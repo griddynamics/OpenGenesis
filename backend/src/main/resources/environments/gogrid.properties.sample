@@ -24,7 +24,7 @@
 genesis.bind.port = 9070
 
 genesis.jdbc.driver = org.h2.Driver
-genesis.jdbc.url = jdbc:h2:file:~/genesis_gogrid_db
+genesis.jdbc.url = jdbc:h2:mem:.
 genesis.jdbc.username = ""
 genesis.jdbc.password = ""
 

@@ -22,8 +22,7 @@
 #
 
 genesis.jdbc.driver = org.h2.Driver
-genesis.jdbc.url = jdbc:h2:mem:genesisBackendInMemoryStore;DB_CLOSE_DELAY=-1
-#genesis.jdbc.url = jdbc:h2:file:~/genesis
+genesis.jdbc.url = jdbc:h2:mem:.
 genesis.jdbc.username = ""
 genesis.jdbc.password = ""
 
