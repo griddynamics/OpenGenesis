@@ -75,6 +75,7 @@
         <module>internal-api</module>
         <module>backend</module>
 	<module>frontend</module>
+	<module>client</module>
         <module>api</module>
         <module>commons</module>
         <module>build-providers/jenkins</module>
