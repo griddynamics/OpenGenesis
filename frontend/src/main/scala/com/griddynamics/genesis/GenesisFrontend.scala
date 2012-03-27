@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -17,8 +17,8 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
 package com.griddynamics.genesis
 
@@ -34,37 +34,18 @@ import org.eclipse.jetty.servlets.GzipFilter
 import org.apache.commons.lang3.SystemUtils
 import java.lang.System.{getProperty => gp}
 import resources.ResourceFilter
+import spring.security.DefaultSecurityConfig
 import util.Logging
 
-object GenesisFrontend extends Logging {
+object GenesisFrontend extends Logging with DefaultSecurityConfig {
     val genesisProperties = loadGenesisProperties()
 
     def main(args: Array[String]) {
         val host = getProperty("genesis.bind.host", "0.0.0.0")
-      val port = Integer.valueOf(getProperty("genesis.bind.port", "8080"))
-      val isFrontend = getProperty("genesis.service.backendUrl", "NONE") != "NONE"
-      val useKerberos = getProperty("genesis.security.useKerberos", "false").equalsIgnoreCase("true")
-      val resourceRoots = getProperty("genesis.web.resourceRoots", "classpath:,classpath:resources/,classpath:resources/icons/,classpath:extjs/")
-      val groupString : String = getProperty("genesis.security.groups", "UNKNOWN") match {
-          case "UNKNOWN" => "IS_AUTHENTICATED_FULLY"
-          case s => s.split(",").map(r => "ROLE_%s".format(r.toUpperCase)).mkString(",")
-        }
-        System.setProperty("genesis.security.windows.groups", groupString)
-      
-        val securityConfig = useKerberos match {
-          case true => {
-            if (SystemUtils.IS_OS_WINDOWS)
-              "classpath:/WEB-INF/spring/security-waffle-config.xml"
-            else
-              "classpath:/WEB-INF/spring/security-kerberos-config.xml"
-          }
-          case false => {
-            getProperty("genesis.server.mode", "") match {
-              case "backend" => "classpath:/WEB-INF/spring/no-security-config.xml"
-              case  _ => "classpath:/WEB-INF/spring/security-config.xml"
-            }
-          }
-        }
+        val port = Integer.valueOf(getProperty("genesis.bind.port", "8080"))
+        val isFrontend = getProperty("genesis.service.backendUrl", "NONE") != "NONE"
+        val resourceRoots = getProperty("genesis.web.resourceRoots", "classpath:,classpath:resources/,classpath:resources/icons/,classpath:extjs/")
+        val securityConfig: String = securityConfigResolver.findSecurityConfig(genesisProperties)
         log.debug("Using configuration file %s", securityConfig)
         val server = new Server()
 
@@ -82,9 +63,9 @@ object GenesisFrontend extends Logging {
 
         context.addEventListener(new ContextLoaderListener)
         val contexts = if (isFrontend) {
-          securityConfig
+            securityConfig
         } else {
-          "classpath:/WEB-INF/spring/backend-config.xml " + securityConfig
+            "classpath:/WEB-INF/spring/backend-config.xml " + securityConfig
         }
         log.debug("Using contexts %s", contexts)
         context.setInitParameter("contextConfigLocation", contexts)
