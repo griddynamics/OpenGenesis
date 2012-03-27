@@ -100,11 +100,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.gdjclouds.provider</groupId>
-            <artifactId>gdnova</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.jclouds.driver</groupId>
             <artifactId>jclouds-jsch</artifactId>
         </dependency>

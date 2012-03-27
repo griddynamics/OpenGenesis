@@ -77,7 +77,6 @@
 	<module>frontend</module>
         <module>api</module>
         <module>commons</module>
-        <module>client</module>
         <module>build-providers/jenkins</module>
     </modules>
 
@@ -484,12 +483,6 @@
                 <artifactId>jersey-client</artifactId>
                 <version>1.5</version>
             </dependency>
-        <dependency>
-            <groupId>org.gdjclouds.provider</groupId>
-            <artifactId>gdnova</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-
         </dependencies>
     </dependencyManagement>
 
