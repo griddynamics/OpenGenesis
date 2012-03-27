@@ -1,0 +1,3 @@
+com.griddynamics.genesis.jclouds.JCloudsPluginContextImpl
+com.griddynamics.genesis.exec.ExecPluginContextImpl
+com.griddynamics.genesis.chef.ChefPluginContextImpl
