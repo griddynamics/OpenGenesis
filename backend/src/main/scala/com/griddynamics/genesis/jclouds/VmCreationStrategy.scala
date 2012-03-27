@@ -28,80 +28,94 @@ import org.jclouds.ec2.compute.options.EC2TemplateOptions
 import com.griddynamics.genesis.util.Logging
 import org.jclouds.compute.domain.NodeState
 import com.griddynamics.executors.provision.VmMetadataFuture
-import org.jclouds.compute.options.TemplateOptions
-import org.gdjclouds.provider.gdnova.v100.GDNovaTemplateOptions
+import org.jclouds.compute.ComputeServiceContext
+import java.util.Properties
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Component
 
-trait VmCreationStrategy {
-    def createVm(env: Environment, vm: VirtualMachine): VmMetadataFuture
+
+trait JCloudsVmCreationStrategyProvider {
+  def name: String
+  def computeProperties: Properties
+  def createVmCreationStrategy(nodeNamePrefix: String, computeContext: ComputeServiceContext): VmCreationStrategy
 }
 
-class DefaultVmCreationStrategy(val pluginContext: JCloudsPluginContext) extends VmCreationStrategy with Logging {
+trait VmCreationStrategy {
+  def createVm(env: Environment, vm: VirtualMachine): VmMetadataFuture
+}
 
-    import DefaultVmCreationStrategy._
 
-    val computeService = pluginContext.computeContext.getComputeService
+class DefaultVmCreationStrategy(nodeNamePrefix: String, pluginContext: ComputeServiceContext) extends VmCreationStrategy with Logging {
 
-    class DefaultVmMetadataFuture(instanceId : String) extends VmMetadataFuture {
-        def getMetadata : Option[String] = {
-            val node = Option(computeService.getNodeMetadata(instanceId))
-            log.debug("Requested node metadata: '%s'", node)
-            node.filter(_.getState == NodeState.RUNNING).map(_.getId)
-        }
+  import DefaultVmCreationStrategy._
+
+  val computeService = pluginContext.getComputeService
+
+  class DefaultVmMetadataFuture(instanceId: String) extends VmMetadataFuture {
+    def getMetadata: Option[String] = {
+      val node = Option(computeService.getNodeMetadata(instanceId))
+      log.debug("Requested node metadata: '%s'", node)
+      node.filter(_.getState == NodeState.RUNNING).map(_.getId)
     }
+  }
 
-    def createVm(env: Environment, vm: VirtualMachine) : VmMetadataFuture = {
-        val nodes = computeService.createNodesInGroup(group(env, vm), 1, template(env, vm))
-        new DefaultVmMetadataFuture(nodes.headOption.map(_.getId).get)
-    }
+  def createVm(env: Environment, vm: VirtualMachine): VmMetadataFuture = {
+    val nodes = computeService.createNodesInGroup(group(env, vm), 1, template(env, vm))
+    new DefaultVmMetadataFuture(nodes.headOption.map(_.getId).get)
+  }
 
-    protected def template(env: Environment, vm: VirtualMachine) = {
-        computeService.templateBuilder.imageId(vm.imageId.get)
-            .hardwareId(vm.hardwareId.get)
-            .options(templateOptions(env, vm))
-            .build
-    }
+  protected def template(env: Environment, vm: VirtualMachine) = {
+    computeService.templateBuilder.imageId(vm.imageId.get)
+      .hardwareId(vm.hardwareId.get)
+      .options(templateOptions(env, vm))
+      .build
+  }
 
-    protected def group(env: Environment, vm: VirtualMachine) = {
-        "%s.%s.%s".format(pluginContext.nodeNamePrefix, java.lang.System.currentTimeMillis() / 1000,
-            env.templateName.take(APP_NAME_MAXLEN)).take(VM_GROUP_MAXLEN)
-    }
+  protected def group(env: Environment, vm: VirtualMachine) = {
+    "%s.%s.%s".format(nodeNamePrefix, java.lang.System.currentTimeMillis() / 1000,
+      env.templateName.take(APP_NAME_MAXLEN)).take(VM_GROUP_MAXLEN)
+  }
 
-    protected def templateOptions(env: Environment, vm: VirtualMachine) = {
-        computeService.templateOptions().blockUntilRunning(false)
-    }
+  protected def templateOptions(env: Environment, vm: VirtualMachine) = {
+    computeService.templateOptions().blockUntilRunning(false)
+  }
 }
 
 object DefaultVmCreationStrategy {
-    val VM_GROUP_PREFIX = "genesis"
-    val VM_GROUP_MAXLEN = 20
-    val APP_NAME_MAXLEN = 4
+  val VM_GROUP_PREFIX = "genesis"
+  val VM_GROUP_MAXLEN = 20
+  val APP_NAME_MAXLEN = 4
 }
 
-class Ec2VmCreationStrategy(computeContext: JCloudsPluginContextImpl,
-                            keyPair: String,
-                            securityGroup: String) extends DefaultVmCreationStrategy(computeContext) {
 
-//    import DefaultVmCreationStrategy._
+object DefaultVmCreationStrategyProvider extends JCloudsVmCreationStrategyProvider {
 
-/*
-    override protected def group(env: Environment, vm: VirtualMachine) = {
-        "%s.%s.%s.%d".format(VM_GROUP_PREFIX, env.name, vm.roleName, vm.id)
-    }
-*/
+  def createVmCreationStrategy(nodeNamePrefix: String, computeService: ComputeServiceContext) =
+    new DefaultVmCreationStrategy(nodeNamePrefix, computeService);
 
-    override protected def templateOptions(env: Environment, vm: VirtualMachine) = {
+  val name = "default"
+
+  val computeProperties = new Properties
+}
+
+
+@Component
+class Ec2VmCreationStrategyProvider extends JCloudsVmCreationStrategyProvider {
+
+  @Value("${genesis.ec2.key.pair:NOT-SET!!!}") var ec2KeyPair: String = _
+  @Value("${genesis.ec2.security.group:NOT-SET!!!}") var ec2SecurityGroup: String = _
+
+  override val name = "aws-ec2";
+
+  override val computeProperties = new Properties();
+
+  override def createVmCreationStrategy(nodeNamePrefix:String, computeContext: ComputeServiceContext ): VmCreationStrategy = {
+    new DefaultVmCreationStrategy(nodeNamePrefix, computeContext) {
+      override protected def templateOptions(env: Environment, vm: VirtualMachine) = {
         super.templateOptions(env, vm).asInstanceOf[EC2TemplateOptions]
-            .keyPair(keyPair)
-            .securityGroups(securityGroup)
+          .keyPair(ec2KeyPair)
+          .securityGroups(ec2SecurityGroup)
+      }
     }
-}
-
-class GdNovaCreationStrategy(computeContext: JCloudsPluginContextImpl,
-                            keyPair: String) extends DefaultVmCreationStrategy(computeContext) {
-
-    override protected def templateOptions(env: Environment, vm: VirtualMachine): TemplateOptions = {
-        super.templateOptions(env, vm).asInstanceOf[GDNovaTemplateOptions]
-            .keyPair(keyPair);
-    }
-}
-
+  }
+};

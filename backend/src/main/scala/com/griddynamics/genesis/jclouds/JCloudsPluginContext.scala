@@ -45,6 +45,8 @@ import java.util.Properties
 import com.griddynamics.genesis.actions.provision._
 import com.griddynamics.context.provision.ProvisionContext
 import com.griddynamics.executors.provision.{CommonCheckPublicIpExecutor, CommonPortTestExecutor}
+import java.util.{List => JList}
+import collection.JavaConversions._
 
 trait JCloudsPluginContext extends ProvisionContext[JCloudsProvisionVm] {
     def clientBootstrap: ClientBootstrap
@@ -58,11 +60,6 @@ class JCloudsPluginContextImpl extends JCloudsPluginContext {
     @Value("${genesis.provision.vm.timeout.secs:180}") var provisionVmTimeoutSecs: Int = _
     @Value("${genesis.public.ip.check.timeout.secs:30}") var publicIpCheckTimeoutSecs: Int = _
 
-    @Value("${genesis.ec2.key.pair:NOT-SET!!!}") var ec2KeyPair: String = _
-    @Value("${genesis.ec2.security.group:NOT-SET!!!}") var ec2SecurityGroup: String = _
-
-    @Value("${genesis.gdnova.key.pair:NOT-SET!!!}") var gdnovaKeypair: String = _
-
     @Value("${genesis.jclouds.provider:nova}") var jcloudsProvider: String = _
     @Value("${genesis.jclouds.endpoint:not-set}") var jcloudsEndpoint: String = _
     @Value("${genesis.jclouds.identity}") var jcloudsIdentity: String = _
@@ -71,6 +68,17 @@ class JCloudsPluginContextImpl extends JCloudsPluginContext {
 
     @Autowired var storeServiceContext: StoreServiceContext = _
     @Autowired var credentialServiceContext: CredentialServiceContext = _
+
+    var providersMap: Map[String, JCloudsVmCreationStrategyProvider]  = _
+
+    @Autowired
+    def collectProviders(providers: JList[JCloudsVmCreationStrategyProvider]) {
+      providersMap = providers.map( provider => (provider.name, provider)).toMap
+    }
+
+    lazy val currentProvider: JCloudsVmCreationStrategyProvider =
+      providersMap.getOrElse(providerName, DefaultVmCreationStrategyProvider)
+
 
     @Bean def jcloudsExecutorFactory = new JCloudsStepCoordinatorFactory(this)
 
@@ -104,18 +112,15 @@ class JCloudsPluginContextImpl extends JCloudsPluginContext {
     @Bean def computeContext = {
         val contextFactory = new ComputeServiceContextFactory
 
-        val overrides = new Properties
+        val overrides = currentProvider.computeProperties
 
         if (jcloudsEndpoint != "not-set") {
             overrides(PROPERTY_ENDPOINT) = jcloudsEndpoint
         }
 
-        if(providerName == "gdnova") { //gdnova is external to jclouds-core provider (not specified in rest.properties)
-            overrides("gdnova.contextbuilder") = "org.gdjclouds.provider.gdnova.GDNovaContextBuilder";
-            overrides("gdnova.propertiesbuilder") = "org.jclouds.openstack.nova.NovaPropertiesBuilder";
+        if (jcloudsEndpoint != "not-set") {
+            overrides(PROPERTY_ENDPOINT) = jcloudsEndpoint
         }
-
-//       overrides("jclouds.timeouts.GridServerClient") = "666000"
 
         contextFactory.createContext(jcloudsProvider, jcloudsIdentity, jcloudsCredential,
             Set(new JschSshClientModule, new SLF4JLoggingModule), overrides)
@@ -132,14 +137,9 @@ class JCloudsPluginContextImpl extends JCloudsPluginContext {
 
     def nodeNamePrefix = jcloudsNodeNamePrefix.take(2)
 
-    @Bean def vmCreationStrategy = {
-        providerName match {
-            case "aws-ec2" => new Ec2VmCreationStrategy(this, ec2KeyPair, ec2SecurityGroup)
-            case "gogrid" => new GoGridVmCreationStrategy(this)
-            case "gdnova" => new GdNovaCreationStrategy(this, gdnovaKeypair)
-            case _ => new DefaultVmCreationStrategy(this)
-        }
-    }
+    @Bean def vmCreationStrategy: VmCreationStrategy =
+       currentProvider.createVmCreationStrategy(nodeNamePrefix, computeContext);
+
 
     def destroyVmActionExecutor(action : DestroyVmAction) = {
         new JCloudsVmDestructor(action,

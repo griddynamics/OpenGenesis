@@ -28,9 +28,21 @@ import com.google.common.collect.Iterables
 import org.jclouds.gogrid.domain.{IpType, JobState, PowerCommand}
 import org.jclouds.gogrid.options.{AddServerOptions, GetIpListOptions, GetJobListOptions}
 import com.griddynamics.executors.provision.VmMetadataFuture
+import org.jclouds.compute.ComputeServiceContext
+import java.util.Properties
+import org.springframework.stereotype.Component
 
-class GoGridVmCreationStrategy(computeContext: JCloudsPluginContext) extends DefaultVmCreationStrategy(computeContext) {
-    val restContext = computeContext.computeContext.getProviderSpecificContext[GoGridClient, GoGridAsyncClient]
+@Component
+class GoGridVmCreationStrategyProvider extends JCloudsVmCreationStrategyProvider {
+    val name = "gogrid"
+    val computeProperties = new Properties
+
+    def createVmCreationStrategy(nodeNamePrefix: String, computeContext: ComputeServiceContext): VmCreationStrategy =
+        new GoGridVmCreationStrategy(nodeNamePrefix, computeContext);
+}
+
+class GoGridVmCreationStrategy(nodeNamePrefix: String, computeContext: ComputeServiceContext) extends DefaultVmCreationStrategy(nodeNamePrefix, computeContext) {
+    val restContext = computeContext.getProviderSpecificContext[GoGridClient, GoGridAsyncClient]
     val client = restContext.getApi
     val jobServices = client.getJobServices
 
