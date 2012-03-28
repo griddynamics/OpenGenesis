@@ -33,9 +33,8 @@
 
     <s:global-method-security pre-post-annotations="enabled"/>
 
-    <s:http security="none" pattern="/js/**" />
-    <s:http security="none" pattern="/stylesheets/**" />
-    <s:http security="none" pattern="/resources/**" />
+    <s:http security="none" pattern="/app/**" />
+    <s:http security="none" pattern="/assets/**" />
     <s:http security="none" pattern="/favicon.ico" />
     <s:http security="none" pattern="/login*" />
 
