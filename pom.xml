@@ -79,6 +79,7 @@
         <module>api</module>
         <module>commons</module>
         <module>build-providers/jenkins</module>
+        <module>distribution</module>
     </modules>
 
       <dependencyManagement>
