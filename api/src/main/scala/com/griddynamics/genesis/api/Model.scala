@@ -49,7 +49,7 @@ case class Workflow(name : String, variables : Seq[Variable])
 
 case class WorkflowStep(stepId: String, phase: String, status : String, details : String)
 
-case class WorkflowDetails(name : String, steps : Option[Seq[WorkflowStep]])
+case class WorkflowDetails(name : String, status: String,  stepsCompleted: Option[Double], steps : Option[Seq[WorkflowStep]])
 
 case class VirtualMachine(envName : String,
                           roleName : String,
