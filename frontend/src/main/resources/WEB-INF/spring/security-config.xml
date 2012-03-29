@@ -33,15 +33,11 @@
 
     <s:global-method-security pre-post-annotations="enabled"/>
 
-    <s:http security="none" pattern="/js/**" />
-    <s:http security="none" pattern="/stylesheets/**" />
-    <s:http security="none" pattern="/resources/**" />
-    <s:http security="none" pattern="/favicon.ico" />
-    <s:http security="none" pattern="/login*" />
-
 	<s:http use-expressions="true" disable-url-rewriting="true" entry-point-ref="genesisAuthenticationEntryPoint"
             realm="Genesis" >
-		<s:intercept-url pattern="/**" access="isAuthenticated()" />
+		<s:intercept-url pattern="/" access="isAuthenticated()" />
+		<s:intercept-url pattern="/index.html" access="isAuthenticated()" />
+		<s:intercept-url pattern="/rest/**" access="isAuthenticated()" />
         <s:form-login login-page="/login.html"
                       authentication-success-handler-ref="authenticationSuccessHandler"
                       authentication-failure-handler-ref="authenticationFailureHandler"

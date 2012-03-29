@@ -50,16 +50,6 @@ class GenesisRestService(storeService: StoreService,
 
     def countEnvs : Int = storeService.countEnvs
 
-    private def stepsCompleted(workflowOption: Option[Workflow]) = {
-        workflowOption match {
-            case Some(workflow) if workflow.stepsCount > 0 =>
-                Some(workflow.stepsFinished / (workflow.stepsCount: Double))
-            case Some(workflow) =>
-                Some(0.0)
-            case None => None
-        }
-    }
-
     def listTemplates = {
         for {(name, version) <- templateService.listTemplates.toSeq
              templateOpt = templateService.findTemplate(name, version)
@@ -105,6 +95,17 @@ class GenesisRestService(storeService: StoreService,
 }
 
 object GenesisRestService {
+
+  private def stepsCompleted(workflowOption: Option[Workflow]) = {
+      workflowOption match {
+        case Some(workflow) if workflow.stepsCount > 0 =>
+          Some(workflow.stepsFinished / (workflow.stepsCount: Double))
+        case Some(workflow) =>
+          Some(0.0)
+        case None => None
+      }
+    }
+
     def templateDesc(name: String, version: String, template: service.TemplateDefinition) = {
         val createWorkflow = workflowDesc(template.createWorkflow)
         Template(name, version, createWorkflow)
@@ -142,7 +143,7 @@ object GenesisRestService {
     def workflowHistoryDesc(history: Seq[(Workflow, Seq[model.WorkflowStep])]) =
         wrap(history)(() =>
             (for ((flow, steps) <- history) yield
-                new WorkflowDetails(flow.name, stepDesc(steps))).toSeq)
+                new WorkflowDetails(flow.name, flow.status.toString, stepsCompleted(Some(flow)), stepDesc(steps))).toSeq)
 
     def stepDesc(steps : Seq[model.WorkflowStep]) =
         wrap(steps)(() =>
