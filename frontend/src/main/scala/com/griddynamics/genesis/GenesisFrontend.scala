@@ -41,30 +41,16 @@ object GenesisFrontend extends Logging {
 
     def main(args: Array[String]) {
         val host = getProperty("genesis.bind.host", "0.0.0.0")
-      val port = Integer.valueOf(getProperty("genesis.bind.port", "8080"))
-      val isFrontend = getProperty("genesis.service.backendUrl", "NONE") != "NONE"
-      val useKerberos = getProperty("genesis.security.useKerberos", "false").equalsIgnoreCase("true")
-      val resourceRoots = getProperty("genesis.web.resourceRoots", "classpath:,classpath:resources/,classpath:resources/icons/,classpath:extjs/")
-      val groupString : String = getProperty("genesis.security.groups", "UNKNOWN") match {
-          case "UNKNOWN" => "IS_AUTHENTICATED_FULLY"
-          case s => s.split(",").map(r => "ROLE_%s".format(r.toUpperCase)).mkString(",")
+        val port = Integer.valueOf(getProperty("genesis.bind.port", "8080"))
+        val isFrontend = getProperty("genesis.service.backendUrl", "NONE") != "NONE"
+        val resourceRoots = getProperty("genesis.web.resourceRoots", "classpath:,classpath:resources/,classpath:resources/icons/,classpath:extjs/")
+        val groupString : String = getProperty("genesis.security.groups", "UNKNOWN") match {
+            case "UNKNOWN" => "IS_AUTHENTICATED_FULLY"
+            case s => s.split(",").map(r => "ROLE_%s".format(r.toUpperCase)).mkString(",")
         }
         System.setProperty("genesis.security.windows.groups", groupString)
       
-        val securityConfig = useKerberos match {
-          case true => {
-            if (SystemUtils.IS_OS_WINDOWS)
-              "classpath:/WEB-INF/spring/security-waffle-config.xml"
-            else
-              "classpath:/WEB-INF/spring/security-kerberos-config.xml"
-          }
-          case false => {
-            getProperty("genesis.server.mode", "") match {
-              case "backend" => "classpath:/WEB-INF/spring/no-security-config.xml"
-              case  _ => "classpath:/WEB-INF/spring/security-config.xml"
-            }
-          }
-        }
+        val securityConfig = getProperty("genesis.security.config", "classpath:/WEB-INF/spring/security-config.xml")
         log.debug("Using configuration file %s", securityConfig)
         val server = new Server()
 
@@ -135,4 +121,5 @@ object GenesisFrontend extends Logging {
 
     def getProperty(name: String, default: String) =
         gp(name, genesisProperties.getProperty(name, default))
+
 }
