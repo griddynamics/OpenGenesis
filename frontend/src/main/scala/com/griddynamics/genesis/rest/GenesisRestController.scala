@@ -149,14 +149,14 @@ object GenesisRestController {
       SecurityContextHolder.getContext.getAuthentication.asInstanceOf[Principal].getName
     }
 
-    private def extractValue(valueName : String, values : Map[String, Any]) : String = {
+    def extractValue(valueName : String, values : Map[String, Any]) : String = {
         values.get(valueName) match {
             case Some(s) => String.valueOf(s)
             case None => throw new MissingParameterException(valueName)
         }
     }
   
-    private def extractOption(valueName: String,  values: Map[String, Any]) : Option[String] = {
+    def extractOption(valueName: String,  values: Map[String, Any]) : Option[String] = {
        values.get(valueName) match {
          case Some(s) => Some(String.valueOf(s))
          case None => None

@@ -36,6 +36,8 @@ trait GenesisSchema extends Schema {
     val envAttrs = table[SquerylEntityAttr]("env_attribute")
     val counters = table[NumberCounter]("number_counter")
     val logs = table[StepLogEntry]("step_logs")
+  
+    val projects = table[Project]("project")
 }
 
 trait GenesisSchemaPrimitive extends GenesisSchema {

@@ -70,10 +70,12 @@ case class RequestResult(serviceErrors : Map[String, String] = Map(),
     def hasValidationErrors = ! isSuccess && (! variablesErrors.isEmpty || ! serviceErrors.isEmpty)
 }
 
+case class Project(id: Option[String], name: String,  description: Option[String], projectManager: String)
+
 object RequestResult {
     val envName = "envName"
     val template = "template"
 }
 
-case class Project(name : String, id: String)
-case class Tag(p: Project, name: String)
+case class VcsProject(name : String, id: String)
+case class Tag(p: VcsProject, name: String)

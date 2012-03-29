@@ -37,7 +37,7 @@ package com.griddynamics.genesis.template
 import org.bouncycastle.crypto.digests.SHA1Digest
 import org.bouncycastle.util.encoders.Base64
 import org.apache.commons.io.IOCase
-import com.griddynamics.genesis.api.{Tag, Project}
+import com.griddynamics.genesis.api.{Tag, VcsProject}
 
 trait TemplateRepository {
     def listSources() : Map[VersionedTemplate, String]
@@ -47,7 +47,7 @@ trait TemplateRepository {
 
 trait SourceControl {
     type ChangesetType <: Any;
-    def listProjects : Seq[Project] = Seq[Project]()
+    def listProjects : Seq[VcsProject] = Seq[VcsProject]()
     def listTags(id : String) : Seq[Tag] = Seq[Tag]()
     def getContent(projectId: String,  tagId: String, fileName: String) : Option[String] = None
     /** Content for specific version */
