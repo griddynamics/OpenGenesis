@@ -52,11 +52,13 @@ class GenesisRestController(genesisService: GenesisService) {
         val templateName = extractValue("templateName", paramsMap)
         val templateVersion = extractValue("templateVersion", paramsMap)
         val variables = extractVariables(paramsMap)
+        val projectId = extractValue("projectId", paramsMap)
+
         val user = mode match {
           case "backend" => extractValue("creator", paramsMap)
           case _ => getCurrentUser
         }
-        genesisService.createEnv(envName, user, templateName, templateVersion, variables)
+        genesisService.createEnv(projectId.toInt, envName, user, templateName, templateVersion, variables)
     }
 
     @RequestMapping(value=Array("envs/{envName}/logs/{stepId}"))
@@ -103,8 +105,10 @@ class GenesisRestController(genesisService: GenesisService) {
 
     @RequestMapping(value = Array("envs"), method = Array(RequestMethod.GET))
     @ResponseBody
-    def listEnvs = genesisService.listEnvs
-
+    def listEnvs(request: HttpServletRequest) = {
+      val projectId = request.getParameter("projectId").toInt;
+      genesisService.listEnvs(projectId)
+    }
 
     @RequestMapping(value = Array("cancel/{envName}"), method = Array(RequestMethod.POST))
     @ResponseBody @ResponseStatus(HttpStatus.NO_CONTENT)

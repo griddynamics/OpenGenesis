@@ -34,6 +34,7 @@ import com.griddynamics.genesis.model._
 class StoreServiceTest extends MustMatchersForJUnit {
     val storeService = new StoreService
 
+    var project: Project = _
     var env: Environment = _
     var workflow: Workflow = _
 
@@ -90,7 +91,10 @@ class StoreServiceTest extends MustMatchersForJUnit {
     }
 
     def fillDb() {
-        env = new Environment("env", EnvStatus.Requested("workflow"), "owner", "template", "0.1", None)
+
+        project =  GenesisSchema.projects.insert(new Project("project1", Some("test project"), "Nina, Soto"));
+
+        env = new Environment("env", EnvStatus.Requested("workflow"), "owner", "template", "0.1", project.id)
         env(EnvAttr1) = EnvAttrVal1
         workflow = new Workflow(env.id, "workflow", WorkflowStatus.Requested, 0, 0, Map[String, String]())
 

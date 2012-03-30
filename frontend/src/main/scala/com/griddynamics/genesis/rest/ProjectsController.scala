@@ -37,11 +37,18 @@ class ProjectsController(projectRepository: ProjectRepository) {
   @ResponseBody
   def listProjects: List[Project] = projectRepository.list
 
+//  @RequestMapping(method = Array(RequestMethod.POST))
+//  @ResponseBody
+//  def createProject(request: HttpServletRequest, response: HttpServletResponse): Project = {
+//    val paramsMap = extractParamsMap(request)
+//    val project = extractProject(paramsMap)
+//    projectRepository.save(project)
+//  }
   @RequestMapping(method = Array(RequestMethod.POST))
   @ResponseBody
-  def createProject(request: HttpServletRequest, response: HttpServletResponse): Project = {
-    val paramsMap = extractParamsMap(request)
-    val project = extractProject(paramsMap)
+  def createProject(project: Project , response: HttpServletResponse): Project = {
+//    val paramsMap = extractParamsMap(request)
+//    val project = extractProject(paramsMap)
     projectRepository.save(project)
   }
 

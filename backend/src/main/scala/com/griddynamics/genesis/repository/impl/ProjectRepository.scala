@@ -1,12 +1,3 @@
-package com.griddynamics.genesis.repository
-
-import org.squeryl.PrimitiveTypeMode._
-import com.griddynamics.genesis.model
-import model.{GenesisEntity, GenesisSchema}
-import org.springframework.transaction.annotation.Transactional
-import org.squeryl._
-import com.griddynamics.genesis.api
-
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
@@ -29,46 +20,18 @@ import com.griddynamics.genesis.api
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-abstract class AbstractGenericRepository[T <: KeyedEntity[GenesisEntity.Id], K] (table: Table[T]) {
+package com.griddynamics.genesis.repository.impl
 
-  implicit def convertTo(model: T): K
-  implicit def convertFrom(dto: K): T
+import com.griddynamics.genesis.model
+import model.GenesisSchema
+import com.griddynamics.genesis.api
+import com.griddynamics.genesis.repository.AbstractGenericRepository
+import com.griddynamics.genesis.repository
 
-  @Transactional(readOnly = true)
-  def load(id: Int): K = from(table) {
-    item => where(item.id === id) select (item)
-  }.single
+class ProjectRepository extends AbstractGenericRepository[model.Project, api.Project](GenesisSchema.projects)
+  with repository.ProjectRepository {
 
-  @Transactional(readOnly = true)
-  def list: List[K] = from(table) { select(_) }.toList.map(convertTo(_));
-
-  @Transactional
-  def delete(entity: K): Int = table.deleteWhere(a => a.id === entity.id)
-
-  @Transactional
-  def delete(id: GenesisEntity.Id): Int = table.deleteWhere(a => a.id === id)
-
-  @Transactional
-  def save(entity: K): K = entity.id match {
-    case 0 => insert(entity);
-    case _ => update(entity);
-  };
-
-  @Transactional
-  def insert(entity: K): K = table.insert(entity)
-
-  @Transactional
-  def update(entity: K): K = {
-    table.update(entity);
-    entity
-  }
-
-}
-
-class ProjectRepositoryImpl extends AbstractGenericRepository[model.Project, api.Project](GenesisSchema.projects)
-  with ProjectRepository{
-
-  override implicit def convertTo(entity: model.Project): api.Project = {
+  override implicit def convert(entity: model.Project): api.Project = {
     val id = entity.id match {
       case 0 => None;
       case _ => Some(entity.id.toString);
@@ -76,7 +39,7 @@ class ProjectRepositoryImpl extends AbstractGenericRepository[model.Project, api
     new api.Project(id, entity.name, entity.description, entity.projectManager)
   }
 
-  override implicit def convertFrom(dto: api.Project): model.Project = {
+  override implicit def convert(dto: api.Project): model.Project = {
     val project = new model.Project(dto.name, dto.description, dto.projectManager)
     project.id = dto.id.getOrElse("0").toInt;
     project;

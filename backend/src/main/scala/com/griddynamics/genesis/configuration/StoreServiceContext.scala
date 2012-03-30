@@ -37,6 +37,7 @@ import java.sql.Connection
 import org.springframework.transaction.support.{TransactionCallback, TransactionTemplate}
 import org.springframework.transaction.{TransactionStatus, PlatformTransactionManager}
 import org.squeryl.adapters.{MSSQLServer, MySQLAdapter, H2Adapter}
+import com.griddynamics.genesis.repository.impl.ProjectRepository
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
@@ -47,6 +48,8 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 
     @Bean def storeService = new impl.StoreService
 
+    @Bean def projectRepository = new ProjectRepository
+  
     @Bean def dataSource = {
         val res = new BasicDataSource
         res.setDriverClassName(jdbcDriver)

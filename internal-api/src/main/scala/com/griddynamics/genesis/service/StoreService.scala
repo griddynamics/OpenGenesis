@@ -28,8 +28,9 @@ import com.griddynamics.genesis.model._
 
 trait StoreService {
     def listEnvs(): Seq[Environment]
-    def listEnvs(start : Int, limit : Int): Seq[Environment]
-    def countEnvs : Int
+    def listEnvs(projectId: Int): Seq[Environment]
+    def listEnvs(projectId: Int, start : Int, limit : Int): Seq[Environment]
+    def countEnvs(projectId: Int) : Int
 
     def findEnv(name: String): Option[Environment]
 
@@ -39,8 +40,8 @@ trait StoreService {
 
     def listWorkflows(env: Environment): Seq[Workflow]
 
-    def listEnvsWithWorkflow(): Seq[(Environment, Option[Workflow])]
-    def listEnvsWithWorkflow(start : Int, limit : Int): Seq[(Environment, Option[Workflow])]
+    def listEnvsWithWorkflow(projectId: Int): Seq[(Environment, Option[Workflow])]
+    def listEnvsWithWorkflow(projectId: Int, start : Int, limit : Int): Seq[(Environment, Option[Workflow])]
 
     def workflowsHistory(env : Environment): Seq[(Workflow, Seq[WorkflowStep])]
 

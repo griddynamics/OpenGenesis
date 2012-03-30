@@ -54,7 +54,7 @@ trait Environment {
 }
 
 trait WorkflowService {
-    def createEnvironment(envName: String, envCreator: String, steps: Seq[GenesisStep]): Environment
+    def createEnvironment(projectId:Int, envName: String, envCreator: String, steps: Seq[GenesisStep]): Environment
 
     def getEnvironment(envName: String): Environment
 

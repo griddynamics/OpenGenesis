@@ -59,6 +59,9 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     val stepsToWorkflow = oneToManyRelation(workflows, steps).via((workflow, step) => workflow.id === step.workflowId)
     stepsToWorkflow.foreignKeyDeclaration.constrainReference(onDelete cascade)
 
+    val envsToProject = oneToManyRelation(projects, envs).via((project, environment) => project.id === environment.projectId)
+    envsToProject.foreignKeyDeclaration.constrainReference(onDelete cascade)
+
     on(envs)(env => declare(
         env.name is (unique)
     ))
@@ -82,6 +85,11 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
 
     on(logs) (log => declare(
       log.message is (dbType("text"))
+    ))
+
+    on(projects) (project=> declare(
+      project.name is (unique),
+      project.description is (dbType("text"))
     ))
 }
 

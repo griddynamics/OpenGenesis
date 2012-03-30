@@ -30,7 +30,7 @@ import com.griddynamics.genesis.service
 import service.{ValidationError, TemplateService, StoreService}
 
 trait RequestBroker {
-    def createEnv(envName: String, envCreator : String,
+    def createEnv(projectId: Int, envName: String, envCreator : String,
                   templateName: String, templateVersion: String,
                   variables: Map[String, String]) : RR
 
@@ -46,7 +46,7 @@ class RequestBrokerImpl(storeService: StoreService,
                         dispatcher: RequestDispatcher) extends RequestBroker {
     import RequestBrokerImpl._
 
-    def createEnv(envName: String, envCreator : String,
+    def createEnv(projectId: Int, envName: String, envCreator : String,
                   templateName: String, templateVersion: String,
                   variables: Map[String, String]) : RR = {
         validateEnvName(envName) match {
@@ -66,7 +66,7 @@ class RequestBrokerImpl(storeService: StoreService,
         }
 
         val env = new Environment(envName, EnvStatus.Requested(twf.name),
-                                  envCreator, templateName, templateVersion, None)
+                                  envCreator, templateName, templateVersion, projectId)
         val workflow = new Workflow(env.id, twf.name,
                                     WorkflowStatus.Requested, 0, 0, variables)
 
