@@ -1,3 +1,10 @@
+package com.griddynamics.genesis.rest
+
+import org.springframework.web.bind.annotation.ExceptionHandler._
+import org.springframework.web.bind.annotation.{ResponseStatus, ExceptionHandler}
+import org.springframework.http.HttpStatus
+import javax.servlet.http.HttpServletResponse
+
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
@@ -17,46 +24,22 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.service
+trait RestApiExceptionsHandler {
 
-package workflow
+  @ExceptionHandler(value = Array(classOf[InvalidInputException]))
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  def handleInvalidParams(response : HttpServletResponse) {
+    response.getWriter.write("{\"error\": \"Invalid input\"}")
+  }
 
-import java.lang.RuntimeException
-import com.griddynamics.genesis.plugin.GenesisStep
+  @ExceptionHandler(value = Array(classOf[MissingParameterException]))
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  def handleMissingParam(response : HttpServletResponse, exception: MissingParameterException) {
+    response.getWriter.write("{\"error\": \"Missing parameter: %s\"}".format(exception.paramName))
+  }
 
-case class FailureDetails(description: String, executionLog: String)
 
-case class WorkflowStatus(status: WorkflowStatus, stepsCompleted: Int, stepsTotal: Int, failedSteps: Seq[FailureDetails])
-
-class WorkflowException(reason: String) extends RuntimeException(reason)
-
-trait WorkflowFuture {
-    def getStatus: String
-
-    def resume()
-
-    def suspend()
-
-    def cancel()
-}
-
-trait Environment {
-    def destroy(steps: Seq[GenesisStep]): WorkflowFuture
-
-    def executeWorkflow(steps: Seq[GenesisStep]): WorkflowFuture
-
-    def listWorkflows: Seq[WorkflowFuture]
-
-    def currentWorkflow: WorkflowFuture
-}
-
-trait WorkflowService {
-    def createEnvironment(projectId:Int, envName: String, envCreator: String, steps: Seq[GenesisStep]): Environment
-
-    def getEnvironment(envName: String): Environment
-
-    def listEnvironments: Seq[Environment]
 }

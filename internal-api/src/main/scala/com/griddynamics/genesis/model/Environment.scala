@@ -31,8 +31,8 @@ class Environment(val name: String,
                   val creator: String,
                   val templateName: String,
                   var templateVersion: String,
-                  val projectId: Option[String]) extends EntityWithAttrs {
-    def this() = this ("", Requested(""), "", "", "", None)
+                  val projectId: GenesisEntity.Id) extends EntityWithAttrs {
+    def this() = this ("", Requested(""), "", "", "", 0)
 
     def copy() = {
         val env = new Environment(name, status, creator, templateName,

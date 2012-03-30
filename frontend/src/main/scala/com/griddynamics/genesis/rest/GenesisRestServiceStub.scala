@@ -39,7 +39,7 @@ class GenesisRestServiceStub() extends GenesisService {
 
     val workflows = Seq(createWorkflow, destroyWorkflow, testWorkflow)
 
-    val envT = Environment("name", "Requested", None, "artem", "erlangEnv", "1.0.0")
+    val envT = Environment("name", "Requested", None, "artem", "erlangEnv", "1.0.0", 1)
     val vmT = VirtualMachine("environment", "erlangNode", 1, "instanceId", "hardwareId", "hostNumber", "publicIp", "privateIp", "Ready")
 
     val templateT = Template("erlangEnv", "1.0.0", createWorkflow)
@@ -75,7 +75,7 @@ class GenesisRestServiceStub() extends GenesisService {
 
     val templates = Seq(templateT, templateT.copy(version = "1.0.1"), templateT.copy(version = "1.0.2"))
 
-    def createEnv(name: String, creator : String, templateName: String, templateVersion: String, vars: Map[String, String]) = {
+    def createEnv(projectId: Int, name: String, creator : String, templateName: String, templateVersion: String, vars: Map[String, String]) = {
         /*
         RequestResult(serviceErrors : Map[String, String] = Map(),
                          variablesErrors : Map[String, String] = Map(),
@@ -94,7 +94,7 @@ class GenesisRestServiceStub() extends GenesisService {
                                                                         "CompoundVariablesErrors2"))
             case _ => val newEnv = Environment(name, "Executing(create)",
                                                Some(0.0), creator,
-                                               templateName, templateVersion)
+                                               templateName, templateVersion, projectId)
                       envs =  newEnv +: envs
                       RequestResult(isSuccess = true)
         }
@@ -105,13 +105,13 @@ class GenesisRestServiceStub() extends GenesisService {
         RequestResult(isSuccess = true)
     }
 
-    def countEnvs = envs.size
+    def countEnvs(projectId: Int) = envs.size
 
     def listTemplates = templates
 
     def describeEnv(envName : String) = envsDescr.get(envName)
 
-    def listEnvs = {
+    def listEnvs(projectId: Int) = {
         envs = envs map {e =>
             if(e.status.startsWith("Executing")){
                 val completed = e.completed.get
@@ -123,7 +123,7 @@ class GenesisRestServiceStub() extends GenesisService {
         envs
     }
 
-    def listEnvs(start : Int, limit : Int) = listEnvs
+    def listEnvs(projectId: Int, start : Int, limit : Int) = listEnvs(projectId)
 
     def requestWorkflow(envName: String, workflowName: String, variables: Map[String, String]) = {
         envs = envs map {e =>

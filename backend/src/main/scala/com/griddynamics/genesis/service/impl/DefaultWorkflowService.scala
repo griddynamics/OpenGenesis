@@ -92,9 +92,9 @@ class DefaultWorkflowService(val storeService: service.StoreService,
         }
     }
 
-    def createEnvironment(envName: String, envCreator: String, steps: Seq[GenesisStep]) = {
+    def createEnvironment(projectId: Int, envName: String, envCreator: String, steps: Seq[GenesisStep]) = {
         val env = new model.Environment(envName, EnvStatus.Requested(null),
-            envCreator, null, null, None)
+            envCreator, null, null, projectId)
         val workflow = new Workflow(env.id, null,
             WorkflowStatus.Requested, 0, 0, null)
 

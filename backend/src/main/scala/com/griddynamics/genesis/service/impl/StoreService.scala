@@ -37,15 +37,21 @@ class StoreService extends service.StoreService {
     import StoreService._
 
     @Transactional(readOnly = true)
-    def listEnvs(): Seq[Environment] = {
-        from(GS.envs)(select(_)).toList
-    }
+    def listEnvs(): Seq[Environment] = from(GS.envs)(select (_)).toList
 
     @Transactional(readOnly = true)
-    def countEnvs = GS.envs.size
+    def listEnvs(projectId: Int): Seq[Environment] = listEnvQuery(projectId).toList
+
+    @Transactional(readOnly = true)
+    def countEnvs(projectId: Int) = listEnvQuery(projectId).size
 
     @Transactional
-    def listEnvs(start : Int, limit : Int) = from(GS.envs)(select(_)).page(start, limit).toList
+    def listEnvs(projectId: Int, start : Int, limit : Int) =
+       listEnvQuery(projectId).page(start, limit).toList
+
+    private def listEnvQuery(projectId: Int): Query[Environment] = {
+       from(GS.envs)(env => where(env.projectId === projectId) select (env))
+    }
 
     @Transactional(readOnly = true)
     def findEnv(envName: String) = {
@@ -82,8 +88,8 @@ class StoreService extends service.StoreService {
 
     //TODO switch to join query
     @Transactional(readOnly = true)
-    def listEnvsWithWorkflow() = {
-        listEnvs().map(env => {
+    def listEnvsWithWorkflow(projectId: Int) = {
+        listEnvs(projectId).map(env => {
             (env, listWorkflows(env).find(w => w.status == WorkflowStatus.Executed))
         })
         //join(envs, workflows.leftOuter)((env, w) => {
@@ -94,8 +100,8 @@ class StoreService extends service.StoreService {
     }
 
     @Transactional(readOnly = true)
-    def listEnvsWithWorkflow(start : Int, limit : Int) = {
-        listEnvs(start, limit).map(env => {
+    def listEnvsWithWorkflow(projectId: Int, start : Int, limit : Int) = {
+        listEnvs(projectId, start, limit).map(env => {
             (env, listWorkflows(env).find(w => w.status == WorkflowStatus.Executed))
         })
         //join(envs, workflows.leftOuter)((env, w) => {

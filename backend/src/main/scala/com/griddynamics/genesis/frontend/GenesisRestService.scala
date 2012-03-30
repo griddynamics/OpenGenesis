@@ -28,27 +28,29 @@ import com.griddynamics.genesis.bean.RequestBroker
 import GenesisRestService._
 import com.griddynamics.genesis.model
 import model.{EnvStatusField, Workflow, EnvStatus}
-import service.{TemplateDefinition, ComputeService, TemplateService, StoreService}
-import com.griddynamics.genesis.template.{VersionedTemplate, TemplateRepository}
+import service.{ComputeService, TemplateService, StoreService}
+import com.griddynamics.genesis.template.TemplateRepository
 
 class GenesisRestService(storeService: StoreService,
                          templateService: TemplateService,
                          computeService: ComputeService,
                          templateRepository : TemplateRepository,
                          broker: RequestBroker) extends GenesisService {
-    def listEnvs = {
-        for ((env, workflowOption) <- storeService.listEnvsWithWorkflow()) yield
+
+
+    def listEnvs(projectId: Int) = {
+        for ((env, workflowOption) <- storeService.listEnvsWithWorkflow(projectId)) yield
             Environment(env.name, envStatusDesc(env.status), stepsCompleted(workflowOption),
                 env.creator, env.templateName, env.templateVersion, env.projectId)
     }
 
-    def listEnvs(start : Int, limit : Int) = {
-        for ((env, workflowOption) <- storeService.listEnvsWithWorkflow(start, limit)) yield
+    def listEnvs(projectId: Int, start : Int, limit : Int) = {
+        for ((env, workflowOption) <- storeService.listEnvsWithWorkflow(projectId, start, limit)) yield
             Environment(env.name, envStatusDesc(env.status), stepsCompleted(workflowOption),
                 env.creator, env.templateName, env.templateVersion, env.projectId)
     }
 
-    def countEnvs : Int = storeService.countEnvs
+    def countEnvs(projectId: Int) : Int = storeService.countEnvs(projectId)
 
     def listTemplates = {
         for {(name, version) <- templateService.listTemplates.toSeq
@@ -57,9 +59,9 @@ class GenesisRestService(storeService: StoreService,
         } yield templateDesc(name, version, templateOpt.get)
     }
 
-    def createEnv(envName: String, creator: String, templateName: String,
+    def createEnv(projectId: Int, envName: String, creator: String, templateName: String,
                   templateVersion: String, variables: Map[String, String]) = {
-        broker.createEnv(envName, creator, templateName, templateVersion, variables)
+        broker.createEnv(projectId, envName, creator, templateName, templateVersion, variables)
     }
 
     def destroyEnv(envName: String, variables: Map[String, String]) = {
