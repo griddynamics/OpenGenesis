@@ -26,11 +26,12 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:s="http://www.springframework.org/schema/security"
+       xmlns:context="http://www.springframework.org/schema/context"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
        http://www.springframework.org/schema/beans/spring-beans.xsd
        http://www.springframework.org/schema/security
-       http://www.springframework.org/schema/security/spring-security.xsd">
-
+       http://www.springframework.org/schema/security/spring-security.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+    <context:property-placeholder location="${backend.properties}" system-properties-mode="OVERRIDE"/>
     <s:global-method-security pre-post-annotations="enabled"/>
 
 	<s:http use-expressions="true" disable-url-rewriting="true" entry-point-ref="genesisAuthenticationEntryPoint"
@@ -43,7 +44,7 @@
                       authentication-failure-handler-ref="authenticationFailureHandler"
                       login-processing-url="/signin"/>
 
-        <s:logout logout-url="/logout" invalidate-session="true"/>
+        <s:logout logout-url="/logout" invalidate-session="true" logout-success-url="/login.html"/>
         <s:http-basic/>
         <!--token-validity-seconds="604800" = 1 week-->
         <s:remember-me key="GenesisRememberMeKey"
