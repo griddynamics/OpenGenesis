@@ -85,7 +85,7 @@ class ResourceFilter extends Filter with Logging {
         val originalPath = if (uri == null || uri == "" || uri == "/")
             "index.html"
         else
-            uri.replaceAll("^\\/", "")
+            uri.replaceAll("^\\/", "").takeWhile(_ != ';')
         def locateResource(path: String) = {
             resourceRoots.map(
                 root => {
