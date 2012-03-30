@@ -2,10 +2,12 @@ package com.griddynamics.genesis.rest
 
 import com.griddynamics.genesis.api.Project
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
-import org.springframework.web.bind.annotation.{PathVariable, ResponseBody, RequestMethod, RequestMapping}
 import com.griddynamics.genesis.repository.ProjectRepository
 import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.stereotype.Controller
+import org.springframework.web.bind.annotation._
+import org.springframework.http.HttpStatus
+import com.griddynamics.genesis.util.Logging
 
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
@@ -31,24 +33,17 @@ import org.springframework.stereotype.Controller
  */
 @Controller
 @RequestMapping(value = Array("/rest/projects"))
-class ProjectsController(projectRepository: ProjectRepository) {
+class ProjectsController(projectRepository: ProjectRepository) extends Logging {
 
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
   def listProjects: List[Project] = projectRepository.list
 
-//  @RequestMapping(method = Array(RequestMethod.POST))
-//  @ResponseBody
-//  def createProject(request: HttpServletRequest, response: HttpServletResponse): Project = {
-//    val paramsMap = extractParamsMap(request)
-//    val project = extractProject(paramsMap)
-//    projectRepository.save(project)
-//  }
   @RequestMapping(method = Array(RequestMethod.POST))
   @ResponseBody
-  def createProject(project: Project , response: HttpServletResponse): Project = {
-//    val paramsMap = extractParamsMap(request)
-//    val project = extractProject(paramsMap)
+  def createProject(request: HttpServletRequest, response: HttpServletResponse): Project = {
+    val paramsMap = extractParamsMap(request)
+    val project = extractProject(paramsMap)
     projectRepository.save(project)
   }
 
@@ -66,11 +61,19 @@ class ProjectsController(projectRepository: ProjectRepository) {
     projectRepository.delete(projectId)
   }
 
+  @ExceptionHandler(value = Array(classOf[Exception]))
+  @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+  def handleErrors(exception: Exception, response : HttpServletResponse) {
+    log.error(exception, "failed to process rest request")
+    response.getWriter.write("{\"error\": \"Failed to process request\"}")
+  }
+
+
   private def extractProject(paramsMap: Map[String, Any]): Project = {
     val name = extractValue("name", paramsMap)
     val description = extractOption("description", paramsMap)
     val projectManager = extractValue("projectManager", paramsMap)
-    val id = extractOption("id", paramsMap);
+    val id = extractOption("id", paramsMap)
     new Project(id, name, description, projectManager)
   }
 }
