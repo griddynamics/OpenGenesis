@@ -1,0 +1,17 @@
+To build project run:
+
+mvn clean package
+
+in project directory(PROJECT_DIR).
+
+To start Genesis server run:
+
+java -Dbackend.properties=(path to the configuration file) -cp "${TARGET}/*" com.griddynamics.genesis.GenesisFrontend
+
+Run client command line utility with:
+
+java -cp "${TARGET}/*" com.griddynamics.genesis.client.Client
+
+where TARGET is Genesis distribution target directory.
+By default it is ${PROJECT_DIR}/distribution/target/genesis-${VERSION}
+
