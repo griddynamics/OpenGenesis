@@ -51,7 +51,7 @@ class ResourceFilter extends Filter with Logging {
         config = filterConfig
     }
 
-    def writeContent(response: HttpServletResponse, f: FileObject) {
+    def writeContent(response: HttpServletResponse, f: FileObject, cache: Boolean) {
         response.resetBuffer()
         response.setStatus(HttpServletResponse.SC_OK)
         val content: FileContent = f.getContent
@@ -59,8 +59,12 @@ class ResourceFilter extends Filter with Logging {
         response.setHeader("Content-type", contentType.getOrElse("application/octet-stream"))
         val httpDateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US)
         response.setHeader("Last-modified", httpDateFormat.format(new Date(content.getLastModifiedTime)))
-        response.setHeader("Expires", httpDateFormat.format(expires));
-        response.setHeader("Cache-control", "public, max-age=31536000")
+        if (cache) {
+            response.setHeader("Expires", httpDateFormat.format(expires));
+            response.setHeader("Cache-control", "public, max-age=31536000")
+        } else {
+            response.setHeader("Cache-control", "no-cache, no-store, must-revalidate")
+        }
         val stream: InputStream = content.getInputStream
         val out: OutputStream = response.getOutputStream
         copyStream(stream, out)
@@ -82,10 +86,10 @@ class ResourceFilter extends Filter with Logging {
     }
 
     def serve(response: NotFoundWrapper, uri: String) {
-        val originalPath = if (uri == null || uri == "" || uri == "/")
-            "index.html"
+        val (originalPath, cache) = if (uri == null || uri == "" || uri == "/")
+            ("index.html", false)
         else
-            uri.replaceAll("^\\/", "").takeWhile(_ != ';')
+            (uri.replaceAll("^\\/", "").takeWhile(_ != ';'), true)
         def locateResource(path: String) = {
             resourceRoots.map(
                 root => {
@@ -108,7 +112,7 @@ class ResourceFilter extends Filter with Logging {
         result match {
             case None => response.resume();
             case Some(f) => {
-                writeContent(response, f)
+                writeContent(response, f, cache)
             }
         } 
     }
