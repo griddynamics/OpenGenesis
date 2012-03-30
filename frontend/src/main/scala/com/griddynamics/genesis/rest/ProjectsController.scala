@@ -33,7 +33,7 @@ import com.griddynamics.genesis.util.Logging
  */
 @Controller
 @RequestMapping(value = Array("/rest/projects"))
-class ProjectsController(projectRepository: ProjectRepository) extends Logging {
+class ProjectsController(projectRepository: ProjectRepository) extends RestApiExceptionsHandler {
 
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
@@ -61,18 +61,11 @@ class ProjectsController(projectRepository: ProjectRepository) extends Logging {
     projectRepository.delete(projectId)
   }
 
-  @ExceptionHandler(value = Array(classOf[Exception]))
-  @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-  def handleErrors(exception: Exception, response : HttpServletResponse) {
-    log.error(exception, "failed to process rest request")
-    response.getWriter.write("{\"error\": \"Failed to process request\"}")
-  }
-
-
   private def extractProject(paramsMap: Map[String, Any]): Project = {
-    val name = extractValue("name", paramsMap)
+    val name = extractNotEmptyValue("name", paramsMap)
+    val projectManager = extractNotEmptyValue("projectManager", paramsMap)
     val description = extractOption("description", paramsMap)
-    val projectManager = extractValue("projectManager", paramsMap)
+
     val id = extractOption("id", paramsMap)
     new Project(id, name, description, projectManager)
   }
