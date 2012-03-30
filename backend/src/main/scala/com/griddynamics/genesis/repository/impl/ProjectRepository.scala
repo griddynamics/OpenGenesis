@@ -17,46 +17,33 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.service
+package com.griddynamics.genesis.repository.impl
 
-package workflow
+import com.griddynamics.genesis.model
+import model.GenesisSchema
+import com.griddynamics.genesis.api
+import com.griddynamics.genesis.repository.AbstractGenericRepository
+import com.griddynamics.genesis.repository
 
-import java.lang.RuntimeException
-import com.griddynamics.genesis.plugin.GenesisStep
+class ProjectRepository extends AbstractGenericRepository[model.Project, api.Project](GenesisSchema.projects)
+  with repository.ProjectRepository {
 
-case class FailureDetails(description: String, executionLog: String)
+  override implicit def convert(entity: model.Project): api.Project = {
+    val id = entity.id match {
+      case 0 => None;
+      case _ => Some(entity.id.toString);
+    }
+    new api.Project(id, entity.name, entity.description, entity.projectManager)
+  }
 
-case class WorkflowStatus(status: WorkflowStatus, stepsCompleted: Int, stepsTotal: Int, failedSteps: Seq[FailureDetails])
-
-class WorkflowException(reason: String) extends RuntimeException(reason)
-
-trait WorkflowFuture {
-    def getStatus: String
-
-    def resume()
-
-    def suspend()
-
-    def cancel()
+  override implicit def convert(dto: api.Project): model.Project = {
+    val project = new model.Project(dto.name, dto.description, dto.projectManager)
+    project.id = dto.id.getOrElse("0").toInt;
+    project;
+  }
 }
 
-trait Environment {
-    def destroy(steps: Seq[GenesisStep]): WorkflowFuture
 
-    def executeWorkflow(steps: Seq[GenesisStep]): WorkflowFuture
-
-    def listWorkflows: Seq[WorkflowFuture]
-
-    def currentWorkflow: WorkflowFuture
-}
-
-trait WorkflowService {
-    def createEnvironment(projectId:Int, envName: String, envCreator: String, steps: Seq[GenesisStep]): Environment
-
-    def getEnvironment(envName: String): Environment
-
-    def listEnvironments: Seq[Environment]
-}

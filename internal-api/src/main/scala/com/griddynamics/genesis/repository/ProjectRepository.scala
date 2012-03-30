@@ -1,3 +1,7 @@
+package com.griddynamics.genesis.repository
+
+import com.griddynamics.genesis.api
+
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
@@ -17,46 +21,15 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.service
+trait ProjectRepository {
+  def load(id: Int): api.Project;
 
-package workflow
+  def list: List[api.Project]
 
-import java.lang.RuntimeException
-import com.griddynamics.genesis.plugin.GenesisStep
+  def delete(id: Int): Int
 
-case class FailureDetails(description: String, executionLog: String)
-
-case class WorkflowStatus(status: WorkflowStatus, stepsCompleted: Int, stepsTotal: Int, failedSteps: Seq[FailureDetails])
-
-class WorkflowException(reason: String) extends RuntimeException(reason)
-
-trait WorkflowFuture {
-    def getStatus: String
-
-    def resume()
-
-    def suspend()
-
-    def cancel()
-}
-
-trait Environment {
-    def destroy(steps: Seq[GenesisStep]): WorkflowFuture
-
-    def executeWorkflow(steps: Seq[GenesisStep]): WorkflowFuture
-
-    def listWorkflows: Seq[WorkflowFuture]
-
-    def currentWorkflow: WorkflowFuture
-}
-
-trait WorkflowService {
-    def createEnvironment(projectId:Int, envName: String, envCreator: String, steps: Seq[GenesisStep]): Environment
-
-    def getEnvironment(envName: String): Environment
-
-    def listEnvironments: Seq[Environment]
+  def save(entity: api.Project): api.Project
 }

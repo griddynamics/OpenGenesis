@@ -36,7 +36,7 @@ import org.springframework.beans.factory.annotation.Value
 
 @Controller
 @RequestMapping(Array("/rest"))
-class GenesisRestController(genesisService: GenesisService) {
+class GenesisRestController(genesisService: GenesisService) extends RestApiExceptionsHandler {
 
     @Value("${genesis.security.useKerberos:false}")
     var ssoEnabled = false
@@ -52,11 +52,13 @@ class GenesisRestController(genesisService: GenesisService) {
         val templateName = extractValue("templateName", paramsMap)
         val templateVersion = extractValue("templateVersion", paramsMap)
         val variables = extractVariables(paramsMap)
+        val projectId = extractValue("projectId", paramsMap)
+
         val user = mode match {
           case "backend" => extractValue("creator", paramsMap)
           case _ => getCurrentUser
         }
-        genesisService.createEnv(envName, user, templateName, templateVersion, variables)
+        genesisService.createEnv(projectId.toInt, envName, user, templateName, templateVersion, variables)
     }
 
     @RequestMapping(value=Array("envs/{envName}/logs/{stepId}"))
@@ -103,8 +105,10 @@ class GenesisRestController(genesisService: GenesisService) {
 
     @RequestMapping(value = Array("envs"), method = Array(RequestMethod.GET))
     @ResponseBody
-    def listEnvs = genesisService.listEnvs
-
+    def listEnvs(request: HttpServletRequest) = {
+      val projectId = request.getParameter("projectId").toInt;
+      genesisService.listEnvs(projectId)
+    }
 
     @RequestMapping(value = Array("cancel/{envName}"), method = Array(RequestMethod.POST))
     @ResponseBody @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -117,17 +121,6 @@ class GenesisRestController(genesisService: GenesisService) {
                         request: HttpServletRequest) =
         genesisService.requestWorkflow(env, workflow, extractVariables(extractParamsMap(request)))
 
-    @ExceptionHandler(value = Array(classOf[InvalidInputException]))
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    def handleInvalidParams(response : HttpServletResponse) {
-        response.getWriter.write("{error: 'Invalid input'}")
-    }
-
-    @ExceptionHandler(value = Array(classOf[MissingParameterException]))
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    def handleMissingParam(response : HttpServletResponse, exception: MissingParameterException) {
-        response.getWriter.write("{error: 'Missing parameter: %s'}".format(exception.paramName))
-    }
 }
 
 object GenesisRestController {
@@ -149,14 +142,22 @@ object GenesisRestController {
       SecurityContextHolder.getContext.getAuthentication.asInstanceOf[Principal].getName
     }
 
-    private def extractValue(valueName : String, values : Map[String, Any]) : String = {
+    def extractValue(valueName : String, values : Map[String, Any]) : String = {
         values.get(valueName) match {
             case Some(s) => String.valueOf(s)
             case None => throw new MissingParameterException(valueName)
         }
     }
   
-    private def extractOption(valueName: String,  values: Map[String, Any]) : Option[String] = {
+    def extractNotEmptyValue(valueName: String, values: Map[String,  Any]): String = {
+        val value = extractValue(valueName, values)
+        if (value.isEmpty) {
+          throw new MissingParameterException(valueName)
+        }
+        value
+    }
+
+    def extractOption(valueName: String,  values: Map[String, Any]) : Option[String] = {
        values.get(valueName) match {
          case Some(s) => Some(String.valueOf(s))
          case None => None

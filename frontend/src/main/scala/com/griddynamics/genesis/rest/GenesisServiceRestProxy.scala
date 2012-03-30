@@ -26,17 +26,17 @@ class GenesisServiceRestProxy(val backendUrl: String) extends GenesisService {
     Seq(resource.get(classOf[String]))
   }
 
-  def listEnvs = {
-    val resource = client.resource(backendUrl + "/envs").accept(MediaType.APPLICATION_JSON_TYPE)
+  def listEnvs(projectId: Int) = {
+    val resource = client.resource(backendUrl + "/envs?projectId=" + projectId).accept(MediaType.APPLICATION_JSON_TYPE)
     val list = resource.get(new GenericType[List[Environment]](){})
     list.toSeq
   }
 
-  def listEnvs(start: Int, limit: Int) = {
+  def listEnvs(projectId: Int, start: Int, limit: Int) = {
     List()
   }
 
-  def countEnvs = 0
+  def countEnvs(projectId: Int) = 0
 
   def describeEnv(envName: String) = {
     val resource = client.resource(backendUrl + "/envs/%s".format(envName)).accept(MediaType.APPLICATION_JSON_TYPE)
@@ -52,8 +52,8 @@ class GenesisServiceRestProxy(val backendUrl: String) extends GenesisService {
     resource.get(new GenericType[List[Template]](){})
   }
 
-  def createEnv(envName: String, creator: String, templateName: String, templateVersion: String, variables: Map[String, String]) = {
-    var post = ("envName" -> envName) ~ ("creator" -> creator) ~ ("templateName" -> templateName) ~ ("templateVersion" -> templateVersion) ~ ("variables" -> Extraction.unflatten(variables.map(e => ("."+e._1, e._2)).toMap))
+  def createEnv(projectId: Int, envName: String, creator: String, templateName: String, templateVersion: String, variables: Map[String, String]) = {
+    var post = ("projectId" -> projectId) ~ ("envName" -> envName) ~ ("creator" -> creator) ~ ("templateName" -> templateName) ~ ("templateVersion" -> templateVersion) ~ ("variables" -> Extraction.unflatten(variables.map(e => ("."+e._1, e._2)).toMap))
     val resource = client.resource(backendUrl + "/create")
     val request = compact(render(post))
     resource.post(classOf[RequestResult], request)
