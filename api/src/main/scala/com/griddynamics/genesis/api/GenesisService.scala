@@ -25,17 +25,17 @@ package com.griddynamics.genesis.api
 trait GenesisService {
     def getLogs(envName: String, stepId: Int) : Seq[String]
 
-    def listEnvs : Seq[Environment]
+    def listEnvs (projectId: Int) : Seq[Environment]
 
-    def listEnvs(start : Int, limit : Int) : Seq[Environment]
+    def listEnvs(projectId: Int, start : Int, limit : Int) : Seq[Environment]
 
-    def countEnvs : Int
+    def countEnvs(projectId: Int) : Int
 
     def describeEnv(envName : String) : Option[EnvironmentDetails]
 
     def listTemplates : Seq[Template]
 
-    def createEnv(envName : String, creator : String, templateName : String,
+    def createEnv(projectId: Int, envName : String, creator : String, templateName : String,
                   templateVersion : String, variables : Map[String, String]) : RequestResult
 
     def destroyEnv(envName : String, variables : Map[String, String]) : RequestResult

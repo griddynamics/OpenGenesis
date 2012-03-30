@@ -23,8 +23,10 @@
 package com.griddynamics.genesis.configuration
 
 import com.griddynamics.genesis.service.StoreService
+import com.griddynamics.genesis.repository.ProjectRepository
 
 trait StoreServiceContext {
     def storeService : StoreService
+    def projectRepository : ProjectRepository
 }
 
