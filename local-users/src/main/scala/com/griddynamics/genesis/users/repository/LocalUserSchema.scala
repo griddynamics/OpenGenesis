@@ -20,8 +20,8 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
+package com.griddynamics.genesis.users.repository
 
-package com.griddynamics.genesis.users.persistence
 
 import org.squeryl.Schema
 import com.griddynamics.genesis.users.model.LocalUser
@@ -33,13 +33,14 @@ trait LocalUserSchema extends Schema {
 }
 
 trait LocalUserPrimitiveSchema extends LocalUserSchema {
+
     import org.squeryl.PrimitiveTypeMode._
 
-    on (users) (user => declare(
-       user.username is (unique, dbType("varchar(64)")),
-       user.email is (unique, dbType("varchar(64)")),
-       user.pass is (dbType("text")),
-       user.fullName is (dbType("varchar(256)"))
+    on(users)(user => declare(
+        user.username is(unique, dbType("varchar(64)")),
+        user.email is(unique, dbType("varchar(64)")),
+        user.pass is (dbType("text")),
+        user.fullName is (dbType("varchar(256)"))
     ))
 
     override def create {
