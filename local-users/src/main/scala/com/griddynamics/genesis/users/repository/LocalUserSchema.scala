@@ -39,7 +39,7 @@ trait LocalUserPrimitiveSchema extends LocalUserSchema {
     on(users)(user => declare(
         user.username is(unique, dbType("varchar(64)")),
         user.email is(unique, dbType("varchar(64)")),
-        user.pass is (dbType("text")),
+        user.pass is (dbType("varchar(128)")),
         user.fullName is (dbType("varchar(256)"))
     ))
 }
