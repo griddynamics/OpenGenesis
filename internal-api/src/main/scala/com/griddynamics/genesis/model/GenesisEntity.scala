@@ -33,3 +33,5 @@ trait GenesisEntity extends KeyedEntity[Id] {
 object GenesisEntity {
     type Id = Int
 }
+
+ class ConfigProperty (val key: String, val value: String) extends GenesisEntity
