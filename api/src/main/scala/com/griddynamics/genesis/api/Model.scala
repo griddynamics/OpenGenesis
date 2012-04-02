@@ -70,6 +70,8 @@ case class RequestResult(serviceErrors : Map[String, String] = Map(),
     def hasValidationErrors = ! isSuccess && (! variablesErrors.isEmpty || ! serviceErrors.isEmpty)
 }
 
+case class User(username: String, email: String, fullName: String)
+
 case class Project(id: Option[String], name: String,  description: Option[String], projectManager: String) {
   def this() = this(None, "", None, "");
 }
