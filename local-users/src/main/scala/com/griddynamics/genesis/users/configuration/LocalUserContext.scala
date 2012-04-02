@@ -28,10 +28,10 @@ import org.springframework.context.annotation.{Bean, Configuration}
 import javax.sql.DataSource
 import com.griddynamics.genesis.users.service.LocalUserService
 import org.springframework.transaction.PlatformTransactionManager
-import com.griddynamics.genesis.users.persistence.LocalUserSchema
 import org.springframework.beans.factory.annotation.{Value, Autowired}
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.repository.SchemaCreator
+import com.griddynamics.genesis.users.repository.LocalUserSchema
 
 @Configuration
 class LocalUserContext extends UserServiceContext with Logging {

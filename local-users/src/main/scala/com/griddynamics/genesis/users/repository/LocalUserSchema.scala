@@ -42,10 +42,4 @@ trait LocalUserPrimitiveSchema extends LocalUserSchema {
         user.pass is (dbType("text")),
         user.fullName is (dbType("varchar(256)"))
     ))
-
-    override def create {
-        super.create
-        val user: LocalUser = LocalUser("genesis", "genesis@example.com", "Genesis predefined user", Some("genesis"))
-        users.insert(user)
-    }
 }
