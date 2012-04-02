@@ -22,7 +22,6 @@
  */
 package com.griddynamics.genesis.configuration
 
-import com.griddynamics.genesis.service.StoreService
 import org.springframework.context.annotation.{Configuration, Bean}
 import org.apache.commons.dbcp.BasicDataSource
 import com.griddynamics.genesis.service.impl
@@ -38,6 +37,10 @@ import org.springframework.transaction.support.{TransactionCallback, Transaction
 import org.springframework.transaction.{TransactionStatus, PlatformTransactionManager}
 import org.squeryl.adapters.{MSSQLServer, MySQLAdapter, H2Adapter}
 import com.griddynamics.genesis.repository.impl.ProjectRepository
+import org.springframework.core.io.ResourceLoader
+import javax.annotation.Resource
+import org.apache.commons.configuration._
+import com.griddynamics.genesis.util.Closeables
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
@@ -45,6 +48,8 @@ class JdbcStoreServiceContext extends StoreServiceContext {
     @Value("${genesis.jdbc.username}") var jdbcUser : String = _
     @Value("${genesis.jdbc.password}") var jdbcPassword : String = _
     @Value("${genesis.jdbc.driver}") var jdbcDriver : String = _
+    @Value("#{systemProperties['backend.properties']}") var propResource: String = _
+    @Resource var resourceLoader: ResourceLoader = _
 
     @Bean def storeService = new impl.StoreService
 
@@ -63,6 +68,16 @@ class JdbcStoreServiceContext extends StoreServiceContext {
         Connection.TRANSACTION_REPEATABLE_READ, SquerylConfigurator.createDatabaseAdapter(jdbcUrl))
 
     @Bean def genesisSchemaCreator = new GenesisSchemaCreator(dataSource, squerylTransactionManager)
+    
+    @Bean def config = {
+        val propConfig = new PropertiesConfiguration
+        val is = resourceLoader.getResource(propResource).getInputStream
+        Closeables.using(is) {propConfig.load(_)}
+        val dbConfig =
+        new DatabaseConfiguration(dataSource, GenesisSchema.settings.name, "key", "value", true)
+        import collection.JavaConversions.seqAsJavaList
+        new CompositeConfiguration(Seq(dbConfig, propConfig))
+    }
 }
 
 class GenesisSchemaCreator(dataSource : DataSource, transactionManager : PlatformTransactionManager) extends InitializingBean {

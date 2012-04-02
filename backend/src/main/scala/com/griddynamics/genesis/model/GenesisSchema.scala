@@ -38,6 +38,7 @@ trait GenesisSchema extends Schema {
     val logs = table[StepLogEntry]("step_logs")
   
     val projects = table[Project]("project")
+    val settings = table[ConfigProperty]("settings")
 }
 
 trait GenesisSchemaPrimitive extends GenesisSchema {
