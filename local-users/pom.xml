@@ -22,88 +22,46 @@
       @Description: Execution Workflow Engine
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>distribution</artifactId>
+    <artifactId>local-users</artifactId>
+    <name>${project.artifactId}</name>
     <groupId>com.griddynamics.genesis</groupId>
-    <packaging>pom</packaging>
+    <description>Local users module</description>
+
     <parent>
         <groupId>com.griddynamics.genesis</groupId>
         <artifactId>parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <profiles>
-        <profile>
-            <id>mysql</id>
-            <dependencies>
-                <dependency>
-                    <groupId>mysql</groupId>
-                    <artifactId>mysql-connector-java</artifactId>
-                    <version>5.1.16</version>
-                </dependency>
-            </dependencies>
-        </profile>
-        <profile>
-            <id>jenkins</id>
-            <dependencies>
-                <dependency>
-                    <groupId>com.griddynamics.genesis</groupId>
-                    <artifactId>jenkins-build-provider</artifactId>
-                    <version>${project.version}</version>
-                </dependency>
-            </dependencies>
-        </profile>
-    </profiles>
+
     <dependencies>
         <dependency>
-            <artifactId>client</artifactId>
-            <groupId>com.griddynamics.genesis</groupId>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.griddynamics.genesis</groupId>
-            <artifactId>frontend</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.griddynamics.genesis</groupId>
-            <artifactId>local-users</artifactId>
-        </dependency>
-    </dependencies>
-    <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-            </resource>
-        </resources>
-        <plugins>
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>
-					<finalName>genesis-${project.version}</finalName>
-					<appendAssemblyId>false</appendAssemblyId>
-					<descriptors>
-						<descriptor>assembly.xml</descriptor>
- 					</descriptors>
-				</configuration>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
 
+        <dependency>
+            <groupId>com.griddynamics.genesis</groupId>
+            <artifactId>internal-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.griddynamics.genesis</groupId>
+            <artifactId>commons</artifactId>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
             <plugin>
                 <groupId>com.mycila.maven-license-plugin</groupId>
                 <artifactId>maven-license-plugin</artifactId>
             </plugin>
-
         </plugins>
     </build>
 </project>
+
