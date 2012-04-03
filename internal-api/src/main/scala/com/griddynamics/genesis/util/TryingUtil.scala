@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
+ *   Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
  *   This library is free software; you can redistribute it and/or modify it under the terms of
@@ -17,16 +17,15 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.rest
+package com.griddynamics.genesis.util
 
+object TryingUtil {
 
-class InvalidInputException() extends Exception
-
-class MissingParameterException(s : String) extends Exception {
-    val paramName = s
+  def attempt[A](f: => A): Option[A] = {
+    try { Some( f ) }
+    catch { case _ => None }
+  }
 }
-
-class ResourceNotFoundException() extends Exception

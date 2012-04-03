@@ -89,15 +89,8 @@ class GenesisRestController(genesisService: GenesisService) extends RestApiExcep
     //TODO: divide method
     @RequestMapping(value = Array("envs/{envName}"), method = Array(RequestMethod.GET))
     @ResponseBody
-    def describeEnv(@PathVariable("envName") envName: String, response : HttpServletResponse) : Any = {
-        genesisService.describeEnv(envName) match {
-            case(Some(x : EnvironmentDetails)) => x
-            case None => {
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND)
-                Map()
-            }
-        }
-    }
+    def describeEnv(@PathVariable("envName") envName: String, response : HttpServletResponse) : EnvironmentDetails =
+        genesisService.describeEnv(envName).getOrElse(throw new ResourceNotFoundException)
 
     @RequestMapping(value = Array("whoami"), method = Array(RequestMethod.GET))
     @ResponseBody
@@ -105,10 +98,7 @@ class GenesisRestController(genesisService: GenesisService) extends RestApiExcep
 
     @RequestMapping(value = Array("envs"), method = Array(RequestMethod.GET))
     @ResponseBody
-    def listEnvs(request: HttpServletRequest) = {
-      val projectId = request.getParameter("projectId").toInt;
-      genesisService.listEnvs(projectId)
-    }
+    def listEnvs(@RequestParam("projectId") projectId: Int, request: HttpServletRequest) = genesisService.listEnvs(projectId)
 
     @RequestMapping(value = Array("cancel/{envName}"), method = Array(RequestMethod.POST))
     @ResponseBody @ResponseStatus(HttpStatus.NO_CONTENT)
