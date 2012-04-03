@@ -24,8 +24,6 @@ package com.griddynamics.genesis.configuration
 
 import org.springframework.context.annotation.{Configuration, Bean}
 import org.apache.commons.dbcp.BasicDataSource
-import com.griddynamics.genesis.service.impl
-import org.springframework.beans.factory.annotation.Value
 import javax.sql.DataSource
 import org.squeryl.{Session, SessionFactory}
 import com.griddynamics.genesis.model.GenesisSchema
@@ -41,13 +39,11 @@ import org.springframework.core.io.ResourceLoader
 import javax.annotation.Resource
 import org.apache.commons.configuration._
 import com.griddynamics.genesis.util.Closeables
+import com.griddynamics.genesis.service.impl
+import org.springframework.beans.factory.annotation.{Autowired, Value}
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
-    @Value("${genesis.jdbc.url}") var jdbcUrl : String = _
-    @Value("${genesis.jdbc.username}") var jdbcUser : String = _
-    @Value("${genesis.jdbc.password}") var jdbcPassword : String = _
-    @Value("${genesis.jdbc.driver}") var jdbcDriver : String = _
     @Value("#{systemProperties['backend.properties']}") var propResource: String = _
     @Resource var resourceLoader: ResourceLoader = _
 
@@ -55,17 +51,11 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 
     @Bean def projectRepository = new ProjectRepository
   
-    @Bean def dataSource = {
-        val res = new BasicDataSource
-        res.setDriverClassName(jdbcDriver)
-        res.setUrl(jdbcUrl)
-        res.setUsername(jdbcUser)
-        res.setPassword(jdbcPassword)
-        res
-    }
+    @Autowired var dataSource : BasicDataSource = _
+    @Autowired var dbConfig : org.apache.commons.configuration.Configuration = _
 
     @Bean def squerylTransactionManager = new SquerylTransactionManager(dataSource,
-        Connection.TRANSACTION_REPEATABLE_READ, SquerylConfigurator.createDatabaseAdapter(jdbcUrl))
+        Connection.TRANSACTION_REPEATABLE_READ, SquerylConfigurator.createDatabaseAdapter(dataSource.getUrl))
 
     @Bean def genesisSchemaCreator = new GenesisSchemaCreator(dataSource, squerylTransactionManager)
     
@@ -73,11 +63,13 @@ class JdbcStoreServiceContext extends StoreServiceContext {
         val propConfig = new PropertiesConfiguration
         val is = resourceLoader.getResource(propResource).getInputStream
         Closeables.using(is) {propConfig.load(_)}
-        val dbConfig =
-        new DatabaseConfiguration(dataSource, GenesisSchema.settings.name, "key", "value", true)
-        import collection.JavaConversions.seqAsJavaList
-        new CompositeConfiguration(Seq(dbConfig, propConfig))
+        val compConfig = new CompositeConfiguration
+        compConfig.addConfiguration(dbConfig, true) // updates go to DB, reads are from DB first
+        compConfig.addConfiguration(propConfig) // file properties are read after DB
+        compConfig
     }
+    
+    @Bean def configService = new impl.DefaultConfigService(config)
 }
 
 class GenesisSchemaCreator(dataSource : DataSource, transactionManager : PlatformTransactionManager) extends InitializingBean {
