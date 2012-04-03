@@ -24,13 +24,12 @@ package com.griddynamics.genesis.resources
 
 import javax.servlet._
 import http.{HttpServletResponseWrapper, HttpServletResponse, HttpServletRequest}
-import com.griddynamics.genesis.util.Logging
 import org.apache.commons.vfs._
-import Iterator.continually
 import java.text.SimpleDateFormat
 import java.util.{Calendar, Locale, Date}
-import org.springframework.util.FileCopyUtils
 import java.io.{OutputStream, InputStream}
+import com.griddynamics.genesis.util.Logging
+import com.griddynamics.genesis.util.TryingUtil._
 
 
 class ResourceFilter extends Filter with Logging {
@@ -90,19 +89,11 @@ class ResourceFilter extends Filter with Logging {
             ("index.html", false)
         else
             (uri.replaceAll("^\\/", "").takeWhile(_ != ';'), true)
+
         def locateResource(path: String) = {
-            resourceRoots.map(
-                root => {
-                    val result = try {
-                        Some(manager.resolveFile(root + path))
-                    }catch {
-                        case e=> {
-                            None
-                        }
-                    }
-                    result
-                }).filter(!_.isEmpty).map(_.get).headOption
+            resourceRoots.map ( root =>  attempt { manager.resolveFile(root + path) } ).flatten.find(_.exists)
         }
+
         val result: Option[FileObject] = locateResource(originalPath) match {
             case s@Some((_)) => s
             case None => {
@@ -116,8 +107,6 @@ class ResourceFilter extends Filter with Logging {
             }
         } 
     }
-
-
 
     def doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
         val req: HttpServletRequest = request.asInstanceOf[HttpServletRequest]
