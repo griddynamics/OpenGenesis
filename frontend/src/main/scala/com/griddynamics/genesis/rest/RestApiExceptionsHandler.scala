@@ -41,5 +41,10 @@ trait RestApiExceptionsHandler {
     response.getWriter.write("{\"error\": \"Missing parameter: %s\"}".format(exception.paramName))
   }
 
+  @ExceptionHandler(value = Array(classOf[ResourceNotFoundException]))
+  @ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "resource not found")
+  def handleResourceNotFound(response : HttpServletResponse, exception: ResourceNotFoundException) {
+    /*do nothing*/
+  }
 
 }

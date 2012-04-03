@@ -77,6 +77,7 @@
         <mockito.version>1.9.0</mockito.version>
         <commons.cli.version>1.2</commons.cli.version>
         <commons.codec.version>1.5</commons.codec.version>
+        <commons.config.version>1.8</commons.config.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <commons-httpclient.version>3.1</commons-httpclient.version>
@@ -469,6 +470,12 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>${commons.lang3.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-configuration</groupId>
+                <artifactId>commons-configuration</artifactId>
+                <version>${commons.config.version}</version>
             </dependency>
 
             <dependency>
