@@ -35,7 +35,36 @@
                            http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
     <context:annotation-config/>
 
-    <context:property-placeholder location="${backend.properties}" system-properties-mode="OVERRIDE"/>
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="propertiesArray">
+            <list>
+                <ref bean="fileProps"/>
+                <ref bean="dbProps"/>
+            </list>
+        </property>
+    </bean>
+    <bean id="fileProps" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+        <property name="location" value="${backend.properties}"/>
+    </bean>
+
+    <bean id="ds" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="#{fileProps['genesis.jdbc.driver']}"/>
+        <property name="url" value="#{fileProps['genesis.jdbc.url']}"/>
+        <property name="username" value="#{fileProps['genesis.jdbc.username']}"/>
+        <property name="password" value="#{fileProps['genesis.jdbc.password']}"/>
+    </bean>
+
+    <bean id="dbConfig" class="org.apache.commons.configuration.DatabaseConfiguration">
+        <constructor-arg ref="ds" />
+        <constructor-arg value="settings" />
+        <constructor-arg value="key" />
+        <constructor-arg value="value" />
+        <constructor-arg value="true" />
+     </bean>
+
+    <bean id="dbProps" class="org.apache.commons.configuration.ConfigurationConverter" factory-method="getProperties">
+        <constructor-arg ref="dbConfig" />
+    </bean>
 
     <tx:annotation-driven transaction-manager="squerylTransactionManager"/>
 

@@ -78,6 +78,7 @@
         <commons.cli.version>1.2</commons.cli.version>
         <commons.codec.version>1.5</commons.codec.version>
         <commons.config.version>1.8</commons.config.version>
+        <commons.collections.version>3.2</commons.collections.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <commons-httpclient.version>3.1</commons-httpclient.version>
@@ -469,6 +470,12 @@
                 <groupId>commons-configuration</groupId>
                 <artifactId>commons-configuration</artifactId>
                 <version>${commons.config.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-collections</groupId>
+                <artifactId>commons-collections</artifactId>
+                <version>${commons.collections.version}</version>
             </dependency>
 
             <dependency>
