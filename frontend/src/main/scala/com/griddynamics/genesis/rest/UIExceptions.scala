@@ -28,3 +28,5 @@ class InvalidInputException() extends Exception
 class MissingParameterException(s : String) extends Exception {
     val paramName = s
 }
+
+class ResourceNotFoundException() extends Exception
