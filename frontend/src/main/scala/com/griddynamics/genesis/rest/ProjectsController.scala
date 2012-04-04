@@ -43,7 +43,7 @@ class ProjectsController(projectRepository: ProjectRepository) extends RestApiEx
   @ResponseBody
   def createProject(request: HttpServletRequest, response: HttpServletResponse): Project = {
     val paramsMap = extractParamsMap(request)
-    val project = extractProject(paramsMap)
+    val project = extractProject(None, paramsMap)
     projectRepository.save(project)
   }
 
@@ -51,7 +51,7 @@ class ProjectsController(projectRepository: ProjectRepository) extends RestApiEx
   @ResponseBody
   def updateProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response: HttpServletResponse): Project = {
     val paramsMap = GenesisRestController.extractParamsMap(request)
-    val project = extractProject(paramsMap)
+    val project = extractProject(Option(projectId), paramsMap)
     projectRepository.save(project)
   }
 
@@ -61,12 +61,11 @@ class ProjectsController(projectRepository: ProjectRepository) extends RestApiEx
     projectRepository.delete(projectId)
   }
 
-  private def extractProject(paramsMap: Map[String, Any]): Project = {
+  private def extractProject(projectId: Option[Int], paramsMap: Map[String, Any]): Project = {
     val name = extractNotEmptyValue("name", paramsMap)
     val projectManager = extractNotEmptyValue("projectManager", paramsMap)
     val description = extractOption("description", paramsMap)
 
-    val id = extractOption("id", paramsMap)
-    new Project(id, name, description, projectManager)
+    new Project(projectId, name, description, projectManager)
   }
 }
