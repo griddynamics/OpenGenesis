@@ -74,7 +74,7 @@ case class User(username: String, email: String, fullName: String)
 
 case class Project(id: Option[Int], name: String,  description: Option[String], projectManager: String)
 
-case class ConfigProperty(key: String, value: String)
+case class ConfigProperty(name: String, value: String)
 
 object RequestResult {
     val envName = "envName"
