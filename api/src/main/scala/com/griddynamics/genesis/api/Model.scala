@@ -72,9 +72,7 @@ case class RequestResult(serviceErrors : Map[String, String] = Map(),
 
 case class User(username: String, email: String, fullName: String)
 
-case class Project(id: Option[String], name: String,  description: Option[String], projectManager: String) {
-  def this() = this(None, "", None, "");
-}
+case class Project(id: Option[Int], name: String,  description: Option[String], projectManager: String)
 
 case class ConfigProperty(name: String, value: String)
 
