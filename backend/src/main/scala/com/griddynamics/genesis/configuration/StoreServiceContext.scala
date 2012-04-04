@@ -22,54 +22,26 @@
  */
 package com.griddynamics.genesis.configuration
 
-import org.springframework.context.annotation.{Configuration, Bean}
-import org.apache.commons.dbcp.BasicDataSource
 import javax.sql.DataSource
 import org.squeryl.{Session, SessionFactory}
 import com.griddynamics.genesis.model.GenesisSchema
 import org.squeryl.internals.DatabaseAdapter
 import org.springframework.jdbc.datasource.{DataSourceUtils, DataSourceTransactionManager}
 import org.springframework.beans.factory.InitializingBean
-import java.sql.Connection
 import org.springframework.transaction.support.{TransactionCallback, TransactionTemplate}
 import org.springframework.transaction.{TransactionStatus, PlatformTransactionManager}
 import org.squeryl.adapters.{MSSQLServer, MySQLAdapter, H2Adapter}
 import com.griddynamics.genesis.repository.impl.ProjectRepository
-import org.springframework.core.io.ResourceLoader
-import javax.annotation.Resource
-import org.apache.commons.configuration._
-import com.griddynamics.genesis.util.Closeables
 import com.griddynamics.genesis.service.impl
-import org.springframework.beans.factory.annotation.{Autowired, Value}
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation._
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
-    @Value("#{systemProperties['backend.properties']}") var propResource: String = _
-    @Resource var resourceLoader: ResourceLoader = _
 
     @Bean def storeService = new impl.StoreService
 
     @Bean def projectRepository = new ProjectRepository
-  
-    @Autowired var dataSource : BasicDataSource = _
-    @Autowired var dbConfig : org.apache.commons.configuration.Configuration = _
-
-    @Bean def squerylTransactionManager = new SquerylTransactionManager(dataSource,
-        Connection.TRANSACTION_REPEATABLE_READ, SquerylConfigurator.createDatabaseAdapter(dataSource.getUrl))
-
-    @Bean def genesisSchemaCreator = new GenesisSchemaCreator(dataSource, squerylTransactionManager)
-    
-    @Bean def config = {
-        val propConfig = new PropertiesConfiguration
-        val is = resourceLoader.getResource(propResource).getInputStream
-        Closeables.using(is) {propConfig.load(_)}
-        val compConfig = new CompositeConfiguration
-        compConfig.addConfiguration(dbConfig, true) // updates go to DB, reads are from DB first
-        compConfig.addConfiguration(propConfig) // file properties are read after DB
-        compConfig
-    }
-    
-    @Bean def configService = new impl.DefaultConfigService(config)
 }
 
 class GenesisSchemaCreator(dataSource : DataSource, transactionManager : PlatformTransactionManager) extends InitializingBean {
