@@ -76,7 +76,7 @@ case class Project(id: Option[String], name: String,  description: Option[String
   def this() = this(None, "", None, "");
 }
 
-case class ConfigProperty(key: String, value: String)
+case class ConfigProperty(name: String, value: String)
 
 object RequestResult {
     val envName = "envName"

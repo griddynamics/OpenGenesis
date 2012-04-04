@@ -54,10 +54,10 @@
         <property name="password" value="#{fileProps['genesis.jdbc.password']}"/>
     </bean>
 
-    <bean id="dbConfig" class="org.apache.commons.configuration.DatabaseConfiguration">
+    <bean id="dbConfig" class="org.apache.commons.configuration.DatabaseConfiguration" >
         <constructor-arg ref="ds" />
         <constructor-arg value="settings" />
-        <constructor-arg value="key" />
+        <constructor-arg value="name" />
         <constructor-arg value="value" />
         <constructor-arg value="true" />
      </bean>
