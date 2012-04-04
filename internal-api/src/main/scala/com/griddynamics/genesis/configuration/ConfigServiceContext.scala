@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,13 +20,11 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
+
 package com.griddynamics.genesis.configuration
 
-import com.griddynamics.genesis.service.StoreService
-import com.griddynamics.genesis.repository.ProjectRepository
+import com.griddynamics.genesis.service.ConfigService
 
-trait StoreServiceContext {
-    def storeService : StoreService
-    def projectRepository : ProjectRepository
+trait ConfigServiceContext {
+    def configService: ConfigService
 }
-

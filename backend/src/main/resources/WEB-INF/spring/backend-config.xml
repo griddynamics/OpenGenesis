@@ -43,6 +43,7 @@
             </list>
         </property>
     </bean>
+
     <bean id="fileProps" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
         <property name="location" value="${backend.properties}"/>
     </bean>
@@ -54,7 +55,7 @@
         <property name="password" value="#{fileProps['genesis.jdbc.password']}"/>
     </bean>
 
-    <bean id="dbConfig" class="org.apache.commons.configuration.DatabaseConfiguration" >
+    <bean id="dbConfig" class="org.apache.commons.configuration.DatabaseConfiguration" depends-on="genesisSchemaCreator">
         <constructor-arg ref="ds" />
         <constructor-arg value="settings" />
         <constructor-arg value="name" />
@@ -64,6 +65,21 @@
 
     <bean id="dbProps" class="org.apache.commons.configuration.ConfigurationConverter" factory-method="getProperties">
         <constructor-arg ref="dbConfig" />
+    </bean>
+
+    <bean id="dbAdapter" class="com.griddynamics.genesis.configuration.SquerylConfigurator" factory-method="createDatabaseAdapter">
+        <constructor-arg value="#{fileProps['genesis.jdbc.url']}" />
+    </bean>
+
+    <bean id="squerylTransactionManager" class="com.griddynamics.genesis.configuration.SquerylTransactionManager" >
+        <constructor-arg ref="ds" />
+        <constructor-arg value="#{T(java.sql.Connection).TRANSACTION_REPEATABLE_READ}" />
+        <constructor-arg ref="dbAdapter" />
+    </bean>
+
+    <bean id="genesisSchemaCreator" class="com.griddynamics.genesis.configuration.GenesisSchemaCreator" >
+        <constructor-arg ref="ds" />
+        <constructor-arg ref="squerylTransactionManager" />
     </bean>
 
     <tx:annotation-driven transaction-manager="squerylTransactionManager"/>
