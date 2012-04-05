@@ -22,10 +22,12 @@
  */
 package com.griddynamics.genesis.users
 
-import com.griddynamics.genesis.api.User
+import com.griddynamics.genesis.api.{RequestResult, User}
+
 
 trait UserService {
-    def findUserByUsername(username: String) : User
-    def supportsCreation : Boolean
-    def create(user: User)
+    def findByUsername(username: String) : Option[User]
+    def create(user: User) : RequestResult  = RequestResult(isSuccess = false, compoundServiceErrors = Seq("This service cannot modify users"))
+    def update(user: User) : RequestResult  = RequestResult(isSuccess = false, compoundServiceErrors = Seq("This service cannot modify users"))
+    def all: List[User]
 }

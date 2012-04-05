@@ -1,5 +1,4 @@
 package com.griddynamics.genesis.users
-
 /*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
@@ -25,5 +24,7 @@ package com.griddynamics.genesis.users
 trait GenesisUser {
     def username: String
     def email: String
-    def fullName: String
+    def firstName: String
+    def lastName: String
+    def jobTitle: Option[String]
 }

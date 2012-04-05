@@ -53,6 +53,11 @@
             <artifactId>commons</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.squeryl</groupId>
+            <artifactId>${org.squeryl.id}</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

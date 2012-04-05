@@ -1,6 +1,4 @@
-package com.griddynamics.genesis.repository
-
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  * http://www.griddynamics.com
  *
@@ -22,6 +20,7 @@ package com.griddynamics.genesis.repository
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
+package com.griddynamics.genesis.repository
 
 import org.squeryl.PrimitiveTypeMode._
 import com.griddynamics.genesis.model
@@ -29,7 +28,7 @@ import model.GenesisEntity
 import org.springframework.transaction.annotation.Transactional
 import org.squeryl._
 
-abstract class AbstractGenericRepository[Model <: KeyedEntity[GenesisEntity.Id], Api](table: Table[Model]) {
+abstract class AbstractGenericRepository[Model <: KeyedEntity[GenesisEntity.Id], Api](val table: Table[Model]) {
 
     implicit def convert(model: Model): Api
 

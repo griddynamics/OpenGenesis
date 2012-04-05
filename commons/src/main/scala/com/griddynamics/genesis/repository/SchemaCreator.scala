@@ -31,7 +31,7 @@ import org.springframework.transaction.support.{TransactionTemplate, Transaction
 import javax.sql.DataSource
 import com.griddynamics.genesis.util.Logging
 
-abstract class SchemaCreator[A <: Schema] extends InitializingBean with Logging {
+abstract class SchemaCreator[A <: Schema](val tablePattern: String) extends InitializingBean with Logging {
     def transactionManager: PlatformTransactionManager
 
     def schema: A
@@ -50,13 +50,14 @@ abstract class SchemaCreator[A <: Schema] extends InitializingBean with Logging 
                 }
             })
 
-        if (drop || !isSchemaExists)
+        if (drop || !isSchemaExists) {
             log.debug("Need to create schema %s", schema)
-        transactionTemplate.execute(new TransactionCallback[Unit]() {
-            def doInTransaction(status: TransactionStatus) {
-                schema.create
-            }
-        })
+            transactionTemplate.execute(new TransactionCallback[Unit]() {
+                def doInTransaction(status: TransactionStatus) {
+                    schema.create
+                }
+            })
+        }
     }
 
     def isSchemaExists = {
@@ -65,9 +66,15 @@ abstract class SchemaCreator[A <: Schema] extends InitializingBean with Logging 
         transactionTemplate.execute(new TransactionCallback[Unit]() {
             def doInTransaction(status: TransactionStatus) {
                 val tables = DataSourceUtils.getConnection(dataSource).getMetaData
-                  .getTables(null, null, "%", Array("TABLE"))
+                  .getTables(null, null, tablePattern, Array("TABLE"))
                 result = tables.next()
                 tables.close()
+                if (! result) { //workaround: db may be case-insensitive, but not return metadata about table names in lowercase
+                    val tables = DataSourceUtils.getConnection(dataSource).getMetaData
+                      .getTables(null, null, tablePattern.toUpperCase, Array("TABLE"))
+                    result = tables.next()
+                    tables.close()
+                }
             }
         })
 

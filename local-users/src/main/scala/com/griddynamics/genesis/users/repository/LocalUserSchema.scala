@@ -37,9 +37,11 @@ trait LocalUserPrimitiveSchema extends LocalUserSchema {
     import org.squeryl.PrimitiveTypeMode._
 
     on(users)(user => declare(
-        user.username is(unique, dbType("varchar(64)")),
-        user.email is(unique, dbType("varchar(64)")),
-        user.pass is (dbType("varchar(128)")),
-        user.fullName is (dbType("varchar(256)"))
+        user.username is (unique, dbType("varchar(64)")),
+        user.email is (unique, dbType("varchar(64)")),
+        user.pass is (dbType("varchar(64)")),
+        user.firstName is (dbType("varchar(256)")),
+        user.lastName is (dbType("varchar(256)")),
+        user.jobTitle is (dbType("varchar(256)"))
     ))
 }

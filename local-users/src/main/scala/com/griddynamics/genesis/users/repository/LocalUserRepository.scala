@@ -26,15 +26,38 @@ package com.griddynamics.genesis.users.repository
 import com.griddynamics.genesis.repository.AbstractGenericRepository
 import com.griddynamics.genesis.api.User
 import com.griddynamics.genesis.users.model.LocalUser
-import com.griddynamics.genesis.users.persistence.LocalUserSchema
+import org.squeryl.PrimitiveTypeMode._
 
 
 class LocalUserRepository extends AbstractGenericRepository[LocalUser, User](LocalUserSchema.users) {
+    def findByUsername(s: String): Option[User] = {
+        from (LocalUserSchema.users) {
+            item => where (
+                item.username === s
+            ).select(item)
+        }.headOption match {
+            case Some(user) => Some(convert(user))
+            case None => None
+        }
+    }
+
+    override def update(user: User) : User = {
+        table.update(
+            u => where (u.username === user.username)
+              set(
+              u.email := user.email,
+              u.firstName := user.firstName,
+              u.lastName := user.lastName,
+              u.jobTitle := user.jobTitle)
+        )
+        user
+    }
+
     implicit def convert(model: LocalUser) = {
-        User(model.username, model.email, model.fullName, None)
+        User(model.username, model.email, model.firstName, model.lastName, model.jobTitle, None)
     }
 
     implicit def convert(dto: User) = {
-        LocalUser(dto.username, dto.email, dto.fullName, dto.password)
+        LocalUser(dto.username, dto.email, dto.firstName, dto.lastName, dto.jobTitle, dto.password)
     }
 }

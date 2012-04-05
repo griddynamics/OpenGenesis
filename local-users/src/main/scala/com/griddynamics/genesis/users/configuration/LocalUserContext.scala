@@ -26,19 +26,19 @@ package com.griddynamics.genesis.users.configuration
 import com.griddynamics.genesis.users.UserServiceContext
 import org.springframework.context.annotation.{Bean, Configuration}
 import javax.sql.DataSource
-import com.griddynamics.genesis.users.service.LocalUserService
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.beans.factory.annotation.{Value, Autowired}
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.repository.SchemaCreator
-import com.griddynamics.genesis.users.repository.LocalUserSchema
+import com.griddynamics.genesis.users.repository.{LocalUserRepository, LocalUserSchema}
+import com.griddynamics.genesis.users.service.LocalUserService
 
 @Configuration
 class LocalUserContext extends UserServiceContext with Logging {
     @Autowired var dataSource: DataSource = _
     @Autowired var transactionManager: PlatformTransactionManager = _
     @Value("${genesis.jdbc.drop.db:false}") var dropSchema: Boolean = _
-    @Bean def userService = new LocalUserService
+    @Bean def userService = new LocalUserService(new LocalUserRepository)
     @Bean def schemaCreator = {
         log.debug("Starting schema creation")
         new UsersSchemaCreator(dropSchema, dataSource, transactionManager)
@@ -46,8 +46,7 @@ class LocalUserContext extends UserServiceContext with Logging {
 }
 
 class UsersSchemaCreator(val drop: Boolean, override val dataSource: DataSource, override val transactionManager: PlatformTransactionManager)
-  extends SchemaCreator[LocalUserSchema] with UsersSchemaCreatorImpl
-
-trait UsersSchemaCreatorImpl extends  SchemaCreator[LocalUserSchema] {
+  extends SchemaCreator[LocalUserSchema](LocalUserSchema.users.name) {
     override val schema = LocalUserSchema
 }
+

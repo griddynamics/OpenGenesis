@@ -26,10 +26,11 @@ package com.griddynamics.genesis.users.model
 import org.apache.commons.codec.digest.DigestUtils
 import com.griddynamics.genesis.users.GenesisUser
 import com.griddynamics.genesis.model.GenesisEntity
+import com.griddynamics.genesis.api.User
 
 
-class LocalUser(val username: String, val email: String, val fullName: String) extends GenesisUser with GenesisEntity {
-    def this() = this("", "", "")
+class LocalUser(val username: String, val email: String, val firstName: String, val lastName: String, val jobTitle: Option[String]) extends GenesisUser with GenesisEntity {
+    def this() = this("", "", "", "", None)
     var pass: String = _
 
     def password_=(pass: String) {
@@ -42,8 +43,8 @@ class LocalUser(val username: String, val email: String, val fullName: String) e
 }
 
 object LocalUser {
-    def apply(username: String, email: String, fullName: String, password: Option[String]) = {
-        val user = new LocalUser(username, email, fullName)
+    def apply(username: String, email: String, firstName: String, lastName: String, jobTitle: Option[String], password: Option[String]) = {
+        val user = new LocalUser(username, email, firstName, lastName, jobTitle)
         password.map(user.password = _)
         user
     }
