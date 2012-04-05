@@ -35,11 +35,67 @@
                            http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
     <context:annotation-config/>
 
-    <context:property-placeholder location="${backend.properties}" system-properties-mode="OVERRIDE"/>
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="propertiesArray">
+            <list>
+                <ref bean="fileProps"/>
+                <ref bean="dbProps"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="fileProps" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+        <property name="singleton" value="true"/>
+        <property name="locations">
+            <list>
+                <value>${backend.properties}</value>
+                <value>classpath*:genesis-plugin.properties</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="ds" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="#{fileProps['genesis.jdbc.driver']}"/>
+        <property name="url" value="#{fileProps['genesis.jdbc.url']}"/>
+        <property name="username" value="#{fileProps['genesis.jdbc.username']}"/>
+        <property name="password" value="#{fileProps['genesis.jdbc.password']}"/>
+    </bean>
+
+    <bean id="dbConfig" class="org.apache.commons.configuration.DatabaseConfiguration" depends-on="genesisSchemaCreator">
+        <constructor-arg ref="ds" />
+        <constructor-arg value="settings" />
+        <constructor-arg value="name" />
+        <constructor-arg value="value" />
+        <constructor-arg value="false" />
+     </bean>
+
+    <bean id="dbProps" class="org.apache.commons.configuration.ConfigurationConverter" factory-method="getProperties">
+        <constructor-arg ref="dbConfig" />
+    </bean>
+
+    <bean id="dbAdapter" class="com.griddynamics.genesis.configuration.SquerylConfigurator" factory-method="createDatabaseAdapter">
+        <constructor-arg value="#{fileProps['genesis.jdbc.url']}" />
+    </bean>
+
+    <bean id="squerylTransactionManager" class="com.griddynamics.genesis.configuration.SquerylTransactionManager" >
+        <constructor-arg ref="ds" />
+        <constructor-arg value="#{T(java.sql.Connection).TRANSACTION_REPEATABLE_READ}" />
+        <constructor-arg ref="dbAdapter" />
+    </bean>
+
+    <bean id="genesisSchemaCreator" class="com.griddynamics.genesis.configuration.GenesisSchemaCreator" >
+        <constructor-arg ref="ds" />
+        <constructor-arg ref="squerylTransactionManager" />
+    </bean>
 
     <tx:annotation-driven transaction-manager="squerylTransactionManager"/>
 
-    <bean class="com.griddynamics.genesis.plugin.PluginLoader"/>
+    <bean id="pluginLoader" class="com.griddynamics.genesis.plugin.PluginLoader"/>
+
+    <bean id="pluginRepository" class="com.griddynamics.genesis.plugin.PluginRepository">
+        <constructor-arg name="configService" ref="configService"/>
+        <constructor-arg name="pluginLoader" ref="pluginLoader" />
+    </bean> 
 
     <context:component-scan base-package="com.griddynamics.genesis.configuration" />
 </beans>

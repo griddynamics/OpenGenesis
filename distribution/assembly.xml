@@ -33,12 +33,14 @@
     </formats>
     <dependencySets>
         <dependencySet>
+            <useProjectAttachments>true</useProjectAttachments>
             <scope>runtime</scope>
         </dependencySet>
     </dependencySets>
      <fileSets>
-        <fileSet>
-      <directory>${basedir}/environments</directory>
+        <fileSet>           
+      <directory>${basedir}/src/main/resources/environments</directory>
+      <outputDirectory>environments</outputDirectory>
       <includes>
         <include>*.properties</include>
       </includes>

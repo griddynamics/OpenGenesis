@@ -24,11 +24,9 @@ package com.griddynamics.genesis.configuration
 
 import com.griddynamics.genesis.service.StoreService
 import com.griddynamics.genesis.repository.ProjectRepository
-import org.apache.commons.configuration.AbstractConfiguration
 
 trait StoreServiceContext {
     def storeService : StoreService
     def projectRepository : ProjectRepository
-    def config : AbstractConfiguration
 }
 

@@ -34,14 +34,14 @@ class ProjectRepository extends AbstractGenericRepository[model.Project, api.Pro
   override implicit def convert(entity: model.Project): api.Project = {
     val id = entity.id match {
       case 0 => None;
-      case _ => Some(entity.id.toString);
+      case _ => Some(entity.id);
     }
     new api.Project(id, entity.name, entity.description, entity.projectManager)
   }
 
   override implicit def convert(dto: api.Project): model.Project = {
     val project = new model.Project(dto.name, dto.description, dto.projectManager)
-    project.id = dto.id.getOrElse("0").toInt;
+    project.id = dto.id.getOrElse(0);
     project;
   }
 }

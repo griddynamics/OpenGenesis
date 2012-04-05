@@ -83,9 +83,13 @@ case class User(username: String, email: String, firstName: String, lastName: St
 
 }
 
-case class Project(id: Option[String], name: String,  description: Option[String], projectManager: String) {
-  def this() = this(None, "", None, "");
-}
+case class Project(id: Option[Int], name: String,  description: Option[String], projectManager: String)
+
+case class ConfigProperty(name: String, value: String)
+
+case class Plugin(id: String, description: Option[String])
+
+case class PluginDetails(id: String,  description: Option[String], configuration: Map[String, Any]);
 
 object RequestResult {
     val envName = "envName"

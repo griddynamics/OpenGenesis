@@ -22,41 +22,66 @@
  */
 package com.griddynamics.genesis.plugin
 
+import api.GenesisPlugin
 import org.springframework.beans.factory.support.{RootBeanDefinition, BeanDefinitionRegistry, BeanDefinitionRegistryPostProcessor}
 import collection.{JavaConversions => JC}
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory
 import org.springframework.core.Ordered
 import com.griddynamics.genesis.spring.BeanClassLoaderAware
-import java.util.{Properties, UUID}
 import org.springframework.core.io.DefaultResourceLoader
 import com.griddynamics.genesis.util.{Closeables, InputUtil}
+import org.springframework.context.annotation.ClassPathBeanDefinitionScanner
+import org.springframework.core.`type`.filter.AnnotationTypeFilter
+import collection.JavaConversions._
+import java.util.{Enumeration, Properties, UUID}
+import java.net.URL
 
 class PluginLoader extends BeanClassLoaderAware with BeanDefinitionRegistryPostProcessor with Ordered {
 
     import PluginLoader._
 
+    private var plugins: Set[GenesisPlugin] = _
+
     def getOrder = Ordered.HIGHEST_PRECEDENCE
+
+
+    private def scanForAnnotatedPlugins(classNames: Iterator[String], registry: BeanDefinitionRegistry) = {
+        val scanner = new ClassPathBeanDefinitionScanner(registry, false)
+        scanner.addIncludeFilter(new AnnotationTypeFilter(classOf[GenesisPlugin]))
+
+        val components = scanner.findCandidateComponents("com.griddynamics.genesis.configuration").map(_.getBeanClassName)
+
+        (components ++ classNames).map {
+            beanClassName => Option(Class.forName(beanClassName).getAnnotation(classOf[GenesisPlugin]))
+        }.flatten
+    }
 
     def postProcessBeanDefinitionRegistry(registry: BeanDefinitionRegistry) {
         if (pluginResourcePath == null) {
             pluginResourcePath = loadGenesisProperties(classLoader)
                 .getProperty(PropNamePluginInfo, DefaultPluginResourcePath)
         }
-        for (url <- JC.enumerationAsScalaIterator(classLoader.getResources(pluginResourcePath))) {
-            for (rawClazz <- InputUtil.getLines(url.openStream())) {
-                registerBeanDefinition(rawClazz, registry)
-            }
-        }
+
+        val resources = classLoader.getResources(pluginResourcePath)
+
+        val classNames = for {
+          url <- JC.enumerationAsScalaIterator(resources)
+          rawClazz <- InputUtil.getLines(url.openStream())
+          if !rawClazz.trim.isEmpty
+        } yield registerBeanDefinition(rawClazz, registry)
+
+        this.plugins = scanForAnnotatedPlugins(classNames, registry).toSet
     }
 
-    def registerBeanDefinition(rawClazz: String, registry: BeanDefinitionRegistry) {
+    def registerBeanDefinition(rawClazz: String, registry: BeanDefinitionRegistry): String = {
         val clazz = rawClazz.trim()
-
-        if (!clazz.isEmpty)
-            registry.registerBeanDefinition(clazz + "#" + UUID.randomUUID().toString, new RootBeanDefinition(clazz))
+        registry.registerBeanDefinition(clazz + "#" + UUID.randomUUID().toString, new RootBeanDefinition(clazz))
+        clazz
     }
 
     def postProcessBeanFactory(beanFactory: ConfigurableListableBeanFactory) {}
+
+    def loadedPlugins = plugins
 }
 
 object PluginLoader {

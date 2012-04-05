@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,34 +20,35 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.build.jenkins.configuration
 
-import org.springframework.beans.factory.annotation.Value
-import com.griddynamics.genesis.util.Logging
-import org.springframework.context.annotation.{Configuration, Lazy, Bean}
-import com.griddynamics.genesis.build.jenkins.{JenkinsConnectSpecification, JenkinsBuildProvider}
-import com.griddynamics.genesis.build.NullBuildProvider
-import com.griddynamics.genesis.plugin.api.GenesisPlugin
+package com.griddynamics.genesis.service.impl
 
+import com.griddynamics.genesis.service
+import com.griddynamics.genesis.api
+import api.RequestResult
+import org.apache.commons.configuration.AbstractConfiguration
+import collection.JavaConversions.asScalaIterator
+import org.springframework.transaction.annotation.Transactional
 
-@GenesisPlugin(
-  id = "build-jenkins",
-  description = "Jenkins build step"
-)
-@Configuration
-class JenkinsBuildProviderContextImpl extends Logging {
-  @Value("${plugin.build-jenkins.baseUrl:NOT-SET!!!}") var baseUrl: String = _
-  @Value("${plugin.build-jenkins.username:NOT-SET!!!}") var name: String = _
-  @Value("${plugin.build-jenkins.password:NOT-SET!!!}") var password: String = _
+// TODO: add synchronization?
+class DefaultConfigService(val config: AbstractConfiguration) extends service.ConfigService {
 
+    @Transactional(readOnly = true)
+    def listSettings(prefix: Option[String]) = prefix.map(config.getKeys(_)).getOrElse(config.getKeys())
+        .map(k => api.ConfigProperty(k, config.getString(k))).toSeq
 
-  @Bean @Lazy def buildProviderImpl = {
-    baseUrl match {
-      case "NOT-SET!!!" => {
-          log.error("Build provider is not configured properly. Property 'genesis.jenkins.baseUrl' is mandatory.")
-          NullBuildProvider()
-      }
-      case _ => new JenkinsBuildProvider(JenkinsConnectSpecification(baseUrl, Some(name), Some(password)))
+    @Transactional
+    def update(name: String, value: Any) = try {
+        config.setProperty(name, value); RequestResult(isSuccess = true)
+    } catch {
+        case _ => RequestResult(isSuccess = false)
     }
-  }
+
+    @Transactional
+    def delete(key: String) = RequestResult(isSuccess = try {
+        config.clearProperty(key)
+        true
+    } catch {
+        case _ => false
+    })
 }

@@ -34,4 +34,4 @@ object GenesisEntity {
     type Id = Int
 }
 
- class ConfigProperty (val key: String, val value: String) extends GenesisEntity
+ class ConfigProperty (val name: String, val value: String) extends GenesisEntity

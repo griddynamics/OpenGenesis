@@ -41,43 +41,20 @@ import org.springframework.core.io.ResourceLoader
 import javax.annotation.Resource
 import org.apache.commons.configuration._
 import com.griddynamics.genesis.util.Closeables
+import org.springframework.beans.factory.InitializingBean
+import org.springframework.transaction.support.{TransactionCallback, TransactionTemplate}
+import org.springframework.transaction.{TransactionStatus, PlatformTransactionManager}
+import org.squeryl.adapters.{MSSQLServer, MySQLAdapter, H2Adapter}
+import com.griddynamics.genesis.repository.impl.ProjectRepository
+import com.griddynamics.genesis.service.impl
+import org.springframework.beans.factory.annotation.Value
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
-    @Value("${genesis.jdbc.url}") var jdbcUrl : String = _
-    @Value("${genesis.jdbc.username}") var jdbcUser : String = _
-    @Value("${genesis.jdbc.password}") var jdbcPassword : String = _
-    @Value("${genesis.jdbc.driver}") var jdbcDriver : String = _
-    @Value("#{systemProperties['backend.properties']}") var propResource: String = _
-    @Resource var resourceLoader: ResourceLoader = _
 
     @Bean def storeService = new impl.StoreService
 
     @Bean def projectRepository = new ProjectRepository
-  
-    @Bean def dataSource = {
-        val res = new BasicDataSource
-        res.setDriverClassName(jdbcDriver)
-        res.setUrl(jdbcUrl)
-        res.setUsername(jdbcUser)
-        res.setPassword(jdbcPassword)
-        res
-    }
-
-    @Bean def squerylTransactionManager = new SquerylTransactionManager(dataSource,
-        Connection.TRANSACTION_REPEATABLE_READ, SquerylConfigurator.createDatabaseAdapter(jdbcUrl))
-
-    @Bean def genesisSchemaCreator = new GenesisSchemaCreator(dataSource, squerylTransactionManager)
-    
-    @Bean def config = {
-        val propConfig = new PropertiesConfiguration
-        val is = resourceLoader.getResource(propResource).getInputStream
-        Closeables.using(is) {propConfig.load(_)}
-        val dbConfig =
-        new DatabaseConfiguration(dataSource, GenesisSchema.settings.name, "key", "value", true)
-        import collection.JavaConversions.seqAsJavaList
-        new CompositeConfiguration(Seq(dbConfig, propConfig))
-    }
 }
 
 class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager) extends SchemaCreator[GenesisSchema](GenesisSchema.envs.name) {
