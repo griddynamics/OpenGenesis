@@ -27,13 +27,18 @@ import com.griddynamics.genesis.util.Logging
 import org.springframework.context.annotation.{Configuration, Lazy, Bean}
 import com.griddynamics.genesis.build.jenkins.{JenkinsConnectSpecification, JenkinsBuildProvider}
 import com.griddynamics.genesis.build.NullBuildProvider
+import com.griddynamics.genesis.plugin.api.GenesisPlugin
 
 
+@GenesisPlugin(
+  id = "build-jenkins",
+  description = "Jenkins build step"
+)
 @Configuration
 class JenkinsBuildProviderContextImpl extends Logging {
-  @Value("${genesis.jenkins.baseUrl:NOT-SET!!!}") var baseUrl: String = _
-  @Value("${genesis.jenkins.username:NOT-SET!!!}") var name: String = _
-  @Value("${genesis.jenkins.password:NOT-SET!!!}") var password: String = _
+  @Value("${plugin.build-jenkins.baseUrl:NOT-SET!!!}") var baseUrl: String = _
+  @Value("${plugin.build-jenkins.username:NOT-SET!!!}") var name: String = _
+  @Value("${plugin.build-jenkins.password:NOT-SET!!!}") var password: String = _
 
 
   @Bean @Lazy def buildProviderImpl = {
