@@ -29,8 +29,14 @@ import genesis.service.ConfigService
 import collection.immutable.Map
 import org.springframework.transaction.annotation.Transactional
 
-class PluginRepository(pluginLoader: PluginLoader,
-                       configService: ConfigService) {
+trait PluginRepository {
+  def getPlugin(id: String): Option[genesis.api.PluginDetails]
+  def updateConfiguration(pluginId: String, configuration: Map[String, Any])
+  def listPlugins: Iterable[genesis.api.Plugin]
+}
+
+class PluginRepositoryImpl(pluginLoader: PluginLoader,
+                       configService: ConfigService) extends PluginRepository {
 
   private val plugins: Map[String, GenesisPlugin] = pluginLoader.loadedPlugins.map(plugin => (plugin.id(), plugin)).toMap
 

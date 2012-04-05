@@ -23,10 +23,10 @@
 package com.griddynamics.genesis.rest
 
 import org.springframework.stereotype.Controller
-import com.griddynamics.genesis.plugin.PluginRepository
 import org.springframework.web.bind.annotation._
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.api.{PluginDetails, Plugin}
+import com.griddynamics.genesis.plugin.PluginRepository
 
 @Controller
 @RequestMapping(value = Array("/rest/plugins"))

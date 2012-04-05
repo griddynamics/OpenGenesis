@@ -92,7 +92,7 @@
 
     <bean id="pluginLoader" class="com.griddynamics.genesis.plugin.PluginLoader"/>
 
-    <bean id="pluginRepository" class="com.griddynamics.genesis.plugin.PluginRepository">
+    <bean id="pluginRepository" class="com.griddynamics.genesis.plugin.PluginRepositoryImpl">
         <constructor-arg name="configService" ref="configService"/>
         <constructor-arg name="pluginLoader" ref="pluginLoader" />
     </bean> 
