@@ -122,7 +122,6 @@
     </dependencies>
 
     <build>
-        <sourceDirectory>src/main/scala</sourceDirectory>
         <testSourceDirectory>src/test/scala</testSourceDirectory>
         <plugins>
             <plugin>
@@ -160,7 +159,13 @@
                     </includes>
                 </configuration>
             </plugin>
-
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                         <source>1.6</source>
+                         <target>1.6</target>
+                    </configuration>
+            </plugin>
             <plugin>
                 <groupId>com.mycila.maven-license-plugin</groupId>
                 <artifactId>maven-license-plugin</artifactId>

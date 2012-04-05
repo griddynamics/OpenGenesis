@@ -45,7 +45,13 @@
     </bean>
 
     <bean id="fileProps" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
-        <property name="location" value="${backend.properties}"/>
+        <property name="singleton" value="true"/>
+        <property name="locations">
+            <list>
+                <value>${backend.properties}</value>
+                <value>classpath*:genesis-plugin.properties</value>
+            </list>
+        </property>
     </bean>
 
     <bean id="ds" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
@@ -60,7 +66,7 @@
         <constructor-arg value="settings" />
         <constructor-arg value="name" />
         <constructor-arg value="value" />
-        <constructor-arg value="true" />
+        <constructor-arg value="false" />
      </bean>
 
     <bean id="dbProps" class="org.apache.commons.configuration.ConfigurationConverter" factory-method="getProperties">
@@ -84,7 +90,12 @@
 
     <tx:annotation-driven transaction-manager="squerylTransactionManager"/>
 
-    <bean class="com.griddynamics.genesis.plugin.PluginLoader"/>
+    <bean id="pluginLoader" class="com.griddynamics.genesis.plugin.PluginLoader"/>
+
+    <bean id="pluginRepository" class="com.griddynamics.genesis.plugin.PluginRepository">
+        <constructor-arg name="configService" ref="configService"/>
+        <constructor-arg name="pluginLoader" ref="pluginLoader" />
+    </bean> 
 
     <context:component-scan base-package="com.griddynamics.genesis.configuration" />
 </beans>
