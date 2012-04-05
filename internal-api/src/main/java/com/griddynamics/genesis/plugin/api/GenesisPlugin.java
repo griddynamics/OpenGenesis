@@ -20,35 +20,16 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
+package com.griddynamics.genesis.plugin.api;
 
-package com.griddynamics.genesis.service.impl
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import com.griddynamics.genesis.service
-import com.griddynamics.genesis.api
-import api.RequestResult
-import org.apache.commons.configuration.AbstractConfiguration
-import collection.JavaConversions.asScalaIterator
-import org.springframework.transaction.annotation.Transactional
-
-// TODO: add synchronization?
-class DefaultConfigService(val config: AbstractConfiguration) extends service.ConfigService {
-
-    @Transactional(readOnly = true)
-    def listSettings(prefix: Option[String]) = prefix.map(config.getKeys(_)).getOrElse(config.getKeys())
-        .map(k => api.ConfigProperty(k, config.getString(k))).toSeq
-
-    @Transactional
-    def update(name: String, value: Any) = try {
-        config.setProperty(name, value); RequestResult(isSuccess = true)
-    } catch {
-        case _ => RequestResult(isSuccess = false)
-    }
-
-    @Transactional
-    def delete(key: String) = RequestResult(isSuccess = try {
-        config.clearProperty(key)
-        true
-    } catch {
-        case _ => false
-    })
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface GenesisPlugin {
+    String id();
+    String description() default "";
 }

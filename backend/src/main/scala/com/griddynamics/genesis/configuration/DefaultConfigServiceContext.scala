@@ -29,23 +29,20 @@ import org.springframework.core.io.ResourceLoader
 import com.griddynamics.genesis.util.Closeables
 import org.springframework.beans.factory.annotation._
 import com.griddynamics.genesis.service.impl
-import org.apache.commons.configuration.{CompositeConfiguration, PropertiesConfiguration, Configuration => CommonsConfig}
 import reflect.BeanProperty
 import java.util.Properties
+import org.springframework.beans.factory.config.PropertiesFactoryBean
+import org.apache.commons.configuration.{ConfigurationConverter, CompositeConfiguration, PropertiesConfiguration, Configuration => CommonsConfig}
 
 @Configuration
 class DefaultConfigServiceContext extends ConfigServiceContext {
-    @Value("#{systemProperties['backend.properties']}") var propResource: String = _
-    @Resource private var resourceLoader: ResourceLoader = _
     @Autowired private var dbConfig : CommonsConfig = _
+    @Autowired private var fileProps: PropertiesFactoryBean = _
 
     private lazy val config = {
-        val propConfig = new PropertiesConfiguration
-        val is = resourceLoader.getResource(propResource).getInputStream
-        Closeables.using(is) {propConfig.load(_)}
         val compConfig = new CompositeConfiguration
         compConfig.addConfiguration(dbConfig, true) // updates go to DB, reads are from DB first
-        compConfig.addConfiguration(propConfig) // file properties are read after DB
+        compConfig.addConfiguration(ConfigurationConverter.getConfiguration(fileProps.getObject)) // file properties are read after DB
         compConfig
     }
 

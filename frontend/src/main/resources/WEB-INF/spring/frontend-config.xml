@@ -43,7 +43,11 @@
     <bean class="com.griddynamics.genesis.rest.ProjectsController">
         <constructor-arg name="projectRepository" ref="projectRepository"/>
     </bean>
-    
+
+    <bean class="com.griddynamics.genesis.rest.PluginsController">
+        <constructor-arg name="repository" ref="pluginRepository"/>
+    </bean>
+
     <bean class="com.griddynamics.genesis.rest.GenesisRestController">
         <constructor-arg name="genesisService" ref="genesisService"/>
     </bean>

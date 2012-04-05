@@ -76,6 +76,10 @@ case class Project(id: Option[Int], name: String,  description: Option[String], 
 
 case class ConfigProperty(name: String, value: String)
 
+case class Plugin(id: String, description: Option[String])
+
+case class PluginDetails(id: String,  description: Option[String], configuration: Map[String, Any]);
+
 object RequestResult {
     val envName = "envName"
     val template = "template"
