@@ -22,19 +22,19 @@
  */
 package com.griddynamics.genesis.configuration
 
+import org.springframework.context.annotation.{Configuration, Bean}
 import javax.sql.DataSource
 import org.squeryl.{Session, SessionFactory}
 import com.griddynamics.genesis.model.GenesisSchema
 import org.squeryl.internals.DatabaseAdapter
 import org.springframework.jdbc.datasource.{DataSourceUtils, DataSourceTransactionManager}
-import org.springframework.beans.factory.InitializingBean
-import org.springframework.transaction.support.{TransactionCallback, TransactionTemplate}
-import org.springframework.transaction.{TransactionStatus, PlatformTransactionManager}
+import com.griddynamics.genesis.repository.SchemaCreator
+import org.springframework.transaction.support.TransactionTemplate
+import org.springframework.transaction.PlatformTransactionManager
 import org.squeryl.adapters.{MSSQLServer, MySQLAdapter, H2Adapter}
 import com.griddynamics.genesis.repository.impl.ProjectRepository
 import com.griddynamics.genesis.service.impl
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.context.annotation._
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
@@ -44,41 +44,10 @@ class JdbcStoreServiceContext extends StoreServiceContext {
     @Bean def projectRepository = new ProjectRepository
 }
 
-class GenesisSchemaCreator(dataSource : DataSource, transactionManager : PlatformTransactionManager) extends InitializingBean {
+class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager) extends SchemaCreator[GenesisSchema](GenesisSchema.envs.name) {
     @Value("${genesis.jdbc.drop.db:false}") var drop : Boolean = _
-
-    val transactionTemplate = new TransactionTemplate(transactionManager)
-
-    def afterPropertiesSet() {
-        if(drop)
-            transactionTemplate.execute(new TransactionCallback[Unit]() {
-                def doInTransaction(status: TransactionStatus) {
-                    GenesisSchema.drop
-                }
-            })
-
-        if (drop || !isSchemaExists)
-            transactionTemplate.execute(new TransactionCallback[Unit]() {
-                def doInTransaction(status: TransactionStatus) {
-                    GenesisSchema.create
-                }
-            })
-    }
-
-    def isSchemaExists() = {
-        var result : Boolean = false
-
-        transactionTemplate.execute(new TransactionCallback[Unit]() {
-            def doInTransaction(status: TransactionStatus) {
-                val tables = DataSourceUtils.getConnection(dataSource).getMetaData
-                                            .getTables(null, null, "%", Array("TABLE"))
-                result = tables.next()
-                tables.close()
-            }
-        })
-
-        result
-    }
+    override val transactionTemplate = new TransactionTemplate(transactionManager)
+    override val schema = GenesisSchema
 }
 
 object SquerylConfigurator {

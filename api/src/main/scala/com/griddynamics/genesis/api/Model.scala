@@ -68,9 +68,20 @@ case class RequestResult(serviceErrors : Map[String, String] = Map(),
                          isSuccess : Boolean = false,
                          isNotFound : Boolean = false)  {
     def hasValidationErrors = ! isSuccess && (! variablesErrors.isEmpty || ! serviceErrors.isEmpty)
+    def ++(other: RequestResult) : RequestResult = {
+        RequestResult(serviceErrors = this.serviceErrors ++ other.serviceErrors,
+            variablesErrors = this.variablesErrors ++ other.variablesErrors,
+            compoundServiceErrors = this.compoundServiceErrors ++ other.compoundServiceErrors,
+            compoundVariablesErrors = this.compoundVariablesErrors ++ other.compoundVariablesErrors,
+            isSuccess = this.isSuccess && other.isSuccess,
+            isNotFound = this.isNotFound && other.isNotFound
+        )
+    }
 }
 
-case class User(username: String, email: String, fullName: String)
+case class User(username: String, email: String, firstName: String, lastName: String, jobTitle: Option[String], password: Option[String]) {
+
+}
 
 case class Project(id: Option[Int], name: String,  description: Option[String], projectManager: String)
 
