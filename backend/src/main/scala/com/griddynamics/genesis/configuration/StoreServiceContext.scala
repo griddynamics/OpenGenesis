@@ -23,27 +23,14 @@
 package com.griddynamics.genesis.configuration
 
 import org.springframework.context.annotation.{Configuration, Bean}
-import org.apache.commons.dbcp.BasicDataSource
-import org.springframework.beans.factory.annotation.Value
 import javax.sql.DataSource
 import org.squeryl.{Session, SessionFactory}
 import com.griddynamics.genesis.model.GenesisSchema
 import org.squeryl.internals.DatabaseAdapter
 import org.springframework.jdbc.datasource.{DataSourceUtils, DataSourceTransactionManager}
-import java.sql.Connection
+import com.griddynamics.genesis.repository.SchemaCreator
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
-import org.squeryl.adapters.{MSSQLServer, MySQLAdapter, H2Adapter}
-import com.griddynamics.genesis.repository.impl.ProjectRepository
-import com.griddynamics.genesis.repository.SchemaCreator
-import com.griddynamics.genesis.service.impl
-import org.springframework.core.io.ResourceLoader
-import javax.annotation.Resource
-import org.apache.commons.configuration._
-import com.griddynamics.genesis.util.Closeables
-import org.springframework.beans.factory.InitializingBean
-import org.springframework.transaction.support.{TransactionCallback, TransactionTemplate}
-import org.springframework.transaction.{TransactionStatus, PlatformTransactionManager}
 import org.squeryl.adapters.{MSSQLServer, MySQLAdapter, H2Adapter}
 import com.griddynamics.genesis.repository.impl.ProjectRepository
 import com.griddynamics.genesis.service.impl
