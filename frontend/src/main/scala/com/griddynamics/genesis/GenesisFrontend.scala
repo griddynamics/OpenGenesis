@@ -27,22 +27,31 @@ import java.util.Properties
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.nio.SelectChannelConnector
 import org.springframework.web.servlet.DispatcherServlet
-import org.springframework.web.context.ContextLoaderListener
 import org.springframework.web.filter.DelegatingFilterProxy
 import org.eclipse.jetty.servlet.{FilterHolder, ServletHolder, ServletContextHandler}
 import org.eclipse.jetty.servlets.GzipFilter
 import org.apache.commons.lang3.SystemUtils
 import java.lang.System.{getProperty => gp}
 import resources.ResourceFilter
+import service.ConfigService
 import util.Logging
+import org.springframework.web.context.support.GenericWebApplicationContext
+import org.springframework.context.support.ClassPathXmlApplicationContext
+import org.springframework.web.context.WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE
 
 object GenesisFrontend extends Logging {
-    val genesisProperties = loadGenesisProperties()
+    private lazy val genesisProperties = loadGenesisProperties
+    private val isFrontend = getFileProperty("genesis.service.backendUrl", "NONE") != "NONE"
+    private val securityConfig = getFileProperty("genesis.security.config", "classpath:/WEB-INF/spring/security-config.xml")
+    private val contexts = if (isFrontend) Seq(securityConfig)
+    else Seq("classpath:/WEB-INF/spring/backend-config.xml", securityConfig)
+
+    private val appContext = new ClassPathXmlApplicationContext(contexts:_*)
 
     def main(args: Array[String]) {
+        log.debug("Using contexts %s", contexts)
         val host = getProperty("genesis.bind.host", "0.0.0.0")
         val port = Integer.valueOf(getProperty("genesis.bind.port", "8080"))
-        val isFrontend = getProperty("genesis.service.backendUrl", "NONE") != "NONE"
         val resourceRoots = getProperty("genesis.web.resourceRoots", "classpath:,classpath:resources/,classpath:resources/icons/,classpath:extjs/")
         val groupString : String = getProperty("genesis.security.groups", "UNKNOWN") match {
             case "UNKNOWN" => "IS_AUTHENTICATED_FULLY"
@@ -50,12 +59,16 @@ object GenesisFrontend extends Logging {
         }
         System.setProperty("genesis.security.windows.groups", groupString)
       
-        val securityConfig = getProperty("genesis.security.config", "classpath:/WEB-INF/spring/security-config.xml")
-        log.debug("Using configuration file %s", securityConfig)
         val server = new Server()
 
+        val webAppContext = new GenericWebApplicationContext
         val context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-        context.setContextPath("/");
+        val servletContext = context.getServletContext
+        webAppContext.setServletContext(servletContext)
+        webAppContext.setParent(appContext)
+        webAppContext.refresh()
+        context.setContextPath("/")
+        servletContext.setAttribute(ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE, webAppContext)
 
         val gzipFilterHolder = new FilterHolder(new GzipFilter)
         gzipFilterHolder.setName("gzipFilter")
@@ -65,15 +78,6 @@ object GenesisFrontend extends Logging {
         val securityFilterHolder = new FilterHolder(new DelegatingFilterProxy)
         securityFilterHolder.setName("springSecurityFilterChain")
         context.addFilter(securityFilterHolder, "/*", 0)
-
-        context.addEventListener(new ContextLoaderListener)
-        val contexts = if (isFrontend) {
-          securityConfig
-        } else {
-          "classpath:/WEB-INF/spring/backend-config.xml " + securityConfig
-        }
-        log.debug("Using contexts %s", contexts)
-        context.setInitParameter("contextConfigLocation", contexts)
 
         val resourceHolder = new FilterHolder(new ResourceFilter)
         resourceHolder.setName("resourceFilter")
@@ -119,7 +123,9 @@ object GenesisFrontend extends Logging {
         genesisProperties
     }
 
-    def getProperty(name: String, default: String) =
-        gp(name, genesisProperties.getProperty(name, default))
+    def getFileProperty(name: String, default: String) = gp(name, genesisProperties.getProperty(name, default))
+
+    def getProperty(name: String, default: String) = appContext.getBean(classOf[ConfigService])
+        .get(name).getOrElse(default).toString
 
 }
