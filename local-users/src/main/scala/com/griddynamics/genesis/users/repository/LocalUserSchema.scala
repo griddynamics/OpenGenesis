@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,34 +20,28 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.build.jenkins.configuration
-
-import org.springframework.beans.factory.annotation.Value
-import com.griddynamics.genesis.util.Logging
-import org.springframework.context.annotation.{Configuration, Lazy, Bean}
-import com.griddynamics.genesis.build.jenkins.{JenkinsConnectSpecification, JenkinsBuildProvider}
-import com.griddynamics.genesis.build.NullBuildProvider
-import com.griddynamics.genesis.plugin.api.GenesisPlugin
+package com.griddynamics.genesis.users.repository
 
 
-@GenesisPlugin(
-  id = "build-jenkins",
-  description = "Jenkins build step"
-)
-@Configuration
-class JenkinsBuildProviderContextImpl extends Logging {
-  @Value("${plugin.build-jenkins.baseUrl:NOT-SET!!!}") var baseUrl: String = _
-  @Value("${plugin.build-jenkins.username:NOT-SET!!!}") var name: String = _
-  @Value("${plugin.build-jenkins.password:NOT-SET!!!}") var password: String = _
+import org.squeryl.Schema
+import com.griddynamics.genesis.users.model.LocalUser
 
+object LocalUserSchema extends LocalUserSchema with LocalUserPrimitiveSchema
 
-  @Bean @Lazy def buildProviderImpl = {
-    baseUrl match {
-      case "NOT-SET!!!" => {
-          log.error("Build provider is not configured properly. Property 'genesis.jenkins.baseUrl' is mandatory.")
-          NullBuildProvider()
-      }
-      case _ => new JenkinsBuildProvider(JenkinsConnectSpecification(baseUrl, Some(name), Some(password)))
-    }
-  }
+trait LocalUserSchema extends Schema {
+    val users = table[LocalUser]("local_users")
+}
+
+trait LocalUserPrimitiveSchema extends LocalUserSchema {
+
+    import org.squeryl.PrimitiveTypeMode._
+
+    on(users)(user => declare(
+        user.username is (unique, dbType("varchar(64)")),
+        user.email is (unique, dbType("varchar(64)")),
+        user.pass is (dbType("varchar(64)")),
+        user.firstName is (dbType("varchar(256)")),
+        user.lastName is (dbType("varchar(256)")),
+        user.jobTitle is (dbType("varchar(256)"))
+    ))
 }

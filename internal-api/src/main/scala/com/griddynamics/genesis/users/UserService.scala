@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,34 +20,14 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.build.jenkins.configuration
+package com.griddynamics.genesis.users
 
-import org.springframework.beans.factory.annotation.Value
-import com.griddynamics.genesis.util.Logging
-import org.springframework.context.annotation.{Configuration, Lazy, Bean}
-import com.griddynamics.genesis.build.jenkins.{JenkinsConnectSpecification, JenkinsBuildProvider}
-import com.griddynamics.genesis.build.NullBuildProvider
-import com.griddynamics.genesis.plugin.api.GenesisPlugin
+import com.griddynamics.genesis.api.{RequestResult, User}
 
 
-@GenesisPlugin(
-  id = "build-jenkins",
-  description = "Jenkins build step"
-)
-@Configuration
-class JenkinsBuildProviderContextImpl extends Logging {
-  @Value("${plugin.build-jenkins.baseUrl:NOT-SET!!!}") var baseUrl: String = _
-  @Value("${plugin.build-jenkins.username:NOT-SET!!!}") var name: String = _
-  @Value("${plugin.build-jenkins.password:NOT-SET!!!}") var password: String = _
-
-
-  @Bean @Lazy def buildProviderImpl = {
-    baseUrl match {
-      case "NOT-SET!!!" => {
-          log.error("Build provider is not configured properly. Property 'genesis.jenkins.baseUrl' is mandatory.")
-          NullBuildProvider()
-      }
-      case _ => new JenkinsBuildProvider(JenkinsConnectSpecification(baseUrl, Some(name), Some(password)))
-    }
-  }
+trait UserService {
+    def findByUsername(username: String) : Option[User]
+    def create(user: User) : RequestResult  = RequestResult(isSuccess = false, compoundServiceErrors = Seq("This service cannot modify users"))
+    def update(user: User) : RequestResult  = RequestResult(isSuccess = false, compoundServiceErrors = Seq("This service cannot modify users"))
+    def all: List[User]
 }

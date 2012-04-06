@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,34 +20,34 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.build.jenkins.configuration
 
-import org.springframework.beans.factory.annotation.Value
-import com.griddynamics.genesis.util.Logging
-import org.springframework.context.annotation.{Configuration, Lazy, Bean}
-import com.griddynamics.genesis.build.jenkins.{JenkinsConnectSpecification, JenkinsBuildProvider}
-import com.griddynamics.genesis.build.NullBuildProvider
-import com.griddynamics.genesis.plugin.api.GenesisPlugin
+package com.griddynamics.genesis.configuration
 
+import org.springframework.context.annotation._
+import javax.annotation.Resource
+import org.springframework.core.io.ResourceLoader
+import com.griddynamics.genesis.util.Closeables
+import org.springframework.beans.factory.annotation._
+import com.griddynamics.genesis.service.impl
+import reflect.BeanProperty
+import java.util.Properties
+import org.springframework.beans.factory.config.PropertiesFactoryBean
+import org.apache.commons.configuration.{ConfigurationConverter, CompositeConfiguration, PropertiesConfiguration, Configuration => CommonsConfig}
 
-@GenesisPlugin(
-  id = "build-jenkins",
-  description = "Jenkins build step"
-)
 @Configuration
-class JenkinsBuildProviderContextImpl extends Logging {
-  @Value("${plugin.build-jenkins.baseUrl:NOT-SET!!!}") var baseUrl: String = _
-  @Value("${plugin.build-jenkins.username:NOT-SET!!!}") var name: String = _
-  @Value("${plugin.build-jenkins.password:NOT-SET!!!}") var password: String = _
+class DefaultConfigServiceContext extends ConfigServiceContext {
+    @Autowired private var dbConfig : CommonsConfig = _
+    @Autowired private var fileProps: PropertiesFactoryBean = _
 
-
-  @Bean @Lazy def buildProviderImpl = {
-    baseUrl match {
-      case "NOT-SET!!!" => {
-          log.error("Build provider is not configured properly. Property 'genesis.jenkins.baseUrl' is mandatory.")
-          NullBuildProvider()
-      }
-      case _ => new JenkinsBuildProvider(JenkinsConnectSpecification(baseUrl, Some(name), Some(password)))
+    private lazy val config = {
+        val compConfig = new CompositeConfiguration
+        compConfig.addConfiguration(dbConfig, true) // updates go to DB, reads are from DB first
+        compConfig.addConfiguration(ConfigurationConverter.getConfiguration(fileProps.getObject)) // file properties are read after DB
+        compConfig
     }
-  }
+
+    @Bean def configService = new impl.DefaultConfigService(config)
+
+    @BeanProperty var dbProps:Properties = _
+
 }
