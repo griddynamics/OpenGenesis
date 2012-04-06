@@ -27,6 +27,7 @@ import com.griddynamics.genesis.{repository, api, model}
 import model.GenesisSchema
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
+import collection.mutable.{ArrayBuffer, LinearSeq}
 
 class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectProperty, api.ProjectProperty](GenesisSchema.projectProperties)
   with repository.ProjectPropertyRepository {
@@ -36,13 +37,24 @@ class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectP
     from(GenesisSchema.projectProperties)(pp => where(pp.projectId === projectId) select(pp)).toList
   }
 
+  @Transactional
+  def updateForProject(projectId: Int, properties : List[model.ProjectProperty]) {
+    GenesisSchema.projectProperties.deleteWhere(pp => pp.projectId === projectId)
+
+    val newProperties = new ArrayBuffer[model.ProjectProperty](properties.size)
+    for (pp <- properties) {
+      newProperties += new model.ProjectProperty(projectId, pp.name, pp.value)
+    }
+    GenesisSchema.projectProperties.insert(newProperties)
+  }
+
   override implicit def convert(entity: model.ProjectProperty): api.ProjectProperty = {
     new api.ProjectProperty(entity.id, entity.projectId, entity.name, entity.value)
   }
 
   override implicit def convert(dto: api.ProjectProperty): model.ProjectProperty = {
     val projectProperty = new model.ProjectProperty(dto.projectId, dto.name, dto.value)
-    projectProperty.id = dto.id;
-    projectProperty;
+    projectProperty.id = dto.id
+    projectProperty
   }
 }

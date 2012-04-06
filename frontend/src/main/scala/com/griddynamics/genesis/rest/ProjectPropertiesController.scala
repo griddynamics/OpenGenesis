@@ -30,6 +30,8 @@ import org.springframework.web.bind.annotation.{PathVariable, ResponseBody, Requ
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import com.griddynamics.genesis._
 import model.GenesisSchema
+import net.liftweb.json.JsonParser
+import java.io.InputStreamReader
 
 @Controller
 @RequestMapping(value = Array("/rest/project_properties"))
@@ -39,13 +41,15 @@ class ProjectPropertiesController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def listForProject(@PathVariable projectId: Int, request: HttpServletRequest, response: HttpServletResponse): List[ProjectProperty] = {
+  def listForProject(@PathVariable projectId: Int, request: HttpServletRequest, response: HttpServletResponse): List[api.ProjectProperty] = {
     projectPropertyRepository.listForProject(projectId).map(projectPropertyRepository.convert(_))
   }
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.POST))
   @ResponseBody
-  def updateForProject(@PathVariable projectId: Int, request: HttpServletRequest, response: HttpServletResponse): List[ProjectProperty] = {
-    projectPropertyRepository.listForProject(projectId).map(projectPropertyRepository.convert(_))
+  def updateForProject(@PathVariable projectId: Int, request: HttpServletRequest) {
+    val apiProperties = JsonParser.parse(new InputStreamReader(request.getInputStream), false).values.asInstanceOf[List[api.ProjectProperty]];
+    val modelProperties = apiProperties.map(projectPropertyRepository.convert(_))
+    projectPropertyRepository.updateForProject(projectId, modelProperties)
   }
 }
