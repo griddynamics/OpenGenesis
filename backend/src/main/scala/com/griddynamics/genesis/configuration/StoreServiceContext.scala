@@ -34,13 +34,13 @@ import java.sql.Connection
 import org.springframework.transaction.support.{TransactionCallback, TransactionTemplate}
 import org.springframework.transaction.{TransactionStatus, PlatformTransactionManager}
 import org.squeryl.adapters.{MSSQLServer, MySQLAdapter, H2Adapter}
-import com.griddynamics.genesis.repository.impl.ProjectRepository
 import org.springframework.core.io.ResourceLoader
 import javax.annotation.Resource
 import org.apache.commons.configuration._
 import com.griddynamics.genesis.util.Closeables
 import com.griddynamics.genesis.service.impl
 import org.springframework.beans.factory.annotation.{Autowired, Value}
+import com.griddynamics.genesis.repository.impl.{ProjectPropertyRepository, ProjectRepository}
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
@@ -50,7 +50,8 @@ class JdbcStoreServiceContext extends StoreServiceContext {
     @Bean def storeService = new impl.StoreService
 
     @Bean def projectRepository = new ProjectRepository
-  
+    @Bean def projectPropertyRepository = new ProjectPropertyRepository
+
     @Autowired var dataSource : BasicDataSource = _
     @Autowired var dbConfig : org.apache.commons.configuration.Configuration = _
 

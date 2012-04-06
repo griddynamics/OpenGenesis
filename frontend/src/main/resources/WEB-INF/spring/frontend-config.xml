@@ -44,6 +44,8 @@
         <constructor-arg name="projectRepository" ref="projectRepository"/>
     </bean>
     
+    <bean class="com.griddynamics.genesis.rest.ProjectPropertiesController"/>
+
     <bean class="com.griddynamics.genesis.rest.GenesisRestController">
         <constructor-arg name="genesisService" ref="genesisService"/>
     </bean>

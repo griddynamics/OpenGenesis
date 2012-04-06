@@ -28,3 +28,8 @@ class Project (val name: String,
   extends GenesisEntity {
 
 }
+
+class ProjectProperty(val projectId: GenesisEntity.Id,
+                      val name: String,
+                      val value: String) extends GenesisEntity {
+}
