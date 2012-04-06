@@ -26,6 +26,7 @@ package com.griddynamics.genesis.service
 import com.griddynamics.genesis.api.{RequestResult, ConfigProperty}
 
 trait ConfigService {
+    def get(name: String) : Option[Any]
     def listSettings(prefix: Option[String]) : Seq[ConfigProperty]
     def update(name:String, value:Any) : RequestResult
     def delete(name:String) : RequestResult

@@ -34,6 +34,9 @@ import org.springframework.transaction.annotation.Transactional
 class DefaultConfigService(val config: AbstractConfiguration) extends service.ConfigService {
 
     @Transactional(readOnly = true)
+    def get(name: String) = Option(config.getProperty(name))
+
+    @Transactional(readOnly = true)
     def listSettings(prefix: Option[String]) = prefix.map(config.getKeys(_)).getOrElse(config.getKeys())
         .map(k => api.ConfigProperty(k, config.getString(k))).toSeq
 
