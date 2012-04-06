@@ -27,10 +27,14 @@ import com.griddynamics.genesis.{repository, api, model}
 import model.GenesisSchema
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.transaction.annotation.Transactional._
 
 class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectProperty, api.ProjectProperty](GenesisSchema.projectProperties)
   with repository.ProjectPropertyRepository {
+
+  @Transactional(readOnly = true)
+  def listForProject(projectId: Int): List[model.ProjectProperty] = {
+    from(GenesisSchema.projectProperties)(pp => where(pp.projectId === projectId) select(pp)).toList
+  }
 
   override implicit def convert(entity: model.ProjectProperty): api.ProjectProperty = {
     new api.ProjectProperty(entity.id, entity.projectId, entity.name, entity.value)
@@ -40,10 +44,5 @@ class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectP
     val projectProperty = new model.ProjectProperty(dto.projectId, dto.name, dto.value)
     projectProperty.id = dto.id;
     projectProperty;
-  }
-
-  @Transactional(readOnly = true)
-  def listForProject(projectId: Int): List[model.ProjectProperty] = {
-    from(GenesisSchema.projectProperties)(pp => where(pp.projectId === projectId) select(pp)).toList
   }
 }

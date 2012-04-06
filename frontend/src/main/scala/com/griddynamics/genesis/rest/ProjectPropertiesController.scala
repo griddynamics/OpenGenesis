@@ -24,7 +24,7 @@ package com.griddynamics.genesis.rest
 
 import org.springframework.stereotype.Controller
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.repository.impl.ProjectPropertyRepository
+import com.griddynamics.genesis.repository.ProjectPropertyRepository
 import com.griddynamics.genesis.api.ProjectProperty
 import org.springframework.web.bind.annotation.{PathVariable, ResponseBody, RequestMethod, RequestMapping}
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
@@ -48,11 +48,4 @@ class ProjectPropertiesController extends RestApiExceptionsHandler {
   def updateForProject(@PathVariable projectId: Int, request: HttpServletRequest, response: HttpServletResponse): List[ProjectProperty] = {
     projectPropertyRepository.listForProject(projectId).map(projectPropertyRepository.convert(_))
   }
-
-/*  @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.DELETE))
-  @ResponseBody
-  def deleteProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response: HttpServletResponse) {
-    projectRepository.delete(projectId)
-  }
-  */
 }

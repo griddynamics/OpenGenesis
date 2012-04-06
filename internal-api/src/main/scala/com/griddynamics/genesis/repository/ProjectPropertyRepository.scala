@@ -22,9 +22,15 @@
  */
 package com.griddynamics.genesis.repository
 
-import com.griddynamics.genesis.api
+import com.griddynamics.genesis._
 
 trait ProjectPropertyRepository {
+  def listForProject(projectId: Int): List[model.ProjectProperty];
+
+  def convert(entity: model.ProjectProperty): api.ProjectProperty;
+
+  def convert(dto: api.ProjectProperty): model.ProjectProperty;
+
   def load(id: Int): api.ProjectProperty;
 
   def list: List[api.ProjectProperty]
