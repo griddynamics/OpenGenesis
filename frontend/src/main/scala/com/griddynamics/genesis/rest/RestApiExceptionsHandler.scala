@@ -1,11 +1,4 @@
-package com.griddynamics.genesis.rest
-
-import org.springframework.web.bind.annotation.ExceptionHandler._
-import org.springframework.web.bind.annotation.{ResponseStatus, ExceptionHandler}
-import org.springframework.http.HttpStatus
-import javax.servlet.http.HttpServletResponse
-
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -27,19 +20,31 @@ import javax.servlet.http.HttpServletResponse
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
+package com.griddynamics.genesis.rest
+
+import org.springframework.http.HttpStatus
+import javax.servlet.http.HttpServletResponse
+import org.springframework.web.bind.annotation.{ResponseStatus, ExceptionHandler}
+
 trait RestApiExceptionsHandler {
 
-  @ExceptionHandler(value = Array(classOf[InvalidInputException]))
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
-  def handleInvalidParams(response : HttpServletResponse) {
-    response.getWriter.write("{\"error\": \"Invalid input\"}")
-  }
+    @ExceptionHandler(value = Array(classOf[InvalidInputException]))
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    def handleInvalidParams(response : HttpServletResponse) {
+        response.getWriter.write("{\"error\": \"Invalid input\"}")
+    }
 
-  @ExceptionHandler(value = Array(classOf[MissingParameterException]))
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
-  def handleMissingParam(response : HttpServletResponse, exception: MissingParameterException) {
-    response.getWriter.write("{\"error\": \"Missing parameter: %s\"}".format(exception.paramName))
-  }
+    @ExceptionHandler(value = Array(classOf[MissingParameterException]))
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    def handleMissingParam(response : HttpServletResponse, exception: MissingParameterException) {
+        response.getWriter.write("{\"error\": \"Missing parameter: %s\"}".format(exception.paramName))
+    }
+
+    @ExceptionHandler(value = Array(classOf[ResourceConflictException]))
+    @ResponseStatus(HttpStatus.CONFLICT)
+    def handleConflict(response : HttpServletResponse, exception: ResourceConflictException) {
+        response.getWriter.write("{\"error\":\"Conflict when updating resource\"}")
+    }
 
   @ExceptionHandler(value = Array(classOf[ResourceNotFoundException]))
   @ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "resource not found")

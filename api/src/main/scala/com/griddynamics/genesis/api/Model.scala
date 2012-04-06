@@ -79,9 +79,8 @@ case class RequestResult(serviceErrors : Map[String, String] = Map(),
     }
 }
 
-case class User(username: String, email: String, firstName: String, lastName: String, jobTitle: Option[String], password: Option[String]) {
-
-}
+case class User(username: String, email: String, firstName: String, lastName: String, jobTitle: Option[String], password: Option[String])
+case class UserGroup(name: String, description: String, mailingList: Option[String], id: Option[Int] = None)
 
 case class Project(id: Option[Int], name: String,  description: Option[String], projectManager: String)
 
