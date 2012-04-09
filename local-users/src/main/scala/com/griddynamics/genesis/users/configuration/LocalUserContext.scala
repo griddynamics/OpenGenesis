@@ -37,7 +37,7 @@ import com.griddynamics.genesis.users.repository.{LocalUserGroupManagement, Loca
 class LocalUserContext extends UserServiceContext with Logging {
     @Autowired var dataSource: DataSource = _
     @Autowired var transactionManager: PlatformTransactionManager = _
-    @Value("${genesis.jdbc.drop.db:false}") var dropSchema: Boolean = _
+    @Value("${genesis.system.jdbc.drop.db:false}") var dropSchema: Boolean = _
     @Bean def userService = new LocalUserService(new LocalUserRepository)
     @Bean def groupService = new LocalGroupService(new LocalGroupRepositoryImpl)
     @Bean def schemaCreator = {
