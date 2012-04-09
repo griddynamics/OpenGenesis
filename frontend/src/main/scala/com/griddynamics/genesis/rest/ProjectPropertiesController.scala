@@ -39,15 +39,14 @@ class ProjectPropertiesController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def listForProject(@PathVariable projectId: Int, request: HttpServletRequest, response: HttpServletResponse): List[api.ProjectProperty] = {
-    projectPropertyRepository.listForProject(projectId).map(projectPropertyRepository.convert(_))
+  def listForProject(@PathVariable("projectId") projectId: Int): List[api.ProjectProperty] = {
+    projectPropertyRepository.listForProject(projectId)
   }
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.POST))
   @ResponseBody
-  def updateForProject(@PathVariable projectId: Int, request: HttpServletRequest) {
-    val apiProperties = JsonParser.parse(new InputStreamReader(request.getInputStream), false).values.asInstanceOf[List[api.ProjectProperty]];
-    val modelProperties = apiProperties.map(projectPropertyRepository.convert(_))
-    projectPropertyRepository.updateForProject(projectId, modelProperties)
+  def updateForProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) {
+    val properties = JsonParser.parse(new InputStreamReader(request.getInputStream), false).values.asInstanceOf[List[api.ProjectProperty]];
+    projectPropertyRepository.updateForProject(projectId, properties)
   }
 }

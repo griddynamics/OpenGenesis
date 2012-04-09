@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  * http://www.griddynamics.com
  *
@@ -20,25 +20,15 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.repository
 
-import com.griddynamics.genesis._
-import org.springframework.web.bind.annotation.PathVariable
+package com.griddynamics.genesis.common
 
-trait ProjectPropertyRepository {
-  def listForProject(projectId: Int): List[api.ProjectProperty];
+import com.griddynamics.genesis.api.RequestResult
 
-  def updateForProject(projectId: Int, properties : List[api.ProjectProperty]);
-
-  def convert(entity: model.ProjectProperty): api.ProjectProperty;
-
-  def convert(dto: api.ProjectProperty): model.ProjectProperty;
-
-  def load(id: Int): api.ProjectProperty;
-
-  def list: List[api.ProjectProperty]
-
-  def delete(id: Int): Int
-
-  def save(entity: api.ProjectProperty): api.ProjectProperty
+trait CRUDService[A, KEY] {
+    def list: Seq[A]
+    def create(a: A) = RequestResult(isSuccess = false, compoundServiceErrors = Seq("This service cannot create objects"))
+    def update(a: A) = RequestResult(isSuccess = false, compoundServiceErrors = Seq("This service cannot update objects"))
+    def delete(a: A) = RequestResult(isSuccess = false, compoundServiceErrors = Seq("This service cannot delete objects"))
+    def get(key: KEY) : Option[A]
 }

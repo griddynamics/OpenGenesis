@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  * http://www.griddynamics.com
  *
@@ -20,25 +20,18 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.repository
 
-import com.griddynamics.genesis._
-import org.springframework.web.bind.annotation.PathVariable
+package com.griddynamics.genesis.groups
 
-trait ProjectPropertyRepository {
-  def listForProject(projectId: Int): List[api.ProjectProperty];
+import com.griddynamics.genesis.common.CRUDService
+import com.griddynamics.genesis.api.{RequestResult, User, UserGroup}
 
-  def updateForProject(projectId: Int, properties : List[api.ProjectProperty]);
 
-  def convert(entity: model.ProjectProperty): api.ProjectProperty;
-
-  def convert(dto: api.ProjectProperty): model.ProjectProperty;
-
-  def load(id: Int): api.ProjectProperty;
-
-  def list: List[api.ProjectProperty]
-
-  def delete(id: Int): Int
-
-  def save(entity: api.ProjectProperty): api.ProjectProperty
+trait GroupService extends CRUDService[UserGroup, String]{
+   override def get(name: String) = findByName(name)
+   def findByName(name: String) : Option[UserGroup]
+   def users(name: Int) : Seq[User]
+   def addUserToGroup(id: Int, username: String) : RequestResult
+   def removeUserFromGroup(id: Int, username: String) : RequestResult
+   def get(id: Int) : Option[UserGroup]
 }

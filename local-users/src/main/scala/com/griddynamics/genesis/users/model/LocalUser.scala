@@ -26,7 +26,7 @@ package com.griddynamics.genesis.users.model
 import org.apache.commons.codec.digest.DigestUtils
 import com.griddynamics.genesis.users.GenesisUser
 import com.griddynamics.genesis.model.GenesisEntity
-import com.griddynamics.genesis.api.User
+import com.griddynamics.genesis.users.repository.LocalUserSchema
 
 
 class LocalUser(val username: String, val email: String, val firstName: String, val lastName: String, val jobTitle: Option[String]) extends GenesisUser with GenesisEntity {
@@ -40,6 +40,8 @@ class LocalUser(val username: String, val email: String, val firstName: String, 
     def password = {
         this.pass
     }
+
+    lazy val groups = LocalUserSchema.userGroupsRelation.left(this)
 }
 
 object LocalUser {
