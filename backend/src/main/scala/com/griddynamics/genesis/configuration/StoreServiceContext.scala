@@ -32,9 +32,9 @@ import com.griddynamics.genesis.repository.SchemaCreator
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import org.squeryl.adapters.{MSSQLServer, MySQLAdapter, H2Adapter}
-import com.griddynamics.genesis.repository.impl.ProjectRepository
 import com.griddynamics.genesis.service.impl
 import org.springframework.beans.factory.annotation.Value
+import com.griddynamics.genesis.repository.impl.{ProjectPropertyRepository, ProjectRepository}
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
@@ -42,6 +42,8 @@ class JdbcStoreServiceContext extends StoreServiceContext {
     @Bean def storeService = new impl.StoreService
 
     @Bean def projectRepository = new ProjectRepository
+
+    @Bean def projectPropertyRepository = new ProjectPropertyRepository
 }
 
 class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager) extends SchemaCreator[GenesisSchema](GenesisSchema.envs.name) {

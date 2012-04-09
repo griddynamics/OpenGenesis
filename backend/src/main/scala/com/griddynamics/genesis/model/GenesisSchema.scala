@@ -38,6 +38,7 @@ trait GenesisSchema extends Schema {
     val logs = table[StepLogEntry]("step_logs")
   
     val projects = table[Project]("project")
+    val projectProperties = table[ProjectProperty]("project_property")
     val settings = table[ConfigProperty]("settings")
 }
 
@@ -62,6 +63,9 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
 
     val envsToProject = oneToManyRelation(projects, envs).via((project, environment) => project.id === environment.projectId)
     envsToProject.foreignKeyDeclaration.constrainReference(onDelete cascade)
+
+    val projectPropertiesToProject = oneToManyRelation(projects, projectProperties).via((project, projectProperty) => project.id === projectProperty.projectId)
+    projectPropertiesToProject.foreignKeyDeclaration.constrainReference(onDelete cascade)
 
     on(envs)(env => declare(
         env.name is (unique)
@@ -91,6 +95,11 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     on(projects) (project=> declare(
       project.name is (unique),
       project.description is (dbType("text"))
+    ))
+
+    on(projectProperties) (projectProperty => declare(
+      projectProperty.id is (primaryKey),
+      projectProperty.value is (dbType("text"))
     ))
 }
 
