@@ -30,8 +30,8 @@ import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.beans.factory.annotation.{Value, Autowired}
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.repository.SchemaCreator
-import com.griddynamics.genesis.users.repository.{LocalUserRepository, LocalUserSchema}
-import com.griddynamics.genesis.users.service.LocalUserService
+import com.griddynamics.genesis.users.service.{LocalGroupService, LocalUserService}
+import com.griddynamics.genesis.users.repository.{LocalUserGroupManagement, LocalGroupRepository, LocalUserRepository, LocalUserSchema}
 
 @Configuration
 class LocalUserContext extends UserServiceContext with Logging {
@@ -39,12 +39,12 @@ class LocalUserContext extends UserServiceContext with Logging {
     @Autowired var transactionManager: PlatformTransactionManager = _
     @Value("${genesis.jdbc.drop.db:false}") var dropSchema: Boolean = _
     @Bean def userService = new LocalUserService(new LocalUserRepository)
+    @Bean def groupService = new LocalGroupService(new LocalGroupRepositoryImpl)
     @Bean def schemaCreator = {
-        log.debug("Starting schema creation")
         new UsersSchemaCreator(dropSchema, dataSource, transactionManager)
     }
 }
-
+class LocalGroupRepositoryImpl extends LocalGroupRepository with LocalUserGroupManagement
 class UsersSchemaCreator(val drop: Boolean, override val dataSource: DataSource, override val transactionManager: PlatformTransactionManager)
   extends SchemaCreator[LocalUserSchema](LocalUserSchema.users.name) {
     override val schema = LocalUserSchema

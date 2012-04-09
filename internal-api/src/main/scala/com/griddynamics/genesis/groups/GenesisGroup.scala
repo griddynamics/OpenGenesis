@@ -1,3 +1,5 @@
+package com.griddynamics.genesis.groups
+
 /*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
@@ -20,13 +22,10 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.users
+trait GenesisGroup {
+    def name: String
 
-import com.griddynamics.genesis.api.User
-import com.griddynamics.genesis.common.CRUDService
+    def description: String
 
-
-trait UserService extends CRUDService[User, String] {
-    override def get(key: String) = findByUsername(key)
-    def findByUsername(username: String) : Option[User]
+    def mailingList: Option[String]
 }

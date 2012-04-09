@@ -20,13 +20,27 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.users
+package com.griddynamics.genesis.users.model
 
-import com.griddynamics.genesis.api.User
-import com.griddynamics.genesis.common.CRUDService
+import com.griddynamics.genesis.model.GenesisEntity
+import com.griddynamics.genesis.groups.GenesisGroup
+import com.griddynamics.genesis.users.repository.LocalUserSchema
 
+class LocalGroup(val name: String, val description: String, val mailingList: Option[String]) extends GenesisEntity with GenesisGroup {
+    def this() = this("", "", None)
 
-trait UserService extends CRUDService[User, String] {
-    override def get(key: String) = findByUsername(key)
-    def findByUsername(username: String) : Option[User]
+    lazy val users = LocalUserSchema.userGroupsRelation.right(this)
+
 }
+
+object LocalGroup {
+    def apply(name: String, description: String, mailingList: Option[String] = None, id: Option[Int] = None) = {
+        val group = new LocalGroup(name, description, mailingList)
+        group.id = id match {
+            case None => 0
+            case Some(v) => v
+        }
+        group
+    }
+}
+

@@ -20,13 +20,12 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.users
+package com.griddynamics.genesis.users.model
 
-import com.griddynamics.genesis.api.User
-import com.griddynamics.genesis.common.CRUDService
+import org.squeryl.KeyedEntity
+import org.squeryl.dsl.CompositeKey2
+import org.squeryl.PrimitiveTypeMode._
 
-
-trait UserService extends CRUDService[User, String] {
-    override def get(key: String) = findByUsername(key)
-    def findByUsername(username: String) : Option[User]
+class UserToGroup(val userId: Int, val groupId: Int) extends KeyedEntity[CompositeKey2[Int, Int]] {
+    def id = compositeKey(userId, groupId)
 }

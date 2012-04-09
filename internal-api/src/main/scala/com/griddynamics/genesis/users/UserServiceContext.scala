@@ -22,7 +22,10 @@
  */
 package com.griddynamics.genesis.users
 
+import com.griddynamics.genesis.groups.GroupService
+
 
 trait UserServiceContext {
     def userService: UserService
+    def groupService: GroupService
 }
