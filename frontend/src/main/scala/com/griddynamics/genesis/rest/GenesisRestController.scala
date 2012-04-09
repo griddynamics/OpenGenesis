@@ -38,9 +38,9 @@ import org.springframework.beans.factory.annotation.Value
 @RequestMapping(Array("/rest"))
 class GenesisRestController(genesisService: GenesisService) extends RestApiExceptionsHandler {
 
-    @Value("${genesis.security.useKerberos:false}")
+    @Value("${genesis.system.security.useKerberos:false}")
     var ssoEnabled = false
-    @Value("${genesis.server.mode:frontend}")
+    @Value("${genesis.system.server.mode:frontend}")
     var mode = ""
 
 
