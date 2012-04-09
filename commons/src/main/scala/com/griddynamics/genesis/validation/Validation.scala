@@ -5,33 +5,33 @@ import util.matching.Regex
 
 trait Validation[C] {
 
-    def validCreate(user: C, function: (C) => Any): RequestResult = {
-        validOnCreation(user) {
+    def validCreate(value: C, function: (C) => Any): RequestResult = {
+        validOnCreation(value) {
             function
         }
     }
 
-    def validUpdate(user: C, function: (C) => RequestResult): RequestResult = {
-        validOnUpdate(user) {
+    def validUpdate(value: C, function: (C) => RequestResult): RequestResult = {
+        validOnUpdate(value) {
             function
         }
     }
 
-    def validOnCreation[B](user: C)(block: C => B): RequestResult = {
-        validateCreation(user) match {
+    def validOnCreation[B](value: C)(block: C => B): RequestResult = {
+        validateCreation(value) match {
             case Some(rr) => rr
             case _ => {
-                block(user)
+                block(value)
                 RequestResult(isSuccess = true)
             }
         }
     }
 
-    def validOnUpdate(user: C)(block: C => RequestResult): RequestResult = {
-        validateUpdate(user) match {
+    def validOnUpdate(value: C)(block: C => RequestResult): RequestResult = {
+        validateUpdate(value) match {
             case Some(rr) => rr
             case _ => {
-                block(user) ++ RequestResult(isSuccess = true)
+                block(value) ++ RequestResult(isSuccess = true)
             }
         }
     }
