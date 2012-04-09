@@ -33,19 +33,21 @@ class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectP
   with repository.ProjectPropertyRepository {
 
   @Transactional(readOnly = true)
-  def listForProject(projectId: Int): List[model.ProjectProperty] = {
-    from(GenesisSchema.projectProperties)(pp => where(pp.projectId === projectId) select(pp)).toList
+  def listForProject(projectId: Int): List[api.ProjectProperty] = {
+    val modelProperties = from(GenesisSchema.projectProperties)(pp => where(pp.projectId === projectId) select(pp)).toList
+    modelProperties.map(convert(_))
   }
 
   @Transactional
-  def updateForProject(projectId: Int, properties : List[model.ProjectProperty]) {
+  def updateForProject(projectId: Int, properties : List[api.ProjectProperty]) {
+    val modelProperties = properties.map(convert(_))
+
     GenesisSchema.projectProperties.deleteWhere(pp => pp.projectId === projectId)
 
-    val newProperties = new ArrayBuffer[model.ProjectProperty](properties.size)
-    for (pp <- properties) {
-      newProperties += new model.ProjectProperty(projectId, pp.name, pp.value)
+    for (pp <- modelProperties) {
+      pp.projectId = projectId;
     }
-    GenesisSchema.projectProperties.insert(newProperties)
+    GenesisSchema.projectProperties.insert(modelProperties)
   }
 
   override implicit def convert(entity: model.ProjectProperty): api.ProjectProperty = {
