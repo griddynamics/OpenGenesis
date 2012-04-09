@@ -39,7 +39,7 @@ class UsersController extends RestApiExceptionsHandler {
 
     @RequestMapping(method = Array(RequestMethod.GET))
     @ResponseBody
-    def list() = userService.all
+    def list() = userService.list
 
     @RequestMapping(value = Array("{username}"), method=Array(RequestMethod.GET))
     @ResponseBody

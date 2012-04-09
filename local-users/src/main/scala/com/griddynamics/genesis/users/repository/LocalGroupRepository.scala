@@ -20,13 +20,36 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.users
+package com.griddynamics.genesis.users.repository
 
-import com.griddynamics.genesis.api.User
-import com.griddynamics.genesis.common.CRUDService
+import com.griddynamics.genesis.repository.AbstractGenericRepository
+import org.squeryl.PrimitiveTypeMode._
+import com.griddynamics.genesis.api.UserGroup
+import com.griddynamics.genesis.users.model.LocalGroup
 
 
-trait UserService extends CRUDService[User, String] {
-    override def get(key: String) = findByUsername(key)
-    def findByUsername(username: String) : Option[User]
+abstract class LocalGroupRepository extends AbstractGenericRepository[LocalGroup, UserGroup](LocalUserSchema.groups)
+    with UserGroupManagement {
+    def get(i: Int): Option[UserGroup] = {
+        from(table)(group => where(group.id === i).select(group)).headOption.map(convert(_))
+    }
+
+
+    def findByName(name: String) : Option[UserGroup] = {
+        from(table)(group => where(group.name === name).select(group)).headOption.map(convert(_))
+    }
+
+    override def update(group: UserGroup) = {
+        table.update(
+            g => where (g.name === group.name)
+              set(
+              g.description := group.description,
+              g.mailingList := group.mailingList
+              )
+        )
+        group
+    }
+
+    implicit def convert(model: LocalGroup) = UserGroup(model.name, model.description, model.mailingList, Some(model.id))
+    implicit def convert(dto: UserGroup) = LocalGroup(dto.name, dto.description, dto.mailingList)
 }
