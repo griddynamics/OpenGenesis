@@ -85,6 +85,8 @@ case class User(username: String, email: String, firstName: String, lastName: St
 
 case class Project(id: Option[Int], name: String,  description: Option[String], projectManager: String)
 
+case class ProjectProperty(id: Int, projectId: Int, name: String, value: String)
+
 case class ConfigProperty(name: String, value: String)
 
 case class Plugin(id: String, description: Option[String])
