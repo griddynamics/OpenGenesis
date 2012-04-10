@@ -34,4 +34,5 @@ trait GroupService extends CRUDService[UserGroup, String]{
    def addUserToGroup(id: Int, username: String) : RequestResult
    def removeUserFromGroup(id: Int, username: String) : RequestResult
    def get(id: Int) : Option[UserGroup]
+   def create(a: UserGroup, users: List[String]) : RequestResult
 }
