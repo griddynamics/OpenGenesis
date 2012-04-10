@@ -32,18 +32,19 @@ import net.liftweb.json.JsonParser
 import java.io.InputStreamReader
 
 @Controller
-@RequestMapping(value = Array("/rest/project_properties"))
+@RequestMapping(value = Array("/rest/project"))
 class ProjectPropertiesController extends RestApiExceptionsHandler {
   @Autowired
   var projectPropertyRepository: ProjectPropertyRepository = null;
 
-  @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.GET))
+  @RequestMapping(value = Array("{projectId}/properties"), method = Array(RequestMethod.GET))
   @ResponseBody
   def listForProject(@PathVariable("projectId") projectId: Int): List[api.ProjectProperty] = {
     projectPropertyRepository.listForProject(projectId)
+    List(new api.ProjectProperty(1, 1, "Prop1", "Value1"), new api.ProjectProperty(2, 1, "Prop2", "Value2"), new api.ProjectProperty(3, 1, "Prop3", "Value3"));
   }
 
-  @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.POST))
+  @RequestMapping(value = Array("{projectId}/properties"), method = Array(RequestMethod.PUT))
   @ResponseBody
   def updateForProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) {
     val properties = JsonParser.parse(new InputStreamReader(request.getInputStream), false).values.asInstanceOf[List[api.ProjectProperty]];
