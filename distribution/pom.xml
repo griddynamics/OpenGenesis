@@ -72,6 +72,10 @@
             <groupId>com.griddynamics.genesis</groupId>
             <artifactId>local-users</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.griddynamics.genesis</groupId>
+            <artifactId>jclouds</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <resources>

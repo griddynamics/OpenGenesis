@@ -26,6 +26,10 @@ import org.jclouds.ssh.SshClient
 import com.griddynamics.genesis.model.{VirtualMachine, Environment}
 
 trait SshService {
-    def sshClient(env : Environment,  vm : VirtualMachine) : SshClient
+  def sshClient(env : Environment,  vm : VirtualMachine) : SshClient
+
+  //todo this is workaround until proper CredentialService is implemented
+  @Deprecated
+  def sshClient(vm : VirtualMachine, credentials: Option[Credentials]) : SshClient
 }
 

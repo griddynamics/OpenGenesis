@@ -95,6 +95,7 @@
         <module>commons</module>
         <module>build-providers/jenkins</module>
         <module>local-users</module>
+        <module>jclouds</module>
         <module>distribution</module>
     </modules>
 
@@ -182,6 +183,12 @@
             <dependency>
                 <groupId>com.griddynamics.genesis</groupId>
                 <artifactId>commons</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.griddynamics.genesis</groupId>
+                <artifactId>jclouds</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
