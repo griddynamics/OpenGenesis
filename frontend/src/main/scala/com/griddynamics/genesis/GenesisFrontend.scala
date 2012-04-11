@@ -34,6 +34,7 @@ import org.apache.commons.lang3.SystemUtils
 import java.lang.System.{getProperty => gp}
 import resources.ResourceFilter
 import service.ConfigService
+import service.GenesisSystemProperties._
 import util.Logging
 import org.springframework.web.context.support.GenericWebApplicationContext
 import org.springframework.context.support.ClassPathXmlApplicationContext
@@ -41,8 +42,8 @@ import org.springframework.web.context.WebApplicationContext.ROOT_WEB_APPLICATIO
 
 object GenesisFrontend extends Logging {
     private lazy val genesisProperties = loadGenesisProperties
-    private val isFrontend = getFileProperty("genesis.service.backendUrl", "NONE") != "NONE"
-    private val securityConfig = getFileProperty("genesis.security.config", "classpath:/WEB-INF/spring/security-config.xml")
+    private val isFrontend = getFileProperty(SERVICE_BACKEND_URL, "NONE") != "NONE"
+    private val securityConfig = getFileProperty(SECURITY_CONFIG, "classpath:/WEB-INF/spring/security-config.xml")
     private val contexts = if (isFrontend) Seq(securityConfig)
     else Seq("classpath:/WEB-INF/spring/backend-config.xml", securityConfig)
 
@@ -50,10 +51,10 @@ object GenesisFrontend extends Logging {
 
     def main(args: Array[String]) {
         log.debug("Using contexts %s", contexts)
-        val host = getProperty("genesis.bind.host", "0.0.0.0")
-        val port = Integer.valueOf(getProperty("genesis.bind.port", "8080"))
-        val resourceRoots = getProperty("genesis.web.resourceRoots", "classpath:,classpath:resources/,classpath:resources/icons/,classpath:extjs/")
-        val groupString : String = getProperty("genesis.security.groups", "UNKNOWN") match {
+        val host = getProperty(BIND_HOST, "0.0.0.0")
+        val port = Integer.valueOf(getProperty(BIND_PORT, "8080"))
+        val resourceRoots = getProperty(WEB_RESOURCE_ROOTS, "classpath:,classpath:resources/,classpath:resources/icons/,classpath:extjs/")
+        val groupString : String = getProperty(SECURITY_GROUPS, "UNKNOWN") match {
             case "UNKNOWN" => "IS_AUTHENTICATED_FULLY"
             case s => s.split(",").map(r => "ROLE_%s".format(r.toUpperCase)).mkString(",")
         }
@@ -112,9 +113,7 @@ object GenesisFrontend extends Logging {
 
     def loadGenesisProperties() = {
         val resourceLoader = new DefaultResourceLoader()
-        val propertiesStream = resourceLoader.getResource(
-            gp("backend.properties")
-        ).getInputStream
+        val propertiesStream = resourceLoader.getResource(gp(BACKEND)).getInputStream
 
         val genesisProperties = new Properties()
         genesisProperties.load(propertiesStream)

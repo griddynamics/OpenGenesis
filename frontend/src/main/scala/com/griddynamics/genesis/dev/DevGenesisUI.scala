@@ -23,10 +23,11 @@
 package com.griddynamics.genesis.dev
 
 import com.griddynamics.genesis.GenesisFrontend
+import com.griddynamics.genesis.service.GenesisSystemProperties.BACKEND
 
 object DevGenesisUI {
     def main(args: Array[String]) {
-        java.lang.System.setProperty("backend.properties", "classpath:environments/dev.properties")
+        sys.props(BACKEND) = "classpath:environments/dev.properties"
         GenesisFrontend.main(args)
     }
 }

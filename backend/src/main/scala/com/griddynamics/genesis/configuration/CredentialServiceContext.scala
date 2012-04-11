@@ -30,8 +30,8 @@ import com.griddynamics.genesis.util.InputUtil
 
 @Configuration
 class SingleCredentialServiceContext extends CredentialServiceContext {
-    @Value("${genesis.default.vm.identity:not-set}") var defaultVmIdentity : String = _
-    @Value("${genesis.default.vm.credential:not-set}") var defaultVmCredentialResource : Resource = _
+    @Value("${genesis.system.default.vm.identity:not-set}") var defaultVmIdentity : String = _
+    @Value("${genesis.system.default.vm.credential:not-set}") var defaultVmCredentialResource : Resource = _
     lazy val defaultVmCredential = {
       try {
         InputUtil.resourceAsString(defaultVmCredentialResource)

@@ -55,10 +55,10 @@
     </bean>
 
     <bean id="ds" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
-        <property name="driverClassName" value="#{fileProps['genesis.jdbc.driver']}"/>
-        <property name="url" value="#{fileProps['genesis.jdbc.url']}"/>
-        <property name="username" value="#{fileProps['genesis.jdbc.username']}"/>
-        <property name="password" value="#{fileProps['genesis.jdbc.password']}"/>
+        <property name="driverClassName" value="#{fileProps['genesis.system.jdbc.driver']}"/>
+        <property name="url" value="#{fileProps['genesis.system.jdbc.url']}"/>
+        <property name="username" value="#{fileProps['genesis.system.jdbc.username']}"/>
+        <property name="password" value="#{fileProps['genesis.system.jdbc.password']}"/>
     </bean>
 
     <bean id="dbConfig" class="org.apache.commons.configuration.DatabaseConfiguration" depends-on="genesisSchemaCreator">
@@ -74,7 +74,7 @@
     </bean>
 
     <bean id="dbAdapter" class="com.griddynamics.genesis.configuration.SquerylConfigurator" factory-method="createDatabaseAdapter">
-        <constructor-arg value="#{fileProps['genesis.jdbc.url']}" />
+        <constructor-arg value="#{ds.url}" />
     </bean>
 
     <bean id="squerylTransactionManager" class="com.griddynamics.genesis.configuration.SquerylTransactionManager" >
