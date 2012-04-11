@@ -98,7 +98,7 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     ))
 
     on(projectProperties) (projectProperty => declare(
-      projectProperty.id is (primaryKey),
+      projectProperty.id is (primaryKey, autoIncremented),
       columns(projectProperty.projectId, projectProperty.name) are (unique),
       projectProperty.value is (dbType("text"))
     ))

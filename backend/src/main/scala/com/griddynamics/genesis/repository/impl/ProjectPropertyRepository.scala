@@ -28,6 +28,7 @@ import model.GenesisSchema
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
 import collection.mutable.{ArrayBuffer, LinearSeq}
+import java.util.UUID
 
 class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectProperty, api.ProjectProperty](GenesisSchema.projectProperties)
   with repository.ProjectPropertyRepository {
@@ -45,9 +46,18 @@ class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectP
     GenesisSchema.projectProperties.deleteWhere(pp => pp.projectId === projectId)
 
     for (pp <- modelProperties) {
+      pp.id = 0;
       pp.projectId = projectId;
     }
-    GenesisSchema.projectProperties.insert(modelProperties)
+
+    if (GenesisSchema.projects.where(pp => pp.id === projectId).isEmpty) {
+      val id = GenesisSchema.projects.insert(new model.Project(UUID.randomUUID.toString, Option("desc"), "manager")).id;
+      for (pp <- modelProperties) {
+        pp.projectId = id;
+      }
+    }
+
+    GenesisSchema.projectProperties.insert(modelProperties);
   }
 
   override implicit def convert(entity: model.ProjectProperty): api.ProjectProperty = {
