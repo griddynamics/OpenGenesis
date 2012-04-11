@@ -17,22 +17,26 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.jclouds
+package com.griddynamics.genesis.jclouds.executors
 
-import com.griddynamics.executors.provision.CommonVmDestructor
-import com.griddynamics.genesis.actions.provision.DestroyVmAction
-import org.jclouds.compute.ComputeService
 import com.griddynamics.genesis.service.StoreService
-import com.griddynamics.genesis.model.VirtualMachine
+import com.griddynamics.genesis.model.{Environment, VirtualMachine}
+import com.griddynamics.executors.provision.{CommonProvisionExecutor, VmMetadataFuture}
+import com.griddynamics.genesis.jclouds.action.JCloudsProvisionVm
+import com.griddynamics.genesis.jclouds.VmCreationStrategy
 
+class ProvisionExecutor(val action: JCloudsProvisionVm,
+                        val storeService: StoreService,
+                        vmCreationStrategy: VmCreationStrategy,
+                        val timeoutMillis: Long) extends CommonProvisionExecutor {
 
-class JCloudsVmDestructor(override val action: DestroyVmAction,
-                          computeService: ComputeService,
-                          override val storeService: StoreService) extends CommonVmDestructor {
-  def deleteVm(vm: VirtualMachine) {
-    vm.instanceId.foreach(computeService.destroyNode(_))
+  var vm: VirtualMachine = _
+  var vmMetadataFuture: VmMetadataFuture = _
+
+  def createVm(env: Environment, vm: VirtualMachine) = {
+    vmCreationStrategy.createVm(env, vm)
   }
 }

@@ -17,27 +17,28 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.jclouds
+package com.griddynamics.genesis.jclouds.coordinators
 
 import com.griddynamics.genesis.plugin.{StepExecutionContext, PartialStepCoordinatorFactory}
 import com.griddynamics.genesis.jclouds.step.{DestroyEnv, DestroyVm, ProvisionVm, JCloudsStep}
 import com.griddynamics.genesis.workflow.Step
+import com.griddynamics.genesis.jclouds.JCloudsPluginContext
 
 class JCloudsStepCoordinatorFactory(pluginContext: JCloudsPluginContext) extends PartialStepCoordinatorFactory {
-    def isDefinedAt(step: Step) = step.isInstanceOf[JCloudsStep]
+  def isDefinedAt(step: Step) = step.isInstanceOf[JCloudsStep]
 
-    def apply(step: Step, context: StepExecutionContext) = {
-        step match {
-            case s: ProvisionVm => {
-                new ProvisionVmsStepCoordinator(s, context, pluginContext)
-            }
-            case s: DestroyEnv => {
-                new DestroyEnvStepCoordinator(s, context, pluginContext)
-            }
-            case _: DestroyVm => null
-        }
+  def apply(step: Step, context: StepExecutionContext) = {
+    step match {
+      case s: ProvisionVm => {
+        new ProvisionVmsStepCoordinator(s, context, pluginContext)
+      }
+      case s: DestroyEnv => {
+        new DestroyEnvStepCoordinator(s, context, pluginContext)
+      }
+      case _: DestroyVm => null
     }
+  }
 }
