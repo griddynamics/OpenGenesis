@@ -42,6 +42,14 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
     }
 
     @Transactional
+    def create(a: UserGroup, users: List[String]) = {
+        validCreate(a, a => {
+            var newGroup = repository.insert(a)
+            newGroup.id.map(i => users.map(u => repository.addUserToGroup(i, u)))
+        })
+    }
+
+    @Transactional
     override def update(a: UserGroup) = {
         validUpdate(a, a => {
              findByName(a.name) match {
