@@ -1,3 +1,5 @@
+package com.griddynamics.genesis.jclouds.coordinators
+
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
@@ -17,19 +19,29 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.service
 
-import org.jclouds.ssh.SshClient
-import com.griddynamics.genesis.model.{VirtualMachine, Environment}
+import com.griddynamics.genesis.plugin.{StepExecutionContext, PartialStepCoordinatorFactory}
+import steps._
+import com.griddynamics.genesis.jclouds.step.{DestroyEnv, DestroyVm, ProvisionVm, JCloudsStep}
+import com.griddynamics.genesis.workflow.Step
+import com.griddynamics.genesis.jclouds.JCloudsPluginContext
+import com.griddynamics.genesis.jclouds.steps.{DestroyVm, DestroyEnv, ProvisionVm, JCloudsStep}
 
-trait SshService {
-  def sshClient(env : Environment,  vm : VirtualMachine) : SshClient
+class JCloudsStepCoordinatorFactory(pluginContext: JCloudsPluginContext) extends PartialStepCoordinatorFactory {
+  def isDefinedAt(step: Step) = step.isInstanceOf[JCloudsStep]
 
-  //todo this is workaround until proper CredentialService is implemented
-  @Deprecated
-  def sshClient(vm : VirtualMachine, credentials: Option[Credentials]) : SshClient
+  def apply(step: Step, context: StepExecutionContext) = {
+    step match {
+      case s: ProvisionVm => {
+        new ProvisionVmsStepCoordinator(s, context, pluginContext)
+      }
+      case s: DestroyEnv => {
+        new DestroyEnvStepCoordinator(s, context, pluginContext)
+      }
+      case _: DestroyVm => null
+    }
+  }
 }
-

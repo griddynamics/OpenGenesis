@@ -17,19 +17,24 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.service
+package com.griddynamics.genesis.jclouds.executors
 
-import org.jclouds.ssh.SshClient
-import com.griddynamics.genesis.model.{VirtualMachine, Environment}
+import com.griddynamics.genesis.service.{ComputeService, SshService, StoreService}
+import com.griddynamics.genesis.workflow.{Signal, SimpleSyncActionExecutor}
+import com.griddynamics.genesis.actions.provision.CheckSshPortAction
+import com.griddynamics.executors.provision.CommonSshPortChecker
 
-trait SshService {
-  def sshClient(env : Environment,  vm : VirtualMachine) : SshClient
+class SshPortChecker(val action: CheckSshPortAction,
+                     val computeService: ComputeService,
+                     sshService: SshService,
+                     val storeService: StoreService) extends SimpleSyncActionExecutor with CommonSshPortChecker {
+  lazy val sshClient = sshService.sshClient(action.env, action.vm)
 
-  //todo this is workaround until proper CredentialService is implemented
-  @Deprecated
-  def sshClient(vm : VirtualMachine, credentials: Option[Credentials]) : SshClient
+  override def cleanUp(signal: Signal) {
+    if (sshClient != null)
+      sshClient.disconnect()
+  }
 }
-

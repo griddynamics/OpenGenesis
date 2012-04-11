@@ -1,3 +1,5 @@
+package com.griddynamics.genesis.jclouds.executors
+
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
@@ -17,10 +19,9 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.jclouds
 
 import com.griddynamics.executors.provision.CommonVmDestructor
 import com.griddynamics.genesis.actions.provision.DestroyVmAction

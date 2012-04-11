@@ -1,3 +1,5 @@
+package com.griddynamics.genesis.jclouds.executors
+
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
@@ -17,19 +19,27 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.service
 
-import org.jclouds.ssh.SshClient
-import com.griddynamics.genesis.model.{VirtualMachine, Environment}
+import actions.JCloudsProvisionVm
+import com.griddynamics.genesis.service.StoreService
+import com.griddynamics.genesis.jclouds.action.JCloudsProvisionVm
+import com.griddynamics.genesis.model.{Environment, VirtualMachine}
+import com.griddynamics.executors.provision.{CommonProvisionExecutor, VmMetadataFuture}
+import com.griddynamics.genesis.jclouds.actions.JCloudsProvisionVm
+import com.griddynamics.genesis.jclouds.VmCreationStrategy
 
-trait SshService {
-  def sshClient(env : Environment,  vm : VirtualMachine) : SshClient
+class ProvisionExecutor(val action: JCloudsProvisionVm,
+                        val storeService: StoreService,
+                        vmCreationStrategy: VmCreationStrategy,
+                        val timeoutMillis: Long) extends CommonProvisionExecutor {
 
-  //todo this is workaround until proper CredentialService is implemented
-  @Deprecated
-  def sshClient(vm : VirtualMachine, credentials: Option[Credentials]) : SshClient
+  var vm: VirtualMachine = _
+  var vmMetadataFuture: VmMetadataFuture = _
+
+  def createVm(env: Environment, vm: VirtualMachine) = {
+    vmCreationStrategy.createVm(env, vm)
+  }
 }
-

@@ -17,10 +17,10 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.jclouds
+package com.griddynamics.genesis.jclouds.coordinators
 
 import com.griddynamics.genesis.plugin.StepExecutionContext
 import com.griddynamics.genesis.jclouds.step.{ProvisionVm => ProvisionVmStep}
@@ -29,17 +29,18 @@ import com.griddynamics.genesis.jclouds.action.JCloudsProvisionVm
 import com.griddynamics.coordinators.provision.AbstractProvisionVmsStepCoordinator
 import com.griddynamics.context.provision.ProvisionContext
 import com.griddynamics.genesis.logging.LoggerWrapper
+import com.griddynamics.genesis.jclouds.action.JCloudsProvisionVm
 
-class ProvisionVmsStepCoordinator(override val step : ProvisionVmStep,
-                                  override val context : StepExecutionContext,
+class ProvisionVmsStepCoordinator(override val step: ProvisionVmStep,
+                                  override val context: StepExecutionContext,
                                   override val pluginContext: ProvisionContext[JCloudsProvisionVm]) extends AbstractProvisionVmsStepCoordinator[JCloudsProvisionVm] {
 
-    def onStepStart() = {
-        LoggerWrapper.writeLog(context.step.id, "Starting phase %s".format(context.step.phase))
-        val existingVms = context.vms.filter(_.stepId == context.step.id)
-                                     .filter(_.status == VmStatus.Ready)
-        for (n <- 1 to (step.quantity - existingVms.size)) yield {
-            JCloudsProvisionVm(context.env, context.workflow, context.step, step.roleName, step.hardwareId, step.imageId, step.instanceId, step.ip)
-        }
+  def onStepStart() = {
+    LoggerWrapper.writeLog(context.step.id, "Starting phase %s".format(context.step.phase))
+    val existingVms = context.vms.filter(_.stepId == context.step.id)
+      .filter(_.status == VmStatus.Ready)
+    for (n <- 1 to (step.quantity - existingVms.size)) yield {
+      JCloudsProvisionVm(context.env, context.workflow, context.step, step.roleName, step.hardwareId, step.imageId, step.instanceId, step.ip)
     }
+  }
 }
