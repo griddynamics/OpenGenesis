@@ -17,12 +17,10 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.jclouds
-
-package step
+package com.griddynamics.genesis.jclouds.step
 
 import com.griddynamics.genesis.plugin.RoleStep
 import com.griddynamics.genesis.workflow.Step
@@ -33,18 +31,18 @@ case class ProvisionVm(roleName: String,
                        hardwareId: Option[String],
                        imageId: Option[String],
                        quantity: Int,
-                       instanceId : Option[String],
-                       ip : Option[String] = None) extends JCloudsStep with RoleStep {
-    def isGlobal = true
+                       instanceId: Option[String],
+                       ip: Option[String] = None) extends JCloudsStep with RoleStep {
+  def isGlobal = true
 
-    def roles = Set(roleName)
+  def roles = Set(roleName)
 }
 
 case class DestroyVm(roleName: String,
                      quantity: Int) extends JCloudsStep with RoleStep {
-    def isGlobal = true
+  def isGlobal = true
 
-    def roles = Set(roleName)
+  def roles = Set(roleName)
 }
 
 case class DestroyEnv() extends JCloudsStep

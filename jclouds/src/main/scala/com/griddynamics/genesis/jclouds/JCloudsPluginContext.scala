@@ -22,6 +22,9 @@
  */
 package com.griddynamics.genesis.jclouds
 
+import action.JCloudsProvisionVm
+import coordinators.JCloudsStepCoordinatorFactory
+import executors.{JCloudsVmDestructor, ProvisionExecutor, SshPortChecker}
 import org.springframework.context.annotation.{Configuration, Bean}
 import com.griddynamics.genesis.configuration.{StoreServiceContext, CredentialServiceContext}
 import org.springframework.beans.factory.annotation.{Value, Autowired}
@@ -33,7 +36,6 @@ import org.jboss.netty.handler.logging.LoggingHandler
 import org.jboss.netty.logging.{Slf4JLoggerFactory, InternalLoggerFactory, InternalLogLevel}
 import com.griddynamics.genesis.jclouds.step.{DestroyEnvStepBuilderFactory, ProvisionVmsStepBuilderFactory}
 import com.griddynamics.genesis.workflow.DurationLimitedActionExecutor
-import com.griddynamics.genesis.jclouds.action._
 import com.griddynamics.genesis.service.{ComputeService, impl}
 import com.griddynamics.genesis.model.{IpAddresses, VirtualMachine}
 import org.jclouds.compute.{ComputeServiceContextFactory, ComputeServiceContext}
@@ -41,7 +43,6 @@ import org.jclouds.Constants._
 import collection.JavaConversions.{setAsJavaSet, propertiesAsScalaMap, asScalaSet}
 import org.jclouds.ssh.jsch.config.JschSshClientModule
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule
-import java.util.Properties
 import com.griddynamics.genesis.actions.provision._
 import com.griddynamics.context.provision.ProvisionContext
 import com.griddynamics.executors.provision.{CommonCheckPublicIpExecutor, CommonPortTestExecutor}

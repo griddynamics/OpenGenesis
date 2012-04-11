@@ -17,38 +17,36 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.jclouds
-
-package step
+package com.griddynamics.genesis.jclouds.step
 
 import reflect.BeanProperty
 import com.griddynamics.genesis.plugin.{StepBuilderFactory, StepBuilder}
 
 class ProvisionVmsStepBuilder extends StepBuilder {
-    @BeanProperty var roleName: String = _
-    @BeanProperty var hardwareId: String = _
-    @BeanProperty var imageId: String = _
-    @BeanProperty var quantity: Int = _
-    @BeanProperty var instanceId: String = _
-    @BeanProperty var ip: String = _
+  @BeanProperty var roleName: String = _
+  @BeanProperty var hardwareId: String = _
+  @BeanProperty var imageId: String = _
+  @BeanProperty var quantity: Int = _
+  @BeanProperty var instanceId: String = _
+  @BeanProperty var ip: String = _
 
-    def getDetails = new ProvisionVm(roleName, Option(hardwareId), Option(imageId),
-        if(ip == null) quantity else 1, Option(instanceId), Option(ip))
+  def getDetails = new ProvisionVm(roleName, Option(hardwareId), Option(imageId),
+    if (ip == null) quantity else 1, Option(instanceId), Option(ip))
 }
 
 class ProvisionVmsStepBuilderFactory extends StepBuilderFactory {
-    def newStepBuilder = new ProvisionVmsStepBuilder
+  def newStepBuilder = new ProvisionVmsStepBuilder
 
-    val stepName = "provisionVms"
+  val stepName = "provisionVms"
 }
 
 class DestroyEnvStepBuilderFactory extends StepBuilderFactory {
-    def newStepBuilder = new StepBuilder {
-        def getDetails = new DestroyEnv
-    }
+  def newStepBuilder = new StepBuilder {
+    def getDetails = new DestroyEnv
+  }
 
-    val stepName = "undeployEnv"
+  val stepName = "undeployEnv"
 }

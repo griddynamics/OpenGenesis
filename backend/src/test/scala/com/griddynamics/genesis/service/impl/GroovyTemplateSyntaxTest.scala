@@ -31,7 +31,6 @@ import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.template.dsl.groovy.WorkflowDeclaration
 import scala.Array
 import com.griddynamics.genesis.chef.step.{DestroyChefEnvStepBuilderFactory, CreateChefDatabagBuilderFactory, CreateChefRoleBuilderFactory, ChefRunStepBuilderFactory}
-import com.griddynamics.genesis.jclouds.step.{ProvisionVmsStepBuilderFactory, DestroyEnvStepBuilderFactory}
 import com.griddynamics.genesis.template.{VersionedTemplate, TemplateRepository}
 
 class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with MockitoSugar {
@@ -174,14 +173,14 @@ class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with Mock
         Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> script))
 
         val templateService = new GroovyTemplateService(templateRepository,
-            List(new DoNothingStepBuilderFactory,
-                new ChefRunStepBuilderFactory,
-                new CreateChefDatabagBuilderFactory,
-                new CreateChefRoleBuilderFactory,
-                new CreateChefDatabagBuilderFactory,
-                new DestroyEnvStepBuilderFactory,
-                new DestroyChefEnvStepBuilderFactory,
-                new ProvisionVmsStepBuilderFactory),
+            List(
+              new DoNothingStepBuilderFactory,
+              new ChefRunStepBuilderFactory,
+              new CreateChefDatabagBuilderFactory,
+              new CreateChefRoleBuilderFactory,
+              new CreateChefDatabagBuilderFactory,
+              new DestroyChefEnvStepBuilderFactory
+            ),
             ConversionServiceFactory.createDefaultConversionService())
 
         templateService.listTemplates.headOption match {
