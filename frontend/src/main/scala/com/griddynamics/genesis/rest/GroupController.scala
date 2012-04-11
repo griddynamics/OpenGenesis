@@ -40,12 +40,18 @@ class GroupController extends RestApiExceptionsHandler {
     @ResponseBody
     def list() = groupService.list
 
+    @RequestMapping(value=Array("{id}"), method = Array(RequestMethod.GET))
+    @ResponseBody
+    def get(@PathVariable(value = "id") id: Int) = groupService.get(id)
+
     @RequestMapping(method = Array(RequestMethod.POST))
     @ResponseBody
     def create(request: HttpServletRequest) : RequestResult = {
         RequestReader.read(request) {
             map => {
-                groupService.create(readGroup(map))
+                var group :UserGroup = readGroup(map)
+                var create = groupService.create(group, readUsers(map, "users"))
+                create
             }
         }
     }
@@ -59,6 +65,14 @@ class GroupController extends RestApiExceptionsHandler {
                     group => groupService.update(readGroup(map))
                 }
             }
+        }
+    }
+
+    @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.DELETE))
+    @ResponseBody
+    def delete(@PathVariable(value="id") id: Int) : RequestResult = {
+        withGroup(id) {
+            group => groupService.delete(group)
         }
     }
 
@@ -107,6 +121,13 @@ class GroupController extends RestApiExceptionsHandler {
             extractOption("mailingList", map),
             extractOption("id", map).map(_.toInt)
         )
+    }
+
+    private def readUsers(map: Map[String, Any], paramName: String) : List[String] = {
+        map.getOrElse(paramName, List()) match {
+            case (x :: xs) => (x :: xs).map(_.toString)
+            case _ => List()
+        }
     }
 
 }
