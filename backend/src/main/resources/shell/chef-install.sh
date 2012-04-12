@@ -48,7 +48,7 @@ if [ `which chef-client &>/dev/null; echo $?` -ne 0 ]; then
 
     gem install --no-rdoc --no-ri chef
 
-    ntpdate 0.pool.ntp.org
 fi
+ntpdate 0.pool.ntp.org
 
 exit `which chef-client &>/dev/null; echo $?`
