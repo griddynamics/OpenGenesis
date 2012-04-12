@@ -17,48 +17,54 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
 package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.service
-import service.{ComputeService, CredentialService}
 import com.griddynamics.genesis.model.{VirtualMachine, Environment}
 import org.jclouds.domain.Credentials
 import org.jclouds.compute.domain.NodeMetadataBuilder
 import org.jclouds.compute.ComputeServiceContext
 import org.jclouds.net.IPSocket
 import com.griddynamics.genesis.util.Logging
+import service.{Credentials => GenesisCredentials, ComputeService, CredentialService}
+import org.jclouds.ssh.SshClient
 
-class SshService(credentialService : CredentialService,
-                 computeService : ComputeService,
-                 computeContext : ComputeServiceContext) extends service.SshService with Logging {
+class SshService(credentialService: CredentialService,
+                 computeService: ComputeService,
+                 computeContext: ComputeServiceContext) extends service.SshService with Logging {
 
-    def sshClient(env : Environment,  vm : VirtualMachine) = {
-        val ip = computeService.getIpAddresses(vm).map(_.address)
+  def sshClient(env: Environment, vm: VirtualMachine): SshClient = {
+    val client = sshClient(vm, credentialService.getCredentialsForEnvironment(env))
+    client.connect()
+    client
+  }
 
-        if (ip.isEmpty) {
-            log.debug("can't get ip address of machine '%s'", vm)
-            throw new IllegalArgumentException(vm.toString)
-        }
-
-        val credentials = credentialService.getCredentialsForEnvironment(env).map {
-            creds => new Credentials(creds.identity, creds.credential)
-        }
-        val metadata = vm.instanceId.map(computeContext.getComputeService.getNodeMetadata(_))
-        val node = credentials.map {
-            creds => metadata.map(NodeMetadataBuilder.fromNodeMetadata(_)
-                .credentials(creds).build)
-        }.getOrElse(metadata)
-
-        log.debug("getting ssh client for machine with %s...", ip)
-        val utils = computeContext.utils()
-        val sshClient = node.map(utils.sshForNode().apply(_)) orElse
-         credentials.map(
-            utils.getSshClientFactory.create(new IPSocket(ip.get, 22), _)
-         )
-        sshClient.map(_.connect)
-        sshClient.get
+  def sshClient(vm: VirtualMachine, gcredentials: Option[GenesisCredentials]): SshClient = {
+    val credentials = gcredentials.map {
+      creds => new Credentials(creds.identity, creds.credential)
     }
+
+    val ip = computeService.getIpAddresses(vm).map(_.address).getOrElse {
+      log.debug("can't get ip address of machine '%s'", vm)
+      throw new IllegalArgumentException(vm.toString)
+    }
+
+    val metadata = vm.instanceId.map { computeContext.getComputeService.getNodeMetadata(_) }
+
+    val node = credentials.map {
+      creds => metadata.map { NodeMetadataBuilder.fromNodeMetadata(_).credentials(creds).build }
+    }.getOrElse(metadata)
+
+    log.debug("getting ssh client for machine with %s...", ip)
+    val utils = computeContext.utils()
+    val sshClient = node.map(utils.sshForNode().apply(_)) orElse
+      credentials.map {
+        utils.getSshClientFactory.create(new IPSocket(ip, 22), _)
+      }
+    sshClient.get
+  }
+
 }

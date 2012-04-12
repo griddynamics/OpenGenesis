@@ -87,13 +87,13 @@ class PluginLoader extends BeanClassLoaderAware with BeanDefinitionRegistryPostP
 object PluginLoader {
     val DefaultPluginResourcePath = "META-INF/genesis/plugin.info"
     val PropNamePluginInfo = "genesis.plugin.info"
-    val PropBackend = "backend.properties"
+    import com.griddynamics.genesis.service.GenesisSystemProperties.BACKEND
     var pluginResourcePath = java.lang.System.getProperty(PropNamePluginInfo)
 
     def loadGenesisProperties(classLoader: ClassLoader) = {
         val resourceLoader = new DefaultResourceLoader(classLoader)
         val genesisProperties = new Properties
-        Closeables.using(resourceLoader.getResource(java.lang.System.getProperty(PropBackend)).getInputStream) {
+        Closeables.using(resourceLoader.getResource(java.lang.System.getProperty(BACKEND)).getInputStream) {
             stream => {
                 genesisProperties.load(stream)
             }

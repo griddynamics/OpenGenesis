@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,24 +20,27 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.jclouds
+package com.griddynamics.genesis.users.model
 
-import com.griddynamics.genesis.plugin.{StepExecutionContext, PartialStepCoordinatorFactory}
-import com.griddynamics.genesis.jclouds.step.{DestroyEnv, DestroyVm, ProvisionVm, JCloudsStep}
-import com.griddynamics.genesis.workflow.Step
+import com.griddynamics.genesis.model.GenesisEntity
+import com.griddynamics.genesis.groups.GenesisGroup
+import com.griddynamics.genesis.users.repository.LocalUserSchema
 
-class JCloudsStepCoordinatorFactory(pluginContext: JCloudsPluginContext) extends PartialStepCoordinatorFactory {
-    def isDefinedAt(step: Step) = step.isInstanceOf[JCloudsStep]
+class LocalGroup(val name: String, val description: String, val mailingList: Option[String]) extends GenesisEntity with GenesisGroup {
+    def this() = this("", "", None)
 
-    def apply(step: Step, context: StepExecutionContext) = {
-        step match {
-            case s: ProvisionVm => {
-                new ProvisionVmsStepCoordinator(s, context, pluginContext)
-            }
-            case s: DestroyEnv => {
-                new DestroyEnvStepCoordinator(s, context, pluginContext)
-            }
-            case _: DestroyVm => null
+    lazy val users = LocalUserSchema.userGroupsRelation.right(this)
+
+}
+
+object LocalGroup {
+    def apply(name: String, description: String, mailingList: Option[String] = None, id: Option[Int] = None) = {
+        val group = new LocalGroup(name, description, mailingList)
+        group.id = id match {
+            case None => 0
+            case Some(v) => v
         }
+        group
     }
 }
+

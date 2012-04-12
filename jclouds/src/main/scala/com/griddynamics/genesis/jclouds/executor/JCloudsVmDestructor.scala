@@ -17,17 +17,22 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.dev
+package com.griddynamics.genesis.jclouds.executors
 
-import com.griddynamics.genesis.GenesisFrontend
-import com.griddynamics.genesis.service.GenesisSystemProperties.BACKEND
+import com.griddynamics.executors.provision.CommonVmDestructor
+import com.griddynamics.genesis.actions.provision.DestroyVmAction
+import org.jclouds.compute.ComputeService
+import com.griddynamics.genesis.service.StoreService
+import com.griddynamics.genesis.model.VirtualMachine
 
-object DevGenesisUI {
-    def main(args: Array[String]) {
-        sys.props(BACKEND) = "classpath:environments/dev.properties"
-        GenesisFrontend.main(args)
-    }
+
+class JCloudsVmDestructor(override val action: DestroyVmAction,
+                          computeService: ComputeService,
+                          override val storeService: StoreService) extends CommonVmDestructor {
+  def deleteVm(vm: VirtualMachine) {
+    vm.instanceId.foreach(computeService.destroyNode(_))
+  }
 }

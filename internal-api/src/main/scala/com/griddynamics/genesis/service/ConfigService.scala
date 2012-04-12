@@ -31,3 +31,14 @@ trait ConfigService {
     def update(name:String, value:Any) : RequestResult
     def delete(name:String) : RequestResult
 }
+
+object GenesisSystemProperties {
+    val BACKEND = "backend.properties"
+    val SERVICE_BACKEND_URL = "genesis.system.service.backendUrl"
+    val SERVICE_REST_USEMOCK = "genesis.system.service.rest.use.mock"
+    val SECURITY_CONFIG = "genesis.system.security.config"
+    val SECURITY_GROUPS = "genesis.system.security.groups"
+    val BIND_HOST = "genesis.system.bind.host"
+    val BIND_PORT = "genesis.system.bind.port"
+    val WEB_RESOURCE_ROOTS = "genesis.system.web.resourceRoots"
+}

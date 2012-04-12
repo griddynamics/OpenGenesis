@@ -53,6 +53,11 @@ class LocalUserRepository extends AbstractGenericRepository[LocalUser, User](Loc
         user
     }
 
+    implicit def convert(model: LocalUser) = LocalUserRepository.convert(model)
+    implicit def convert(dto: User) =  LocalUserRepository.convert(dto)
+}
+
+object LocalUserRepository {
     implicit def convert(model: LocalUser) = {
         User(model.username, model.email, model.firstName, model.lastName, model.jobTitle, None)
     }

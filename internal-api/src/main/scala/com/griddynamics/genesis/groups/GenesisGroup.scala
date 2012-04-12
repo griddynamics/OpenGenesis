@@ -1,4 +1,6 @@
-/**
+package com.griddynamics.genesis.groups
+
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,14 +22,10 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.dev
+trait GenesisGroup {
+    def name: String
 
-import com.griddynamics.genesis.GenesisFrontend
-import com.griddynamics.genesis.service.GenesisSystemProperties.BACKEND
+    def description: String
 
-object DevGenesisUI {
-    def main(args: Array[String]) {
-        sys.props(BACKEND) = "classpath:environments/dev.properties"
-        GenesisFrontend.main(args)
-    }
+    def mailingList: Option[String]
 }

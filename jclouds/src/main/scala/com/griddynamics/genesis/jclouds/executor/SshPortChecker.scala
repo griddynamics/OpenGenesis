@@ -17,17 +17,24 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.dev
+package com.griddynamics.genesis.jclouds.executors
 
-import com.griddynamics.genesis.GenesisFrontend
-import com.griddynamics.genesis.service.GenesisSystemProperties.BACKEND
+import com.griddynamics.genesis.service.{ComputeService, SshService, StoreService}
+import com.griddynamics.genesis.workflow.{Signal, SimpleSyncActionExecutor}
+import com.griddynamics.genesis.actions.provision.CheckSshPortAction
+import com.griddynamics.executors.provision.CommonSshPortChecker
 
-object DevGenesisUI {
-    def main(args: Array[String]) {
-        sys.props(BACKEND) = "classpath:environments/dev.properties"
-        GenesisFrontend.main(args)
-    }
+class SshPortChecker(val action: CheckSshPortAction,
+                     val computeService: ComputeService,
+                     sshService: SshService,
+                     val storeService: StoreService) extends SimpleSyncActionExecutor with CommonSshPortChecker {
+  lazy val sshClient = sshService.sshClient(action.env, action.vm)
+
+  override def cleanUp(signal: Signal) {
+    if (sshClient != null)
+      sshClient.disconnect()
+  }
 }

@@ -1,3 +1,5 @@
+package com.griddynamics.genesis.jclouds.coordinators
+
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
@@ -17,53 +19,53 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.jclouds
 
 import com.griddynamics.genesis.workflow.{Action, ActionResult, Signal, ActionOrientedStepCoordinator}
 import com.griddynamics.genesis.plugin.{GenesisStepResult, StepExecutionContext}
 import com.griddynamics.genesis.workflow.action.{ExecutorInterrupt, ExecutorThrowable}
 import com.griddynamics.genesis.jclouds.step.{DestroyEnv => DestroyEnvStep}
 import com.griddynamics.genesis.actions.provision.{VmDestroyed, DestroyVmAction}
+import com.griddynamics.genesis.jclouds.JCloudsPluginContext
 
-class DestroyEnvStepCoordinator(val step : DestroyEnvStep,
-                                context : StepExecutionContext,
+class DestroyEnvStepCoordinator(val step: DestroyEnvStep,
+                                context: StepExecutionContext,
                                 pluginContext: JCloudsPluginContext) extends ActionOrientedStepCoordinator {
 
-    var stepFailed = false
+  var stepFailed = false
 
-    def getActionExecutor(action: Action) = {
-        action match {
-            case a : DestroyVmAction => pluginContext.destroyVmActionExecutor(a)
-        }
+  def getActionExecutor(action: Action) = {
+    action match {
+      case a: DestroyVmAction => pluginContext.destroyVmActionExecutor(a)
     }
+  }
 
-    def getStepResult() = {
-        GenesisStepResult(context.step,
-                          isStepFailed = stepFailed,
-                          envUpdate = context.envUpdate(),
-                          vmsUpdate = context.vmsUpdate())
+  def getStepResult() = {
+    GenesisStepResult(context.step,
+      isStepFailed = stepFailed,
+      envUpdate = context.envUpdate(),
+      vmsUpdate = context.vmsUpdate())
+  }
+
+  def onActionFinish(result: ActionResult) = {
+    result match {
+      case VmDestroyed(_, vm) => {
+        context.updateVm(vm)
+        Seq()
+      }
+      case _: ExecutorThrowable => {
+        stepFailed = true
+        Seq()
+      }
+      case _: ExecutorInterrupt => {
+        Seq()
+      }
     }
+  }
 
-    def onActionFinish(result: ActionResult) = {
-        result match {
-            case VmDestroyed(_, vm) => {
-                context.updateVm(vm)
-                Seq()
-            }
-            case _ : ExecutorThrowable => {
-                stepFailed = true
-                Seq()
-            }
-            case _ : ExecutorInterrupt => {
-                Seq()
-            }
-        }
-    }
+  def onStepInterrupt(signal: Signal) = Seq()
 
-    def onStepInterrupt(signal: Signal) = Seq()
-
-    def onStepStart() = for (vm <- context.vms) yield DestroyVmAction(vm)
+  def onStepStart() = for (vm <- context.vms) yield DestroyVmAction(vm)
 }

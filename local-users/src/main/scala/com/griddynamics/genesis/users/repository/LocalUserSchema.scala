@@ -24,12 +24,13 @@ package com.griddynamics.genesis.users.repository
 
 
 import org.squeryl.Schema
-import com.griddynamics.genesis.users.model.LocalUser
+import com.griddynamics.genesis.users.model.{UserToGroup, LocalGroup, LocalUser}
 
 object LocalUserSchema extends LocalUserSchema with LocalUserPrimitiveSchema
 
 trait LocalUserSchema extends Schema {
     val users = table[LocalUser]("local_users")
+    val groups = table[LocalGroup]("local_group")
 }
 
 trait LocalUserPrimitiveSchema extends LocalUserSchema {
@@ -44,4 +45,13 @@ trait LocalUserPrimitiveSchema extends LocalUserSchema {
         user.lastName is (dbType("varchar(256)")),
         user.jobTitle is (dbType("varchar(256)"))
     ))
+
+    on(groups)(group => declare(
+        group.name is (unique, dbType("varchar(64)")),
+        group.description is (dbType("text")),
+        group.mailingList is (dbType("varchar(64)"))
+    ))
+
+    val userGroupsRelation = manyToManyRelation(users, groups).
+      via[UserToGroup]((u, g, ug) => (ug.userId === u.id, ug.groupId === g.id))
 }

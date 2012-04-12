@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,19 +20,36 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.jclouds
+package com.griddynamics.genesis.users.repository
 
-import com.griddynamics.executors.provision.CommonVmDestructor
-import com.griddynamics.genesis.actions.provision.DestroyVmAction
-import org.jclouds.compute.ComputeService
-import com.griddynamics.genesis.service.StoreService
-import com.griddynamics.genesis.model.VirtualMachine
+import com.griddynamics.genesis.repository.AbstractGenericRepository
+import org.squeryl.PrimitiveTypeMode._
+import com.griddynamics.genesis.api.UserGroup
+import com.griddynamics.genesis.users.model.LocalGroup
 
 
-class JCloudsVmDestructor(override val action: DestroyVmAction,
-                          computeService: ComputeService,
-                          override val storeService: StoreService) extends CommonVmDestructor {
-  def deleteVm(vm: VirtualMachine) {
-    vm.instanceId.foreach(computeService.destroyNode(_))
-  }
+abstract class LocalGroupRepository extends AbstractGenericRepository[LocalGroup, UserGroup](LocalUserSchema.groups)
+    with UserGroupManagement {
+    def get(i: Int): Option[UserGroup] = {
+        from(table)(group => where(group.id === i).select(group)).headOption.map(convert(_))
+    }
+
+
+    def findByName(name: String) : Option[UserGroup] = {
+        from(table)(group => where(group.name === name).select(group)).headOption.map(convert(_))
+    }
+
+    override def update(group: UserGroup) = {
+        table.update(
+            g => where (g.name === group.name)
+              set(
+              g.description := group.description,
+              g.mailingList := group.mailingList
+              )
+        )
+        group
+    }
+
+    implicit def convert(model: LocalGroup) = UserGroup(model.name, model.description, model.mailingList, Some(model.id))
+    implicit def convert(dto: UserGroup) = LocalGroup(dto.name, dto.description, dto.mailingList)
 }

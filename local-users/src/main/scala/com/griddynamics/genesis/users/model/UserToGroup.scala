@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,14 +20,12 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.dev
+package com.griddynamics.genesis.users.model
 
-import com.griddynamics.genesis.GenesisFrontend
-import com.griddynamics.genesis.service.GenesisSystemProperties.BACKEND
+import org.squeryl.KeyedEntity
+import org.squeryl.dsl.CompositeKey2
+import org.squeryl.PrimitiveTypeMode._
 
-object DevGenesisUI {
-    def main(args: Array[String]) {
-        sys.props(BACKEND) = "classpath:environments/dev.properties"
-        GenesisFrontend.main(args)
-    }
+class UserToGroup(val userId: Int, val groupId: Int) extends KeyedEntity[CompositeKey2[Int, Int]] {
+    def id = compositeKey(userId, groupId)
 }

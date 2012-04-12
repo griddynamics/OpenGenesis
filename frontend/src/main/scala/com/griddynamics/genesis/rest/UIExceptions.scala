@@ -30,3 +30,5 @@ class MissingParameterException(s : String) extends Exception {
 }
 
 class ResourceNotFoundException() extends Exception
+
+class ResourceConflictException() extends Exception

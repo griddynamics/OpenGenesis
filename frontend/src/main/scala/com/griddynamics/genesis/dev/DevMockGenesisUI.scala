@@ -23,12 +23,13 @@
 package com.griddynamics.genesis.dev
 
 import com.griddynamics.genesis.GenesisFrontend
-import java.lang.System.{setProperty}
+import com.griddynamics.genesis.service.GenesisSystemProperties.{BACKEND, SERVICE_REST_USEMOCK}
+import sys.props
 
 object DevMockGenesisUI {
     def main(args: Array[String]) {
-        setProperty("backend.properties", "classpath:environments/backend.properties")
-        setProperty("genesis.service.rest.use.mock", "true")
+        props(BACKEND) = "classpath:environments/nova.properties"
+        props(SERVICE_REST_USEMOCK) = "true"
         GenesisFrontend.main(args)
     }
 }

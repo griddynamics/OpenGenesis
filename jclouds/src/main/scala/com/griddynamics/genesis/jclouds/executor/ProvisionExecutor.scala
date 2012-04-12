@@ -17,25 +17,26 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.jclouds
+package com.griddynamics.genesis.jclouds.executors
 
 import com.griddynamics.genesis.service.StoreService
-import com.griddynamics.genesis.jclouds.action.JCloudsProvisionVm
 import com.griddynamics.genesis.model.{Environment, VirtualMachine}
 import com.griddynamics.executors.provision.{CommonProvisionExecutor, VmMetadataFuture}
+import com.griddynamics.genesis.jclouds.action.JCloudsProvisionVm
+import com.griddynamics.genesis.jclouds.VmCreationStrategy
 
 class ProvisionExecutor(val action: JCloudsProvisionVm,
                         val storeService: StoreService,
                         vmCreationStrategy: VmCreationStrategy,
-                        val timeoutMillis : Long) extends CommonProvisionExecutor {
+                        val timeoutMillis: Long) extends CommonProvisionExecutor {
 
-    var vm : VirtualMachine = _
-    var vmMetadataFuture: VmMetadataFuture = _
+  var vm: VirtualMachine = _
+  var vmMetadataFuture: VmMetadataFuture = _
 
-    def createVm(env : Environment, vm : VirtualMachine) = {
-      vmCreationStrategy.createVm(env, vm)
-    }
+  def createVm(env: Environment, vm: VirtualMachine) = {
+    vmCreationStrategy.createVm(env, vm)
+  }
 }

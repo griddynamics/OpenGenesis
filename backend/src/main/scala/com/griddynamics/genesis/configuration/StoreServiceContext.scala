@@ -47,7 +47,7 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 }
 
 class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager) extends SchemaCreator[GenesisSchema](GenesisSchema.envs.name) {
-    @Value("${genesis.jdbc.drop.db:false}") var drop : Boolean = _
+    @Value("${genesis.system.jdbc.drop.db:false}") var drop : Boolean = _
     override val transactionTemplate = new TransactionTemplate(transactionManager)
     override val schema = GenesisSchema
 }

@@ -22,12 +22,11 @@
  */
 package com.griddynamics.genesis.users
 
-import com.griddynamics.genesis.api.{RequestResult, User}
+import com.griddynamics.genesis.api.User
+import com.griddynamics.genesis.common.CRUDService
 
 
-trait UserService {
+trait UserService extends CRUDService[User, String] {
+    override def get(key: String) = findByUsername(key)
     def findByUsername(username: String) : Option[User]
-    def create(user: User) : RequestResult  = RequestResult(isSuccess = false, compoundServiceErrors = Seq("This service cannot modify users"))
-    def update(user: User) : RequestResult  = RequestResult(isSuccess = false, compoundServiceErrors = Seq("This service cannot modify users"))
-    def all: List[User]
 }
