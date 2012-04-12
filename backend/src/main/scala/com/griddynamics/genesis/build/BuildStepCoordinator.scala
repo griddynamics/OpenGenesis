@@ -26,24 +26,27 @@ import com.griddynamics.genesis.workflow._
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.plugin.{PartialStepCoordinatorFactory, GenesisStepResult, StepExecutionContext}
 
-class BuildStepCoordinatorFactory(pluginContext : BuildPluginContext) extends PartialStepCoordinatorFactory {
-    def apply(step: Step, context: StepExecutionContext) = new BuildStepCoordinator(step, context, pluginContext)
+class BuildStepCoordinatorFactory(pluginContext : () => BuildContext) extends PartialStepCoordinatorFactory {
+    def apply(step: Step, context: StepExecutionContext) = new BuildStepCoordinator(step, context, pluginContext())
     def isDefinedAt(step: Step) = step.isInstanceOf[BuildStep]
 }
 
-class BuildStepCoordinator(val step : Step, context: StepExecutionContext, pluginContext : BuildPluginContext) extends StepCoordinator
+class BuildStepCoordinator(val step : Step, context: StepExecutionContext, pluginContext : BuildContext) extends StepCoordinator
     with Logging{
 
     var stepFailed = false
 
     def onStepStart() = {
-        pluginContext.buildProvider match {
+        val buildStep: BuildStep = step.asInstanceOf[BuildStep]
+
+        pluginContext.buildProvider(buildStep.provider) match {
             case None => {
-                log.debug("No build provider found")
+                log.debug("No build provider found for name = [" + buildStep.provider + "]")
                 stepFailed = true;
                 Seq()
             }
-            case Some(provider) => Seq(new BuildActionExecutor(new BuildAction(step.asInstanceOf[BuildStep]), provider))
+            case Some(provider) =>
+              Seq(new BuildActionExecutor(new BuildAction(buildStep), provider))
         }
     }
 

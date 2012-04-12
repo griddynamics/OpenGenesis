@@ -22,32 +22,29 @@
  */
 package com.griddynamics.genesis.build.jenkins.configuration
 
-import org.springframework.beans.factory.annotation.Value
 import com.griddynamics.genesis.util.Logging
-import org.springframework.context.annotation.{Configuration, Lazy, Bean}
 import com.griddynamics.genesis.build.jenkins.{JenkinsConnectSpecification, JenkinsBuildProvider}
-import com.griddynamics.genesis.build.NullBuildProvider
-import com.griddynamics.genesis.plugin.api.GenesisPlugin
+import com.griddynamics.genesis.plugin.api.{PluginInstanceFactory, GenesisPlugin}
+import com.griddynamics.genesis.build.BuildProvider
 
-
-@GenesisPlugin(
+@GenesisPlugin (
   id = "build-jenkins",
   description = "Jenkins build step"
 )
-@Configuration
-class JenkinsBuildProviderContextImpl extends Logging {
-  @Value("${plugin.build-jenkins.baseUrl:NOT-SET!!!}") var baseUrl: String = _
-  @Value("${plugin.build-jenkins.username:NOT-SET!!!}") var name: String = _
-  @Value("${plugin.build-jenkins.password:NOT-SET!!!}") var password: String = _
+class JenkinsBuildProviderContextImpl extends Logging with PluginInstanceFactory[BuildProvider] {
 
-
-  @Bean @Lazy def buildProviderImpl = {
-    baseUrl match {
-      case "NOT-SET!!!" => {
-          log.error("Build provider is not configured properly. Property 'genesis.jenkins.baseUrl' is mandatory.")
-          NullBuildProvider()
-      }
-      case _ => new JenkinsBuildProvider(JenkinsConnectSpecification(baseUrl, Some(name), Some(password)))
-    }
+  def create(pluginConfig: Map[String, Any]): BuildProvider = {
+    import Plugin._
+    val baseUrl = pluginConfig(BaseUrl).toString
+    val name = pluginConfig.get(UserName).map(_.toString)
+    val password = pluginConfig.get(Password).map(_.toString)
+    new JenkinsBuildProvider(JenkinsConnectSpecification(baseUrl, name, password))
   }
+}
+
+private object Plugin {
+  val id: String = "build-jenkins"
+  val BaseUrl =  "genesis.plugin.build-jenkins.baseUrl"
+  val UserName = "genesis.plugin.build-jenkins.username"
+  val Password = "genesis.plugin.build-jenkins.password"
 }

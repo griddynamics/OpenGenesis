@@ -25,8 +25,8 @@ package com.griddynamics.genesis.plugin
 import api.GenesisPlugin
 import com.griddynamics.genesis
 import genesis.api.PluginDetails
-import genesis.service.ConfigService
 import collection.immutable.Map
+import genesis.service.{GenesisSystemProperties, ConfigService}
 import org.springframework.transaction.annotation.Transactional
 
 trait PluginRepository {
@@ -35,8 +35,12 @@ trait PluginRepository {
   def listPlugins: Iterable[genesis.api.Plugin]
 }
 
+trait PluginConfigurationContext {
+  def configuration(pluginId: String): Map[String, String]
+}
+
 class PluginRepositoryImpl(pluginLoader: PluginLoader,
-                       configService: ConfigService) extends PluginRepository {
+                       configService: ConfigService) extends PluginRepository with PluginConfigurationContext {
 
   private val plugins: Map[String, GenesisPlugin] = pluginLoader.loadedPlugins.map(plugin => (plugin.id(), plugin)).toMap
 
@@ -55,8 +59,9 @@ class PluginRepositoryImpl(pluginLoader: PluginLoader,
     configuration.foreach { case (name, value) => configService.update(name, value) }
   }
 
-  private def configuration(pluginId: String) = {
-    configService.listSettings(Some("plugin." + pluginId)).map { property => (property.name, property.value) }.toMap
+  def configuration(pluginId: String): Map[String, String] = {
+    val settingsKey = Some(GenesisSystemProperties.PLUGIN_PREFIX + "." + pluginId)
+    configService.listSettings(settingsKey).map { property => (property.name, property.value) }.toMap
   }
 }
 
