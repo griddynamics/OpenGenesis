@@ -31,10 +31,10 @@ import org.springframework.jdbc.datasource.{DataSourceUtils, DataSourceTransacti
 import com.griddynamics.genesis.repository.SchemaCreator
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
-import org.squeryl.adapters.{MSSQLServer, MySQLAdapter, H2Adapter}
 import com.griddynamics.genesis.service.impl
 import org.springframework.beans.factory.annotation.Value
 import com.griddynamics.genesis.repository.impl.{ProjectPropertyRepository, ProjectRepository}
+import org.squeryl.adapters.{PostgreSqlAdapter, MSSQLServer, MySQLAdapter, H2Adapter}
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
@@ -57,6 +57,7 @@ object SquerylConfigurator {
         jdbcUrl.drop("jdbc:".length).takeWhile(_ != ':').toLowerCase match {
             case "h2" => new H2Adapter
             case "mysql" => new MySQLAdapter
+            case "postgresql" => new PostgreSqlAdapter
             case "sqlserver" => new MSSQLServer
             case _ => throw new IllegalArgumentException
         }
