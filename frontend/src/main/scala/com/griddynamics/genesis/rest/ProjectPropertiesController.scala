@@ -37,7 +37,7 @@ import collection.mutable.ArrayBuffer
 @RequestMapping(value = Array("/rest/project"))
 class ProjectPropertiesController extends RestApiExceptionsHandler {
   @Autowired
-  var projectPropertyRepository: ProjectPropertyRepository = null;
+  var projectPropertyRepository: ProjectPropertyRepository = null
 
   @RequestMapping(value = Array("{projectId}/properties"), method = Array(RequestMethod.GET))
   @ResponseBody
@@ -48,13 +48,11 @@ class ProjectPropertiesController extends RestApiExceptionsHandler {
   @RequestMapping(value = Array("{projectId}/properties"), method = Array(RequestMethod.PUT))
   @ResponseBody
   def updateForProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) {
-    val props = JsonParser.parse(new InputStreamReader(request.getInputStream), false).values.asInstanceOf[List[Map[String, String]]];
-    val properties = new ArrayBuffer[api.ProjectProperty];
-    for (p <- props) {
-      val name = GenesisRestController.extractValue("name", p);
-      val value = GenesisRestController.extractValue("value", p);
-      properties.append(new api.ProjectProperty(0, 0, name, value));
+    val properties = for (p <- GenesisRestController.extractParamsMapList(request)) yield {
+      val name = GenesisRestController.extractValue("name", p)
+      val value = GenesisRestController.extractValue("value", p)
+      new api.ProjectProperty(0, 0, name, value)
     }
-    projectPropertyRepository.updateForProject(projectId, properties.toList)
+    projectPropertyRepository.updateForProject(projectId, properties)
   }
 }

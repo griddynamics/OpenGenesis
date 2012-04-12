@@ -49,6 +49,16 @@
             </dependencies>
         </profile>
         <profile>
+            <id>postgresql</id>
+            <dependencies>
+                <dependency>
+                    <groupId>postgresql</groupId>
+                    <artifactId>postgresql</artifactId>
+                    <version>9.1-901.jdbc4</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
             <id>jenkins</id>
             <dependencies>
                 <dependency>

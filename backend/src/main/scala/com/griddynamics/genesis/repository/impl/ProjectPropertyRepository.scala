@@ -27,37 +27,24 @@ import com.griddynamics.genesis.{repository, api, model}
 import model.GenesisSchema
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
-import collection.mutable.{ArrayBuffer, LinearSeq}
-import java.util.UUID
+import com.griddynamics.genesis.util.Logging
 
 class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectProperty, api.ProjectProperty](GenesisSchema.projectProperties)
-  with repository.ProjectPropertyRepository {
+  with repository.ProjectPropertyRepository with Logging {
 
   @Transactional(readOnly = true)
   def listForProject(projectId: Int): List[api.ProjectProperty] = {
-    val modelProperties = from(GenesisSchema.projectProperties)(pp => where(pp.projectId === projectId) select(pp)).toList
+    val modelProperties = from(GenesisSchema.projectProperties)(pp => where(pp.projectId === projectId) select(pp) orderBy(pp.id asc)).toList
+
     modelProperties.map(convert(_))
   }
 
   @Transactional
   def updateForProject(projectId: Int, properties : List[api.ProjectProperty]) {
-    val modelProperties = properties.map(convert(_))
+    val modelProperties = for (pp <- properties.map(convert(_))) yield new model.ProjectProperty(projectId, pp.name, pp.value)
 
     GenesisSchema.projectProperties.deleteWhere(pp => pp.projectId === projectId)
-
-    for (pp <- modelProperties) {
-      pp.id = 0;
-      pp.projectId = projectId;
-    }
-
-    if (GenesisSchema.projects.where(pp => pp.id === projectId).isEmpty) {
-      val id = GenesisSchema.projects.insert(new model.Project(UUID.randomUUID.toString, Option("desc"), "manager")).id;
-      for (pp <- modelProperties) {
-        pp.projectId = id;
-      }
-    }
-
-    GenesisSchema.projectProperties.insert(modelProperties);
+    GenesisSchema.projectProperties.insert(modelProperties)
   }
 
   override implicit def convert(entity: model.ProjectProperty): api.ProjectProperty = {
