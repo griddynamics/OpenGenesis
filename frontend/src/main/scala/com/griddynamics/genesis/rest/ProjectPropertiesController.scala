@@ -28,25 +28,31 @@ import com.griddynamics.genesis.repository.ProjectPropertyRepository
 import org.springframework.web.bind.annotation.{PathVariable, ResponseBody, RequestMethod, RequestMapping}
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import com.griddynamics.genesis._
-import net.liftweb.json.JsonParser
 import java.io.InputStreamReader
+import net.liftweb.json.{Formats, JsonParser}
+import net.liftweb.json.JsonAST.JArray
+import collection.mutable.ArrayBuffer
 
 @Controller
-@RequestMapping(value = Array("/rest/project_properties"))
+@RequestMapping(value = Array("/rest/project"))
 class ProjectPropertiesController extends RestApiExceptionsHandler {
   @Autowired
-  var projectPropertyRepository: ProjectPropertyRepository = null;
+  var projectPropertyRepository: ProjectPropertyRepository = null
 
-  @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.GET))
+  @RequestMapping(value = Array("{projectId}/properties"), method = Array(RequestMethod.GET))
   @ResponseBody
   def listForProject(@PathVariable("projectId") projectId: Int): List[api.ProjectProperty] = {
     projectPropertyRepository.listForProject(projectId)
   }
 
-  @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.POST))
+  @RequestMapping(value = Array("{projectId}/properties"), method = Array(RequestMethod.PUT))
   @ResponseBody
   def updateForProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) {
-    val properties = JsonParser.parse(new InputStreamReader(request.getInputStream), false).values.asInstanceOf[List[api.ProjectProperty]];
+    val properties = for (p <- GenesisRestController.extractParamsMapList(request)) yield {
+      val name = GenesisRestController.extractValue("name", p)
+      val value = GenesisRestController.extractValue("value", p)
+      new api.ProjectProperty(0, 0, name, value)
+    }
     projectPropertyRepository.updateForProject(projectId, properties)
   }
 }

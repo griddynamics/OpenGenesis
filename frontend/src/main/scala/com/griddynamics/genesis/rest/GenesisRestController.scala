@@ -123,6 +123,14 @@ object GenesisRestController {
         }
     }
 
+    def extractParamsMapList(request: HttpServletRequest): List[Map[String, Any]] = {
+        try {
+            JsonParser.parse(new InputStreamReader(request.getInputStream), false).values.asInstanceOf[List[Map[String, Any]]]
+        } catch {
+            case _ => throw new InvalidInputException
+        }
+    }
+
     def extractVariables(paramsMap: Map[String, Any]): Map[String, String] = {
         if (!paramsMap.contains("variables")) return Map[String, String]()
         paramsMap.apply("variables").asInstanceOf[Map[String, String]]
