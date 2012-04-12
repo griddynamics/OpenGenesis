@@ -109,13 +109,14 @@ class Ec2VmCreationStrategyProvider extends JCloudsVmCreationStrategyProvider {
 
   override val computeProperties = new Properties();
 
-  override def createVmCreationStrategy(nodeNamePrefix:String, computeContext: ComputeServiceContext ): VmCreationStrategy = {
+    override def createVmCreationStrategy(nodeNamePrefix:String, computeContext: ComputeServiceContext ): VmCreationStrategy = {
     new DefaultVmCreationStrategy(nodeNamePrefix, computeContext) {
       override protected def templateOptions(env: Environment, vm: VirtualMachine) = {
         super.templateOptions(env, vm).asInstanceOf[EC2TemplateOptions]
           .keyPair(ec2KeyPair)
           .securityGroups(ec2SecurityGroup)
       }
+      override protected def group(env: Environment, vm: VirtualMachine)  = ec2SecurityGroup
     }
   }
 };
