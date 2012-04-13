@@ -52,7 +52,7 @@ class ChefRunCoordinator(val step : ChefRun,
     }
 
     def onActionFinish(result : ActionResult) = {
-        writeLog("Action finished with result %s".format(result))
+        writeLog("Action finished with result %s".format(result.getClass.getSimpleName))
         result match {
             case _ if isStepFailed => {
                 Seq()
@@ -98,8 +98,6 @@ class ChefRunCoordinator(val step : ChefRun,
     }
 
     def getStepResult() = {
-        writeLog("Final step result is %s".format(isStepFailed))
-
         GenesisStepResult(stepContext.step,
             isStepFailed = isStepFailed,
             envUpdate = stepContext.envUpdate(),
@@ -107,7 +105,7 @@ class ChefRunCoordinator(val step : ChefRun,
     }
 
     def getActionExecutor(action: Action) = {
-        writeLog("Starting action %s".format(action))
+        writeLog("Starting action %s".format(action.getClass.getSimpleName))
         action match {
             case a : InitExecNode => execPluginContext.execNodeInitializer(a)
             case a : InitChefNode => chefPluginContext.chefNodeInitializer(a)
