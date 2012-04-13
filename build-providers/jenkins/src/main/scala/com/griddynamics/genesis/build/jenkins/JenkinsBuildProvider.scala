@@ -42,7 +42,7 @@ import org.apache.http.protocol.{HttpContext, BasicHttpContext}
 
 class JenkinsBuildProvider(val specification : JenkinsConnectSpecification) extends BuildProvider {
 
-    override def mode = "jenkins"
+    override val mode = "jenkins"
     var next : Int = _
     var buildSpec : BuildSpecification = _
     override def build(values : Map[String,  String]) { doBuild(Specifications(values)) }

@@ -33,8 +33,7 @@ import com.griddynamics.genesis.util.{Closeables, InputUtil}
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner
 import org.springframework.core.`type`.filter.AnnotationTypeFilter
 import collection.JavaConversions._
-import java.util.{Enumeration, Properties, UUID}
-import java.net.URL
+import java.util.{Properties, UUID}
 
 class PluginLoader extends BeanClassLoaderAware with BeanDefinitionRegistryPostProcessor with Ordered {
 
