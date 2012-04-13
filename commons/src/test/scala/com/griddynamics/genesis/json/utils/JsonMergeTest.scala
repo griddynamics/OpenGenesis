@@ -24,6 +24,21 @@ class JsonMergeTest {
     }
     }""")
 
+  val mergeStruct = JsonParser.parse("""{
+    "test" : {
+        "list" : [1, 2, 3]
+    }
+  }""")
+
+  val afterMerge = JsonParser.parse("""{
+        "test" : {
+            "val1" : "%%foo%%",
+            "val2" : "%%bar%%i%%baz%%",
+            "val3" : "baz",
+            "list" : [1, 2, 3]
+        }
+  }""")
+
   @Test
   def testMerge() {
     val merged_ = substituteByKey(Source.fromString(source),
@@ -37,4 +52,11 @@ class JsonMergeTest {
       Map("foo" -> "fred", "bar" -> "w", "baz" -> "lma"))
     Assert.assertEquals(merged, merged_)
   }
+
+    @Test
+    def testFullMergeStructures() {
+        val merged_ = merge(Source.fromString(source),
+            mergeStruct)
+        Assert.assertEquals(afterMerge, merged_)
+    }
 }

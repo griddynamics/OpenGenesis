@@ -116,7 +116,7 @@ class Ec2VmCreationStrategyProvider extends JCloudsVmCreationStrategyProvider {
           .keyPair(ec2KeyPair)
           .securityGroups(ec2SecurityGroup)
       }
-      override protected def group(env: Environment, vm: VirtualMachine)  = ec2SecurityGroup
+      override protected def group(env: Environment, vm: VirtualMachine) = ec2SecurityGroup
     }
   }
 };

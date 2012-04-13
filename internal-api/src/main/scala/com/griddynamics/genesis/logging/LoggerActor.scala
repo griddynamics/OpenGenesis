@@ -26,17 +26,6 @@ import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.service.StoreService
 import akka.actor.{ActorRef, Actor}
 
-/*
- * Copyright (c) 2011 Grid Dynamics Consulting Services, Inc, All Rights Reserved
- *   http://www.griddynamics.com
- *
- *   For information about the licensing and copyright of this document please
- *   contact Grid Dynamics at info@griddynamics.com.
- *
- *   $Id: $
- *   @Project:     Genesis
- *   @Description: A cloud deployment platform
- */
 class LoggerActor(val service: StoreService) extends Actor with Logging {
   protected def receive = {
     case Log(id, message) => {
@@ -47,8 +36,14 @@ class LoggerActor(val service: StoreService) extends Actor with Logging {
 
 case class Log(stepId : Int, message: String)
 
+trait InternalLogger {
+   def stepId : Int
+   def writeLog(message : String) = {
+       LoggerWrapper.writeLog(stepId, message)
+   }
+}
 
-object LoggerWrapper extends Logging{
+object LoggerWrapper extends Logging {
 
   def start(storeService: StoreService) = {
     Actor.registry.actorsFor(classOf[LoggerActor]).isEmpty match {
