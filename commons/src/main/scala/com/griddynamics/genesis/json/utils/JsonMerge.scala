@@ -1,8 +1,8 @@
 package com.griddynamics.genesis.json.utils
 
 import scala.io.Source
-import net.liftweb.json.{parse, render, compact}
 import net.liftweb.json.JsonAST.{JValue, JString, JField}
+import net.liftweb.json.{JsonParser, parse, render, compact}
 
 object JsonMerge {
   def substituteByKey(source : Source, replacements: Map[String, String]) =
@@ -28,6 +28,12 @@ object JsonMerge {
         }
       }
     }
+
+    def merge(source: JValue, attributes: JValue) : JValue = {
+        source.merge(attributes)
+    }
   
     implicit def JValueToSource(value: JValue) : Source = Source.fromString(compact(render(value)))
+    implicit def SourceToJValue(value: Source) : JValue = JsonParser.parse(value.getLines().mkString)
+
 }
