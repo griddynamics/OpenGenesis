@@ -34,6 +34,17 @@ import org.springframework.transaction.annotation.Transactional
 class DefaultConfigService(val config: AbstractConfiguration) extends service.ConfigService {
 
     @Transactional(readOnly = true)
+    def get[B](name: String, default: B): B = {
+      (default match {
+        case value: Int => config.getInt(name, value)
+        case value: Long => config.getLong(name, value)
+        case value: String => config.getString(name, value)
+        case value: Boolean => config.getBoolean(name, value)
+        case _ => throw new IllegalArgumentException("Not supported type")
+      }).asInstanceOf[B]
+    }
+
+    @Transactional(readOnly = true)
     def get(name: String) = Option(config.getProperty(name))
 
     @Transactional(readOnly = true)

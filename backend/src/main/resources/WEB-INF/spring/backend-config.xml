@@ -97,5 +97,9 @@
         <constructor-arg name="pluginLoader" ref="pluginLoader" />
     </bean> 
 
+    <bean id="pluginRegistry" class="com.griddynamics.genesis.plugin.PluginRegistryImpl">
+        <constructor-arg name="configService" ref="configService"/>
+    </bean>
+    
     <context:component-scan base-package="com.griddynamics.genesis.configuration" />
 </beans>

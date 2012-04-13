@@ -26,6 +26,7 @@ package com.griddynamics.genesis.service
 import com.griddynamics.genesis.api.{RequestResult, ConfigProperty}
 
 trait ConfigService {
+    def get[B](name: String, default: B): B
     def get(name: String) : Option[Any]
     def listSettings(prefix: Option[String]) : Seq[ConfigProperty]
     def update(name:String, value:Any) : RequestResult
@@ -34,6 +35,9 @@ trait ConfigService {
 
 object GenesisSystemProperties {
     val BACKEND = "backend.properties"
+    val PREFIX = "genesis.system"
+    val PLUGIN_PREFIX = "genesis.plugin"
+
     val SERVICE_BACKEND_URL = "genesis.system.service.backendUrl"
     val SERVICE_REST_USEMOCK = "genesis.system.service.rest.use.mock"
     val SECURITY_CONFIG = "genesis.system.security.config"
