@@ -41,7 +41,7 @@ class BuildStepCoordinator(val step : Step, context: StepExecutionContext, plugi
 
         pluginContext.buildProvider(buildStep.provider) match {
             case None => {
-                log.debug("No build provider found for name = [" + buildStep.provider + "]")
+                log.debug("No build provider found for name = [%s]", buildStep.provider)
                 stepFailed = true;
                 Seq()
             }
