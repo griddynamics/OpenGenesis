@@ -32,15 +32,17 @@ import java.util.{Collections, Map => JMap}
 
 class BuildStepBuilderFactory extends StepBuilderFactory {
     val stepName = "build"
-    def newStepBuilder = new StepBuilder {
-      @BeanProperty var attrs: JMap[Any, Any] = Collections.emptyMap()
-      @BeanProperty var provider: String = _
-
-      def getDetails = {
-        val toMap: Map[String, String] = (for((k,v) <- attrs.toMap) yield (String.valueOf(k), String.valueOf(v))).toMap
-        new BuildStep(toMap ++ templateContext, provider)
-      }
-    }
+    def newStepBuilder: BuildStepBuilder = new BuildStepBuilder
 }
 
 case class BuildStep(values: Map[String, String], provider: String) extends Step
+
+class BuildStepBuilder extends StepBuilder {
+  @BeanProperty var attrs: JMap[Any, Any] = Collections.emptyMap()
+  @BeanProperty var provider: String = _
+
+  def getDetails = {
+    val toMap: Map[String, String] = (for((k,v) <- attrs.toMap) yield (String.valueOf(k), String.valueOf(v))).toMap
+    new BuildStep(toMap ++ templateContext, provider)
+  }
+}
