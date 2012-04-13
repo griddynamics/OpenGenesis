@@ -24,7 +24,7 @@ package com.griddynamics.genesis.build
 
 trait BuildProvider  {
     def mode : String
-    def build(values: Map[String, String]) {}
+    def build(values: Map[String, String])
     def query() : Option[BuildResult]
     def cancel()
 }
@@ -41,6 +41,9 @@ trait BuildResult {
 
 case class NullBuildProvider() extends BuildProvider {
   val mode = "null"
+
+  def build(values: Map[String, String]) {}
+
   def query() = Some(new BuildResult {
     def success = false
   })

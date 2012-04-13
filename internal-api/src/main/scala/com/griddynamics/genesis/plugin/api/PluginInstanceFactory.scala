@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
+ *   Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
  *   This library is free software; you can redistribute it and/or modify it under the terms of
@@ -17,33 +17,14 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.build
+package com.griddynamics.genesis.plugin.api
 
-import org.springframework.context.annotation.{Configuration, Bean}
-import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.plugin.PluginRegistry
+trait PluginInstanceFactory[B <: AnyRef] {
+  def create(pluginConfig: Map[String, Any]): B
 
-
-trait BuildContext {
-    def buildProvider(provider: String) : Option[BuildProvider]
+  def pluginClazz[B: ClassManifest]: Class[_] = classManifest[B].erasure
 }
 
-@Configuration
-class BuildPluginContextImpl {
-
-    @Autowired var pluginRegistry: PluginRegistry = _
-
-    @Bean def bootstrapStepBuilderFactory = new BuildStepBuilderFactory()
-
-    @Bean def bootstrapStepCoordinatorFactory = new BuildStepCoordinatorFactory(() =>
-      new BuildContext {
-        val plugins = pluginRegistry.getPlugins(classOf[BuildProvider])
-
-        def buildProvider(provider: String) =
-          plugins.values.find { _.mode == provider }
-      }
-    );
-}
