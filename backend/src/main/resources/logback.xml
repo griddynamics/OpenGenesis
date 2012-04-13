@@ -39,6 +39,7 @@
     <!--<logger name="com.griddynamics.genesis.jclouds" level="trace"/>-->
 
     <logger name="org.jclouds" level="debug"/>
+    <logger name="org.jclouds.http" level="warn"/>
     <logger name="jclouds.compute" level="debug"/>
     <logger name="com.jcraft" level="debug"/>
     <!--<logger name="org.eclipse.jetty" level="debug"/>-->
