@@ -29,14 +29,17 @@ import com.griddynamics.genesis.exec.action._
 import com.griddynamics.genesis.exec._
 import com.griddynamics.genesis.plugin.{GenesisStepResult, StepExecutionContext}
 import com.griddynamics.genesis.model.VmStatus
+import com.griddynamics.genesis.logging.InternalLogger
 
 class ChefRunCoordinator(val step : ChefRun,
                          stepContext : StepExecutionContext,
                          execPluginContext : ExecPluginContext,
-                         chefPluginContext : ChefPluginContext) extends ActionOrientedStepCoordinator{
+                         chefPluginContext : ChefPluginContext) extends ActionOrientedStepCoordinator with InternalLogger {
+    override val stepId = stepContext.step.id
     var isStepFailed = false
 
     def onStepStart() = {
+        writeLog("Starting phase %s".format(stepContext.step.phase))
         val (tVms, clearVms) = stepContext.vms(step).filter(_.status == VmStatus.Ready).partition(_.get(ExecVmAttrs.HomeDir).isDefined)
         val (chefVms, execVms) = tVms.partition(_.get(ChefVmAttrs.ChefNodeName).isDefined)
 
@@ -48,60 +51,70 @@ class ChefRunCoordinator(val step : ChefRun,
         clearActions ++ execActions ++ chefActions
     }
 
-    def onActionFinish(result : ActionResult) = result match {
-        case _ if isStepFailed => {
-            Seq()
-        }
-        case a @ ExecFinished(_, _) if (!a.isExecSuccess) => {
-            isStepFailed = true
-            Seq()
-        }
-        case ExecInitFail(a) => {
-            stepContext.updateVm(a.vm)
-            isStepFailed = true
-            Seq()
-        }
+    def onActionFinish(result : ActionResult) = {
+        writeLog("Action finished with result %s".format(result))
+        result match {
+            case _ if isStepFailed => {
+                Seq()
+            }
+            case a @ ExecFinished(_, _) if (!a.isExecSuccess) => {
+                isStepFailed = true
+                Seq()
+            }
+            case ExecInitFail(a) => {
+                stepContext.updateVm(a.vm)
+                isStepFailed = true
+                Seq()
+            }
 
-        case ExecInitSuccess(a) => {
-            stepContext.updateVm(a.vm)
-            Seq(InitChefNode(a.env, a.vm))
-        }
-        case ChefInitSuccess(a, d) => {
-            stepContext.updateVm(a.vm)
-            Seq(RunPreparedExec(d, a))
-        }
-        case ChefRunPrepared(a, d) => {
-            Seq(RunPreparedExec(d, a))
-        }
-        case ExecFinished(RunPreparedExec(details, _ : InitChefNode), _) => {
-            Seq(PrepareInitialChefRun(details.env, details.vm))
-        }
-        case ExecFinished(RunPreparedExec(details, _ : PrepareInitialChefRun), _) => {
-            val label = "%d.%d.%s".format(stepContext.workflow.id, stepContext.step.id,
-                                          stepContext.step.phase)
+            case ExecInitSuccess(a) => {
+                stepContext.updateVm(a.vm)
+                Seq(InitChefNode(a.env, a.vm))
+            }
+            case ChefInitSuccess(a, d) => {
+                stepContext.updateVm(a.vm)
+                Seq(RunPreparedExec(d, a))
+            }
+            case ChefRunPrepared(a, d) => {
+                Seq(RunPreparedExec(d, a))
+            }
+            case ExecFinished(RunPreparedExec(details, _ : InitChefNode), _) => {
+                Seq(PrepareInitialChefRun(details.env, details.vm))
+            }
+            case ExecFinished(RunPreparedExec(details, _ : PrepareInitialChefRun), _) => {
+                val label = "%d.%d.%s".format(stepContext.workflow.id, stepContext.step.id,
+                    stepContext.step.phase)
 
-            Seq(PrepareRegularChefRun(label, details.env, details.vm, step.runList, step.jattrs))
-        }
-        case ExecFinished(RunPreparedExec(_, _ : PrepareRegularChefRun), _) => {
-            Seq()
-        }
-        case _ => {
-            isStepFailed = true
-            Seq()
+                Seq(PrepareRegularChefRun(label, details.env, details.vm, step.runList, step.jattrs))
+            }
+            case ExecFinished(RunPreparedExec(_, _ : PrepareRegularChefRun), _) => {
+                Seq()
+            }
+            case _ => {
+                isStepFailed = true
+                Seq()
+            }
         }
     }
 
-    def getStepResult() = GenesisStepResult(stepContext.step,
-                                            isStepFailed = isStepFailed,
-                                            envUpdate = stepContext.envUpdate(),
-                                            vmsUpdate = stepContext.vmsUpdate())
+    def getStepResult() = {
+        writeLog("Final step result is %s".format(isStepFailed))
 
-    def getActionExecutor(action: Action) = action match {
-        case a : InitExecNode => execPluginContext.execNodeInitializer(a)
-        case a : InitChefNode => chefPluginContext.chefNodeInitializer(a)
-        case a : PrepareInitialChefRun => chefPluginContext.initialChefRunPreparer(a)
-        case a : PrepareRegularChefRun => chefPluginContext.regularChefRunPreparer(a)
-        case a : RunExec => execPluginContext.execRunner(a)
+        GenesisStepResult(stepContext.step,
+            isStepFailed = isStepFailed,
+            envUpdate = stepContext.envUpdate(),
+            vmsUpdate = stepContext.vmsUpdate())
+    }
+
+    def getActionExecutor(action: Action) = {
+        writeLog("Starting action %s".format(action))
+        action match {
+            case a : InitExecNode => execPluginContext.execNodeInitializer(a)
+            case a : InitChefNode => chefPluginContext.chefNodeInitializer(a)
+            case a : PrepareInitialChefRun => chefPluginContext.initialChefRunPreparer(a)
+            case a : PrepareRegularChefRun => chefPluginContext.regularChefRunPreparer(a)
+            case a : RunExec => execPluginContext.execRunner(a)
+        }
     }
 
     def onStepInterrupt(signal: Signal) = Seq()
