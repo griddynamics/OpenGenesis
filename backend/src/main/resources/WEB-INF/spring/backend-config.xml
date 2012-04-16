@@ -62,7 +62,11 @@
     </bean>
 
     <bean id="dbConfig" class="org.apache.commons.configuration.DatabaseConfiguration" depends-on="genesisSchemaCreator">
-        <constructor-arg ref="ds" />
+        <constructor-arg>
+            <bean class="org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy">
+                <constructor-arg ref="ds" />
+            </bean>
+        </constructor-arg>
         <constructor-arg value="settings" />
         <constructor-arg value="name" />
         <constructor-arg value="value" />
@@ -86,6 +90,7 @@
     <bean id="genesisSchemaCreator" class="com.griddynamics.genesis.configuration.GenesisSchemaCreator" >
         <constructor-arg ref="ds" />
         <constructor-arg ref="squerylTransactionManager" />
+        <constructor-arg value="#{fileProps['genesis.system.jdbc.drop.db']}" />
     </bean>
 
     <tx:annotation-driven transaction-manager="squerylTransactionManager"/>

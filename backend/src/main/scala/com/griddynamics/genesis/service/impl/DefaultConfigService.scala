@@ -26,9 +26,9 @@ package com.griddynamics.genesis.service.impl
 import com.griddynamics.genesis.service
 import com.griddynamics.genesis.api
 import api.RequestResult
-import org.apache.commons.configuration.AbstractConfiguration
 import collection.JavaConversions.asScalaIterator
 import org.springframework.transaction.annotation.Transactional
+import org.apache.commons.configuration.AbstractConfiguration
 
 // TODO: add synchronization?
 class DefaultConfigService(val config: AbstractConfiguration) extends service.ConfigService {
@@ -49,14 +49,10 @@ class DefaultConfigService(val config: AbstractConfiguration) extends service.Co
 
     @Transactional(readOnly = true)
     def listSettings(prefix: Option[String]) = prefix.map(config.getKeys(_)).getOrElse(config.getKeys())
-        .map(k => api.ConfigProperty(k, config.getString(k))).toSeq
+        .map(k => api.ConfigProperty(k, config.getString(k))).toSeq.sortBy(_.name)
 
     @Transactional
-    def update(name: String, value: Any) = try {
-        config.setProperty(name, value); RequestResult(isSuccess = true)
-    } catch {
-        case _ => RequestResult(isSuccess = false)
-    }
+    def update(name: String, value: Any) {config.setProperty(name, value)}
 
     @Transactional
     def delete(key: String) = RequestResult(isSuccess = try {
