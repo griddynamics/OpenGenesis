@@ -40,12 +40,12 @@ class Describer(description: String) {
 
   def param(key: String, value: Iterable[_]): Describer = {
     params(key) = "[%s]".format(value.mkString(", "))
-    this;
+    this
   }
 
   def param(key: String, values: Map[String, String]): Describer = {
     params(key) = "{%s}".format(toString(values))
-    this;
+    this
   }
 
   private def toString(tuple: (String, String)): String = tuple._1 + " = " + tuple._2;
