@@ -27,23 +27,38 @@ package step
 import net.liftweb.json.JsonAST.JObject
 import com.griddynamics.genesis.plugin.RoleStep
 import com.griddynamics.genesis.workflow.Step
+import com.griddynamics.genesis.util.Describer
 
 sealed trait ChefStep extends Step
 
 case class ChefRun(roles: Set[String],
                    isGlobal: Boolean,
                    runList: Seq[String] = Seq(),
-                   jattrs: JObject = JObject(List())) extends ChefStep with RoleStep
+                   jattrs: JObject = JObject(List())) extends ChefStep with RoleStep {
+
+  override val stepDescription = new Describer("Chef recipe execution").param("receipes", runList).describe
+}
 
 case class CreateChefDatabag(databag: String,
                              items: Map[String, JObject] = Map(),
-                             overwrite : Boolean) extends ChefStep
+                             overwrite : Boolean) extends ChefStep {
+
+  override val stepDescription = new Describer("Chef databag creation").param("databag", databag).describe
+}
 
 case class CreateChefRole(role: String,
                           description: String = "",
                           runList: Seq[String] = Seq(),
                           defaults: JObject = JObject(List()),
                           overrides: JObject = JObject(List()),
-                          overwrite : Boolean) extends ChefStep
+                          overwrite : Boolean) extends ChefStep  {
+  override val stepDescription = new Describer("Chef role creation")
+    .param("role", role)
+    .param("receipes", runList)
+    .describe
 
-case class DestroyChefEnv() extends ChefStep
+}
+
+case class DestroyChefEnv() extends ChefStep {
+  override val stepDescription = "Chef environment destruction"
+}
