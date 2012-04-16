@@ -79,14 +79,14 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
       var toBeProcessed = rawSteps;
 
       while(sorted.size != rawSteps.size) {
-        val (finished, unprocessed) = toBeProcessed.partition (
+        val (noPrecedingSteps, havePrecedingSteps) = toBeProcessed.partition (
           step => step.precedingPhases.forall(phase=> toBeProcessed.find(_.phase == phase).isEmpty)
         )
-        if(finished.isEmpty && !unprocessed.isEmpty) { // cyclic dependencies, let flow coordinator deal with it
+        if(noPrecedingSteps.isEmpty && !havePrecedingSteps.isEmpty) { // cyclic dependencies, let flow coordinator deal with it
           return rawSteps
         }
-        toBeProcessed = unprocessed
-        sorted ++= finished
+        toBeProcessed = havePrecedingSteps
+        sorted ++= noPrecedingSteps
       }
       sorted.toSeq
     }
