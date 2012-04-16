@@ -40,10 +40,12 @@ case class ProvisionVm(roleName: String,
 
   override val stepDescription =
     new Describer("Virtual machine(s) provisioning")
+      .param("role", roleName)
       .param("hardware id", hardwareId)
       .param("image id", imageId)
       .param("quantity", quantity.toString)
       .param("instance id", instanceId)
+      .param("ip address", ip)
       .describe
 }
 
