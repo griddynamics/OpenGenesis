@@ -59,4 +59,6 @@ case class CreateChefRole(role: String,
 
 }
 
-case class DestroyChefEnv() extends ChefStep
+case class DestroyChefEnv() extends ChefStep {
+  override val stepDescription = "Chef environment destruction"
+}
