@@ -28,7 +28,8 @@ import akka.actor.TypedActor
 import com.griddynamics.genesis.workflow.actor.{TypedFlowCoordinatorImpl, TypedFlowCoordinator}
 import com.griddynamics.genesis.plugin.{Cancel, StepCoordinatorFactory, GenesisStep}
 import com.griddynamics.genesis.core._
-import com.griddynamics.genesis.service.{TemplateDefinition, TemplateService, StoreService}
+import com.griddynamics.genesis.service.{TemplateService, StoreService}
+import collection.mutable.ArrayBuffer
 
 trait RequestDispatcher {
     def createEnv(envName: String)
@@ -64,13 +65,30 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
         val definition = templateService.findTemplate(env.templateName, env.templateVersion)
         val rawSteps = definition.flatMap(_.getWorkflow(workflow.name)
             .map(_.embody(workflow.variables, Option(env.name))))
-        rawSteps.map(applyIds(_)).foreach(s => {
+        rawSteps.map(sortByPhase).map(applyIds(_)).foreach(s => {
             coordinators(env.name) = if (Option(workflow.name) == definition.map(_.destroyWorkflow.name))
                 destroyingCoordinator(envName, s)
             else regularCoordinator(envName, s)
 
             coordinators(env.name).start
         })
+    }
+
+    def sortByPhase(rawSteps: Seq[GenesisStep]): Seq[GenesisStep] = {
+      val sorted: mutable.ArrayBuffer[GenesisStep]  = new ArrayBuffer[GenesisStep]()
+      var toBeProcessed = rawSteps;
+
+      while(sorted.size != rawSteps.size) {
+        val (noPrecedingSteps, havePrecedingSteps) = toBeProcessed.partition (
+          step => step.precedingPhases.forall(phase=> toBeProcessed.find(_.phase == phase).isEmpty)
+        )
+        if(noPrecedingSteps.isEmpty && !havePrecedingSteps.isEmpty) { // cyclic dependencies, let flow coordinator deal with it
+          return rawSteps
+        }
+        toBeProcessed = havePrecedingSteps
+        sorted ++= noPrecedingSteps
+      }
+      sorted.toSeq
     }
 
     def cancelWorkflow(envName: String) {
