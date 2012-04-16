@@ -39,7 +39,7 @@ case class ProvisionVm(roleName: String,
   def roles = Set(roleName)
 
   override val stepDescription =
-    new Describer("Virtual mashine(s) provisioning")
+    new Describer("Virtual machine(s) provisioning")
       .param("hardware id", hardwareId)
       .param("image id", imageId)
       .param("quantity", quantity.toString)
@@ -53,7 +53,7 @@ case class DestroyVm(roleName: String,
 
   def roles = Set(roleName)
 
-  override val stepDescription = "Virtual mashine(s) destruction"
+  override val stepDescription = "Virtual machine(s) destruction"
 }
 
 case class DestroyEnv() extends JCloudsStep {
