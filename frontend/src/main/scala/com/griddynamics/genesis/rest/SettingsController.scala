@@ -28,6 +28,7 @@ import org.springframework.stereotype.Controller
 import com.griddynamics.genesis.service.ConfigService
 import com.griddynamics.genesis.rest.GenesisRestController.extractParamsMap
 import javax.servlet.http.HttpServletRequest
+import com.griddynamics.genesis.api.RequestResult
 
 @Controller
 @RequestMapping(value = Array("/rest/settings"))
@@ -39,8 +40,12 @@ class SettingsController(configService: ConfigService) extends RestApiExceptions
 
     @RequestMapping(value = Array("{key:.+}"), method = Array(RequestMethod.PUT))
     @ResponseBody
-    def update(@PathVariable("key") key: String, request: HttpServletRequest) =
+    def update(@PathVariable("key") key: String, request: HttpServletRequest) = try {
         configService.update(key, extractParamsMap(request)("value"))
+        RequestResult(isSuccess = true)
+    } catch {
+        case e => RequestResult(isSuccess = false, compoundServiceErrors = Seq(e.getMessage))
+    }
 
 
     @RequestMapping(value = Array("{key:.+}"), method = Array(RequestMethod.DELETE))
