@@ -33,7 +33,9 @@ import org.springframework.core.convert.support.ConversionServiceFactory
 import com.griddynamics.genesis.workflow.Step
 import com.griddynamics.genesis.template.{VersionedTemplate, TemplateRepository}
 
-case class DoNothingStep(name: String) extends Step
+case class DoNothingStep(name: String) extends Step {
+  override def stepDescription = "Best step ever!"
+}
 
 class DoNothingStepBuilderFactory extends StepBuilderFactory {
     val stepName = "teststep"

@@ -132,7 +132,7 @@ abstract class GenesisFlowCoordinatorBase(val envName: String,
                         workflow.id,
                         step.phase,
                         WorkflowStepStatus.Requested,
-                        step.actualStep.toString
+                        step.actualStep.stepDescription
                     )
                 )
             step.copy(id = workflowStep.id)

@@ -22,7 +22,9 @@
  */
 package com.griddynamics.genesis.workflow
 
-trait Step
+trait Step {
+  def stepDescription = toString
+}
 
 trait StepResult {
     val step: Step

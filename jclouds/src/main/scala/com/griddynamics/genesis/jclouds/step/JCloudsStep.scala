@@ -24,6 +24,7 @@ package com.griddynamics.genesis.jclouds.step
 
 import com.griddynamics.genesis.plugin.RoleStep
 import com.griddynamics.genesis.workflow.Step
+import com.griddynamics.genesis.util.Describer
 
 sealed trait JCloudsStep extends Step
 
@@ -36,6 +37,14 @@ case class ProvisionVm(roleName: String,
   def isGlobal = true
 
   def roles = Set(roleName)
+
+  override val stepDescription =
+    new Describer("Virtual Mashines Provisioning")
+      .param("hardware id", hardwareId)
+      .param("image id", imageId)
+      .param("quantity", quantity.toString)
+      .param("instance id", instanceId)
+      .describe
 }
 
 case class DestroyVm(roleName: String,
@@ -43,6 +52,10 @@ case class DestroyVm(roleName: String,
   def isGlobal = true
 
   def roles = Set(roleName)
+
+  override val stepDescription = "Virtual Mashine Desctruction"
 }
 
-case class DestroyEnv() extends JCloudsStep
+case class DestroyEnv() extends JCloudsStep {
+  override val stepDescription = "Environment Destruction"
+}
