@@ -53,7 +53,7 @@ case class DestroyVm(roleName: String,
 
   def roles = Set(roleName)
 
-  override val stepDescription = "Virtual mashine(s) desctruction"
+  override val stepDescription = "Virtual mashine(s) destruction"
 }
 
 case class DestroyEnv() extends JCloudsStep {
