@@ -20,46 +20,43 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.exec
+package com.griddynamics.genesis.util
 
-import reflect.BeanProperty
-import collection.{JavaConversions => JC}
-import java.util.{Collections, List => JList}
-import com.griddynamics.genesis.plugin._
-import com.griddynamics.genesis.workflow.Step
-import com.griddynamics.genesis.util.Describer
+import collection.mutable
 
-sealed trait ExecStep extends Step
+class Describer(description: String) {
+  val Unspecified: String = "unspecified";
 
-case class ExecRunStep(roles: Set[String], ipOfRole: String,
-                       script: String) extends ExecStep with RoleStep {
-  def isGlobal = false
+  private val params = new mutable.LinkedHashMap[String, String]
 
-  override val stepDescription = new Describer("Executing shell script").param("script", script).describe
-}
-
-
-class ExecRunStepBuilderFactory extends StepBuilderFactory {
-  val stepName = "execrun"
-
-  def newStepBuilder = new StepBuilder {
-    @BeanProperty var roles: JList[String] = Collections.emptyList()
-    @BeanProperty var ipOfRole: String = _
-    @BeanProperty var script: String = _
-
-    def getDetails = ExecRunStep(JC.asScalaBuffer(roles).toSet, ipOfRole, script)
+  def param(key: String, value: Option[String]): Describer = {
+    params(key) = value.getOrElse(Unspecified);
+    this
   }
-}
 
-class ExecStepCoordinatorFactory(execPluginContext: ExecPluginContext)
-  extends PartialStepCoordinatorFactory {
+  def param(key: String, value: String): Describer = {
+    param(key, Some(value))
+  }
 
-  def isDefinedAt(step: Step) = step.isInstanceOf[ExecStep]
+  def param(key: String, value: Iterable[_]): Describer = {
+    params(key) = "[%s]".format(value.mkString(", "))
+    this
+  }
 
-  def apply(step: Step, context: StepExecutionContext) = step match {
-    case s: ExecRunStep => {
-      execPluginContext.execStepCoordinator(s, context)
+  def param(key: String, values: Map[String, String]): Describer = {
+    params(key) = "{%s}".format(toString(values))
+    this
+  }
+
+  private def toString(tuple: (String, String)): String = tuple._1 + " = " + tuple._2;
+
+  private def toString(values: Map[String, String]): String = values.map(toString(_)).mkString(", ")
+
+  def describe: String = {
+    if (params.isEmpty) {
+      description
+    } else {
+      "%s (%s)".format(description, toString(params.toMap))
     }
   }
-
 }
