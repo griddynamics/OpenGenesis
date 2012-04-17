@@ -40,7 +40,6 @@
 
     <logger name="org.jclouds" level="debug"/>
     <logger name="org.jclouds.http" level="warn"/>
-    <logger name="org.jclouds.rest.internal" level="warn"/>
     <logger name="jclouds.compute" level="debug"/>
     <logger name="com.jcraft" level="debug"/>
     <!--<logger name="org.eclipse.jetty" level="debug"/>-->
