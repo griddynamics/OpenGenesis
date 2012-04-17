@@ -28,20 +28,30 @@ import model.GenesisSchema
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.util.Logging
+import java.util.HashSet
 
 class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectProperty, api.ProjectProperty](GenesisSchema.projectProperties)
   with repository.ProjectPropertyRepository with Logging {
 
+  val namePattern = """^([a-zA-Z0-9.]{1,1024})$""".r
+
   @Transactional(readOnly = true)
   def listForProject(projectId: Int): List[api.ProjectProperty] = {
     val modelProperties = from(GenesisSchema.projectProperties)(pp => where(pp.projectId === projectId) select(pp) orderBy(pp.id asc)).toList
-
     modelProperties.map(convert(_))
   }
 
   @Transactional
   def updateForProject(projectId: Int, properties : List[api.ProjectProperty]) {
-    val modelProperties = for (pp <- properties.map(convert(_))) yield new model.ProjectProperty(projectId, pp.name, pp.value)
+    val names = new HashSet[String](properties.size);
+    val modelProperties = for (pp <- properties.map(convert(_))) yield {
+      validate(pp);
+      if (names.contains(pp.name)) {
+        throw new IllegalArgumentException(String.format("Duplicate project property name '%s'", pp.name));
+      }
+      names.add(pp.name);
+      new model.ProjectProperty(projectId, pp.name, pp.value)
+    }
 
     GenesisSchema.projectProperties.deleteWhere(pp => pp.projectId === projectId)
     GenesisSchema.projectProperties.insert(modelProperties)
@@ -55,5 +65,14 @@ class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectP
     val projectProperty = new model.ProjectProperty(dto.projectId, dto.name, dto.value)
     projectProperty.id = dto.id
     projectProperty
+  }
+
+  def validate(property : api.ProjectProperty) {
+    if ((property.name == null) || property.name.isEmpty) {
+      throw new IllegalArgumentException("Project property with empty name");
+    }
+    if (namePattern.findFirstIn(property.name) == None) {
+      throw new IllegalArgumentException(String.format("Project property name '%s' does not match required form", property.name));
+    }
   }
 }
