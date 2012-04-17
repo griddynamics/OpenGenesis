@@ -24,6 +24,7 @@ package com.griddynamics.genesis.repository.impl
 
 import com.griddynamics.genesis.repository.AbstractGenericRepository
 import com.griddynamics.genesis.{repository, api, model}
+import api.RequestResult
 import model.GenesisSchema
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
@@ -42,19 +43,25 @@ class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectP
   }
 
   @Transactional
-  def updateForProject(projectId: Int, properties : List[api.ProjectProperty]) {
+  def updateForProject(projectId: Int, properties : List[api.ProjectProperty]): Option[RequestResult] = {
     val names = new HashSet[String](properties.size);
     val modelProperties = for (pp <- properties.map(convert(_))) yield {
-      validate(pp);
-      if (names.contains(pp.name)) {
-        throw new IllegalArgumentException(String.format("Duplicate project property name '%s'", pp.name));
+      validate(pp) match {
+        case Some(result) => return Option.apply(result)
+        case None => {
+          if (names.contains(pp.name)) {
+            return Option.apply(new RequestResult(isSuccess = false, compoundServiceErrors = Seq("Project property name '%s' is duplicated".format(pp.name))))
+          }
+          names.add(pp.name)
+          new model.ProjectProperty(projectId, pp.name, pp.value)
+        }
       }
-      names.add(pp.name);
-      new model.ProjectProperty(projectId, pp.name, pp.value)
     }
 
     GenesisSchema.projectProperties.deleteWhere(pp => pp.projectId === projectId)
     GenesisSchema.projectProperties.insert(modelProperties)
+
+    Option.empty
   }
 
   override implicit def convert(entity: model.ProjectProperty): api.ProjectProperty = {
@@ -67,12 +74,14 @@ class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectP
     projectProperty
   }
 
-  def validate(property : api.ProjectProperty) {
+  def validate(property: api.ProjectProperty): Option[RequestResult] = {
     if ((property.name == null) || property.name.isEmpty) {
-      throw new IllegalArgumentException("Project property with empty name");
+      return Option.apply(new RequestResult(isSuccess = false, compoundServiceErrors = Seq("Project property name is empty")))
     }
     if (namePattern.findFirstIn(property.name) == None) {
-      throw new IllegalArgumentException(String.format("Project property name '%s' does not match required form", property.name));
+      return Option.apply(new RequestResult(isSuccess = false, compoundServiceErrors = Seq("Project property name '%s' does not match required form".format(property.name))))
     }
+
+    Option.empty
   }
 }
