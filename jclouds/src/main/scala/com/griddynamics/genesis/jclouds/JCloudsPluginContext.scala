@@ -167,7 +167,8 @@ class JCloudsPluginContextImpl extends JCloudsPluginContext {
         new SshPortChecker(action,
                            computeService,
                            sshService,
-                           storeServiceContext.storeService)
+                           storeServiceContext.storeService,
+            portCheckTimeoutSecs*1000) with DurationLimitedActionExecutor
     }
 
     def publicIpCheckActionExecutor(action: CheckPublicIpAction) = {
