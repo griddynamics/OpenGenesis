@@ -46,10 +46,11 @@ class JdbcStoreServiceContext extends StoreServiceContext {
     @Bean def projectPropertyRepository = new ProjectPropertyRepository
 }
 
-class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager) extends SchemaCreator[GenesisSchema](GenesisSchema.envs.name) {
-    @Value("${genesis.system.jdbc.drop.db:false}") var drop : Boolean = _
+class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager,
+                           val dropNullable: java.lang.Boolean) extends SchemaCreator[GenesisSchema](GenesisSchema.envs.name) {
     override val transactionTemplate = new TransactionTemplate(transactionManager)
     override val schema = GenesisSchema
+    override def drop = if (dropNullable != null) Boolean2boolean(dropNullable) else false
 }
 
 object SquerylConfigurator {

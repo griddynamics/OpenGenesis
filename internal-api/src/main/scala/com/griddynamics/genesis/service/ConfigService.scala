@@ -29,7 +29,7 @@ trait ConfigService {
     def get[B](name: String, default: B): B
     def get(name: String) : Option[Any]
     def listSettings(prefix: Option[String]) : Seq[ConfigProperty]
-    def update(name:String, value:Any) : RequestResult
+    def update(name:String, value:Any)
     def delete(name:String) : RequestResult
 }
 
