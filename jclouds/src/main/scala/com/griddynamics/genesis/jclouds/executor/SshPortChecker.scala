@@ -23,14 +23,15 @@
 package com.griddynamics.genesis.jclouds.executors
 
 import com.griddynamics.genesis.service.{ComputeService, SshService, StoreService}
-import com.griddynamics.genesis.workflow.{Signal, SimpleSyncActionExecutor}
 import com.griddynamics.genesis.actions.provision.CheckSshPortAction
 import com.griddynamics.executors.provision.CommonSshPortChecker
+import com.griddynamics.genesis.workflow.{AsyncTimeoutAwareActionExecutor, Signal}
 
 class SshPortChecker(val action: CheckSshPortAction,
                      val computeService: ComputeService,
                      sshService: SshService,
-                     val storeService: StoreService) extends SimpleSyncActionExecutor with CommonSshPortChecker {
+                     val storeService: StoreService,
+                     val timeoutMillis: Long = 180 * 1000) extends AsyncTimeoutAwareActionExecutor with CommonSshPortChecker {
   lazy val sshClient = sshService.sshClient(action.env, action.vm)
 
   override def cleanUp(signal: Signal) {
