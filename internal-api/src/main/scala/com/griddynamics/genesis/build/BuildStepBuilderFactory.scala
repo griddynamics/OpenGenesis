@@ -28,6 +28,7 @@ import reflect.BeanProperty
 import collection.JavaConversions._
 import collection.immutable.Map
 import java.util.{Collections, Map => JMap}
+import com.griddynamics.genesis.util.Describer
 
 
 class BuildStepBuilderFactory extends StepBuilderFactory {
@@ -35,7 +36,12 @@ class BuildStepBuilderFactory extends StepBuilderFactory {
     def newStepBuilder: BuildStepBuilder = new BuildStepBuilder
 }
 
-case class BuildStep(values: Map[String, String], provider: String) extends Step
+case class BuildStep(values: Map[String, String], provider: String) extends Step {
+  override val stepDescription = new Describer("Build process execution")
+    .param("build system", provider)
+    .param("parameters", values)
+    .describe
+}
 
 class BuildStepBuilder extends StepBuilder {
   @BeanProperty var attrs: JMap[Any, Any] = Collections.emptyMap()

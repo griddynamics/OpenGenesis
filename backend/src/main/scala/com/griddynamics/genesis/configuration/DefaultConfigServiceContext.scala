@@ -24,30 +24,34 @@
 package com.griddynamics.genesis.configuration
 
 import org.springframework.context.annotation._
-import javax.annotation.Resource
-import org.springframework.core.io.ResourceLoader
-import com.griddynamics.genesis.util.Closeables
 import org.springframework.beans.factory.annotation._
 import com.griddynamics.genesis.service.impl
-import reflect.BeanProperty
-import java.util.Properties
 import org.springframework.beans.factory.config.PropertiesFactoryBean
-import org.apache.commons.configuration.{ConfigurationConverter, CompositeConfiguration, PropertiesConfiguration, Configuration => CommonsConfig}
+import org.springframework.transaction.support.{TransactionCallback, TransactionTemplate}
+import org.springframework.transaction.{TransactionStatus, PlatformTransactionManager}
+import org.apache.commons.configuration.{ConfigurationUtils, ConfigurationConverter, AbstractConfiguration}
 
 @Configuration
 class DefaultConfigServiceContext extends ConfigServiceContext {
-    @Autowired private var dbConfig : CommonsConfig = _
+    @Autowired private var dbConfig : AbstractConfiguration = _
     @Autowired private var fileProps: PropertiesFactoryBean = _
+    @Autowired private var transactionManager : PlatformTransactionManager = _
+
+    private lazy val transactionTemplate: TransactionTemplate = new TransactionTemplate(transactionManager)
 
     private lazy val config = {
-        val compConfig = new CompositeConfiguration
-        compConfig.addConfiguration(dbConfig, true) // updates go to DB, reads are from DB first
-        compConfig.addConfiguration(ConfigurationConverter.getConfiguration(fileProps.getObject)) // file properties are read after DB
-        compConfig
+        ConfigurationUtils.enableRuntimeExceptions(dbConfig)
+        // read properties from file
+        val mapConfig = ConfigurationConverter.getConfiguration(fileProps.getObject)
+        // override them by DB properties
+        ConfigurationUtils.copy(dbConfig, mapConfig)
+        // write the result into DB:
+        transactionTemplate.execute(new TransactionCallback[Unit] {
+            def doInTransaction(p1: TransactionStatus) = dbConfig.copy(mapConfig)
+        })
+        dbConfig
     }
 
     @Bean def configService = new impl.DefaultConfigService(config)
-
-    @BeanProperty var dbProps:Properties = _
 
 }

@@ -77,7 +77,7 @@ class GenesisStepCoordinator(val step: GenesisStep,
                     workflow.id,
                     step.phase,
                     status,
-                    step.actualStep.toString
+                    step.actualStep.stepDescription
                 )
         )
     }

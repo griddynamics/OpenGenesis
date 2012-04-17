@@ -37,6 +37,7 @@ trait WorkflowContext {
 class DefaultWorkflowContext extends WorkflowContext {
     @Value("${genesis.system.beat.period.ms:1000}") var beatPeriodMs: Int = _
     @Value("${genesis.system.flow.timeout.ms:3600000}") var flowTimeOutMs: Int = _
+    @Value("${genesis.system.flow.executor.sync.threads.max:5}") var syncExecThreadPoolSize: Int = _
 
     @Autowired var storeServiceContext: StoreServiceContext = _
     @Autowired var templateServiceContext: TemplateServiceContext = _
@@ -54,8 +55,9 @@ class DefaultWorkflowContext extends WorkflowContext {
             stepCoordinatorFactory = stepCoordinatorFactory)
     }
 
-    @Bean def executorService = Executors.newFixedThreadPool(5)
-
+    // this executor service is used to 'asynchronously' execute SyncActionExecutors,
+    // @see com.griddynamics.genesis.workflow.actor.SyncActionExecutorAdapter
+    @Bean def executorService = Executors.newFixedThreadPool(syncExecThreadPoolSize)
 
     @Bean def requestBroker = new RequestBrokerImpl(storeServiceContext.storeService,
         templateServiceContext.templateService,

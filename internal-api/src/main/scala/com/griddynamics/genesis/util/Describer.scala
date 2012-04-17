@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,29 +20,43 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
+package com.griddynamics.genesis.util
 
-package com.griddynamics.genesis.service
+import collection.mutable
 
-import com.griddynamics.genesis.api.{RequestResult, ConfigProperty}
+class Describer(description: String) {
+  val Unspecified: String = "unspecified";
 
-trait ConfigService {
-    def get[B](name: String, default: B): B
-    def get(name: String) : Option[Any]
-    def listSettings(prefix: Option[String]) : Seq[ConfigProperty]
-    def update(name:String, value:Any)
-    def delete(name:String) : RequestResult
-}
+  private val params = new mutable.LinkedHashMap[String, String]
 
-object GenesisSystemProperties {
-    val BACKEND = "backend.properties"
-    val PREFIX = "genesis.system"
-    val PLUGIN_PREFIX = "genesis.plugin"
+  def param(key: String, value: Option[String]): Describer = {
+    params(key) = value.getOrElse(Unspecified);
+    this
+  }
 
-    val SERVICE_BACKEND_URL = "genesis.system.service.backendUrl"
-    val SERVICE_REST_USEMOCK = "genesis.system.service.rest.use.mock"
-    val SECURITY_CONFIG = "genesis.system.security.config"
-    val SECURITY_GROUPS = "genesis.system.security.groups"
-    val BIND_HOST = "genesis.system.bind.host"
-    val BIND_PORT = "genesis.system.bind.port"
-    val WEB_RESOURCE_ROOTS = "genesis.system.web.resourceRoots"
+  def param(key: String, value: String): Describer = {
+    param(key, Some(value))
+  }
+
+  def param(key: String, value: Iterable[_]): Describer = {
+    params(key) = "[%s]".format(value.mkString(", "))
+    this
+  }
+
+  def param(key: String, values: Map[String, String]): Describer = {
+    params(key) = "{%s}".format(toString(values))
+    this
+  }
+
+  private def toString(tuple: (String, String)): String = tuple._1 + " = " + tuple._2;
+
+  private def toString(values: Map[String, String]): String = values.map(toString(_)).mkString(", ")
+
+  def describe: String = {
+    if (params.isEmpty) {
+      description
+    } else {
+      "%s (%s)".format(description, toString(params.toMap))
+    }
+  }
 }
