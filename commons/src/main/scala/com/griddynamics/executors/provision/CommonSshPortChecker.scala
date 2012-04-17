@@ -23,41 +23,56 @@
 package com.griddynamics.executors.provision
 
 import com.griddynamics.genesis.util.Logging
-import com.griddynamics.genesis.model.VmStatus
 import com.griddynamics.genesis.actions.provision._
 import com.griddynamics.genesis.workflow._
 import com.griddynamics.genesis.service.{StoreService, ComputeService}
 import com.griddynamics.genesis.util.shell.Command._
 import org.jclouds.ssh.{SshClient, SshException}
 import com.griddynamics.genesis.util.shell.command.echo
+import com.griddynamics.genesis.model.{VirtualMachine, VmStatus}
 
-trait CommonSshPortChecker extends SimpleSyncActionExecutor with Logging {
+trait CommonSshPortChecker extends AsyncTimeoutAwareActionExecutor with Logging {
   def sshClient: SshClient
   val action : CheckSshPortAction
   def computeService : ComputeService
   def storeService : StoreService
 
-  def startSync() = {
-    log.debug("Trying to connect via ssh to host with IPs '%s'", computeService.getIpAddresses(action.vm).map(_.publicIp))
+  def startAsync() {}
 
-    try {
-      val client = sshClient
-      client.connect()
-      client.exec(echo("ssh-test"))
-      action.vm.status = VmStatus.Ready
-      storeService.updateVm(action.vm)
-      SshCheckCompleted(action, action.vm)
-    } catch {
-      case e : SshException => {
-        log.debug("Ssh ping is failed: %s", e.getMessage)
-        log.trace(e, "Ssh ping is failed trace")
+  def connect : Option[VirtualMachine] = {
+      try {
+          val client = sshClient
+          client.connect()
+          client.exec(echo("ssh-test"))
+          client.disconnect()
+          Some(action.vm)
+      } catch {
+          case e : SshException => {
+              log.debug("Ssh ping is failed: %s", e.getMessage)
+              log.trace(e, "Ssh ping is failed trace")
+              None
+          }
 
+      }
+  }
+
+  def getResult() = {
+      connect match {
+          case Some(vm) => {
+              action.vm.status = VmStatus.Ready
+              storeService.updateVm(action.vm)
+              Some(SshCheckCompleted(action, action.vm))
+          }
+          case None => None
+      }
+  }
+
+    def getResultOnTimeout = {
+        log.debug("Action timed out")
         action.vm.status = VmStatus.Failed
         storeService.updateVm(action.vm)
         SshCheckFailed(action, action.vm)
-      }
     }
-  }
 }
 
 
