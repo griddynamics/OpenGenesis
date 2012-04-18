@@ -63,6 +63,7 @@ class CommonPortTestExecutor (val action : CheckPortAction,
 
   override def cleanUp(signal : Signal) {
     cFuture.cancel()
+    bootstrap.releaseExternalResources()
   }
 
   private def connect() {

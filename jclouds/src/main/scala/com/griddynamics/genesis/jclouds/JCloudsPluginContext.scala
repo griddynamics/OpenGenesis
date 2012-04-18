@@ -25,15 +25,8 @@ package com.griddynamics.genesis.jclouds
 import action.JCloudsProvisionVm
 import coordinators.JCloudsStepCoordinatorFactory
 import executors.{JCloudsVmDestructor, ProvisionExecutor, SshPortChecker}
-import org.springframework.context.annotation.{Configuration, Bean}
-import com.griddynamics.genesis.configuration.{StoreServiceContext, CredentialServiceContext}
 import org.springframework.beans.factory.annotation.{Value, Autowired}
 import org.jboss.netty.bootstrap.ClientBootstrap
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory
-import java.util.concurrent.Executors
-import org.jboss.netty.channel.{Channels, ChannelPipelineFactory}
-import org.jboss.netty.handler.logging.LoggingHandler
-import org.jboss.netty.logging.{Slf4JLoggerFactory, InternalLoggerFactory, InternalLogLevel}
 import com.griddynamics.genesis.jclouds.step.{DestroyEnvStepBuilderFactory, ProvisionVmsStepBuilderFactory}
 import com.griddynamics.genesis.workflow.DurationLimitedActionExecutor
 import com.griddynamics.genesis.service.{ComputeService, impl}
@@ -48,9 +41,11 @@ import com.griddynamics.context.provision.ProvisionContext
 import com.griddynamics.executors.provision.{CommonCheckPublicIpExecutor, CommonPortTestExecutor}
 import java.util.{List => JList}
 import collection.JavaConversions._
+import org.springframework.context.annotation.{Configuration, Bean}
+import com.griddynamics.genesis.configuration.{ClientBootstrapContext, StoreServiceContext, CredentialServiceContext}
 
 trait JCloudsPluginContext extends ProvisionContext[JCloudsProvisionVm] {
-    def clientBootstrap: ClientBootstrap
+    def clientBootstrapContext: ClientBootstrapContext
     def computeContext: ComputeServiceContext
     def nodeNamePrefix: String
 }
@@ -69,6 +64,7 @@ class JCloudsPluginContextImpl extends JCloudsPluginContext {
 
     @Autowired var storeServiceContext: StoreServiceContext = _
     @Autowired var credentialServiceContext: CredentialServiceContext = _
+    @Autowired var clientBootstrapContext: ClientBootstrapContext = _
 
     var providersMap: Map[String, JCloudsVmCreationStrategyProvider]  = _
 
@@ -86,29 +82,6 @@ class JCloudsPluginContextImpl extends JCloudsPluginContext {
     @Bean def provisionVmsStepBuilderFactory = new ProvisionVmsStepBuilderFactory
 
     @Bean def destroyEnvStepBuilderFactory = new DestroyEnvStepBuilderFactory
-
-    @Bean def clientBootstrap = {
-        InternalLoggerFactory.setDefaultFactory(new Slf4JLoggerFactory());
-        val bootstrap = new ClientBootstrap(socketChannelFactory)
-        bootstrap.setPipelineFactory(channelPipelineFactory)
-        bootstrap.setOption("connectTimeoutMillis", 10000)
-        bootstrap
-    }
-
-    @Bean def channelPipelineFactory = {
-        new ChannelPipelineFactory() {
-            def getPipeline = {
-                Channels.pipeline(new LoggingHandler(InternalLogLevel.INFO));
-            }
-        }
-    }
-
-    @Bean def socketChannelFactory = {
-        new NioClientSocketChannelFactory(
-            Executors.newSingleThreadExecutor(),
-            Executors.newSingleThreadExecutor()
-        )
-    }
 
     @Bean def computeContext = {
         val contextFactory = new ComputeServiceContextFactory
@@ -159,7 +132,7 @@ class JCloudsPluginContextImpl extends JCloudsPluginContext {
         new CommonPortTestExecutor(action,
                              computeService,
                              storeServiceContext.storeService,
-                             clientBootstrap,
+                             clientBootstrapContext.clientBootstrap,
                              portCheckTimeoutSecs*1000) with DurationLimitedActionExecutor
     }
 
