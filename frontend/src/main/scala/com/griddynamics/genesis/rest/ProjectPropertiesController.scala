@@ -52,9 +52,6 @@ class ProjectPropertiesController extends RestApiExceptionsHandler {
       new api.ProjectProperty(0, 0, name, value)
     }
 
-    projectPropertyRepository.updateForProject(projectId, properties) match {
-      case Some(result) => result
-      case None => RequestResult(isSuccess = true)
-    }
+    projectPropertyRepository.updateForProject(projectId, properties)
   }
 }

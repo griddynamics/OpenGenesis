@@ -28,7 +28,7 @@ import api.RequestResult
 trait ProjectPropertyRepository {
   def listForProject(projectId: Int): List[api.ProjectProperty];
 
-  def updateForProject(projectId: Int, properties : List[api.ProjectProperty]): Option[RequestResult];
+  def updateForProject(projectId: Int, properties : List[api.ProjectProperty]): RequestResult;
 
   def convert(entity: model.ProjectProperty): api.ProjectProperty;
 
