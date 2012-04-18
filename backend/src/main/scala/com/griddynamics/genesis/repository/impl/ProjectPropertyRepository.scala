@@ -44,14 +44,14 @@ class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectP
 
   @Transactional
   def updateForProject(projectId: Int, properties : List[api.ProjectProperty]): RequestResult = {
-    val result = RequestResult(isSuccess = true)
+    var result = RequestResult(isSuccess = true)
     val names = new HashSet[String]()
     val modelProperties = new ArrayBuffer[model.ProjectProperty]
     for (pp <- properties.map(convert(_))) {
-      result ++ validate(pp)
+      result = result ++ validate(pp)
       if (result.isSuccess) {
         if (names.contains(pp.name)) {
-          result ++ RequestResult(isSuccess = false, compoundServiceErrors = Seq("Project property name '%s' is duplicated".format(pp.name)))
+          result = result ++ RequestResult(isSuccess = false, compoundServiceErrors = Seq("Project property name '%s' is duplicated".format(pp.name)))
         }
         if (result.isSuccess) {
           names.add(pp.name)
