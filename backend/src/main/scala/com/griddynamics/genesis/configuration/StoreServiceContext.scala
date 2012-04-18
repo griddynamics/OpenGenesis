@@ -32,7 +32,6 @@ import com.griddynamics.genesis.repository.SchemaCreator
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import com.griddynamics.genesis.service.impl
-import org.springframework.beans.factory.annotation.Value
 import com.griddynamics.genesis.repository.impl.{ProjectPropertyRepository, ProjectRepository}
 import org.squeryl.adapters.{PostgreSqlAdapter, MSSQLServer, MySQLAdapter, H2Adapter}
 
@@ -47,10 +46,9 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 }
 
 class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager,
-                           val dropNullable: java.lang.Boolean) extends SchemaCreator[GenesisSchema](GenesisSchema.envs.name) {
+                           override val drop: Boolean) extends SchemaCreator[GenesisSchema](GenesisSchema.envs.name) {
     override val transactionTemplate = new TransactionTemplate(transactionManager)
     override val schema = GenesisSchema
-    override def drop = if (dropNullable != null) Boolean2boolean(dropNullable) else false
 }
 
 object SquerylConfigurator {
