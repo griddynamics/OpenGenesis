@@ -24,27 +24,48 @@ package com.griddynamics.genesis.repository.impl
 
 import com.griddynamics.genesis.repository.AbstractGenericRepository
 import com.griddynamics.genesis.{repository, api, model}
+import api.RequestResult
 import model.GenesisSchema
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.util.Logging
+import collection.mutable.{ArrayBuffer, HashSet}
 
 class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectProperty, api.ProjectProperty](GenesisSchema.projectProperties)
   with repository.ProjectPropertyRepository with Logging {
 
+  val namePattern = """^([a-zA-Z0-9.]{1,1024})$""".r
+
   @Transactional(readOnly = true)
   def listForProject(projectId: Int): List[api.ProjectProperty] = {
     val modelProperties = from(GenesisSchema.projectProperties)(pp => where(pp.projectId === projectId) select(pp) orderBy(pp.id asc)).toList
-
     modelProperties.map(convert(_))
   }
 
   @Transactional
-  def updateForProject(projectId: Int, properties : List[api.ProjectProperty]) {
-    val modelProperties = for (pp <- properties.map(convert(_))) yield new model.ProjectProperty(projectId, pp.name, pp.value)
+  def updateForProject(projectId: Int, properties : List[api.ProjectProperty]): RequestResult = {
+    var result = RequestResult(isSuccess = true)
+    val names = new HashSet[String]()
+    val modelProperties = new ArrayBuffer[model.ProjectProperty]
+    for (pp <- properties.map(convert(_))) {
+      result = result ++ validate(pp)
+      if (result.isSuccess) {
+        if (names.contains(pp.name)) {
+          result = result ++ RequestResult(isSuccess = false, compoundServiceErrors = Seq("Project property name '%s' is duplicated".format(pp.name)))
+        }
+        if (result.isSuccess) {
+          names.add(pp.name)
+          modelProperties.append(new model.ProjectProperty(projectId, pp.name, pp.value))
+        }
+      }
+    }
 
-    GenesisSchema.projectProperties.deleteWhere(pp => pp.projectId === projectId)
-    GenesisSchema.projectProperties.insert(modelProperties)
+    if (result.isSuccess) {
+      GenesisSchema.projectProperties.deleteWhere(pp => pp.projectId === projectId)
+      GenesisSchema.projectProperties.insert(modelProperties)
+    }
+
+    result
   }
 
   override implicit def convert(entity: model.ProjectProperty): api.ProjectProperty = {
@@ -55,5 +76,16 @@ class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectP
     val projectProperty = new model.ProjectProperty(dto.projectId, dto.name, dto.value)
     projectProperty.id = dto.id
     projectProperty
+  }
+
+  def validate(property: api.ProjectProperty): RequestResult = {
+    if ((property.name == null) || property.name.isEmpty) {
+      return RequestResult(isSuccess = false, compoundServiceErrors = Seq("Project property name is empty"))
+    }
+    if (namePattern.findFirstIn(property.name) == None) {
+      return RequestResult(isSuccess = false, compoundServiceErrors = Seq("Project property name '%s' does not match required form".format(property.name)))
+    }
+
+    RequestResult(isSuccess = true)
   }
 }

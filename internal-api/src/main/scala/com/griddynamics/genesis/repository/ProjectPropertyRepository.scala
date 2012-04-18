@@ -23,12 +23,12 @@
 package com.griddynamics.genesis.repository
 
 import com.griddynamics.genesis._
-import org.springframework.web.bind.annotation.PathVariable
+import api.RequestResult
 
 trait ProjectPropertyRepository {
   def listForProject(projectId: Int): List[api.ProjectProperty];
 
-  def updateForProject(projectId: Int, properties : List[api.ProjectProperty]);
+  def updateForProject(projectId: Int, properties : List[api.ProjectProperty]): RequestResult;
 
   def convert(entity: model.ProjectProperty): api.ProjectProperty;
 

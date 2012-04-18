@@ -6,8 +6,6 @@ import com.griddynamics.genesis.repository.ProjectRepository
 import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
-import org.springframework.http.HttpStatus
-import com.griddynamics.genesis.util.Logging
 
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
@@ -45,6 +43,12 @@ class ProjectsController(projectRepository: ProjectRepository) extends RestApiEx
     val paramsMap = extractParamsMap(request)
     val project = extractProject(None, paramsMap)
     projectRepository.save(project)
+  }
+
+  @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  def findProject(@PathVariable("projectId") projectId: Int): Project = {
+    projectRepository.load(projectId);
   }
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.PUT))
