@@ -32,7 +32,6 @@ import org.eclipse.jetty.servlet.{FilterHolder, ServletHolder, ServletContextHan
 import org.eclipse.jetty.servlets.GzipFilter
 import org.apache.commons.lang3.SystemUtils
 import java.lang.System.{getProperty => gp}
-import java.util.{Collection => JCollection}
 import resources.ResourceFilter
 import service.ConfigService
 import service.GenesisSystemProperties._
