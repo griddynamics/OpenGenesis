@@ -38,8 +38,9 @@ class LocalUserContext extends UserServiceContext with Logging {
     @Autowired var dataSource: DataSource = _
     @Autowired var transactionManager: PlatformTransactionManager = _
     @Value("#{fileProps['genesis.system.jdbc.drop.db'] ?: false}") var dropSchema: Boolean = _
-    @Bean def userService = new LocalUserService(new LocalUserRepository)
-    @Bean def groupService = new LocalGroupService(new LocalGroupRepositoryImpl)
+    lazy val groupRepo = new LocalGroupRepositoryImpl
+    @Bean def userService = new LocalUserService(new LocalUserRepository, groupRepo)
+    @Bean def groupService = new LocalGroupService(groupRepo)
     @Bean def schemaCreator = {
         new UsersSchemaCreator(dropSchema, dataSource, transactionManager)
     }

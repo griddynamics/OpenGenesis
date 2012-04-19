@@ -50,19 +50,28 @@ class UsersController extends RestApiExceptionsHandler {
 
     @RequestMapping(method = Array(RequestMethod.POST))
     @ResponseBody
-    def create(request: HttpServletRequest) = {
-        val params: Map[String, Any] = extractParamsMap(request)
-        val user: User = User(extractValue("username", params), extractValue("email", params), extractValue("lastName", params),
-            extractValue("firstName", params), extractOption("jobTitle", params), Some(extractValue("password", params)))
-        userService.create(user)
+    def create(request: HttpServletRequest) = RequestReader.read(request) {
+        map => userService.create(readUser(map), readGroups(map, "groups"))
     }
 
     @RequestMapping(value = Array("{username}"), method = Array(RequestMethod.PUT))
     @ResponseBody
     def update(@PathVariable username: String, request: HttpServletRequest) = {
         val params: Map[String, Any] = extractParamsMap(request)
-        val user: User = User(username, extractValue("email", params), extractValue("lastName", params),
-            extractValue("firstName", params), extractOption("jobTitle", params), None)
+        val user: User = User(username, extractValue("email", params), extractValue("firstName", params),
+            extractValue("lastName", params), extractOption("jobTitle", params), None)
         userService.update(user)
+    }
+
+    private def readUser(map: Map[String, Any]) =
+        User(extractValue("username", map), extractValue("email", map), extractValue("firstName", map),
+             extractValue("lastName", map), extractOption("jobTitle", map), Some(extractValue("password", map)))
+
+
+    private def readGroups(map: Map[String, Any], paramName: String) : List[String] = {
+        map.getOrElse(paramName, List()) match {
+            case (x :: xs) => (x :: xs).map(_.toString)
+            case _ => List()
+        }
     }
 }
