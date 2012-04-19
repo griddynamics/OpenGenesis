@@ -31,7 +31,6 @@ import org.jboss.netty.bootstrap.ClientBootstrap
 import com.griddynamics.genesis.jclouds.step.{DestroyEnvStepBuilderFactory, ProvisionVmsStepBuilderFactory}
 import com.griddynamics.genesis.model.{IpAddresses, VirtualMachine}
 import org.jclouds.Constants._
-import collection.JavaConversions.{setAsJavaSet, propertiesAsScalaMap, asScalaSet}
 import com.griddynamics.genesis.actions.provision._
 import com.griddynamics.context.provision.ProvisionContext
 import com.griddynamics.executors.provision.{CommonCheckPublicIpExecutor, CommonPortTestExecutor}
@@ -50,9 +49,7 @@ import com.griddynamics.genesis.plugin.PluginConfigurationContext
 import javax.annotation.PostConstruct
 import com.griddynamics.genesis.workflow.DurationLimitedActionExecutor
 import com.griddynamics.genesis.util.InputUtil
-import scala.Predef._
-import org.springframework.core.io.{ResourceLoader, UrlResource}
-import scala.collection.mutable
+import org.springframework.core.io.ResourceLoader
 
 trait JCloudsPluginContext extends ProvisionContext[JCloudsProvisionVm] {
   def cloudProvider: String
