@@ -28,11 +28,11 @@ import com.griddynamics.genesis.plugin.{GenesisStepResult, StepExecutionContext}
 import com.griddynamics.genesis.workflow.action.{ExecutorInterrupt, ExecutorThrowable}
 import com.griddynamics.genesis.jclouds.step.{DestroyEnv => DestroyEnvStep}
 import com.griddynamics.genesis.actions.provision.{VmDestroyed, DestroyVmAction}
-import com.griddynamics.genesis.jclouds.JCloudsPluginContext
+import com.griddynamics.genesis.jclouds.JCloudsProvisionContext
 
 class DestroyEnvStepCoordinator(val step: DestroyEnvStep,
                                 context: StepExecutionContext,
-                                pluginContext: JCloudsPluginContext) extends ActionOrientedStepCoordinator {
+                                pluginContext: JCloudsProvisionContext) extends ActionOrientedStepCoordinator {
 
   var stepFailed = false
 

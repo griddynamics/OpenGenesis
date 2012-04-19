@@ -34,9 +34,11 @@ case class JCloudsProvisionVm(env: Environment,
                               hardwareId: Option[String],
                               imageId: Option[String],
                               instanceId: Option[String] = None,
-                              ip: Option[String] = None) extends SpecificProvisionVmAction {
+                              ip: Option[String] = None,
+                              cloudProvider: Option[String] = None,
+                              provision: Map[String, Any] = Map()) extends SpecificProvisionVmAction {
   def newVm = {
-    new VirtualMachine(
+    val vm = new VirtualMachine(
       envId = env.id,
       workflowId = workflow.id,
       stepId = step.id,
@@ -45,7 +47,10 @@ case class JCloudsProvisionVm(env: Environment,
       hostNumber = 0,
       instanceId = instanceId,
       hardwareId = hardwareId,
-      imageId = imageId
+      imageId = imageId,
+      cloudProvider = cloudProvider
     )
+    vm.setComputeSettings(provision)
+    vm
   }
 }

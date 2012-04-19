@@ -23,9 +23,10 @@
 package com.griddynamics.genesis.model
 
 import VmStatus._
+import collection.JavaConversions._
 
 case class IpAddresses(publicIp:Option[String] = None,  privateIp:Option[String] = None) {
-    def address = publicIp.getOrElse(privateIp.getOrElse(""))
+  def address = publicIp.getOrElse(privateIp.getOrElse(""))
 }
 
 class VirtualMachine(val envId: GenesisEntity.Id,
@@ -36,21 +37,31 @@ class VirtualMachine(val envId: GenesisEntity.Id,
                      val hostNumber: Int,
                      var instanceId: Option[String] = None,
                      val hardwareId: Option[String] = None,
-                     val imageId: Option[String] = None) extends EntityWithAttrs {
-    def this() = this (0, 0, 0, Provision, "", 0)
+                     val imageId: Option[String] = None,
+                     val cloudProvider: Option[String] = None) extends EntityWithAttrs {
+  def this() = this (0, 0, 0, Provision, "", 0)
 
-    def copy() = {
-        val vm = new VirtualMachine(envId, workflowId, stepId, status, roleName, hostNumber,
-            instanceId, hardwareId, imageId).importAttrs(this)
-        vm.id = this.id
-        vm
-    }
-    import VirtualMachine._
-    def getIp = this.get(IpAttr)
+  def copy() = {
+    val vm = new VirtualMachine(envId, workflowId, stepId, status, roleName, hostNumber,
+      instanceId, hardwareId, imageId).importAttrs(this)
+    vm.id = this.id
+    vm
+  }
+  import VirtualMachine._
+  def getIp = this.get(IpAttr)
 
-    def setIp(ip: String) {this(IpAttr) = IpAddresses(publicIp = Option(ip))}
+  def setIp(ip: String) {this(IpAttr) = IpAddresses(publicIp = Option(ip))}
+
+  def setComputeSettings(settings: Map[String, Any]) {
+    val props = new java.util.Properties()
+    settings.foreach { case (key, value) => props.setProperty(key, value.toString) }
+    this(СomputeSettings) = props
+  }
+
+  def getComputeSettings: Option[Map[String, Any]] = this.get(СomputeSettings).map { propertiesAsScalaMap(_).toMap }
 }
 
 object VirtualMachine {
-    val IpAttr = EntityAttr[IpAddresses]("ip")
+  val IpAttr = EntityAttr[IpAddresses]("ip")
+  val СomputeSettings = EntityAttr[java.util.Properties]("compute")
 }

@@ -25,18 +25,20 @@ package com.griddynamics.genesis.jclouds.coordinators
 import com.griddynamics.genesis.plugin.{StepExecutionContext, PartialStepCoordinatorFactory}
 import com.griddynamics.genesis.jclouds.step.{DestroyEnv, DestroyVm, ProvisionVm, JCloudsStep}
 import com.griddynamics.genesis.workflow.Step
-import com.griddynamics.genesis.jclouds.JCloudsPluginContext
+import com.griddynamics.genesis.jclouds.JCloudsProvisionContext
 
-class JCloudsStepCoordinatorFactory(pluginContext: JCloudsPluginContext) extends PartialStepCoordinatorFactory {
+class JCloudsStepCoordinatorFactory(pluginContext: (Map[String, String]) => JCloudsProvisionContext) extends PartialStepCoordinatorFactory {
   def isDefinedAt(step: Step) = step.isInstanceOf[JCloudsStep]
 
   def apply(step: Step, context: StepExecutionContext) = {
+    val currentContext = pluginContext(context.globals.toMap)
+    context.globals ++= currentContext.computeSettings.map {case (key, value) => (key, value.toString)}
     step match {
       case s: ProvisionVm => {
-        new ProvisionVmsStepCoordinator(s, context, pluginContext)
+        new ProvisionVmsStepCoordinator(s, context, currentContext)
       }
       case s: DestroyEnv => {
-        new DestroyEnvStepCoordinator(s, context, pluginContext)
+        new DestroyEnvStepCoordinator(s, context, currentContext)
       }
       case _: DestroyVm => null
     }
