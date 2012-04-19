@@ -32,6 +32,7 @@ import org.eclipse.jetty.servlet.{FilterHolder, ServletHolder, ServletContextHan
 import org.eclipse.jetty.servlets.GzipFilter
 import org.apache.commons.lang3.SystemUtils
 import java.lang.System.{getProperty => gp}
+import java.util.{Collection => JCollection}
 import resources.ResourceFilter
 import service.ConfigService
 import service.GenesisSystemProperties._
@@ -54,12 +55,6 @@ object GenesisFrontend extends Logging {
         val host = getProperty(BIND_HOST, "0.0.0.0")
         val port = Integer.valueOf(getProperty(BIND_PORT, "8080"))
         val resourceRoots = getProperty(WEB_RESOURCE_ROOTS, "classpath:,classpath:resources/,classpath:resources/icons/,classpath:extjs/")
-        val groupString : String = getProperty(SECURITY_GROUPS, "UNKNOWN") match {
-            case "UNKNOWN" => "IS_AUTHENTICATED_FULLY"
-            case s => s.split(",").map(r => "ROLE_%s".format(r.toUpperCase)).mkString(",")
-        }
-        System.setProperty("genesis.security.windows.groups", groupString)
-      
         val server = new Server()
 
         val webAppContext = new GenericWebApplicationContext
@@ -126,5 +121,7 @@ object GenesisFrontend extends Logging {
 
     def getProperty(name: String, default: String) = appContext.getBean(classOf[ConfigService])
         .get(name).getOrElse(default).toString
+
+    def getProperty[A](name: String) = appContext.getBean(classOf[ConfigService]).get(name)
 
 }
