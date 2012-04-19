@@ -23,14 +23,14 @@
 package com.griddynamics.genesis.users.service
 
 import com.griddynamics.genesis.users.UserService
-import com.griddynamics.genesis.users.repository.LocalUserRepository
 import org.springframework.transaction.annotation.{Propagation, Transactional}
 import com.griddynamics.genesis.api.{RequestResult, User}
 import collection.Seq
 import com.griddynamics.genesis.validation.Validation
 import Validation._
+import com.griddynamics.genesis.users.repository.{LocalGroupRepository, LocalUserRepository}
 
-class LocalUserService(val repository: LocalUserRepository) extends UserService with Validation[User]{
+class LocalUserService(val repository: LocalUserRepository, val groupRepo: LocalGroupRepository) extends UserService with Validation[User]{
     @Transactional(readOnly = true)
     def findByUsername(username: String) = {
         repository.findByUsername(username)
@@ -38,7 +38,15 @@ class LocalUserService(val repository: LocalUserRepository) extends UserService 
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
     override def create(user: User) : RequestResult = {
-        validCreate(user, user => repository.insert(user))
+        validCreate(user, u => repository.insert(u))
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
+    override def create(user: User, groups: List[String]) : RequestResult = {
+        validCreate(user, user => {
+            val newUser = repository.insert(user)
+            groups.flatMap(groupRepo.findByName(_).flatMap(_.id)).foreach(groupRepo.addUserToGroup(_, newUser.username))
+        })
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
