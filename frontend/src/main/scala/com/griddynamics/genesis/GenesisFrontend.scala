@@ -122,6 +122,4 @@ object GenesisFrontend extends Logging {
     def getProperty(name: String, default: String) = appContext.getBean(classOf[ConfigService])
         .get(name).getOrElse(default).toString
 
-    def getProperty[A](name: String) = appContext.getBean(classOf[ConfigService]).get(name)
-
 }
