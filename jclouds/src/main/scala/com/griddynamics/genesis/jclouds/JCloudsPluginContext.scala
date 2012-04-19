@@ -25,140 +25,223 @@ package com.griddynamics.genesis.jclouds
 import action.JCloudsProvisionVm
 import coordinators.JCloudsStepCoordinatorFactory
 import executors.{JCloudsVmDestructor, ProvisionExecutor, SshPortChecker}
-import org.springframework.beans.factory.annotation.{Value, Autowired}
+import org.springframework.context.annotation.{Configuration, Bean}
+import org.springframework.beans.factory.annotation.Autowired
 import org.jboss.netty.bootstrap.ClientBootstrap
 import com.griddynamics.genesis.jclouds.step.{DestroyEnvStepBuilderFactory, ProvisionVmsStepBuilderFactory}
-import com.griddynamics.genesis.workflow.DurationLimitedActionExecutor
-import com.griddynamics.genesis.service.{ComputeService, impl}
 import com.griddynamics.genesis.model.{IpAddresses, VirtualMachine}
-import org.jclouds.compute.{ComputeServiceContextFactory, ComputeServiceContext}
 import org.jclouds.Constants._
 import collection.JavaConversions.{setAsJavaSet, propertiesAsScalaMap, asScalaSet}
-import org.jclouds.ssh.jsch.config.JschSshClientModule
-import org.jclouds.logging.slf4j.config.SLF4JLoggingModule
 import com.griddynamics.genesis.actions.provision._
 import com.griddynamics.context.provision.ProvisionContext
 import com.griddynamics.executors.provision.{CommonCheckPublicIpExecutor, CommonPortTestExecutor}
 import java.util.{List => JList}
 import collection.JavaConversions._
-import org.springframework.context.annotation.{Configuration, Bean}
+import com.griddynamics.genesis.service._
+import com.griddynamics.genesis.plugin.api.GenesisPlugin
 import com.griddynamics.genesis.configuration.{ClientBootstrapContext, StoreServiceContext, CredentialServiceContext}
+import java.util.concurrent.TimeUnit
+import net.sf.ehcache.CacheManager
+import com.griddynamics.genesis.cache.Cache
+import org.jclouds.compute.{ComputeServiceContextFactory, ComputeServiceContext}
+import org.jclouds.ssh.jsch.config.JschSshClientModule
+import org.jclouds.logging.slf4j.config.SLF4JLoggingModule
+import com.griddynamics.genesis.plugin.PluginConfigurationContext
+import javax.annotation.PostConstruct
+import com.griddynamics.genesis.workflow.DurationLimitedActionExecutor
+import com.griddynamics.genesis.util.InputUtil
+import scala.Predef._
+import org.springframework.core.io.{ResourceLoader, UrlResource}
+import scala.collection.mutable
 
 trait JCloudsPluginContext extends ProvisionContext[JCloudsProvisionVm] {
-    def clientBootstrapContext: ClientBootstrapContext
-    def computeContext: ComputeServiceContext
-    def nodeNamePrefix: String
+  def cloudProvider: String
+  def computeSettings: Map[String, Any]
+}
+
+private object Plugin {
+  val id = "jclouds"
+  val Provider = "genesis.plugin.jclouds.provider"
+  val Endpoint = "genesis.plugin.jclouds.endpoint"
+  val Identity = "genesis.plugin.jclouds.identity"
+  val Credential = "genesis.plugin.jclouds.credential"
+  val NodeNamePrefix = "genesis.plugin.jclouds.nodename.prefix"
+
+  //todo: are these global?
+  val PortCheckoutTimout = "genesis.port.check.timeout.secs"
+  val ProvisionTimeout = "genesis.provision.vm.timeout.secs"
+  val PublicIpCheckoutTimeout = "genesis.public.ip.check.timeout.secs"
 }
 
 @Configuration
-class JCloudsPluginContextImpl extends JCloudsPluginContext {
-    @Value("${genesis.port.check.timeout.secs:180}") var portCheckTimeoutSecs: Int = _
-    @Value("${genesis.provision.vm.timeout.secs:180}") var provisionVmTimeoutSecs: Int = _
-    @Value("${genesis.public.ip.check.timeout.secs:30}") var publicIpCheckTimeoutSecs: Int = _
+@GenesisPlugin(id = "jclouds", description = "jclouds plugin")
+class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache {
 
-    @Value("${genesis.jclouds.provider:nova}") var jcloudsProvider: String = _
-    @Value("${genesis.jclouds.endpoint:not-set}") var jcloudsEndpoint: String = _
-    @Value("${genesis.jclouds.identity}") var jcloudsIdentity: String = _
-    @Value("${genesis.jclouds.credential}") var jcloudsCredential: String = _
-    @Value("${genesis.jclouds.nodename.prefix:GN}") var jcloudsNodeNamePrefix: String = _
+  val computeContextRegion = "computeServiceContexts"
 
-    @Autowired var storeServiceContext: StoreServiceContext = _
-    @Autowired var credentialServiceContext: CredentialServiceContext = _
-    @Autowired var clientBootstrapContext: ClientBootstrapContext = _
+  @Autowired var storeServiceContext: StoreServiceContext = _
+  @Autowired var credentialServiceContext: CredentialServiceContext = _
+  @Autowired var configService: ConfigService = _
+  @Autowired var pluginConfiguration: PluginConfigurationContext = _
+  @Autowired var clientBootstrapContext: ClientBootstrapContext = _
 
-    var providersMap: Map[String, JCloudsVmCreationStrategyProvider]  = _
+  @Autowired var cacheManager: CacheManager = _
 
-    @Autowired
-    def collectProviders(providers: JList[JCloudsVmCreationStrategyProvider]) {
-      providersMap = providers.map( provider => (provider.name, provider)).toMap
+  var providersMap: Map[String, JCloudsVmCreationStrategyProvider] = _
+
+  @Autowired
+  def collectProviders(providers: JList[JCloudsVmCreationStrategyProvider]) {
+    providersMap = providers.map(provider => (provider.name, provider)).toMap
+  }
+
+  def strategyProvider(cloudProvider: String): JCloudsVmCreationStrategyProvider = {
+    providersMap.getOrElse(cloudProvider, DefaultVmCreationStrategyProvider)
+  }
+
+  @PostConstruct
+  def cacheRegionAdjustment() {
+    val cache = cacheManager.addCacheIfAbsent(computeContextRegion)
+    val config = cache.getCacheConfiguration;
+    config.setTimeToIdleSeconds(TimeUnit.HOURS.toSeconds(2))
+    config.setTimeToLiveSeconds(TimeUnit.HOURS.toSeconds(20))
+    config.setDiskPersistent(false)
+  }
+
+  @Bean
+  def jcloudsCoordinatorFactory = new JCloudsStepCoordinatorFactory((globalContext: Map[String, String]) => {
+    var pluginConfig = pluginConfiguration.configuration(Plugin.id)
+
+    pluginConfig = pluginConfig ++ globalContext.filterKeys(pluginConfig.contains(_))
+    val computeContext = this.computeContext(pluginConfig);
+
+    val nodeNamePrefix = pluginConfig(Plugin.NodeNamePrefix).take(2)
+    val cloudProvider = pluginConfig(Plugin.Provider)
+
+    val vmCreationStrategy = strategyProvider(cloudProvider).createVmCreationStrategy(nodeNamePrefix, computeContext);
+
+    val provisionSettings = pluginConfig.filterKeys(_ != Plugin.NodeNamePrefix)
+    new JCloudsExecutionContext(
+      storeServiceContext.storeService,
+      computeService,
+      sshService,
+      vmCreationStrategy,
+      clientBootstrapContext.clientBootstrap,
+      configService,
+      provisionSettings,
+      this
+    )
+  });
+
+
+  @Bean def provisionVmsStepBuilderFactory = new ProvisionVmsStepBuilderFactory
+
+  @Bean def destroyEnvStepBuilderFactory = new DestroyEnvStepBuilderFactory
+
+  @Bean def sshService: SshService =
+    new impl.SshService(credentialServiceContext.credentialService, stubVmCredentialService, computeService, this)
+
+  @Bean def computeService = new JCloudsComputeService(this)
+
+
+  //todo: FIXME this is temporal solution until proper CredentialService is implemented
+  @Autowired var resourceLoader: ResourceLoader = _
+  @Bean def stubVmCredentialService = new VmCredentialService {
+
+    def getCredentialsForVm(vm: VirtualMachine) = vm.cloudProvider match {
+      case Some(provider) => {
+        for {
+          identity <- configService.get("genesis.plugin.jclouds." + provider + ".vm.identity").map { _.toString }
+          credential <- configService.get("genesis.plugin.jclouds." + provider + ".vm.credential").map { cred =>  resourceLoader.getResource(cred.toString) }
+        } yield new Credentials(identity, InputUtil.resourceAsString(credential))
+      }
+      case None => None
     }
 
-    lazy val currentProvider: JCloudsVmCreationStrategyProvider =
-      providersMap.getOrElse(providerName, DefaultVmCreationStrategyProvider)
-
-
-    @Bean def jcloudsExecutorFactory = new JCloudsStepCoordinatorFactory(this)
-
-    @Bean def provisionVmsStepBuilderFactory = new ProvisionVmsStepBuilderFactory
-
-    @Bean def destroyEnvStepBuilderFactory = new DestroyEnvStepBuilderFactory
-
-    @Bean def computeContext = {
-        val contextFactory = new ComputeServiceContextFactory
-
-        val overrides = currentProvider.computeProperties
-
-        if (jcloudsEndpoint != "not-set") {
-            overrides(PROPERTY_ENDPOINT) = jcloudsEndpoint
-        }
-
-        if (jcloudsEndpoint != "not-set") {
-            overrides(PROPERTY_ENDPOINT) = jcloudsEndpoint
-        }
-
-        contextFactory.createContext(jcloudsProvider, jcloudsIdentity, jcloudsCredential,
-            Set(new JschSshClientModule, new SLF4JLoggingModule), overrides)
-    }
-
-    @Bean def sshService = {
-        new impl.SshService(credentialServiceContext.credentialService, computeService,
-            computeContext)
-    }
-
-    @Bean def computeService = new JCloudsComputeService(computeContext)
-
-    def providerName = jcloudsProvider
-
-    def nodeNamePrefix = jcloudsNodeNamePrefix.take(2)
-
-    @Bean def vmCreationStrategy: VmCreationStrategy =
-       currentProvider.createVmCreationStrategy(nodeNamePrefix, computeContext);
-
-
-    def destroyVmActionExecutor(action : DestroyVmAction) = {
-        new JCloudsVmDestructor(action,
-                         computeContext.getComputeService,
-                         storeServiceContext.storeService)
-    }
-
-    def provisionVmActionExecutor(action: JCloudsProvisionVm) = {
-        new ProvisionExecutor(action,
-                              storeServiceContext.storeService,
-                              vmCreationStrategy,
-                              provisionVmTimeoutSecs*1000) with DurationLimitedActionExecutor
-    }
-
-    def portCheckActionExecutor(action: CheckPortAction) = {
-        new CommonPortTestExecutor(action,
-                             computeService,
-                             storeServiceContext.storeService,
-                             clientBootstrapContext.clientBootstrap,
-                             portCheckTimeoutSecs*1000) with DurationLimitedActionExecutor
-    }
-
-    def sshPortCheckActionExecutor(action: CheckSshPortAction) = {
-        new SshPortChecker(action,
-                           computeService,
-                           sshService,
-                           storeServiceContext.storeService,
-            portCheckTimeoutSecs*1000) with DurationLimitedActionExecutor
-    }
-
-    def publicIpCheckActionExecutor(action: CheckPublicIpAction) = {
-        new CommonCheckPublicIpExecutor(action,
-                                  computeService,
-                                  storeServiceContext.storeService,
-                                  publicIpCheckTimeoutSecs*1000)
-    }
+  }
 }
 
-class JCloudsComputeService(computeContext: ComputeServiceContext) extends ComputeService {
-        def getIpAddresses(vm: VirtualMachine) : Option[IpAddresses] = {
-            vm.getIp.orElse(
-            for {instanceId <- vm.instanceId
-                 node = computeContext.getComputeService.getNodeMetadata(instanceId)
-                 if node != null}
-            yield (IpAddresses(node.getPublicAddresses.headOption, node.getPrivateAddresses.headOption)))
-        }
 
+class JCloudsComputeContextProvider {
+  this: JCloudsPluginContextImpl =>
+
+  import Plugin._
+
+  def computeContext(computeSettings: Map[String, Any]): ComputeServiceContext = {
+    val provider = computeSettings(Provider).toString
+    val endpoint = computeSettings.get(Endpoint).map { _.toString }
+    val identity = computeSettings(Identity).toString
+    val credential = computeSettings(Credential).toString
+
+    val settings = Settings(provider, endpoint, identity, credential)
+
+    fromCache(computeContextRegion, settings) {
+      val contextFactory = new ComputeServiceContextFactory
+      val overrides = strategyProvider(settings.provider).computeProperties
+      endpoint.foreach { overrides(PROPERTY_ENDPOINT) = _ }
+
+      contextFactory.createContext(settings.provider, settings.identity, settings.credentials,
+        Set(new JschSshClientModule, new SLF4JLoggingModule), overrides)
+    }
+  }
+
+  def computeContext(vm: VirtualMachine): ComputeServiceContext = {
+    val computeSettings = vm.getComputeSettings.getOrElse {
+      throw new IllegalArgumentException("Vm [" + vm + "] wasn't created by jclouds compute plugin")
+    };
+    computeContext(computeSettings)
+  }
+
+  private case class Settings(provider: String, endpoint: Option[String], identity: String, credentials: String)
+}
+
+class JCloudsExecutionContext(storeService: StoreService,
+                              computeService: ComputeService,
+                              sshService: SshService,
+                              vmCreationStrategy: VmCreationStrategy,
+                              clientBootstrap: ClientBootstrap,
+                              configService: ConfigService,
+                              settings: Map[String, Any],
+                              contextProvider: JCloudsComputeContextProvider) extends JCloudsPluginContext {
+
+  val provisionVmTimeout = configService.get(Plugin.ProvisionTimeout, 180) * 1000
+  val portCheckTimeout = configService.get(Plugin.PortCheckoutTimout, 180) * 1000
+  val ipCheckTimeout = configService.get(Plugin.PublicIpCheckoutTimeout, 30) * 1000
+
+  def destroyVmActionExecutor(action : DestroyVmAction) = {
+    val jcloudsComputeService = contextProvider.computeContext(action.vm).getComputeService
+    new JCloudsVmDestructor(action, jcloudsComputeService, storeService)
+  }
+
+  def provisionVmActionExecutor(action: JCloudsProvisionVm) =
+    new ProvisionExecutor(action, storeService, vmCreationStrategy, provisionVmTimeout) with DurationLimitedActionExecutor
+
+  def portCheckActionExecutor(action: CheckPortAction) =
+    new CommonPortTestExecutor(action, computeService, storeService, clientBootstrap, portCheckTimeout) with DurationLimitedActionExecutor
+
+  def sshPortCheckActionExecutor(action: CheckSshPortAction) =
+    new SshPortChecker(action, computeService, sshService, storeService)
+
+  def publicIpCheckActionExecutor(action: CheckPublicIpAction) =
+    new CommonCheckPublicIpExecutor(action, computeService, storeService, ipCheckTimeout)
+
+  def computeSettings = settings
+
+  def cloudProvider = computeSettings(Plugin.Provider).toString
+}
+
+
+class JCloudsComputeService(pluginFactory: JCloudsComputeContextProvider) extends ComputeService {
+
+  def getIpAddresses(vm: VirtualMachine): Option[IpAddresses] = {
+
+    val jCloudsComputeService = pluginFactory.computeContext(vm).getComputeService
+
+    vm.getIp.orElse(
+      for {
+        instanceId <- vm.instanceId
+        node = jCloudsComputeService.getNodeMetadata(instanceId)
+        if node != null
+      } yield (IpAddresses(node.getPublicAddresses.headOption, node.getPrivateAddresses.headOption))
+    )
+  }
 }

@@ -22,10 +22,15 @@
  */
 package com.griddynamics.genesis.service
 
-import com.griddynamics.genesis.model.Environment
+import com.griddynamics.genesis.model.{VirtualMachine, Environment}
+
 
 class Credentials(val identity : String, val credential : String)
 
 trait CredentialService {
     def getCredentialsForEnvironment(env : Environment) : Option[Credentials]
+}
+
+trait VmCredentialService {
+  def getCredentialsForVm(vm: VirtualMachine): Option[Credentials]
 }
