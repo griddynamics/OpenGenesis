@@ -28,11 +28,11 @@ import com.griddynamics.genesis.model.VmStatus
 import com.griddynamics.coordinators.provision.AbstractProvisionVmsStepCoordinator
 import com.griddynamics.genesis.logging.LoggerWrapper
 import com.griddynamics.genesis.jclouds.action.JCloudsProvisionVm
-import com.griddynamics.genesis.jclouds.JCloudsPluginContext
+import com.griddynamics.genesis.jclouds.JCloudsProvisionContext
 
 class ProvisionVmsStepCoordinator(override val step: ProvisionVmStep,
                                   override val context: StepExecutionContext,
-                                  override val pluginContext: JCloudsPluginContext) extends AbstractProvisionVmsStepCoordinator[JCloudsProvisionVm] {
+                                  override val pluginContext: JCloudsProvisionContext) extends AbstractProvisionVmsStepCoordinator[JCloudsProvisionVm] {
 
   def onStepStart() = {
     LoggerWrapper.writeLog(context.step.id, "Starting phase %s".format(context.step.phase))

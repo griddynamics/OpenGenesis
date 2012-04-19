@@ -51,7 +51,7 @@ import com.griddynamics.genesis.workflow.DurationLimitedActionExecutor
 import com.griddynamics.genesis.util.InputUtil
 import org.springframework.core.io.ResourceLoader
 
-trait JCloudsPluginContext extends ProvisionContext[JCloudsProvisionVm] {
+trait JCloudsProvisionContext extends ProvisionContext[JCloudsProvisionVm] {
   def cloudProvider: String
   def computeSettings: Map[String, Any]
 }
@@ -107,24 +107,16 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
   @Bean
   def jcloudsCoordinatorFactory = new JCloudsStepCoordinatorFactory((globalContext: Map[String, String]) => {
     var pluginConfig = pluginConfiguration.configuration(Plugin.id)
-
     pluginConfig = pluginConfig ++ globalContext.filterKeys(pluginConfig.contains(_))
-    val computeContext = this.computeContext(pluginConfig);
 
-    val nodeNamePrefix = pluginConfig(Plugin.NodeNamePrefix).take(2)
-    val cloudProvider = pluginConfig(Plugin.Provider)
-
-    val vmCreationStrategy = strategyProvider(cloudProvider).createVmCreationStrategy(nodeNamePrefix, computeContext);
-
-    val provisionSettings = pluginConfig.filterKeys(_ != Plugin.NodeNamePrefix)
-    new JCloudsExecutionContext(
+    new JCloudsProvisionContextImpl(
       storeServiceContext.storeService,
       computeService,
       sshService,
-      vmCreationStrategy,
+      providersMap,
       clientBootstrapContext.clientBootstrap,
       configService,
-      provisionSettings,
+      pluginConfig,
       this
     )
   });
@@ -191,26 +183,33 @@ class JCloudsComputeContextProvider {
   private case class Settings(provider: String, endpoint: Option[String], identity: String, credentials: String)
 }
 
-class JCloudsExecutionContext(storeService: StoreService,
+class JCloudsProvisionContextImpl(storeService: StoreService,
                               computeService: ComputeService,
                               sshService: SshService,
-                              vmCreationStrategy: VmCreationStrategy,
+                              strategies: Map[String, JCloudsVmCreationStrategyProvider],
                               clientBootstrap: ClientBootstrap,
                               configService: ConfigService,
-                              settings: Map[String, Any],
-                              contextProvider: JCloudsComputeContextProvider) extends JCloudsPluginContext {
+                              settings: Map[String, String],
+                              contextProvider: JCloudsComputeContextProvider) extends JCloudsProvisionContext {
 
   val provisionVmTimeout = configService.get(Plugin.ProvisionTimeout, 180) * 1000
   val portCheckTimeout = configService.get(Plugin.PortCheckoutTimout, 180) * 1000
   val ipCheckTimeout = configService.get(Plugin.PublicIpCheckoutTimeout, 30) * 1000
+
+  override val computeSettings = settings.filterKeys(_ != Plugin.NodeNamePrefix)
 
   def destroyVmActionExecutor(action : DestroyVmAction) = {
     val jcloudsComputeService = contextProvider.computeContext(action.vm).getComputeService
     new JCloudsVmDestructor(action, jcloudsComputeService, storeService)
   }
 
-  def provisionVmActionExecutor(action: JCloudsProvisionVm) =
+  def provisionVmActionExecutor(action: JCloudsProvisionVm) = {
+    val computeContext = contextProvider.computeContext(computeSettings)
+    val nodeNamePrefix = settings(Plugin.NodeNamePrefix).take(2)
+
+    val vmCreationStrategy = strategies(cloudProvider).createVmCreationStrategy(nodeNamePrefix, computeContext);
     new ProvisionExecutor(action, storeService, vmCreationStrategy, provisionVmTimeout) with DurationLimitedActionExecutor
+  }
 
   def portCheckActionExecutor(action: CheckPortAction) =
     new CommonPortTestExecutor(action, computeService, storeService, clientBootstrap, portCheckTimeout) with DurationLimitedActionExecutor
@@ -221,9 +220,7 @@ class JCloudsExecutionContext(storeService: StoreService,
   def publicIpCheckActionExecutor(action: CheckPublicIpAction) =
     new CommonCheckPublicIpExecutor(action, computeService, storeService, ipCheckTimeout)
 
-  def computeSettings = settings
-
-  def cloudProvider = computeSettings(Plugin.Provider).toString
+  def cloudProvider = settings(Plugin.Provider).toString
 }
 
 
