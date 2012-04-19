@@ -22,11 +22,12 @@
  */
 package com.griddynamics.genesis.users
 
-import com.griddynamics.genesis.api.User
 import com.griddynamics.genesis.common.CRUDService
+import com.griddynamics.genesis.api.{RequestResult, User}
 
 
 trait UserService extends CRUDService[User, String] {
     override def get(key: String) = findByUsername(key)
-    def findByUsername(username: String) : Option[User]
+    def findByUsername(username: String): Option[User]
+    def create(user: User, groups: List[String]) : RequestResult
 }
