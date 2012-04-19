@@ -26,23 +26,27 @@ import com.griddynamics.genesis.service
 import com.griddynamics.genesis.model.{VirtualMachine, Environment}
 import org.jclouds.domain.Credentials
 import org.jclouds.compute.domain.NodeMetadataBuilder
-import org.jclouds.compute.ComputeServiceContext
 import org.jclouds.net.IPSocket
 import com.griddynamics.genesis.util.Logging
-import service.{Credentials => GenesisCredentials, ComputeService, CredentialService}
 import org.jclouds.ssh.SshClient
+import com.griddynamics.genesis.jclouds.JCloudsComputeContextProvider
+import service.{VmCredentialService, Credentials => GenesisCredentials, ComputeService, CredentialService}
 
 class SshService(credentialService: CredentialService,
+                 vmCredentialService: VmCredentialService,
                  computeService: ComputeService,
-                 computeContext: ComputeServiceContext) extends service.SshService with Logging {
+                 contextFactory: JCloudsComputeContextProvider) extends service.SshService with Logging {
 
   def sshClient(env: Environment, vm: VirtualMachine): SshClient = {
-    val client = sshClient(vm, credentialService.getCredentialsForEnvironment(env))
+    val creds: Option[GenesisCredentials] = vmCredentialService.getCredentialsForVm(vm).orElse(credentialService.getCredentialsForEnvironment(env))
+    val client = sshClient(vm, creds)
     client.connect()
     client
   }
 
   def sshClient(vm: VirtualMachine, gcredentials: Option[GenesisCredentials]): SshClient = {
+    val computeContext = contextFactory.computeContext(vm);
+
     val credentials = gcredentials.map {
       creds => new Credentials(creds.identity, creds.credential)
     }
@@ -66,5 +70,4 @@ class SshService(credentialService: CredentialService,
       }
     sshClient.get
   }
-
 }

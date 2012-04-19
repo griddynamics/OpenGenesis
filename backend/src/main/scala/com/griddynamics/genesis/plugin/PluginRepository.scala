@@ -35,10 +35,6 @@ trait PluginRepository {
   def listPlugins: Iterable[genesis.api.Plugin]
 }
 
-trait PluginConfigurationContext {
-  def configuration(pluginId: String): Map[String, String]
-}
-
 class PluginRepositoryImpl(pluginLoader: PluginLoader,
                        configService: ConfigService) extends PluginRepository with PluginConfigurationContext {
 
