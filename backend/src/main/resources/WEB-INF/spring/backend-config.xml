@@ -38,18 +38,30 @@
     <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="propertiesArray">
             <list>
-                <ref bean="fileProps"/>
+                <ref bean="filePropsDefault"/>
                 <ref bean="dbProps"/>
+                <ref bean="fileProps"/>
             </list>
         </property>
     </bean>
 
-    <bean id="fileProps" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+    <bean id="filePropsDefault" class="org.springframework.beans.factory.config.PropertiesFactoryBean" >
+        <qualifier value="main" />
+        <property name="singleton" value="true"/>
+        <property name="locations">
+            <list>
+                <value>classpath*:*-system.properties</value>
+                <value>classpath*:genesis-plugin.properties</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="fileProps" class="org.springframework.beans.factory.config.PropertiesFactoryBean" >
+        <qualifier value="override" />
         <property name="singleton" value="true"/>
         <property name="locations">
             <list>
                 <value>${backend.properties}</value>
-                <value>classpath*:genesis-plugin.properties</value>
             </list>
         </property>
     </bean>

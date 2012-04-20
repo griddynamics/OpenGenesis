@@ -23,35 +23,33 @@
 
 package com.griddynamics.genesis.configuration
 
-import org.springframework.context.annotation._
+import org.springframework.context.annotation.{Configuration, Bean}
 import org.springframework.beans.factory.annotation._
 import com.griddynamics.genesis.service.impl
 import org.springframework.beans.factory.config.PropertiesFactoryBean
-import org.springframework.transaction.support.{TransactionCallback, TransactionTemplate}
-import org.springframework.transaction.{TransactionStatus, PlatformTransactionManager}
-import org.apache.commons.configuration.{ConfigurationUtils, ConfigurationConverter, AbstractConfiguration}
+import org.apache.commons.configuration._
 
 @Configuration
 class DefaultConfigServiceContext extends ConfigServiceContext {
-    @Autowired private var dbConfig : AbstractConfiguration = _
-    @Autowired private var fileProps: PropertiesFactoryBean = _
-    @Autowired private var transactionManager : PlatformTransactionManager = _
+    @Autowired private var dbConfig : org.apache.commons.configuration.Configuration = _
+    @Autowired @Qualifier("main") private var fileProps: PropertiesFactoryBean = _
+    @Autowired @Qualifier("override") private var filePropsOverride: PropertiesFactoryBean = _
 
-    private lazy val transactionTemplate: TransactionTemplate = new TransactionTemplate(transactionManager)
+    lazy val overrideConfig = ConfigurationConverter.getConfiguration(filePropsOverride.getObject)
 
     private lazy val config = {
         ConfigurationUtils.enableRuntimeExceptions(dbConfig)
-        // read properties from file
-        val mapConfig = ConfigurationConverter.getConfiguration(fileProps.getObject)
-        // override them by DB properties
-        ConfigurationUtils.copy(dbConfig, mapConfig)
-        // write the result into DB:
-        transactionTemplate.execute(new TransactionCallback[Unit] {
-            def doInTransaction(p1: TransactionStatus) = dbConfig.copy(mapConfig)
-        })
-        dbConfig
+        val compConfig = new CompositeConfiguration
+        // read file properties overrides first
+        compConfig.addConfiguration(overrideConfig)
+         // then read DB, write to DB only
+        compConfig.addConfiguration(dbConfig, true)
+         // then read file properties defaults
+        compConfig.addConfiguration(ConfigurationConverter.getConfiguration(fileProps.getObject))
+        ConfigurationUtils.enableRuntimeExceptions(compConfig)
+        compConfig
     }
 
-    @Bean def configService = new impl.DefaultConfigService(config)
+    @Bean def configService = new impl.DefaultConfigService(config, dbConfig, overrideConfig)
 
 }
