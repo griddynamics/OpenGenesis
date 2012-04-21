@@ -23,7 +23,6 @@
 package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.plugin.GenesisStep
-import scala.Some
 import com.griddynamics.genesis.service.workflow.{Environment, WorkflowException, WorkflowFuture, WorkflowService}
 import com.griddynamics.genesis.model
 import model.{WorkflowStatus, Workflow, EnvStatus}
@@ -56,7 +55,7 @@ class DefaultWorkflowService(val storeService: service.StoreService,
 
         def executeWorkflow(steps: Seq[GenesisStep]) = {
             val workflow = new Workflow(env.id, null,
-                WorkflowStatus.Requested, 0, 0, null)
+                WorkflowStatus.Requested, 0, 0, null, None)
 
             storeService.requestWorkflow(env, workflow) match {
                 case Left(m) => throw new WorkflowException(m.toString)
@@ -69,7 +68,7 @@ class DefaultWorkflowService(val storeService: service.StoreService,
 
         def destroy(steps: Seq[GenesisStep]) = {
             val workflow = new Workflow(env.id, null,
-                WorkflowStatus.Requested, 0, 0, null)
+                WorkflowStatus.Requested, 0, 0, null, None)
 
             storeService.requestWorkflow(env, workflow) match {
                 case Left(m) => throw new WorkflowException(m.toString)
@@ -96,7 +95,7 @@ class DefaultWorkflowService(val storeService: service.StoreService,
         val env = new model.Environment(envName, EnvStatus.Requested(null),
             envCreator, null, null, projectId)
         val workflow = new Workflow(env.id, null,
-            WorkflowStatus.Requested, 0, 0, null)
+            WorkflowStatus.Requested, 0, 0, null, None)
 
         storeService.createEnv(env, workflow) match {
             case Left(m) => throw new WorkflowException(m.toString)
