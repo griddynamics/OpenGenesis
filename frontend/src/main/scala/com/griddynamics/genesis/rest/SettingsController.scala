@@ -26,7 +26,7 @@ package com.griddynamics.genesis.rest
 import org.springframework.web.bind.annotation._
 import org.springframework.stereotype.Controller
 import com.griddynamics.genesis.service.ConfigService
-import com.griddynamics.genesis.rest.GenesisRestController.extractParamsMap
+import com.griddynamics.genesis.rest.GenesisRestController.{extractParamsMap, paramToOption}
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.api.RequestResult
 
@@ -36,19 +36,28 @@ class SettingsController(configService: ConfigService) extends RestApiExceptions
 
     @RequestMapping(method = Array(RequestMethod.GET))
     @ResponseBody
-    def listSettings(@RequestParam(required = false) prefix: String) = configService.listSettings(Option(prefix))
+    def listSettings(@RequestParam(required = false) prefix: String) = configService.listSettings(paramToOption(prefix))
 
     @RequestMapping(value = Array("{key:.+}"), method = Array(RequestMethod.PUT))
     @ResponseBody
-    def update(@PathVariable("key") key: String, request: HttpServletRequest) = try {
+    def update(@PathVariable("key") key: String, request: HttpServletRequest) = using { _ =>
         configService.update(key, extractParamsMap(request)("value"))
-        RequestResult(isSuccess = true)
-    } catch {
-        case e => RequestResult(isSuccess = false, compoundServiceErrors = Seq(e.getMessage))
     }
-
 
     @RequestMapping(value = Array("{key:.+}"), method = Array(RequestMethod.DELETE))
     @ResponseBody
-    def delete(@PathVariable("key") key: String) = configService.delete(key)
+    def delete(@PathVariable("key") key: String) = using ( _ => configService.delete(key) )
+
+    @RequestMapping(method = Array(RequestMethod.DELETE))
+    @ResponseBody
+    def clear(@RequestParam(required = false) prefix: String) = using{ _ => configService.clear(Option(prefix))}
+
+    private def using (block : Any => Any) = {
+        try {
+            block()
+            RequestResult(isSuccess = true)
+        } catch {
+            case e => RequestResult(isSuccess = false, compoundServiceErrors = Seq(e.getMessage))
+        }
+    }
 }
