@@ -36,6 +36,7 @@ trait ConfigService {
 object GenesisSystemProperties {
     val BACKEND = "backend.properties"
     val PREFIX = "genesis.system"
+    val PREFIX_DB = PREFIX + ".jdbc."
     val PLUGIN_PREFIX = "genesis.plugin"
 
     val SERVICE_BACKEND_URL = "genesis.system.service.backendUrl"
