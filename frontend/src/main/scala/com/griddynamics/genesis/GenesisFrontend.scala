@@ -83,7 +83,7 @@ object GenesisFrontend extends Logging {
         }
 
         if (isFrontend) {
-            val proxyFilter = new TunnelFilter("/rest") with UrlConnectionTunnel
+            val proxyFilter = new TunnelFilter("/rest") with NettyTunnel
             val proxyHolder = new FilterHolder(proxyFilter)
             proxyHolder.setInitParameter(TunnelFilter.BACKEND_PARAMETER, getFileProperty(SERVICE_BACKEND_URL, ""))
             proxyHolder.setName("tunnelFilter")

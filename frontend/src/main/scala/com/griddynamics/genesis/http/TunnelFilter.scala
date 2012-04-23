@@ -29,8 +29,8 @@ import org.jboss.netty.bootstrap.ClientBootstrap
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory
 import java.net.{InetSocketAddress, HttpURLConnection, URL}
 import org.jboss.netty.channel._
+import local.DefaultLocalClientChannelFactory
 import org.jboss.netty.handler.codec.http._
-import java.util.concurrent.{TimeUnit, Executors}
 import com.griddynamics.genesis.util.Logging
 import java.security.Principal
 import org.springframework.security.core.context.{SecurityContext, SecurityContextHolder}
@@ -38,6 +38,10 @@ import com.griddynamics.genesis.resources.ResourceFilter
 import org.jboss.netty.buffer.{ChannelBuffer, ChannelBuffers}
 import collection.mutable.{ArrayOps, ArrayBuffer}
 import java.io.{IOException, IOError, OutputStream}
+import socket.ClientSocketChannelFactory
+import socket.http.HttpTunnelingClientSocketChannelFactory
+import socket.oio.OioClientSocketChannelFactory
+import java.util.concurrent.{ThreadPoolExecutor, TimeUnit, Executors}
 
 sealed trait Tunnel {
     def backendHost: String
@@ -93,12 +97,14 @@ object TunnelFilter {
 trait NettyTunnel extends Tunnel with Logging {
     val bossPool = Executors.newFixedThreadPool(5)
     val handlerPool = Executors.newFixedThreadPool(5 * 3)
+    val workerPool = Executors.newFixedThreadPool(5)
+    var finished = false
 
     def doServe(request: HttpServletRequest, response: CatchCodeWrapper) {
         val url = new URL(backendHost + "/" + request.getRequestURI)
-        val bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(bossPool, handlerPool))
-        val buffer = new ArrayBuffer[Byte]()
-        var factory: TunnelPipelineFactory = new TunnelPipelineFactory(buffer, response)
+        val bootstrap = new ClientBootstrap(new OioClientSocketChannelFactory(bossPool))
+        val handler = new OutputStreamHandler(response, this)
+        var factory: TunnelPipelineFactory = new TunnelPipelineFactory(handler)
         bootstrap.setPipelineFactory(factory)
         bootstrap.setOption("connectTimeoutMillis", 5000)
         val future = bootstrap.connect(new InetSocketAddress(url.getHost, url.getPort))
@@ -111,10 +117,9 @@ trait NettyTunnel extends Tunnel with Logging {
             var write: ChannelFuture = channel.write(prepareRequest(request, url))
             write.awaitUninterruptibly(5, TimeUnit.SECONDS)
             log.debug("Channel is %s", channel)
-            if(channel.getCloseFuture.awaitUninterruptibly(5, TimeUnit.SECONDS)){
-                var channel1: Channel = factory.getPipeline.getChannel
-            }
+            channel.getCloseFuture.awaitUninterruptibly(5, TimeUnit.SECONDS)
         }
+        log.debug("Exiting")
     }
 
     def prepareRequest(req: HttpServletRequest, host: URL): HttpRequest = {
@@ -139,17 +144,18 @@ trait NettyTunnel extends Tunnel with Logging {
 }
 
 
-class TunnelPipelineFactory(val buffer: ArrayBuffer[Byte], response: HttpServletResponse) extends ChannelPipelineFactory {
+class TunnelPipelineFactory(handler: OutputStreamHandler) extends ChannelPipelineFactory {
     def getPipeline = {
         val pipeline: ChannelPipeline = new DefaultChannelPipeline()
         pipeline.addLast("codec", new HttpClientCodec())
         pipeline.addLast("inflate", new HttpContentDecompressor)
-        pipeline.addLast("handler", new OutputStreamHandler(response, buffer))
+        pipeline.addLast("aggregator", new HttpChunkAggregator(64000))
+        pipeline.addLast("handler", handler)
         pipeline
     }
 }
 
-class OutputStreamHandler(val response: HttpServletResponse, buffer: ArrayBuffer[Byte])
+class OutputStreamHandler(val response: HttpServletResponse, tunnel: NettyTunnel)
   extends SimpleChannelUpstreamHandler with Logging {
 
     var chunked: Boolean = false
@@ -160,9 +166,11 @@ class OutputStreamHandler(val response: HttpServletResponse, buffer: ArrayBuffer
             response.resetBuffer()
             response.sendError(503, "Remote party error")
         }
+        tunnel.finished = true
     }
 
     override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
+        log.debug("Input channel: %s", e.getChannel)
         if (! chunked) {
             log.debug("Here")
             val remote = e.getMessage.asInstanceOf[DefaultHttpResponse]
@@ -181,14 +189,15 @@ class OutputStreamHandler(val response: HttpServletResponse, buffer: ArrayBuffer
                 log.debug("Starting to read chunks")
             } else {
                 response.getOutputStream.write(remote.getContent.toByteBuffer.array())
+                tunnel.finished = true
             }
         } else {
             val chunk = e.getMessage.asInstanceOf[HttpChunk]
             log.debug("Reading chunk %s", chunk)
-            buffer.appendAll(chunk.getContent.toByteBuffer.array())
             if (chunk.isLast) {
                 log.debug("Last chunk")
                 chunked = false
+                tunnel.finished = false
             }
         }
     }
