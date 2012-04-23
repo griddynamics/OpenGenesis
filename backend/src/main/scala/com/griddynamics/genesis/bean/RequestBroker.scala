@@ -68,7 +68,7 @@ class RequestBrokerImpl(storeService: StoreService,
         val env = new Environment(envName, EnvStatus.Requested(twf.name),
                                   envCreator, templateName, templateVersion, projectId)
         val workflow = new Workflow(env.id, twf.name,
-                                    WorkflowStatus.Requested, 0, 0, variables)
+                                    WorkflowStatus.Requested, 0, 0, variables, None)
 
         storeService.createEnv(env, workflow) match {
             case Left(m) => RR(compoundVariablesErrors = Seq(m.toString))
@@ -93,7 +93,7 @@ class RequestBrokerImpl(storeService: StoreService,
         }
 
         val workflow = new Workflow(env.id, twf.name,
-                                    WorkflowStatus.Requested, 0, 0, variables)
+                                    WorkflowStatus.Requested, 0, 0, variables, None)
 
         storeService.requestWorkflow(env, workflow) match {
             case Left(m) => RR(compoundVariablesErrors =  Seq(m.toString))
@@ -128,7 +128,7 @@ class RequestBrokerImpl(storeService: StoreService,
             case None =>
         }
 
-        val workflow = new Workflow(env.id, workflowName, WorkflowStatus.Requested, 0, 0, variables)
+        val workflow = new Workflow(env.id, workflowName, WorkflowStatus.Requested, 0, 0, variables, None)
 
         storeService.requestWorkflow(env, workflow)  match {
             case Left(m) => RR(compoundVariablesErrors = Seq(m.toString))

@@ -24,6 +24,7 @@ package com.griddynamics.genesis.model
 
 import org.squeryl.customtypes.StringField
 import WorkflowStatus._
+import java.sql.Timestamp
 
 //TODO make stepsCount and stepsFinished Option fields
 class Workflow(val envId: Int,
@@ -31,11 +32,12 @@ class Workflow(val envId: Int,
                var status: WorkflowStatus,
                var stepsCount: Int,
                var stepsFinished: Int,
-               val variables: VariablesField) extends GenesisEntity {
-    def this() = this (0, "", Requested, 0, 0, Map[String, String]())
+               val variables: VariablesField,
+               var executionStarted: Option[Timestamp]) extends GenesisEntity {
+    def this() = this (0, "", Requested, 0, 0, Map[String, String](), None)
 
     def copy() = {
-        val w = new Workflow(envId, name, status, stepsCount, stepsFinished, variables)
+        val w = new Workflow(envId, name, status, stepsCount, stepsFinished, variables, executionStarted)
         w.id = this.id
         w
     }
