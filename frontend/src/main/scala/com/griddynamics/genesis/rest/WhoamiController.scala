@@ -21,30 +21,21 @@
  *   @Description: Execution Workflow Engine
  */
 
-package com.griddynamics.genesis.service
+package com.griddynamics.genesis.rest
 
-import com.griddynamics.genesis.api.{RequestResult, ConfigProperty}
+import org.springframework.stereotype.Controller
+import scala.Array
+import org.springframework.web.bind.annotation.{ResponseBody, RequestMethod, RequestMapping}
+import org.springframework.beans.factory.annotation.Value
 
-trait ConfigService {
-    def get[B](name: String, default: B): B
-    def get(name: String) : Option[Any]
-    def listSettings(prefix: Option[String]) : Seq[ConfigProperty]
-    def update(name:String, value:Any)
-    def delete(name:String) : RequestResult
-}
+@Controller
+@RequestMapping(Array("/rest/whoami"))
+class WhoamiController {
+    @Value("${genesis.system.logout.disabled:false}")
+    var nologout = false
 
-object GenesisSystemProperties {
-    val BACKEND = "backend.properties"
-    val PREFIX = "genesis.system"
-    val PREFIX_DB = PREFIX + ".jdbc."
-    val PLUGIN_PREFIX = "genesis.plugin"
+    @RequestMapping(method = Array(RequestMethod.GET))
+    @ResponseBody
+    def whoami(): Map[String, Any] = Map("user" -> GenesisRestController.getCurrentUser, "logout_disabled" -> nologout)
 
-    val SERVICE_BACKEND_URL = "genesis.system.service.backendUrl"
-    val SERVER_MODE = "genesis.system.server.mode"
-    val SERVICE_REST_USEMOCK = "genesis.system.service.rest.use.mock"
-    val SECURITY_CONFIG = "genesis.system.security.config"
-    val SECURITY_GROUPS = "genesis.system.security.groups"
-    val BIND_HOST = "genesis.system.bind.host"
-    val BIND_PORT = "genesis.system.bind.port"
-    val WEB_RESOURCE_ROOTS = "genesis.system.web.resourceRoots"
 }

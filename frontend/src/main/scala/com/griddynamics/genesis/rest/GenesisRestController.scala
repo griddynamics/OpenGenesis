@@ -33,13 +33,13 @@ import com.griddynamics.genesis.api.{EnvironmentDetails, GenesisService}
 import org.springframework.http.HttpStatus
 import java.security.Principal
 import org.springframework.beans.factory.annotation.Value
+import com.griddynamics.genesis.http.TunnelFilter
 
 @Controller
 @RequestMapping(Array("/rest"))
 class GenesisRestController(genesisService: GenesisService) extends RestApiExceptionsHandler {
 
-    @Value("${genesis.system.security.useKerberos:false}")
-    var ssoEnabled = false
+
     @Value("${genesis.system.server.mode:frontend}")
     var mode = ""
 
@@ -55,7 +55,7 @@ class GenesisRestController(genesisService: GenesisService) extends RestApiExcep
         val projectId = extractValue("projectId", paramsMap)
 
         val user = mode match {
-          case "backend" => extractValue("creator", paramsMap)
+          case "backend" => request.getHeader(TunnelFilter.SEC_HEADER_NAME)
           case _ => getCurrentUser
         }
         genesisService.createEnv(projectId.toInt, envName, user, templateName, templateVersion, variables)
@@ -91,10 +91,6 @@ class GenesisRestController(genesisService: GenesisService) extends RestApiExcep
     @ResponseBody
     def describeEnv(@PathVariable("envName") envName: String, response : HttpServletResponse) : EnvironmentDetails =
         genesisService.describeEnv(envName).getOrElse(throw new ResourceNotFoundException)
-
-    @RequestMapping(value = Array("whoami"), method = Array(RequestMethod.GET))
-    @ResponseBody
-    def whoami() : Map[String, Any] = Map("user" -> getCurrentUser, "sso" -> ssoEnabled)
 
     @RequestMapping(value = Array("envs"), method = Array(RequestMethod.GET))
     @ResponseBody
