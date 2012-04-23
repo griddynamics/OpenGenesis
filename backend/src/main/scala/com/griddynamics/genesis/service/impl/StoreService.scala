@@ -29,7 +29,8 @@ import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.common.Mistake
 import com.griddynamics.genesis.common.Mistake.throwableToLeft
 import org.springframework.transaction.annotation.{Isolation, Propagation, Transactional}
-import org.squeryl.{Session, Query, Table}
+import org.squeryl.{Query, Table}
+import java.sql.Timestamp
 
 //TODO think about ids as vars
 class StoreService extends service.StoreService {
@@ -133,7 +134,7 @@ class StoreService extends service.StoreService {
 
             var cworkflow = new Workflow(cenv.id, workflow.name,
                 WorkflowStatus.Requested, 0, 0,
-                workflow.variables)
+                workflow.variables, None)
             cworkflow = GS.workflows.insert(cworkflow)
 
             (cenv, cworkflow)
@@ -214,6 +215,7 @@ class StoreService extends service.StoreService {
 
         e.status = EnvStatus.Executing(w.name)
         w.status = WorkflowStatus.Executed
+        w.executionStarted = Some(new Timestamp(System.currentTimeMillis()))
 
         updateEnv(e)
         GS.workflows.update(w)
