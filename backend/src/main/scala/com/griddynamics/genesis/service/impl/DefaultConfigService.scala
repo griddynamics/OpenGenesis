@@ -47,9 +47,10 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
     @Transactional(readOnly = true)
     def get(name: String) = Option(config.getProperty(name))
 
+    import service.GenesisSystemProperties.PREFIX_DB
     @Transactional(readOnly = true)
     def listSettings(prefix: Option[String]) = prefix.map(config.getKeys(_)).getOrElse(config.getKeys())
-        .map(k => api.ConfigProperty(k, config.getString(k), configRO.containsKey(k))).toSeq.sortBy(_.name)
+        .map(k => api.ConfigProperty(k, config.getString(k), k.startsWith(PREFIX_DB) || configRO.containsKey(k))).toSeq.sortBy(_.name)
 
     @Transactional
     def update(name: String, value: Any) {writeConfig.setProperty(name, value)}
