@@ -22,7 +22,7 @@
  */
 package com.griddynamics.genesis
 
-import http.{UrlConnectionTunnel, NettyTunnel, TunnelFilter}
+import http.{NettyTunnel, UrlConnectionTunnel, TunnelFilter}
 import org.springframework.core.io.DefaultResourceLoader
 import java.util.Properties
 import org.eclipse.jetty.server.Server
@@ -83,7 +83,7 @@ object GenesisFrontend extends Logging {
         }
 
         if (isFrontend) {
-            val proxyFilter = new TunnelFilter("/rest") with NettyTunnel
+            val proxyFilter = new TunnelFilter("/rest") with UrlConnectionTunnel
             val proxyHolder = new FilterHolder(proxyFilter)
             proxyHolder.setInitParameter(TunnelFilter.BACKEND_PARAMETER, getFileProperty(SERVICE_BACKEND_URL, ""))
             proxyHolder.setName("tunnelFilter")

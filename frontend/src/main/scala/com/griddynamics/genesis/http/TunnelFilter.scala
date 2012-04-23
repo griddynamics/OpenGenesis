@@ -29,19 +29,14 @@ import org.jboss.netty.bootstrap.ClientBootstrap
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory
 import java.net.{InetSocketAddress, HttpURLConnection, URL}
 import org.jboss.netty.channel._
-import local.DefaultLocalClientChannelFactory
 import org.jboss.netty.handler.codec.http._
 import com.griddynamics.genesis.util.Logging
 import java.security.Principal
 import org.springframework.security.core.context.{SecurityContext, SecurityContextHolder}
 import com.griddynamics.genesis.resources.ResourceFilter
 import org.jboss.netty.buffer.{ChannelBuffer, ChannelBuffers}
-import collection.mutable.{ArrayOps, ArrayBuffer}
-import java.io.{IOException, IOError, OutputStream}
-import socket.ClientSocketChannelFactory
-import socket.http.HttpTunnelingClientSocketChannelFactory
-import socket.oio.OioClientSocketChannelFactory
-import java.util.concurrent.{ThreadPoolExecutor, TimeUnit, Executors}
+import java.io.IOException
+import java.util.concurrent.{CountDownLatch, TimeUnit, Executors}
 
 sealed trait Tunnel {
     def backendHost: String
@@ -69,8 +64,8 @@ abstract class TunnelFilter(override val uriMatch: String) extends Filter with T
 
     def serve(request: HttpServletRequest, response: CatchCodeWrapper) {
         if (request.getRequestURI.startsWith(uriMatch)) {
-            doServe(request, response)
-            response.getOutputStream.flush()
+          TunnelFilter.withTimings(doServe(request, response))
+          response.getOutputStream.flush()
         } else {
             response.resume()
         }
@@ -79,8 +74,10 @@ abstract class TunnelFilter(override val uriMatch: String) extends Filter with T
     def destroy() {}
 }
 
-object TunnelFilter {
+object TunnelFilter extends Logging {
     val BACKEND_PARAMETER = "backendHost"
+    //we will authenticate on backend with this header.
+    //TODO: write Spring Sec. filter to provide normal authorization based on it, if required
     val SEC_HEADER_NAME = "X-On-Behalf-of"
     val TUNNELED_HEADER_NAME = "X-Tunneled-By"
     def currentUser = {
@@ -91,19 +88,28 @@ object TunnelFilter {
          ""
         result
     }
+
+    def withTimings[B](block: => B) : B = {
+      val millis = System.currentTimeMillis()
+      try {
+        block
+      } finally {
+        log.debug("Time spent: %s ms", System.currentTimeMillis() - millis)
+      }
+    }
 }
 
 
 trait NettyTunnel extends Tunnel with Logging {
     val bossPool = Executors.newFixedThreadPool(5)
     val handlerPool = Executors.newFixedThreadPool(5 * 3)
-    val workerPool = Executors.newFixedThreadPool(5)
     var finished = false
 
     def doServe(request: HttpServletRequest, response: CatchCodeWrapper) {
         val url = new URL(backendHost + "/" + request.getRequestURI)
-        val bootstrap = new ClientBootstrap(new OioClientSocketChannelFactory(bossPool))
-        val handler = new OutputStreamHandler(response, this)
+        val bootstrap = new ClientBootstrap(new NioClientSocketChannelFactory(bossPool, handlerPool))
+        val latch = new CountDownLatch(1) //we have to block until remote response will be read
+        val handler = new OutputStreamHandler(response, latch)
         var factory: TunnelPipelineFactory = new TunnelPipelineFactory(handler)
         bootstrap.setPipelineFactory(factory)
         bootstrap.setOption("connectTimeoutMillis", 5000)
@@ -116,10 +122,12 @@ trait NettyTunnel extends Tunnel with Logging {
         } else {
             var write: ChannelFuture = channel.write(prepareRequest(request, url))
             write.awaitUninterruptibly(5, TimeUnit.SECONDS)
-            log.debug("Channel is %s", channel)
             channel.getCloseFuture.awaitUninterruptibly(5, TimeUnit.SECONDS)
         }
-        log.debug("Exiting")
+        if (! latch.await(5, TimeUnit.SECONDS)) {
+          response.resetBuffer()
+          response.sendError(502, "Timeout while reading remote answer")
+        }
     }
 
     def prepareRequest(req: HttpServletRequest, host: URL): HttpRequest = {
@@ -149,13 +157,13 @@ class TunnelPipelineFactory(handler: OutputStreamHandler) extends ChannelPipelin
         val pipeline: ChannelPipeline = new DefaultChannelPipeline()
         pipeline.addLast("codec", new HttpClientCodec())
         pipeline.addLast("inflate", new HttpContentDecompressor)
-        pipeline.addLast("aggregator", new HttpChunkAggregator(64000))
+        //pipeline.addLast("aggregator", new HttpChunkAggregator(64000))
         pipeline.addLast("handler", handler)
         pipeline
     }
 }
 
-class OutputStreamHandler(val response: HttpServletResponse, tunnel: NettyTunnel)
+class OutputStreamHandler(val response: HttpServletResponse, val latch: CountDownLatch)
   extends SimpleChannelUpstreamHandler with Logging {
 
     var chunked: Boolean = false
@@ -166,20 +174,18 @@ class OutputStreamHandler(val response: HttpServletResponse, tunnel: NettyTunnel
             response.resetBuffer()
             response.sendError(503, "Remote party error")
         }
-        tunnel.finished = true
+        latch.countDown()
     }
 
     override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
-        log.debug("Input channel: %s", e.getChannel)
         if (! chunked) {
-            log.debug("Here")
             val remote = e.getMessage.asInstanceOf[DefaultHttpResponse]
             response.reset()
             response.setStatus(remote.getStatus.getCode)
             response.addHeader(TunnelFilter.TUNNELED_HEADER_NAME, "Netty %s".format(this))
             import scala.collection.JavaConversions._
             val headers = remote.getHeaderNames
-            for (header <- headers if (header != "Connection" && header != "Transfer-Encoding")) {
+            for (header <- headers if (header != "Connection" && header != "Transfer-Encoding" && header != "Set-Cookie")) {
                 for (vals <- remote.getHeaders(header)) {
                     response.addHeader(header, vals)
                 }
@@ -188,22 +194,26 @@ class OutputStreamHandler(val response: HttpServletResponse, tunnel: NettyTunnel
                 chunked = true
                 log.debug("Starting to read chunks")
             } else {
-                response.getOutputStream.write(remote.getContent.toByteBuffer.array())
-                tunnel.finished = true
+                write(remote.getContent)
+                latch.countDown()
             }
         } else {
             val chunk = e.getMessage.asInstanceOf[HttpChunk]
-            log.debug("Reading chunk %s", chunk)
+            log.debug("Reading chunk")
+            write(chunk.getContent)
             if (chunk.isLast) {
                 log.debug("Last chunk")
                 chunked = false
-                tunnel.finished = false
+                response.getOutputStream.flush()
+                latch.countDown()
             }
         }
-    }
-
-    override def channelConnected(ctx: ChannelHandlerContext, e: ChannelStateEvent) {
-        log.debug("Channel was closed")
+        def write(content: ChannelBuffer) {
+            if (content.readable() && ! response.isCommitted) {
+               val bytes = content.readableBytes()
+               response.getOutputStream.write(content.array().slice(0, bytes))
+            }
+        }
     }
 }
 
@@ -216,6 +226,7 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
         val url = new URL(backendHost + uri)
         val connection = url.openConnection().asInstanceOf[HttpURLConnection]
         connection.setRequestMethod(request.getMethod)
+        connection.setUseCaches(false)
         var doWrite = false
         if (request.getMethod == "POST" || request.getMethod == "PUT") {
             connection.setDoOutput(true)
@@ -236,24 +247,17 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
             }
             val localOut = response.getOutputStream
             response.resetBuffer()
-            val code = try {
-                connection.getResponseCode
-            } catch {
-                case e: IOException => {
-                    log.debug("error occured")
-                    connection.getResponseCode
-                }
-            }
+            response.setStatus(connection.getResponseCode)
             val stream = try {
-                connection.getInputStream
+              connection.getInputStream
             } catch {
-                case e => {
-                    connection.getErrorStream
-                }
+              //on codes >= 400 connection.getInputStream throws error, but all data are in connection.errorStream
+              case e => connection.getErrorStream
             }
-            response.setStatus(code)
             import scala.collection.JavaConversions._
-            for(entry <- connection.getHeaderFields if (entry._1 != null && entry._1 != "Connection")) {
+            //I have no idea why there is nulls for header names, but we have to check it
+            for(entry <- connection.getHeaderFields if (entry._1 != null && entry._1 != "Connection"
+              && entry._1 != "Set-Cookie")) {
                 response.addHeader(entry._1, entry._2(0))
             }
             response.addHeader(TunnelFilter.TUNNELED_HEADER_NAME, "UrlConnection")
@@ -264,7 +268,8 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
         } catch {
             case e => {
                 log.error(e, "Error when tunneling request")
-                response.resume()
+                response.resetBuffer()
+                response.sendError(503, "Error reading remote answer")
             }
         } finally {
             connection.disconnect()
