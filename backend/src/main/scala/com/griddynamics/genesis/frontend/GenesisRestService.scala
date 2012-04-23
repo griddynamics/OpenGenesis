@@ -145,7 +145,7 @@ object GenesisRestService {
     def workflowHistoryDesc(history: Seq[(Workflow, Seq[model.WorkflowStep])]) =
         wrap(history)(() =>
             (for ((flow, steps) <- history) yield
-                new WorkflowDetails(flow.name, flow.status.toString, stepsCompleted(Some(flow)), stepDesc(steps))).toSeq)
+                new WorkflowDetails(flow.name, flow.status.toString, stepsCompleted(Some(flow)), stepDesc(steps), flow.executionStarted.map (_.getTime))).toSeq)
 
     def stepDesc(steps : Seq[model.WorkflowStep]) =
         wrap(steps)(() =>
