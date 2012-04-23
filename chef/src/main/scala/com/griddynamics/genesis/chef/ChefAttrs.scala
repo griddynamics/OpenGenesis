@@ -22,16 +22,9 @@
  */
 package com.griddynamics.genesis.chef
 
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.core.io.Resource
-import com.griddynamics.genesis.util.InputUtil
+import com.griddynamics.genesis.model.EntityAttr
 
-trait ChefResources {
-    val chefInstallSh : String
-}
-
-class ChefResourcesImpl extends ChefResources {
-    @Value("${genesis.shell.chef.install.sh:classpath:shell/chef-install.sh}")
-    var chefInstallShResource : Resource = _
-    lazy val chefInstallSh = InputUtil.resourceAsString(chefInstallShResource)
+object ChefVmAttrs {
+    val ChefNodeName = EntityAttr[String]("ChefNodeName")
+    val ChefConfig = EntityAttr[ChefPluginConfig]("ChefConfig")
 }
