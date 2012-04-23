@@ -50,13 +50,15 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
     }
 
     @Transactional
-    override def update(a: UserGroup) = {
-        validUpdate(a, a => {
+    def update(group: UserGroup, users: List[String]) = {
+        validUpdate(group, a => {
              findByName(a.name) match {
                  case None => RequestResult(isSuccess = false, compoundServiceErrors = Seq("Group not found"))
                  case Some(g) => {
-                     repository.update(a)
-                     RequestResult(isSuccess = true)
+                   val group = repository.update(a)
+                   repository.removeAllUsersFromGroup(group.id.get)
+                   group.id.map(i => users.map(u => repository.addUserToGroup(i, u)))
+                   RequestResult(isSuccess = true)
                  }
              }
         })
