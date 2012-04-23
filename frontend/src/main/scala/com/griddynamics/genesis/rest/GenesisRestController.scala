@@ -162,7 +162,7 @@ object GenesisRestController {
        }
     }
   
-    private def paramToOption(param: String) = {
+    def paramToOption(param: String) = {
       if (param == null || param.isEmpty)
         None
       else
