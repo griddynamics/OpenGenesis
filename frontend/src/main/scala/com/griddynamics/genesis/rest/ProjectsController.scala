@@ -48,7 +48,10 @@ class ProjectsController(projectRepository: ProjectRepository) extends RestApiEx
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.GET))
   @ResponseBody
   def findProject(@PathVariable("projectId") projectId: Int): Project = {
-    projectRepository.load(projectId);
+    projectRepository.get(projectId) match {
+        case Some(p: Project) => p
+        case None => throw new ResourceNotFoundException
+    };
   }
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.PUT))
@@ -56,7 +59,10 @@ class ProjectsController(projectRepository: ProjectRepository) extends RestApiEx
   def updateProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response: HttpServletResponse): Project = {
     val paramsMap = GenesisRestController.extractParamsMap(request)
     val project = extractProject(Option(projectId), paramsMap)
-    projectRepository.save(project)
+    projectRepository.get(projectId) match {
+        case Some(p) => projectRepository.save(project)
+        case _ => throw new ResourceNotFoundException
+    }
   }
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.DELETE))

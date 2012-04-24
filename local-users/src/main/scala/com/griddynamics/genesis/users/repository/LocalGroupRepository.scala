@@ -30,9 +30,6 @@ import com.griddynamics.genesis.users.model.LocalGroup
 
 abstract class LocalGroupRepository extends AbstractGenericRepository[LocalGroup, UserGroup](LocalUserSchema.groups)
     with UserGroupManagement {
-    def get(i: Int): Option[UserGroup] = {
-        from(table)(group => where(group.id === i).select(group)).headOption.map(convert(_))
-    }
 
 
     def findByName(name: String) : Option[UserGroup] = {
