@@ -38,8 +38,9 @@ abstract class LocalGroupRepository extends AbstractGenericRepository[LocalGroup
 
     override def update(group: UserGroup) = {
         table.update(
-            g => where (g.name === group.name)
+            g => where (g.id === group.id)
               set(
+              g.name        := group.name,
               g.description := group.description,
               g.mailingList := group.mailingList
               )

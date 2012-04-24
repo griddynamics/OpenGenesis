@@ -49,7 +49,7 @@ class GroupController extends RestApiExceptionsHandler {
     def create(request: HttpServletRequest) : RequestResult = {
         RequestReader.read(request) {
             map => {
-                var group :UserGroup = readGroup(map)
+                var group: UserGroup = readGroup(map)
                 var create = groupService.create(group, readUsers(map, "users"))
                 create
             }
@@ -62,7 +62,7 @@ class GroupController extends RestApiExceptionsHandler {
         RequestReader.read(request) {
             map => {
                 withGroup(id) {
-                    group => groupService.update(readGroup(map))
+                    group => groupService.update(readGroup(map), readUsers(map, "users"))
                 }
             }
         }

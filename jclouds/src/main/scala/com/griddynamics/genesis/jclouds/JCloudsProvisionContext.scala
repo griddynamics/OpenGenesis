@@ -25,8 +25,6 @@ package com.griddynamics.genesis.jclouds
 import action.JCloudsProvisionVm
 import coordinators.JCloudsStepCoordinatorFactory
 import executors.{JCloudsVmDestructor, ProvisionExecutor, SshPortChecker}
-import org.springframework.context.annotation.{Configuration, Bean}
-import org.springframework.beans.factory.annotation.Autowired
 import org.jboss.netty.bootstrap.ClientBootstrap
 import com.griddynamics.genesis.jclouds.step.{DestroyEnvStepBuilderFactory, ProvisionVmsStepBuilderFactory}
 import com.griddynamics.genesis.model.{IpAddresses, VirtualMachine}
@@ -50,6 +48,8 @@ import javax.annotation.PostConstruct
 import com.griddynamics.genesis.workflow.DurationLimitedActionExecutor
 import com.griddynamics.genesis.util.InputUtil
 import org.springframework.core.io.ResourceLoader
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.{Configuration, Bean}
 
 trait JCloudsProvisionContext extends ProvisionContext[JCloudsProvisionVm] {
   def cloudProvider: String
@@ -69,6 +69,7 @@ private object Plugin {
   val ProvisionTimeout = "genesis.provision.vm.timeout.secs"
   val PublicIpCheckoutTimeout = "genesis.public.ip.check.timeout.secs"
 }
+
 
 @Configuration
 @GenesisPlugin(id = "jclouds", description = "jclouds plugin")
@@ -105,9 +106,8 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
   }
 
   @Bean
-  def jcloudsCoordinatorFactory = new JCloudsStepCoordinatorFactory((globalContext: Map[String, String]) => {
-    var pluginConfig = pluginConfiguration.configuration(Plugin.id)
-    pluginConfig = pluginConfig ++ globalContext.filterKeys(pluginConfig.contains(_))
+  def jcloudsCoordinatorFactory = new JCloudsStepCoordinatorFactory(() => {
+    val pluginConfig = pluginConfiguration.configuration(Plugin.id)
 
     new JCloudsProvisionContextImpl(
       storeServiceContext.storeService,

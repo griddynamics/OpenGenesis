@@ -34,4 +34,4 @@ object GenesisEntity {
     type Id = Int
 }
 
-class ConfigProperty (val name: String, val value: String, val readOnly: Boolean)
+class ConfigProperty (val name: String, val value: String)
