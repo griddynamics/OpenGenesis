@@ -54,6 +54,11 @@ class RequestBrokerImpl(storeService: StoreService,
             case None =>
         }
 
+        validateCreator(envCreator) match {
+            case Some(rr) => return rr
+            case _ =>
+        }
+
         val twf = templateService.findTemplate(templateName, templateVersion) match  {
             case None => return RR(compoundVariablesErrors = Seq("Template %s with version %s not found".format(templateName, templateVersion)),
                 isSuccess = false, isNotFound = true)
@@ -171,6 +176,13 @@ object RequestBrokerImpl {
             Some(toRequestResult(validationResults))
         else
             None
+    }
+
+    def validateCreator(creator: String) = {
+        if (creator.trim.length > 0)
+            None
+        else
+            Some(RR(isSuccess = false, compoundServiceErrors = Seq("Creator not found")))
     }
 
     def toRequestResult(errors : Seq[ValidationError]) = {

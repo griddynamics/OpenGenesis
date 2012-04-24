@@ -65,11 +65,15 @@ class JsonMessageConverter
                case None    => ""
                case Some(v) => v*/
         val statusCode  = getStatus(t)
-        if (outputMessage.isInstanceOf[ServerHttpResponse] && statusCode > 0)
-            outputMessage.asInstanceOf[ServerHttpResponse].setStatusCode(HttpStatus.valueOf(statusCode))
+        if (outputMessage.isInstanceOf[ServerHttpResponse] && statusCode > 0)  {
+            var response: ServerHttpResponse = outputMessage.asInstanceOf[ServerHttpResponse]
+            response.setStatusCode(HttpStatus.valueOf(statusCode))
+        }
 
-        Serialization.write(t,
-            new OutputStreamWriter(outputMessage.getBody, StringHttpMessageConverter.DEFAULT_CHARSET))
+        outputMessage.getHeaders.setContentType(MediaType.APPLICATION_JSON)
+        val message: String = Serialization.write(t)
+        outputMessage.getHeaders.setContentLength(message.length)
+        outputMessage.getBody.write(message.getBytes(StringHttpMessageConverter.DEFAULT_CHARSET))
     }
 
     private def getStatus(requestResult : AnyRef) : Int =

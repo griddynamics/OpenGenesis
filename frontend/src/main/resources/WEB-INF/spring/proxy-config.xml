@@ -6,17 +6,6 @@
                            http://www.springframework.org/schema/context
                            http://www.springframework.org/schema/context/spring-context-3.0.xsd">
     <import resource="mvc-config.xml"/>
+    <bean class="com.griddynamics.genesis.rest.WhoamiController"/>
     <context:property-placeholder location="${backend.properties}" system-properties-mode="OVERRIDE"/>
-    <bean id="genesisService" class="com.griddynamics.genesis.spring.GenesisServiceFactoryBean">
-        <constructor-arg name="useMock" value="${genesis.system.service.rest.use.mock:false}"/>
-        <constructor-arg name="genesisRestService" ref="genesisRestService"/>
-    </bean>
-    
-    <bean id="genesisRestService" class="com.griddynamics.genesis.rest.GenesisServiceRestProxy">
-        <constructor-arg name="backendUrl" value="${genesis.system.service.backendUrl}"/>
-    </bean>
-
-    <bean class="com.griddynamics.genesis.rest.GenesisRestController">
-        <constructor-arg name="genesisService" ref="genesisService"/>
-    </bean>
 </beans>
