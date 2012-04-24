@@ -49,7 +49,7 @@ class StepExecutionContextImpl(val step : GenesisStep,
                                iVms : Seq[VirtualMachine],
                                iWorkflow : Workflow,
                                val globals : mutable.Map[String,String],
-                               val pluginContexts: mutable.Map[String, String]) extends StepExecutionContext {
+                               val pluginContexts: mutable.Map[String, Any]) extends StepExecutionContext {
     var hEnv = iEnv
     var hVms = mutable.Seq(iVms : _ *)
 

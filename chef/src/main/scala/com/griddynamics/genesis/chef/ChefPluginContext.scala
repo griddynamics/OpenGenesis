@@ -35,7 +35,10 @@ import com.griddynamics.genesis.service.{StoreService, SshService, Credentials}
 import step.ChefResourcesImpl
 import com.griddynamics.genesis.plugin.PluginConfigurationContext
 import org.springframework.context.annotation.{Scope, Bean, Configuration}
-import com.griddynamics.genesis.cache.Cache._
+import com.griddynamics.genesis.cache.Cache
+import javax.annotation.PostConstruct
+import java.util.concurrent.TimeUnit
+import net.sf.ehcache.CacheManager
 
 trait ChefPluginContext {
 
@@ -94,15 +97,25 @@ class ChefPluginContextImpl extends Cache /*extends ApplicationContextAware*/ {
 
     @Autowired var pluginConfiguration: PluginConfigurationContext = _
 
+    @Autowired var cacheManager: CacheManager = _
+
     @Bean @Scope(value = "prototype")
     def config: ChefPluginConfig  = new ChefPluginConfig
 
+    @PostConstruct
+    def cacheRegionAdjustment() {
+      val cache = cacheManager.addCacheIfAbsent(ChefPluginContextImpl.CacheRegion)
+      val config = cache.getCacheConfiguration;
+      config.setTimeToIdleSeconds(TimeUnit.HOURS.toSeconds(2))
+      config.setTimeToLiveSeconds(TimeUnit.HOURS.toSeconds(20))
+      config.setDiskPersistent(false)
+    }
 
     def chefService(config: ChefPluginConfig) = new ChefServiceImpl(config.chefId , config.chefEndpoint,
         new Credentials(config.chefValidatorIdentity, config.chefValidatorCredential), chefClient(config))
 
     def chefClient(config: ChefPluginConfig) = {
-      fromCache(computeContextRegion, settings) {
+      fromCache(ChefPluginContextImpl.CacheRegion, config) {
 
         val chefContextFactory = new ChefContextFactory
 
@@ -117,9 +130,9 @@ class ChefPluginContextImpl extends Cache /*extends ApplicationContextAware*/ {
 
    @Bean def chefStepCoordinatorFactory =
     new ChefStepCoordinatorFactory(execPluginContext,
-      () => {
+      (value: Option[ChefPluginConfig]) => {
 //        val configSnapshot = applicationContext.getBean(classOf[ChefPluginConfig])
-        val configSnapshot = config
+        val configSnapshot = value.getOrElse(config)
 
         new ChefExecutionContextImpl(
           computeServiceContext.sshService,
@@ -134,8 +147,6 @@ class ChefPluginContextImpl extends Cache /*extends ApplicationContextAware*/ {
   @Bean def createChefRoleBuilderFactory = new step.CreateChefRoleBuilderFactory
   @Bean def createChefDatabagBuilderFactory = new step.CreateChefDatabagBuilderFactory
   @Bean def destroyChefEnvStepBuilderFactory = new step.DestroyChefEnvStepBuilderFactory
-
-
 }
 
 
@@ -184,4 +195,5 @@ class ChefExecutionContextImpl(sshService: SshService,
 
 object ChefPluginContextImpl {
     val CHEF_ENDPOINT = "chef.endpoint"
+    val CacheRegion = "ChefCache"
 }

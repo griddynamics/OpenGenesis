@@ -25,16 +25,20 @@ package com.griddynamics.genesis.chef.coordinator
 import com.griddynamics.genesis.plugin.{StepExecutionContext, PartialStepCoordinatorFactory}
 import com.griddynamics.genesis.workflow.{ActionStepCoordinator, Step}
 import com.griddynamics.genesis.chef.step._
-import com.griddynamics.genesis.chef.{action, ChefPluginContext}
 import com.griddynamics.genesis.exec.ExecPluginContext
+import com.griddynamics.genesis.chef.{ChefPluginConfig, ChefVmAttrs, action, ChefPluginContext}
 
-class ChefStepCoordinatorFactory(execPluginContext: ExecPluginContext, chefPluginContextProvider: () => ChefPluginContext)
+class ChefStepCoordinatorFactory(execPluginContext: ExecPluginContext,
+                                 chefPluginContextProvider: (Option[ChefPluginConfig]) => ChefPluginContext)
   extends PartialStepCoordinatorFactory {
 
   def isDefinedAt(step: Step) = step.isInstanceOf[ChefStep]
 
   def apply(step: Step, context: StepExecutionContext) = {
-    val chefPluginContext = context.pluginContexts.getOrElseUpdate("chef", chefPluginContextProvider()).asInstanceOf[ChefPluginContext];
+    val config = context.env.get(ChefVmAttrs.ChefConfig)
+
+    val chefPluginContext = context.pluginContexts.getOrElseUpdate("chef", chefPluginContextProvider(config)).asInstanceOf[ChefPluginContext];
+
     step match {
       case s: ChefRun => new ChefRunCoordinator(s, context, execPluginContext, chefPluginContext)
 
