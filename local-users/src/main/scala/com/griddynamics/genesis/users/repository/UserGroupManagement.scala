@@ -9,7 +9,7 @@ trait UserGroupManagement{
     def usersForGroup(id: Int) : Option[List[User]]
     def addUserToGroup(id: Int, username: String)
     def removeUserFromGroup(id: Int, username: String)
-
+    def removeAllUsersFromGroup(id: Int)
 }
 
 trait LocalUserGroupManagement extends UserGroupManagement {
@@ -32,5 +32,9 @@ trait LocalUserGroupManagement extends UserGroupManagement {
         withSelectUser(username) {
             u => from(LocalUserSchema.groups)(group => where(group.id === id).select(group)).headOption.map(g => g.users.dissociate(u))
         }
+    }
+
+    def removeAllUsersFromGroup(id: Int) {
+        LocalUserSchema.userGroupsRelation.deleteWhere(ug => ug.groupId === id)
     }
 }
