@@ -86,6 +86,10 @@
             <groupId>com.griddynamics.genesis</groupId>
             <artifactId>jclouds</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.griddynamics.genesis</groupId>
+            <artifactId>chef</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <resources>

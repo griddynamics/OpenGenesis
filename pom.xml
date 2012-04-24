@@ -96,6 +96,7 @@
         <module>build-providers/jenkins</module>
         <module>local-users</module>
         <module>jclouds</module>
+        <module>chef</module>
         <module>distribution</module>
     </modules>
 
@@ -189,6 +190,12 @@
             <dependency>
                 <groupId>com.griddynamics.genesis</groupId>
                 <artifactId>jclouds</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.griddynamics.genesis</groupId>
+                <artifactId>chef</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -340,6 +347,12 @@
                 <groupId>com.h2database</groupId>
                 <artifactId>h2</artifactId>
                 <version>${com.h2.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jclouds</groupId>
+                <artifactId>jclouds-compute</artifactId>
+                <version>${org.jclouds.version}</version>
             </dependency>
 
             <dependency>
