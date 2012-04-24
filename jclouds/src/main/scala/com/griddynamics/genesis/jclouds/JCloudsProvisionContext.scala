@@ -48,9 +48,8 @@ import javax.annotation.PostConstruct
 import com.griddynamics.genesis.workflow.DurationLimitedActionExecutor
 import com.griddynamics.genesis.util.InputUtil
 import org.springframework.core.io.ResourceLoader
-import org.springframework.beans.factory.annotation.{Value, Autowired}
-import org.springframework.context.annotation.{Scope, Configuration, Bean}
-import org.springframework.stereotype.Component
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.{Configuration, Bean}
 
 trait JCloudsProvisionContext extends ProvisionContext[JCloudsProvisionVm] {
   def cloudProvider: String
@@ -70,19 +69,6 @@ private object Plugin {
   val ProvisionTimeout = "genesis.provision.vm.timeout.secs"
   val PublicIpCheckoutTimeout = "genesis.public.ip.check.timeout.secs"
 }
-
-@Component @Scope("prototype")
-case class PluginConfig @Autowired() (
-  @Value("${genesis.port.check.timeout.secs:180}") portCheckTimeoutSecs: Int,
-  @Value("${genesis.provision.vm.timeout.secs:180}") provisionVmTimeoutSecs: Int,
-  @Value("${genesis.public.ip.check.timeout.secs:30}") publicIpCheckTimeoutSecs: Int,
-
-  @Value("${genesis.jclouds.provider}") jcloudsProvider: String,
-  @Value("${genesis.jclouds.endpoint}") jcloudsEndpoint: String,
-  @Value("${genesis.jclouds.identity}") jcloudsIdentity: String,
-  @Value("${genesis.jclouds.credential}") jcloudsCredential: String,
-  @Value("${genesis.jclouds.nodename.prefix}") jcloudsNodeNamePrefix: String
-)
 
 
 @Configuration

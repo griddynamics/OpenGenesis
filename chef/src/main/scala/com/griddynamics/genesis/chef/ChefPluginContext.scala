@@ -27,14 +27,14 @@ import executor._
 import com.griddynamics.genesis.util.InputUtil
 import org.jclouds.chef.ChefContextFactory
 import java.util.{Collections, Properties}
-import org.springframework.beans.factory.annotation.{Autowired, Value}
+import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.configuration.{StoreServiceContext, ComputeServiceContext}
 import com.griddynamics.genesis.exec.ExecPluginContext
 import com.griddynamics.genesis.plugin.api.GenesisPlugin
 import com.griddynamics.genesis.service.{StoreService, SshService, Credentials}
 import step.ChefResourcesImpl
 import com.griddynamics.genesis.plugin.PluginConfigurationContext
-import org.springframework.context.annotation.{Scope, Bean, Configuration}
+import org.springframework.context.annotation.{Bean, Configuration}
 import com.griddynamics.genesis.cache.Cache
 import javax.annotation.PostConstruct
 import java.util.concurrent.TimeUnit
@@ -55,39 +55,22 @@ trait ChefPluginContext {
     def chefEnvDestructor(a: action.DestroyChefEnv): ChefEnvDestructor
 }
 
-//private object Plugin {
-//  val id = "chef"
-//
-//  val ChefId = "genesis.plugin.chef.id"
-//  val Identity = "genesis.plugin.chef.identity"
-//  val Credential = "genesis.plugin.chef.credential"
-//  val ValidatorIdentity = "genesis.plugin.chef.validator.identity"
-//  val ValidatorCredential = "genesis.plugin.chef.validator.credential"
-//  val Endpoint = "genesis.plugin.chef.endpoint"
-//
-//  val ChefInstallScript = "genesis.plugin.chef.install.sh"
-//}
+private object Plugin {
+  val id = "chef"
 
-//@Bean
-//@Scope(value = "prototype")
-//case class ChefPluginConfig @Autowired() (
-//  @Value("${genesis.plugin.chef.id}") chefId: String,
-//  @Value("${genesis.plugin.chef.identity}") chefIdentity: String,
-//  @Value("${genesis.plugin.chef.credential}") chefCredentialResource: Resource,
-//  @Value("${genesis.plugin.chef.validator.identity}") chefValidatorIdentity: String,
-//  @Value("${genesis.plugin.chef.validator.credential}") chefValidatorCredentialResource: Resource,
-//  @Value("${genesis.plugin.chef.endpoint}") chefEndpoint: String,
-//  @Value("${genesis.plugin.shell.chef.install.sh:classpath:shell/chef-install.sh}") chefInstallShResource : Resource)
-//{
-//
-//  @transient lazy val chefCredential = InputUtil.resourceAsString(chefCredentialResource)
-//  @transient lazy val chefValidatorCredential = InputUtil.resourceAsString(chefValidatorCredentialResource)
-//  @transient lazy val chefResources = new ChefResourcesImpl(chefInstallShResource)
-//}
+  val ChefId = "genesis.plugin.chef.id"
+  val Identity = "genesis.plugin.chef.identity"
+  val Credential = "genesis.plugin.chef.credential"
+  val ValidatorIdentity = "genesis.plugin.chef.validator.identity"
+  val ValidatorCredential = "genesis.plugin.chef.validator.credential"
+  val Endpoint = "genesis.plugin.chef.endpoint"
+
+  val ChefInstallScript = "genesis.plugin.chef.install.sh"
+}
 
 @Configuration
 @GenesisPlugin(id="chef", description = "Chef plugin")
-class ChefPluginContextImpl extends Cache /*extends ApplicationContextAware*/ {
+class ChefPluginContextImpl extends Cache {
 
     import ChefPluginContextImpl._
 
@@ -98,9 +81,6 @@ class ChefPluginContextImpl extends Cache /*extends ApplicationContextAware*/ {
     @Autowired var pluginConfiguration: PluginConfigurationContext = _
 
     @Autowired var cacheManager: CacheManager = _
-
-    @Bean @Scope(value = "prototype")
-    def config: ChefPluginConfig  = new ChefPluginConfig
 
     @PostConstruct
     def cacheRegionAdjustment() {
@@ -115,24 +95,22 @@ class ChefPluginContextImpl extends Cache /*extends ApplicationContextAware*/ {
         new Credentials(config.chefValidatorIdentity, config.chefValidatorCredential), chefClient(config))
 
     def chefClient(config: ChefPluginConfig) = {
-      fromCache(ChefPluginContextImpl.CacheRegion, config) {
-
+      val key = ChefCacheKey(config.chefEndpoint, config.chefIdentity, config.chefCredentialResource)
+      fromCache(ChefPluginContextImpl.CacheRegion, key) {
         val chefContextFactory = new ChefContextFactory
 
         val overrides = new Properties
         overrides.setProperty(CHEF_ENDPOINT, config.chefEndpoint)
 
         val chefContext = chefContextFactory.createContext(config.chefIdentity, config.chefCredential, Collections.emptySet, overrides)
-
         chefContext.getApi
       }
     }
 
-   @Bean def chefStepCoordinatorFactory =
+  @Bean def chefStepCoordinatorFactory = {
     new ChefStepCoordinatorFactory(execPluginContext,
-      (value: Option[ChefPluginConfig]) => {
-//        val configSnapshot = applicationContext.getBean(classOf[ChefPluginConfig])
-        val configSnapshot = value.getOrElse(config)
+      () => {
+        val configSnapshot = new ChefPluginConfig(pluginConfiguration.configuration(Plugin.id))
 
         new ChefExecutionContextImpl(
           computeServiceContext.sshService,
@@ -142,6 +120,7 @@ class ChefPluginContextImpl extends Cache /*extends ApplicationContextAware*/ {
         )
       }
     )
+  }
 
   @Bean def chefRunStepBuilderFactory = new step.ChefRunStepBuilderFactory
   @Bean def createChefRoleBuilderFactory = new step.CreateChefRoleBuilderFactory
@@ -149,26 +128,26 @@ class ChefPluginContextImpl extends Cache /*extends ApplicationContextAware*/ {
   @Bean def destroyChefEnvStepBuilderFactory = new step.DestroyChefEnvStepBuilderFactory
 }
 
+private case class ChefCacheKey(endpoint: String, identity: String, credential: String)
 
-class ChefPluginConfig extends Serializable {
-  //TODO underscores are not allowed
-  @Value("${genesis.plugin.chef.id:dev}") var chefId: String = _
+class ChefPluginConfig(@transient config: Map[String, String]) extends Serializable {
+  val chefId = config(Plugin.ChefId)
 
-  @Value("${genesis.plugin.chef.endpoint}") var chefEndpoint: String = _
+  val chefEndpoint = config(Plugin.Endpoint)
 
-  @Value("${genesis.plugin.chef.identity}") var chefIdentity: String = _
-  @Value("${genesis.plugin.chef.credential}") var chefCredentialResource: String = _
+  val chefIdentity = config(Plugin.Identity)
+  val chefCredentialResource = config(Plugin.Credential)
 
-  @Value("${genesis.plugin.chef.validator.identity}") var chefValidatorIdentity: String = _
-  @Value("${genesis.plugin.chef.validator.credential}") var chefValidatorCredentialResource: String = _
+  val chefValidatorIdentity = config(Plugin.ValidatorIdentity)
+  val chefValidatorCredentialResource = config(Plugin.ValidatorCredential)
 
-  @Value("${genesis.plugin.shell.chef.install.sh:classpath:shell/chef-install.sh}")
-  var chefInstallShResource : String = _
+  val chefInstallShResource = config(Plugin.ChefInstallScript)
 
   @transient lazy val chefCredential = InputUtil.locationAsString(chefCredentialResource)
   @transient lazy val chefValidatorCredential = InputUtil.locationAsString(chefValidatorCredentialResource)
   @transient lazy val chefResources = new ChefResourcesImpl(chefInstallShResource)
 }
+
 
 
 class ChefExecutionContextImpl(sshService: SshService,
@@ -178,7 +157,7 @@ class ChefExecutionContextImpl(sshService: SshService,
   extends ChefPluginContext {
 
   def chefNodeInitializer(a: action.InitChefNode) =
-      new ChefNodeInitializer(a, sshService, chefService, storeService, config)
+      new ChefNodeInitializer(a, sshService, chefService, storeService, config.chefResources)
 
   def initialChefRunPreparer(a: action.PrepareInitialChefRun) =
       new ChefRunPreparer(a, sshService, chefService) with InitialChefRun

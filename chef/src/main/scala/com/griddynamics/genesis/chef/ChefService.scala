@@ -48,7 +48,7 @@ trait ChefService {
     def createRole(env : Environment, name : String, description : String, runList : Seq[String],
                    defaults : JObject, overrides : JObject, overwrite : Boolean)
 
-    def deleteChefEvn(env : Environment)
+    def deleteChefEnv(env : Environment)
 }
 
 class ChefServiceImpl(val genesisId: String, val endpoint : String,
@@ -102,7 +102,7 @@ class ChefServiceImpl(val genesisId: String, val endpoint : String,
         JC.mapAsJavaMap(result)
     }
 
-    def deleteChefEvn(env : Environment) {
+    def deleteChefEnv(env : Environment) {
         deleteClients(env)
         deleteNodes(env)
         deleteRoles(env)

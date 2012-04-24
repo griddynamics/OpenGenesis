@@ -31,13 +31,13 @@ import com.griddynamics.genesis.service.{SshService, StoreService}
 import com.griddynamics.genesis.chef.action.{ChefInitSuccess, InitChefNode}
 import com.griddynamics.genesis.workflow.{Signal, SyncActionExecutor}
 import com.griddynamics.genesis.chef.step.ChefResources
-import com.griddynamics.genesis.chef.{ChefPluginConfig, ChefVmAttrs, ChefService}
+import com.griddynamics.genesis.chef.{ChefVmAttrs, ChefService}
 
 class ChefNodeInitializer(val action: InitChefNode,
                           sshService: SshService,
                           chefService: ChefService,
                           storeService: StoreService,
-                          config: ChefPluginConfig) extends SyncActionExecutor
+                          chefResources: ChefResources) extends SyncActionExecutor
 with Logging {
   val installDetails = ExecDetails(action.env, action.vm, installDir / "chef-install.sh", installDir)
 
@@ -48,11 +48,10 @@ with Logging {
 
     // script for chef install if it doesn't exist
     sshClient.exec(mkdir(installDir))
-    sshClient.put(installDetails.execPath, config.chefResources.chefInstallSh)
+    sshClient.put(installDetails.execPath, chefResources.chefInstallSh)
     sshClient.exec(chmod("+x", installDetails.execPath))
 
     action.vm(ChefVmAttrs.ChefNodeName) = chefService.chefClientName(action.env, action.vm)
-    action.env(ChefVmAttrs.ChefConfig) = config
     storeService.updateVm(action.vm)
 
     ChefInitSuccess(action, installDetails)

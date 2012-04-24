@@ -30,7 +30,7 @@ import com.griddynamics.genesis.chef.ChefService
 class ChefEnvDestructor(val action: DestroyChefEnv,
                         chefService: ChefService) extends SimpleSyncActionExecutor with Logging {
   def startSync() = {
-    chefService.deleteChefEvn(action.env)
+    chefService.deleteChefEnv(action.env)
     ChefEnvDestroyed(action)
   }
 }
