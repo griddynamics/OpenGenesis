@@ -22,7 +22,7 @@
  */
 package com.griddynamics.genesis
 
-import http.{NettyTunnel, UrlConnectionTunnel, TunnelFilter}
+import http.{UrlConnectionTunnel, TunnelFilter}
 import org.springframework.core.io.DefaultResourceLoader
 import java.util.Properties
 import org.eclipse.jetty.server.Server
@@ -54,8 +54,8 @@ object GenesisFrontend extends Logging {
     def main(args: Array[String]) {
         log.debug("Using contexts %s", contexts)
         val host = getPropWithFallback(BIND_HOST, "0.0.0.0")
-        val port = Integer.valueOf(getPropWithFallback(BIND_PORT, "8080"))
-        val resourceRoots = getPropWithFallback(WEB_RESOURCE_ROOTS, "classpath:,classpath:resources/,classpath:resources/icons/,classpath:extjs/")
+        val port = getPropWithFallback(BIND_PORT, 8080)
+        val resourceRoots = getPropWithFallback(WEB_RESOURCE_ROOTS, "classpath:")
         val server = new Server()
 
         val webAppContext = new GenericWebApplicationContext
@@ -126,12 +126,12 @@ object GenesisFrontend extends Logging {
         genesisProperties
     }
 
-    def getFileProperty(name: String, default: String) = gp(name, genesisProperties.getProperty(name, default))
+    def getFileProperty[T](name: String, default: T) = gp(name, genesisProperties.getProperty(name, String.valueOf(default))).asInstanceOf[T]
 
-    def getProperty(name: String, default: String) = appContext.getBean(classOf[ConfigService])
-        .get(name).getOrElse(default).toString
+    def getProperty[T](name: String, default: T) = appContext.getBean(classOf[ConfigService])
+        .get(name, default)
 
-    def getPropWithFallback(name: String, default: String) = {
+    def getPropWithFallback[T](name: String, default: T) = {
         appContext.getBeansOfType(classOf[ConfigService]).isEmpty match {
             case true => getFileProperty(name, default)
             case false => getProperty(name, default)

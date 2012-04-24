@@ -50,7 +50,7 @@
         <property name="singleton" value="true"/>
         <property name="locations">
             <list>
-                <value>classpath*:*-system.properties</value>
+                <value>classpath*:defaults-system.properties</value>
                 <value>classpath*:genesis-plugin.properties</value>
             </list>
         </property>
