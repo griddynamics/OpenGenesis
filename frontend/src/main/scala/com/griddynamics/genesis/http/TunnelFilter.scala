@@ -37,6 +37,7 @@ import com.griddynamics.genesis.resources.ResourceFilter
 import org.jboss.netty.buffer.{ChannelBuffer, ChannelBuffers}
 import java.io.IOException
 import java.util.concurrent.{CountDownLatch, TimeUnit, Executors}
+import java.util.zip.GZIPInputStream
 
 sealed trait Tunnel {
     def backendHost: String
@@ -94,7 +95,7 @@ object TunnelFilter extends Logging {
       try {
         block
       } finally {
-        log.debug("Time spent: %s ms", System.currentTimeMillis() - millis)
+        log.trace("Time spent: %s ms", System.currentTimeMillis() - millis)
       }
     }
 }
@@ -157,7 +158,6 @@ class TunnelPipelineFactory(handler: OutputStreamHandler) extends ChannelPipelin
         val pipeline: ChannelPipeline = new DefaultChannelPipeline()
         pipeline.addLast("codec", new HttpClientCodec())
         pipeline.addLast("inflate", new HttpContentDecompressor)
-        //pipeline.addLast("aggregator", new HttpChunkAggregator(64000))
         pipeline.addLast("handler", handler)
         pipeline
     }
@@ -247,6 +247,7 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
             }
             val localOut = response.getOutputStream
             response.resetBuffer()
+            //it's to avoid double encoding
             response.setStatus(connection.getResponseCode)
             val stream = try {
               connection.getInputStream
@@ -261,10 +262,20 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
                 response.addHeader(entry._1, entry._2(0))
             }
             response.addHeader(TunnelFilter.TUNNELED_HEADER_NAME, "UrlConnection")
-            ResourceFilter.copyStream(stream, localOut)
-            stream.close()
+            response.setHeader("Content-Encoding", "identity")
+            log.trace("Estimate byte count %d", stream.available())
+            val streamToRead = if ("gzip" == connection.getContentEncoding)
+                new GZIPInputStream(stream)
+            else
+                stream
+            ResourceFilter.copyStream(streamToRead, localOut)
+            streamToRead.close()
+            try {
+                stream.close()
+            } catch {
+                case e => log.debug("Error when re-closing stream")
+            }
             localOut.flush()
-            localOut.close()
         } catch {
             case e => {
                 log.error(e, "Error when tunneling request")

@@ -34,7 +34,7 @@
     <context:property-placeholder location="${backend.properties}" system-properties-mode="OVERRIDE"/>
     <s:global-method-security pre-post-annotations="enabled"/>
 
-	<s:http use-expressions="true" disable-url-rewriting="true" entry-point-ref="genesisAuthenticationEntryPoint"
+	<s:http use-expressions="true" disable-url-rewriting="true"
             realm="Genesis" >
 		<s:intercept-url pattern="/" access="isAuthenticated()" />
 		<s:intercept-url pattern="/index.html" access="isAuthenticated()" />
@@ -59,12 +59,6 @@
     </bean>
     <bean id="authenticationFailureHandler"
           class="com.griddynamics.genesis.spring.security.AuthenticationFailureHandler"/>
-
-    <bean id="genesisAuthenticationEntryPoint"
-          class="com.griddynamics.genesis.spring.security.GenesisAuthenticationEntryPoint">
-        <constructor-arg value="Genesis"/>
-        <constructor-arg value="/login.html"/>
-    </bean>
 
     <!--<bean id="accessDeniedHandler" class="AccessDeniedHandlerImpl">
         <property name="errorPage" value="/app/403"/>
