@@ -23,13 +23,14 @@
 package com.griddynamics.genesis.resources
 
 import javax.servlet._
-import http.{HttpServletResponseWrapper, HttpServletResponse, HttpServletRequest}
+import http.{HttpServletResponse, HttpServletRequest}
 import org.apache.commons.vfs._
 import java.text.SimpleDateFormat
 import java.util.{Calendar, Locale, Date}
 import java.io.{OutputStream, InputStream}
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.util.TryingUtil._
+import com.griddynamics.genesis.http.CatchCodeWrapper
 
 
 class ResourceFilter extends Filter with Logging {
@@ -43,7 +44,7 @@ class ResourceFilter extends Filter with Logging {
     }
 
     def init(filterConfig: FilterConfig) {
-        resourceRoots = filterConfig.getInitParameter("resourceRoots").split(",").map(
+        resourceRoots = filterConfig.getInitParameter(ResourceFilter.PARAM_NAME).split(",").map(
             s => s.replaceAll("classpath:", "res:")
         )
         log.debug("Resource roots: %s", resourceRoots)
@@ -66,25 +67,14 @@ class ResourceFilter extends Filter with Logging {
         }
         val stream: InputStream = content.getInputStream
         val out: OutputStream = response.getOutputStream
-        copyStream(stream, out)
+        ResourceFilter.copyStream(stream, out)
         out.flush()
         out.close()
         stream.close()
     }
 
-    def copyStream(is: InputStream, os: OutputStream) {
-        val buffer = new Array[Byte](4096)
-        def read() {
-            val count = is.read(buffer)
-            if (count != -1) {
-                os.write(buffer, 0, count)
-                read()
-            }
-        }
-        read()
-    }
 
-    def serve(response: NotFoundWrapper, uri: String) {
+    def serve(response: CatchCodeWrapper, uri: String) {
         val (originalPath, cache) = if (uri == null || uri == "" || uri == "/")
             ("index.html", false)
         else
@@ -111,7 +101,7 @@ class ResourceFilter extends Filter with Logging {
     def doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
         val req: HttpServletRequest = request.asInstanceOf[HttpServletRequest]
         val uri: String = req.getRequestURI
-        val wrappedResponse: NotFoundWrapper = new NotFoundWrapper(response.asInstanceOf[HttpServletResponse])
+        val wrappedResponse: CatchCodeWrapper = new CatchCodeWrapper(response.asInstanceOf[HttpServletResponse])
         try {
             chain.doFilter(request, wrappedResponse)
         } finally {
@@ -127,46 +117,20 @@ class ResourceFilter extends Filter with Logging {
     }
 }
 
-class NotFoundWrapper(response: HttpServletResponse) extends HttpServletResponseWrapper(response) with Logging {
-    def willServe = {statusCode == HttpServletResponse.SC_NOT_FOUND}
-    var statusCode : Int = _
-    var message : Option[String] = None
-    var callback: Unit = _
-    override def setStatus(sc: Int) {
-        if (checkStatus(sc, None)) {
-            super.setStatus(sc)
-        }
-    }
+object ResourceFilter {
+    def PARAM_NAME = "resourceRoots"
 
-    override def setStatus(sc: Int, sm: String) {
-        if (checkStatus(sc, Some(sm)))
-            super.setStatus(sc)
-    }
-
-
-    override def sendError(sc: Int, msg: String) {
-        if (checkStatus(sc, Some(msg)))
-            super.sendError(sc, msg)
-    }
-
-    override def sendError(sc: Int) {
-        if (checkStatus(sc, None)) {
-            super.sendError(sc)
-        }
-    }
-
-    def resume() {
-        if (! response.isCommitted) {
-            message match {
-                case None => getResponse.asInstanceOf[HttpServletResponse].sendError(statusCode)
-                case Some(s) =>  getResponse.asInstanceOf[HttpServletResponse].sendError(statusCode, s)
+    def copyStream(is: InputStream, os: OutputStream) {
+        val buffer = new Array[Byte](4096)
+        def read() {
+            val count = is.read(buffer)
+            if (count != -1) {
+                os.write(buffer, 0, count)
+                read()
             }
         }
-    }
-
-    private def checkStatus(sc: Int, msg : Option[String]) : Boolean = {
-        statusCode = sc
-        message = msg
-        sc != HttpServletResponse.SC_NOT_FOUND
+        read()
     }
 }
+
+

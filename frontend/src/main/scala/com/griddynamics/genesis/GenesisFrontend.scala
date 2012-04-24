@@ -22,6 +22,7 @@
  */
 package com.griddynamics.genesis
 
+import http.{NettyTunnel, UrlConnectionTunnel, TunnelFilter}
 import org.springframework.core.io.DefaultResourceLoader
 import java.util.Properties
 import org.eclipse.jetty.server.Server
@@ -43,6 +44,7 @@ import org.springframework.web.context.WebApplicationContext.ROOT_WEB_APPLICATIO
 object GenesisFrontend extends Logging {
     private lazy val genesisProperties = loadGenesisProperties
     private val isFrontend = getFileProperty(SERVICE_BACKEND_URL, "NONE") != "NONE"
+    private val isBackend = getFileProperty(SERVER_MODE, "frontend") == "backend"
     private val securityConfig = getFileProperty(SECURITY_CONFIG, "classpath:/WEB-INF/spring/security-config.xml")
     private val contexts = if (isFrontend) Seq(securityConfig)
     else Seq("classpath:/WEB-INF/spring/backend-config.xml", securityConfig)
@@ -51,9 +53,9 @@ object GenesisFrontend extends Logging {
 
     def main(args: Array[String]) {
         log.debug("Using contexts %s", contexts)
-        val host = getProperty(BIND_HOST, "0.0.0.0")
-        val port = Integer.valueOf(getProperty(BIND_PORT, "8080"))
-        val resourceRoots = getProperty(WEB_RESOURCE_ROOTS, "classpath:,classpath:resources/,classpath:resources/icons/,classpath:extjs/")
+        val host = getPropWithFallback(BIND_HOST, "0.0.0.0")
+        val port = Integer.valueOf(getPropWithFallback(BIND_PORT, "8080"))
+        val resourceRoots = getPropWithFallback(WEB_RESOURCE_ROOTS, "classpath:,classpath:resources/,classpath:resources/icons/,classpath:extjs/")
         val server = new Server()
 
         val webAppContext = new GenericWebApplicationContext
@@ -70,23 +72,31 @@ object GenesisFrontend extends Logging {
         gzipFilterHolder.setInitParameter("mimeTypes", "text/html,text/plain,text/xml,application/xhtml+xml,text/css,application/javascript,image/svg+xml")
         context.addFilter(gzipFilterHolder, "/*", 0)
 
-        val securityFilterHolder = new FilterHolder(new DelegatingFilterProxy)
-        securityFilterHolder.setName("springSecurityFilterChain")
-        context.addFilter(securityFilterHolder, "/*", 0)
+        if (! isBackend) {
+            val securityFilterHolder = new FilterHolder(new DelegatingFilterProxy)
+            securityFilterHolder.setName("springSecurityFilterChain")
+            context.addFilter(securityFilterHolder, "/*", 0)
+            val resourceHolder = new FilterHolder(new ResourceFilter)
+            resourceHolder.setName("resourceFilter")
+            resourceHolder.setInitParameter("resourceRoots", resourceRoots)
+            context.addFilter(resourceHolder, "/*", 0)
+        }
 
-        val resourceHolder = new FilterHolder(new ResourceFilter)
-        resourceHolder.setName("resourceFilter")
-        resourceHolder.setInitParameter("resourceRoots", resourceRoots)
-        context.addFilter(resourceHolder, "/*", 0)
+        if (isFrontend) {
+            val proxyFilter = new TunnelFilter("/rest") with UrlConnectionTunnel
+            val proxyHolder = new FilterHolder(proxyFilter)
+            proxyHolder.setInitParameter(TunnelFilter.BACKEND_PARAMETER, getFileProperty(SERVICE_BACKEND_URL, ""))
+            proxyHolder.setName("tunnelFilter")
+            context.addFilter(proxyHolder, "/*", 0)
+        }
 
         val holder = new ServletHolder(new DispatcherServlet)
         val frontendConfig: String = if (isFrontend) "classpath:/WEB-INF/spring/proxy-config.xml" else "classpath:/WEB-INF/spring/frontend-config.xml"
         log.debug("Using frontend configuration: %s", frontendConfig)
         holder.setInitParameter("contextConfigLocation", frontendConfig)
         context.addServlet(holder, "/");
-
         val httpConnector = new SelectChannelConnector()
-
+        httpConnector.setMaxIdleTime(300000)
         httpConnector.setHost(host)
         httpConnector.setPort(port)
 
@@ -120,5 +130,12 @@ object GenesisFrontend extends Logging {
 
     def getProperty(name: String, default: String) = appContext.getBean(classOf[ConfigService])
         .get(name).getOrElse(default).toString
+
+    def getPropWithFallback(name: String, default: String) = {
+        appContext.getBeansOfType(classOf[ConfigService]).isEmpty match {
+            case true => getFileProperty(name, default)
+            case false => getProperty(name, default)
+        }
+    }
 
 }
