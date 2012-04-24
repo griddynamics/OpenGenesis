@@ -32,4 +32,6 @@ trait ProjectRepository {
   def delete(id: Int): Int
 
   def save(entity: api.Project): api.Project
+
+  def get(id: Int): Option[api.Project]
 }

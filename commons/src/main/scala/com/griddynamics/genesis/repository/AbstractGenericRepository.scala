@@ -40,6 +40,11 @@ abstract class AbstractGenericRepository[Model <: KeyedEntity[GenesisEntity.Id],
     }.single
 
     @Transactional(readOnly = true)
+    def get(id: Int): Option[Api] = from(table) {
+        item => where(item.id === id) select (item)
+    }.headOption.map(convert(_))
+
+    @Transactional(readOnly = true)
     def list: List[Api] = from(table) {
         select(_)
     }.toList.map(convert(_));
