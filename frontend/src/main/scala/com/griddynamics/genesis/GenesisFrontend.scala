@@ -67,10 +67,12 @@ object GenesisFrontend extends Logging {
         context.setContextPath("/")
         servletContext.setAttribute(ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE, webAppContext)
 
-        val gzipFilterHolder = new FilterHolder(new GzipFilter)
-        gzipFilterHolder.setName("gzipFilter")
-        gzipFilterHolder.setInitParameter("mimeTypes", "text/html,text/plain,text/xml,application/xhtml+xml,text/css,application/javascript,image/svg+xml")
-        context.addFilter(gzipFilterHolder, "/*", 0)
+        if (! isFrontend) {
+            val gzipFilterHolder = new FilterHolder(new GzipFilter)
+            gzipFilterHolder.setName("gzipFilter")
+            gzipFilterHolder.setInitParameter("mimeTypes", "text/html,text/plain,text/xml,application/xhtml+xml,text/css,application/javascript,image/svg+xml")
+            context.addFilter(gzipFilterHolder, "/*", 0)
+        }
 
         if (! isBackend) {
             val securityFilterHolder = new FilterHolder(new DelegatingFilterProxy)
