@@ -25,7 +25,6 @@ package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.service
 import com.griddynamics.genesis.api
-import api.RequestResult
 import collection.JavaConversions.asScalaIterator
 import org.springframework.transaction.annotation.Transactional
 import org.apache.commons.configuration.Configuration
@@ -56,10 +55,8 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
     def update(name: String, value: Any) {writeConfig.setProperty(name, value)}
 
     @Transactional
-    def delete(key: String) = RequestResult(isSuccess = try {
-        writeConfig.clearProperty(key)
-        true
-    } catch {
-        case _ => false
-    })
+    def delete(key: String) = writeConfig.clearProperty(key)
+
+    @Transactional
+    def clear(prefix: Option[String]) {prefix.map(writeConfig.subset(_)).getOrElse(writeConfig).clear}
 }

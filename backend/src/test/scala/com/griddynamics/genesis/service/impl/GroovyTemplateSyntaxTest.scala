@@ -30,7 +30,6 @@ import org.springframework.core.convert.support.ConversionServiceFactory
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.template.dsl.groovy.WorkflowDeclaration
 import scala.Array
-import com.griddynamics.genesis.chef.step.{DestroyChefEnvStepBuilderFactory, CreateChefDatabagBuilderFactory, CreateChefRoleBuilderFactory, ChefRunStepBuilderFactory}
 import com.griddynamics.genesis.template.{VersionedTemplate, TemplateRepository}
 
 class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with MockitoSugar {
@@ -174,12 +173,7 @@ class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with Mock
 
         val templateService = new GroovyTemplateService(templateRepository,
             List(
-              new DoNothingStepBuilderFactory,
-              new ChefRunStepBuilderFactory,
-              new CreateChefDatabagBuilderFactory,
-              new CreateChefRoleBuilderFactory,
-              new CreateChefDatabagBuilderFactory,
-              new DestroyChefEnvStepBuilderFactory
+              new DoNothingStepBuilderFactory
             ),
             ConversionServiceFactory.createDefaultConversionService())
 

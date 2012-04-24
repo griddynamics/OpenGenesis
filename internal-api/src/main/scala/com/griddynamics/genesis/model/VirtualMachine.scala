@@ -43,7 +43,7 @@ class VirtualMachine(val envId: GenesisEntity.Id,
 
   def copy() = {
     val vm = new VirtualMachine(envId, workflowId, stepId, status, roleName, hostNumber,
-      instanceId, hardwareId, imageId).importAttrs(this)
+      instanceId, hardwareId, imageId, cloudProvider).importAttrs(this)
     vm.id = this.id
     vm
   }
