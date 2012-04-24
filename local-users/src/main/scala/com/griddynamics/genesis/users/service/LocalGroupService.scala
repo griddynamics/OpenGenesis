@@ -33,6 +33,7 @@ import com.griddynamics.genesis.api.{RequestResult, UserGroup}
 class LocalGroupService(val repository: LocalGroupRepository) extends GroupService with Validation[UserGroup] {
     @Transactional(readOnly = true)
     def list = repository.list.sortBy(_.name)
+
     @Transactional(readOnly = true)
     def findByName(name: String) = repository.findByName(name)
 
@@ -52,8 +53,8 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
     @Transactional
     def update(group: UserGroup, users: List[String]) = {
         validUpdate(group, a => {
-             findByName(a.name) match {
-                 case None => RequestResult(isSuccess = false, compoundServiceErrors = Seq("Group not found"))
+             get(a.id.get) match {
+                 case None => RequestResult(isSuccess = false, compoundServiceErrors = Seq("Group '%d' is not found".format(a.id)))
                  case Some(g) => {
                    val group = repository.update(a)
                    repository.removeAllUsersFromGroup(group.id.get)
