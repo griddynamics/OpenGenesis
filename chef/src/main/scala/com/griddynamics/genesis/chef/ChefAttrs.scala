@@ -26,5 +26,4 @@ import com.griddynamics.genesis.model.EntityAttr
 
 object ChefVmAttrs {
     val ChefNodeName = EntityAttr[String]("ChefNodeName")
-    val ChefConfig = EntityAttr[ChefPluginConfig]("ChefConfig")
 }
