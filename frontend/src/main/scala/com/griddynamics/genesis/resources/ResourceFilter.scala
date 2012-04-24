@@ -44,7 +44,7 @@ class ResourceFilter extends Filter with Logging {
     }
 
     def init(filterConfig: FilterConfig) {
-        resourceRoots = filterConfig.getInitParameter(ResourceFilter.PARAM_NAME).split(",").map(
+        resourceRoots = filterConfig.getInitParameter(ResourceFilter.PARAM_NAME).split(";").map(
             s => s.replaceAll("classpath:", "res:")
         )
         log.debug("Resource roots: %s", resourceRoots)
