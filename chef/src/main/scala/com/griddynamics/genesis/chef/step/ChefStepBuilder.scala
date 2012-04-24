@@ -20,9 +20,7 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.chef
-
-package step
+package com.griddynamics.genesis.chef.step
 
 import com.griddynamics.genesis.util.JsonUtil
 import com.griddynamics.genesis.plugin.{StepBuilder, StepBuilderFactory}

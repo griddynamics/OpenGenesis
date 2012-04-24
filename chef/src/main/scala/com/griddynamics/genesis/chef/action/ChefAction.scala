@@ -35,9 +35,9 @@ sealed trait ChefAction extends Action
 case class InitChefNode(env: Environment, vm: VirtualMachine) extends ChefAction
 
 sealed trait PrepareChefRun extends ChefAction {
-    val label: String
-    val env: Environment
-    val vm: VirtualMachine
+    def label: String
+    def env: Environment
+    def vm: VirtualMachine
 }
 
 case class PrepareRegularChefRun(label: String,

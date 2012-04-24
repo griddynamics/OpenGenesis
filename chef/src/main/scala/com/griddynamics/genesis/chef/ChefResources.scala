@@ -20,16 +20,15 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.chef
+package com.griddynamics.genesis.chef.step
 
-import com.griddynamics.genesis.workflow.SimpleSyncActionExecutor
-import com.griddynamics.genesis.chef.action.{ChefRoleCreated, CreateChefRole}
+import org.springframework.core.io.Resource
+import com.griddynamics.genesis.util.InputUtil
 
-class ChefRoleCreator(val action: CreateChefRole,
-                      chefService: ChefService) extends SimpleSyncActionExecutor {
-    def startSync() = {
-        chefService.createRole(action.env, action.role, action.description, action.runList,
-                               action.defaults, action.overrides, action.overwrite)
-        ChefRoleCreated(action)
-    }
+trait ChefResources {
+    def chefInstallSh : String
+}
+
+class ChefResourcesImpl(resource: String) extends ChefResources {
+    lazy val chefInstallSh = InputUtil.locationAsString(resource)
 }

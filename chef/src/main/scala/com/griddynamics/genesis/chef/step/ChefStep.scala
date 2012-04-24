@@ -20,9 +20,8 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.chef
+package com.griddynamics.genesis.chef.step
 
-package step
 
 import net.liftweb.json.JsonAST.JObject
 import com.griddynamics.genesis.plugin.RoleStep
