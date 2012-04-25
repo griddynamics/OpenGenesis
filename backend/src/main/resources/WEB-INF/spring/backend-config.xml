@@ -117,6 +117,8 @@
     <bean id="pluginRegistry" class="com.griddynamics.genesis.plugin.PluginRegistryImpl">
         <constructor-arg name="configService" ref="configService"/>
     </bean>
-    
+
+    <bean id="housekeeping" class="com.griddynamics.genesis.service.impl.DefaultHousekeepingService"/>
+
     <context:component-scan base-package="com.griddynamics.genesis.configuration" />
 </beans>
