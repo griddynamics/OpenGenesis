@@ -26,15 +26,37 @@ import org.squeryl.PrimitiveTypeMode._
 import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.model.{GenesisSchema => GS}
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.beans.factory.annotation.Autowired
+import com.griddynamics.genesis.configuration.WorkflowContext
 
 trait HousekeepingService {
   def markExecutingWorkflowsAsFailed()
+  def allEnvsWithActiveWorkflows: List[Environment]
+  def cancelAllWorkflows(envs: List[Environment])
 }
 
 class DefaultHousekeepingService extends HousekeepingService {
+
+  @Autowired var requestBroker: WorkflowContext  = _
+
+  @Transactional(readOnly = true)
+  override def allEnvsWithActiveWorkflows =  {
+    val envIDs = from (GS.workflows) (wf =>
+      where ((wf.status === WorkflowStatus.Executed) or (wf.status === WorkflowStatus.Requested)) select wf.envId)
+    from(GS.envs)(env => where (env.id in envIDs) select env).toList
+  }
+
+  override def cancelAllWorkflows(envs: List[Environment]) {
+    envs.foreach { env => requestBroker.requestBroker.cancelWorkflow(env.name) }
+  }
+
   @Transactional
-  def markExecutingWorkflowsAsFailed() {
-    val envWithFlow = from(GS.workflows) ( wf => where( wf.status === WorkflowStatus.Executed ) select(wf.envId, wf.name))
+  //todo: can we just rerun requested workflows?
+  override def markExecutingWorkflowsAsFailed() {
+    val envWithFlow = from(GS.workflows) ( wf =>
+      where ( (wf.status === WorkflowStatus.Executed) or (wf.status === WorkflowStatus.Requested) )
+      select(wf.envId, wf.name)
+    )
 
     envWithFlow.iterator.foreach { case (envId, workflowName)  =>
       val status: EnvStatusField = EnvStatus.Failed(workflowName)
@@ -44,11 +66,11 @@ class DefaultHousekeepingService extends HousekeepingService {
       )
     }
     GS.steps.update (step =>
-      where ( step.status === WorkflowStepStatus.Executing )
+      where ( (step.status === WorkflowStepStatus.Executing) or (step.status === WorkflowStepStatus.Requested) )
         set ( step.status := WorkflowStepStatus.Failed )
     )
     GS.workflows.update ( wf =>
-      where( wf.status === WorkflowStatus.Executed )
+      where( (wf.status === WorkflowStatus.Executed) or (wf.status === WorkflowStatus.Requested) )
         set( wf.status := WorkflowStatus.Failed )
     )
   }

@@ -40,6 +40,7 @@ object GenesisSystemProperties {
     val PREFIX_DB = PREFIX + ".jdbc."
     val PLUGIN_PREFIX = "genesis.plugin"
 
+    val SHUTDOWN_TIMEOUT = "genesis.system.shutdown.timeout.sec"
     val SERVICE_BACKEND_URL = "genesis.system.service.backendUrl"
     val SERVER_MODE = "genesis.system.server.mode"
     val SERVICE_REST_USEMOCK = "genesis.system.service.rest.use.mock"
