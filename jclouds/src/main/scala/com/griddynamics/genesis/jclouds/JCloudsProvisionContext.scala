@@ -99,10 +99,11 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
   @PostConstruct
   def cacheRegionAdjustment() {
     val cache = cacheManager.addCacheIfAbsent(computeContextRegion)
-    val config = cache.getCacheConfiguration;
-    config.setTimeToIdleSeconds(TimeUnit.HOURS.toSeconds(2))
-    config.setTimeToLiveSeconds(TimeUnit.HOURS.toSeconds(20))
-    config.setDiskPersistent(false)
+    cache.getCacheConfiguration
+      .timeToIdleSeconds(TimeUnit.HOURS.toSeconds(2))
+      .timeToLiveSeconds(TimeUnit.HOURS.toSeconds(20))
+      .overflowToDisk(false)
+      .diskPersistent(false)
   }
 
   @Bean

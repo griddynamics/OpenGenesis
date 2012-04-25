@@ -41,6 +41,8 @@ import util.Logging
 import org.springframework.web.context.support.GenericWebApplicationContext
 import org.springframework.context.support.ClassPathXmlApplicationContext
 import org.springframework.web.context.WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE
+import java.util.concurrent.TimeUnit
+import java.lang.System
 
 object GenesisFrontend extends Logging {
     private lazy val genesisProperties = loadGenesisProperties
@@ -54,7 +56,9 @@ object GenesisFrontend extends Logging {
 
     def main(args: Array[String]) {
         if (!isFrontend) {
-          doHousekeeping()
+          val houseKeepingService = appContext.getBean(classOf[HousekeepingService])
+          doHousekeeping(houseKeepingService)
+          installShutdownHook(houseKeepingService)
         }
 
         log.debug("Using contexts %s", contexts)
@@ -123,10 +127,37 @@ object GenesisFrontend extends Logging {
     }
 
 
-  def doHousekeeping() {
+  def installShutdownHook(houseKeepingService: HousekeepingService) {
+    Runtime.getRuntime.addShutdownHook(new Thread() {
+      val WaitingPeriod = 2000
+
+      override def run() {
+        val timeout = TimeUnit.SECONDS.toMillis(getPropWithFallback(SHUTDOWN_TIMEOUT, 60))
+        val shutdownStart = System.currentTimeMillis();
+
+        var envs = houseKeepingService.allEnvsWithActiveWorkflows
+        if (!envs.isEmpty) {
+          houseKeepingService.cancelAllWorkflows(envs)
+        }
+
+        while (!envs.isEmpty && (timeout == 0 || System.currentTimeMillis() - shutdownStart < timeout)) {
+          log.info("Terminating running workflows. Active environments: " + envs.size)
+          Thread.sleep(WaitingPeriod);
+          envs = houseKeepingService.allEnvsWithActiveWorkflows
+        }
+
+        if (envs.isEmpty) {
+          log.info("Workflows termination process finished sucessfully")
+        } else {
+          log.warn("Workflow temination timed out. Active environments: " + envs.size)
+        }
+      }
+    })
+  }
+
+  def doHousekeeping(houseKeeping: HousekeepingService) {
     log.info("Housekeeping: marking executing workflows statuses as failed")
     try {
-      val houseKeeping = appContext.getBean(classOf[HousekeepingService])
       houseKeeping.markExecutingWorkflowsAsFailed();
     } catch {
       case e => log.error("Failed to complete housekeeping", e)
