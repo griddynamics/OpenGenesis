@@ -25,12 +25,14 @@ package com.griddynamics.genesis.service.impl
 import org.squeryl.PrimitiveTypeMode._
 import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.model.{GenesisSchema => GS}
+import org.springframework.transaction.annotation.Transactional
 
 trait HousekeepingService {
   def markExecutingWorkflowsAsFailed()
 }
 
 class DefaultHousekeepingService extends HousekeepingService {
+  @Transactional
   def markExecutingWorkflowsAsFailed() {
     val envWithFlow = from(GS.workflows) ( wf => where( wf.status === WorkflowStatus.Executed ) select(wf.envId, wf.name))
 
