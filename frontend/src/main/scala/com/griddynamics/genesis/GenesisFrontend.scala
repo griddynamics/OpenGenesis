@@ -36,6 +36,7 @@ import java.lang.System.{getProperty => gp}
 import resources.ResourceFilter
 import service.ConfigService
 import service.GenesisSystemProperties._
+import service.impl.HousekeepingService
 import util.Logging
 import org.springframework.web.context.support.GenericWebApplicationContext
 import org.springframework.context.support.ClassPathXmlApplicationContext
@@ -52,6 +53,10 @@ object GenesisFrontend extends Logging {
     private val appContext = new ClassPathXmlApplicationContext(contexts:_*)
 
     def main(args: Array[String]) {
+        if (!isFrontend) {
+          doHousekeeping()
+        }
+
         log.debug("Using contexts %s", contexts)
         val host = getPropWithFallback(BIND_HOST, "0.0.0.0")
         val port = getPropWithFallback(BIND_PORT, 8080)
@@ -117,7 +122,18 @@ object GenesisFrontend extends Logging {
         }
     }
 
-    def loadGenesisProperties() = {
+
+  def doHousekeeping() {
+    log.info("Housekeeping: marking executing workflows statuses as failed")
+    try {
+      val houseKeeping = appContext.getBean(classOf[HousekeepingService])
+      houseKeeping.markExecutingWorkflowsAsFailed();
+    } catch {
+      case e => log.error("Failed to complete housekeeping", e)
+    }
+  }
+
+  def loadGenesisProperties() = {
         val resourceLoader = new DefaultResourceLoader()
         val propertiesStream = resourceLoader.getResource(gp(BACKEND)).getInputStream
 
