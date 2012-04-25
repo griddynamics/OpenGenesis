@@ -144,7 +144,16 @@ object GenesisFrontend extends Logging {
         genesisProperties
     }
 
-    def getFileProperty[T](name: String, default: T) = gp(name, genesisProperties.getProperty(name, String.valueOf(default))).asInstanceOf[T]
+    def getFileProperty[T](name: String, default: T) = {
+        val strVal = gp(name, genesisProperties.getProperty(name, String.valueOf(default)))
+        (default match {
+            case v: Int => strVal.toInt
+            case v: Long => strVal.toLong
+            case v: String => strVal
+            case v: Boolean => strVal.toBoolean
+            case _ => throw new IllegalArgumentException("Not supported type")
+        }).asInstanceOf[T]
+    }
 
     def getProperty[T](name: String, default: T) = appContext.getBean(classOf[ConfigService])
         .get(name, default)
