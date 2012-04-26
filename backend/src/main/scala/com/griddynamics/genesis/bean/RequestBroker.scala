@@ -179,7 +179,7 @@ object RequestBrokerImpl {
     }
 
     def validateCreator(creator: String) = {
-        if (creator.trim.length > 0)
+        if (creator != null && creator.trim.length > 0)
             None
         else
             Some(RR(isSuccess = false, compoundServiceErrors = Seq("Creator not found")))
