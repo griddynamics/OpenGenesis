@@ -37,6 +37,8 @@ import org.springframework.context.annotation.{Bean, Configuration}
 import com.griddynamics.genesis.cache.Cache
 import net.sf.ehcache.CacheManager
 import org.springframework.beans.factory.annotation.Autowired
+import javax.annotation.PostConstruct
+import java.util.concurrent.TimeUnit
 
 trait ChefPluginContext {
 
@@ -78,7 +80,16 @@ class ChefPluginContextImpl extends Cache {
 
     @Autowired var pluginConfiguration: PluginConfigurationContext = _
 
-    val cacheManager: CacheManager = CacheManager.create( this.getClass.getClassLoader.getResource("chef-ehcache.xml") );
+
+    @Autowired
+    var cacheManager: CacheManager = _
+
+    @PostConstruct
+    def initCache() {
+      val cache = new net.sf.ehcache.Cache(
+        CacheRegion, 100, false, false, TimeUnit.HOURS.toSeconds(2), TimeUnit.HOURS.toSeconds(1), false, 0);
+      cacheManager.addCacheIfAbsent(cache)
+    }
 
     def chefService(config: ChefPluginConfig) = new ChefServiceImpl(config.chefId , config.chefEndpoint,
         new Credentials(config.chefValidatorIdentity, config.chefValidatorCredential), chefClient(config))
