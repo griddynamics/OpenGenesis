@@ -66,7 +66,7 @@ class DefaultHousekeepingService extends HousekeepingService {
       )
     }
     GS.steps.update (step =>
-      where ( (step.status === WorkflowStepStatus.Executing) or (step.status === WorkflowStepStatus.Requested) )
+      where ( step.status === WorkflowStepStatus.Executing )
         set ( step.status := WorkflowStepStatus.Failed )
     )
     GS.workflows.update ( wf =>
