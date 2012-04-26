@@ -36,6 +36,7 @@ import collection.JavaConversions._
 import com.griddynamics.genesis.service._
 import com.griddynamics.genesis.plugin.api.GenesisPlugin
 import com.griddynamics.genesis.configuration.{ClientBootstrapContext, StoreServiceContext, CredentialServiceContext}
+import net.sf.ehcache.CacheManager
 import com.griddynamics.genesis.cache.Cache
 import org.jclouds.compute.{ComputeServiceContextFactory, ComputeServiceContext}
 import org.jclouds.ssh.jsch.config.JschSshClientModule
@@ -46,9 +47,6 @@ import com.griddynamics.genesis.util.InputUtil
 import org.springframework.context.annotation.{Configuration, Bean}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.ResourceLoader
-import javax.annotation.PostConstruct
-import net.sf.ehcache.CacheManager
-import java.util.concurrent.TimeUnit
 
 trait JCloudsProvisionContext extends ProvisionContext[JCloudsProvisionVm] {
   def cloudProvider: String
@@ -82,15 +80,7 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
   @Autowired var pluginConfiguration: PluginConfigurationContext = _
   @Autowired var clientBootstrapContext: ClientBootstrapContext = _
 
-  @Autowired
-  var cacheManager: CacheManager = _
-
-  @PostConstruct
-  def initCache() {
-    val cache = new net.sf.ehcache.Cache(
-      computeContextRegion, 100, false, false, TimeUnit.HOURS.toSeconds(2), TimeUnit.HOURS.toSeconds(1), false, 0);
-    cacheManager.addCacheIfAbsent(cache)
-  }
+  val cacheManager: CacheManager = CacheManager.create( this.getClass.getClassLoader.getResource("jclouds-ehcache.xml") );
 
   var providersMap: Map[String, JCloudsVmCreationStrategyProvider] = _
 
