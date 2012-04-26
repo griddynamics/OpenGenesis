@@ -30,7 +30,7 @@ import com.griddynamics.genesis.workflow.step.{ActionStepResult, ActionStep}
  * previous actions
  */
 trait StepCoordinator {
-    val step: Step
+    def step: Step
 
     /* Retrieve a set of action executors which will be activated first */
     def onStepStart(): Seq[ActionExecutor]
@@ -53,7 +53,7 @@ trait StepCoordinator {
  * by provided action to simplify event loop programming.
  */
 trait ActionOrientedStepCoordinator {
-    val step: Step
+    def step: Step
 
     /* Same as in StepCoordinator */
     def onStepStart(): Seq[Action]
