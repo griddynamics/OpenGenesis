@@ -27,7 +27,6 @@ import executor._
 import com.griddynamics.genesis.util.InputUtil
 import org.jclouds.chef.ChefContextFactory
 import java.util.{Collections, Properties}
-import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.configuration.{StoreServiceContext, ComputeServiceContext}
 import com.griddynamics.genesis.exec.ExecPluginContext
 import com.griddynamics.genesis.plugin.api.GenesisPlugin
@@ -36,9 +35,10 @@ import step.ChefResourcesImpl
 import com.griddynamics.genesis.plugin.PluginConfigurationContext
 import org.springframework.context.annotation.{Bean, Configuration}
 import com.griddynamics.genesis.cache.Cache
+import net.sf.ehcache.CacheManager
+import org.springframework.beans.factory.annotation.Autowired
 import javax.annotation.PostConstruct
 import java.util.concurrent.TimeUnit
-import net.sf.ehcache.CacheManager
 
 trait ChefPluginContext {
 
@@ -80,15 +80,15 @@ class ChefPluginContextImpl extends Cache {
 
     @Autowired var pluginConfiguration: PluginConfigurationContext = _
 
-    @Autowired var cacheManager: CacheManager = _
+
+    @Autowired
+    var cacheManager: CacheManager = _
 
     @PostConstruct
-    def cacheRegionAdjustment() {
-      val cache = cacheManager.addCacheIfAbsent(ChefPluginContextImpl.CacheRegion)
-      val config = cache.getCacheConfiguration;
-      config.setTimeToIdleSeconds(TimeUnit.HOURS.toSeconds(2))
-      config.setTimeToLiveSeconds(TimeUnit.HOURS.toSeconds(20))
-      config.setDiskPersistent(false)
+    def initCache() {
+      val cache = new net.sf.ehcache.Cache(
+        CacheRegion, 100, false, false, TimeUnit.HOURS.toSeconds(2), TimeUnit.HOURS.toSeconds(1), false, 0);
+      cacheManager.addCacheIfAbsent(cache)
     }
 
     def chefService(config: ChefPluginConfig) = new ChefServiceImpl(config.chefId , config.chefEndpoint,
@@ -174,5 +174,5 @@ class ChefExecutionContextImpl(sshService: SshService,
 
 object ChefPluginContextImpl {
     val CHEF_ENDPOINT = "chef.endpoint"
-    val CacheRegion = "ChefCache"
+    val CacheRegion = "chefContext"
 }
