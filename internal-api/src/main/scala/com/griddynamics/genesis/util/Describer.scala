@@ -23,7 +23,6 @@
 package com.griddynamics.genesis.util
 
 import collection.mutable
-import scala.Predef._
 
 class Describer(description: String) {
   val Unspecified: String = "unspecified";
