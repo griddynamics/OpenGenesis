@@ -25,7 +25,6 @@ package com.griddynamics.genesis.jclouds
 import action.JCloudsProvisionVm
 import coordinators.JCloudsStepCoordinatorFactory
 import executors.{JCloudsVmDestructor, ProvisionExecutor, SshPortChecker}
-import org.jboss.netty.bootstrap.ClientBootstrap
 import com.griddynamics.genesis.jclouds.step.{DestroyEnvStepBuilderFactory, ProvisionVmsStepBuilderFactory}
 import com.griddynamics.genesis.model.{IpAddresses, VirtualMachine}
 import org.jclouds.Constants._
@@ -37,19 +36,17 @@ import collection.JavaConversions._
 import com.griddynamics.genesis.service._
 import com.griddynamics.genesis.plugin.api.GenesisPlugin
 import com.griddynamics.genesis.configuration.{ClientBootstrapContext, StoreServiceContext, CredentialServiceContext}
-import java.util.concurrent.TimeUnit
 import net.sf.ehcache.CacheManager
 import com.griddynamics.genesis.cache.Cache
 import org.jclouds.compute.{ComputeServiceContextFactory, ComputeServiceContext}
 import org.jclouds.ssh.jsch.config.JschSshClientModule
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule
 import com.griddynamics.genesis.plugin.PluginConfigurationContext
-import javax.annotation.PostConstruct
 import com.griddynamics.genesis.workflow.DurationLimitedActionExecutor
 import com.griddynamics.genesis.util.InputUtil
-import org.springframework.core.io.ResourceLoader
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.{Configuration, Bean}
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.core.io.ResourceLoader
 
 trait JCloudsProvisionContext extends ProvisionContext[JCloudsProvisionVm] {
   def cloudProvider: String
@@ -83,7 +80,7 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
   @Autowired var pluginConfiguration: PluginConfigurationContext = _
   @Autowired var clientBootstrapContext: ClientBootstrapContext = _
 
-  @Autowired var cacheManager: CacheManager = _
+  val cacheManager: CacheManager = CacheManager.create( this.getClass.getClassLoader.getResource("jclouds-ehcache.xml") );
 
   var providersMap: Map[String, JCloudsVmCreationStrategyProvider] = _
 
@@ -96,16 +93,6 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
     providersMap.getOrElse(cloudProvider, DefaultVmCreationStrategyProvider)
   }
 
-  @PostConstruct
-  def cacheRegionAdjustment() {
-    val cache = cacheManager.addCacheIfAbsent(computeContextRegion)
-    cache.getCacheConfiguration
-      .timeToIdleSeconds(TimeUnit.HOURS.toSeconds(2))
-      .timeToLiveSeconds(TimeUnit.HOURS.toSeconds(20))
-      .overflowToDisk(false)
-      .diskPersistent(false)
-  }
-
   @Bean
   def jcloudsCoordinatorFactory = new JCloudsStepCoordinatorFactory(() => {
     val pluginConfig = pluginConfiguration.configuration(Plugin.id)
@@ -115,7 +102,7 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
       computeService,
       sshService,
       providersMap,
-      clientBootstrapContext.clientBootstrap,
+      clientBootstrapContext,
       configService,
       pluginConfig,
       this
@@ -188,7 +175,7 @@ class JCloudsProvisionContextImpl(storeService: StoreService,
                               computeService: ComputeService,
                               sshService: SshService,
                               strategies: Map[String, JCloudsVmCreationStrategyProvider],
-                              clientBootstrap: ClientBootstrap,
+                              bootstrapContext: ClientBootstrapContext,
                               configService: ConfigService,
                               settings: Map[String, String],
                               contextProvider: JCloudsComputeContextProvider) extends JCloudsProvisionContext {
@@ -213,7 +200,7 @@ class JCloudsProvisionContextImpl(storeService: StoreService,
   }
 
   def portCheckActionExecutor(action: CheckPortAction) =
-    new CommonPortTestExecutor(action, computeService, storeService, clientBootstrap, portCheckTimeout) with DurationLimitedActionExecutor
+    new CommonPortTestExecutor(action, computeService, storeService, bootstrapContext.clientBootstrap, portCheckTimeout) with DurationLimitedActionExecutor
 
   def sshPortCheckActionExecutor(action: CheckSshPortAction) =
     new SshPortChecker(action, computeService, sshService, storeService)

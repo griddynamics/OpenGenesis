@@ -26,13 +26,14 @@ import scala.collection.mutable
 import com.griddynamics.genesis.workflow
 import com.griddynamics.genesis.workflow.message._
 import java.util.concurrent.ExecutorService
-import com.griddynamics.genesis.util.Logging
 import akka.actor.{PoisonPill, ActorRef, Actor}
 import com.griddynamics.genesis.workflow._
 import workflow.action.{DelayedExecutorInterrupt, ExecutorInterrupt}
-import workflow.signal.Success
 import scala.Some
+import workflow.signal.{Fail, Success}
 import workflow.step.{CoordinatorThrowable, CoordinatorInterrupt}
+import com.griddynamics.genesis.util.Logging
+import com.griddynamics.genesis.common.Mistake
 
 class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
                       supervisor: ActorRef,
@@ -164,7 +165,7 @@ class SafeStepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator)
 
     val step = unsafeStepCoordinator.step
 
-    var result: Option[StepResult] = None
+    var exceptionalResult: Option[StepResult] = None
 
     def onStepStart() =
         try {
@@ -172,10 +173,8 @@ class SafeStepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator)
         } catch {
             case t => {
                 log.warn(t, "Throwable while onStepStart for step '%s'", step)
-
-                result = Some(CoordinatorThrowable(step, t))
-
-                Seq()
+                exceptionalResult = Some(CoordinatorThrowable(step, t))
+                this.onStepInterrupt(Fail(Mistake(t)))
             }
         }
 
@@ -198,8 +197,8 @@ class SafeStepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator)
                 log.warn(t, "Throwable while onActionFinish for step '%s' and action result '%s'",
                     step, actionResult)
 
-                if (result.isEmpty)
-                    result = Some(CoordinatorThrowable(step, t))
+                if (exceptionalResult.isEmpty)
+                    exceptionalResult = Some(CoordinatorThrowable(step, t))
 
                 Seq()
             }
@@ -207,7 +206,7 @@ class SafeStepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator)
 
     def getStepResult() =
         try {
-            unsafeStepCoordinator.getStepResult()
+            exceptionalResult.getOrElse { unsafeStepCoordinator.getStepResult() }
         } catch {
             case t => {
                 log.warn(t, "Throwable while getStepResult for step '%s'", step)

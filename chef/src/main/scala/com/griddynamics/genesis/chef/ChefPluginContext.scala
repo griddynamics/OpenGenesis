@@ -27,7 +27,6 @@ import executor._
 import com.griddynamics.genesis.util.InputUtil
 import org.jclouds.chef.ChefContextFactory
 import java.util.{Collections, Properties}
-import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.configuration.{StoreServiceContext, ComputeServiceContext}
 import com.griddynamics.genesis.exec.ExecPluginContext
 import com.griddynamics.genesis.plugin.api.GenesisPlugin
@@ -36,9 +35,8 @@ import step.ChefResourcesImpl
 import com.griddynamics.genesis.plugin.PluginConfigurationContext
 import org.springframework.context.annotation.{Bean, Configuration}
 import com.griddynamics.genesis.cache.Cache
-import javax.annotation.PostConstruct
-import java.util.concurrent.TimeUnit
 import net.sf.ehcache.CacheManager
+import org.springframework.beans.factory.annotation.Autowired
 
 trait ChefPluginContext {
 
@@ -80,16 +78,7 @@ class ChefPluginContextImpl extends Cache {
 
     @Autowired var pluginConfiguration: PluginConfigurationContext = _
 
-    @Autowired var cacheManager: CacheManager = _
-
-    @PostConstruct
-    def cacheRegionAdjustment() {
-      val cache = cacheManager.addCacheIfAbsent(ChefPluginContextImpl.CacheRegion)
-      val config = cache.getCacheConfiguration;
-      config.setTimeToIdleSeconds(TimeUnit.HOURS.toSeconds(2))
-      config.setTimeToLiveSeconds(TimeUnit.HOURS.toSeconds(20))
-      config.setDiskPersistent(false)
-    }
+    val cacheManager: CacheManager = CacheManager.create( this.getClass.getClassLoader.getResource("chef-ehcache.xml") );
 
     def chefService(config: ChefPluginConfig) = new ChefServiceImpl(config.chefId , config.chefEndpoint,
         new Credentials(config.chefValidatorIdentity, config.chefValidatorCredential), chefClient(config))
@@ -174,5 +163,5 @@ class ChefExecutionContextImpl(sshService: SshService,
 
 object ChefPluginContextImpl {
     val CHEF_ENDPOINT = "chef.endpoint"
-    val CacheRegion = "ChefCache"
+    val CacheRegion = "chefContext"
 }
