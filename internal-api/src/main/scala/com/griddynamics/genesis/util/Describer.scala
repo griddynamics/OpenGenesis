@@ -23,6 +23,7 @@
 package com.griddynamics.genesis.util
 
 import collection.mutable
+import scala.Predef._
 
 class Describer(description: String) {
   val Unspecified: String = "unspecified";
@@ -39,24 +40,47 @@ class Describer(description: String) {
   }
 
   def param(key: String, value: Iterable[_]): Describer = {
-    params(key) = "[%s]".format(value.mkString(", "))
+    params(key) = toString(value)
     this
   }
 
-  def param(key: String, values: Map[String, String]): Describer = {
-    params(key) = "{%s}".format(toString(values))
+  def param(key: String, values: scala.collection.Map[_, _]): Describer = {
+    params(key) = toString(values)
     this
   }
-
-  private def toString(tuple: (String, String)): String = tuple._1 + " = " + tuple._2;
-
-  private def toString(values: Map[String, String]): String = values.map(toString(_)).mkString(", ")
 
   def describe: String = {
     if (params.isEmpty) {
       description
     } else {
-      "%s (%s)".format(description, toString(params.toMap))
+      "%s %s".format(description, toString(params.toMap))
     }
   }
+
+
+  private def toString(list: Iterable[_]):String =
+    "[ " +
+      ( if(list.isEmpty)
+        Unspecified
+      else
+        list.map(toString(_)).mkString(", ") ) +
+    " ]"
+
+  private def toString(tuple: (Any, Any)): String = tuple._1.toString + " = " + toString(tuple._2);
+
+  private def toString(objRef: Any):String = objRef match {
+    case map: scala.collection.Map[_,_] => toString(map)
+    case list: Iterable[_] => toString(list)
+    case option: Option[_] => option.map { toString(_) }.getOrElse(Unspecified);
+    case other => other.toString
+  }
+
+  private def toString(values: scala.collection.Map[_, _]): String =
+    "{ " +
+    (if (values.isEmpty)
+      Unspecified
+    else
+      values.map(toString(_)).mkString(", ")) +
+    " }"
+
 }
