@@ -22,13 +22,40 @@
  */
 package com.griddynamics.genesis.cache
 
+import net.sf.ehcache.config.CacheConfiguration
 import net.sf.ehcache.{Element, Ehcache, CacheManager}
 
 trait Cache {
   def cacheManager : CacheManager
 
+  def defaultTtl: Int = 30
+  def maxEntries : Int = 1000
+  def eternal : Boolean = false
+
+  def addCacheIfAbsent(region: String) = {
+      cacheManager.cacheExists(region) match {
+          case true => cacheManager.getCache(region)
+          case false => createCache(region)
+      }
+  }
+
+  def createCache(region: String) = {
+      val configuration = new CacheConfiguration()
+      configuration.setDiskPersistent(false)
+      configuration.setEternal(eternal)
+      configuration.setMaxElementsOnDisk(0)
+      configuration.setMaxEntriesLocalDisk(0)
+      configuration.setMaxEntriesLocalHeap(maxEntries)
+      configuration.setName(region)
+      configuration.setTimeToIdleSeconds(defaultTtl)
+      configuration.setTimeToLiveSeconds(defaultTtl)
+      val cache: Ehcache = new net.sf.ehcache.Cache(configuration)
+      cacheManager.addCacheIfAbsent(cache)
+      cache
+  }
+
   def fromCache[B](region : String, key : AnyRef)(callback: => B) : B = {
-    val cache: Ehcache = cacheManager.addCacheIfAbsent(region)
+    val cache: Ehcache = addCacheIfAbsent(region)
     val element: Element = cache.get(key)
     (element == null) match {
       case true => {
