@@ -30,6 +30,7 @@ import com.griddynamics.genesis.workflow.signal.{Success, Fail}
 import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.common.Mistake
 import com.griddynamics.genesis.util.Logging
+import com.griddynamics.genesis.workflow.step.CoordinatorThrowable
 
 abstract class GenesisFlowCoordinator(envName: String,
                              flowSteps: Seq[GenesisStep],
@@ -54,7 +55,10 @@ abstract class GenesisFlowCoordinatorBase(val envName: String,
 
     val onFlowFinishSuccess : EnvStatus
 
-    def flowDescription = "Workflow[env='%s']".format(envName)
+    def flowDescription = {
+      val workflowName = if (workflow == null) "*undefined at this stage*" else workflow.name
+      "Workflow[env='%s', name='%s']".format(envName, workflowName)
+    }
 
     def onFlowStart() = {
         val (iEnv, iWorkflow, iVms) = storeService.startWorkflow(envName)
@@ -83,7 +87,10 @@ abstract class GenesisFlowCoordinatorBase(val envName: String,
         storeService.finishWorkflow(env, workflow)
     }
 
-    def onStepFinish(result: StepResult) = onStepFinish(result.asInstanceOf[GenesisStepResult])
+    def onStepFinish(result: StepResult) = result match {
+        case coordinatorThrowable: CoordinatorThrowable => Left(Fail(Mistake(coordinatorThrowable.throwable)))
+        case genesisStep  => onStepFinish(genesisStep.asInstanceOf[GenesisStepResult]) //todo ClassCastException is still possible
+    }
 
     //TODO remove workflow.stepsFinished
     def onStepFinish(result: GenesisStepResult): Either[Signal, Seq[StepCoordinator]] = {

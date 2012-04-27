@@ -94,7 +94,7 @@ case class ConfigProperty(name: String, value: String, readOnly: Boolean)
 
 case class Plugin(id: String, description: Option[String])
 
-case class PluginDetails(id: String,  description: Option[String], configuration: Map[String, Any]);
+case class PluginDetails(id: String,  description: Option[String], configuration: Seq[ConfigProperty]);
 
 object RequestResult {
     val envName = "envName"
