@@ -46,7 +46,7 @@ class PluginRepositoryImpl(pluginLoader: PluginLoader,
 
   def getPlugin(id: String): Option[genesis.api.PluginDetails] = {
     plugins.get(id).map { plugin =>
-      PluginDetails(plugin.id, Option(plugin.description), configuration(id))
+      PluginDetails(plugin.id, Option(plugin.description), configService.listSettings(Some(GenesisSystemProperties.PLUGIN_PREFIX + "." + id)))
     }
   }
 
