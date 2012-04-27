@@ -46,18 +46,18 @@ class PluginsController(repository: PluginRepository) extends RestApiExceptionsH
   @ResponseBody
   def updatePluginConfiguration(@PathVariable("pluginId") projectId: String, request: HttpServletRequest) {
     val plugin = repository.getPlugin(projectId).getOrElse(throw new ResourceNotFoundException)
-    val pluginConfig = plugin.configuration
+    val pluginConfig = plugin.configuration.filterNot(_.readOnly).map(item => (item.name, item.value)).toMap
     
     val paramsMap = GenesisRestController.extractParamsMap(request)
 
-    val configurationRequest = paramsMap
+    val propertiesList = paramsMap
       .getOrElse("configuration", throw new MissingParameterException("configuration"))
-      .asInstanceOf[Map[String, String]]
+      .asInstanceOf[List[Map[String,String]]]
 
     val updatedConfigs = for {
-      (name, value) <- configurationRequest
-      if pluginConfig.isDefinedAt(name)
-    } yield (name, value)
+      property  <- propertiesList
+      if (pluginConfig.isDefinedAt(property("name")))
+    } yield (property("name"), property("value"))
 
     repository.updateConfiguration(plugin.id, updatedConfigs.toMap)
   }
