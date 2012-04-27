@@ -25,7 +25,13 @@ package com.griddynamics.genesis.util
 import java.util.concurrent.TimeoutException
 import annotation.tailrec
 
-object Retry {
+trait Retriable {
+   def retryCount : Int
+   def retryDelay: Int
+   def retry[B](block : => B) :B  = Retry.retryWithCount(retryCount, retryDelay)(block)
+}
+
+object Retry extends Logging {
     def retryWithTimeout[T](timeoutMillis : Long, sleepMillis : Long)
                         (block : => Option[T]) : T = {
         retryWithTimeout(timeoutMillis, sleepMillis, java.lang.System.nanoTime(), block)
@@ -43,6 +49,16 @@ object Retry {
         else {
             Thread.sleep(sleepMillis)
             retryWithTimeout(timeoutMillis, sleepMillis, startTime, block)
+        }
+    }
+
+    def retryWithCount[T](retryCount: Int, delay: Long = 100)(block : => T) : T = {
+        try {block} catch {
+            case e if retryCount > 1 => {
+                log.error(e, "Error running block. Will retry it. Retry count: %d",  retryCount)
+                Thread.sleep(delay)
+                retryWithCount(retryCount - 1, delay)(block)
+            }
         }
     }
 }
