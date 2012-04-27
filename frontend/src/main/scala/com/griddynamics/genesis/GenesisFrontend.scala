@@ -51,6 +51,7 @@ object GenesisFrontend extends Logging {
     private val securityConfig = getFileProperty(SECURITY_CONFIG, "classpath:/WEB-INF/spring/security-config.xml")
     private val contexts = if (isFrontend) Seq(securityConfig)
     else Seq("classpath:/WEB-INF/spring/backend-config.xml", securityConfig)
+    private val requestIdleTime: Int = getFileProperty(MAX_IDLE, 5000)
 
     private val appContext = new ClassPathXmlApplicationContext(contexts:_*)
 
@@ -107,7 +108,7 @@ object GenesisFrontend extends Logging {
         holder.setInitParameter("contextConfigLocation", frontendConfig)
         context.addServlet(holder, "/");
         val httpConnector = new SelectChannelConnector()
-        httpConnector.setMaxIdleTime(300000)
+        httpConnector.setMaxIdleTime(requestIdleTime)
         httpConnector.setHost(host)
         httpConnector.setPort(port)
 
