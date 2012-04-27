@@ -48,5 +48,6 @@ object GenesisSystemProperties {
     val SECURITY_GROUPS = "genesis.system.security.groups"
     val BIND_HOST = "genesis.system.bind.host"
     val BIND_PORT = "genesis.system.bind.port"
+    val MAX_IDLE = "genesis.system.request.maxIdle"
     val WEB_RESOURCE_ROOTS = "genesis.system.web.resourceRoots"
 }
