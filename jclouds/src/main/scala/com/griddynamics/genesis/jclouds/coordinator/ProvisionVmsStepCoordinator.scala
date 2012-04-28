@@ -48,6 +48,8 @@ class ProvisionVmsStepCoordinator(override val step: ProvisionVmStep,
         step.instanceId,
         step.ip,
         Some(pluginContext.cloudProvider),
+        step.keyPair,
+        step.securityGroup,
         pluginContext.computeSettings
       )
     }

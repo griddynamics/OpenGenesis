@@ -29,6 +29,9 @@ template {
                 imageId = "eu-west-1/ami-359ea941"
                 quantity = nodesCount
                 retryCount = 3
+	            	keyPair = "genesis"
+		            securityGroup = "genesis"
+
             }
             chefrun {
                 phase = "install"

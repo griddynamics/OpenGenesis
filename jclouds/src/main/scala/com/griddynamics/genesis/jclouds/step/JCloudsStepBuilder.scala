@@ -32,9 +32,11 @@ class ProvisionVmsStepBuilder extends StepBuilder {
   @BeanProperty var quantity: Int = _
   @BeanProperty var instanceId: String = _
   @BeanProperty var ip: String = _
+  @BeanProperty var keyPair: String = _
+  @BeanProperty var securityGroup: String = _
 
   def getDetails = new ProvisionVm(roleName, Option(hardwareId), Option(imageId),
-    if (ip == null) quantity else 1, Option(instanceId), Option(ip))
+    if (ip == null) quantity else 1, Option(instanceId), Option(ip), Option(keyPair), Option(securityGroup))
 }
 
 class ProvisionVmsStepBuilderFactory extends StepBuilderFactory {
