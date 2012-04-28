@@ -172,7 +172,7 @@ class JCloudsComputeContextProvider {
   }
 
   def computeContext(vm: VirtualMachine): ComputeServiceContext = {
-    val computeSettings = vm.getComputeSettings.getOrElse {
+    val computeSettings = vm.computeSettings.getOrElse {
       throw new IllegalArgumentException("Vm [" + vm + "] wasn't created by jclouds compute plugin")
     };
     computeContext(computeSettings)

@@ -52,16 +52,34 @@ class VirtualMachine(val envId: GenesisEntity.Id,
 
   def setIp(ip: String) {this(IpAttr) = IpAddresses(publicIp = Option(ip))}
 
-  def setComputeSettings(settings: Map[String, Any]) {
-    val props = new java.util.Properties()
-    settings.foreach { case (key, value) => props.setProperty(key, value.toString) }
-    this(СomputeSettings) = props
+  def computeSettings_= (settings: Option[Map[String, Any]]) {
+    if(settings.isDefined) {
+      val props = new java.util.Properties()
+      settings.get.foreach { case (key, value) => props.setProperty(key, value.toString) }
+      this(СomputeSettings) = props
+    }
   }
 
-  def getComputeSettings: Option[Map[String, Any]] = this.get(СomputeSettings).map { propertiesAsScalaMap(_).toMap }
+  def computeSettings: Option[Map[String, Any]] = this.get(СomputeSettings).map { propertiesAsScalaMap(_).toMap }
+
+  def keyPair: Option[String] = this.get(KeyPair)
+
+  def keyPair_=(pair: Option[String]) {
+    pair.foreach( this(KeyPair) = _ )
+  }
+
+  def securityGroup: Option[String] = this.get(SecurityGroup)
+
+  def securityGroup_=(group: Option[String]) {
+    group.foreach(this(SecurityGroup) = _)
+  }
+
 }
 
 object VirtualMachine {
   val IpAttr = EntityAttr[IpAddresses]("ip")
   val СomputeSettings = EntityAttr[java.util.Properties]("compute")
+  val KeyPair = EntityAttr[String]("keypair")
+  val SecurityGroup = EntityAttr[String]("securityGroup")
+
 }
