@@ -33,7 +33,9 @@ case class ProvisionVm(roleName: String,
                        imageId: Option[String],
                        quantity: Int,
                        instanceId: Option[String],
-                       ip: Option[String] = None) extends JCloudsStep with RoleStep {
+                       ip: Option[String] = None,
+                       keyPair: Option[String] = None,
+                       securityGroup: Option[String] = None) extends JCloudsStep with RoleStep {
   def isGlobal = true
 
   def roles = Set(roleName)
@@ -45,6 +47,7 @@ case class ProvisionVm(roleName: String,
       .param("image id", imageId)
       .param("quantity", quantity.toString)
       .param("instance id", instanceId)
+      .param("security group", securityGroup)
       .param("ip address", ip)
       .describe
 }

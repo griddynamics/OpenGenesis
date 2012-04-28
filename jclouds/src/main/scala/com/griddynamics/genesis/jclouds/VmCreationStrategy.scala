@@ -102,21 +102,23 @@ object DefaultVmCreationStrategyProvider extends JCloudsVmCreationStrategyProvid
 @Component
 class Ec2VmCreationStrategyProvider extends JCloudsVmCreationStrategyProvider {
 
-  @Value("${genesis.ec2.key.pair:NOT-SET!!!}") var ec2KeyPair: String = _
-  @Value("${genesis.ec2.security.group:NOT-SET!!!}") var ec2SecurityGroup: String = _
-
   override val name = "aws-ec2";
 
   override val computeProperties = new Properties();
 
     override def createVmCreationStrategy(nodeNamePrefix:String, computeContext: ComputeServiceContext ): VmCreationStrategy = {
     new DefaultVmCreationStrategy(nodeNamePrefix, computeContext) {
+
       override protected def templateOptions(env: Environment, vm: VirtualMachine) = {
         super.templateOptions(env, vm).asInstanceOf[EC2TemplateOptions]
-          .keyPair(ec2KeyPair)
-          .securityGroups(ec2SecurityGroup)
+          .keyPair(vm.keyPair.getOrElse { throw new IllegalArgumentException("VM keyPair property should be specified") })
+          .securityGroups(securityGroup(vm))
       }
-      override protected def group(env: Environment, vm: VirtualMachine) = ec2SecurityGroup
+
+      override protected def group(env: Environment, vm: VirtualMachine) = securityGroup(vm)
+
+      private def securityGroup(vm: VirtualMachine): String =
+        vm.securityGroup.getOrElse(throw new IllegalArgumentException("VM security property should be specified for provisioning in amazon"))
     }
   }
 };

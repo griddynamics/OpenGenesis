@@ -74,10 +74,11 @@ class VirtualMachine(val envId: GenesisEntity.Id,
     group.foreach(this(SecurityGroup) = _)
   }
 
-  def getComputeSettings: Option[Map[String, Any]] = this.get(СomputeSettings).map { propertiesAsScalaMap(_).toMap }
 }
 
 object VirtualMachine {
   val IpAttr = EntityAttr[IpAddresses]("ip")
   val СomputeSettings = EntityAttr[java.util.Properties]("compute")
+  val KeyPair = EntityAttr[String]("keypair")
+  val SecurityGroup = EntityAttr[String]("securityGroup")
 }
