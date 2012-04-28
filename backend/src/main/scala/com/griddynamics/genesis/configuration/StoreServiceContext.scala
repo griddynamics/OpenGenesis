@@ -33,6 +33,7 @@ import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import com.griddynamics.genesis.service.impl
 import com.griddynamics.genesis.repository.impl.{ProjectPropertyRepository, ProjectRepository}
+import impl.ProjectServiceImpl
 import org.squeryl.adapters.{PostgreSqlAdapter, MSSQLServer, MySQLAdapter, H2Adapter}
 
 @Configuration
@@ -40,7 +41,9 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 
     @Bean def storeService = new impl.StoreService
 
-    @Bean def projectRepository = new ProjectRepository
+    @Bean def projectRepository: com.griddynamics.genesis.repository.ProjectRepository = new ProjectRepository
+
+    @Bean def projectService = new ProjectServiceImpl(projectRepository)
 
     @Bean def projectPropertyRepository = new ProjectPropertyRepository
 }
