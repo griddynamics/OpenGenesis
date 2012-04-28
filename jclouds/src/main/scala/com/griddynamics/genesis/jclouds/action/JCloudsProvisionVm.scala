@@ -36,6 +36,8 @@ case class JCloudsProvisionVm(env: Environment,
                               instanceId: Option[String] = None,
                               ip: Option[String] = None,
                               cloudProvider: Option[String] = None,
+                              keyPair: Option[String] = None,
+                              securityGroup: Option[String] = None,
                               provision: Map[String, Any] = Map()) extends SpecificProvisionVmAction {
   def newVm = {
     val vm = new VirtualMachine(
@@ -50,7 +52,9 @@ case class JCloudsProvisionVm(env: Environment,
       imageId = imageId,
       cloudProvider = cloudProvider
     )
-    vm.setComputeSettings(provision)
+    vm.computeSettings = Option(provision)
+    vm.keyPair = keyPair
+    vm.securityGroup = securityGroup
     vm
   }
 }
