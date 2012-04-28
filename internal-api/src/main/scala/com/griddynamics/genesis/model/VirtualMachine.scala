@@ -52,10 +52,10 @@ class VirtualMachine(val envId: GenesisEntity.Id,
 
   def setIp(ip: String) {this(IpAttr) = IpAddresses(publicIp = Option(ip))}
 
-  def computeSettings_= (settings: Option[Map[String, Any]]) {
-    if(settings.isDefined) {
+  def computeSettings_= (settingsOption: Option[Map[String, Any]]) {
+    settingsOption.foreach { settings =>
       val props = new java.util.Properties()
-      settings.get.foreach { case (key, value) => props.setProperty(key, value.toString) }
+      settings.foreach { case (key, value) => props.setProperty(key, value.toString) }
       this(СomputeSettings) = props
     }
   }
