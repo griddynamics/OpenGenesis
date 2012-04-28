@@ -1,5 +1,3 @@
-package com.griddynamics.genesis.configuration
-
 /*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
@@ -22,6 +20,7 @@ package com.griddynamics.genesis.configuration
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
+package com.griddynamics.genesis.configuration
 
 import org.springframework.context.annotation.{Scope, Bean, Configuration}
 import org.springframework.beans.factory.config.BeanDefinition
@@ -51,13 +50,16 @@ class ClientBootstrapContext {
         new ChannelPipelineFactory() {
             def getPipeline = {
                 Channels.pipeline(new LoggingHandler(InternalLogLevel.INFO));
-                Channels.pipeline(new IdleStateHandler(new HashedWheelTimer(), 10, 10, 10))
-                Channels.pipeline(new ReadTimeoutHandler(new HashedWheelTimer(), 10, TimeUnit.SECONDS))
+                Channels.pipeline(new IdleStateHandler(hashedWheelTimer, 10, 10, 10))
+                Channels.pipeline(new ReadTimeoutHandler(hashedWheelTimer, 10, TimeUnit.SECONDS))
             }
         }
     }
 
-    def socketChannelFactory = {
+
+  @Bean def hashedWheelTimer: HashedWheelTimer = new HashedWheelTimer()
+
+  def socketChannelFactory = {
         new NioClientSocketChannelFactory(
             Executors.newSingleThreadExecutor(),
             Executors.newSingleThreadExecutor()
