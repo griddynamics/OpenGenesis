@@ -1,7 +1,3 @@
-package com.griddynamics.genesis.repository
-
-import com.griddynamics.genesis.api
-
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
@@ -24,6 +20,10 @@ import com.griddynamics.genesis.api
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
+package com.griddynamics.genesis.repository
+
+import com.griddynamics.genesis.api
+
 trait ProjectRepository {
   def load(id: Int): api.Project;
 
@@ -34,4 +34,6 @@ trait ProjectRepository {
   def save(entity: api.Project): api.Project
 
   def get(id: Int): Option[api.Project]
+
+  def findByName(name: String): Option[api.Project]
 }

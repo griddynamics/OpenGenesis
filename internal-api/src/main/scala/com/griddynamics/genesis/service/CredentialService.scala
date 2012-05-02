@@ -23,6 +23,7 @@
 package com.griddynamics.genesis.service
 
 import com.griddynamics.genesis.model.{VirtualMachine, Environment}
+import com.griddynamics.genesis.repository.CredentialsRepository
 
 
 class Credentials(val identity : String, val credential : String)
@@ -32,5 +33,21 @@ trait CredentialService {
 }
 
 trait VmCredentialService {
-  def getCredentialsForVm(vm: VirtualMachine): Option[Credentials]
+  def getCredentialsForVm(env: Environment, vm: VirtualMachine): Option[Credentials]
+
+//  def updateVmCredentials(vm: VirtualMachine, credentials: Credentials)
+}
+
+class DefaultCredentialsService(credentialsStore: CredentialsRepository) extends VmCredentialService {
+
+  def getCredentialsForVm(env: Environment, vm: VirtualMachine): Option[Credentials] = {
+    val creds = for {
+      provider <- vm.cloudProvider
+      keypair <- vm.keyPair
+    } yield {
+      val creds = credentialsStore.find(env.projectId, provider, keypair)
+      creds.map (it => new Credentials(it.identity, it.credential))
+    }
+    creds.getOrElse(None)
+  }
 }

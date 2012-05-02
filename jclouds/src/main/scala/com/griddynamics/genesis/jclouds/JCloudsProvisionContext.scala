@@ -26,7 +26,6 @@ import action.JCloudsProvisionVm
 import coordinators.JCloudsStepCoordinatorFactory
 import executors.{JCloudsVmDestructor, ProvisionExecutor, SshPortChecker}
 import com.griddynamics.genesis.jclouds.step.{DestroyEnvStepBuilderFactory, ProvisionVmsStepBuilderFactory}
-import com.griddynamics.genesis.model.{IpAddresses, VirtualMachine}
 import org.jclouds.Constants._
 import com.griddynamics.genesis.actions.provision._
 import com.griddynamics.context.provision.ProvisionContext
@@ -49,6 +48,7 @@ import org.springframework.core.io.ResourceLoader
 import javax.annotation.PostConstruct
 import net.sf.ehcache.CacheManager
 import java.util.concurrent.TimeUnit
+import com.griddynamics.genesis.model.{Environment, IpAddresses, VirtualMachine}
 
 trait JCloudsProvisionContext extends ProvisionContext[JCloudsProvisionVm] {
   def cloudProvider: String
@@ -134,7 +134,7 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
   @Autowired var resourceLoader: ResourceLoader = _
   @Bean def stubVmCredentialService = new VmCredentialService {
 
-    def getCredentialsForVm(vm: VirtualMachine) = vm.cloudProvider match {
+    def getCredentialsForVm(env: Environment, vm: VirtualMachine) = vm.cloudProvider match {
       case Some(provider) => {
         for {
           identity <- configService.get("genesis.plugin.jclouds." + provider + ".vm.identity").map { _.toString }

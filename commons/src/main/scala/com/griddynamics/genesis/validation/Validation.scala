@@ -11,9 +11,16 @@ trait Validation[C] {
         }
     }
 
-    def validUpdate(value: C, function: (C) => RequestResult): RequestResult = {
-        validOnUpdate(value) {
-            function
+//    def validUpdate(value: C, function: (C) => RequestResult): RequestResult = {
+//        validOnUpdate(value) {
+//            function
+//        }
+//    }
+
+    def validUpdate(value: C, function: (C) => C): RequestResult = {
+        validOnUpdate(value) { item =>
+            function(item)
+            RequestResult(isSuccess = true)
         }
     }
 
@@ -41,7 +48,7 @@ trait Validation[C] {
     protected def validateCreation(c: C): Option[RequestResult]
 
     protected def filterResults(xs: Seq[Option[RequestResult]]): Option[RequestResult] = {
-        val results: Seq[RequestResult] = xs.filter(_.isDefined).map(_.get)
+        val results: Seq[RequestResult] = xs.flatten
         results.isEmpty match {
             case true => None
             case _ => Some(results.reduceLeft(_ ++ _))
@@ -65,7 +72,7 @@ object Validation {
     def mustMatchUserName(value: String, fieldName: String) : Option[RequestResult] = mustMatch(fieldName)(usernamePattern)(value)
     def mustMatchEmail(value: String, fieldName: String) : Option[RequestResult] = mustMatch(fieldName)(emailPattern)(value)
 
-    def mustPresent(value: Option[String], fieldName: String, error : String = "Must be present") = {
+    def mustPresent(value: Option[_], fieldName: String, error : String = "Must be present") = {
         value match {
             case None => Some(RequestResult(variablesErrors = Map(fieldName -> error), isSuccess = false))
             case _ => None
@@ -83,4 +90,12 @@ object Validation {
             case false => Some(RequestResult(isSuccess = false, compoundServiceErrors = Seq(errorMessage)))
         }
     }
+
+    def mustExist[C](value: C, errorMessage: String = "Not found")(finder: C => Option[C]) = {
+      finder(value) match {
+        case None => Some(RequestResult(isSuccess = false, isNotFound = true, compoundServiceErrors = Seq(errorMessage)))
+        case Some(_) => None
+      }
+    }
+
 }
