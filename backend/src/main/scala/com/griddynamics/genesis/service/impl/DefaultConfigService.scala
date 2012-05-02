@@ -30,7 +30,8 @@ import org.springframework.transaction.annotation.Transactional
 import org.apache.commons.configuration.Configuration
 
 // TODO: add synchronization?
-class DefaultConfigService(val config: Configuration, val writeConfig: Configuration, val configRO: Configuration) extends service.ConfigService {
+class DefaultConfigService(val config: Configuration, val writeConfig: Configuration, val configRO: Configuration,
+                           val descriptions: Map[String, String] = Map()) extends service.ConfigService {
 
     @Transactional(readOnly = true)
     def get[B](name: String, default: B): B = {
@@ -47,9 +48,13 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
     def get(name: String) = Option(config.getProperty(name))
 
     import service.GenesisSystemProperties.PREFIX_DB
+    private def isReadOnly(key: String) = key.startsWith(PREFIX_DB) || configRO.containsKey(key)
+    
+    private def desc(key: String) = descriptions.get(key)
+
     @Transactional(readOnly = true)
     def listSettings(prefix: Option[String]) = prefix.map(config.getKeys(_)).getOrElse(config.getKeys())
-        .map(k => api.ConfigProperty(k, config.getString(k), k.startsWith(PREFIX_DB) || configRO.containsKey(k))).toSeq.sortBy(_.name)
+         .map(k => api.ConfigProperty(k, config.getString(k), isReadOnly(k), desc(k))).toSeq.sortBy(_.name)
 
     @Transactional
     def update(name: String, value: Any) {writeConfig.setProperty(name, value)}

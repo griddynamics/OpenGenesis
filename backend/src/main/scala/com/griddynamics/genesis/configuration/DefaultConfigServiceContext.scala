@@ -25,17 +25,20 @@ package com.griddynamics.genesis.configuration
 
 import org.springframework.context.annotation.{Configuration, Bean}
 import org.springframework.beans.factory.annotation._
-import com.griddynamics.genesis.service.impl
 import org.springframework.beans.factory.config.PropertiesFactoryBean
 import org.apache.commons.configuration._
+import com.griddynamics.genesis.service.{GenesisSystemProperties, impl}
+import collection.JavaConversions.{propertiesAsScalaMap, mapAsJavaMap} 
+import GenesisSystemProperties.SUFFIX_DESC
 
 @Configuration
 class DefaultConfigServiceContext extends ConfigServiceContext {
     @Autowired private var dbConfig : org.apache.commons.configuration.Configuration = _
-    @Autowired @Qualifier("main") private var fileProps: PropertiesFactoryBean = _
+    @Autowired @Qualifier("main") private var filePropsAll: PropertiesFactoryBean = _
     @Autowired @Qualifier("override") private var filePropsOverride: PropertiesFactoryBean = _
 
     lazy val overrideConfig = ConfigurationConverter.getConfiguration(filePropsOverride.getObject)
+    lazy val (descs, fileProps) = filePropsAll.getObject.partition(_._1.endsWith(SUFFIX_DESC))
 
     private lazy val config = {
         ConfigurationUtils.enableRuntimeExceptions(dbConfig)
@@ -45,11 +48,12 @@ class DefaultConfigServiceContext extends ConfigServiceContext {
          // then read DB, write to DB only
         compConfig.addConfiguration(dbConfig, true)
          // then read file properties defaults
-        compConfig.addConfiguration(ConfigurationConverter.getConfiguration(fileProps.getObject))
+        compConfig.addConfiguration(new MapConfiguration(fileProps))
         ConfigurationUtils.enableRuntimeExceptions(compConfig)
         compConfig
     }
 
-    @Bean def configService = new impl.DefaultConfigService(config, dbConfig, overrideConfig)
+    @Bean def configService = new impl.DefaultConfigService(config, dbConfig, overrideConfig,
+    (descs map { case (k,v) => (k.stripSuffix(SUFFIX_DESC), v)}).toMap)
 
 }
