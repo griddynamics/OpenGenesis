@@ -22,6 +22,7 @@
  */
 package com.griddynamics.genesis.api
 
+
 case class Environment(name : String,
                        status : String,
                        completed : Option[Double] = None, //optional field, only if status Executing(workflow)
@@ -95,6 +96,13 @@ case class ConfigProperty(name: String, value: String, readOnly: Boolean, descri
 case class Plugin(id: String, description: Option[String])
 
 case class PluginDetails(id: String,  description: Option[String], configuration: Seq[ConfigProperty]);
+
+case class Credentials( id: Option[Int],
+                        projectId: Int,
+                        cloudProvider: String,
+                        pairName: String,
+                        identity: String,
+                        credential: String)
 
 object RequestResult {
     val envName = "envName"

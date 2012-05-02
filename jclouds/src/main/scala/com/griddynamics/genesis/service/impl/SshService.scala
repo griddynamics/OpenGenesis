@@ -38,7 +38,7 @@ class SshService(credentialService: CredentialService,
                  contextFactory: JCloudsComputeContextProvider) extends service.SshService with Logging {
 
   def sshClient(env: Environment, vm: VirtualMachine): SshClient = {
-    val creds: Option[GenesisCredentials] = vmCredentialService.getCredentialsForVm(vm).orElse(credentialService.getCredentialsForEnvironment(env))
+    val creds: Option[GenesisCredentials] = vmCredentialService.getCredentialsForVm(env, vm).orElse(credentialService.getCredentialsForEnvironment(env))
     val client = sshClient(vm, creds)
     client.connect()
     client

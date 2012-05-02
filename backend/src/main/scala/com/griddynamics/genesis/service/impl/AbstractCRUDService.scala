@@ -17,23 +17,35 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
  */
 package com.griddynamics.genesis.service.impl
 
-import com.griddynamics.genesis.model.Environment
-import com.griddynamics.genesis.service.{Credentials, CredentialService}
-import com.griddynamics.genesis.repository.CredentialsRepository
+import com.griddynamics.genesis.common.CRUDService
 import com.griddynamics.genesis.validation.Validation
-import com.griddynamics.genesis.validation.Validation._
-import com.griddynamics.genesis.api
-import api.RequestResult
+import com.griddynamics.genesis.repository.Repository
+import org.springframework.transaction.annotation.Transactional
+import com.griddynamics.genesis.api.RequestResult
 
-class SingleCredentialsService(identity : String, credential : String) extends CredentialService {
-    def getCredentialsForEnvironment(env : Environment) = Some(new Credentials(identity, credential))
-}
+abstract class AbstractCRUDService[A](repository: Repository[A]) extends CRUDService[A, Int] with Validation[A]  {
 
-class EmptyCredentialsService extends CredentialService {
-    def getCredentialsForEnvironment(env: Environment) = None
+  @Transactional(readOnly = true)
+  def list = repository.list
+
+  @Transactional(readOnly = true)
+  override def get(id: Int) = repository.get(id)
+
+  @Transactional
+  override def delete(entity: A) {
+    repository.delete(entity)
+    RequestResult(isSuccess = true)
+  }
+
+  @Transactional
+  override def create(creds: A) = validCreate(creds, repository.insert(_))
+
+  @Transactional
+  override def update(creds: A) = validUpdate(creds, repository.update(_))
+
 }

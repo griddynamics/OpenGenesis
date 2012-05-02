@@ -45,24 +45,19 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
     @Transactional
     def create(a: UserGroup, users: List[String]) = {
         validCreate(a, a => {
-            var newGroup = repository.insert(a)
+            val newGroup = repository.insert(a)
             newGroup.id.map(i => users.map(u => repository.addUserToGroup(i, u)))
         })
     }
 
     @Transactional
     def update(group: UserGroup, users: List[String]) = {
-        validUpdate(group, a => {
-             get(a.id.get) match {
-                 case None => RequestResult(isSuccess = false, compoundServiceErrors = Seq("Group '%d' is not found".format(a.id)))
-                 case Some(g) => {
-                   val group = repository.update(a)
-                   repository.removeAllUsersFromGroup(group.id.get)
-                   group.id.map(i => users.map(u => repository.addUserToGroup(i, u)))
-                   RequestResult(isSuccess = true)
-                 }
-             }
-        })
+      validUpdate(group, a => {
+          val group = repository.update(a)
+          repository.removeAllUsersFromGroup(group.id.get)
+          group.id.map(i => users.map(u => repository.addUserToGroup(i, u)))
+          group
+      })
     }
 
     @Transactional
@@ -92,11 +87,14 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
         repository.get(id)
     }
 
-    protected def validateUpdate(c: UserGroup) = filterResults(Seq(notEmpty(c.name, "name"),
-        notEmpty(c.description, "description"), must(c, "name must be unique"){ c =>
-        findByName(c.name) match {
-            case None => true
-            case Some(group) => group.id == c.id
+    protected def validateUpdate(c: UserGroup) = filterResults(Seq(
+        notEmpty(c.name, "name"),
+        notEmpty(c.description, "description"),
+        mustExist(c){it => get(it.id.get)},
+        must(c, "name must be unique"){ c =>
+          findByName(c.name) match {
+              case None => true
+              case Some(group) => group.id == c.id
         }
     }))
 

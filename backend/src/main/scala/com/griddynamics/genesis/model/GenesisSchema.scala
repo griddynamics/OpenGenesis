@@ -40,6 +40,7 @@ trait GenesisSchema extends Schema {
     val projects = table[Project]("project")
     val projectProperties = table[ProjectProperty]("project_property")
     val settings = table[ConfigProperty]("settings")
+    val credentials = table[Credentials]("credentials")
 }
 
 trait GenesisSchemaPrimitive extends GenesisSchema {

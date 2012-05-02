@@ -24,6 +24,8 @@ package com.griddynamics.genesis.rest
 
 import org.springframework.http.HttpStatus
 import javax.servlet.http.HttpServletResponse
+import net.liftweb.json.MappingException
+import org.springframework.web.bind.annotation.ExceptionHandler._
 import org.springframework.web.bind.annotation.{ResponseStatus, ExceptionHandler}
 
 trait RestApiExceptionsHandler {
@@ -46,10 +48,16 @@ trait RestApiExceptionsHandler {
         response.getWriter.write("{\"error\":\"Conflict when updating resource\"}")
     }
 
-  @ExceptionHandler(value = Array(classOf[ResourceNotFoundException]))
-  @ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "resource not found")
-  def handleResourceNotFound(response : HttpServletResponse, exception: ResourceNotFoundException) {
-    /*do nothing*/
-  }
+    @ExceptionHandler(value = Array(classOf[MappingException]))
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    def handleMappingException(response: HttpServletResponse, exception: MappingException) {
+      response.getWriter.write("{\"error\":\"" + exception.msg + "\"}")
+    }
+
+    @ExceptionHandler(value = Array(classOf[ResourceNotFoundException]))
+    @ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "resource not found")
+    def handleResourceNotFound(response : HttpServletResponse, exception: ResourceNotFoundException) {
+      /*do nothing*/
+    }
 
 }

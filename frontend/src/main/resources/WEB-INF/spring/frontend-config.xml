@@ -52,6 +52,10 @@
         <constructor-arg name="genesisService" ref="genesisService"/>
     </bean>
 
+    <bean class="com.griddynamics.genesis.rest.CredentialsController">
+        <!--<constructor-arg name="genesisService" ref="genesisService"/>-->
+    </bean>
+
     <bean class="com.griddynamics.genesis.rest.SettingsController">
         <constructor-arg name="configService" ref="configService"/>
     </bean>

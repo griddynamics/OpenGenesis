@@ -28,7 +28,8 @@ import model.GenesisEntity
 import org.springframework.transaction.annotation.Transactional
 import org.squeryl._
 
-abstract class AbstractGenericRepository[Model <: KeyedEntity[GenesisEntity.Id], Api](val table: Table[Model]) {
+abstract class AbstractGenericRepository[Model <: KeyedEntity[GenesisEntity.Id], Api](val table: Table[Model])
+  extends Repository[Api]{
 
     implicit def convert(model: Model): Api
 
@@ -69,4 +70,12 @@ abstract class AbstractGenericRepository[Model <: KeyedEntity[GenesisEntity.Id],
         table.update(entity);
         entity
     }
+
+    protected def toModelId(id: Option[Int]): GenesisEntity.Id = id.getOrElse(0)
+
+    protected def fromModelId(id: GenesisEntity.Id): Option[Int] = id match {
+          case 0 => None;
+          case _ => Some(id);
+        }
+
 }
