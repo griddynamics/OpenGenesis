@@ -14,7 +14,6 @@ class ProjectServiceImpl(repository: ProjectRepository) extends ProjectService w
   protected def validateCreation(project: Project): Option[RequestResult] = {
     filterResults(Seq(
       must(project, "name must be unique") {
-//        project => get(project.id.get).isEmpty
         project => project.id.isEmpty
       },
       mustMatchName(project.name, "name"),
