@@ -49,6 +49,7 @@ import javax.annotation.PostConstruct
 import net.sf.ehcache.CacheManager
 import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.model.{Environment, IpAddresses, VirtualMachine}
+import com.griddynamics.genesis.repository.CredentialsRepository
 
 trait JCloudsProvisionContext extends ProvisionContext[JCloudsProvisionVm] {
   def cloudProvider: String
@@ -132,19 +133,23 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
 
   //todo: FIXME this is temporal solution until proper CredentialService is implemented
   @Autowired var resourceLoader: ResourceLoader = _
-  @Bean def stubVmCredentialService = new VmCredentialService {
+//  @Bean def stubVmCredentialService = new VmCredentialService {
+//
+//    def getCredentialsForVm(env: Environment, vm: VirtualMachine) = vm.cloudProvider match {
+//      case Some(provider) => {
+//        for {
+//          identity <- configService.get("genesis.plugin.jclouds." + provider + ".vm.identity").map { _.toString }
+//          credential <- configService.get("genesis.plugin.jclouds." + provider + ".vm.credential").map { cred =>  resourceLoader.getResource(cred.toString) }
+//        } yield new Credentials(identity, InputUtil.resourceAsString(credential))
+//      }
+//      case None => None
+//    }
+//
+//  }
 
-    def getCredentialsForVm(env: Environment, vm: VirtualMachine) = vm.cloudProvider match {
-      case Some(provider) => {
-        for {
-          identity <- configService.get("genesis.plugin.jclouds." + provider + ".vm.identity").map { _.toString }
-          credential <- configService.get("genesis.plugin.jclouds." + provider + ".vm.credential").map { cred =>  resourceLoader.getResource(cred.toString) }
-        } yield new Credentials(identity, InputUtil.resourceAsString(credential))
-      }
-      case None => None
-    }
+  @Autowired var credStore: CredentialsRepository = _
 
-  }
+  @Bean def stubVmCredentialService = new DefaultCredentialsService(credStore)
 }
 
 

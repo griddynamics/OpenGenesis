@@ -53,7 +53,7 @@
     </bean>
 
     <bean class="com.griddynamics.genesis.rest.CredentialsController">
-        <!--<constructor-arg name="genesisService" ref="genesisService"/>-->
+        <constructor-arg name="service" ref="credentialsStoreService"/>
     </bean>
 
     <bean class="com.griddynamics.genesis.rest.SettingsController">

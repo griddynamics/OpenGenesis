@@ -4,7 +4,7 @@ import com.griddynamics.genesis.api
 import api.RequestResult
 
 trait CredentialsStoreService {
-  def get(id: Int): RequestResult
+  def get(id: Int): Option[api.Credentials]
 
   def delete(id: Int): RequestResult
 

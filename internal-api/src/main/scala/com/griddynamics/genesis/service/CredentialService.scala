@@ -41,13 +41,11 @@ trait VmCredentialService {
 class DefaultCredentialsService(credentialsStore: CredentialsRepository) extends VmCredentialService {
 
   def getCredentialsForVm(env: Environment, vm: VirtualMachine): Option[Credentials] = {
-    val creds = for {
+     for {
       provider <- vm.cloudProvider
       keypair <- vm.keyPair
-    } yield {
-      val creds = credentialsStore.find(env.projectId, provider, keypair)
-      creds.map (it => new Credentials(it.identity, it.credential))
-    }
-    creds.getOrElse(None)
+      creds <- credentialsStore.find(env.projectId, provider, keypair)
+      credential <- creds.credential
+    } yield new Credentials(creds.identity, credential)
   }
 }
