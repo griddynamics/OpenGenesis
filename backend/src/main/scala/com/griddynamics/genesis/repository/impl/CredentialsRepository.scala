@@ -5,17 +5,18 @@ import com.griddynamics.genesis.api
 import com.griddynamics.genesis.model
 import com.griddynamics.genesis.repository
 import model.GenesisSchema
-import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
+import scala.Option
+import org.squeryl.PrimitiveTypeMode._
 
 class CredentialsRepository extends AbstractGenericRepository[model.Credentials, api.Credentials](GenesisSchema.credentials)
   with repository.CredentialsRepository {
 
-  implicit def convert(model: model.Credentials): api.Credentials =
-    new api.Credentials(fromModelId(model.id), model.projectId, model.cloudProvider, model.pairName, model.identity, model.credential)
+  implicit def convert(entity: model.Credentials): api.Credentials =
+    new api.Credentials(fromModelId(entity.id), entity.projectId, entity.cloudProvider, entity.pairName, entity.identity, entity.credential, entity.fingerPrint)
 
   implicit def convert(dto: api.Credentials): model.Credentials = {
-    val creds = new model.Credentials(dto.projectId, dto.cloudProvider, dto.pairName, dto.identity, dto.credential)
+    val creds = new model.Credentials(dto.projectId, dto.cloudProvider, dto.pairName, dto.identity, dto.credential, dto.fingerPrint)
     creds.id = toModelId(dto.id);
     creds;
   }
@@ -29,7 +30,14 @@ class CredentialsRepository extends AbstractGenericRepository[model.Credentials,
   @Transactional(readOnly = true)
   def find(projectId: Int, cloudProvider: String, pairName: String): Option[api.Credentials] = from(table) {
       item =>
-        where((item.projectId === projectId) and (item.cloudProvider === cloudProvider) and (item.pairName === pairName))
+        where((projectId === item.projectId) and (cloudProvider === item.cloudProvider ) and (pairName === item.pairName ))
         select (item)
     }.headOption.map(convert(_))
+
+  def find(cloudProvider: String, fingerPrint: String) = from(table) {
+    item =>
+      where((Option(fingerPrint) === item.fingerPrint ) and (cloudProvider === item.cloudProvider) )
+      select (item)
+  }.headOption.map(convert(_))
+
 }

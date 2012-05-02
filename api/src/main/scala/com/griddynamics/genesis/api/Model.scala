@@ -102,7 +102,8 @@ case class Credentials( id: Option[Int],
                         cloudProvider: String,
                         pairName: String,
                         identity: String,
-                        credential: String)
+                        credential: Option[String],
+                        fingerPrint: Option[String] = None)
 
 object RequestResult {
     val envName = "envName"

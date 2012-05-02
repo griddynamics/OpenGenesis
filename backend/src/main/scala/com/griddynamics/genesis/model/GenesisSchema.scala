@@ -103,6 +103,12 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
       columns(projectProperty.projectId, projectProperty.name) are (unique),
       projectProperty.value is (dbType("text"))
     ))
+
+    on(credentials)(creds => declare(
+      creds.id is (primaryKey, autoIncremented),
+      columns(creds.cloudProvider, creds.pairName, creds.projectId) are (unique),
+      creds.credential is (dbType("text"))
+    ))
 }
 
 trait GenesisSchemaCustom extends GenesisSchema {

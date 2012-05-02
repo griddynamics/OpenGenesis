@@ -37,7 +37,7 @@ abstract class AbstractCRUDService[A](repository: Repository[A]) extends CRUDSer
   override def get(id: Int) = repository.get(id)
 
   @Transactional
-  override def delete(entity: A) {
+  override def delete(entity: A) = {
     repository.delete(entity)
     RequestResult(isSuccess = true)
   }
