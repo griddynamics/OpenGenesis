@@ -13,8 +13,8 @@ trait ProjectService extends CRUDService[Project, Int] {
 class ProjectServiceImpl(repository: ProjectRepository) extends ProjectService with Validation[Project] {
   protected def validateCreation(project: Project): Option[RequestResult] = {
     filterResults(Seq(
-      must(project, "name must be unique") {
-        project => project.id.isEmpty
+      must(project, "Name must be unique") {
+        project => findByName(project.name).isEmpty
       },
       mustMatchName(project.name, "name"),
       mustMatchUserName(project.projectManager, "projectManager")
@@ -23,9 +23,9 @@ class ProjectServiceImpl(repository: ProjectRepository) extends ProjectService w
 
   protected def validateUpdate(project: Project): Option[RequestResult] = {
     filterResults(Seq(
-      must(project, "name must be unique") {
+      must(project, "Name must be unique") {
         project =>
-          get(project.id.get) match {
+          findByName(project.name) match {
             case None => true
             case Some(prj) => prj.id == project.id
           }
@@ -55,7 +55,7 @@ class ProjectServiceImpl(repository: ProjectRepository) extends ProjectService w
       validUpdate(project, a => {
         get(a.id.get) match {
           case None => RequestResult(isSuccess = false, compoundServiceErrors = Seq("Project '%d' is not found".format(a.id)))
-          case Some(p) => {
+          case Some(_) => {
             repository.save(a)
             RequestResult(isSuccess = true)
           }
@@ -67,5 +67,9 @@ class ProjectServiceImpl(repository: ProjectRepository) extends ProjectService w
   override def delete(project: Project): RequestResult = {
     repository.delete(project.id.get)
     RequestResult(isSuccess = true)
+  }
+
+  def findByName(project: String): Option[Project] = {
+    list.filter(p => p.name == project).headOption
   }
 }
