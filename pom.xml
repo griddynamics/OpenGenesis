@@ -72,7 +72,7 @@
         <org.jboss.netty.version>3.4.2.Final</org.jboss.netty.version>
 
         <org.eclipse.jgit.version>1.0.0.201106090707-r</org.eclipse.jgit.version>
-        <org.jboss.resteasy.version>2.2.1.GA</org.jboss.resteasy.version>
+        <org.jboss.resteasy.version>2.3.1.GA</org.jboss.resteasy.version>
 
         <mockito.version>1.9.0</mockito.version>
         <commons.cli.version>1.2</commons.cli.version>
