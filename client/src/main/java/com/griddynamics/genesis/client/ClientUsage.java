@@ -26,6 +26,7 @@ import org.apache.commons.cli.*;
 
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.URL;
 import java.util.Arrays;
 
 /**
@@ -65,6 +66,7 @@ public class ClientUsage {
         server.setArgs(1);
         server.setRequired(true);
         server.setArgName("server");
+        server.setType(URL.class);
         cmdCommonOptions.addOption(server);
 
         Option user = new Option("u", "user", true, "User name");
@@ -121,6 +123,15 @@ public class ClientUsage {
         params.setArgName("variable=value");
         requestWorkflowOptions.addOption(params);
         createEnvOptions.addOption(params);
+
+
+        Option projectId = new Option("pr", "project", true, "Project Id");
+        projectId.setArgs(1);
+        projectId.setArgName("project");
+        projectId.setRequired(true);
+        projectId.setType(Number.class);
+        listEnvsOptions.addOption(projectId);
+        createEnvOptions.addOption(projectId);
 
         Option help = new Option("h", "help", true, "Help");
         help.setArgName("command");
