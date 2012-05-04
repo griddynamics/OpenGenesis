@@ -24,6 +24,7 @@ package com.griddynamics.genesis.configuration
 
 import com.griddynamics.genesis.service.CredentialService
 
+
 trait CredentialServiceContext {
-    def credentialService : CredentialService
+  def credentialService : CredentialService
 }

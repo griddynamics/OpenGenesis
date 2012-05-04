@@ -23,10 +23,11 @@
 package com.griddynamics.genesis.configuration
 
 import org.springframework.context.annotation.{Configuration, Bean}
-import com.griddynamics.genesis.service.{CredentialService, impl}
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.Resource
 import com.griddynamics.genesis.util.InputUtil
+import org.springframework.beans.factory.annotation.{Autowired, Value}
+import com.griddynamics.genesis.service._
+import impl.DefaultCredentialsService
 
 @Configuration
 class SingleCredentialServiceContext extends CredentialServiceContext {
@@ -42,10 +43,11 @@ class SingleCredentialServiceContext extends CredentialServiceContext {
       }
     }
 
-      @Bean def credentialService = {
-        if (defaultVmIdentity != "not-set")
-          new impl.SingleCredentialsService(defaultVmIdentity, defaultVmCredential)
-        else
-          new impl.EmptyCredentialsService
-      }
+    @Autowired var credentialsStore: CredentialsStoreService = _
+
+    @Bean def credentialService = {
+      val default = if (defaultVmIdentity != "not-set") Some(new Credentials(defaultVmIdentity, defaultVmCredential)) else None
+      new DefaultCredentialsService(credentialsStore, default)
+    }
+
 }

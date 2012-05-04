@@ -15,13 +15,6 @@ import org.springframework.web.bind.annotation._
 @RequestMapping(Array("/rest/credentials"))
 class CredentialsController(service: CredentialsStoreService) extends RestApiExceptionsHandler {
 
-  @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.PUT))
-  @ResponseBody
-  def update(@PathVariable("id") credId: Int, request: HttpServletRequest): RequestResult = {
-    val creds = extractCredentials(request, Option(credId))
-    service.update(creds)
-  }
-
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
   def create(request: HttpServletRequest): RequestResult = {

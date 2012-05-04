@@ -22,6 +22,12 @@ class CredentialsRepository extends AbstractGenericRepository[model.Credentials,
   }
 
   @Transactional(readOnly = true)
+  def findCredentials(projectId: Int, cloudProvider: String, fingerPrint: String): Option[api.Credentials] = from(table) (
+    item => where((item.projectId === projectId) and (cloudProvider === item.cloudProvider) and (Option(fingerPrint) === item.fingerPrint) )
+      select (item)
+  ).headOption.map(convert(_))
+
+  @Transactional(readOnly = true)
   def list(projectId: Int): Iterable[api.Credentials] = from(table) (
     item => where(item.projectId === projectId) select (item)
   ).map(convert(_))
