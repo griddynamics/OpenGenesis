@@ -30,15 +30,14 @@ import org.jclouds.net.IPSocket
 import com.griddynamics.genesis.util.Logging
 import org.jclouds.ssh.SshClient
 import com.griddynamics.genesis.jclouds.JCloudsComputeContextProvider
-import service.{VmCredentialService, Credentials => GenesisCredentials, ComputeService, CredentialService}
+import service.{Credentials => GenesisCredentials, ComputeService, CredentialService}
 
 class SshService(credentialService: CredentialService,
-                 vmCredentialService: VmCredentialService,
                  computeService: ComputeService,
                  contextFactory: JCloudsComputeContextProvider) extends service.SshService with Logging {
 
   def sshClient(env: Environment, vm: VirtualMachine): SshClient = {
-    val creds: Option[GenesisCredentials] = vmCredentialService.getCredentialsForVm(env, vm).orElse(credentialService.getCredentialsForEnvironment(env))
+    val creds: Option[GenesisCredentials] = credentialService.getCredentialsForVm(env, vm).orElse(credentialService.defaultCredentials)
     val client = sshClient(vm, creds)
     client.connect()
     client

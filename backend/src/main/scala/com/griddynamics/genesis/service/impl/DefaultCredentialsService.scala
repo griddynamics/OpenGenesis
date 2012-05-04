@@ -22,18 +22,33 @@
  */
 package com.griddynamics.genesis.service.impl
 
-import com.griddynamics.genesis.model.Environment
+import com.griddynamics.genesis.model.{VirtualMachine, Environment}
 import com.griddynamics.genesis.service.{Credentials, CredentialService}
-import com.griddynamics.genesis.repository.CredentialsRepository
-import com.griddynamics.genesis.validation.Validation
-import com.griddynamics.genesis.validation.Validation._
-import com.griddynamics.genesis.api
-import api.RequestResult
+import com.griddynamics.genesis.service
 
-class SingleCredentialsService(identity : String, credential : String) extends CredentialService {
-    def getCredentialsForEnvironment(env : Environment) = Some(new Credentials(identity, credential))
-}
+class DefaultCredentialsService(credentialsStore: service.CredentialsStoreService, val defaultCredentials: Option[Credentials]) extends CredentialService {
 
-class EmptyCredentialsService extends CredentialService {
-    def getCredentialsForEnvironment(env: Environment) = None
+  def getCredentialsForVm(env: Environment, vm: VirtualMachine): Option[Credentials] = {
+    for {
+      provider <- vm.cloudProvider
+      keypair <- vm.keyPair
+      creds <- credentialsStore.find(env.projectId, provider, keypair)
+      credential <- credentialsStore.decrypt(creds).credential
+    } yield new Credentials(creds.identity, credential)
+  }
+
+  def updateVmCredentials(env: Environment, vm: VirtualMachine, credentials: Credentials) {
+    val cloudProvider = vm.cloudProvider.getOrElse(throw new UnsupportedOperationException("Not-cloud based servers are not supported yet"))
+    val credsOption = credentialsStore.findCredentials(env.projectId, cloudProvider, credentials.credential);
+    credsOption match {
+      case None => {
+        val creds = credentialsStore.generate(env.projectId, cloudProvider, credentials.identity, credentials.credential)
+        vm.keyPair = Some(creds.pairName)
+      }
+      case Some(creds) => {
+        vm.keyPair = Some(creds.pairName)
+      }
+    }
+  }
+
 }

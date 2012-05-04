@@ -5,17 +5,24 @@ import com.griddynamics.genesis.validation.Validation
 import com.griddynamics.genesis.api.RequestResult
 import com.griddynamics.genesis.api
 import com.griddynamics.genesis.service
-import java.security.{DigestInputStream, MessageDigest, PrivateKey}
-import java.io.ByteArrayInputStream
-import org.apache.commons.codec.binary.Hex
-import com.griddynamics.genesis.util.Closeables
 import com.griddynamics.genesis.validation.Validation._
-import scala._
 import org.springframework.transaction.annotation.Transactional
-import org.bouncycastle.openssl.PEMReader;
-import org.bouncycastle.openssl.PEMWriter;
+
+import java.util.UUID
+import com.griddynamics.genesis.util.BasicCrypto
+import org.springframework.beans.factory.annotation.{Value, Autowired}
+import javax.crypto.spec.SecretKeySpec
+import javax.annotation.PostConstruct
+;
 
 class CredentialsStoreService(repository: CredentialsRepository) extends Validation[api.Credentials] with service.CredentialsStoreService {
+
+  var keySpec: SecretKeySpec = _
+
+  @Value("${genesis.hidden.secret.key:NOT_SET!!}")
+  def init(key: String ) {
+    keySpec = BasicCrypto.keySpec(key)
+  }
 
   def get(id: Int) = repository.get(id)
 
@@ -26,34 +33,31 @@ class CredentialsStoreService(repository: CredentialsRepository) extends Validat
 
   def list(projectId: Int) = repository.list(projectId)
 
+  def find(projectId: Int, cloudProvider: String, keypairName: String): Option[api.Credentials] = repository.find(projectId, cloudProvider, keypairName)
+
+  def decrypt(creds: api.Credentials): api.Credentials =
+    creds.copy(credential = creds.credential.map (BasicCrypto.decrypt(keySpec, _)))
+
   @Transactional
-  def create(creds: api.Credentials) = {
-    org.squeryl.Session.currentSession.setLogger(System.out.println _)
-    validCreate(creds, validatedCreds => {
-      val fingerPrint = validatedCreds.credential.map (digest (_))
-      repository.save(validatedCreds.copy(fingerPrint = fingerPrint))
-    })
+  def generate(projectId: Int, cloudProvider: String, identity: String, credentials: String): api.Credentials = {
+    val name = "Generated-" + UUID.randomUUID().toString
+    val creds = new api.Credentials(None, projectId, cloudProvider, name, identity, Some(credentials))
+    saveWithFingerprints(creds)
   }
 
-  def update(creds: api.Credentials) = {
-    validUpdate(creds, validatedCreds => {
-      val fingerPrint = validatedCreds.credential.map (digest (_))
-      repository.save(validatedCreds.copy(fingerPrint = fingerPrint))
-    })
+  def findCredentials(projectId: Int, cloudProvider: String, privateKey: String): Option[api.Credentials] =
+    repository.find(projectId, cloudProvider, BasicCrypto.fingerPrint(privateKey))
+
+  @Transactional
+  def create(creds: api.Credentials) = validCreate(creds, saveWithFingerprints(_))
+
+  private def saveWithFingerprints(validatedCreds: api.Credentials): api.Credentials = {
+    val fingerPrint = validatedCreds.credential.map(BasicCrypto.fingerPrint(_))
+    val encrypted = validatedCreds.credential.map(BasicCrypto.encrypt(keySpec, _))
+    repository.save(validatedCreds.copy(fingerPrint = fingerPrint, credential = encrypted))
   }
 
-  protected def validateUpdate(c: api.Credentials): Option[RequestResult] = filterResults(Seq(
-    mustPresent(c.id, "id"),
-    notEmpty(c.cloudProvider, "cloud provider"),
-    notEmpty(c.pairName, "key pair name"),
-    mustExist(c) { item => repository.get(item.id.get) },
-    must(c, "key pair name must be unique per provider") {
-      item => repository.find(item.projectId, item.cloudProvider, item.pairName) match {
-        case None => true
-        case Some(cred) => cred.id == item.id
-      }
-    }
-  ))
+  protected def validateUpdate(c: api.Credentials): Option[RequestResult] = None
 
   protected def validateCreation(c: api.Credentials) = filterResults(Seq(
     notEmpty(c.cloudProvider, "cloudProvider"),
@@ -63,25 +67,4 @@ class CredentialsStoreService(repository: CredentialsRepository) extends Validat
       item => repository.find(item.projectId, item.cloudProvider, item.pairName).isEmpty
     }
   ))
-
-  def digest(k: String): String = {
-    if (!k.isEmpty) {
-      val md5 = MessageDigest.getInstance("SHA1");
-
-      Closeables.using(new DigestInputStream(new ByteArrayInputStream(k.getBytes()), md5)) {
-        in => while (in.read(new Array[Byte](128)) > 0) {}
-      }
-
-      val buf = new StringBuilder();
-      val hex = Hex.encodeHex(md5.digest());
-      for (i <- 0 until hex.length by 2) {
-        if (buf.length > 0) buf.append(':');
-        buf.appendAll(hex, i, 2);
-      }
-
-      buf.toString();
-    } else {
-      ""
-    }
-  }
 }
