@@ -11,6 +11,9 @@ import org.apache.commons.codec.binary.Hex
 import com.griddynamics.genesis.util.Closeables
 import com.griddynamics.genesis.validation.Validation._
 import scala._
+import org.springframework.transaction.annotation.Transactional
+import org.bouncycastle.openssl.PEMReader;
+import org.bouncycastle.openssl.PEMWriter;
 
 class CredentialsStoreService(repository: CredentialsRepository) extends Validation[api.Credentials] with service.CredentialsStoreService {
 
@@ -23,7 +26,9 @@ class CredentialsStoreService(repository: CredentialsRepository) extends Validat
 
   def list(projectId: Int) = repository.list(projectId)
 
+  @Transactional
   def create(creds: api.Credentials) = {
+    org.squeryl.Session.currentSession.setLogger(System.out.println _)
     validCreate(creds, validatedCreds => {
       val fingerPrint = validatedCreds.credential.map (digest (_))
       repository.save(validatedCreds.copy(fingerPrint = fingerPrint))
