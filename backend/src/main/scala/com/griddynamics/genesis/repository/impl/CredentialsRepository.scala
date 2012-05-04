@@ -22,22 +22,22 @@ class CredentialsRepository extends AbstractGenericRepository[model.Credentials,
   }
 
   @Transactional(readOnly = true)
-  def list(projectId: Int): Iterable[api.Credentials] = from(table) {
+  def list(projectId: Int): Iterable[api.Credentials] = from(table) (
     item => where(item.projectId === projectId) select (item)
-  }.map(convert(_))
+  ).map(convert(_))
 
 
   @Transactional(readOnly = true)
-  def find(projectId: Int, cloudProvider: String, pairName: String): Option[api.Credentials] = from(table) {
+  def find(projectId: Int, cloudProvider: String, pairName: String): Option[api.Credentials] = from(table) (
       item =>
         where((projectId === item.projectId) and (cloudProvider === item.cloudProvider ) and (pairName === item.pairName ))
         select (item)
-    }.headOption.map(convert(_))
+    ).headOption.map(convert(_))
 
-  def find(cloudProvider: String, fingerPrint: String) = from(table) {
+  def find(cloudProvider: String, fingerPrint: String) = from(table) (
     item =>
       where((Option(fingerPrint) === item.fingerPrint ) and (cloudProvider === item.cloudProvider) )
       select (item)
-  }.headOption.map(convert(_))
+  ).headOption.map(convert(_))
 
 }
