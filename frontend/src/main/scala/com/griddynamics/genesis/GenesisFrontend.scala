@@ -37,35 +37,44 @@ import resources.ResourceFilter
 import service.ConfigService
 import service.GenesisSystemProperties._
 import service.impl.HousekeepingService
-import util.Logging
+import com.griddynamics.genesis.util.Logging
 import org.springframework.web.context.support.GenericWebApplicationContext
 import org.springframework.context.support.ClassPathXmlApplicationContext
 import org.springframework.web.context.WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE
 import java.util.concurrent.TimeUnit
 import java.lang.System
+import scala.collection.JavaConversions._
 
 object GenesisFrontend extends Logging {
-    private lazy val genesisProperties = loadGenesisProperties
-    private val isFrontend = getFileProperty(SERVICE_BACKEND_URL, "NONE") != "NONE"
-    private val isBackend = getFileProperty(SERVER_MODE, "frontend") == "backend"
-    private val securityConfig = getFileProperty(SECURITY_CONFIG, "classpath:/WEB-INF/spring/security-config.xml")
-    private val contexts = if (isFrontend) Seq(securityConfig)
-    else Seq("classpath:/WEB-INF/spring/backend-config.xml", securityConfig)
-    private val requestIdleTime: Int = getFileProperty(MAX_IDLE, 5000)
 
-    private val appContext = new ClassPathXmlApplicationContext(contexts:_*)
+    def main(args: Array[String]): Unit = try{
+        val genesisProperties = loadGenesisProperties()
 
-    def main(args: Array[String]) {
+        val securityConfig = genesisProperties.getOrElse(SECURITY_CONFIG, "classpath:/WEB-INF/spring/security-config.xml")
+        val isFrontend = genesisProperties.get(SERVICE_BACKEND_URL).isDefined
+        val isBackend = genesisProperties.getOrElse(SERVER_MODE, "frontend") == "backend"
+
+        val contexts = if (isFrontend)
+          Seq(securityConfig)
+         else
+          Seq("classpath:/WEB-INF/spring/backend-config.xml", securityConfig)
+
+        log.debug("Using contexts %s", contexts)
+
+        val appContext = new ClassPathXmlApplicationContext(contexts:_*)
+        val helper = new PropertyHelper(genesisProperties, appContext)
+
+        val requestIdleTime: Int = helper.getFileProperty(MAX_IDLE, 5000)
+
         if (!isFrontend) {
           val houseKeepingService = appContext.getBean(classOf[HousekeepingService])
           doHousekeeping(houseKeepingService)
-          installShutdownHook(houseKeepingService)
+          installShutdownHook(houseKeepingService, helper)
         }
 
-        log.debug("Using contexts %s", contexts)
-        val host = getPropWithFallback(BIND_HOST, "0.0.0.0")
-        val port = getPropWithFallback(BIND_PORT, 8080)
-        val resourceRoots = getPropWithFallback(WEB_RESOURCE_ROOTS, "classpath:")
+        val host = helper.getPropWithFallback(BIND_HOST, "0.0.0.0")
+        val port = helper.getPropWithFallback(BIND_PORT, 8080)
+        val resourceRoots = helper.getPropWithFallback(WEB_RESOURCE_ROOTS, "classpath:")
         val server = new Server()
 
         val webAppContext = new GenericWebApplicationContext
@@ -97,7 +106,7 @@ object GenesisFrontend extends Logging {
         if (isFrontend) {
             val proxyFilter = new TunnelFilter("/rest") with UrlConnectionTunnel
             val proxyHolder = new FilterHolder(proxyFilter)
-            proxyHolder.setInitParameter(TunnelFilter.BACKEND_PARAMETER, getFileProperty(SERVICE_BACKEND_URL, ""))
+            proxyHolder.setInitParameter(TunnelFilter.BACKEND_PARAMETER, helper.getFileProperty(SERVICE_BACKEND_URL, ""))
             proxyHolder.setName("tunnelFilter")
             context.addFilter(proxyHolder, "/*", 0)
         }
@@ -125,15 +134,20 @@ object GenesisFrontend extends Logging {
         } finally {
             server.stop()
         }
+    } catch {
+      case e => {
+        log.error(e, e.getMessage)
+        throw e
+      }
     }
 
 
-  def installShutdownHook(houseKeepingService: HousekeepingService) {
+  def installShutdownHook(houseKeepingService: HousekeepingService, helper: PropertyHelper) {
     Runtime.getRuntime.addShutdownHook(new Thread() {
       val WaitingPeriod = 2000
 
       override def run() {
-        val timeout = TimeUnit.SECONDS.toMillis(getPropWithFallback(SHUTDOWN_TIMEOUT, 60))
+        val timeout = TimeUnit.SECONDS.toMillis(helper.getPropWithFallback(SHUTDOWN_TIMEOUT, 60))
         val shutdownStart = System.currentTimeMillis();
 
         var envs = houseKeepingService.allEnvsWithActiveWorkflows
@@ -165,36 +179,39 @@ object GenesisFrontend extends Logging {
     }
   }
 
-  def loadGenesisProperties() = {
-        val resourceLoader = new DefaultResourceLoader()
-        val propertiesStream = resourceLoader.getResource(gp(BACKEND)).getInputStream
+  def loadGenesisProperties(): scala.collection.Map[String, String]  = {
+    val resourceLoader = new DefaultResourceLoader()
+    val propertiesStream = resourceLoader.getResource(gp(BACKEND)).getInputStream
 
-        val genesisProperties = new Properties()
-        genesisProperties.load(propertiesStream)
+    val genesisProperties = new Properties()
+    genesisProperties.load(propertiesStream)
 
-        propertiesStream.close()
-        genesisProperties
+    propertiesStream.close()
+    genesisProperties
+  }
+
+}
+
+
+private class PropertyHelper(genesisProperties: scala.collection.Map[String, String], appContext: ClassPathXmlApplicationContext) {
+
+  def getFileProperty[T](name: String, default: T) = {
+    val strVal = gp(name, genesisProperties.getOrElse(name, String.valueOf(default)))
+    (default match {
+      case v: Int => strVal.toInt
+      case v: Long => strVal.toLong
+      case v: String => strVal
+      case v: Boolean => strVal.toBoolean
+      case _ => throw new IllegalArgumentException("Not supported type")
+    }).asInstanceOf[T]
+  }
+
+  def getProperty[T](name: String, default: T) = appContext.getBean(classOf[ConfigService]).get(name, default)
+
+  def getPropWithFallback[T](name: String, default: T) = {
+    appContext.getBeansOfType(classOf[ConfigService]).isEmpty match {
+      case true => getFileProperty(name, default)
+      case false => getProperty(name, default)
     }
-
-    def getFileProperty[T](name: String, default: T) = {
-        val strVal = gp(name, genesisProperties.getProperty(name, String.valueOf(default)))
-        (default match {
-            case v: Int => strVal.toInt
-            case v: Long => strVal.toLong
-            case v: String => strVal
-            case v: Boolean => strVal.toBoolean
-            case _ => throw new IllegalArgumentException("Not supported type")
-        }).asInstanceOf[T]
-    }
-
-    def getProperty[T](name: String, default: T) = appContext.getBean(classOf[ConfigService])
-        .get(name, default)
-
-    def getPropWithFallback[T](name: String, default: T) = {
-        appContext.getBeansOfType(classOf[ConfigService]).isEmpty match {
-            case true => getFileProperty(name, default)
-            case false => getProperty(name, default)
-        }
-    }
-
+  }
 }
