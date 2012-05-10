@@ -23,17 +23,24 @@
 package com.griddynamics.genesis.client;
 
 
+import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthCache;
+import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.DefaultHttpClient;
 
+import org.apache.http.protocol.BasicHttpContext;
 import org.jboss.resteasy.client.ClientExecutor;
 import org.jboss.resteasy.client.ProxyFactory;
 import org.jboss.resteasy.client.core.executors.ApacheHttpClient4Executor;
 import org.jboss.resteasy.plugins.providers.RegisterBuiltin;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
 
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,9 +49,9 @@ import java.util.Map;
  */
 public class ClientResorceGenericWrapper implements GenesisClient {
 
-    ClientResourceGeneric client;
+    private ClientResourceGeneric client;
 
-    public ClientResorceGenericWrapper(String server, String user, String password) {
+    public ClientResorceGenericWrapper(URL server, String user, String password) {
         ResteasyProviderFactory providerFactory = ResteasyProviderFactory.getInstance();
         providerFactory.addMessageBodyReader(new ClientMessageBodyReader());
 
@@ -57,23 +64,28 @@ public class ClientResorceGenericWrapper implements GenesisClient {
             if (password == null) user = "";
             Credentials credentials = new UsernamePasswordCredentials(user, password);
             httpClient.getCredentialsProvider().setCredentials(AuthScope.ANY, credentials);
-//            httpClient.getCredentialsProvider().setAuthenticationPreemptive(true);
         }
+        AuthCache authCache = new BasicAuthCache();
 
-        ClientExecutor clientExecutor = new ApacheHttpClient4Executor(httpClient);
+        // Generate BASIC scheme object and add it to the local auth cache
+        BasicScheme basicAuth = new BasicScheme();
+        HttpHost targetHost = new HttpHost(server.getHost(), server.getPort());
+        authCache.put(targetHost, basicAuth);
 
-        client = ProxyFactory.create(ClientResourceGeneric.class, server, clientExecutor);
+        // Add AuthCache to the execution context
+        BasicHttpContext localContext = new BasicHttpContext();
+        localContext.setAttribute(ClientContext.AUTH_CACHE, authCache);
+
+        // Create ClientExecutor.
+        ClientExecutor clientExecutor = new ApacheHttpClient4Executor(httpClient, localContext);
+
+        client = ProxyFactory.create(ClientResourceGeneric.class, server.toString(), clientExecutor);
     }
 
 
     @Override
-    public String signin(String user, String password) {
-        return client.signin(user, password);
-    }
-
-    @Override
-    public String listEnvs() {
-        return client.listEnvs();
+    public String listEnvs(Number projectId) {
+        return client.listEnvs(projectId);
     }
 
     @Override
@@ -87,12 +99,15 @@ public class ClientResorceGenericWrapper implements GenesisClient {
     }
 
     @Override
-    public String createEnv(String envName,
+    public String createEnv(Number projectId,
+                            String envName,
                             String creator,
                             String templateName,
                             String templateVersion,
                             Map<String, String> variables) {
-        return client.createEnv(makeCreateEnvParams(envName,
+        return client.createEnv(makeCreateEnvParams(
+                projectId,
+                envName,
                 creator,
                 templateName,
                 templateVersion,
@@ -115,12 +130,14 @@ public class ClientResorceGenericWrapper implements GenesisClient {
         return client.cancelWorkflow(envName);
     }
 
-    private Map<String, Object> makeCreateEnvParams(String envName,
+    private Map<String, Object> makeCreateEnvParams(Number projectId,
+                                                    String envName,
                                                     String creator,
                                                     String templateName,
                                                     String templateVersion,
                                                     Map<String, String> variables) {
         Map<String, Object> params = new HashMap<String, Object>();
+        params.put("projectId", projectId);
         params.put("envName", envName);
         params.put("creator", creator);
         params.put("templateName", templateName);
