@@ -28,15 +28,15 @@ import java.util.Map;
  * @author Victor Galkin
  */
 public interface GenesisClient {
-    String signin(String user, String password);
 
-    String listEnvs();
+    String listEnvs(Number projectId);
 
     String describeEnv(String envName);
 
     String listTemplates();
 
-    String createEnv(String envName,
+    String createEnv(Number projectId,
+                     String envName,
                      String creator,
                      String templateName,
                      String templateVersion,

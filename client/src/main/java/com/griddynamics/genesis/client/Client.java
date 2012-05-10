@@ -28,6 +28,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 import org.slf4j.LoggerFactory;
 
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -36,6 +37,8 @@ import java.util.Properties;
 public class Client {
 
     static ClientUsage clientUsage = new ClientUsage();
+    private final GenesisClient client;
+    private final CommandLine cmdLine;
 
     public static void main(String[] args) throws Exception {
 
@@ -45,32 +48,7 @@ public class Client {
             if (parseResult.commandLine.hasOption("debug"))
                 root.setLevel(Level.DEBUG);
             else root.setLevel(Level.OFF);
-            switch (parseResult.getAction()) {
-                case HELP:
-                    doHelp(parseResult.getCommandLine());
-                    break;
-                case LISTTEMPLATES:
-                    doListTemplates(parseResult.getCommandLine());
-                    break;
-                case LISTENVS:
-                    doListEnvs(parseResult.getCommandLine());
-                    break;
-                case CREATEENV:
-                    doCreateEnv(parseResult.getCommandLine());
-                    break;
-                case DESCRIBEENV:
-                    doDescribeEnv(parseResult.getCommandLine());
-                    break;
-                case REQUESTWORKFLOW:
-                    doRequestWorkflow(parseResult.getCommandLine());
-                    break;
-                case CANCELWORKFLOW:
-                    doCancelWorkflow(parseResult.getCommandLine());
-                    break;
-                case DESTROYENV:
-                    doDestroyEnv(parseResult.getCommandLine());
-                    break;
-            }
+            System.out.println(new Client(parseResult).doAction(parseResult.getAction()));
         } catch (ParseException parseException) {
             clientUsage.printHelp(System.err);
             System.err.println(parseException);
@@ -78,45 +56,69 @@ public class Client {
         }
     }
 
-    public static void doHelp(CommandLine commandLine) {
-        String value = commandLine.getOptionValue("help");
+    private String doAction(ActionEnum action) throws ParseException {
+            switch (action) {
+                case HELP:
+                    return doHelp();
+                case LISTTEMPLATES:
+                    return doListTemplates();
+                case LISTENVS:
+                    return doListEnvs();
+                case CREATEENV:
+                    return doCreateEnv();
+                case DESCRIBEENV:
+                    return doDescribeEnv();
+                case REQUESTWORKFLOW:
+                    return doRequestWorkflow();
+                case CANCELWORKFLOW:
+                    return doCancelWorkflow();
+                case DESTROYENV:
+                    return doDestroyEnv();
+            }
+            return "";
+    }
+    
+    private String doHelp() {
+        String value = cmdLine.getOptionValue("help");
+
         if (value == null)
             clientUsage.printHelp(System.out);
         else {
             clientUsage.printCommandHelp(System.out, CommandEnum.valueOf(value.toUpperCase()));
         }
+        return "";
     }
 
-    private static GenesisClient getClient(CommandLine commandLine) {
+    private String getEnv() { return cmdLine.getOptionValue("environment");}
+    
+    private Number getProject()  throws ParseException {
+        return (Number) cmdLine.getParsedOptionValue("project");
+    }
+
+    private GenesisClient getClient(CommandLine commandLine) throws ParseException {
         String user = commandLine.getOptionValue("user");
         String password = commandLine.getOptionValue("password");
-        String server = commandLine.getOptionValue("server");
+        URL server = (URL) commandLine.getParsedOptionValue("server");
         return new ClientResorceGenericWrapper(server, user, password);
     }
 
-    public static void doListTemplates(CommandLine commandLine) {
-        String result = getClient(commandLine).listTemplates();
-        System.out.println(result);
+    public String doListTemplates() {
+        return client.listTemplates();
     }
 
-    public static void doListEnvs(CommandLine commandLine) {
-        String result = getClient(commandLine).listEnvs();
-        System.out.println(result);
+    public String doListEnvs() throws ParseException {
+        return client.listEnvs(getProject());
     }
 
-    public static void doDescribeEnv(CommandLine commandLine) {
-        String environment = commandLine.getOptionValue("environment");
-        String result = getClient(commandLine).describeEnv(environment);
-        System.out.println(result);
+    public String doDescribeEnv() {
+        return client.describeEnv(getEnv());
     }
 
-    public static void doDestroyEnv(CommandLine commandLine) {
-        String environment = commandLine.getOptionValue("environment");
-        String result = getClient(commandLine).destroyEnv(environment);
-        System.out.println(result);
+    public String doDestroyEnv() {
+        return client.destroyEnv(getEnv());
     }
 
-    private static Map<String, String> extractVariables(CommandLine commandLine) {
+    private Map<String, String> extractVariables(CommandLine commandLine) {
         Map<String, String> result = new HashMap<String, String>();
         Properties variables = commandLine.getOptionProperties("variables");
         for (Map.Entry<Object, Object> variable : variables.entrySet()) {
@@ -125,30 +127,26 @@ public class Client {
         return result;
     }
 
-    public static void doCreateEnv(CommandLine commandLine) {
-        String environment = commandLine.getOptionValue("environment");
-        String creator = commandLine.getOptionValue("creator");
-        String templateName = commandLine.getOptionValue("tn");
-        String templateVersion = commandLine.getOptionValue("tv");
-        Map<String, String> variables = extractVariables(commandLine);
-        String result = getClient(commandLine).createEnv(environment, creator, templateName, templateVersion, variables);
-        System.out.println(result);
+    public String doCreateEnv() throws ParseException {
+        String creator = cmdLine.getOptionValue("creator");
+        String templateName = cmdLine.getOptionValue("tn");
+        String templateVersion = cmdLine.getOptionValue("tv");
+        Map<String, String> variables = extractVariables(cmdLine);
+        return client.createEnv(getProject(), getEnv(), creator, templateName, templateVersion, variables);
     }
 
-    public static void doRequestWorkflow(CommandLine commandLine) {
-        String environment = commandLine.getOptionValue("environment");
-        String workflow = commandLine.getOptionValue("workflow");
-        Map<String, String> variables = extractVariables(commandLine);
-        String result = getClient(commandLine).requestWorkflow(environment, workflow, variables);
-        System.out.println(result);
+    public String doRequestWorkflow() {
+        String workflow = cmdLine.getOptionValue("workflow");
+        Map<String, String> variables = extractVariables(cmdLine);
+        return client.requestWorkflow(getEnv(), workflow, variables);
     }
 
-    public static void doCancelWorkflow(CommandLine commandLine) {
-        String environment = commandLine.getOptionValue("environment");
-        String result = getClient(commandLine).cancelWorkflow(environment);
-        System.out.println(result);
+    public String doCancelWorkflow() {
+        return client.cancelWorkflow(getEnv());
     }
 
-    public Client() {
+    public Client(ParseResult parseResult) throws ParseException {
+        this.cmdLine = parseResult.getCommandLine();
+        this.client = getClient(cmdLine);
     }
 }

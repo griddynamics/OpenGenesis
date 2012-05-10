@@ -36,18 +36,11 @@ import java.util.Map;
 @Produces(MediaType.APPLICATION_JSON)
 public interface ClientResourceGeneric {
 
-    @Path("/signin")
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    String signin(@QueryParam("j_username") String user,
-                  @QueryParam("j_password") String password);
-
     @Path("/rest/envs")
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    String listEnvs();
+    String listEnvs(@QueryParam("projectId") Number projectId);
 
     @Path("/rest/envs/{name}")
     @GET
