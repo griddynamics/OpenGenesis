@@ -1,11 +1,12 @@
 package com.griddynamics.genesis.rest
 
-import com.griddynamics.genesis.api.Project
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import com.griddynamics.genesis.repository.ProjectRepository
 import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
+import com.griddynamics.genesis.service.impl.{ProjectService, ProjectServiceImpl}
+import com.griddynamics.genesis.api.{RequestResult, Project}
 
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
@@ -31,24 +32,24 @@ import org.springframework.web.bind.annotation._
  */
 @Controller
 @RequestMapping(value = Array("/rest/projects"))
-class ProjectsController(projectRepository: ProjectRepository) extends RestApiExceptionsHandler {
+class ProjectsController(projectService: ProjectService) extends RestApiExceptionsHandler {
 
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
-  def listProjects: List[Project] = projectRepository.list
+  def listProjects: List[Project] = projectService.list.toList
 
   @RequestMapping(method = Array(RequestMethod.POST))
   @ResponseBody
-  def createProject(request: HttpServletRequest, response: HttpServletResponse): Project = {
+  def createProject(request: HttpServletRequest, response: HttpServletResponse): RequestResult = {
     val paramsMap = extractParamsMap(request)
     val project = extractProject(None, paramsMap)
-    projectRepository.save(project)
+    projectService.create(project)
   }
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.GET))
   @ResponseBody
   def findProject(@PathVariable("projectId") projectId: Int): Project = {
-    projectRepository.get(projectId) match {
+    projectService.get(projectId) match {
         case Some(p: Project) => p
         case None => throw new ResourceNotFoundException
     };
@@ -56,11 +57,11 @@ class ProjectsController(projectRepository: ProjectRepository) extends RestApiEx
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.PUT))
   @ResponseBody
-  def updateProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response: HttpServletResponse): Project = {
+  def updateProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response: HttpServletResponse): RequestResult = {
     val paramsMap = GenesisRestController.extractParamsMap(request)
     val project = extractProject(Option(projectId), paramsMap)
-    projectRepository.get(projectId) match {
-        case Some(p) => projectRepository.save(project)
+    projectService.get(projectId) match {
+        case Some(p) => projectService.update(project)
         case _ => throw new ResourceNotFoundException
     }
   }
@@ -68,7 +69,9 @@ class ProjectsController(projectRepository: ProjectRepository) extends RestApiEx
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
   def deleteProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response: HttpServletResponse) {
-    projectRepository.delete(projectId)
+    val paramsMap = GenesisRestController.extractParamsMap(request)
+    val project = extractProject(Option(projectId), paramsMap)
+    projectService.delete(project)
   }
 
   private def extractProject(projectId: Option[Int], paramsMap: Map[String, Any]): Project = {

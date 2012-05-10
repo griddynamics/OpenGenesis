@@ -35,7 +35,7 @@
     </bean>
 
     <bean class="com.griddynamics.genesis.rest.ProjectsController">
-        <constructor-arg name="projectRepository" ref="projectRepository"/>
+        <constructor-arg name="projectService" ref="projectService"/>
     </bean>
 
     <bean class="com.griddynamics.genesis.rest.ProjectPropertiesController"/>
