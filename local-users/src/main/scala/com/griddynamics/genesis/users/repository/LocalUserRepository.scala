@@ -30,6 +30,15 @@ import org.squeryl.PrimitiveTypeMode._
 
 
 class LocalUserRepository extends AbstractGenericRepository[LocalUser, User](LocalUserSchema.users) {
+
+    def getWithCredentials(username: String): Option[User] = {
+        from (LocalUserSchema.users) {
+          item => where (item.username === username).
+            select(item)
+        }.headOption.map(LocalUserRepository.convertWithoutStrippingPassword _)
+    }
+
+
     def findByUsername(s: String): Option[User] = {
         from (LocalUserSchema.users) {
             item => where (
@@ -58,6 +67,11 @@ class LocalUserRepository extends AbstractGenericRepository[LocalUser, User](Loc
 }
 
 object LocalUserRepository {
+
+    implicit def convertWithoutStrippingPassword(model: LocalUser) = {
+        User(model.username, model.email, model.firstName, model.lastName, model.jobTitle, Option(model.password))
+    }
+
     implicit def convert(model: LocalUser) = {
         User(model.username, model.email, model.firstName, model.lastName, model.jobTitle, None)
     }

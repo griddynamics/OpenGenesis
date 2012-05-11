@@ -31,8 +31,12 @@ import Validation._
 import com.griddynamics.genesis.users.repository.{LocalGroupRepository, LocalUserRepository}
 
 class LocalUserService(val repository: LocalUserRepository, val groupRepo: LocalGroupRepository) extends UserService with Validation[User]{
+
     @Transactional(readOnly = true)
-    def findByUsername(username: String) = {
+    override def getWithCredentials(username: String) = repository.getWithCredentials(username)
+
+    @Transactional(readOnly = true)
+    override def findByUsername(username: String) = {
         repository.findByUsername(username)
     }
 

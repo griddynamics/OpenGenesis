@@ -60,27 +60,21 @@
     <bean id="authenticationFailureHandler"
           class="com.griddynamics.genesis.spring.security.AuthenticationFailureHandler"/>
 
-    <!--<bean id="accessDeniedHandler" class="AccessDeniedHandlerImpl">
-        <property name="errorPage" value="/app/403"/>
-    </bean>-->
-
     <s:authentication-manager alias="authenticationManager">
         <!--<s:authentication-provider>
             <s:password-encoder hash="sha-256"/>
             <s:jdbc-user-service data-source-ref="dataSource"/>
         </s:authentication-provider>-->
 
-        <s:authentication-provider>
+        <s:authentication-provider user-service-ref="genesisUserDetailsService">
             <s:password-encoder hash="sha-256"/>
-            <s:user-service>
-                <!--
-                    username/password is
-                    genesis/genesis
-                -->
-                <s:user name="genesis" password="aeebad4a796fcc2e15dc4c6061b45ed9b373f26adfc798ca7d2d8cc58182718e" authorities="ROLE_GENESIS" />
-            </s:user-service>
         </s:authentication-provider>
     </s:authentication-manager>
+
+    <bean id="genesisUserDetailsService" class="com.griddynamics.genesis.spring.security.GenesisUserDetailsService">
+        <constructor-arg name="adminPassword" value="aeebad4a796fcc2e15dc4c6061b45ed9b373f26adfc798ca7d2d8cc58182718e"/>
+        <constructor-arg name="adminUsername" value="genesis" />
+    </bean>
 
     <bean id="adAuthProvider" lazy-init="true"
           class="org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider">
