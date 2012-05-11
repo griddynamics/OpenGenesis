@@ -110,6 +110,13 @@ class GenesisRestController(genesisService: GenesisService) extends RestApiExcep
 }
 
 object GenesisRestController {
+    import net.liftweb.json._
+
+    def extract[B <: AnyRef : Manifest](request: HttpServletRequest): B = {
+      implicit val formats = DefaultFormats
+      val json = parse(scala.io.Source.fromInputStream(request.getInputStream).getLines().mkString(" "));
+      json.extract[B]
+    }
 
     def extractParamsMap(request: HttpServletRequest): Map[String, Any] = {
         try {

@@ -11,6 +11,7 @@ trait ProjectService extends CRUDService[Project, Int] {
 }
 
 class ProjectServiceImpl(repository: ProjectRepository) extends ProjectService with Validation[Project] {
+
   protected def validateCreation(project: Project): Option[RequestResult] = {
     filterResults(Seq(
       must(project, "Name must be unique") {
@@ -23,45 +24,28 @@ class ProjectServiceImpl(repository: ProjectRepository) extends ProjectService w
 
   protected def validateUpdate(project: Project): Option[RequestResult] = {
     filterResults(Seq(
-      must(project, "Name must be unique") {
-        project =>
-          findByName(project.name) match {
-            case None => true
-            case Some(prj) => prj.id == project.id
-          }
-      },
       mustMatchName(project.name, "name"),
-      mustMatchUserName(project.projectManager, "projectManager")
+      mustMatchUserName(project.projectManager, "projectManager"),
+      mustExist(project) { it => get(it.id.get) },
+      must(project, "name must be unique") {
+        project => repository.findByName(project.name).forall { _.id == project.id}
+      }
     ))
   }
 
   @Transactional(readOnly = true)
-  def get(key: Int): Option[Project] = {
-    repository.get(key)
-  }
+  def get(key: Int): Option[Project] = repository.get(key)
 
   @Transactional(readOnly = true)
-  def list: Seq[Project] = {
-    repository.list
-  }
+  def list: Seq[Project] =  repository.list
 
   @Transactional
   override def create(project: Project): RequestResult = {
-    validCreate(project, a => repository.save(a))
+    validCreate(project, repository.save(_))
   }
 
   @Transactional
-  override def update(project: Project): RequestResult = {
-      validUpdate(project, a => {
-        get(a.id.get) match {
-          case None => RequestResult(isSuccess = false, compoundServiceErrors = Seq("Project '%d' is not found".format(a.id)))
-          case Some(_) => {
-            repository.save(a)
-            RequestResult(isSuccess = true)
-          }
-        }
-      })
-  }
+  override def update(project: Project): RequestResult = validUpdate(project, repository.save(_))
 
   @Transactional
   override def delete(project: Project): RequestResult = {

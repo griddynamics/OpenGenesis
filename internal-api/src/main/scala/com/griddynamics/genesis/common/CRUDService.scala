@@ -25,6 +25,7 @@ package com.griddynamics.genesis.common
 
 import com.griddynamics.genesis.api.RequestResult
 
+
 trait CRUDService[A, KEY] {
     def list: Seq[A]
     def create(a: A) = RequestResult(isSuccess = false, compoundServiceErrors = Seq("This service cannot create objects"))
@@ -32,3 +33,5 @@ trait CRUDService[A, KEY] {
     def delete(a: A) = RequestResult(isSuccess = false, compoundServiceErrors = Seq("This service cannot delete objects"))
     def get(key: KEY) : Option[A]
 }
+
+

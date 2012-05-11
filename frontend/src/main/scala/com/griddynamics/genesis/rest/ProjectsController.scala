@@ -48,12 +48,8 @@ class ProjectsController(projectService: ProjectService) extends RestApiExceptio
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def findProject(@PathVariable("projectId") projectId: Int): Project = {
-    projectService.get(projectId) match {
-        case Some(p: Project) => p
-        case None => throw new ResourceNotFoundException
-    };
-  }
+  def findProject(@PathVariable("projectId") projectId: Int): Project =
+    projectService.get(projectId).getOrElse { throw new ResourceNotFoundException }
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.PUT))
   @ResponseBody

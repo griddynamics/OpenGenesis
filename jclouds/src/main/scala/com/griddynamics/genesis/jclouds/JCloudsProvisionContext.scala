@@ -26,7 +26,6 @@ import action.JCloudsProvisionVm
 import coordinators.JCloudsStepCoordinatorFactory
 import executors.{JCloudsVmDestructor, ProvisionExecutor, SshPortChecker}
 import com.griddynamics.genesis.jclouds.step.{DestroyEnvStepBuilderFactory, ProvisionVmsStepBuilderFactory}
-import com.griddynamics.genesis.model.{IpAddresses, VirtualMachine}
 import org.jclouds.Constants._
 import com.griddynamics.genesis.actions.provision._
 import com.griddynamics.context.provision.ProvisionContext
@@ -42,13 +41,12 @@ import org.jclouds.ssh.jsch.config.JschSshClientModule
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule
 import com.griddynamics.genesis.plugin.PluginConfigurationContext
 import com.griddynamics.genesis.workflow.DurationLimitedActionExecutor
-import com.griddynamics.genesis.util.InputUtil
 import org.springframework.context.annotation.{Configuration, Bean}
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.io.ResourceLoader
 import javax.annotation.PostConstruct
 import net.sf.ehcache.CacheManager
 import java.util.concurrent.TimeUnit
+import com.griddynamics.genesis.model.{IpAddresses, VirtualMachine}
 
 trait JCloudsProvisionContext extends ProvisionContext[JCloudsProvisionVm] {
   def cloudProvider: String
@@ -125,26 +123,10 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
   @Bean def destroyEnvStepBuilderFactory = new DestroyEnvStepBuilderFactory
 
   @Bean def sshService: SshService =
-    new impl.SshService(credentialServiceContext.credentialService, stubVmCredentialService, computeService, this)
+    new impl.SshService(credentialServiceContext.credentialService, computeService, this)
 
   @Bean def computeService = new JCloudsComputeService(this)
 
-
-  //todo: FIXME this is temporal solution until proper CredentialService is implemented
-  @Autowired var resourceLoader: ResourceLoader = _
-  @Bean def stubVmCredentialService = new VmCredentialService {
-
-    def getCredentialsForVm(vm: VirtualMachine) = vm.cloudProvider match {
-      case Some(provider) => {
-        for {
-          identity <- configService.get("genesis.plugin.jclouds." + provider + ".vm.identity").map { _.toString }
-          credential <- configService.get("genesis.plugin.jclouds." + provider + ".vm.credential").map { cred =>  resourceLoader.getResource(cred.toString) }
-        } yield new Credentials(identity, InputUtil.resourceAsString(credential))
-      }
-      case None => None
-    }
-
-  }
 }
 
 
