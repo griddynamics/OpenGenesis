@@ -56,10 +56,7 @@ class PluginLoader extends BeanClassLoaderAware with BeanDefinitionRegistryPostP
     }
 
     def postProcessBeanDefinitionRegistry(registry: BeanDefinitionRegistry) {
-        if (pluginResourcePath == null) {
-            pluginResourcePath = loadGenesisProperties(classLoader)
-                .getProperty(PropNamePluginInfo, DefaultPluginResourcePath)
-        }
+        loadGenesisProperties(classLoader)
 
         val resources = classLoader.getResources(pluginResourcePath)
 
@@ -84,10 +81,8 @@ class PluginLoader extends BeanClassLoaderAware with BeanDefinitionRegistryPostP
 }
 
 object PluginLoader {
-    val DefaultPluginResourcePath = "META-INF/genesis/plugin.info"
-    val PropNamePluginInfo = "genesis.plugin.info"
     import com.griddynamics.genesis.service.GenesisSystemProperties.BACKEND
-    var pluginResourcePath = java.lang.System.getProperty(PropNamePluginInfo)
+    var pluginResourcePath = "META-INF/genesis/plugin.info"
 
     def loadGenesisProperties(classLoader: ClassLoader) = {
         val resourceLoader = new DefaultResourceLoader(classLoader)
