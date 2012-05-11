@@ -1,0 +1,19 @@
+package com.griddynamics.genesis.service
+
+import com.griddynamics.genesis.api
+import api.RequestResult
+
+trait CredentialsStoreService {
+  def get(id: Int): Option[api.Credentials]
+  def delete(id: Int): RequestResult
+  def list(projectId: Int): Iterable[api.Credentials]
+  def create(creds: api.Credentials): RequestResult
+
+  def find(projectId: Int, cloudProvider: String, keypairName: String): Option[api.Credentials]
+
+  def generate(projectId: Int, cloudProvider: String, identity: String, credentials: String): api.Credentials
+
+  def findCredentials(projectId: Int, cloudProvider: String, privateKey: String): Option[api.Credentials]
+
+  def decrypt(creds: api.Credentials): api.Credentials
+}

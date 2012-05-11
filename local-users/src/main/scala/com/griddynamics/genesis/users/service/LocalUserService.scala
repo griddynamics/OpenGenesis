@@ -55,19 +55,12 @@ class LocalUserService(val repository: LocalUserRepository, val groupRepo: Local
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
     override def update(user: User) : RequestResult = {
-         validUpdate(user, user => {
-             repository.findByUsername(user.username) match {
-                 case None => RequestResult(isSuccess = false, compoundServiceErrors = Seq("Not found"))
-                 case Some(lu) => {
-                     repository.update(user)
-                     RequestResult(isSuccess = true)
-                 }
-             }
-         })
+       validUpdate(user, repository.update(_) )
     }
 
     protected def validateUpdate(user: User) = {
         filterResults(Seq(
+            mustExist(user){ it => repository.findByUsername(it.username) },
             mustMatchName(user.firstName, "firstName"),
             mustMatchName(user.lastName, "lastName"),
             mustMatchEmail(user.email, "email")

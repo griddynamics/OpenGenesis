@@ -28,9 +28,10 @@ import com.griddynamics.genesis.model.{VirtualMachine, Environment}
 class Credentials(val identity : String, val credential : String)
 
 trait CredentialService {
-    def getCredentialsForEnvironment(env : Environment) : Option[Credentials]
+    def defaultCredentials: Option[Credentials]
+    def getCredentialsForVm(env: Environment, vm: VirtualMachine): Option[Credentials]
+    def updateVmCredentials(env: Environment, vm: VirtualMachine, credentials: Credentials)
 }
 
-trait VmCredentialService {
-  def getCredentialsForVm(vm: VirtualMachine): Option[Credentials]
-}
+
+
