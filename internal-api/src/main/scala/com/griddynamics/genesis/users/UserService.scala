@@ -23,7 +23,7 @@
 package com.griddynamics.genesis.users
 
 import com.griddynamics.genesis.common.CRUDService
-import com.griddynamics.genesis.api.{RequestResult, User}
+import com.griddynamics.genesis.api.{UserGroup, RequestResult, User}
 
 
 trait UserService extends CRUDService[User, String] {

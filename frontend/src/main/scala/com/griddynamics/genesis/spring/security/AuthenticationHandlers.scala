@@ -37,7 +37,7 @@ class AuthenticationSuccessHandler(val authRole : String) extends SpringAuthenti
         val (granted, responseMessage) = auth.getAuthorities.map(_.getAuthority)
             .exists(_.toUpperCase.contains(authRole)) match {
             case true => (true, "{\"success\": true}")
-            case _ => (false, "{\"success\": false, errors: \"Access to Genesis application is denied.\"}")
+            case _ => (false, "{\"success\": false, \"errors\": \"Access to Genesis application is denied.\"}")
         }
 
         if (granted) createSessionIfNotExist(request)

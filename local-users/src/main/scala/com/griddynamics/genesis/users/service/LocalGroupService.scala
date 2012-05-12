@@ -60,6 +60,10 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
       })
     }
 
+
+    @Transactional(readOnly = true)
+    def getUsersGroups(username: String) = repository.groupsForUser(username)
+
     @Transactional
     override def delete(a: UserGroup) = {
         repository.delete(a)
@@ -91,7 +95,7 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
         notEmpty(c.name, "name"),
         notEmpty(c.description, "description"),
         mustExist(c){it => get(it.id.get)},
-        must(c, "name must be unique"){ c =>
+        must(c, "Group with name '" + c.name + "' already exists"){ c =>
           findByName(c.name) match {
               case None => true
               case Some(group) => group.id == c.id

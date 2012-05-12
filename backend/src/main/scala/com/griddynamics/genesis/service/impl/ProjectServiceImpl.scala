@@ -14,7 +14,7 @@ class ProjectServiceImpl(repository: ProjectRepository) extends ProjectService w
 
   protected def validateCreation(project: Project): Option[RequestResult] = {
     filterResults(Seq(
-      must(project, "Name must be unique") {
+      must(project, "Project with name '" + project.name + "' already exists") {
         project => findByName(project.name).isEmpty
       },
       mustMatchName(project.name, "name"),
@@ -27,7 +27,7 @@ class ProjectServiceImpl(repository: ProjectRepository) extends ProjectService w
       mustMatchName(project.name, "name"),
       mustMatchUserName(project.projectManager, "projectManager"),
       mustExist(project) { it => get(it.id.get) },
-      must(project, "name must be unique") {
+      must(project, "Project with name '" + project.name + "' already exists") {
         project => repository.findByName(project.name).forall { _.id == project.id}
       }
     ))

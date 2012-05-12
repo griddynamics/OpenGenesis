@@ -1,11 +1,10 @@
 package com.griddynamics.genesis.rest
 
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
-import com.griddynamics.genesis.repository.ProjectRepository
 import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
-import com.griddynamics.genesis.service.impl.{ProjectService, ProjectServiceImpl}
+import com.griddynamics.genesis.service.impl.ProjectService
 import com.griddynamics.genesis.api.{RequestResult, Project}
 
 /**
@@ -65,9 +64,7 @@ class ProjectsController(projectService: ProjectService) extends RestApiExceptio
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
   def deleteProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response: HttpServletResponse) {
-    val paramsMap = GenesisRestController.extractParamsMap(request)
-    val project = extractProject(Option(projectId), paramsMap)
-    projectService.delete(project)
+    projectService.get(projectId).foreach( projectService.delete(_) )
   }
 
   private def extractProject(projectId: Option[Int], paramsMap: Map[String, Any]): Project = {
