@@ -66,7 +66,7 @@ class GenesisStepCoordinator(val step: GenesisStep,
 
 
     def onStepInterrupt(signal: Signal) = {
-        setStepStatus(Failed)
+        setStepStatus(Canceled)
         stepCoordinator.onStepInterrupt(signal)
     }
 
