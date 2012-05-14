@@ -79,4 +79,5 @@ object WorkflowStepStatus extends Enumeration {
     val Executing = Value(1, "Executing")
     val Failed = Value(2, "Failed")
     val Succeed = Value(3, "Succeed")
+    val Canceled = Value(4, "Canceled")
 }
