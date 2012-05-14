@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  * http://www.griddynamics.com
  *
@@ -20,21 +20,23 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
+package com.griddynamics.genesis.service
 
-package com.griddynamics.genesis.groups
+import com.griddynamics.genesis.api
+import api.RequestResult
+import com.griddynamics.genesis.users.GenesisUser
+import com.griddynamics.genesis.groups.GenesisGroup
 
-import com.griddynamics.genesis.common.CRUDService
-import com.griddynamics.genesis.api.{RequestResult, User, UserGroup}
+trait AuthorityService {
+  def grantAuthoritiesToUser(username: String, auths: List[String]): RequestResult
 
+  def grantAuthoritiesToGroup(groupName: String, auths: List[String]): RequestResult
 
-trait GroupService extends CRUDService[UserGroup, String]{
-   override def get(name: String) = findByName(name)
-   def findByName(name: String) : Option[UserGroup]
-   def users(name: Int) : Seq[User]
-   def addUserToGroup(id: Int, username: String) : RequestResult
-   def removeUserFromGroup(id: Int, username: String) : RequestResult
-   def get(id: Int) : Option[UserGroup]
-   def create(a: UserGroup, users: List[String]) : RequestResult
-   def update(group: UserGroup, users: List[String]) : RequestResult
-   def getUsersGroups(username: String): Iterable[UserGroup]
+  def getUserAuthorities(username: String): List[String]
+
+  def getGroupAuthorities(groupName: String): List[String]
+
+  def getAuthorities(groups: Iterable[api.UserGroup]): List[String]
+
+  def listAuthorities: List[String]
 }

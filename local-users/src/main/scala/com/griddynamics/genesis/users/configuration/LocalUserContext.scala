@@ -37,6 +37,7 @@ import com.griddynamics.genesis.users.repository.{LocalUserGroupManagement, Loca
 class LocalUserContext extends UserServiceContext with Logging {
     @Autowired var dataSource: DataSource = _
     @Autowired var transactionManager: PlatformTransactionManager = _
+
     @Value("#{fileProps['genesis.system.jdbc.drop.db'] ?: false}") var dropSchema: Boolean = _
     lazy val groupRepo = new LocalGroupRepositoryImpl
     @Bean def userService = new LocalUserService(new LocalUserRepository, groupRepo)

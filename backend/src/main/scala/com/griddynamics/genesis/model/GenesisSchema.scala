@@ -41,6 +41,9 @@ trait GenesisSchema extends Schema {
     val projectProperties = table[ProjectProperty]("project_property")
     val settings = table[ConfigProperty]("settings")
     val credentials = table[Credentials]("credentials")
+
+    val userAuthorities = table[Authority]("user_authorities")
+    val groupAuthorities = table[Authority]("group_authorities")
 }
 
 trait GenesisSchemaPrimitive extends GenesisSchema {
@@ -108,6 +111,14 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
       creds.id is (primaryKey, autoIncremented),
       columns(creds.cloudProvider, creds.pairName, creds.projectId) are (unique),
       creds.credential is (dbType("text"))
+    ))
+
+    on(userAuthorities)(authority => declare(
+      columns(authority.principalName, authority.authority) are (unique)
+    ))
+
+    on(groupAuthorities)(authority => declare(
+      columns(authority.principalName, authority.authority) are (unique)
     ))
 }
 

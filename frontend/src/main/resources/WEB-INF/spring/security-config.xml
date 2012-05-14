@@ -34,11 +34,20 @@
     <context:property-placeholder location="${backend.properties}" system-properties-mode="OVERRIDE"/>
     <s:global-method-security pre-post-annotations="enabled"/>
 
-	<s:http use-expressions="true" disable-url-rewriting="true"
+    <s:http use-expressions="true" disable-url-rewriting="true"
             realm="Genesis" >
 		<s:intercept-url pattern="/" access="isAuthenticated()" />
 		<s:intercept-url pattern="/index.html" access="isAuthenticated()" />
-		<s:intercept-url pattern="/rest/**" access="isAuthenticated()" />
+        <s:intercept-url pattern="/rest/groups/**" access="hasRole('ROLE_GENESIS_ADMIN')" />
+        <s:intercept-url pattern="/rest/users/**" access="hasRole('ROLE_GENESIS_ADMIN')" />
+        <s:intercept-url pattern="/rest/plugins/**" access="hasRole('ROLE_GENESIS_ADMIN')" />
+        <s:intercept-url pattern="/rest/settings/**" access="hasRole('ROLE_GENESIS_ADMIN')" />
+
+        <s:intercept-url pattern="/rest/projects/**" method="POST" access="hasRole('ROLE_GENESIS_ADMIN')" />
+        <s:intercept-url pattern="/rest/projects/**" method="DELETE" access="hasRole('ROLE_GENESIS_ADMIN')" />
+
+        <s:intercept-url pattern="/rest/**" access="isAuthenticated()" />
+
         <s:form-login login-page="/login.html"
                       authentication-success-handler-ref="authenticationSuccessHandler"
                       authentication-failure-handler-ref="authenticationFailureHandler"
@@ -74,6 +83,7 @@
     <bean id="genesisUserDetailsService" class="com.griddynamics.genesis.spring.security.GenesisUserDetailsService">
         <constructor-arg name="adminPassword" value="aeebad4a796fcc2e15dc4c6061b45ed9b373f26adfc798ca7d2d8cc58182718e"/>
         <constructor-arg name="adminUsername" value="genesis" />
+        <constructor-arg name="authorityService" ref="authorityService"/>
     </bean>
 
     <bean id="adAuthProvider" lazy-init="true"

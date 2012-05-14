@@ -48,6 +48,13 @@ abstract class LocalGroupRepository extends AbstractGenericRepository[LocalGroup
         group
     }
 
-    implicit def convert(model: LocalGroup) = UserGroup(model.name, model.description, model.mailingList, Some(model.id))
-    implicit def convert(dto: UserGroup) = LocalGroup(dto.name, dto.description, dto.mailingList)
+    implicit def convert(model: LocalGroup) = LocalGroupRepository.convert(model)
+    implicit def convert(dto: UserGroup) = LocalGroupRepository.convert(dto)
 }
+
+object LocalGroupRepository {
+  implicit def convert(model: LocalGroup) = UserGroup(model.name, model.description, model.mailingList, Some(model.id))
+  implicit def convert(dto: UserGroup) = LocalGroup(dto.name, dto.description, dto.mailingList)
+
+}
+
