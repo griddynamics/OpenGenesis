@@ -24,14 +24,21 @@ package com.griddynamics.genesis.spring.security
 
 import com.griddynamics.genesis.users.UserService
 import java.util.Arrays
+import scala.collection.JavaConversions._
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.{UsernameNotFoundException, User, UserDetailsService}
 import com.griddynamics.genesis.spring.ApplicationContextAware
+import com.griddynamics.genesis.service.AuthorityService
+import com.griddynamics.genesis.groups.GroupService
 
 
-class GenesisUserDetailsService(adminUsername: String, adminPassword: String) extends UserDetailsService with ApplicationContextAware {
+class GenesisUserDetailsService(adminUsername: String,
+                                adminPassword: String,
+                                authorityService: AuthorityService
+                                ) extends UserDetailsService with ApplicationContextAware {
 
   lazy val userService: Option[UserService] = Option(applicationContext.getBean(classOf[UserService]))
+  lazy val groupService: Option[GroupService] = Option(applicationContext.getBean(classOf[GroupService]))
 
   def loadUserByUsername(username: String) = {
     if (username != adminUsername) {
@@ -39,12 +46,19 @@ class GenesisUserDetailsService(adminUsername: String, adminPassword: String) ex
       val user = for {
         service <- userService
         user <- service.getWithCredentials(username)
-      } yield new User(user.username, user.password.get, Arrays.asList(RoleBasedAuthority("ROLE_GENESIS")));
+      } yield {
+        val groups = groupService match {
+          case None => List()
+          case Some(gservice) => gservice.getUsersGroups(user.username)
+        }
+        val authorities = (authorityService.getAuthorities(groups) ++ authorityService.getUserAuthorities(user.username)).distinct
+        new User(user.username, user.password.get, RoleBasedAuthority(authorities));
+      }
 
       user.getOrElse(throw new UsernameNotFoundException("Couldn't find user = [" + username + "]"))
 
     } else {
-      new User(adminUsername, adminPassword, Arrays.asList(RoleBasedAuthority("ROLE_GENESIS")));
+      new User(adminUsername, adminPassword, Arrays.asList(RoleBasedAuthority("ROLE_GENESIS"), RoleBasedAuthority("ROLE_GENESIS_ADMIN")));
     }
   }
 }
@@ -53,4 +67,6 @@ object RoleBasedAuthority {
   def apply(role: String): GrantedAuthority = new GrantedAuthority() {
     def getAuthority = role
   }
+
+  def apply(roles: Iterable[String]): Iterable[GrantedAuthority] = roles.map (apply _)
 }

@@ -25,9 +25,15 @@
 -->
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:s="http://www.springframework.org/schema/security"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
-                           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+                           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+                           http://www.springframework.org/schema/security
+       http://www.springframework.org/schema/security/spring-security.xsd
+       " >
     <import resource="mvc-config.xml"/>
+
+    <s:global-method-security pre-post-annotations="enabled" proxy-target-class="true"/>
 
     <bean id="genesisService" class="com.griddynamics.genesis.spring.GenesisServiceFactoryBean">
         <constructor-arg name="useMock" value="${genesis.system.service.rest.use.mock:false}"/>
@@ -58,6 +64,10 @@
 
     <bean class="com.griddynamics.genesis.rest.SettingsController">
         <constructor-arg name="configService" ref="configService"/>
+    </bean>
+
+    <bean class="com.griddynamics.genesis.rest.RolesController">
+        <constructor-arg name="authorityService" ref="authorityService"/>
     </bean>
 
     <bean class="com.griddynamics.genesis.rest.WhoamiController"/>
