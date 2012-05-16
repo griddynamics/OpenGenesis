@@ -89,4 +89,11 @@ object Validation {
             case false => Some(RequestResult(isSuccess = false, compoundServiceErrors = Seq(errorMessage)))
         }
     }
+
+    def mustExist[C](value: C, errorMessage: String = "Not found")(finder: C => Option[C]) = {
+      finder(value) match {
+        case None => Some(RequestResult(isSuccess = false, isNotFound = true, compoundServiceErrors = Seq(errorMessage)))
+        case Some(_) => None
+      }
+    }
 }
