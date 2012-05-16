@@ -24,14 +24,18 @@ package com.griddynamics.genesis.users.repository
  */
 
 import com.griddynamics.genesis.repository.AbstractGenericRepository
-import com.griddynamics.genesis.api.User
 import com.griddynamics.genesis.users.model.LocalUser
 import org.squeryl.PrimitiveTypeMode._
+import com.griddynamics.genesis.api.{UserGroup, User}
 
 
 class LocalUserRepository extends AbstractGenericRepository[LocalUser, User](LocalUserSchema.users) {
 
-    def getWithCredentials(username: String): Option[User] = {
+  def search(nameLike: String): List[User] = from(table)(
+    user => where(user.username like nameLike.replaceAll("\\*", "%")).select (user)
+  ).toList.map(convert _)
+
+  def getWithCredentials(username: String): Option[User] = {
         from (LocalUserSchema.users) {
           item => where (item.username === username).
             select(item)

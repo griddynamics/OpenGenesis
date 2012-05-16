@@ -23,11 +23,15 @@
 package com.griddynamics.genesis.service
 
 import com.griddynamics.genesis.api
-import api.RequestResult
+import api.{AuthorityDescription, RequestResult}
 import com.griddynamics.genesis.users.GenesisUser
 import com.griddynamics.genesis.groups.GenesisGroup
 
 trait AuthorityService {
+  def authorityAssociations(authorityName: String): AuthorityDescription
+
+  def updateAuthority(authorityName: String, groups: List[String], usernames: List[String]): RequestResult
+
   def grantAuthoritiesToUser(username: String, auths: List[String]): RequestResult
 
   def grantAuthoritiesToGroup(groupName: String, auths: List[String]): RequestResult

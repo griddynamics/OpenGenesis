@@ -11,6 +11,7 @@ trait UserGroupManagement {
     def addUserToGroup(id: Int, username: String)
     def removeUserFromGroup(id: Int, username: String)
     def removeAllUsersFromGroup(id: Int)
+    def search(nameLike: String): List[UserGroup]
 }
 
 trait LocalUserGroupManagement extends UserGroupManagement {

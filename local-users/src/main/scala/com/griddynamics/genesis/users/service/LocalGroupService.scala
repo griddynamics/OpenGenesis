@@ -43,6 +43,9 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
     @Transactional(readOnly = true)
     def findByName(name: String) = repository.findByName(name)
 
+    @Transactional(readOnly = true)
+    def search(nameLike: String): List[UserGroup] = repository.search(nameLike)
+
     @Transactional
     override def create(a: UserGroup) = {
         validCreate(a, a => repository.insert(a))

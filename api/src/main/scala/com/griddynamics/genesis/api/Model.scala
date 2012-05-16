@@ -105,6 +105,8 @@ case class Credentials( id: Option[Int],
                         credential: Option[String],
                         fingerPrint: Option[String] = None)
 
+case class AuthorityDescription(name: String, users: List[String], groups: List[String])
+
 object RequestResult {
     val envName = "envName"
     val template = "template"

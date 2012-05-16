@@ -31,4 +31,5 @@ trait UserService extends CRUDService[User, String] {
     def getWithCredentials(username: String): Option[User]
     def findByUsername(username: String): Option[User]
     def create(user: User, groups: List[String]) : RequestResult
+    def search(usernameLike: String): List[User]
 }
