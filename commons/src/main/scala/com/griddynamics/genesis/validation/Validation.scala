@@ -51,8 +51,14 @@ trait Validation[C] {
 
 object Validation {
     val usernamePattern = """^([a-zA-Z0-9@.-]{2,64})$""".r
+    val projectNamePattern = """^([a-zA-Z0-9@.-/_ ]{2,64})$""".r
     val namePattern = """^([a-zA-Z ]{2,128})$""".r
     val emailPattern = """^[\w][\w.-]+@([\w-]+\.)+[a-zA-Z]{2,5}$""".r
+
+    val projectNameErrorMessage = "Invalid format. Use a combination of capital and lowercase letters, numbers, " +
+                                  "spaces and symbols(@.-/_). Length must be from 2 to 64";
+    val nameErrorMessage = "Invalid format. Use a combination of capital and lowercase letters and spaces. " +
+                           "Length must be from 2 to 128";
 
     def mustMatch(fieldName: String, error : String = "Invalid format")(pattern: Regex)(value: String) = {
         value match {
