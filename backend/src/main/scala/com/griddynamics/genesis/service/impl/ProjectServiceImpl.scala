@@ -13,25 +13,25 @@ trait ProjectService extends CRUDService[Project, Int] {
 class ProjectServiceImpl(repository: ProjectRepository) extends ProjectService with Validation[Project] {
   protected def validateCreation(project: Project): Option[RequestResult] = {
     filterResults(Seq(
-      must(project, "Name must be unique") {
+      must(project, "Project with name '" + project.name + "' already exists") {
         project => findByName(project.name).isEmpty
       },
-      mustMatchName(project.name, "name"),
-      mustMatchUserName(project.projectManager, "projectManager")
+      mustMatch("Name", Validation.projectNameErrorMessage)(Validation.projectNamePattern)(project.name),
+      mustMatch("Manager", Validation.nameErrorMessage)(Validation.namePattern)(project.projectManager)
     ))
   }
 
   protected def validateUpdate(project: Project): Option[RequestResult] = {
     filterResults(Seq(
-      must(project, "Name must be unique") {
+      must(project, "Project with name '" + project.name + "' already exists") {
         project =>
           findByName(project.name) match {
             case None => true
             case Some(prj) => prj.id == project.id
           }
       },
-      mustMatchName(project.name, "name"),
-      mustMatchUserName(project.projectManager, "projectManager")
+      mustMatch("Name", Validation.projectNameErrorMessage)(Validation.projectNamePattern)(project.name),
+      mustMatch("Manager", Validation.nameErrorMessage)(Validation.namePattern)(project.projectManager)
     ))
   }
 
