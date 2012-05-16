@@ -29,8 +29,12 @@ import collection.Seq
 import com.griddynamics.genesis.validation.Validation
 import Validation._
 import com.griddynamics.genesis.users.repository.{LocalGroupRepository, LocalUserRepository}
+import org.springframework.beans.factory.annotation.Autowired
+import com.griddynamics.genesis.service.AuthorityService
 
 class LocalUserService(val repository: LocalUserRepository, val groupRepo: LocalGroupRepository) extends UserService with Validation[User]{
+    @Autowired
+    var authorityService: AuthorityService = null
 
     @Transactional(readOnly = true)
     override def getWithCredentials(username: String) = repository.getWithCredentials(username)
@@ -56,6 +60,13 @@ class LocalUserService(val repository: LocalUserRepository, val groupRepo: Local
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
     override def update(user: User) : RequestResult = {
        validUpdate(user, repository.update(_) )
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
+    override def delete(a: User) = {
+      authorityService.removeAuthoritiesFromUser(a.username)
+      repository.delete(a)
+      RequestResult(isSuccess = true)
     }
 
     protected def validateUpdate(user: User) = {
