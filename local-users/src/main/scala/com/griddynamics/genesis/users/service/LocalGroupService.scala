@@ -29,8 +29,14 @@ import com.griddynamics.genesis.validation.Validation
 import Validation._
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.api.{RequestResult, UserGroup}
+import com.griddynamics.genesis.service.AuthorityService
+import org.springframework.beans.factory.annotation.Autowired
+import com.griddynamics.genesis.repository.ProjectPropertyRepository
 
 class LocalGroupService(val repository: LocalGroupRepository) extends GroupService with Validation[UserGroup] {
+    @Autowired
+    var authorityService: AuthorityService = null
+
     @Transactional(readOnly = true)
     def list = repository.list.sortBy(_.name)
 
@@ -60,12 +66,13 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
       })
     }
 
-
     @Transactional(readOnly = true)
     def getUsersGroups(username: String) = repository.groupsForUser(username)
 
     @Transactional
     override def delete(a: UserGroup) = {
+        authorityService.removeAuthoritiesFromGroup(a.name)
+        repository.removeAllUsersFromGroup(a.id.get)
         repository.delete(a)
         RequestResult(isSuccess = true)
     }

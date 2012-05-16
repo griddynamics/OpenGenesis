@@ -32,6 +32,10 @@ trait AuthorityService {
 
   def grantAuthoritiesToGroup(groupName: String, auths: List[String]): RequestResult
 
+  def removeAuthoritiesFromUser(username: String): RequestResult
+
+  def removeAuthoritiesFromGroup(groupName: String): RequestResult
+
   def getUserAuthorities(username: String): List[String]
 
   def getGroupAuthorities(groupName: String): List[String]

@@ -55,6 +55,20 @@ class DefaultAuthorityService extends AuthorityService {
       new RequestResult(isSuccess = true)
   }
 
+  @Transactional
+  def removeAuthoritiesFromUser(username: String) = {
+    userAuthorities.deleteWhere(item => item.principalName === username)
+
+    new RequestResult(isSuccess = true)
+  }
+
+  @Transactional
+  def removeAuthoritiesFromGroup(groupName: String) = {
+    groupAuthorities.deleteWhere(item => item.principalName === groupName)
+
+    new RequestResult(isSuccess = true)
+  }
+
   @Transactional(readOnly = true)
   def getUserAuthorities(username: String) =  from(userAuthorities) (item =>
     where(item.principalName === username) select (item.authority)
