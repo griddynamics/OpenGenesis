@@ -27,6 +27,7 @@ import org.springframework.stereotype.Controller
 import scala.Array
 import org.springframework.web.bind.annotation.{ResponseBody, RequestMethod, RequestMapping}
 import org.springframework.beans.factory.annotation.Value
+import javax.servlet.http.HttpServletRequest
 
 @Controller
 @RequestMapping(Array("/rest/whoami"))
@@ -36,6 +37,10 @@ class WhoamiController {
 
     @RequestMapping(method = Array(RequestMethod.GET))
     @ResponseBody
-    def whoami(): Map[String, Any] = Map("user" -> GenesisRestController.getCurrentUser, "logout_disabled" -> nologout)
+    def whoami(request: HttpServletRequest): Map[String, Any] =Map (
+        "user" -> GenesisRestController.getCurrentUser,
+        "logout_disabled" -> nologout,
+        "administrator" -> request.isUserInRole("ROLE_GENESIS_ADMIN")
+    )
 
 }

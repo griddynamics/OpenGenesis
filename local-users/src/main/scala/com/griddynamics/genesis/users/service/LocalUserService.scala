@@ -69,7 +69,7 @@ class LocalUserService(val repository: LocalUserRepository, val groupRepo: Local
 
     protected def validateCreation(user: User) = {
         filterResults(Seq(
-            must(user) {
+            must(user, "User with username [" + user.username + "] is already registered") {
                 user => repository.findByUsername(user.username).isEmpty
             },
             mustMatchUserName(user.username, "username"),

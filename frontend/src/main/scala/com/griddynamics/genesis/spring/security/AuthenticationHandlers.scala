@@ -33,12 +33,20 @@ class AuthenticationSuccessHandler(val authRole : String) extends SpringAuthenti
 
     def onAuthenticationSuccess(request: HttpServletRequest, response: HttpServletResponse, auth: Authentication) {
         import collection.JavaConversions.collectionAsScalaIterable
-        val resp = auth.getAuthorities.map(_.getAuthority)
+
+        val (granted, responseMessage) = auth.getAuthorities.map(_.getAuthority)
             .exists(_.toUpperCase.contains(authRole)) match {
-            case true => "{\"success\": true}"
-            case _ => "{\"success\": false, errors: \"Access to Genesis application is denied.\"}"
+            case true => (true, "{\"success\": true}")
+            case _ => (false, "{\"success\": false, \"errors\": \"Access to Genesis application is denied.\"}")
         }
-        writeResponse(response, resp)
+
+        if (granted) createSessionIfNotExist(request)
+
+        writeResponse(response, responseMessage)
+    }
+
+    private def createSessionIfNotExist(request: HttpServletRequest) {
+      request.getSession()
     }
 }
 
