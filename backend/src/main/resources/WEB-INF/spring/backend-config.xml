@@ -66,6 +66,17 @@
         </property>
     </bean>
 
+    <bean id="buildInformation" class="org.springframework.beans.factory.config.PropertiesFactoryBean" primary="false" >
+        <qualifier value="buildInfo" />
+        <property name="singleton" value="true"/>
+        <property name="locations">
+            <list>
+                <value>classpath*:build.properties</value>
+            </list>
+        </property>
+    </bean>
+
+
     <bean id="ds" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
         <property name="driverClassName" value="#{fileProps['genesis.system.jdbc.driver']}"/>
         <property name="url" value="#{fileProps['genesis.system.jdbc.url']}"/>
