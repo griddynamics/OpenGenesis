@@ -37,6 +37,7 @@ class ResourceFilter extends Filter with Logging {
     var resourceRoots: Seq[String] = _
     var config: FilterConfig = _
     val manager = VFS.getManager
+    var cacheResources = true
     val expires: Date = {
         val cal = Calendar.getInstance()
         cal.roll(Calendar.YEAR, true)
@@ -48,6 +49,7 @@ class ResourceFilter extends Filter with Logging {
             s => s.replaceAll("classpath:", "res:")
         )
         log.debug("Resource roots: %s", resourceRoots)
+        cacheResources = filterConfig.getInitParameter(ResourceFilter.CACHE_PARAMETER).toBoolean
         config = filterConfig
     }
 
@@ -78,7 +80,7 @@ class ResourceFilter extends Filter with Logging {
         val (originalPath, cache) = if (uri == null || uri == "" || uri == "/")
             ("index.html", false)
         else
-            (uri.replaceAll("^\\/", "").takeWhile(_ != ';'), true)
+            (uri.replaceAll("^\\/", "").takeWhile(_ != ';'), true && cacheResources)
 
         def locateResource(path: String) = {
             resourceRoots.map ( root =>  attempt { manager.resolveFile(root + path) } ).flatten.find(_.exists)
@@ -119,6 +121,7 @@ class ResourceFilter extends Filter with Logging {
 
 object ResourceFilter {
     def PARAM_NAME = "resourceRoots"
+    def CACHE_PARAMETER = "cacheResources"
 
     def copyStream(is: InputStream, os: OutputStream) {
         val buffer = new Array[Byte](4096)
