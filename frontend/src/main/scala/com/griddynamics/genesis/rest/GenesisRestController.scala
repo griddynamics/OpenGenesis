@@ -26,14 +26,15 @@ import org.springframework.stereotype.Controller
 import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation._
-import net.liftweb.json.JsonParser
 import java.io.InputStreamReader
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import com.griddynamics.genesis.api.{EnvironmentDetails, GenesisService}
 import org.springframework.http.HttpStatus
 import java.security.Principal
-import org.springframework.beans.factory.annotation.Value
 import com.griddynamics.genesis.http.TunnelFilter
+import java.util.Properties
+import org.springframework.beans.factory.annotation.{Qualifier, Autowired, Value}
+import collection.JavaConversions
 
 @Controller
 @RequestMapping(Array("/rest"))
@@ -43,6 +44,9 @@ class GenesisRestController(genesisService: GenesisService) extends RestApiExcep
     @Value("${genesis.system.server.mode:frontend}")
     var mode = ""
 
+    @Autowired
+    @Qualifier("buildInfo")
+    var buildInfoProps: Properties = _
 
     @RequestMapping(value = Array("create"), method = Array(RequestMethod.POST))
     @ResponseBody
@@ -106,6 +110,11 @@ class GenesisRestController(genesisService: GenesisService) extends RestApiExcep
                         @PathVariable("workflowName") workflow: String,
                         request: HttpServletRequest) =
         genesisService.requestWorkflow(env, workflow, extractVariables(extractParamsMap(request)))
+
+
+    @RequestMapping(value = Array("build-info"), method = Array(RequestMethod.GET))
+    @ResponseBody
+    def buildInfo = JavaConversions.propertiesAsScalaMap(buildInfoProps).toMap
 
 }
 
