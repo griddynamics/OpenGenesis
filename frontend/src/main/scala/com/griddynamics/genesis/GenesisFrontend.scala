@@ -75,6 +75,7 @@ object GenesisFrontend extends Logging {
         val host = helper.getPropWithFallback(BIND_HOST, "0.0.0.0")
         val port = helper.getPropWithFallback(BIND_PORT, 8080)
         val resourceRoots = helper.getPropWithFallback(WEB_RESOURCE_ROOTS, "classpath:")
+        val cacheResources = helper.getPropWithFallback(CACHE_RESOURCES, "true")
         val server = new Server()
 
         val webAppContext = new GenericWebApplicationContext
@@ -100,6 +101,7 @@ object GenesisFrontend extends Logging {
             val resourceHolder = new FilterHolder(new ResourceFilter)
             resourceHolder.setName("resourceFilter")
             resourceHolder.setInitParameter("resourceRoots", resourceRoots)
+            resourceHolder.setInitParameter("cacheResources", cacheResources)
             context.addFilter(resourceHolder, "/*", 0)
         }
 
