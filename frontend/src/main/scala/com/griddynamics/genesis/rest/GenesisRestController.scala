@@ -160,6 +160,14 @@ object GenesisRestController {
       SecurityContextHolder.getContext.getAuthentication.asInstanceOf[Principal].getName
     }
 
+    def extractListValue(valueName: String, values: Map[String, Any]): List[String] = {
+      val value = values.getOrElse(valueName, throw new MissingParameterException(valueName))
+      value match {
+        case list: List[_] => list.map(_.toString)
+        case _ => throw new InvalidInputException
+      }
+    }
+
     def extractValue(valueName : String, values : Map[String, Any]) : String = {
         values.get(valueName) match {
             case Some(s) => String.valueOf(s)

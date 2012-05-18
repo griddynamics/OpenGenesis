@@ -27,9 +27,9 @@ import org.springframework.stereotype.Controller
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.users.UserService
 import javax.servlet.http.HttpServletRequest
-import org.springframework.web.bind.annotation.{ResponseBody, PathVariable, RequestMethod, RequestMapping}
 import GenesisRestController._
-import com.griddynamics.genesis.api.{UserGroup, RequestResult, User}
+import com.griddynamics.genesis.api.{RequestResult, User}
+import org.springframework.web.bind.annotation._
 
 @Controller
 @RequestMapping(Array("/rest/users"))
@@ -41,7 +41,12 @@ class UsersController extends RestApiExceptionsHandler {
     @ResponseBody
     def list() = userService.list
 
-    @RequestMapping(value = Array("{username}"), method=Array(RequestMethod.GET))
+    @RequestMapping(method = Array(RequestMethod.GET), params = Array("tag"))
+    @ResponseBody
+    def pick(@RequestParam("tag") search: String) =
+      userService.search("*" + search + "*").map(item => Map("key" -> item.username, "value" -> item.username))
+
+  @RequestMapping(value = Array("{username}"), method=Array(RequestMethod.GET))
     @ResponseBody
     def user(@PathVariable(value = "username") username: String) = userService.findByUsername(username) match {
         case Some(u) => u

@@ -31,25 +31,28 @@ import com.griddynamics.genesis.users.model.LocalGroup
 abstract class LocalGroupRepository extends AbstractGenericRepository[LocalGroup, UserGroup](LocalUserSchema.groups)
     with UserGroupManagement {
 
+  def search(nameLike: String): List[UserGroup] = from(table)(
+    group => where(group.name like nameLike.replaceAll("\\*", "%")).select (group)
+  ).toList.map(convert _)
 
-    def findByName(name: String) : Option[UserGroup] = {
-        from(table)(group => where(group.name === name).select(group)).headOption.map(convert(_))
-    }
+  def findByName(name: String) : Option[UserGroup] = {
+      from(table)(group => where(group.name === name).select(group)).headOption.map(convert(_))
+  }
 
-    override def update(group: UserGroup) = {
-        table.update(
-            g => where (g.id === group.id)
-              set(
-              g.name        := group.name,
-              g.description := group.description,
-              g.mailingList := group.mailingList
-              )
-        )
-        group
-    }
+  override def update(group: UserGroup) = {
+      table.update(
+          g => where (g.id === group.id)
+            set(
+            g.name        := group.name,
+            g.description := group.description,
+            g.mailingList := group.mailingList
+            )
+      )
+      group
+  }
 
-    implicit def convert(model: LocalGroup) = LocalGroupRepository.convert(model)
-    implicit def convert(dto: UserGroup) = LocalGroupRepository.convert(dto)
+  implicit def convert(model: LocalGroup) = LocalGroupRepository.convert(model)
+  implicit def convert(dto: UserGroup) = LocalGroupRepository.convert(dto)
 }
 
 object LocalGroupRepository {

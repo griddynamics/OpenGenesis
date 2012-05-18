@@ -95,6 +95,9 @@ class LocalUserService(val repository: LocalUserRepository, val groupRepo: Local
     def list = {
        repository.list
     }
+
+    @Transactional(readOnly = true)
+    def search(usernameLike: String) = repository.search(usernameLike)
 }
 
 

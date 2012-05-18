@@ -37,4 +37,5 @@ trait GroupService extends CRUDService[UserGroup, String]{
    def create(a: UserGroup, users: List[String]) : RequestResult
    def update(group: UserGroup, users: List[String]) : RequestResult
    def getUsersGroups(username: String): Iterable[UserGroup]
+    def search(nameLike: String): List[UserGroup]
 }
