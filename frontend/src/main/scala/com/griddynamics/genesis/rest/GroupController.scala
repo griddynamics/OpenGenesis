@@ -44,6 +44,10 @@ class GroupController extends RestApiExceptionsHandler {
     @ResponseBody
     def get(@PathVariable(value = "id") id: Int) = groupService.get(id)
 
+    @RequestMapping(method = Array(RequestMethod.GET), params = Array("tag"))
+    @ResponseBody
+    def pick(@RequestParam("tag") search: String) = groupService.search("*" + search + "*").map(item => Map("key" -> item.name, "value" -> item.name))
+
     @RequestMapping(method = Array(RequestMethod.POST))
     @ResponseBody
     def create(request: HttpServletRequest) : RequestResult = {

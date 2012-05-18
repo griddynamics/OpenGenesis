@@ -23,12 +23,12 @@
 package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.api
-import api.{RequestResult, UserGroup}
+import api.{AuthorityDescription, RequestResult, UserGroup}
 import com.griddynamics.genesis.service.AuthorityService
 import org.squeryl.PrimitiveTypeMode._
-import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.model.Authority
 import com.griddynamics.genesis.model.GenesisSchema.{userAuthorities, groupAuthorities}
+import org.springframework.transaction.annotation.Transactional
 
 
 class DefaultAuthorityService extends AuthorityService {
@@ -37,22 +37,22 @@ class DefaultAuthorityService extends AuthorityService {
 
   @Transactional
   def grantAuthoritiesToUser(username: String, auths: List[String]) = withValidRoles(auths) {
-      userAuthorities.deleteWhere(item => item.principalName === username)
+    userAuthorities.deleteWhere(item => item.principalName === username)
 
-      val grantedAuths = auths.map(new Authority(username, _))
-      userAuthorities.insert(grantedAuths)
+    val grantedAuths = auths.map(new Authority(username, _))
+    userAuthorities.insert(grantedAuths)
 
-      new RequestResult(isSuccess = true)
+    new RequestResult(isSuccess = true)
   }
 
   @Transactional
   def grantAuthoritiesToGroup(groupName: String, auths: List[String]) = withValidRoles(auths) {
-      groupAuthorities.deleteWhere(item => item.principalName === groupName)
+    groupAuthorities.deleteWhere(item => item.principalName === groupName)
 
-      val grantedAuths = auths.map(new Authority(groupName, _))
-      groupAuthorities.insert(grantedAuths)
+    val grantedAuths = auths.map(new Authority(groupName, _))
+    groupAuthorities.insert(grantedAuths)
 
-      new RequestResult(isSuccess = true)
+    new RequestResult(isSuccess = true)
   }
 
   @Transactional
@@ -91,5 +91,21 @@ class DefaultAuthorityService extends AuthorityService {
     } else {
       new RequestResult(isSuccess = false, compoundServiceErrors = List("Unknown authorities: [" + unknownRoles.mkString(",") + "]"))
     }
+  }
+
+  @Transactional(readOnly = true)
+  def authorityAssociations(authorityName: String) = new AuthorityDescription(
+    name = authorityName,
+    groups = from(groupAuthorities)(item => where (item.authority === authorityName) select(item.principalName)).toList,
+    users = from(userAuthorities)(item => where (item.authority === authorityName) select(item.principalName)).toList
+  )
+
+  @Transactional
+  def updateAuthority(authorityName: String, groups: List[String], usernames: List[String]) = {
+    groupAuthorities.deleteWhere(auth => auth.authority === authorityName)
+    userAuthorities.deleteWhere(auth => auth.authority === authorityName)
+    groups.foreach(group => groupAuthorities.insert(new Authority(group, authorityName)))
+    usernames.foreach(user => groupAuthorities.insert(new Authority(user, authorityName)))
+    new RequestResult(isSuccess = true)
   }
 }
