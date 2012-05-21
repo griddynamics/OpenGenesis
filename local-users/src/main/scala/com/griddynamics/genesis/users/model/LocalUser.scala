@@ -29,7 +29,8 @@ import com.griddynamics.genesis.model.GenesisEntity
 import com.griddynamics.genesis.users.repository.LocalUserSchema
 
 
-class LocalUser(val username: String, val email: String, val firstName: String, val lastName: String, val jobTitle: Option[String]) extends GenesisUser with GenesisEntity {
+class LocalUser(val username: String, val email: String, val firstName: String, val lastName: String,
+                val jobTitle: Option[String], val deleted: Boolean = false) extends GenesisUser with GenesisEntity {
     def this() = this("", "", "", "", None)
     var pass: String = _
 

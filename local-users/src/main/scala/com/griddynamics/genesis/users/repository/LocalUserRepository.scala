@@ -26,7 +26,7 @@ package com.griddynamics.genesis.users.repository
 import com.griddynamics.genesis.repository.AbstractGenericRepository
 import com.griddynamics.genesis.users.model.LocalUser
 import org.squeryl.PrimitiveTypeMode._
-import com.griddynamics.genesis.api.{UserGroup, User}
+import com.griddynamics.genesis.api.User
 
 
 class LocalUserRepository extends AbstractGenericRepository[LocalUser, User](LocalUserSchema.users) {
@@ -37,7 +37,7 @@ class LocalUserRepository extends AbstractGenericRepository[LocalUser, User](Loc
 
   def getWithCredentials(username: String): Option[User] = {
         from (LocalUserSchema.users) {
-          item => where (item.username === username).
+          item => where (item.username === username and item.deleted === false).
             select(item)
         }.headOption.map(LocalUserRepository.convertWithoutStrippingPassword _)
     }
@@ -46,7 +46,8 @@ class LocalUserRepository extends AbstractGenericRepository[LocalUser, User](Loc
     def findByUsername(s: String): Option[User] = {
         from (LocalUserSchema.users) {
             item => where (
-                item.username === s
+                item.username === s and
+                item.deleted === false
             ).select(item)
         }.headOption match {
             case Some(user) => Some(convert(user))
@@ -65,6 +66,24 @@ class LocalUserRepository extends AbstractGenericRepository[LocalUser, User](Loc
         )
         user
     }
+
+    override def delete (user: User) : Int = {
+        table.update (
+           u => where(u.username  === user.username)
+           set(
+             u.deleted := true,
+             u.username := user.username + " [deleted at %d]".format(System.currentTimeMillis()),
+             u.email := user.email + " [deleted at %d]".format(System.currentTimeMillis())
+           )
+        )
+    }
+
+    override def list =
+        from (LocalUserSchema.users) {
+            item => where (
+                item.deleted === false
+            ).select(item)
+        }.toList.map(convert(_))
 
     implicit def convert(model: LocalUser) = LocalUserRepository.convert(model)
     implicit def convert(dto: User) =  LocalUserRepository.convert(dto)
