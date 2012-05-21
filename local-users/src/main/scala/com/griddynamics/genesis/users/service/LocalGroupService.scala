@@ -92,11 +92,13 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
         RequestResult(isSuccess = true)
     }
 
+    @Transactional
     def removeUserFromGroup(id: Int, username: String) = {
         repository.removeUserFromGroup(id, username)
         RequestResult(isSuccess = true)
     }
 
+    @Transactional(readOnly = true)
     def get(id: Int) = {
         repository.get(id)
     }
