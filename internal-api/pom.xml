@@ -28,7 +28,7 @@
     <parent>
         <artifactId>parent</artifactId>
         <groupId>com.griddynamics.genesis</groupId>
-        <version>1.0.0.M3</version>
+        <version>1.0.0-M4-SNAPSHOT</version>
     </parent>
     <groupId>com.griddynamics.genesis</groupId>
     <artifactId>internal-api</artifactId>

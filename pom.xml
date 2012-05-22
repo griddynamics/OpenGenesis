@@ -29,10 +29,10 @@
     <groupId>com.griddynamics.genesis</groupId>
     <artifactId>parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.0.M3</version>
+    <version>1.0.0-M4-SNAPSHOT</version>
 
     <scm>
-        <developerConnection>scm:git:git@github.com:griddynamics/OpenGenesis.git</developerConnection>
+        <developerConnection>scm:git:ssh://git@github.com/griddynamics/OpenGenesis.git</developerConnection>
     </scm>
 
     <properties>
@@ -54,7 +54,7 @@
         <org.eclipse.jetty.version>7.4.3.v20110701</org.eclipse.jetty.version>
 
         <org.jclouds.version>1.0.0</org.jclouds.version>
-        <org.jclouds.chef.version>1.0-SNAPSHOT</org.jclouds.chef.version>
+        <org.jclouds.chef.version>1.0</org.jclouds.chef.version>
 
         <org.squeryl.id>squeryl_2.9.0</org.squeryl.id>
         <org.squeryl.version>0.9.4</org.squeryl.version>
@@ -727,6 +727,16 @@
                     <strictCheck>true</strictCheck>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.3</version>
+                <configuration>
+                    <localCheckout>false</localCheckout>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 
@@ -768,6 +778,11 @@
             <name>Spring Portfolio Milestone Repository</name>
             <url>http://maven.springframework.org/milestone</url>
         </repository>
+        <repository>
+            <id>gd thirdparty releases</id>
+            <name>third-party-releases</name>
+            <url>http://nexus.vm.griddynamics.net:8081/nexus/content/repositories/third-party-releases/</url>
+        </repository>
     </repositories>
 
     <pluginRepositories>
@@ -779,4 +794,12 @@
             </snapshots>
         </pluginRepository>
     </pluginRepositories>
+
+    <distributionManagement>
+        <repository>
+            <id>genesis</id>
+            <name>Open Genesis GD internal repo</name>
+            <url>http://nexus.vm.griddynamics.net:8081/nexus/content/repositories/open-genesis</url>
+        </repository>
+    </distributionManagement>
 </project>
