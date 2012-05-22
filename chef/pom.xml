@@ -36,7 +36,6 @@
     </parent>
 
     <dependencies>
-
         <dependency>
             <groupId>com.griddynamics.genesis</groupId>
             <artifactId>api</artifactId>
@@ -48,23 +47,18 @@
         </dependency>
 
         <dependency>
+            <groupId>com.griddynamics.genesis</groupId>
+            <artifactId>commons</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>org.jclouds</groupId>
-            <artifactId>jclouds-compute</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jclouds</groupId>
-            <artifactId>jclouds-chef</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.griddynamics.genesis</groupId>
-            <artifactId>commons</artifactId>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-client</artifactId>
         </dependency>
     </dependencies>
 

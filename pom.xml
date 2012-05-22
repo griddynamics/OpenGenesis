@@ -398,18 +398,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.jclouds</groupId>
-                <artifactId>jclouds-chef</artifactId>
-                <version>${org.jclouds.chef.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.jclouds</groupId>
-                        <artifactId>jclouds-scriptbuilder</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-
-            <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-core</artifactId>
                 <version>${org.springframework.version}</version>
