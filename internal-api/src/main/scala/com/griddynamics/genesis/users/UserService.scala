@@ -23,13 +23,19 @@
 package com.griddynamics.genesis.users
 
 import com.griddynamics.genesis.common.CRUDService
-import com.griddynamics.genesis.api.{UserGroup, RequestResult, User}
+import com.griddynamics.genesis.api.{RequestResult, User}
+import org.springframework.transaction.annotation.Transactional
 
 
 trait UserService extends CRUDService[User, String] {
+    @Transactional(readOnly = true)
     override def get(key: String) = findByUsername(key)
+    @Transactional(readOnly = true)
     def getWithCredentials(username: String): Option[User]
+    @Transactional(readOnly = true)
     def findByUsername(username: String): Option[User]
+    @Transactional(readOnly = false)
     def create(user: User, groups: List[String]) : RequestResult
+    @Transactional(readOnly = true)
     def search(usernameLike: String): List[User]
 }
