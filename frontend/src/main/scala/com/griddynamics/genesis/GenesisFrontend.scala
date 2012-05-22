@@ -44,9 +44,11 @@ import org.springframework.web.context.WebApplicationContext.ROOT_WEB_APPLICATIO
 import java.util.concurrent.TimeUnit
 import java.lang.System
 import scala.collection.JavaConversions._
+import org.springframework.security.web.FilterChainProxy
+import org.springframework.security.web.authentication.logout.LogoutFilter
 
 object GenesisFrontend extends Logging {
-
+    val logoutEnabledParamName = "genesis.web.logout.enabled"
     def main(args: Array[String]): Unit = try{
         val genesisProperties = loadGenesisProperties()
 
@@ -80,7 +82,7 @@ object GenesisFrontend extends Logging {
         val server = new Server()
 
         val webAppContext = new GenericWebApplicationContext
-        val context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+        val context = new ServletContextHandler(ServletContextHandler.SESSIONS)
         val servletContext = context.getServletContext
         webAppContext.setServletContext(servletContext)
         webAppContext.setParent(appContext)
@@ -104,6 +106,10 @@ object GenesisFrontend extends Logging {
             resourceHolder.setInitParameter("resourceRoots", resourceRoots)
             resourceHolder.setInitParameter("cacheResources", cacheResources)
             context.addFilter(resourceHolder, "/*", 0)
+            val bean: FilterChainProxy = appContext.getBean(classOf[FilterChainProxy])
+            val logoutEnabled = bean.getFilterChains.flatMap(chain => chain.getFilters.toIterable
+              .filter(f => f.isInstanceOf[LogoutFilter])).size > 0
+            context.setInitParameter(logoutEnabledParamName, logoutEnabled.toString)
         }
 
         if (isFrontend) {
@@ -118,7 +124,7 @@ object GenesisFrontend extends Logging {
         val frontendConfig: String = if (isFrontend) "classpath:/WEB-INF/spring/proxy-config.xml" else "classpath:/WEB-INF/spring/frontend-config.xml"
         log.debug("Using frontend configuration: %s", frontendConfig)
         holder.setInitParameter("contextConfigLocation", frontendConfig)
-        context.addServlet(holder, "/");
+        context.addServlet(holder, "/")
         val httpConnector = new SelectChannelConnector()
         httpConnector.setMaxIdleTime(requestIdleTime)
         httpConnector.setHost(host)
@@ -151,7 +157,7 @@ object GenesisFrontend extends Logging {
 
       override def run() {
         val timeout = TimeUnit.SECONDS.toMillis(helper.getPropWithFallback(SHUTDOWN_TIMEOUT, 60))
-        val shutdownStart = System.currentTimeMillis();
+        val shutdownStart = System.currentTimeMillis()
 
         var envs = houseKeepingService.allEnvsWithActiveWorkflows
         if (!envs.isEmpty) {
@@ -160,7 +166,7 @@ object GenesisFrontend extends Logging {
 
         while (!envs.isEmpty && (timeout == 0 || System.currentTimeMillis() - shutdownStart < timeout)) {
           log.info("Terminating running workflows. Active environments: " + envs.size)
-          Thread.sleep(WaitingPeriod);
+          Thread.sleep(WaitingPeriod)
           envs = houseKeepingService.allEnvsWithActiveWorkflows
         }
 

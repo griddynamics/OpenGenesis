@@ -26,16 +26,22 @@ package com.griddynamics.genesis.rest
 import org.springframework.stereotype.Controller
 import scala.Array
 import org.springframework.web.bind.annotation.{ResponseBody, RequestMethod, RequestMapping}
-import org.springframework.beans.factory.annotation.Value
+import javax.servlet.http.HttpServletRequest
+import org.springframework.beans.factory.annotation.Autowired
+import javax.servlet.ServletContext
+import com.griddynamics.genesis.GenesisFrontend
 
 @Controller
 @RequestMapping(Array("/rest/whoami"))
 class WhoamiController {
-    @Value("${genesis.system.logout.disabled:false}")
-    var nologout = false
+    @Autowired
+    var servletContext: ServletContext = _
 
     @RequestMapping(method = Array(RequestMethod.GET))
     @ResponseBody
-    def whoami(): Map[String, Any] = Map("user" -> GenesisRestController.getCurrentUser, "logout_disabled" -> nologout)
+    def whoami(request: HttpServletRequest): Map[String, Any] = Map (
+        "user" -> GenesisRestController.getCurrentUser,
+        "logout_disabled" -> "false".equalsIgnoreCase(servletContext.getInitParameter(GenesisFrontend.logoutEnabledParamName))
+    )
 
 }
