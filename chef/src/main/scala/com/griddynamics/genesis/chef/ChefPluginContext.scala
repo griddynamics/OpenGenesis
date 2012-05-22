@@ -25,12 +25,11 @@ package com.griddynamics.genesis.chef
 import coordinator.ChefStepCoordinatorFactory
 import executor._
 import com.griddynamics.genesis.util.InputUtil
-import org.jclouds.chef.ChefContextFactory
-import java.util.{Collections, Properties}
 import com.griddynamics.genesis.configuration.{StoreServiceContext, ComputeServiceContext}
 import com.griddynamics.genesis.exec.ExecPluginContext
 import com.griddynamics.genesis.plugin.api.GenesisPlugin
 import com.griddynamics.genesis.service.{StoreService, SshService, Credentials}
+import com.griddynamics.genesis.chef.rest.ChefRestClient
 import step.ChefResourcesImpl
 import com.griddynamics.genesis.plugin.PluginConfigurationContext
 import org.springframework.context.annotation.{Bean, Configuration}
@@ -39,6 +38,7 @@ import net.sf.ehcache.CacheManager
 import org.springframework.beans.factory.annotation.Autowired
 import javax.annotation.PostConstruct
 import java.util.concurrent.TimeUnit
+import com.griddynamics.genesis.crypto.BasicCrypto
 
 trait ChefPluginContext {
 
@@ -79,10 +79,7 @@ class ChefPluginContextImpl extends Cache {
     @Autowired var execPluginContext: ExecPluginContext = _
 
     @Autowired var pluginConfiguration: PluginConfigurationContext = _
-
-
-    @Autowired
-    var cacheManager: CacheManager = _
+    @Autowired var cacheManager: CacheManager = _
 
     @PostConstruct
     def initCache() {
@@ -97,13 +94,7 @@ class ChefPluginContextImpl extends Cache {
     def chefClient(config: ChefPluginConfig) = {
       val key = ChefCacheKey(config.chefEndpoint, config.chefIdentity, config.chefCredentialResource)
       fromCache(ChefPluginContextImpl.CacheRegion, key) {
-        val chefContextFactory = new ChefContextFactory
-
-        val overrides = new Properties
-        overrides.setProperty(CHEF_ENDPOINT, config.chefEndpoint)
-
-        val chefContext = chefContextFactory.createContext(config.chefIdentity, config.chefCredential, Collections.emptySet, overrides)
-        chefContext.getApi
+        new ChefRestClient(config.chefEndpoint, config.chefIdentity, BasicCrypto.privateKey(config.chefCredential))
       }
     }
 

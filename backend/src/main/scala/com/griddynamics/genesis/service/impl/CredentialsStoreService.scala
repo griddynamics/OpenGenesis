@@ -9,11 +9,9 @@ import com.griddynamics.genesis.validation.Validation._
 import org.springframework.transaction.annotation.Transactional
 
 import java.util.UUID
-import com.griddynamics.genesis.util.BasicCrypto
-import org.springframework.beans.factory.annotation.{Value, Autowired}
+import com.griddynamics.genesis.crypto.BasicCrypto
+import org.springframework.beans.factory.annotation.Value
 import javax.crypto.spec.SecretKeySpec
-import javax.annotation.PostConstruct
-;
 
 class CredentialsStoreService(repository: CredentialsRepository) extends Validation[api.Credentials] with service.CredentialsStoreService {
 
@@ -21,7 +19,7 @@ class CredentialsStoreService(repository: CredentialsRepository) extends Validat
 
   @Value("${genesis.hidden.secret.key:NOT_SET!!}")
   def init(key: String ) {
-    keySpec = BasicCrypto.keySpec(key)
+    keySpec = BasicCrypto.secretKeySpec(key)
   }
 
   def get(id: Int) = repository.get(id)

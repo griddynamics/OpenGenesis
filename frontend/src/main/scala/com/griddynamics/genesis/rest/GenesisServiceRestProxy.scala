@@ -2,18 +2,12 @@ package com.griddynamics.genesis.rest
 
 import com.sun.jersey.api.client.{GenericType, Client}
 import com.sun.jersey.api.client.config.DefaultClientConfig
-import com.sun.jersey.core.provider.AbstractMessageReaderWriterProvider
-import java.lang.Class
-import java.lang.annotation.Annotation
-import javax.ws.rs.core.{MultivaluedMap, MediaType}
-import javax.ws.rs.{Consumes, Produces}
-import javax.ws.rs.ext.Provider
-import java.io.{InputStreamReader, Reader, OutputStream, InputStream}
-import java.lang.reflect.{ParameterizedType, Type}
-import net.liftweb.json.{Extraction, JsonParser}
+import javax.ws.rs.core.MediaType
+import net.liftweb.json.Extraction
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.{render, compact}
 import com.griddynamics.genesis.api._
+import com.griddynamics.genesis.json.utils.LiftJsonClientProvider
 
 class GenesisServiceRestProxy(val backendUrl: String) extends GenesisService {
   val clientConfig = new DefaultClientConfig()
@@ -96,43 +90,4 @@ class GenesisServiceRestProxy(val backendUrl: String) extends GenesisService {
   }
 }
 
-@Provider
-@Produces (Array ("*/*") )
-@Consumes(Array("*/*"))
-class LiftJsonClientProvider extends AbstractMessageReaderWriterProvider[Object]{
-  val untouchables = List(classOf[String], classOf[InputStream], classOf[Reader])
-  val classMap = Map[AnyRef, AnyRef](classOf[collection.immutable.Seq[_]] -> classOf[List[_]])
-  implicit val formats = net.liftweb.json.DefaultFormats
 
-  def isWriteable(p1: Class[_], p2: Type, p3: Array[Annotation], p4: MediaType) = false
-
-  def writeTo(p1: Object, p2: Class[_], p3: Type, p4: Array[Annotation], p5: MediaType, p6: MultivaluedMap[String, AnyRef], p7: OutputStream) {}
-
-  def isReadable(klass: Class[_], genericType: Type, annotations: Array[Annotation], mediaType: MediaType) = {
-     untouchables.find(k => k.isAssignableFrom(klass)).size == 0
-  }
-
-  def readFrom(klass: Class[Object], genericType: Type, annotations: Array[Annotation], mediaType: MediaType, headers: MultivaluedMap[String, String],
-               entityStream: InputStream) : Object = {
-    import LiftJsonClientProvider._
-    Extraction.extract(JsonParser.parse(new InputStreamReader(entityStream), true))(formats, manifest(genericType))
-  }
-
-  
-}
-
-object LiftJsonClientProvider {
-  val classMap = Map[AnyRef, AnyRef](classOf[collection.immutable.Seq[_]] -> classOf[List[_]])
-  def manifest(genericType: Type): Manifest[AnyRef] = {
-    genericType match {
-      case pt: ParameterizedType => {
-        val headArg = manifest(pt.getActualTypeArguments.head)
-        val tailArgs = pt.getActualTypeArguments.tail.map(manifest(_))
-        val clazz = classMap.getOrElse(pt.getRawType, pt.getRawType).asInstanceOf[Class[AnyRef]]
-        Manifest.classType(clazz, headArg, tailArgs: _ *)
-      }
-      case klass: Class[_] => Manifest.classType(klass)
-      case other => throw new IllegalArgumentException("Unexpected type %s".format(other))
-    }
-  }
-}

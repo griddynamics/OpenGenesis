@@ -20,22 +20,38 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.util
+package com.griddynamics.genesis.crypto
 
-import java.security.{DigestInputStream, MessageDigest}
 import java.io.ByteArrayInputStream
 import org.apache.commons.codec.binary.Hex
 import java.util.Arrays
 import javax.crypto.spec.SecretKeySpec
 import javax.crypto.Cipher
 import org.apache.commons.codec.binary.Base64.{encodeBase64String, decodeBase64}
+import com.griddynamics.genesis.util.Closeables
+import java.security.{PrivateKey, DigestInputStream, MessageDigest}
+import org.jclouds.crypto.Pems
+import org.jclouds.io.InputSuppliers
+import org.jclouds.encryption.internal.JCECrypto
 
 object BasicCrypto {
 
-  def keySpec(secret: String): SecretKeySpec = {
+  val crypto: JCECrypto = new JCECrypto
+
+  def privateKey(pem: String): PrivateKey = {
+    crypto.rsaKeyFactory.generatePrivate(Pems.privateKeySpec(InputSuppliers.of(pem))) //todo(RB): dependency on jclouds
+  }
+
+  def secretKeySpec(secret: String): SecretKeySpec = {
     val sha: MessageDigest = MessageDigest.getInstance("SHA-1")
     val key = Arrays.copyOf(sha.digest(secret.getBytes("UTF-8")), 16)
     new SecretKeySpec(key, "AES")
+  }
+
+  def encryptRSA(privateKey: PrivateKey, message: String): String = {
+    val cipher: Cipher = Cipher.getInstance("RSA")
+    cipher.init(Cipher.ENCRYPT_MODE, privateKey)
+    encodeBase64String(cipher.doFinal(message.getBytes))
   }
 
   def encrypt(secretKeySpec: SecretKeySpec, message: String): String = {
@@ -53,22 +69,27 @@ object BasicCrypto {
 
   def fingerPrint(privateKey: String): String = {
     if (!privateKey.isEmpty) {
-      val md5 = MessageDigest.getInstance("SHA1");
+      val digestVal = digestSHA1(privateKey)
 
-      Closeables.using(new DigestInputStream(new ByteArrayInputStream(privateKey.getBytes()), md5)) {
-        in => while (in.read(new Array[Byte](128)) > 0) {}
-      }
-
-      val buf = new StringBuilder();
-      val hex = Hex.encodeHex(md5.digest());
+      val buf = new StringBuilder()
+      val hex = Hex.encodeHex(digestVal)
       for (i <- 0 until hex.length by 2) {
-        if (buf.length > 0) buf.append(':');
-        buf.appendAll(hex, i, 2);
+        if (buf.length > 0) buf.append(':')
+        buf.appendAll(hex, i, 2)
       }
 
-      buf.toString();
+      buf.toString()
     } else {
       ""
     }
+  }
+
+  def digestSHA1(content: String): Array[Byte] = {
+    val sha1 = MessageDigest.getInstance("SHA1")
+
+    Closeables.using(new DigestInputStream(new ByteArrayInputStream(content.getBytes()), sha1)) {
+      in => while (in.read(new Array[Byte](128)) > 0) {}
+    }
+    sha1.digest()
   }
 }
