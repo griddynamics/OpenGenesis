@@ -23,15 +23,10 @@
 package com.griddynamics.genesis.chef
 
 import net.liftweb.json.JsonAST.JObject
-import org.jclouds.chef.ChefClient
 import net.liftweb.json.JsonAST.JField
 import net.liftweb.json.JsonAST.JString
-import com.griddynamics.genesis.util.JsonUtil
 import com.griddynamics.genesis.service.Credentials
-import scala.collection.{JavaConversions=>JC}
-import scala.collection.mutable
-import org.jclouds.chef.domain.{Role, DatabagItem}
-import org.jclouds.domain.JsonBall
+import com.griddynamics.genesis.chef.rest.{Role, DatabagItem, ChefRestClient}
 import com.griddynamics.genesis.model.{VirtualMachine, Environment}
 
 trait ChefService {
@@ -52,7 +47,7 @@ trait ChefService {
 }
 
 class ChefServiceImpl(val genesisId: String, val endpoint : String,
-                      val validatorCredentials : Credentials, chefClient : ChefClient) extends ChefService {
+                      val validatorCredentials : Credentials, chefClient : ChefRestClient) extends ChefService {
     def chefObjectName(env : Environment, objectName : String) = {
         "genesis_%s_%s_%s".format(genesisId, env.name, objectName)
     }
@@ -75,7 +70,7 @@ class ChefServiceImpl(val genesisId: String, val endpoint : String,
 
         for ((itemName, attrs) <- items) {
             val idAttrs = JField("id", JString(itemName)) +: attrs.obj.filter(_.name != "id")
-            val item = new DatabagItem(itemName, JsonUtil.toString(JObject(idAttrs)))
+            val item = new DatabagItem(itemName, JObject(idAttrs))
             chefClient.createDatabagItem(databagName, item)
         }
     }
@@ -84,22 +79,12 @@ class ChefServiceImpl(val genesisId: String, val endpoint : String,
                    defaults : JObject, overrides : JObject, overwrite : Boolean) {
         val roleName = chefObjectName(env, name)
 
-        val chefRole = new Role(roleName, description, chefRoleAttrs(defaults),
-                                JC.seqAsJavaList(runList), chefRoleAttrs(overrides))
+        val chefRole = new Role(roleName, description, runList, defaults, overrides)
 
         if (overwrite)
             chefClient.deleteRole(roleName)
 
         chefClient.createRole(chefRole)
-    }
-
-    def chefRoleAttrs(attrs : JObject) : java.util.Map[String, JsonBall] = {
-        val result = mutable.Map[String, JsonBall]()
-
-        for (field <- attrs.obj)
-            result(field.name) = new JsonBall(JsonUtil.toString(field.value))
-
-        JC.mapAsJavaMap(result)
     }
 
     def deleteChefEnv(env : Environment) {
@@ -110,7 +95,7 @@ class ChefServiceImpl(val genesisId: String, val endpoint : String,
     }
 
     def deleteClients(env : Environment) {
-        for (client <- JC.asScalaSet(chefClient.listClients())) {
+        for (client <- chefClient.listClients()) {
             if (isObjectInEnv(client, env)) {
                 chefClient.deleteClient(client)
             }
@@ -118,7 +103,7 @@ class ChefServiceImpl(val genesisId: String, val endpoint : String,
     }
 
     def deleteNodes(env : Environment) {
-        for (node <- JC.asScalaSet(chefClient.listNodes())) {
+        for (node <- chefClient.listNodes()) {
             if (isObjectInEnv(node, env)) {
                 chefClient.deleteNode(node)
             }
@@ -126,7 +111,7 @@ class ChefServiceImpl(val genesisId: String, val endpoint : String,
     }
 
     def deleteDatabags(env : Environment) {
-        for (databag <- JC.asScalaSet(chefClient.listDatabags())) {
+        for (databag <- chefClient.listDatabags()) {
             if (isObjectInEnv(databag, env)) {
                 chefClient.deleteDatabag(databag)
             }
@@ -134,7 +119,7 @@ class ChefServiceImpl(val genesisId: String, val endpoint : String,
     }
 
     def deleteRoles(env : Environment) {
-       for (role <- JC.asScalaSet(chefClient.listRoles())) {
+       for (role <- chefClient.listRoles()) {
             if (isObjectInEnv(role, env)) {
                 chefClient.deleteRole(role)
             }
