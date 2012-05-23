@@ -785,5 +785,11 @@
             <name>Open Genesis GD internal repo</name>
             <url>http://nexus.vm.griddynamics.net:8081/nexus/content/repositories/open-genesis</url>
         </repository>
+        <snapshotRepository>
+            <id>genesis</id>
+            <name>Open Genesis GD snapshot internal repo</name>
+            <url>http://nexus.vm.griddynamics.net:8081/nexus/content/repositories/open-genesis-snapshots</url>
+            <uniqueVersion>false</uniqueVersion>
+        </snapshotRepository>
     </distributionManagement>
 </project>
