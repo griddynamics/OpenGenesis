@@ -185,7 +185,7 @@ class JCloudsProvisionContextImpl(storeService: StoreService,
 
   def provisionVmActionExecutor(action: JCloudsProvisionVm) = {
     val computeContext = contextProvider.computeContext(computeSettings)
-    val nodeNamePrefix = settings(Plugin.NodeNamePrefix).take(2)
+    val nodeNamePrefix = settings(Plugin.NodeNamePrefix)
 
     val vmCreationStrategy = strategies(cloudProvider).createVmCreationStrategy(nodeNamePrefix, computeContext);
     new ProvisionExecutor(action, storeService, vmCreationStrategy, provisionVmTimeout) with DurationLimitedActionExecutor
