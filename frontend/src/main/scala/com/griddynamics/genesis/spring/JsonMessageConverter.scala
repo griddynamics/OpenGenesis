@@ -39,50 +39,26 @@ class JsonMessageConverter
     val DEFAULT_CHARSET: Charset = Charset.forName("UTF-8")
     val supportedMediaTypes = Collections.singletonList(new MediaType("application", "json", DEFAULT_CHARSET))
 
-    /*override def writeInternal(t: Object, outputMessage: HttpOutputMessage) {
-        val contentType: MediaType = outputMessage.getHeaders.getContentType
-        val charset: Charset = if (contentType.getCharSet != null)
-                                    contentType.getCharSet
-                               else StringHttpMessageConverter.DEFAULT_CHARSET
-
-        Serialization.write(t, new OutputStreamWriter(outputMessage.getBody, charset))
-    }
-
-    override def readInternal(clazz: Class[_ <: Object], inputMessage: HttpInputMessage) = null
-
-    override def supports(clazz: Class[_]) = true
-
-    override def canWrite(clazz: Class[_], mediaType: MediaType) = true
-
-    override def canRead(clazz: Class[_], mediaType: MediaType) = true
-
-    override def getSupportedMediaTypes = Collections.singletonList(MediaType.ALL)*/
-
-
     def write(t: AnyRef, contentType: MediaType, outputMessage: HttpOutputMessage) {
-        /*if(t.isInstanceOf[Option])
-           t.asInstanceOf[Option] match
-               case None    => ""
-               case Some(v) => v*/
         val statusCode  = getStatus(t)
         if (outputMessage.isInstanceOf[ServerHttpResponse] && statusCode > 0)  {
-            var response: ServerHttpResponse = outputMessage.asInstanceOf[ServerHttpResponse]
+            val response = outputMessage.asInstanceOf[ServerHttpResponse]
             response.setStatusCode(HttpStatus.valueOf(statusCode))
         }
 
         outputMessage.getHeaders.setContentType(MediaType.APPLICATION_JSON)
         val message: String = Serialization.write(t)
-        outputMessage.getHeaders.setContentLength(message.length)
-        outputMessage.getBody.write(message.getBytes(StringHttpMessageConverter.DEFAULT_CHARSET))
+        val messageBytes: Array[Byte] = message.getBytes(DEFAULT_CHARSET.name())
+        outputMessage.getHeaders.setContentLength(messageBytes.length)
+        outputMessage.getBody.write(messageBytes)
     }
 
-    private def getStatus(requestResult : AnyRef) : Int =
-        requestResult match  {
-            case RequestResult(_, _, _, _, true, _) => 200
-            case RequestResult(_, _, _, _, false, true) => 404
-            case RequestResult(_, _, _, _, false, _) => 400
-            case _ => -1
-        }
+    private def getStatus(requestResult : AnyRef) : Int = requestResult match  {
+        case RequestResult(_, _, _, _, true, _) => 200
+        case RequestResult(_, _, _, _, false, true) => 404
+        case RequestResult(_, _, _, _, false, _) => 400
+        case _ => -1
+    }
 
     def read(clazz: Class[_ <: AnyRef], inputMessage: HttpInputMessage) = null
 
