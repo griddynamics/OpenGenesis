@@ -29,11 +29,11 @@
     <groupId>com.griddynamics.genesis</groupId>
     <artifactId>parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 
     <scm>
         <developerConnection>scm:git:ssh://git@github.com/griddynamics/OpenGenesis.git</developerConnection>
-      <tag>HEAD</tag>
+      <tag>release-1.0.0</tag>
   </scm>
 
     <properties>
