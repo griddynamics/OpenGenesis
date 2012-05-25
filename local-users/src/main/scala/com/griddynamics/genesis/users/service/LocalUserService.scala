@@ -76,8 +76,8 @@ class LocalUserService(val repository: LocalUserRepository, val groupRepo: Local
             mustMatchName(user, user.firstName, "firstName") ++
             mustMatchName(user, user.lastName, "lastName")++
             mustMatchEmail(user, user.email, "email") ++
-            must(user, "Email [%s] is already registered for other user") {
-                user => repository.findByEmail(user.email).filter(_.username != user.username).isDefined
+            must(user, "Email [%s] is already registered for other user".format(user.email)) {
+                user => repository.findByEmail(user.email).filter(_.username != user.username).isEmpty
             }
 
     protected def validateCreation(user: User) = {
