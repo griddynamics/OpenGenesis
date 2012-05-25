@@ -28,10 +28,9 @@ import com.griddynamics.genesis.users.repository.LocalGroupRepository
 import com.griddynamics.genesis.validation.Validation
 import Validation._
 import org.springframework.transaction.annotation.Transactional
-import com.griddynamics.genesis.api.{RequestResult, UserGroup}
 import com.griddynamics.genesis.service.AuthorityService
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.repository.ProjectPropertyRepository
+import com.griddynamics.genesis.api.{Success, UserGroup}
 
 class LocalGroupService(val repository: LocalGroupRepository) extends GroupService with Validation[UserGroup] {
     @Autowired
@@ -56,6 +55,7 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
         validCreate(a, a => {
             val newGroup = repository.insert(a)
             newGroup.id.map(i => users.map(u => repository.addUserToGroup(i, u)))
+            newGroup
         })
     }
 
@@ -77,7 +77,7 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
         authorityService.removeAuthoritiesFromGroup(a.name)
         repository.removeAllUsersFromGroup(a.id.get)
         repository.delete(a)
-        RequestResult(isSuccess = true)
+        Success(a)
     }
 
     @Transactional(readOnly = true)
@@ -89,13 +89,13 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
     @Transactional
     def addUserToGroup(id: Int, username: String) = {
         repository.addUserToGroup(id, username)
-        RequestResult(isSuccess = true)
+        Success((id, username))
     }
 
     @Transactional
     def removeUserFromGroup(id: Int, username: String) = {
         repository.removeUserFromGroup(id, username)
-        RequestResult(isSuccess = true)
+        Success((id, username))
     }
 
     @Transactional(readOnly = true)
@@ -103,17 +103,18 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
         repository.get(id)
     }
 
-    protected def validateUpdate(c: UserGroup) = filterResults(Seq(
-        notEmpty(c.name, "name"),
-        notEmpty(c.description, "description"),
-        mustExist(c){it => get(it.id.get)},
-        must(c, "Group with name '" + c.name + "' already exists"){ c =>
-          findByName(c.name) match {
-              case None => true
-              case Some(group) => group.id == c.id
-        }
-    }))
+    protected def validateUpdate(c: UserGroup) =
+        notEmpty(c, c.name, "name") ++
+          notEmpty(c, c.description, "description") ++
+          mustExist(c){it => get(it.id.get)} ++
+          must(c, "Group with name '" + c.name + "' already exists"){ g =>
+              findByName(g.name) match {
+                  case None => true
+                  case Some(group) => group.id == g.id
+              }
+          }
 
-    protected def validateCreation(c: UserGroup) = filterResults(Seq(notEmpty(c.name, "name"),
-        notEmpty(c.description, "description"), must(c, "name must be unique") {c => findByName(c.name).isEmpty}))
+
+    protected def validateCreation(c: UserGroup) = notEmpty(c, c.name, "name") ++
+      notEmpty(c, c.description, "description") ++ must(c, "name must be unique") {c => findByName(c.name).isEmpty}
 }

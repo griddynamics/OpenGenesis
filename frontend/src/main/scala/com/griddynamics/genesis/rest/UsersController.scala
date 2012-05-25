@@ -28,8 +28,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.users.UserService
 import javax.servlet.http.HttpServletRequest
 import GenesisRestController._
-import com.griddynamics.genesis.api.{RequestResult, User}
 import org.springframework.web.bind.annotation._
+import com.griddynamics.genesis.api.{ExtendedResult, User}
 
 @Controller
 @RequestMapping(Array("/rest/users"))
@@ -70,13 +70,13 @@ class UsersController extends RestApiExceptionsHandler {
 
     @RequestMapping(value = Array("{username}"), method = Array(RequestMethod.DELETE))
     @ResponseBody
-    def delete(@PathVariable(value="username") username: String) : RequestResult = {
+    def delete(@PathVariable(value="username") username: String) = {
       withUser(username) {
         user => userService.delete(user)
       }
     }
 
-    def withUser(username: String)(block: User => RequestResult) = {
+    def withUser(username: String)(block: User => ExtendedResult[User]) = {
       userService.findByUsername(username) match {
         case None => throw new ResourceNotFoundException
         case Some(group) => block(group)

@@ -24,8 +24,8 @@
 package com.griddynamics.genesis.groups
 
 import com.griddynamics.genesis.common.CRUDService
-import com.griddynamics.genesis.api.{RequestResult, User, UserGroup}
 import org.springframework.transaction.annotation.Transactional
+import com.griddynamics.genesis.api.{ExtendedResult, User, UserGroup}
 
 
 trait GroupService extends CRUDService[UserGroup, String]{
@@ -36,15 +36,15 @@ trait GroupService extends CRUDService[UserGroup, String]{
     @Transactional(readOnly = true)
     def users(name: Int) : Seq[User]
     @Transactional(readOnly = false)
-    def addUserToGroup(id: Int, username: String) : RequestResult
+    def addUserToGroup(id: Int, username: String) : ExtendedResult[_]
     @Transactional(readOnly = false)
-    def removeUserFromGroup(id: Int, username: String) : RequestResult
+    def removeUserFromGroup(id: Int, username: String) : ExtendedResult[_]
     @Transactional(readOnly = true)
     def get(id: Int) : Option[UserGroup]
     @Transactional(readOnly = false)
-    def create(a: UserGroup, users: List[String]) : RequestResult
+    def create(a: UserGroup, users: List[String]) : ExtendedResult[UserGroup]
     @Transactional(readOnly = false)
-    def update(group: UserGroup, users: List[String]) : RequestResult
+    def update(group: UserGroup, users: List[String]) : ExtendedResult[UserGroup]
     @Transactional(readOnly = true)
     def getUsersGroups(username: String): Iterable[UserGroup]
     @Transactional(readOnly = true)

@@ -1,53 +1,42 @@
 package com.griddynamics.genesis.validation
 
-import com.griddynamics.genesis.api.RequestResult
 import util.matching.Regex
+import com.griddynamics.genesis.api.{Success, ExtendedResult, Failure}
 
 trait Validation[C] {
 
-    def validCreate(value: C, function: (C) => Any): RequestResult = {
-        validOnCreation(value) {
-            function
+    def validCreate(value: C, function: (C) => C): ExtendedResult[C] = {
+        validOnCreation(value) { item =>
+            Success(function(item))
         }
     }
 
-    def validUpdate(value: C, function: (C) => C): RequestResult = {
+
+    def validUpdate(value: C, function: (C) => C): ExtendedResult[C] = {
         validOnUpdate(value) { item =>
-            function(item)
-            RequestResult(isSuccess = true)
+            Success(function(item))
         }
     }
 
-    def validOnCreation[B](value: C)(block: C => B): RequestResult = {
+    def validOnCreation(value: C)(block: C => ExtendedResult[C]): ExtendedResult[C] = {
         validateCreation(value) match {
-            case Some(rr) => rr
+            case f: Failure[C] => f
             case _ => {
                 block(value)
-                RequestResult(isSuccess = true)
             }
         }
     }
 
-    def validOnUpdate(value: C)(block: C => RequestResult): RequestResult = {
+    def validOnUpdate(value: C)(block: C => ExtendedResult[C]): ExtendedResult[C] = {
         validateUpdate(value) match {
-            case Some(rr) => rr
+            case f: Failure[C] => f
             case _ => {
-                block(value) ++ RequestResult(isSuccess = true)
+                block(value)
             }
         }
     }
-
-    protected def validateUpdate(c: C): Option[RequestResult]
-
-    protected def validateCreation(c: C): Option[RequestResult]
-
-    protected def filterResults(xs: Seq[Option[RequestResult]]): Option[RequestResult] = {
-        val results: Seq[RequestResult] = xs.flatten
-        results.isEmpty match {
-            case true => None
-            case _ => Some(results.reduceLeft(_ ++ _))
-        }
-    }
+    protected def validateUpdate(c: C): ExtendedResult[C]
+    protected def validateCreation(c: C): ExtendedResult[C]
 }
 
 object Validation {
@@ -61,40 +50,40 @@ object Validation {
     val nameErrorMessage = "Invalid format. Use a combination of capital and lowercase letters and spaces. " +
                            "Length must be from 2 to 128"
 
-    def mustMatch(fieldName: String, error : String = "Invalid format")(pattern: Regex)(value: String) = {
+    def mustMatch[C](obj: C, fieldName: String, error : String = "Invalid format")(pattern: Regex)(value: String) : ExtendedResult[C] = {
         value match {
-            case pattern(s) => None
-            case _ => Some(RequestResult(variablesErrors = Map(fieldName -> error), isSuccess = false))
+            case pattern(s) => Success(obj)
+            case _ => Failure[C](variablesErrors = Map(fieldName -> error))
         }
     }
 
-    def mustMatchName(value: String, fieldName: String) : Option[RequestResult] = mustMatch(fieldName)(namePattern)(value)
-    def mustMatchUserName(value: String, fieldName: String) : Option[RequestResult] = mustMatch(fieldName)(usernamePattern)(value)
-    def mustMatchEmail(value: String, fieldName: String) : Option[RequestResult] = mustMatch(fieldName)(emailPattern)(value)
+    def mustMatchName[C](obj: C, value: String, fieldName: String) : ExtendedResult[C] = mustMatch(obj, fieldName)(namePattern)(value)
+    def mustMatchUserName[C](obj: C, value: String, fieldName: String) : ExtendedResult[C] = mustMatch(obj, fieldName)(usernamePattern)(value)
+    def mustMatchEmail[C](obj: C, value: String, fieldName: String) : ExtendedResult[C] = mustMatch(obj, fieldName)(emailPattern)(value)
 
-    def mustPresent(value: Option[_], fieldName: String, error : String = "Must be present") = {
+    def mustPresent[C](obj:C, value: Option[_], fieldName: String, error : String = "Must be present") : ExtendedResult[C] = {
         value match {
-            case None => Some(RequestResult(variablesErrors = Map(fieldName -> error), isSuccess = false))
-            case _ => None
+            case None => Failure[C](variablesErrors = Map(fieldName -> error))
+            case _ => Success(obj)
         }
     }
 
-    def notEmpty(value: String, fieldName: String, error : String = "Must be present") = {
-        if (value == null || value.trim.length == 0) Some(RequestResult(variablesErrors = Map(fieldName -> error), isSuccess = false))
-        else None
+    def notEmpty[C](obj: C, value: String, fieldName: String, error : String = "Must be present") : ExtendedResult[C] = {
+        if (value == null || value.trim.length == 0) Failure(variablesErrors = Map(fieldName -> error))
+        else Success(obj)
     }
 
-    def must[C](value: C, errorMessage: String = "")(block: C => Boolean) = {
+    def must[C](value: C, errorMessage: String = "")(block: C => Boolean) : ExtendedResult[C] = {
         block(value) match {
-            case true => None
-            case false => Some(RequestResult(isSuccess = false, compoundServiceErrors = Seq(errorMessage)))
+            case true => Success(value)
+            case false => Failure(compoundServiceErrors = Seq(errorMessage))
         }
     }
 
     def mustExist[C](value: C, errorMessage: String = "Not found")(finder: C => Option[C]) = {
       finder(value) match {
-        case None => Some(RequestResult(isSuccess = false, isNotFound = true, compoundServiceErrors = Seq(errorMessage)))
-        case Some(_) => None
+        case None => Failure(isNotFound = true, compoundServiceErrors = Seq(errorMessage))
+        case Some(_) => Success(value)
       }
     }
 

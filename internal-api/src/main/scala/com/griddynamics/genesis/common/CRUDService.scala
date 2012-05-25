@@ -23,19 +23,19 @@
 
 package com.griddynamics.genesis.common
 
-import com.griddynamics.genesis.api.RequestResult
 import org.springframework.transaction.annotation.Transactional
+import com.griddynamics.genesis.api.{Failure, ExtendedResult}
 
 
 trait CRUDService[A, KEY] {
     @Transactional(readOnly = true)
     def list: Seq[A]
     @Transactional(readOnly = false)
-    def create(a: A) = RequestResult(isSuccess = false, compoundServiceErrors = Seq("This service cannot create objects"))
+    def create(a: A): ExtendedResult[A] = Failure(compoundServiceErrors = Seq("This service cannot create objects"))
     @Transactional(readOnly = false)
-    def update(a: A) = RequestResult(isSuccess = false, compoundServiceErrors = Seq("This service cannot update objects"))
+    def update(a: A) : ExtendedResult[A] = Failure(compoundServiceErrors = Seq("This service cannot update objects"))
     @Transactional(readOnly = false)
-    def delete(a: A) = RequestResult(isSuccess = false, compoundServiceErrors = Seq("This service cannot delete objects"))
+    def delete(a: A) : ExtendedResult[A] = Failure(compoundServiceErrors = Seq("This service cannot update objects"))
     @Transactional(readOnly = true)
     def get(key: KEY) : Option[A]
 }
