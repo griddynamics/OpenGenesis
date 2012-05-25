@@ -28,8 +28,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.groups.GroupService
 import javax.servlet.http.HttpServletRequest
 import GenesisRestController._
-import com.griddynamics.genesis.api.{RequestResult, UserGroup}
 import org.springframework.web.bind.annotation._
+import com.griddynamics.genesis.api.{ExtendedResult, UserGroup}
 
 @Controller
 @RequestMapping(Array("/rest/groups"))
@@ -50,11 +50,11 @@ class GroupController extends RestApiExceptionsHandler {
 
     @RequestMapping(method = Array(RequestMethod.POST))
     @ResponseBody
-    def create(request: HttpServletRequest) : RequestResult = {
+    def create(request: HttpServletRequest) = {
         RequestReader.read(request) {
             map => {
-                var group: UserGroup = readGroup(map)
-                var create = groupService.create(group, readUsers(map, "users"))
+                val group: UserGroup = readGroup(map)
+                val create = groupService.create(group, readUsers(map, "users"))
                 create
             }
         }
@@ -62,7 +62,7 @@ class GroupController extends RestApiExceptionsHandler {
 
     @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.PUT))
     @ResponseBody
-    def update(@PathVariable(value="id") id: Int, request: HttpServletRequest) : RequestResult = {
+    def update(@PathVariable(value="id") id: Int, request: HttpServletRequest)  = {
         RequestReader.read(request) {
             map => {
                 withGroup(id) {
@@ -74,13 +74,13 @@ class GroupController extends RestApiExceptionsHandler {
 
     @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.DELETE))
     @ResponseBody
-    def delete(@PathVariable(value="id") id: Int) : RequestResult = {
+    def delete(@PathVariable(value="id") id: Int)  = {
         withGroup(id) {
             group => groupService.delete(group)
         }
     }
 
-    def withGroup(id: Int)(block: UserGroup => RequestResult) = {
+    def withGroup(id: Int)(block: UserGroup => ExtendedResult[_]) = {
         groupService.get(id) match {
             case None => throw new ResourceNotFoundException
             case Some(group) => block(group)

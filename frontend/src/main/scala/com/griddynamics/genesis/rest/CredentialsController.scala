@@ -2,11 +2,9 @@ package com.griddynamics.genesis.rest
 
 
 import scala.Array
-import com.griddynamics.genesis.api._
 import javax.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Controller
 import com.griddynamics.genesis.service.CredentialsStoreService
-import com.griddynamics.genesis.api.RequestResult
 import com.griddynamics.genesis.api
 import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.web.bind.annotation._
@@ -17,7 +15,7 @@ class CredentialsController(service: CredentialsStoreService) extends RestApiExc
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
-  def create(request: HttpServletRequest): RequestResult = {
+  def create(request: HttpServletRequest) = {
       val creds = extractCredentials(request, None)
       service.create(creds)
   }

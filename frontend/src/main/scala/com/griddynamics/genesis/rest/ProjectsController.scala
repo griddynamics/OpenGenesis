@@ -5,7 +5,7 @@ import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
 import com.griddynamics.genesis.service.impl.ProjectService
-import com.griddynamics.genesis.api.{RequestResult, Project}
+import com.griddynamics.genesis.api.Project
 
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
@@ -39,7 +39,7 @@ class ProjectsController(projectService: ProjectService) extends RestApiExceptio
 
   @RequestMapping(method = Array(RequestMethod.POST))
   @ResponseBody
-  def createProject(request: HttpServletRequest, response: HttpServletResponse): RequestResult = {
+  def createProject(request: HttpServletRequest, response: HttpServletResponse) = {
     val paramsMap = extractParamsMap(request)
     val project = extractProject(None, paramsMap)
     projectService.create(project)
@@ -52,7 +52,7 @@ class ProjectsController(projectService: ProjectService) extends RestApiExceptio
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.PUT))
   @ResponseBody
-  def updateProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response: HttpServletResponse): RequestResult = {
+  def updateProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response: HttpServletResponse) = {
     val paramsMap = GenesisRestController.extractParamsMap(request)
     val project = extractProject(Option(projectId), paramsMap)
     projectService.get(projectId) match {

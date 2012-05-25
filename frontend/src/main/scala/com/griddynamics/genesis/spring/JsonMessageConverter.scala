@@ -25,12 +25,10 @@ package com.griddynamics.genesis.spring
 import net.liftweb.json.Serialization
 import org.springframework.http.converter.HttpMessageConverter
 import java.nio.charset.Charset
-import org.springframework.http.converter.StringHttpMessageConverter
-import java.io.OutputStreamWriter
 import java.util.Collections
-import com.griddynamics.genesis.api.RequestResult
 import org.springframework.http.server.ServerHttpResponse
 import org.springframework.http.{HttpStatus, HttpOutputMessage, HttpInputMessage, MediaType}
+import com.griddynamics.genesis.api.{Failure, Success, RequestResult}
 
 class JsonMessageConverter
         extends HttpMessageConverter[AnyRef]{
@@ -57,6 +55,9 @@ class JsonMessageConverter
         case RequestResult(_, _, _, _, true, _) => 200
         case RequestResult(_, _, _, _, false, true) => 404
         case RequestResult(_, _, _, _, false, _) => 400
+        case Success(_, _) => 200
+        case Failure(_, _, _, _, false, false) => 400
+        case Failure(_, _, _, _, true, _) => 404
         case _ => -1
     }
 
