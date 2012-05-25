@@ -13,7 +13,7 @@ class CredentialsRepository extends AbstractGenericRepository[model.Credentials,
   with repository.CredentialsRepository {
 
   implicit def convert(entity: model.Credentials): api.Credentials =
-    new api.Credentials(fromModelId(entity.id), entity.projectId, entity.cloudProvider, entity.pairName, entity.identity, entity.credential, entity.fingerPrint)
+    new api.Credentials(fromModelId(entity.id), entity.projectId, entity.cloudProvider, entity.pairName, entity.crIdentity, entity.credential, entity.fingerPrint)
 
   implicit def convert(dto: api.Credentials): model.Credentials = {
     val creds = new model.Credentials(dto.projectId, dto.cloudProvider, dto.pairName, dto.identity, dto.credential, dto.fingerPrint)
