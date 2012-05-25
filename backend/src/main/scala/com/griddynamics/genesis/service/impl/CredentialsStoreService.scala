@@ -2,8 +2,8 @@ package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.repository.CredentialsRepository
 import com.griddynamics.genesis.validation.Validation
-import com.griddynamics.genesis.api.RequestResult
 import com.griddynamics.genesis.api
+import api.{Failure, ExtendedResult, RequestResult}
 import com.griddynamics.genesis.service
 import com.griddynamics.genesis.validation.Validation._
 import org.springframework.transaction.annotation.Transactional
@@ -55,14 +55,13 @@ class CredentialsStoreService(repository: CredentialsRepository) extends Validat
     repository.save(validatedCreds.copy(fingerPrint = fingerPrint, credential = encrypted))
   }
 
-  protected def validateUpdate(c: api.Credentials): Option[RequestResult] = None
+  protected def validateUpdate(c: api.Credentials): ExtendedResult[api.Credentials] = Failure()
 
-  protected def validateCreation(c: api.Credentials) = filterResults(Seq(
-    notEmpty(c.cloudProvider, "cloudProvider"),
-    notEmpty(c.pairName, "pairName"),
-    notEmpty(c.identity, "identity"),
+  protected def validateCreation(c: api.Credentials) : ExtendedResult[api.Credentials] =
+    notEmpty(c, c.cloudProvider, "cloudProvider") ++
+    notEmpty(c, c.pairName, "pairName") ++
+    notEmpty(c, c.identity, "identity") ++
     must(c, "key pair name must be unique per provider") {
       item => repository.find(item.projectId, item.cloudProvider, item.pairName).isEmpty
     }
-  ))
 }

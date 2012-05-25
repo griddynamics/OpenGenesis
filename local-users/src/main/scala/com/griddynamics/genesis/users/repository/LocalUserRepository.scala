@@ -55,6 +55,14 @@ class LocalUserRepository extends AbstractGenericRepository[LocalUser, User](Loc
         }
     }
 
+    def findByEmail(email: String) : Option[User] = {
+        from (LocalUserSchema.users) {
+            item => where (
+                item.email  === email
+            ).select(item)
+        }.headOption.map(convert(_))
+    }
+
     override def update(user: User) : User = {
         table.update(
             u => where (u.username === user.username)
