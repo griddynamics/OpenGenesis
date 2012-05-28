@@ -58,5 +58,5 @@ class PullingTemplateRepository(val delegate : TemplateRepository,
         sources
     }
 
-    override def getContent(vt: VersionedTemplate) = delegate.getContent(vt) //TODO: cache?
+    override def getContent(vt: VersionedTemplate) = sources.get(vt).orElse(delegate.getContent(vt)) //TODO: cache?
 }
