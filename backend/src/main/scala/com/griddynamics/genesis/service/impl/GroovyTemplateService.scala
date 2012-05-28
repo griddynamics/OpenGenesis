@@ -118,6 +118,15 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
         }
     }
 
+    def templateRawContent(name: String, version: String) = {
+      updateTemplates()
+
+      val templVersionOption = sourcesMap.find { case (_, nameVersionTuple) =>
+        nameVersionTuple._1 == name && nameVersionTuple._2 == version
+      }.map(_._1)
+
+      templVersionOption.flatMap ( templateRepository.getContent(_))
+    }
 }
 
 class StepBodiesCollector(variables: Map[String, AnyRef],
