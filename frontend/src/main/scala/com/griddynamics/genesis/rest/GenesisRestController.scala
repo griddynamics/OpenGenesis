@@ -35,10 +35,11 @@ import com.griddynamics.genesis.http.TunnelFilter
 import java.util.Properties
 import org.springframework.beans.factory.annotation.{Qualifier, Autowired, Value}
 import collection.JavaConversions
+import com.griddynamics.genesis.service.TemplateService
 
 @Controller
 @RequestMapping(Array("/rest"))
-class GenesisRestController(genesisService: GenesisService) extends RestApiExceptionsHandler {
+class GenesisRestController(genesisService: GenesisService, templateService: TemplateService) extends RestApiExceptionsHandler {
 
 
     @Value("${genesis.system.server.mode:frontend}")
@@ -88,6 +89,13 @@ class GenesisRestController(genesisService: GenesisService) extends RestApiExcep
     def listTemplates(@RequestParam(required = false) project: String, @RequestParam(required = false) tag: String) =
       paramToOption(project) match {
         case _ => genesisService.listTemplates
+    }
+
+    @RequestMapping(value = Array("templates/{templateName}/v{templateVersion:.+}"), method = Array(RequestMethod.GET))
+    @ResponseBody
+    def templateContent(@PathVariable templateName: String, @PathVariable templateVersion: String) = {
+      val content = templateService.templateRawContent(templateName, templateVersion).getOrElse("")
+      Map("content" -> content)
     }
 
     //TODO: divide method
