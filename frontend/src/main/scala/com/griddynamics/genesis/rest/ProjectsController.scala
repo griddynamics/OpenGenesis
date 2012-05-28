@@ -32,10 +32,9 @@ import com.griddynamics.genesis.api.Project
 @Controller
 @RequestMapping(value = Array("/rest/projects"))
 class ProjectsController(projectService: ProjectService) extends RestApiExceptionsHandler {
-
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
-  def listProjects: List[Project] = projectService.list.toList
+  def listProjects: List[Project] = projectService.list.toList.sortWith(_.name.toLowerCase < _.name.toLowerCase)
 
   @RequestMapping(method = Array(RequestMethod.POST))
   @ResponseBody
