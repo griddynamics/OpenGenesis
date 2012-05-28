@@ -27,22 +27,24 @@ import org.springframework.stereotype.Controller
 import scala.Array
 import org.springframework.web.bind.annotation.{ResponseBody, RequestMethod, RequestMapping}
 import javax.servlet.http.HttpServletRequest
-import org.springframework.beans.factory.annotation.Autowired
 import javax.servlet.ServletContext
 import com.griddynamics.genesis.GenesisFrontend
+import org.springframework.beans.factory.annotation.{Value, Autowired}
 
 @Controller
 @RequestMapping(Array("/rest/whoami"))
 class WhoamiController {
-    @Autowired
-    var servletContext: ServletContext = _
+  @Autowired
+  var servletContext: ServletContext = _
 
-    @RequestMapping(method = Array(RequestMethod.GET))
-    @ResponseBody
-    def whoami(request: HttpServletRequest): Map[String, Any] = Map (
-        "user" -> GenesisRestController.getCurrentUser,
-        "logout_disabled" -> "false".equalsIgnoreCase(servletContext.getInitParameter(GenesisFrontend.logoutEnabledParamName)),
-        "administrator" -> request.isUserInRole("ROLE_GENESIS_ADMIN")
-    )
+  @Value("${genesis.system.security.groups:ROLE_GENESIS_ADMIN}")
+  var rjaGroups: String = _ //todo (RB) : temp rja fix  to enable UI admin facilities
 
+  @RequestMapping(method = Array(RequestMethod.GET))
+  @ResponseBody
+  def whoami(request: HttpServletRequest): Map[String, Any] = Map(
+    "user" -> GenesisRestController.getCurrentUser,
+    "logout_disabled" -> "false".equalsIgnoreCase(servletContext.getInitParameter(GenesisFrontend.logoutEnabledParamName)),
+    "administrator" -> (request.isUserInRole("ROLE_GENESIS_ADMIN") || rjaGroups.split(",").exists(request.isUserInRole(_)))
+  )
 }
