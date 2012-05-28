@@ -34,8 +34,6 @@ trait UserService extends CRUDService[User, String] {
     def getWithCredentials(username: String): Option[User]
     @Transactional(readOnly = true)
     def findByUsername(username: String): Option[User]
-    @Transactional(readOnly = false)
-    def create(user: User, groups: List[String]) : ExtendedResult[User]
     @Transactional(readOnly = true)
     def search(usernameLike: String): List[User]
 }

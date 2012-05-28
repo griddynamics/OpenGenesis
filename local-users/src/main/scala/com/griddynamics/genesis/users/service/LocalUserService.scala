@@ -26,12 +26,12 @@ import com.griddynamics.genesis.users.UserService
 import org.springframework.transaction.annotation.{Propagation, Transactional}
 import com.griddynamics.genesis.validation.Validation
 import Validation._
-import com.griddynamics.genesis.users.repository.{LocalGroupRepository, LocalUserRepository}
+import com.griddynamics.genesis.users.repository.LocalUserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.service.AuthorityService
 import com.griddynamics.genesis.api.{Success, Failure, User}
 
-class LocalUserService(val repository: LocalUserRepository, val groupRepo: LocalGroupRepository) extends UserService with Validation[User]{
+class LocalUserService(val repository: LocalUserRepository) extends UserService with Validation[User]{
     @Autowired
     var authorityService: AuthorityService = null
 
@@ -46,15 +46,6 @@ class LocalUserService(val repository: LocalUserRepository, val groupRepo: Local
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
     override def create(user: User)  = {
         validCreate(user, u => repository.insert(u))
-    }
-
-    @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
-    override def create(user: User, groups: List[String]) = {
-        validCreate(user, user => {
-            val newUser = repository.insert(user)
-            groups.flatMap(groupRepo.findByName(_).flatMap(_.id)).foreach(groupRepo.addUserToGroup(_, newUser.username))
-            newUser
-        })
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)

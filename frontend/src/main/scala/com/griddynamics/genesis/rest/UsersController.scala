@@ -26,6 +26,7 @@ package com.griddynamics.genesis.rest
 import org.springframework.stereotype.Controller
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.users.UserService
+import com.griddynamics.genesis.groups.GroupService
 import javax.servlet.http.HttpServletRequest
 import GenesisRestController._
 import org.springframework.web.bind.annotation._
@@ -36,6 +37,7 @@ import com.griddynamics.genesis.api.{ExtendedResult, User}
 class UsersController extends RestApiExceptionsHandler {
 
     @Autowired(required = false) var userService: UserService = _
+    @Autowired(required = false) var groupService: GroupService = _
 
     @RequestMapping(method = Array(RequestMethod.GET))
     @ResponseBody
@@ -53,19 +55,33 @@ class UsersController extends RestApiExceptionsHandler {
         case None => throw new ResourceNotFoundException
     }
 
+    def updateGroups(groups: Seq[String], username: String) {
+        groupService.list.foreach{g =>
+            g.id.map(if(groups.contains(g.name))
+                groupService.addUserToGroup(_, username) else
+                groupService.removeUserFromGroup(_, username))
+        }
+    }
+
     @RequestMapping(method = Array(RequestMethod.POST))
     @ResponseBody
     def create(request: HttpServletRequest) = RequestReader.read(request) {
-        map => userService.create(readUser(map), readGroups(map, "groups"))
+        map => 
+        val user = readUser(map)
+        userService.create(user)
+        updateGroups(readGroups(map, "groups"), user.username)
     }
 
     @RequestMapping(value = Array("{username}"), method = Array(RequestMethod.PUT))
     @ResponseBody
     def update(@PathVariable username: String, request: HttpServletRequest) = {
         val params: Map[String, Any] = extractParamsMap(request)
-        val user: User = User(username, extractValue("email", params), extractValue("firstName", params),
+        val userNew = User(username, extractValue("email", params), extractValue("firstName", params),
             extractValue("lastName", params), extractOption("jobTitle", params), None)
-        userService.update(user)
+        withUser(username) {
+            _ => updateGroups(readGroups(params, "groups"), userNew.username)
+            userService.update(userNew)
+        }
     }
 
     @RequestMapping(value = Array("{username}"), method = Array(RequestMethod.DELETE))
@@ -75,6 +91,10 @@ class UsersController extends RestApiExceptionsHandler {
         user => userService.delete(user)
       }
     }
+
+  @RequestMapping(value = Array("{userName}/groups"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  def userGroups(@PathVariable("userName") userName: String) = groupService.getUsersGroups(userName)
 
     def withUser(username: String)(block: User => ExtendedResult[User]) = {
       userService.findByUsername(username) match {

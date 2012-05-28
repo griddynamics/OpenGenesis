@@ -87,9 +87,11 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
     }
 
     @Transactional
-    def addUserToGroup(id: Int, username: String) = {
+    def addUserToGroup(id: Int, username: String) =  users(id).filter(_.username == username).isEmpty match {
+        case true =>
         repository.addUserToGroup(id, username)
         Success((id, username))
+        case _ => Success((id, username))
     }
 
     @Transactional
