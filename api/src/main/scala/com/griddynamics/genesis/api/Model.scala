@@ -42,7 +42,7 @@ case class EnvironmentDetails(name : String,
                               vms : Seq[VirtualMachine],
                               workflowsHistory : Option[Seq[WorkflowDetails]] = None)
 
-case class Variable(name : String, description : String, optional: Boolean = false, defaultValue: String = null)
+case class Variable(name : String, description : String, optional: Boolean = false, defaultValue: String = null, values:Seq[String] = Seq())
 
 case class Template(name : String, version : String, createWorkflow : Workflow)
 

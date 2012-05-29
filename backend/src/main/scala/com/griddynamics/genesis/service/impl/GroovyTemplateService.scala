@@ -250,7 +250,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
             new VariableDescription(variable.name, variable.description, variable.isOptional, variable.defaultValue match {
               case None => null
               case Some(v) => String.valueOf(v)
-            })
+            }, variable.valuesList.map(_.apply().map(_.toString)).getOrElse(Seq()))
         }
     }
 

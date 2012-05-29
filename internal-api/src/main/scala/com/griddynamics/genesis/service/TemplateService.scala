@@ -24,7 +24,8 @@ package com.griddynamics.genesis.service
 
 import com.griddynamics.genesis.plugin.GenesisStep
 
-class VariableDescription(val name: String, val description: String, val isOptional: Boolean = false, val defaultValue: String = null)
+class VariableDescription(val name: String, val description: String, val isOptional: Boolean = false,
+                          val defaultValue: String = null, val values: Seq[String] = Seq())
 
 case class ValidationError(variableName: String, description: String)
 
