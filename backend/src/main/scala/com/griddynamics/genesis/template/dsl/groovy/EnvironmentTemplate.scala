@@ -25,7 +25,6 @@ package com.griddynamics.genesis.template.dsl.groovy
 import collection.mutable.ListBuffer
 import groovy.lang.Closure
 import scala.Some
-import com.griddynamics.genesis.service.ValidationError
 import java.lang.IllegalStateException
 
 class EnvWorkflow(val name : String, val variables : List[VariableDetails], val stepsGenerator : Option[Closure[Unit]])
@@ -39,7 +38,8 @@ class EnvironmentTemplate(val name : String,
 }
 
 class VariableDetails(val name : String, val clazz : Class[_ <: AnyRef], val description : String,
-                      val validators : Seq[Closure[Boolean]], val isOptional: Boolean = false, val defaultValue: Option[Any])
+                      val validators : Seq[Closure[Boolean]], val isOptional: Boolean = false, val defaultValue: Option[Any],
+                      val valuesList: Option[(Any => Seq[AnyRef])] = None)
 
 class VariableBuilder(val name : String) {
     var description : String = _
@@ -47,6 +47,7 @@ class VariableBuilder(val name : String) {
     var clazz : Class[_ <: AnyRef] = classOf[String]
     var defaultValue: Any = _
     var isOptional: Boolean = false
+    var valuesList: Option[(Any => Seq[AnyRef])] = None
 
     def as(value : Class[_ <: AnyRef]) = {
         this.clazz = value
@@ -69,7 +70,17 @@ class VariableBuilder(val name : String) {
       this
     }
 
-    def newVariable = new VariableDetails(name, clazz, description, validators, isOptional, Option(defaultValue))
+    def oneOf(values: Closure[java.util.Collection[Any]]) = {
+        valuesList = Option({_ => values.call().toArray })
+        validators += new Closure[Boolean]() {
+            def doCall(args: Array[Any]): Boolean = {
+               valuesList.get.apply().exists(_ == args(0))
+            }
+        }
+        this
+    }
+
+    def newVariable = new VariableDetails(name, clazz, description, validators, isOptional, Option(defaultValue), valuesList)
 }
 
 class VariableDeclaration {
