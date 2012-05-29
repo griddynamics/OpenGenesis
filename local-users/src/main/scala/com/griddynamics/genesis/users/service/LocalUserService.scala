@@ -30,8 +30,9 @@ import com.griddynamics.genesis.users.repository.LocalUserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.service.AuthorityService
 import com.griddynamics.genesis.api.{Success, Failure, User}
+import com.griddynamics.genesis.groups.GroupService
 
-class LocalUserService(val repository: LocalUserRepository) extends UserService with Validation[User]{
+class LocalUserService(val repository: LocalUserRepository, val groupService: GroupService) extends UserService with Validation[User]{
     @Autowired
     var authorityService: AuthorityService = null
 
@@ -49,8 +50,24 @@ class LocalUserService(val repository: LocalUserRepository) extends UserService 
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
+    def create(user: User, groups: Seq[String]) = create(user) match {
+        case s@Success(u, _) =>
+            groupService.setUsersGroups(u.username, groups)
+            s
+        case f => f
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
     override def update(user: User) = {
        validUpdate(user, repository.update(_) )
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
+    override def update(user: User, groups: Seq[String]) = update(user) match {
+        case s@Success(u, _) =>
+            groupService.setUsersGroups(user.username, groups)
+            s
+        case f => f
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)

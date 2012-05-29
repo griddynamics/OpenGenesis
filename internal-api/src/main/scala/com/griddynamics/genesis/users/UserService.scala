@@ -30,6 +30,10 @@ import com.griddynamics.genesis.api.{ExtendedResult, User}
 trait UserService extends CRUDService[User, String] {
     @Transactional(readOnly = true)
     override def get(key: String) = findByUsername(key)
+    @Transactional(readOnly = false)
+    def create(user: User, groups: Seq[String]) : ExtendedResult[User]
+    @Transactional(readOnly = false)
+    def update(user: User, groups: Seq[String]) : ExtendedResult[User]
     @Transactional(readOnly = true)
     def getWithCredentials(username: String): Option[User]
     @Transactional(readOnly = true)

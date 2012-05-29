@@ -55,21 +55,12 @@ class UsersController extends RestApiExceptionsHandler {
         case None => throw new ResourceNotFoundException
     }
 
-    def updateGroups(groups: Seq[String], username: String) {
-        groupService.list.foreach{g =>
-            g.id.map(if(groups.contains(g.name))
-                groupService.addUserToGroup(_, username) else
-                groupService.removeUserFromGroup(_, username))
-        }
-    }
-
     @RequestMapping(method = Array(RequestMethod.POST))
     @ResponseBody
     def create(request: HttpServletRequest) = RequestReader.read(request) {
         map => 
         val user = readUser(map)
-        userService.create(user)
-        updateGroups(readGroups(map, "groups"), user.username)
+        userService.create(user, readGroups(map, "groups"))
     }
 
     @RequestMapping(value = Array("{username}"), method = Array(RequestMethod.PUT))
@@ -79,8 +70,7 @@ class UsersController extends RestApiExceptionsHandler {
         val userNew = User(username, extractValue("email", params), extractValue("firstName", params),
             extractValue("lastName", params), extractOption("jobTitle", params), None)
         withUser(username) {
-            _ => updateGroups(readGroups(params, "groups"), userNew.username)
-            userService.update(userNew)
+            _ => userService.update(userNew, readGroups(params, "groups"))
         }
     }
 

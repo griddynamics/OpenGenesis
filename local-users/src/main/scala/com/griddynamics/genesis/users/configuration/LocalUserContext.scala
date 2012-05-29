@@ -32,6 +32,7 @@ import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.repository.SchemaCreator
 import com.griddynamics.genesis.users.service.{LocalGroupService, LocalUserService}
 import com.griddynamics.genesis.users.repository.{LocalUserGroupManagement, LocalGroupRepository, LocalUserRepository, LocalUserSchema}
+import com.griddynamics.genesis.groups.GroupService
 
 @Configuration
 class LocalUserContext extends UserServiceContext with Logging {
@@ -40,8 +41,8 @@ class LocalUserContext extends UserServiceContext with Logging {
 
     @Value("#{fileProps['genesis.system.jdbc.drop.db'] ?: false}") var dropSchema: Boolean = _
     lazy val groupRepo = new LocalGroupRepositoryImpl
-    @Bean def userService = new LocalUserService(new LocalUserRepository)
-    @Bean def groupService = new LocalGroupService(groupRepo)
+    @Bean def userService = new LocalUserService(new LocalUserRepository, groupService)
+    @Bean def groupService : GroupService = new LocalGroupService(groupRepo)
     @Bean def schemaCreator = {
         new UsersSchemaCreator(dropSchema, dataSource, transactionManager)
     }
