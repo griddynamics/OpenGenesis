@@ -72,6 +72,15 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
     @Transactional(readOnly = true)
     def getUsersGroups(username: String) = repository.groupsForUser(username)
 
+    @Transactional(readOnly = false)
+    def setUsersGroups(username: String, groups: Seq[String]) {
+        list.foreach{g =>
+            g.id.map(if(groups.contains(g.name))
+                addUserToGroup(_, username) else
+                removeUserFromGroup(_, username))
+        }
+    }
+
     @Transactional
     override def delete(a: UserGroup) = {
         authorityService.removeAuthoritiesFromGroup(a.name)
@@ -87,9 +96,11 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
     }
 
     @Transactional
-    def addUserToGroup(id: Int, username: String) = {
+    def addUserToGroup(id: Int, username: String) =  users(id).filter(_.username == username).isEmpty match {
+        case true =>
         repository.addUserToGroup(id, username)
         Success((id, username))
+        case _ => Success((id, username))
     }
 
     @Transactional
@@ -117,4 +128,5 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
 
     protected def validateCreation(c: UserGroup) = notEmpty(c, c.name, "name") ++
       notEmpty(c, c.description, "description") ++ must(c, "name must be unique") {c => findByName(c.name).isEmpty}
+
 }

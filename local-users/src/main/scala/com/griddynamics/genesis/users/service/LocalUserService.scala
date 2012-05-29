@@ -26,12 +26,13 @@ import com.griddynamics.genesis.users.UserService
 import org.springframework.transaction.annotation.{Propagation, Transactional}
 import com.griddynamics.genesis.validation.Validation
 import Validation._
-import com.griddynamics.genesis.users.repository.{LocalGroupRepository, LocalUserRepository}
+import com.griddynamics.genesis.users.repository.LocalUserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.service.AuthorityService
 import com.griddynamics.genesis.api.{Success, Failure, User}
+import com.griddynamics.genesis.groups.GroupService
 
-class LocalUserService(val repository: LocalUserRepository, val groupRepo: LocalGroupRepository) extends UserService with Validation[User]{
+class LocalUserService(val repository: LocalUserRepository, val groupService: GroupService) extends UserService with Validation[User]{
     @Autowired
     var authorityService: AuthorityService = null
 
@@ -49,17 +50,24 @@ class LocalUserService(val repository: LocalUserRepository, val groupRepo: Local
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
-    override def create(user: User, groups: List[String]) = {
-        validCreate(user, user => {
-            val newUser = repository.insert(user)
-            groups.flatMap(groupRepo.findByName(_).flatMap(_.id)).foreach(groupRepo.addUserToGroup(_, newUser.username))
-            newUser
-        })
+    def create(user: User, groups: Seq[String]) = create(user) match {
+        case s@Success(u, _) =>
+            groupService.setUsersGroups(u.username, groups)
+            s
+        case f => f
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
     override def update(user: User) = {
        validUpdate(user, repository.update(_) )
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
+    override def update(user: User, groups: Seq[String]) = update(user) match {
+        case s@Success(u, _) =>
+            groupService.setUsersGroups(user.username, groups)
+            s
+        case f => f
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
