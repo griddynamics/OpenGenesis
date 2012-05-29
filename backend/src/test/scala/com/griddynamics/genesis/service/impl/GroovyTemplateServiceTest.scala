@@ -104,4 +104,12 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
         assert(res.createWorkflow.variableDescriptions.filter(_.name == "optional").headOption.get.defaultValue == "1")
         assert(res.createWorkflow.variableDescriptions.filter(_.name == "optionalNoValue").headOption.get.isOptional)
     }
+
+    @Test def testOneOfVariable() {
+        val template = templateService.findTemplate("TestEnv", "0.1").get
+        var validate = template.createWorkflow.validate(Map("nodesCount" -> 1, "list" -> 2, "test" -> "test"))
+        validate = template.createWorkflow.validate(Map("nodesCount" -> 1, "test" -> "test", "list" -> 10))
+        assert(validate.isDefinedAt(0))
+        assert(validate(0).variableName == "list")
+    }
 }
