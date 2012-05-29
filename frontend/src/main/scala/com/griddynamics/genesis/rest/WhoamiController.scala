@@ -30,6 +30,7 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.ServletContext
 import com.griddynamics.genesis.GenesisFrontend
 import org.springframework.beans.factory.annotation.{Value, Autowired}
+import com.griddynamics.genesis.users.GenesisRole
 
 @Controller
 @RequestMapping(Array("/rest/whoami"))
@@ -45,6 +46,6 @@ class WhoamiController {
   def whoami(request: HttpServletRequest): Map[String, Any] = Map(
     "user" -> GenesisRestController.getCurrentUser,
     "logout_disabled" -> "false".equalsIgnoreCase(servletContext.getInitParameter(GenesisFrontend.logoutEnabledParamName)),
-    "administrator" -> (request.isUserInRole("ROLE_GENESIS_ADMIN") || rjaGroups.split(",").exists(request.isUserInRole(_)))
+    "administrator" -> (request.isUserInRole(GenesisRole.SystemAdmin.toString) || rjaGroups.split(",").exists(request.isUserInRole(_)))
   )
 }

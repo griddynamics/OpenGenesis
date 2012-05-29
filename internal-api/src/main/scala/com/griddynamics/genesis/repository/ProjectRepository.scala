@@ -23,9 +23,12 @@
 package com.griddynamics.genesis.repository
 
 import com.griddynamics.genesis.api
+import api.Project
 
 trait ProjectRepository {
-  def load(id: Int): api.Project;
+  def getProjects(ids: Iterable[Int]): Iterable[Project]
+
+  def load(id: Int): api.Project
 
   def list: List[api.Project]
 

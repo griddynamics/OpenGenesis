@@ -22,20 +22,21 @@
  */
 package com.griddynamics.genesis.spring.security
 
-import com.griddynamics.genesis.users.UserService
 import java.util.Arrays
 import scala.collection.JavaConversions._
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.{UsernameNotFoundException, User, UserDetailsService}
 import com.griddynamics.genesis.spring.ApplicationContextAware
-import com.griddynamics.genesis.service.AuthorityService
 import com.griddynamics.genesis.groups.GroupService
+import com.griddynamics.genesis.users.{GenesisRole, UserService}
+import com.griddynamics.genesis.service.{ProjectAuthorityService, AuthorityService}
 
 
-class GenesisUserDetailsService(adminUsername: String,
-                                adminPassword: String,
-                                authorityService: AuthorityService
-                                ) extends UserDetailsService with ApplicationContextAware {
+class GenesisUserDetailsService( adminUsername: String,
+                                 adminPassword: String,
+                                 authorityService: AuthorityService,
+                                 projectAuthorityService: ProjectAuthorityService
+                               ) extends UserDetailsService with ApplicationContextAware {
 
   lazy val userService: Option[UserService] = Option(applicationContext.getBean(classOf[UserService]))
   lazy val groupService: Option[GroupService] = Option(applicationContext.getBean(classOf[GroupService]))
@@ -51,14 +52,19 @@ class GenesisUserDetailsService(adminUsername: String,
           case None => List()
           case Some(gservice) => gservice.getUsersGroups(user.username)
         }
-        val authorities = (authorityService.getAuthorities(groups) ++ authorityService.getUserAuthorities(user.username)).distinct
-        new User(user.username, user.password.get, RoleBasedAuthority(authorities));
+        val authorities = (
+          authorityService.getAuthorities(groups) ++
+            authorityService.getUserAuthorities(user.username) ++
+            groups.map("GROUP_" + _.name) ++
+            (if (projectAuthorityService.isUserProjectAdmin(user.username, groups)) List(GenesisRole.ProjectAdmin.toString) else List())
+          ).distinct
+        new User(user.username, user.password.get, RoleBasedAuthority(authorities))
       }
 
       user.getOrElse(throw new UsernameNotFoundException("Couldn't find user = [" + username + "]"))
 
     } else {
-      new User(adminUsername, adminPassword, Arrays.asList(RoleBasedAuthority("ROLE_GENESIS"), RoleBasedAuthority("ROLE_GENESIS_ADMIN")));
+      new User(adminUsername, adminPassword, Arrays.asList(RoleBasedAuthority(GenesisRole.GenesisUser), RoleBasedAuthority(GenesisRole.SystemAdmin)))
     }
   }
 }
@@ -69,4 +75,8 @@ object RoleBasedAuthority {
   }
 
   def apply(roles: Iterable[String]): Iterable[GrantedAuthority] = roles.map (apply _)
+
+  def apply(role: GenesisRole.Value): GrantedAuthority = new GrantedAuthority() {
+    def getAuthority = role.toString
+  }
 }

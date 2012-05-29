@@ -5,7 +5,18 @@ import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
 import com.griddynamics.genesis.service.impl.ProjectService
-import com.griddynamics.genesis.api.Project
+import org.springframework.security.acls.model.{MutableAcl, NotFoundException, MutableAclService}
+import org.springframework.transaction.annotation.Transactional
+import com.griddynamics.genesis.spring.security.acls.ScalaObjectIdentityImpl
+import org.springframework.security.acls.domain.{GrantedAuthoritySid, PrincipalSid, BasePermission}
+import collection.mutable.Buffer
+import com.griddynamics.genesis.api.{ExtendedResult, RequestResult, Project}
+import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.core.Authentication
+import java.security.Principal
+import com.griddynamics.genesis.users.GenesisRole
+import org.springframework.beans.factory.annotation.{Value, Autowired}
+import com.griddynamics.genesis.service.{ProjectAuthorityService, AuthorityService}
 
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
@@ -31,10 +42,26 @@ import com.griddynamics.genesis.api.Project
  */
 @Controller
 @RequestMapping(value = Array("/rest/projects"))
-class ProjectsController(projectService: ProjectService) extends RestApiExceptionsHandler {
+class ProjectsController(projectService: ProjectService, authorityService: ProjectAuthorityService) extends RestApiExceptionsHandler {
+
+  @Value("${genesis.system.server.mode:frontend}")
+  var mode = ""
+
+  lazy val backendMode = mode.matches("backend")  //todo(RB): temp workaround for 3 tier mode
+
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
-  def listProjects: List[Project] = projectService.list.toList.sortWith(_.name.toLowerCase < _.name.toLowerCase)
+  def listProjects(request: HttpServletRequest): Iterable[Project] = {
+    import scala.collection.JavaConversions._
+    if (backendMode || request.isUserInRole(GenesisRole.SystemAdmin.toString)) {
+      projectService.list
+    } else {
+      val auth = SecurityContextHolder.getContext.getAuthentication
+      val authorities = auth.getAuthorities.map (_.getAuthority)
+      val ids = authorityService.getAllowedProjectIds(request.getUserPrincipal.getName, authorities)
+      projectService.getProjects(ids)
+    }
+  }
 
   @RequestMapping(method = Array(RequestMethod.POST))
   @ResponseBody
@@ -49,14 +76,15 @@ class ProjectsController(projectService: ProjectService) extends RestApiExceptio
   def findProject(@PathVariable("projectId") projectId: Int): Project =
     projectService.get(projectId).getOrElse { throw new ResourceNotFoundException }
 
+
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.PUT))
   @ResponseBody
   def updateProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response: HttpServletResponse) = {
     val paramsMap = GenesisRestController.extractParamsMap(request)
     val project = extractProject(Option(projectId), paramsMap)
     projectService.get(projectId) match {
-        case Some(p) => projectService.update(project)
-        case _ => throw new ResourceNotFoundException
+      case Some(p) => projectService.update(project)
+      case _ => throw new ResourceNotFoundException
     }
   }
 
@@ -72,5 +100,41 @@ class ProjectsController(projectService: ProjectService) extends RestApiExceptio
     val description = extractOption("description", paramsMap)
 
     new Project(projectId, name, description, projectManager)
+  }
+
+  @RequestMapping(value = Array("{projectId}/roles/{roleName}"), method = Array(RequestMethod.PUT))
+  @ResponseBody
+  def updateProjectRole(@PathVariable("projectId") projectId: Int,
+                        @PathVariable("roleName") roleName: String,
+                        request: HttpServletRequest,
+                        response: HttpServletResponse): RequestResult = {
+    val paramsMap = GenesisRestController.extractParamsMap(request)
+    val users = GenesisRestController.extractListValue("users", paramsMap)
+    val groups = GenesisRestController.extractListValue("groups", paramsMap)
+    authorityService.updateProjectAuthority(projectId,  GenesisRole.withName(roleName), users, groups)
+  }
+
+  @RequestMapping(value = Array("{projectId}/roles/{roleName}"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  def loadProjectAuths(@PathVariable("projectId") projectId: Int,
+                       @PathVariable("roleName") roleName: String,
+                       request: HttpServletRequest,
+                       response: HttpServletResponse): ExtendedResult[Map[String, Iterable[String]]] = {
+    authorityService.getProjectAuthority(projectId, GenesisRole.withName(roleName)).map{ case (users, groups) => Map("users" -> users, "groups" -> groups) }
+  }
+
+  @RequestMapping(value = Array("{projectId}/permissions"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  def permissions(@PathVariable("projectId") projectId: Int,
+                       request: HttpServletRequest,
+                       response: HttpServletResponse): List[String] = {
+    import scala.collection.JavaConversions._
+    if (backendMode || request.isUserInRole(GenesisRole.SystemAdmin.toString)) {
+      List(GenesisRole.ProjectAdmin.toString, GenesisRole.ProjectUser.toString)
+    } else {
+      val auth: Authentication = SecurityContextHolder.getContext.getAuthentication
+      val authorities = auth.getAuthorities.map (_.getAuthority)
+      authorityService.getGrantedAuthorities(projectId, request.getUserPrincipal.getName, authorities).map(_.toString)
+    }
   }
 }

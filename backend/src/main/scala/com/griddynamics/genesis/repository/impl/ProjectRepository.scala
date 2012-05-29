@@ -28,26 +28,40 @@ import com.griddynamics.genesis.api
 import com.griddynamics.genesis.repository.AbstractGenericRepository
 import com.griddynamics.genesis.repository
 import org.squeryl.PrimitiveTypeMode._
+import org.springframework.transaction.annotation.Transactional
 
 class ProjectRepository extends AbstractGenericRepository[model.Project, api.Project](GenesisSchema.projects)
   with repository.ProjectRepository {
 
+
+  @Transactional(readOnly = true)
+  override def list = from(table) { project =>
+    select(project) orderBy(project.id)
+  }.toList.map(convert(_))
+
+  @Transactional(readOnly = true)
   def findByName(name: String): Option[api.Project] = from(table) {
     item => where(item.name === name) select (item)
   }.headOption.map(convert(_))
 
+
+  @Transactional(readOnly = true)
+  def getProjects(ids: Iterable[Int]) = from(table) {
+    item => where(item.id in ids) select (item) orderBy(item.id)
+  }.toList.map(convert _)
+
   override implicit def convert(entity: model.Project): api.Project = {
     val id = entity.id match {
-      case 0 => None;
-      case _ => Some(entity.id);
+      case 0 => None
+      case _ => Some(entity.id)
     }
     new api.Project(id, entity.name, entity.description, entity.projectManager)
   }
 
   override implicit def convert(dto: api.Project): model.Project = {
     val project = new model.Project(dto.name, dto.description, dto.projectManager)
-    project.id = dto.id.getOrElse(0);
-    project;
+    project.id = dto.id.getOrElse(0)
+    project
   }
 }
 

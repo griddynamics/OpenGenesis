@@ -33,7 +33,7 @@
        " >
     <import resource="mvc-config.xml"/>
 
-    <s:global-method-security pre-post-annotations="enabled" proxy-target-class="true"/>
+    <s:global-method-security pre-post-annotations="enabled" proxy-target-class="true" />
 
     <bean id="genesisService" class="com.griddynamics.genesis.spring.GenesisServiceFactoryBean">
         <constructor-arg name="useMock" value="${genesis.system.service.rest.use.mock:false}"/>
@@ -42,6 +42,7 @@
 
     <bean class="com.griddynamics.genesis.rest.ProjectsController">
         <constructor-arg name="projectService" ref="projectService"/>
+        <constructor-arg name="authorityService" ref="projectAuthorityService"/>
     </bean>
 
     <bean class="com.griddynamics.genesis.rest.ProjectPropertiesController"/>
@@ -73,6 +74,7 @@
 
     <bean class="com.griddynamics.genesis.rest.RolesController">
         <constructor-arg name="authorityService" ref="authorityService"/>
+        <constructor-arg name="projectAuthorityService" ref="projectAuthorityService"/>
     </bean>
 
     <bean class="com.griddynamics.genesis.rest.WhoamiController"/>
