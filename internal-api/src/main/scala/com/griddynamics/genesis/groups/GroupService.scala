@@ -47,6 +47,8 @@ trait GroupService extends CRUDService[UserGroup, String]{
     def update(group: UserGroup, users: List[String]) : ExtendedResult[UserGroup]
     @Transactional(readOnly = true)
     def getUsersGroups(username: String): Iterable[UserGroup]
+    @Transactional(readOnly = false)
+    def setUsersGroups(username: String, groups: Seq[String])
     @Transactional(readOnly = true)
     def search(nameLike: String): List[UserGroup]
 }
