@@ -84,7 +84,7 @@ case class RequestResult(serviceErrors : Map[String, String] = Map(),
     }
 }
 
-sealed abstract class ExtendedResult[+S]() {
+sealed abstract class ExtendedResult[+S]() extends Product with Serializable {
 
     def ++[B >: S](r: ExtendedResult[B]) : ExtendedResult[B] = (this, r) match {
         case (Success(a, _), Success(b, _)) => Success(a)
@@ -96,11 +96,11 @@ sealed abstract class ExtendedResult[+S]() {
 
 final case class Success[+S](result: S, isSuccess: Boolean = true) extends ExtendedResult[S]
 
-final case class Failure[+S](serviceErrors : Map[String, String] = Map(),
+final case class Failure(serviceErrors : Map[String, String] = Map(),
                    variablesErrors : Map[String, String] = Map(),
                    compoundServiceErrors : Seq[String] = Seq(),
                    compoundVariablesErrors : Seq[String] = Seq(),
-                   isNotFound: Boolean = false, isSuccess: Boolean = false) extends ExtendedResult[S]
+                   isNotFound: Boolean = false, isSuccess: Boolean = false) extends ExtendedResult[Nothing]
 
 case class User(username: String, email: String, firstName: String, lastName: String, jobTitle: Option[String], password: Option[String])
 case class UserGroup(name: String, description: String, mailingList: Option[String], id: Option[Int] = None)
