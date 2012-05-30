@@ -20,7 +20,7 @@ trait Validation[C] {
 
     def validOnCreation(value: C)(block: C => ExtendedResult[C]): ExtendedResult[C] = {
         validateCreation(value) match {
-            case f: Failure[C] => f
+            case f: Failure => f
             case _ => {
                 block(value)
             }
@@ -29,7 +29,7 @@ trait Validation[C] {
 
     def validOnUpdate(value: C)(block: C => ExtendedResult[C]): ExtendedResult[C] = {
         validateUpdate(value) match {
-            case f: Failure[C] => f
+            case f: Failure => f
             case _ => {
                 block(value)
             }
@@ -40,7 +40,7 @@ trait Validation[C] {
 }
 
 object Validation {
-    val usernamePattern = """^([a-zA-Z0-9@.-]{2,64})$""".r
+    val usernamePattern = """^([a-zA-Z0-9.-]{2,64})$""".r
     val projectNamePattern = """^([\p{L}0-9@.\-/_ ]{2,64})$""".r
     val namePattern = """^([\p{L} ]{2,128})$""".r
     val emailPattern = """^[\w][\w.-]+@([\w-]+\.)+[a-zA-Z]{2,5}$""".r
@@ -53,7 +53,7 @@ object Validation {
     def mustMatch[C](obj: C, fieldName: String, error : String = "Invalid format")(pattern: Regex)(value: String) : ExtendedResult[C] = {
         value match {
             case pattern(s) => Success(obj)
-            case _ => Failure[C](variablesErrors = Map(fieldName -> error))
+            case _ => Failure(variablesErrors = Map(fieldName -> error))
         }
     }
 
@@ -63,7 +63,7 @@ object Validation {
 
     def mustPresent[C](obj:C, value: Option[_], fieldName: String, error : String = "Must be present") : ExtendedResult[C] = {
         value match {
-            case None => Failure[C](variablesErrors = Map(fieldName -> error))
+            case None => Failure(variablesErrors = Map(fieldName -> error))
             case _ => Success(obj)
         }
     }
