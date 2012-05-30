@@ -76,6 +76,11 @@ class GenesisRestService(storeService: StoreService,
         broker.cancelWorkflow(envName)
     }
 
+
+    def isEnvExists(envName: String, projectId: Int): Boolean = {
+      storeService.isEnvExist(projectId, envName)
+    }
+
     def describeEnv(envName: String) = {
         storeService.findEnv(envName) match {
             case Some(env) =>
@@ -139,6 +144,7 @@ object GenesisRestService {
             template.createWorkflow.name,
             template.destroyWorkflow.name,
             vmDescs.toSeq,
+            env.projectId,
             workflowHistoryDesc(history)
         )
     }

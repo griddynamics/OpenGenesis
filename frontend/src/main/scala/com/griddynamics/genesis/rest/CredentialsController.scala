@@ -10,7 +10,7 @@ import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.web.bind.annotation._
 
 @Controller
-@RequestMapping(Array("/rest/credentials"))
+@RequestMapping(Array("/rest/projects/{projectId}/credentials"))
 class CredentialsController(service: CredentialsStoreService) extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
@@ -22,15 +22,15 @@ class CredentialsController(service: CredentialsStoreService) extends RestApiExc
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
   @ResponseBody
-  def listCredentials(@RequestParam("projectId") projectId: Int) = service.list(projectId).map(_.copy(credential = None))
+  def listCredentials(@PathVariable("projectId") projectId: Int) = service.list(projectId).map(_.copy(credential = None))
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
-  def deleteCredentials(@PathVariable("id") id: Int) = service.delete(id)
+  def deleteCredentials(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int) = service.delete(projectId, id)
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def getCredentials(@PathVariable("id") credId: Int) = service.get(credId).map(_.copy(credential = None))
+  def getCredentials(@PathVariable("projectId") projectId: Int, @PathVariable("id") credId: Int) = service.get(projectId, credId).map(_.copy(credential = None))
 
 
   private def extractCredentials(request: HttpServletRequest, id: Option[Int]): api.Credentials = {

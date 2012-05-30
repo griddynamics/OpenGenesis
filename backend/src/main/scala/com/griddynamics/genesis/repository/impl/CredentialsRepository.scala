@@ -17,8 +17,8 @@ class CredentialsRepository extends AbstractGenericRepository[model.Credentials,
 
   implicit def convert(dto: api.Credentials): model.Credentials = {
     val creds = new model.Credentials(dto.projectId, dto.cloudProvider, dto.pairName, dto.identity, dto.credential, dto.fingerPrint)
-    creds.id = toModelId(dto.id);
-    creds;
+    creds.id = toModelId(dto.id)
+    creds
   }
 
   @Transactional(readOnly = true)
@@ -40,10 +40,22 @@ class CredentialsRepository extends AbstractGenericRepository[model.Credentials,
         select (item)
     ).headOption.map(convert(_))
 
+  @Transactional(readOnly = true)
   def find(cloudProvider: String, fingerPrint: String) = from(table) (
     item =>
       where((Option(fingerPrint) === item.fingerPrint ) and (cloudProvider === item.cloudProvider) )
       select (item)
   ).headOption.map(convert(_))
 
+  @Transactional
+  def delete(projectId: Int, id: Int) = {
+    table.deleteWhere(item => (id === item.id) and (projectId === item.projectId) )
+  }
+
+  @Transactional
+  def get(projectId: Int, id: Int) = from(table) (
+    item =>
+      where((id === item.id) and (projectId === item.projectId )  )
+        select (item)
+  ).headOption.map(convert(_))
 }
