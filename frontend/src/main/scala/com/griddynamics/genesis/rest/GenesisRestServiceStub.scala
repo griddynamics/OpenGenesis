@@ -54,7 +54,8 @@ class GenesisRestServiceStub() extends GenesisService {
             workflows,
             "create",
             "destroy",
-            Seq(vmT, vmT, vmT)
+            Seq(vmT, vmT, vmT),
+            1
         )
 
     var envs = Seq(
@@ -146,4 +147,6 @@ class GenesisRestServiceStub() extends GenesisService {
     def listTemplates(projectId: String) = Seq(templateT)
 
    def getLogs(envName: String, stepId: Int) = Seq("aaa", "bbb")
+
+  def isEnvExists(envName: String, projectId: Int) = true
 }

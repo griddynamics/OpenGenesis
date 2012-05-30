@@ -40,7 +40,8 @@ case class EnvironmentDetails(name : String,
                               createWorkflowName : String,
                               destroyWorkflowName : String,
                               vms : Seq[VirtualMachine],
-                              workflowsHistory : Option[Seq[WorkflowDetails]] = None)
+                              projectId: Int,
+                              workflowsHistory : Option[Seq[WorkflowDetails]] = None )
 
 case class Variable(name : String, description : String, optional: Boolean = false, defaultValue: String = null, values:Seq[String] = Seq())
 

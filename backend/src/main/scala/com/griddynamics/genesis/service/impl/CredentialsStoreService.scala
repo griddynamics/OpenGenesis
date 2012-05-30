@@ -22,11 +22,14 @@ class CredentialsStoreService(repository: CredentialsRepository) extends Validat
     keySpec = BasicCrypto.secretKeySpec(key)
   }
 
-  def get(id: Int) = repository.get(id)
+  def get(projectId: Int, id: Int): Option[api.Credentials] = repository.get(projectId, id)
 
-  def delete(id: Int) = {
-    repository.delete(id)
-    RequestResult(isSuccess = true)
+  def delete(projectId: Int, id: Int) = {
+    if(repository.delete(projectId, id) > 0){
+      RequestResult(isSuccess = true)
+    } else {
+      RequestResult(isSuccess = false, isNotFound = true)
+    }
   }
 
   def list(projectId: Int) = repository.list(projectId)

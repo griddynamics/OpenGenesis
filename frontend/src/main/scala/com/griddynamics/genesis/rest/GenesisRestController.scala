@@ -27,62 +27,25 @@ import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation._
 import java.io.InputStreamReader
-import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
-import com.griddynamics.genesis.api.{EnvironmentDetails, GenesisService}
-import org.springframework.http.HttpStatus
+import javax.servlet.http.HttpServletRequest
 import java.security.Principal
-import com.griddynamics.genesis.http.TunnelFilter
 import java.util.Properties
-import org.springframework.beans.factory.annotation.{Qualifier, Autowired, Value}
+import org.springframework.beans.factory.annotation.{Qualifier, Autowired}
 import collection.JavaConversions
 import com.griddynamics.genesis.service.TemplateService
+import com.griddynamics.genesis.api.GenesisService
 
 @Controller
 @RequestMapping(Array("/rest"))
 class GenesisRestController(genesisService: GenesisService, templateService: TemplateService) extends RestApiExceptionsHandler {
 
-
-    @Value("${genesis.system.server.mode:frontend}")
-    var mode = ""
-
     @Autowired
     @Qualifier("buildInfo")
     var buildInfoProps: Properties = _
 
-    @RequestMapping(value = Array("create"), method = Array(RequestMethod.POST))
+    @RequestMapping(value = Array("build-info"), method = Array(RequestMethod.GET))
     @ResponseBody
-    def createEnv(request: HttpServletRequest, response : HttpServletResponse) = {
-        val paramsMap = extractParamsMap(request)
-        val envName = extractValue("envName", paramsMap)
-        val templateName = extractValue("templateName", paramsMap)
-        val templateVersion = extractValue("templateVersion", paramsMap)
-        val variables = extractVariables(paramsMap)
-        val projectId = extractValue("projectId", paramsMap)
-
-        val user = mode match {
-          case "backend" => request.getHeader(TunnelFilter.SEC_HEADER_NAME)
-          case _ => getCurrentUser
-        }
-        genesisService.createEnv(projectId.toInt, envName, user, templateName, templateVersion, variables)
-    }
-
-    @RequestMapping(value=Array("envs/{envName}/logs/{stepId}"))
-    def stepLogs(@PathVariable("envName") envName: String, @PathVariable stepId: Int, response: HttpServletResponse, request: HttpServletRequest) {
-      val logs: Seq[String] = genesisService.getLogs(envName, stepId)
-      val text = if (logs.isEmpty)
-        "No logs yet"
-      else
-        logs.reduceLeft(_ + "\n" + _)
-      response.setContentType("text/plain")
-      response.getWriter.write(text)
-      response.getWriter.flush()
-    }
-
-    @RequestMapping(value = Array("envs/{envName}"), method = Array(RequestMethod.DELETE))
-    @ResponseBody
-    def deleteEnv(@PathVariable("envName") envName: String,
-                  request: HttpServletRequest) =
-        genesisService.destroyEnv(envName, Map[String, String]())
+    def buildInfo = JavaConversions.propertiesAsScalaMap(buildInfoProps).toMap
 
     @RequestMapping(value = Array("templates"), method = Array(RequestMethod.GET))
     @ResponseBody
@@ -91,38 +54,12 @@ class GenesisRestController(genesisService: GenesisService, templateService: Tem
         case _ => genesisService.listTemplates
     }
 
-    @RequestMapping(value = Array("templates/{templateName}/v{templateVersion:.+}"), method = Array(RequestMethod.GET))
+  @RequestMapping(value = Array("templates/{templateName}/v{templateVersion:.+}"), method = Array(RequestMethod.GET))
     @ResponseBody
     def templateContent(@PathVariable templateName: String, @PathVariable templateVersion: String) = {
       val content = templateService.templateRawContent(templateName, templateVersion).getOrElse("")
       Map("content" -> content)
     }
-
-    //TODO: divide method
-    @RequestMapping(value = Array("envs/{envName}"), method = Array(RequestMethod.GET))
-    @ResponseBody
-    def describeEnv(@PathVariable("envName") envName: String, response : HttpServletResponse) : EnvironmentDetails =
-        genesisService.describeEnv(envName).getOrElse(throw new ResourceNotFoundException)
-
-    @RequestMapping(value = Array("envs"), method = Array(RequestMethod.GET))
-    @ResponseBody
-    def listEnvs(@RequestParam("projectId") projectId: Int, request: HttpServletRequest) = genesisService.listEnvs(projectId)
-
-    @RequestMapping(value = Array("cancel/{envName}"), method = Array(RequestMethod.POST))
-    @ResponseBody @ResponseStatus(HttpStatus.NO_CONTENT)
-    def cancelWorkflow(@PathVariable("envName") envName: String) { genesisService.cancelWorkflow(envName) }
-
-    @RequestMapping(value = Array("exec/{envName}/{workflowName}"), method = Array(RequestMethod.POST))
-    @ResponseBody
-    def requestWorkflow(@PathVariable("envName") env: String,
-                        @PathVariable("workflowName") workflow: String,
-                        request: HttpServletRequest) =
-        genesisService.requestWorkflow(env, workflow, extractVariables(extractParamsMap(request)))
-
-
-    @RequestMapping(value = Array("build-info"), method = Array(RequestMethod.GET))
-    @ResponseBody
-    def buildInfo = JavaConversions.propertiesAsScalaMap(buildInfoProps).toMap
 
 }
 
@@ -131,7 +68,7 @@ object GenesisRestController {
 
     def extract[B <: AnyRef : Manifest](request: HttpServletRequest): B = {
       implicit val formats = DefaultFormats
-      val json = parse(scala.io.Source.fromInputStream(request.getInputStream).getLines().mkString(" "));
+      val json = parse(scala.io.Source.fromInputStream(request.getInputStream).getLines().mkString(" "))
       json.extract[B]
     }
 
@@ -172,6 +109,14 @@ object GenesisRestController {
       val value = values.getOrElse(valueName, throw new MissingParameterException(valueName))
       value match {
         case list: List[_] => list.map(_.toString)
+        case _ => throw new InvalidInputException
+      }
+    }
+
+    def extractMapValue(valueName: String, values: Map[String, Any]): Map[String, Any] = {
+      val value = values.getOrElse(valueName, throw new MissingParameterException(valueName))
+      value match {
+        case map: Map[String,_] => map
         case _ => throw new InvalidInputException
       }
     }

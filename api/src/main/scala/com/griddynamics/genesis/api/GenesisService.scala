@@ -43,4 +43,6 @@ trait GenesisService {
     def requestWorkflow(envName : String, workflowName : String, variables : Map[String, String]) : RequestResult
 
     def cancelWorkflow(envName : String)
+
+    def isEnvExists(envName: String, projectId: Int): Boolean
 }

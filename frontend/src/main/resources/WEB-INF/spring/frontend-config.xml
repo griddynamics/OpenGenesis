@@ -54,6 +54,10 @@
         <constructor-arg name="repository" ref="pluginRepository"/>
     </bean>
 
+    <bean class="com.griddynamics.genesis.rest.EnvironmentsController">
+        <constructor-arg name="genesisService" ref="genesisService"/>
+    </bean>
+
     <bean class="com.griddynamics.genesis.rest.GenesisRestController">
         <constructor-arg name="genesisService" ref="genesisService"/>
         <constructor-arg name="templateService" ref="templateService"/>

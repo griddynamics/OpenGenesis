@@ -34,6 +34,8 @@ trait StoreService {
 
     def findEnv(name: String): Option[Environment]
 
+    def isEnvExist(projectId: Int, envName: String): Boolean
+
     def getVm(instanceId: String): (Environment, VirtualMachine)
 
     def listVms(env: Environment): Seq[VirtualMachine]
