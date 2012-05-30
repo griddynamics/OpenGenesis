@@ -55,6 +55,11 @@ class StoreService extends service.StoreService {
     }
 
     @Transactional(readOnly = true)
+    def isEnvExist(projectId: Int, envName: String): Boolean = {
+      !from(GS.envs)(env => where(env.projectId === projectId and env.name === envName) select (env.id)).headOption.isEmpty
+    }
+
+    @Transactional(readOnly = true)
     def findEnv(envName: String) = {
         val result = from(GS.envs)(e => where(e.name === envName) select (e))
         val envs = if (result.size == 1) Some(result.single) else None

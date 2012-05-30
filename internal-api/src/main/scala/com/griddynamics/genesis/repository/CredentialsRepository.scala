@@ -9,11 +9,11 @@ trait CredentialsRepository {
 
   def list(projectId: Int): Iterable[api.Credentials]
 
-  def delete(key: Int): Int
+  def delete(projectId: Int, id: Int): Int
 
-  def find(projectId: Int, cloudProvider: String, name: String): Option[api.Credentials]
+  def find(projectId: Int, cloudProvider: String, keyPairName: String): Option[api.Credentials]
 
   def find(cloudProvider: String, fingerPrint: String): Option[api.Credentials]
 
-  def get(id: Int): Option[api.Credentials]
+  def get(projectId: Int, id: Int): Option[api.Credentials]
 }
