@@ -25,12 +25,12 @@ package com.griddynamics.genesis.users.service
 import com.griddynamics.genesis.users.UserService
 import org.springframework.transaction.annotation.{Propagation, Transactional}
 import com.griddynamics.genesis.validation.Validation
-import Validation._
+import com.griddynamics.genesis.validation.Validation._
 import com.griddynamics.genesis.users.repository.LocalUserRepository
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.service.AuthorityService
-import com.griddynamics.genesis.api.{Success, Failure, User}
 import com.griddynamics.genesis.groups.GroupService
+import com.griddynamics.genesis.api._
 
 class LocalUserService(val repository: LocalUserRepository, val groupService: GroupService) extends UserService with Validation[User]{
     @Autowired
@@ -50,11 +50,17 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
-    def create(user: User, groups: Seq[String]) = create(user) match {
-        case s@Success(u, _) =>
-            groupService.setUsersGroups(u.username, groups)
-            s
-        case f => f
+    override def create(user: User, groups: Seq[String]) = {
+        checkGroups(groups, user) match {
+            case f: Failure => f
+            case Success(_,_) =>
+                create(user) match {
+                    case s@Success(u, _) =>
+                        groupService.setUsersGroups(u.username, groups)
+                        s
+                    case f => f
+                }
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
@@ -63,12 +69,18 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
-    override def update(user: User, groups: Seq[String]) = update(user) match {
-        case s@Success(u, _) =>
-            groupService.setUsersGroups(user.username, groups)
-            s
-        case f => f
+    override def update(user: User, groups: Seq[String]) = checkGroups(groups, user) match {
+        case f: Failure => f
+        case _ => {
+            update(user) match {
+                case s@Success(u, _) =>
+                    groupService.setUsersGroups(user.username, groups)
+                    s
+                case f => f
+            }
+        }
     }
+
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
     override def delete(a: User) = {
@@ -77,6 +89,16 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
          Failure()
       else
          Success(a)
+    }
+
+    def checkGroups(groups: Seq[String], user : User) = {
+        groups.map(name => {
+            groupService.findByName(name) match {
+            case Some(g) => Success(user)
+            case None => Failure(isNotFound = true,
+                serviceErrors = Map("groups" -> "Group %s does not exist".format(name)))
+        }
+        }).reduceLeft(_ ++ _)
     }
 
     protected def validateUpdate(user: User) =
@@ -99,7 +121,7 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
             mustMatchName(user, user.firstName, "firstName") ++
             mustMatchName(user, user.lastName, "lastName") ++
             mustMatchEmail(user, user.email, "email") ++
-            mustPresent(user, user.password, "password")
+            notEmpty(user, user.password.getOrElse(""), "password")
     }
 
 
