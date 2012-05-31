@@ -16,6 +16,11 @@ template {
     version("0.1")
     createWorkflow("create")
     destroyWorkflow("destroy")
+    dataSources {
+        dataSource("staticList").name("ds1").config([list:["value1",  "value2"]])
+        dataSource("staticList").name("ds2").config([list:["value3"]])
+    }
+
 
     workflow("create") {
         variables {
@@ -26,6 +31,8 @@ template {
             variable("optional").description("Optional variable").optional(defaultValue = 1)
             variable("optionalNoValue").description("Optional variable without default value").optional()
             variable("list").as(Integer).description("Variable that has one value from a list").oneOf {[1, 2, 3]}.optional()
+            variable("listDS1").as(String).description("Variable that has one value from DS").oneOf {ds1}.optional()
+            variable("listDS12").as(String).description("Variable that has one value from DS").oneOf {ds1 + ds2}.optional()
         }
         steps {
             teststep {

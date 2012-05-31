@@ -31,7 +31,7 @@ import com.griddynamics.genesis.plugin._
 import reflect.BeanProperty
 import org.springframework.core.convert.support.ConversionServiceFactory
 import com.griddynamics.genesis.workflow.Step
-import com.griddynamics.genesis.template.{VersionedTemplate, TemplateRepository}
+import com.griddynamics.genesis.template.{ListVarDSFactory, VersionedTemplate, TemplateRepository}
 
 case class DoNothingStep(name: String) extends Step {
   override def stepDescription = "Best step ever!"
@@ -52,7 +52,8 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/ExampleEnv.genesis"))
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
     val templateService = new GroovyTemplateService(templateRepository,
-        List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService())
+        List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
+        Seq(new ListVarDSFactory))
 
     @Test def testEmbody() {
         val res = templateService.findTemplate("TestEnv", "0.1").get.createWorkflow.embody(Map("nodesCount" -> "1", "test" -> "test"))
@@ -111,5 +112,18 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
         validate = template.createWorkflow.validate(Map("nodesCount" -> 1, "test" -> "test", "list" -> 10))
         assert(validate.isDefinedAt(0))
         assert(validate(0).variableName == "list")
+    }
+
+    @Test def testOneOfDS() {
+        val template = templateService.findTemplate("TestEnv", "0.1").get
+        val varDesc =  template.createWorkflow.variableDescriptions
+        assert(varDesc.nonEmpty)
+        val listDS1 = varDesc.find(_.name == "listDS1")
+        assert(listDS1.isDefined)
+        val S1 = Seq("value1", "value2")
+        expect(S1)(listDS1.get.values)
+        val listDS12 = varDesc.find(_.name == "listDS12")
+        assert(listDS12.isDefined)
+        expect(S1 :+ "value3")(listDS12.get.values)
     }
 }
