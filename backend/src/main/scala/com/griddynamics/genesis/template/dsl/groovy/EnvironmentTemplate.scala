@@ -23,9 +23,10 @@
 package com.griddynamics.genesis.template.dsl.groovy
 
 import collection.mutable.ListBuffer
-import groovy.lang.Closure
 import scala.Some
 import java.lang.IllegalStateException
+import groovy.lang.{GroovyObjectSupport, Closure}
+import com.griddynamics.genesis.template.{DataSourceFactory, VarDataSource}
 
 class EnvWorkflow(val name : String, val variables : List[VariableDetails], val stepsGenerator : Option[Closure[Unit]])
 
@@ -41,7 +42,7 @@ class VariableDetails(val name : String, val clazz : Class[_ <: AnyRef], val des
                       val validators : Seq[Closure[Boolean]], val isOptional: Boolean = false, val defaultValue: Option[Any],
                       val valuesList: Option[(Any => Seq[AnyRef])] = None)
 
-class VariableBuilder(val name : String) {
+class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) {
     var description : String = _
     var validators = new ListBuffer[Closure[Boolean]]
     var clazz : Class[_ <: AnyRef] = classOf[String]
@@ -71,6 +72,7 @@ class VariableBuilder(val name : String) {
     }
 
     def oneOf(values: Closure[java.util.Collection[Any]]) = {
+        dsObjSupport.foreach(values.setDelegate(_))
         valuesList = Option({_ => values.call().toArray })
         validators += new Closure[Boolean]() {
             def doCall(args: Array[Any]): Boolean = {
@@ -83,11 +85,11 @@ class VariableBuilder(val name : String) {
     def newVariable = new VariableDetails(name, clazz, description, validators, isOptional, Option(defaultValue), valuesList)
 }
 
-class VariableDeclaration {
+class VariableDeclaration(val dsObjSupport: Option[DSObjectSupport]) {
     val builders = new ListBuffer[VariableBuilder]
 
     def variable(name : String) = {
-        val builder = new VariableBuilder(name)
+        val builder = new VariableBuilder(name, dsObjSupport)
         builders += builder
         builder
     }
@@ -106,7 +108,7 @@ class WorkflowDeclaration {
     }
 }
 
-class EnvTemplateBuilder {
+class EnvTemplateBuilder(val dataSourceFactories : Seq[DataSourceFactory]) {
     var name : String = _
     var version : String = _
 
@@ -114,6 +116,8 @@ class EnvTemplateBuilder {
     var destroyWorkflow : String = _
 
     val workflows = ListBuffer[EnvWorkflow]()
+    
+    var dsObjSupport : Option[DSObjectSupport] = None
 
     def workflow(name: String, details : Closure[Unit]) = {
         if (workflows.find(_.name == name).isDefined)
@@ -124,7 +128,7 @@ class EnvTemplateBuilder {
 
         val variableBuilders = delegate.variablesBlock match {
             case Some(block) => {
-                val variablesDelegate = new VariableDeclaration
+                val variablesDelegate = new VariableDeclaration(dsObjSupport)
                 block.setDelegate(variablesDelegate)
                 block.call()
                 variablesDelegate.builders
@@ -160,6 +164,16 @@ class EnvTemplateBuilder {
         if (destroyWorkflow != null) throw new IllegalStateException("destroy workflow name is already set")
         this.destroyWorkflow = name
         this
+    }
+
+    def dataSources(ds : Closure[Unit]) {
+        val dsDelegate = new DataSourceDeclaration(dataSourceFactories)
+        ds.setDelegate(dsDelegate)
+        ds.call()
+        val dsBuilders = dsDelegate.builders
+
+        val map = (for (builder <- dsBuilders) yield builder.newDS).toMap
+        dsObjSupport = Option(new DSObjectSupport(map))
     }
 
     def newTemplate = {
@@ -199,3 +213,38 @@ class BlockDeclaration {
         bodies += body
     }
 }
+
+
+class DataSourceDeclaration(dsFactories: Seq[DataSourceFactory]) {
+    val builders = new ListBuffer[DataSourceBuilder]
+
+    def dataSource(mode : String) = dsFactories.find(mode == _.mode).map( factory => {
+        val builder = new DataSourceBuilder(factory)
+        builders += builder
+        builder
+    }).getOrElse(throw new IllegalArgumentException("No such variable datasource provider exists: " + mode))
+}
+
+class DataSourceBuilder(val factory : DataSourceFactory) {
+    var name : String = _
+    var conf : Map[String, Any] = _
+
+    def name(nm : String) = {
+        name_=(nm)
+        this
+    }
+
+    def config(map : java.util.Map[String, Any]) = {
+        this.conf = collection.JavaConversions.mapAsScalaMap(map).toMap
+        this
+    }
+
+    def newDS = (name, {val ds = factory.newDataSource; ds.config(conf); ds})
+}
+
+ class DSObjectSupport(val dsMap: Map[String, VarDataSource]) extends GroovyObjectSupport {
+     override def getProperty(name: String) = dsMap.get(name) match {
+         case Some(src) => collection.JavaConversions.asJavaCollection(src.getData)
+         case _ => super.getProperty(name)
+     }
+ }

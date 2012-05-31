@@ -32,15 +32,16 @@ import com.griddynamics.genesis.plugin.StepBuilderFactory
 import org.springframework.core.convert.ConversionService
 import java.lang.IllegalStateException
 import scala.Some
-import com.griddynamics.genesis.template.{VersionedTemplate, TemplateRepository}
 import com.griddynamics.genesis.util.Logging
 import reflect.BeanProperty
 import java.util.{Map => JMap}
 import com.griddynamics.genesis.template.dsl.groovy._
+import com.griddynamics.genesis.template.{DataSourceFactory, VersionedTemplate, TemplateRepository}
 
 class GroovyTemplateService(val templateRepository : TemplateRepository,
                             val stepBuilderFactories : Seq[StepBuilderFactory],
-                            val conversionService : ConversionService)
+                            val conversionService : ConversionService,
+                            val dataSourceFactories : Seq[DataSourceFactory] = Seq()   )
     extends service.TemplateService with Logging {
 
     val updateLock = new Object
@@ -108,7 +109,7 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
             case e: GroovyRuntimeException => throw new IllegalStateException("can't process template", e)
         }
 
-        val templateBuilder = new EnvTemplateBuilder
+        val templateBuilder = new EnvTemplateBuilder(dataSourceFactories)
         templateDecl.bodies.headOption.map {
             templateBody => {
                 templateBody.setDelegate(templateBuilder)
