@@ -51,4 +51,8 @@ trait GroupService extends CRUDService[UserGroup, String]{
     def setUsersGroups(username: String, groups: Seq[String])
     @Transactional(readOnly = true)
     def search(nameLike: String): List[UserGroup]
+    @Transactional(readOnly = true)
+    def doesGroupExist(groupName: String): Boolean
+    @Transactional(readOnly = true)
+    def doGroupsExist(groupNames: Seq[String]): Boolean
 }
