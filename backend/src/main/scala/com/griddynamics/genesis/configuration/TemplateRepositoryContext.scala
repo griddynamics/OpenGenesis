@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.{Autowired, Value}
 import net.sf.ehcache.CacheManager
 import org.springframework.context.annotation.{Lazy, Configuration, Bean}
 import java.net.{URLClassLoader, URL}
+import com.griddynamics.genesis.plugin.PluginRegistry
 
 @Configuration
 class TemplateRepositoryContextImpl extends TemplateRepositoryContext
@@ -56,6 +57,8 @@ class TemplateRepositoryContextImpl extends TemplateRepositoryContext
 
     @Autowired var cacheManager : CacheManager = _
 
+    @Autowired var pluginRegistry: PluginRegistry = _
+
     @Bean
     def templateRepository = {
         import collection.JavaConversions._
@@ -69,7 +72,10 @@ class TemplateRepositoryContextImpl extends TemplateRepositoryContext
                 else
                     new PullingTemplateRepository(driver, pullPeriodSeconds, pullOnStart, cacheManager)
             }
-            case None => throw new RuntimeException("Unknown repository mode %s".format(mode))
+            case None =>
+                val plugins = pluginRegistry.getPlugins(classOf[ModeAwareTemplateRepository])
+                plugins.values.find( _.respondTo == m).getOrElse(
+                throw new RuntimeException("Unknown repository mode %s".format(mode)))
         }
         result
     }
