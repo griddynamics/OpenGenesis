@@ -26,7 +26,6 @@ import com.griddynamics.genesis.common.CRUDService
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.api.{ExtendedResult, User}
 
-
 trait UserService extends CRUDService[User, String] {
     @Transactional(readOnly = true)
     override def get(key: String) = findByUsername(key)
@@ -40,4 +39,8 @@ trait UserService extends CRUDService[User, String] {
     def findByUsername(username: String): Option[User]
     @Transactional(readOnly = true)
     def search(usernameLike: String): List[User]
+    @Transactional(readOnly = true)
+    def doesUserExist(userName: String): Boolean
+    @Transactional(readOnly = true)
+    def doUsersExist(userNames: Seq[String]): Boolean
 }
