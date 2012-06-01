@@ -97,8 +97,10 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
             case Some(g) => Success(user)
             case None => Failure(isNotFound = true,
                 serviceErrors = Map("groups" -> "Group %s does not exist".format(name)))
+        }}).reduceLeftOption(_ ++ _) match {
+            case Some(r) => r
+            case None => Success(None)
         }
-        }).reduceLeft(_ ++ _)
     }
 
     protected def validateUpdate(user: User) =
@@ -133,6 +135,3 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
     @Transactional(readOnly = true)
     def search(usernameLike: String) = repository.search(usernameLike)
 }
-
-
-
