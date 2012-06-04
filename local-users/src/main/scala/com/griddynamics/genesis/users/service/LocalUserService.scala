@@ -136,13 +136,8 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
     def search(usernameLike: String) = repository.search(usernameLike)
 
     @Transactional(readOnly = true)
-    def doesUserExist(userName: String) = {
-      findByUsername(userName) match {
-        case Some(user) => true
-        case None => false
-      }
-    }
+    def doesUserExist(userName: String) = findByUsername(userName).isDefined
 
     @Transactional(readOnly = true)
-    def doUsersExist(userNames: Seq[String]) = !userNames.exists(userName => !doesUserExist(userName))
+    def doUsersExist(userNames: Seq[String]) = userNames.forall { doesUserExist(_) }
 }
