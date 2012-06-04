@@ -130,13 +130,8 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
       notEmpty(c, c.description, "description") ++ must(c, "name must be unique") {c => findByName(c.name).isEmpty}
 
     @Transactional(readOnly = true)
-    def doesGroupExist(groupName: String) = {
-      findByName(groupName) match {
-        case Some(group) => true
-        case None => false
-      }
-    }
+    def doesGroupExist(groupName: String) = findByName(groupName).isDefined
 
     @Transactional(readOnly = true)
-    def doGroupsExist(groupNames: Seq[String]) = !groupNames.exists(groupName => !doesGroupExist(groupName))
+    def doGroupsExist(groupNames: Seq[String]) = groupNames.forall { doesGroupExist(_) }
 }
