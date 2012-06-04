@@ -129,4 +129,14 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
     protected def validateCreation(c: UserGroup) = notEmpty(c, c.name, "name") ++
       notEmpty(c, c.description, "description") ++ must(c, "name must be unique") {c => findByName(c.name).isEmpty}
 
+    @Transactional(readOnly = true)
+    def doesGroupExist(groupName: String) = {
+      findByName(groupName) match {
+        case Some(group) => true
+        case None => false
+      }
+    }
+
+    @Transactional(readOnly = true)
+    def doGroupsExist(groupNames: Seq[String]) = !groupNames.exists(groupName => !doesGroupExist(groupName))
 }
