@@ -29,16 +29,8 @@ import org.squeryl.PrimitiveTypeMode._
 import com.griddynamics.genesis.model.Authority
 import com.griddynamics.genesis.model.GenesisSchema.{userAuthorities, groupAuthorities}
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.users.UserService
-import com.griddynamics.genesis.groups.GroupService
 
 class DefaultAuthorityService extends AuthorityService {
-/*  @Autowired
-  var groupService: GroupService = null
-
-  @Autowired
-  var userService: UserService = null*/
 
   val listAuthorities = List("ROLE_GENESIS_ADMIN", "ROLE_GENESIS")
 
@@ -101,7 +93,7 @@ class DefaultAuthorityService extends AuthorityService {
   }
 
   @Transactional(readOnly = true)
-  def authorityAssociations(authorityName: String) = new AuthorityDescription(
+  def authorityAssociations(authorityName: String) = new AuthorityDescription (
     name = authorityName,
     groups = from(groupAuthorities)(item => where (item.authority === authorityName) select(item.principalName)).toList,
     users = from(userAuthorities)(item => where (item.authority === authorityName) select(item.principalName)).toList
@@ -109,14 +101,10 @@ class DefaultAuthorityService extends AuthorityService {
 
   @Transactional
   def updateAuthority(authorityName: String, groups: List[String], usernames: List[String]) = {
-    if (/*groupService.doGroupsExist(groups) && userService.doUsersExist(usernames)*/ true) {
-      groupAuthorities.deleteWhere(auth => auth.authority === authorityName)
-      userAuthorities.deleteWhere(auth => auth.authority === authorityName)
-      groups.foreach(group => groupAuthorities.insert(new Authority(group, authorityName)))
-      usernames.foreach(user => userAuthorities.insert(new Authority(user, authorityName)))
-      new RequestResult(isSuccess = true)
-    } else {
-      new RequestResult(isSuccess = false)
-    }
+    groupAuthorities.deleteWhere(auth => auth.authority === authorityName)
+    userAuthorities.deleteWhere(auth => auth.authority === authorityName)
+    groups.foreach(group => groupAuthorities.insert(new Authority(group, authorityName)))
+    usernames.foreach(user => userAuthorities.insert(new Authority(user, authorityName)))
+    new RequestResult(isSuccess = true)
   }
 }
