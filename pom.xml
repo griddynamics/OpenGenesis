@@ -332,6 +332,12 @@
             </dependency>
 
             <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-acl</artifactId>
+                <version>${org.springframework.security.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.squeryl</groupId>
                 <artifactId>${org.squeryl.id}</artifactId>
                 <version>${org.squeryl.version}</version>

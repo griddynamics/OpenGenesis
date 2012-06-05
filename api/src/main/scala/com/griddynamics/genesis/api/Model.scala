@@ -86,13 +86,17 @@ case class RequestResult(serviceErrors : Map[String, String] = Map(),
 }
 
 sealed abstract class ExtendedResult[+S]() extends Product with Serializable {
+  def map[B](f: S => B): ExtendedResult[B] = this match {
+    case x: Failure => x
+    case (Success(a, _)) => Success(f(a))
+  }
 
-    def ++[B >: S](r: ExtendedResult[B]) : ExtendedResult[B] = (this, r) match {
+  def ++[B >: S](r: ExtendedResult[B]) : ExtendedResult[B] = (this, r) match {
         case (Success(a, _), Success(b, _)) => Success(a)
         case (a@Failure(s, v, cs, cw, nf, _), b@Failure(s1, v1, cs1, cw1, nf1, _)) => Failure(s ++ s1, v ++ v1, cs ++ cs1, cw ++ cw1, nf || nf1)
         case (_, b@Failure(_, _, _, _, _, _)) => b.asInstanceOf[ExtendedResult[B]]
         case (a@Failure(_, _, _, _, _, _), _) => a.asInstanceOf[ExtendedResult[B]]
-    }
+   }
 }
 
 final case class Success[+S](result: S, isSuccess: Boolean = true) extends ExtendedResult[S]

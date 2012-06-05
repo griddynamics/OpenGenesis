@@ -133,5 +133,9 @@
 
     <bean id="authorityService" class="com.griddynamics.genesis.service.impl.DefaultAuthorityService"/>
 
+    <bean id="projectAuthorityService" class="com.griddynamics.genesis.service.impl.ProjectAuthorityService">
+        <constructor-arg name="aclService" ref="aclService"/>
+    </bean>
+
     <context:component-scan base-package="com.griddynamics.genesis.configuration" />
 </beans>

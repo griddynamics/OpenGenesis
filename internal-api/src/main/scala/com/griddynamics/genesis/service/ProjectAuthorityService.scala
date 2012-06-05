@@ -22,27 +22,14 @@
  */
 package com.griddynamics.genesis.service
 
-import com.griddynamics.genesis.api
-import api.{AuthorityDescription, RequestResult}
+import com.griddynamics.genesis.api.{UserGroup, ExtendedResult, RequestResult}
+import com.griddynamics.genesis.users.GenesisRole
 
-trait AuthorityService {
-  def authorityAssociations(authorityName: String): AuthorityDescription
-
-  def updateAuthority(authorityName: String, groups: List[String], usernames: List[String]): RequestResult
-
-  def grantAuthoritiesToUser(username: String, auths: List[String]): RequestResult
-
-  def grantAuthoritiesToGroup(groupName: String, auths: List[String]): RequestResult
-
-  def removeAuthoritiesFromUser(username: String): RequestResult
-
-  def removeAuthoritiesFromGroup(groupName: String): RequestResult
-
-  def getUserAuthorities(username: String): List[String]
-
-  def getGroupAuthorities(groupName: String): List[String]
-
-  def getAuthorities(groups: Iterable[api.UserGroup]): List[String]
-
-  def listAuthorities: List[String]
+trait ProjectAuthorityService {
+  def projectAuthorities: Iterable[GenesisRole.Value]
+  def updateProjectAuthority(projectId: Int, roleName: GenesisRole.Value, users: List[String], groups: List[String]): RequestResult
+  def getProjectAuthority(projectId: Int, authorityName: GenesisRole.Value): ExtendedResult[(Iterable[String], Iterable[String])]
+  def isUserProjectAdmin(username: String, groups: Iterable[UserGroup]): Boolean
+  def getGrantedAuthorities(projectId: Int, username: String, grantedAuthorities: Iterable[String]): List[GenesisRole.Value]
+  def getAllowedProjectIds(username: String, authorities: Iterable[String]): List[Int]
 }

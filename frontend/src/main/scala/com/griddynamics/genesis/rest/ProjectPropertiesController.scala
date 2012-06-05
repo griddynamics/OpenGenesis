@@ -32,18 +32,18 @@ import api.RequestResult
 import net.liftweb.json.{Formats, JsonParser}
 
 @Controller
-@RequestMapping(value = Array("/rest/project"))
+@RequestMapping(value = Array("/rest/projects/{projectId}/properties"))
 class ProjectPropertiesController extends RestApiExceptionsHandler {
   @Autowired
   var projectPropertyRepository: ProjectPropertyRepository = null
 
-  @RequestMapping(value = Array("{projectId}/properties"), method = Array(RequestMethod.GET))
+  @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
   def listForProject(@PathVariable("projectId") projectId: Int): List[api.ProjectProperty] = {
     projectPropertyRepository.listForProject(projectId)
   }
 
-  @RequestMapping(value = Array("{projectId}/properties"), method = Array(RequestMethod.PUT))
+  @RequestMapping(method = Array(RequestMethod.PUT))
   @ResponseBody
   def updateForProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest): RequestResult = {
     val properties = for (p <- GenesisRestController.extractParamsMapList(request)) yield {

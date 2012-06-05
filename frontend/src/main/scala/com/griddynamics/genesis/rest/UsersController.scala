@@ -48,7 +48,7 @@ class UsersController extends RestApiExceptionsHandler {
     def pick(@RequestParam("tag") search: String) =
       userService.search("*" + search + "*").map(item => Map("key" -> item.username, "value" -> item.username))
 
-  @RequestMapping(value = Array("{username}"), method=Array(RequestMethod.GET))
+    @RequestMapping(value = Array("{username}"), method=Array(RequestMethod.GET))
     @ResponseBody
     def user(@PathVariable(value = "username") username: String) = userService.findByUsername(username) match {
         case Some(u) => u

@@ -28,15 +28,15 @@ import org.squeryl.{Session, SessionFactory}
 import com.griddynamics.genesis.model.GenesisSchema
 import org.squeryl.internals.DatabaseAdapter
 import org.springframework.jdbc.datasource.{DataSourceUtils, DataSourceTransactionManager}
-import org.springframework.transaction.support.TransactionTemplate
-import org.springframework.transaction.PlatformTransactionManager
 import com.griddynamics.genesis.service.impl
 import impl.{CredentialsStoreService, ProjectServiceImpl}
 import org.squeryl.adapters.{PostgreSqlAdapter, MSSQLServer, MySQLAdapter, H2Adapter}
 import com.griddynamics.genesis.repository
 import com.griddynamics.genesis.service
 import com.griddynamics.genesis.repository.impl.{ProjectPropertyRepository, ProjectRepository, CredentialsRepository}
-import repository.{Repository, SchemaCreator}
+import repository.SchemaCreator
+import org.springframework.transaction.support.TransactionTemplate
+import org.springframework.transaction.PlatformTransactionManager
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
