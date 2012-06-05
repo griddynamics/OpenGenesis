@@ -76,7 +76,7 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
 
     def dependsOn(varName: String) = {
         if (useOneOf) {
-            throw new IllegalArgumentException("dependsOn cannot be used with dependsOn")
+            throw new IllegalArgumentException("dependsOn cannot be used with oneOf")
         }
         dependsOn_=(Option(varName))
         this
