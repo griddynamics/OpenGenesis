@@ -22,23 +22,23 @@
  */
 package com.griddynamics.genesis.service.impl
 
-import com.griddynamics.genesis.api
-import api.{AuthorityDescription, RequestResult, UserGroup}
+import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.service.AuthorityService
 import org.squeryl.PrimitiveTypeMode._
 import com.griddynamics.genesis.model.Authority
 import com.griddynamics.genesis.model.GenesisSchema.{userAuthorities, groupAuthorities}
 import org.springframework.transaction.annotation.Transactional
+import com.griddynamics.genesis.users.GenesisRole._
 
 class DefaultAuthorityService extends AuthorityService {
 
-  val listAuthorities = List("ROLE_GENESIS_ADMIN", "ROLE_GENESIS")
+  val listAuthorities = List(SystemAdmin.toString, GenesisUser.toString)
 
   @Transactional
   def grantAuthoritiesToUser(username: String, auths: List[String]) = withValidRoles(auths) {
     userAuthorities.deleteWhere(item => item.principalName === username)
 
-    val grantedAuths = auths.map(new Authority(username, _))
+    val grantedAuths = auths.map { new Authority(username, _) }
     userAuthorities.insert(grantedAuths)
 
     new RequestResult(isSuccess = true)

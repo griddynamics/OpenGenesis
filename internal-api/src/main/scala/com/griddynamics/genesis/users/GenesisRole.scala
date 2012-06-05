@@ -20,29 +20,14 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.service
+package com.griddynamics.genesis.users
 
-import com.griddynamics.genesis.api
-import api.{AuthorityDescription, RequestResult}
-
-trait AuthorityService {
-  def authorityAssociations(authorityName: String): AuthorityDescription
-
-  def updateAuthority(authorityName: String, groups: List[String], usernames: List[String]): RequestResult
-
-  def grantAuthoritiesToUser(username: String, auths: List[String]): RequestResult
-
-  def grantAuthoritiesToGroup(groupName: String, auths: List[String]): RequestResult
-
-  def removeAuthoritiesFromUser(username: String): RequestResult
-
-  def removeAuthoritiesFromGroup(groupName: String): RequestResult
-
-  def getUserAuthorities(username: String): List[String]
-
-  def getGroupAuthorities(groupName: String): List[String]
-
-  def getAuthorities(groups: Iterable[api.UserGroup]): List[String]
-
-  def listAuthorities: List[String]
+object GenesisRole extends Enumeration {
+  type GenesisRole = Value
+  val SystemAdmin = Value("ROLE_GENESIS_ADMIN")
+  val GenesisUser = Value("ROLE_GENESIS_USER")
+  val ProjectAdmin = Value("ROLE_GENESIS_PROJECT_ADMIN")
+  val ProjectUser = Value("ROLE_GENESIS_PROJECT_USER")
 }
+
+

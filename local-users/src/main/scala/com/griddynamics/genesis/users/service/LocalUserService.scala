@@ -33,6 +33,7 @@ import com.griddynamics.genesis.groups.GroupService
 import com.griddynamics.genesis.api._
 
 class LocalUserService(val repository: LocalUserRepository, val groupService: GroupService) extends UserService with Validation[User]{
+
     @Autowired
     var authorityService: AuthorityService = null
 

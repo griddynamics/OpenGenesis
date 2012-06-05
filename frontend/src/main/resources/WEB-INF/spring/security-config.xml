@@ -32,18 +32,49 @@
        http://www.springframework.org/schema/security
        http://www.springframework.org/schema/security/spring-security.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
     <context:property-placeholder location="${backend.properties}" system-properties-mode="OVERRIDE"/>
-    <s:global-method-security pre-post-annotations="enabled"/>
+
+    <s:global-method-security pre-post-annotations="enabled" />
+
+    <!--<bean id="identityExtractor" class="com.griddynamics.genesis.spring.security.acls.ScalaObjectIdentityGenerator"/>-->
+
+    <bean id="webExprHandler" class="com.griddynamics.genesis.spring.security.WebExpressionHandler">
+        <property name="permissionEvaluator" ref="aclPermissionEvaluator"/>
+    </bean>
 
     <s:http use-expressions="true" disable-url-rewriting="true" realm="Genesis" entry-point-ref="genesisAuthenticationEntryPoint">
+        <s:expression-handler ref="webExprHandler"/>
 		<s:intercept-url pattern="/" access="isAuthenticated()" />
 		<s:intercept-url pattern="/index.html" access="isAuthenticated()" />
-        <s:intercept-url pattern="/rest/groups/**" access="hasRole('ROLE_GENESIS_ADMIN')" />
-        <s:intercept-url pattern="/rest/users/**" access="hasRole('ROLE_GENESIS_ADMIN')" />
-        <s:intercept-url pattern="/rest/plugins/**" access="hasRole('ROLE_GENESIS_ADMIN')" />
+
+        <s:intercept-url pattern="/rest/groups*"  method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_PROJECT_ADMIN')" />
+        <s:intercept-url pattern="/rest/users*"   method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_PROJECT_ADMIN')" />
+
+        <s:intercept-url pattern="/rest/groups/**"   access="hasRole('ROLE_GENESIS_ADMIN')" />
+        <s:intercept-url pattern="/rest/users/**"    access="hasRole('ROLE_GENESIS_ADMIN')" />
+        <s:intercept-url pattern="/rest/plugins/**"  access="hasRole('ROLE_GENESIS_ADMIN')" />
         <s:intercept-url pattern="/rest/settings/**" access="hasRole('ROLE_GENESIS_ADMIN')" />
 
-        <s:intercept-url pattern="/rest/projects/**" method="POST" access="hasRole('ROLE_GENESIS_ADMIN')" />
-        <s:intercept-url pattern="/rest/projects/**" method="DELETE" access="hasRole('ROLE_GENESIS_ADMIN')" />
+        <s:intercept-url pattern="/rest/projects" method="GET" access="isAuthenticated()"/>
+
+        <s:intercept-url pattern="/rest/projects/*/permissions" method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or
+                hasPermission( #urlId('/rest/projects/{id}/.*', #url), 'com.griddynamics.genesis.api.Project', 'read')"/>
+
+        <s:intercept-url pattern="/rest/projects/*/envs/**" access="hasRole('ROLE_GENESIS_ADMIN') or
+                    hasPermission( #urlId('/rest/projects/{id}/.*', #url), 'com.griddynamics.genesis.api.Project', 'read') "/>
+
+        <s:intercept-url pattern="/rest/projects/**" method="GET"    access="hasRole('ROLE_GENESIS_ADMIN') or
+                    hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'read')" />
+
+        <s:intercept-url pattern="/rest/projects/*/roles/**" method="PUT" access="hasRole('ROLE_GENESIS_ADMIN') or
+                    hasPermission( #urlId('/rest/projects/{id}/.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"  />
+
+        <s:intercept-url pattern="/rest/projects/*/**" access="hasRole('ROLE_GENESIS_ADMIN') or
+                            hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"/>
+
+        <s:intercept-url pattern="/rest/projects/*" method="DELETE" access="hasRole('ROLE_GENESIS_ADMIN')"/>
+        <s:intercept-url pattern="/rest/projects/*" method="POST"   access="hasRole('ROLE_GENESIS_ADMIN')"/>
+        <s:intercept-url pattern="/rest/projects/*" method="PUT"    access="hasRole('ROLE_GENESIS_ADMIN') or
+                            hasPermission( #urlId('/rest/projects/{id}', #url), 'com.griddynamics.genesis.api.Project', 'administration')" />
 
         <s:intercept-url pattern="/rest/**" access="isAuthenticated()" />
 
@@ -52,13 +83,9 @@
                       authentication-failure-handler-ref="authenticationFailureHandler"
                       login-processing-url="/signin"/>
 
-        <s:logout logout-url="/logout" invalidate-session="true" logout-success-url="/login.html"/>
         <s:http-basic/>
-        <!--token-validity-seconds="604800" = 1 week-->
-        <s:remember-me key="GenesisRememberMeKey"
-                       token-validity-seconds="604800"/>
-
-        <!--<s:access-denied-handler ref="accessDeniedHandler"/>-->
+        <s:logout logout-url="/logout" invalidate-session="true" logout-success-url="/login.html"/>
+        <s:remember-me key="GenesisRememberMeKey" token-validity-seconds="604800"/>
 	</s:http>
 
 
@@ -89,6 +116,7 @@
         <constructor-arg name="adminPassword" value="aeebad4a796fcc2e15dc4c6061b45ed9b373f26adfc798ca7d2d8cc58182718e"/>
         <constructor-arg name="adminUsername" value="genesis" />
         <constructor-arg name="authorityService" ref="authorityService"/>
+        <constructor-arg name="projectAuthorityService" ref="projectAuthorityService"/>
     </bean>
 
     <bean id="adAuthProvider" lazy-init="true"

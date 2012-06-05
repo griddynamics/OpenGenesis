@@ -1,11 +1,11 @@
 package com.griddynamics.genesis.rest
 
-import com.griddynamics.genesis.service.AuthorityService
 import scala.Array
 import org.springframework.web.bind.annotation.{PathVariable, ResponseBody, RequestMethod, RequestMapping}
 import javax.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Controller
 import GenesisRestController._
+import com.griddynamics.genesis.service.{ProjectAuthorityService, AuthorityService}
 import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.groups.GroupService
 import com.griddynamics.genesis.spring.ApplicationContextAware
@@ -13,7 +13,8 @@ import com.griddynamics.genesis.api.RequestResult
 
 @Controller
 @RequestMapping(Array("/rest"))
-class RolesController(authorityService: AuthorityService) extends RestApiExceptionsHandler with ApplicationContextAware {
+class RolesController(authorityService: AuthorityService, projectAuthorityService: ProjectAuthorityService)
+  extends RestApiExceptionsHandler with ApplicationContextAware {
 
   private lazy val userService: Option[UserService] = Option(applicationContext.getBean(classOf[UserService]))
   private lazy val groupService: Option[GroupService] = Option(applicationContext.getBean(classOf[GroupService]))
@@ -22,7 +23,11 @@ class RolesController(authorityService: AuthorityService) extends RestApiExcepti
 
   @RequestMapping(value = Array("roles"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def list() = authorityService.listAuthorities
+  def listSystemRoles() = authorityService.listAuthorities
+
+  @RequestMapping(value = Array("projectRoles"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  def listProjectRoles() = projectAuthorityService.projectAuthorities
 
   @RequestMapping(value = Array("users/{username}/roles"), method = Array(RequestMethod.GET))
   @ResponseBody

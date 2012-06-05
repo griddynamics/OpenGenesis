@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.api.{Success, UserGroup}
 
 class LocalGroupService(val repository: LocalGroupRepository) extends GroupService with Validation[UserGroup] {
+
     @Autowired
     var authorityService: AuthorityService = null
 
