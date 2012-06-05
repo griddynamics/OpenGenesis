@@ -15,8 +15,8 @@ class CredentialsController(service: CredentialsStoreService) extends RestApiExc
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
-  def create(request: HttpServletRequest) = {
-      val creds = extractCredentials(request, None)
+  def create(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = {
+      val creds = extractCredentials(request, projectId, None)
       service.create(creds)
   }
 
@@ -33,12 +33,11 @@ class CredentialsController(service: CredentialsStoreService) extends RestApiExc
   def getCredentials(@PathVariable("projectId") projectId: Int, @PathVariable("id") credId: Int) = service.get(projectId, credId).map(_.copy(credential = None))
 
 
-  private def extractCredentials(request: HttpServletRequest, id: Option[Int]): api.Credentials = {
+  private def extractCredentials(request: HttpServletRequest, projectId: Int, id: Option[Int]): api.Credentials = {
     val params = extractParamsMap(request)
     val credential = extractOption("credential", params)
     val cloudProvider = extractValue("cloudProvider", params)
     val identity = extractValue("identity", params)
-    val projectId = extractValue("projectId", params).toInt
     val pairName = extractValue("pairName", params)
 
     new api.Credentials(id, projectId, cloudProvider, pairName, identity, credential)
