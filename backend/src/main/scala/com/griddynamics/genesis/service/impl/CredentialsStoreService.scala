@@ -28,7 +28,7 @@ class CredentialsStoreService(repository: CredentialsRepository) extends Validat
     if(repository.delete(projectId, id) > 0){
       RequestResult(isSuccess = true)
     } else {
-      RequestResult(isSuccess = false, isNotFound = true)
+      RequestResult(isSuccess = false, isNotFound = true, compoundServiceErrors = List("No credentials found"))
     }
   }
 
