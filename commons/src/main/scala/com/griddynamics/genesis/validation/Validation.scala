@@ -49,6 +49,8 @@ object Validation {
                                   "spaces and following symbols: @.-/_. Length must be from 2 to 64"
     val nameErrorMessage = "Invalid format. Use a combination of capital and lowercase letters and spaces. " +
                            "Length must be from 2 to 128"
+    val usernameErrorMessage = "Invalid format. Use a combination of latin letters, numbers, " +
+                                  "dots and hyphens. Length must be from 2 to 64"
 
     def mustMatch[C](obj: C, fieldName: String, error : String = "Invalid format")(pattern: Regex)(value: String) : ExtendedResult[C] = {
         value match {
