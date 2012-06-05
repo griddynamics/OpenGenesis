@@ -30,7 +30,7 @@ class ListVarDataSource extends VarDataSource {
     def getData = values
 
     def config(map: Map[String, Any])  { values = map.get(Key) match {
-            case Some(s: java.lang.Iterable[String]) => collection.JavaConversions.iterableAsScalaIterable(s).toSeq
+            case Some(s: java.lang.Iterable[AnyRef]) => collection.JavaConversions.iterableAsScalaIterable(s).toArray.map(_.toString).toSeq
             case x => Seq(x.toString)
         }
     }

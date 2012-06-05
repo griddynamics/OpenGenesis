@@ -48,7 +48,6 @@ class GroovyTemplateServiceContext {
 @Configuration
 class DefaultTemplateServiceContext extends TemplateServiceContext with ApplicationContextAware {
     @Resource(name="${genesis.template.service:groovy}") var service: TemplateService = _
-
     @Bean def templateService = service
     @Bean def listVarDsFactory = new ListVarDSFactory
 }
