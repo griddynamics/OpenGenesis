@@ -84,7 +84,7 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
             }  catch {
                 // TODO: log exception stack trace?
                 case t: Throwable => {
-                    log.error("Error processing template: %s", t)
+                    log.error(t, "Error processing template: %s", t)
                     None
                 }
             }
@@ -188,6 +188,16 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
       }
     }
 
+    override def partial(variables: Map[String, Any]): Seq[VariableDescription] = {
+        val dependents = for (variable <- variables) yield {
+            workflow.variables.find(p => p.dependsOn.find(_ == variable._1).isDefined).get
+        }
+        dependents.map(v => new VariableDescription(v.name, v.description, v.isOptional, null, v.valuesList.map(lambda => {
+            lambda.apply(variables).map(_.toString)
+        }).getOrElse(Seq()))).toSeq
+    }
+
+
     def validate(variables: Map[String, Any], envName: Option[String] = None) = {
         val res = for (variable <- workflow.variables) yield {
             variables.get(variable.name) match {
@@ -251,7 +261,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
             new VariableDescription(variable.name, variable.description, variable.isOptional, variable.defaultValue match {
               case None => null
               case Some(v) => String.valueOf(v)
-            }, variable.valuesList.map(_.apply().map(_.toString)).getOrElse(Seq()))
+            }, variable.valuesList.map(_.apply(Map()).map(_.toString)).getOrElse(Seq()))
         }
     }
 

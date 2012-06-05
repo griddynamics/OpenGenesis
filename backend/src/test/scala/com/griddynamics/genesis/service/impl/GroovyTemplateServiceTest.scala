@@ -31,7 +31,8 @@ import com.griddynamics.genesis.plugin._
 import reflect.BeanProperty
 import org.springframework.core.convert.support.ConversionServiceFactory
 import com.griddynamics.genesis.workflow.Step
-import com.griddynamics.genesis.template.{ListVarDSFactory, VersionedTemplate, TemplateRepository}
+import com.griddynamics.genesis.service.VariableDescription
+import com.griddynamics.genesis.template._
 
 case class DoNothingStep(name: String) extends Step {
   override def stepDescription = "Best step ever!"
@@ -53,7 +54,7 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
     val templateService = new GroovyTemplateService(templateRepository,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-        Seq(new ListVarDSFactory))
+        Seq(new ListVarDSFactory, new DependentListVarDSFactory))
 
     @Test def testEmbody() {
         val res = templateService.findTemplate("TestEnv", "0.1").get.createWorkflow.embody(Map("nodesCount" -> "1", "test" -> "test"))
@@ -118,12 +119,43 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
         val template = templateService.findTemplate("TestEnv", "0.1").get
         val varDesc =  template.createWorkflow.variableDescriptions
         assert(varDesc.nonEmpty)
-        val listDS1 = varDesc.find(_.name == "listDS1")
-        assert(listDS1.isDefined)
-        val S1 = Seq("value1", "value2")
-        expect(S1)(listDS1.get.values)
         val listDS12 = varDesc.find(_.name == "listDS12")
         assert(listDS12.isDefined)
-        expect(S1 :+ "value3")(listDS12.get.values)
+        expect(Seq("value1", "value2", "value3"))(listDS12.get.values)
     }
+
+    @Test def testIndependentDataSource() {
+        val template = templateService.findTemplate("TestEnv", "0.1").get
+        val varDesc =  template.createWorkflow.variableDescriptions
+        assert(varDesc.nonEmpty)
+        val listDS1 = varDesc.find(_.name == "listDS1")
+        assert(listDS1.isDefined)
+        expect(Seq("value1", "value2"))(listDS1.get.values)
+    }
+
+    @Test def testDependent() {
+        val template = templateService.findTemplate("TestEnv", "0.1").get
+        val varDesc =  template.createWorkflow.variableDescriptions
+        assert(varDesc.nonEmpty)
+        val listDS1 = varDesc.find(_.name == "dependent")
+        assert(listDS1.isDefined)
+        val S1 = Seq()
+        expect(S1)(listDS1.get.values)
+        val partial: Seq[VariableDescription] = template.createWorkflow.partial(Map("nodesCount" -> 1))
+        val descAfterApply = partial.find(_.name == "dependent")
+        assert(descAfterApply.isDefined)
+        assert(! descAfterApply.get.values.isEmpty)
+        expect(Seq("11", "31", "41"))(descAfterApply.get.values)
+    }
+}
+
+
+
+class DependentListDataSource extends ListVarDataSource with DependentDataSource {
+    def getData(param: Any) = values.map(_ + param.toString).toSeq
+}
+
+class DependentListVarDSFactory extends DataSourceFactory {
+    val mode = "dependentList"
+    def newDataSource = new DependentListDataSource
 }

@@ -47,6 +47,8 @@ trait WorkflowDefinition {
     def embody(variables: Map[String, String], envName: Option[String] = None): Seq[GenesisStep]
 
     def validate(variables: Map[String, Any], envName: Option[String] = None): Seq[ValidationError]
+
+    def partial(variales: Map[String, Any]): Seq[VariableDescription] = Seq()
 }
 
 trait TemplateService {

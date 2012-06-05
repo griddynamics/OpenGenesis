@@ -22,11 +22,11 @@
  */
 package com.griddynamics.genesis.template.dsl.groovy
 
-import collection.mutable.ListBuffer
-import scala.Some
 import java.lang.IllegalStateException
 import groovy.lang.{GroovyObjectSupport, Closure}
-import com.griddynamics.genesis.template.{DataSourceFactory, VarDataSource}
+import scala._
+import collection.mutable.ListBuffer
+import com.griddynamics.genesis.template.{DependentDataSource, DataSourceFactory, VarDataSource}
 
 class EnvWorkflow(val name : String, val variables : List[VariableDetails], val stepsGenerator : Option[Closure[Unit]])
 
@@ -40,7 +40,7 @@ class EnvironmentTemplate(val name : String,
 
 class VariableDetails(val name : String, val clazz : Class[_ <: AnyRef], val description : String,
                       val validators : Seq[Closure[Boolean]], val isOptional: Boolean = false, val defaultValue: Option[Any],
-                      val valuesList: Option[(Any => Seq[AnyRef])] = None)
+                      val valuesList: Option[(Map[String,Any] => Seq[AnyRef])] = None, val dependsOn: Option[String])
 
 class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) {
     var description : String = _
@@ -48,7 +48,10 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
     var clazz : Class[_ <: AnyRef] = classOf[String]
     var defaultValue: Any = _
     var isOptional: Boolean = false
-    var valuesList: Option[(Any => Seq[AnyRef])] = None
+    var dependsOn: Option[String] = None
+    var dataSource: Option[String] = None
+    var useOneOf: Boolean = false
+    var oneOf: Closure[java.util.Collection[Any]] = _
 
     def as(value : Class[_ <: AnyRef]) = {
         this.clazz = value
@@ -71,18 +74,50 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
       this
     }
 
-    def oneOf(values: Closure[java.util.Collection[Any]]) = {
-        dsObjSupport.foreach(values.setDelegate(_))
-        valuesList = Option({_ => values.call().toArray })
-        validators += new Closure[Boolean]() {
-            def doCall(args: Array[Any]): Boolean = {
-               valuesList.get.apply().exists(_ == args(0))
-            }
+    def dependsOn(varName: String) = {
+        if (useOneOf) {
+            throw new IllegalArgumentException("dependsOn cannot be used with dependsOn")
         }
+        dependsOn_=(Option(varName))
         this
     }
 
-    def newVariable = new VariableDetails(name, clazz, description, validators, isOptional, Option(defaultValue), valuesList)
+    def dataSource(dsName: String) = {
+        if (useOneOf) {
+            throw new IllegalArgumentException("oneOf cannot be used with dataSource")
+        }
+        dataSource_=(Option(dsName))
+        this
+    }
+
+    def oneOf(values: Closure[java.util.Collection[Any]]) = {
+        useOneOf = true
+        oneOf_=(values)
+        this
+    }
+
+    def valuesList: Option[(Map[String, Any] => Seq[AnyRef])] = {
+        if (useOneOf) {
+            dsObjSupport.foreach(oneOf.setDelegate(_))
+            val values = Option({ _: Any => oneOf.call().toArray.toSeq })
+            validators += new Closure[Boolean]() {
+                def doCall(args: Array[Any]): Boolean = {
+                    values.get.apply().exists(_ == args(0))
+                }
+            }
+            values
+        } else {
+           dataSource.flatMap(ds => Option({params : Map[String, Any] => {
+               val param: Option[Any] = dependsOn.map(params.get(_)) match {
+                   case Some(x) => x
+                   case x => x
+               }
+               dsObjSupport.get.invokeMethod(ds, param)
+           }}))
+        }
+    }
+
+    def newVariable = new VariableDetails(name, clazz, description, validators, isOptional, Option(defaultValue), valuesList, dependsOn)
 }
 
 class VariableDeclaration(val dsObjSupport: Option[DSObjectSupport]) {
@@ -246,5 +281,17 @@ class DataSourceBuilder(val factory : DataSourceFactory) {
      override def getProperty(name: String) = dsMap.get(name) match {
          case Some(src) => collection.JavaConversions.asJavaCollection(src.getData)
          case _ => super.getProperty(name)
+     }
+
+     override def invokeMethod(name: String, args: AnyRef): Seq[String] = {
+         dsMap.get(name) match {
+             case Some(src) => args match {
+                 case None => src.getData
+                 case Some(x) => {
+                     src.asInstanceOf[DependentDataSource].getData(x)
+                 }
+             }
+             case _ => throw new IllegalStateException("")
+         }
      }
  }

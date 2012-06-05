@@ -28,6 +28,11 @@ trait VarDataSource {
     def config(map: Map[String, Any])
 }
 
+trait DependentDataSource extends VarDataSource {
+    def getData(param: Any) : Seq[String]
+    override def getData = Seq()
+}
+
 
 trait DataSourceFactory {
     val mode: String
