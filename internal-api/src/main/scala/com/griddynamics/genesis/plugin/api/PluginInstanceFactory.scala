@@ -25,6 +25,6 @@ package com.griddynamics.genesis.plugin.api
 trait PluginInstanceFactory[B <: AnyRef] {
   def create(pluginConfig: Map[String, Any]): B
 
-  def pluginClazz[B: ClassManifest]: Class[_] = classManifest[B].erasure
+  def pluginClazz: Class[_]
 }
 
