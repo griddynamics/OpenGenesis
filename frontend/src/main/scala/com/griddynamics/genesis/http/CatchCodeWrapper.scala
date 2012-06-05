@@ -34,33 +34,34 @@ class CatchCodeWrapper(response: HttpServletResponse, val codes:Array[Int] = Arr
 
     var statusCode: Int = _
     var message: Option[String] = None
-    var callback: Unit = _
+    var shouldSendError: Boolean = false
 
     override def setStatus(sc: Int) {
-        if (checkStatus(sc, None)) {
-            super.setStatus(sc)
-        }
+        checkStatus(sc, None)
+        super.setStatus(sc)
     }
 
     override def setStatus(sc: Int, sm: String) {
-        if (checkStatus(sc, Some(sm)))
-            super.setStatus(sc)
+        checkStatus(sc, Some(sm))
+        super.setStatus(sc)
     }
 
 
     override def sendError(sc: Int, msg: String) {
+        shouldSendError = true
         if (checkStatus(sc, Some(msg)))
             super.sendError(sc, msg)
     }
 
     override def sendError(sc: Int) {
+        shouldSendError = true
         if (checkStatus(sc, None)) {
-            super.sendError(sc)
+              super.sendError(sc)
         }
     }
 
     def resume() {
-        if (!response.isCommitted) {
+        if (!response.isCommitted && shouldSendError) {
             message match {
                 case None => getResponse.asInstanceOf[HttpServletResponse].sendError(statusCode)
                 case Some(s) => getResponse.asInstanceOf[HttpServletResponse].sendError(statusCode, s)
