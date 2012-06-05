@@ -40,6 +40,8 @@ class JenkinsBuildProviderContextImpl extends Logging with PluginInstanceFactory
     val password = pluginConfig.get(Password).map(_.toString)
     new JenkinsBuildProvider(JenkinsConnectSpecification(baseUrl, name, password))
   }
+
+  def pluginClazz = classOf[BuildProvider]
 }
 
 private object Plugin {
