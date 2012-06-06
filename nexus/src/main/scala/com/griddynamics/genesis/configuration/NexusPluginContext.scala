@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,39 +20,14 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.service
 
-import com.griddynamics.genesis.plugin.GenesisStep
+package com.griddynamics.genesis.configuration
 
-class VariableDescription(val name: String, val description: String, val isOptional: Boolean = false,
-                          val defaultValue: String = null, val values: Seq[String] = Seq())
+import org.springframework.context.annotation.{Bean, Configuration}
+import com.griddynamics.genesis.nexus.datasource.NexusDSFactory
 
-case class ValidationError(variableName: String, description: String)
 
-trait TemplateDefinition {
-    def createWorkflow: WorkflowDefinition
-
-    def destroyWorkflow: WorkflowDefinition
-
-    def listWorkflows: Seq[WorkflowDefinition]
-
-    def getWorkflow(name: String): Option[WorkflowDefinition]
-}
-
-trait WorkflowDefinition {
-    def name: String
-
-    def variableDescriptions: Seq[VariableDescription]
-
-    def embody(variables: Map[String, String], envName: Option[String] = None): Seq[GenesisStep]
-
-    def validate(variables: Map[String, Any], envName: Option[String] = None): Seq[ValidationError]
-
-    def partial(variables: Map[String, Any]): Seq[VariableDescription] = Seq()
-}
-
-trait TemplateService {
-    def templateRawContent(name: String, version: String): Option[String]
-    def listTemplates: Seq[(String, String)] // (name, version)
-    def findTemplate(templateName: String, templateVersion: String): Option[TemplateDefinition]
+@Configuration
+class NexusPluginContext {
+    @Bean def nexusDsFactory = new NexusDSFactory
 }
