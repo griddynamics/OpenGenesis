@@ -22,13 +22,14 @@
  */
 package com.griddynamics.genesis.rest
 
-import org.springframework.http.HttpStatus
 import javax.servlet.http.HttpServletResponse
-import net.liftweb.json.MappingException
-import org.springframework.web.bind.annotation.ExceptionHandler._
 import org.springframework.web.bind.annotation.{ResponseStatus, ExceptionHandler}
+import net.liftweb.json.{Serialization, MappingException}
+import com.griddynamics.genesis.api.RequestResult
+import org.springframework.http.{MediaType, HttpStatus}
 
 trait RestApiExceptionsHandler {
+    implicit val formats = net.liftweb.json.DefaultFormats
 
     @ExceptionHandler(value = Array(classOf[InvalidInputException]))
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -55,9 +56,10 @@ trait RestApiExceptionsHandler {
     }
 
     @ExceptionHandler(value = Array(classOf[ResourceNotFoundException]))
-    @ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "resource not found")
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     def handleResourceNotFound(response : HttpServletResponse, exception: ResourceNotFoundException) {
-      /*do nothing*/
+      response.setContentType(MediaType.APPLICATION_JSON.toString)
+      val errorMsg = List(exception.msg).flatten
+      response.getWriter.write(Serialization.write(new RequestResult(isNotFound = true, isSuccess = false, compoundServiceErrors = errorMsg)))
     }
-
 }

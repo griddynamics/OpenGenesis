@@ -29,6 +29,6 @@ class MissingParameterException(s : String) extends Exception {
     val paramName = s
 }
 
-class ResourceNotFoundException() extends Exception
+class ResourceNotFoundException(val msg: Option[String] = None) extends Exception
 
 class ResourceConflictException() extends Exception
