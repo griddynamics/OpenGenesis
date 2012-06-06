@@ -27,7 +27,7 @@ import com.griddynamics.genesis.template.{VarDataSource, DataSourceFactory}
 import util.parsing.json.JSON
 import com.griddynamics.genesis.util.IoUtil
 import org.apache.commons.codec.binary.Base64
-import java.net.{URLConnection, URL}
+import java.net.{HttpURLConnection, URLConnection, URL}
 
 class NexusDataSource extends VarDataSource {
     private var url: URL = _
@@ -45,22 +45,29 @@ class NexusDataSource extends VarDataSource {
         case _ => // no basic auth
     }
 
-    def getData = {
-        val con  = url.openConnection
-        con.addRequestProperty("accept", "application/json")
-        basicAuth(con)
-        con.connect
-        val response = IoUtil.streamAsString(con.getInputStream)
-        JSON.parseFull(response) match {
-            case Some(m: Map[String, _]) => m.get(KeyData) match {
-                case Some(s: Seq[_]) => s.collect {
-                    case artifact: Map[String, _] =>
-                        artifact.getOrElse(artifactProperty, "").toString
-                }
-                case _ => Seq()
+    private def request = {
+        var con: URLConnection = null
+        try {
+            con = url.openConnection
+            con.addRequestProperty("Accept", "application/json")
+            basicAuth(con)
+            con.connect
+            IoUtil.streamAsString(con.getInputStream)
+        } finally con match {
+            case c: HttpURLConnection => c.disconnect
+            case _ =>
+        }
+    }
+
+    def getData = JSON.parseFull(request) match {
+        case Some(m: Map[String, _]) => m.get(KeyData) match {
+            case Some(s: Seq[_]) => s.collect {
+                case artifact: Map[String, _] =>
+                    artifact.getOrElse(artifactProperty, "").toString
             }
             case _ => Seq()
         }
+        case _ => Seq()
     }
 
     def config(map: Map[String, Any])  {
