@@ -90,6 +90,10 @@
             <groupId>com.griddynamics.genesis</groupId>
             <artifactId>chef</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.griddynamics.genesis</groupId>
+            <artifactId>nexus</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <resources>
