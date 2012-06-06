@@ -67,6 +67,10 @@ case class VirtualMachine(envName : String,
                           privateIp : String,
                           status : String)
 
+/**
+ * @deprecated use {@see com.griddynamics.genesis.api.ExtendedResult} instead
+ */
+@deprecated
 case class RequestResult(serviceErrors : Map[String, String] = Map(),
                          variablesErrors : Map[String, String] = Map(),
                          compoundServiceErrors : Seq[String] = Seq(),
