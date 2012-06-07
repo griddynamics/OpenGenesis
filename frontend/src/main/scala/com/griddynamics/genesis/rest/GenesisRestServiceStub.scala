@@ -146,7 +146,9 @@ class GenesisRestServiceStub() extends GenesisService {
     
     def listTemplates(projectId: String) = Seq(templateT)
 
-   def getLogs(envName: String, stepId: Int) = Seq("aaa", "bbb")
+    def getLogs(envName: String, stepId: Int) = Seq("aaa", "bbb")
 
-  def isEnvExists(envName: String, projectId: Int) = true
+    def isEnvExists(envName: String, projectId: Int) = true
+
+    def queryVariables(templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]) = Some(Seq())
 }
