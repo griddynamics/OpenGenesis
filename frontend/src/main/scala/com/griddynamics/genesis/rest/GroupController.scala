@@ -30,11 +30,15 @@ import javax.servlet.http.HttpServletRequest
 import GenesisRestController._
 import org.springframework.web.bind.annotation._
 import com.griddynamics.genesis.api.{ExtendedResult, UserGroup}
+import com.griddynamics.genesis.users.UserService
+import com.griddynamics.genesis.spring.ApplicationContextAware
 
 @Controller
 @RequestMapping(Array("/rest/groups"))
-class GroupController extends RestApiExceptionsHandler {
+class GroupController extends RestApiExceptionsHandler with ApplicationContextAware {
     @Autowired(required = false) var groupService: GroupService = _
+
+    lazy val userService: Option[UserService] = Option(applicationContext.getBean(classOf[UserService]))
 
     @RequestMapping(method = Array(RequestMethod.GET))
     @ResponseBody
@@ -54,8 +58,9 @@ class GroupController extends RestApiExceptionsHandler {
         RequestReader.read(request) {
             map => {
                 val group: UserGroup = readGroup(map)
-                val create = groupService.create(group, readUsers(map, "users"))
-                create
+                withUsers(readUsers(map, "users")) {
+                    groupService.create(group, _)
+                }
             }
         }
     }
@@ -66,7 +71,9 @@ class GroupController extends RestApiExceptionsHandler {
         RequestReader.read(request) {
             map => {
                 withGroup(id) {
-                    group => groupService.update(readGroup(map), readUsers(map, "users"))
+                    group => withUsers(readUsers(map, "users")) {
+                        groupService.update(readGroup(map), _)
+                    }
                 }
             }
         }
@@ -132,6 +139,14 @@ class GroupController extends RestApiExceptionsHandler {
             case (x :: xs) => (x :: xs).map(_.toString)
             case _ => List()
         }
+    }
+
+    private def withUsers[A](users: List[String])(block: List[String] => A) :A = {
+        userService.map( service =>
+             if (!service.doUsersExist(users))
+                 throw new ResourceNotFoundException(Some("Some or all usernames in list not found"))
+        )
+        block(users)
     }
 
 }
