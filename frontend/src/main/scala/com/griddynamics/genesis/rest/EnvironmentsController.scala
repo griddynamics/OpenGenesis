@@ -32,7 +32,7 @@ import com.griddynamics.genesis.api.{GenesisService, RequestResult, EnvironmentD
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
-class EnvironmentsController(genesisService: GenesisService) {
+class EnvironmentsController(genesisService: GenesisService) extends RestApiExceptionsHandler {
   import GenesisRestController._
 
   @Value("${genesis.system.server.mode:frontend}")
