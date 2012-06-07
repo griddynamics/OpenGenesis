@@ -31,6 +31,7 @@ import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.common.Mistake
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.workflow.step.CoordinatorThrowable
+import com.griddynamics.genesis.logging.LoggerWrapper
 
 abstract class GenesisFlowCoordinator(envName: String,
                              flowSteps: Seq[GenesisStep],
@@ -195,7 +196,7 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
         handleEnvState(result)
         handleVmsState(result)
         if(!result.isStepFailed) {
-          exportToContext(result)
+            exportToContext(result)
         }
         super.onStepFinish(result)
     }
@@ -206,7 +207,10 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
           val actualResult: StepResult = result.actualResult.getOrElse(null)
           globals(to) = actualResult.getClass.getDeclaredMethod(from).invoke(actualResult)
         } catch {
-          case e => log.error("Failed to export to context: export settings = " + result.step.exportTo, e)
+          case e => {
+            LoggerWrapper.writeLog(result.step.id, "Failed to export step result to context: export settings = " + result.step.exportTo)
+            throw e
+          }
         }
       }
     }
