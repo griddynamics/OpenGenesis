@@ -185,7 +185,7 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
     var envState: Option[GenesisEntity.Id] = None
     val vmsState = mutable.Map[GenesisEntity.Id, GenesisEntity.Id]() // vm.id -> step.id
 
-    val globals = mutable.Map[String,String]()
+    val globals = mutable.Map[String, AnyRef]()
     val pluginContext = mutable.Map[String,Any]()
 
     def createStepExecutionContext(step: GenesisStep) =
@@ -194,8 +194,21 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
     abstract override def onStepFinish(result: GenesisStepResult) = {
         handleEnvState(result)
         handleVmsState(result)
-
+        if(!result.isStepFailed) {
+          exportToContext(result)
+        }
         super.onStepFinish(result)
+    }
+
+    private def exportToContext(result: GenesisStepResult) {
+      result.step.exportTo.foreach { case (from, to) =>
+        try {
+          val actualResult: StepResult = result.actualResult.getOrElse(null)
+          globals(to) = actualResult.getClass.getDeclaredMethod(from).invoke(actualResult)
+        } catch {
+          case e => log.error("Failed to export to context: export settings = " + result.step.exportTo, e)
+        }
+      }
     }
 
     def handleEnvState(result: GenesisStepResult) {
@@ -230,10 +243,10 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
     }
 }
 
-trait RegularWorkflow extends GenesisFlowCoordinatorBase {
-    val onFlowFinishSuccess = EnvStatus.Ready()
+trait RegularWorkflow { this: GenesisFlowCoordinatorBase =>
+    override val onFlowFinishSuccess = EnvStatus.Ready()
 }
 
-trait DestroyWorkflow extends GenesisFlowCoordinatorBase {
-    val onFlowFinishSuccess = EnvStatus.Destroyed()
+trait DestroyWorkflow { this: GenesisFlowCoordinatorBase =>
+    override val onFlowFinishSuccess = EnvStatus.Destroyed()
 }

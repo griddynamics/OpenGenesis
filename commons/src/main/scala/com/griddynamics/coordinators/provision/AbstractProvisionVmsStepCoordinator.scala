@@ -28,7 +28,10 @@ import com.griddynamics.genesis.plugin.{GenesisStepResult, StepExecutionContext}
 import com.griddynamics.genesis.workflow.action.{DelayedExecutorInterrupt, ExecutorInterrupt, ExecutorThrowable}
 import com.griddynamics.genesis.workflow._
 import com.griddynamics.genesis.logging.LoggerWrapper
+import com.griddynamics.genesis.model.VmStatus._
+import com.griddynamics.genesis.model.{VmStatus, VirtualMachine}
 
+case class ProvisionStepResult(step: Step, virtualMachines: Seq[VirtualMachine]) extends StepResult
 
 abstract class AbstractProvisionVmsStepCoordinator[A <: SpecificProvisionVmAction] extends ActionOrientedStepCoordinator {
   def pluginContext : ProvisionContext[A]
@@ -55,7 +58,9 @@ abstract class AbstractProvisionVmsStepCoordinator[A <: SpecificProvisionVmActio
     GenesisStepResult(context.step,
       isStepFailed = stepFailed,
       envUpdate = context.envUpdate(),
-      vmsUpdate = context.vmsUpdate())
+      vmsUpdate = context.vmsUpdate(),
+      actualResult = Some(new ProvisionStepResult(context.step, context.vms.filter(_.status == VmStatus.Ready)))
+    )
   }
 
   override def onActionFinish(result: ActionResult) : Seq[Action] = {
