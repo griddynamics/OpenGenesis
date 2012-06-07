@@ -28,8 +28,8 @@ import com.griddynamics.genesis.bean.RequestBroker
 import GenesisRestService._
 import com.griddynamics.genesis.model
 import model.{EnvStatusField, Workflow, EnvStatus}
-import service.{ComputeService, TemplateService, StoreService}
 import com.griddynamics.genesis.template.TemplateRepository
+import service.{ComputeService, TemplateService, StoreService}
 
 class GenesisRestService(storeService: StoreService,
                          templateService: TemplateService,
@@ -99,6 +99,16 @@ class GenesisRestService(storeService: StoreService,
 
     def getLogs(envName: String,  stepId: Int) : Seq[String] =
       storeService.getLogs(stepId).map(log => "%s: %s".format(log.timestamp, log.message))
+
+    def queryVariables(templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]) = {
+        templateService.findTemplate(templateName, templateVersion).flatMap {t => {
+                t.getWorkflow(workflow).map(workflow => {
+                    workflow.partial(variables).map(v => Variable(v.name, v.description, v.isOptional,
+                        v.defaultValue, v.values))
+                })
+            }
+        }
+    }
 }
 
 object GenesisRestService {
