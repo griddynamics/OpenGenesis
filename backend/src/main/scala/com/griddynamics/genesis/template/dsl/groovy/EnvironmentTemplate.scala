@@ -27,6 +27,7 @@ import groovy.lang.{GroovyObjectSupport, Closure}
 import scala._
 import collection.mutable.ListBuffer
 import com.griddynamics.genesis.template.{DependentDataSource, DataSourceFactory, VarDataSource}
+import java.lang.reflect.Method
 
 class EnvWorkflow(val name : String, val variables : List[VariableDetails], val stepsGenerator : Option[Closure[Unit]])
 
@@ -40,7 +41,7 @@ class EnvironmentTemplate(val name : String,
 
 class VariableDetails(val name : String, val clazz : Class[_ <: AnyRef], val description : String,
                       val validators : Seq[Closure[Boolean]], val isOptional: Boolean = false, val defaultValue: Option[Any],
-                      val valuesList: Option[(Map[String,Any] => Seq[AnyRef])] = None, val dependsOn: Option[String])
+                      val valuesList: Option[(Map[String,Any] => Seq[AnyRef])] = None, val dependsOn: Seq[String])
 
 class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) {
     var description : String = _
@@ -48,7 +49,7 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
     var clazz : Class[_ <: AnyRef] = classOf[String]
     var defaultValue: Any = _
     var isOptional: Boolean = false
-    var dependsOn: Option[String] = None
+    var parents: List[String] = List()
     var dataSource: Option[String] = None
     var useOneOf: Boolean = false
     var oneOf: Closure[java.util.Collection[Any]] = _
@@ -78,7 +79,7 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
         if (useOneOf) {
             throw new IllegalArgumentException("dependsOn cannot be used with oneOf")
         }
-        dependsOn_=(Option(varName))
+        parents = varName :: parents
         this
     }
 
@@ -108,16 +109,13 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
             values
         } else {
            dataSource.flatMap(ds => Option({params : Map[String, Any] => {
-               val param: Option[Any] = dependsOn.map(params.get(_)) match {
-                   case Some(x) => x
-                   case x => x
-               }
-               dsObjSupport.get.invokeMethod(ds, param)
+               val p = parents.map(params.get(_)).filter(_.isDefined).map(_.get)
+               dsObjSupport.get.invokeMethod(ds, Option(p))
            }}))
         }
     }
 
-    def newVariable = new VariableDetails(name, clazz, description, validators, isOptional, Option(defaultValue), valuesList, dependsOn)
+    def newVariable = new VariableDetails(name, clazz, description, validators, isOptional, Option(defaultValue), valuesList, parents)
 }
 
 class VariableDeclaration(val dsObjSupport: Option[DSObjectSupport]) {
@@ -286,10 +284,28 @@ class DataSourceBuilder(val factory : DataSourceFactory) {
      override def invokeMethod(name: String, args: AnyRef): Seq[String] = {
          dsMap.get(name) match {
              case Some(src) => args match {
-                 case None => src.getData
-                 case Some(x) => {
+                 case Some(Nil) => src.getData
+                 case Some(x :: Nil) => {
                      src.asInstanceOf[DependentDataSource].getData(x)
                  }
+                 case Some(head :: tail) => {
+                     println("Here")
+                     val params = (head :: tail).toArray
+                     println("Params: %s".format(params.getClass))
+                     src.getClass.getDeclaredMethods.foreach(m => println(m.getName))
+                     println(params.length)
+                     val find: Option[Method] = src.getClass.getDeclaredMethods.find(m => m.getName == "getData"
+                       && m.getParameterTypes.length == params.length
+                     )
+                     println("Method: %s".format(find))
+                     find match  {
+                         case Some(m) => {
+
+                         }
+                         case _ => throw new IllegalStateException("Cannot find method getData for args %s".format(args))
+                     }
+                 }
+                 case _ => throw new IllegalStateException("Cannot find any suitable method at datasource %s".format(src))
              }
              case _ => throw new IllegalStateException("")
          }

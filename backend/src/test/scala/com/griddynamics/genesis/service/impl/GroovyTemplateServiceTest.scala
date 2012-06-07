@@ -147,12 +147,28 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
         assert(! descAfterApply.get.values.isEmpty)
         expect(Seq("11", "31", "41"))(descAfterApply.get.values)
     }
+
+    @Test def testDoubleDependent() {
+        val template = templateService.findTemplate("TestEnv", "0.1").get
+        val varDesc =  template.createWorkflow.variableDescriptions
+        assert(varDesc.nonEmpty)
+        val listDS1 = varDesc.find(_.name == "doubleDep")
+        assert(listDS1.isDefined)
+        val S1 = Seq()
+        expect(S1)(listDS1.get.values)
+        val partial: Seq[VariableDescription] = template.createWorkflow.partial(Map("nodesCount" -> 1, "dependent" -> 2))
+        val descAfterApply = partial.find(_.name == "doubleDep")
+        assert(descAfterApply.isDefined)
+        assert(! descAfterApply.get.values.isEmpty)
+        expect(Seq("11", "31", "41"))(descAfterApply.get.values)
+    }
 }
 
 
 
 class DependentListDataSource extends ListVarDataSource with DependentDataSource {
     def getData(param: Any) = values.map(_ + param.toString).toSeq
+    def getData(param1: Any, param2: Any) = values.map(_ + param1.toString + param2.toString).toSeq
 }
 
 class DependentListVarDSFactory extends DataSourceFactory {
