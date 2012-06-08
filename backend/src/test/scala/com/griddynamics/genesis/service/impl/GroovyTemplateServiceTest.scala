@@ -56,50 +56,52 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
         Seq(new ListVarDSFactory, new DependentListVarDSFactory))
 
+    private def testTemplate = templateService.findTemplate(0, "TestEnv", "0.1").get
+
     @Test def testEmbody() {
-        val res = templateService.findTemplate("TestEnv", "0.1").get.createWorkflow.embody(Map("nodesCount" -> "1", "test" -> "test"))
+        val res = testTemplate.createWorkflow.embody(Map("nodesCount" -> "1", "test" -> "test"))
         assert(res.size === 2)
         assert(res.head.phase == "provision")
 
-        templateService.findTemplate("TestEnv", "0.1").get.destroyWorkflow.embody(Map())
+        testTemplate.destroyWorkflow.embody(Map())
     }
 
     @Test(expected = classOf[IllegalArgumentException])
     def testEmbodyWrongVariableCount() {
-        templateService.findTemplate("TestEnv", "0.1").get.createWorkflow.embody(Map("nodesCount" -> "1"))
+        testTemplate.createWorkflow.embody(Map("nodesCount" -> "1"))
     }
 
     @Test def testValidateNoVariable() {
-        val res = templateService.findTemplate("TestEnv", "0.1").get.createWorkflow.validate(Map())
+        val res = testTemplate.createWorkflow.validate(Map())
         assert(res.size === 2)
         assert(res.head.variableName === "nodesCount")
     }
 
     @Test def testValidateWrongVariable() {
-        val res = templateService.findTemplate("TestEnv", "0.1").get.createWorkflow.validate(Map("nodesCount" -> "nothing", "test" -> "test"))
+        val res = testTemplate.createWorkflow.validate(Map("nodesCount" -> "nothing", "test" -> "test"))
         assert(res.size === 1)
         assert(res.head.variableName === "nodesCount")
     }
 
     @Test def testValidationError() {
-        val res = templateService.findTemplate("TestEnv", "0.1").get.createWorkflow.validate(Map("nodesCount" -> "0", "test" -> "test"))
+        val res = testTemplate.createWorkflow.validate(Map("nodesCount" -> "0", "test" -> "test"))
         assert(res.size === 1)
         assert(res.head.variableName === "nodesCount")
     }
 
     @Test def testValidate() {
-        val res = templateService.findTemplate("TestEnv", "0.1").get.createWorkflow.validate(Map("nodesCount" -> "1", "test" -> "test"))
+        val res = testTemplate.createWorkflow.validate(Map("nodesCount" -> "1", "test" -> "test"))
         assert(res.isEmpty)
     }
 
     @Test def testListTemplates() {
-        val res = templateService.listTemplates
+        val res = templateService.listTemplates(0)
         assert(res.size === 1)
         assert(res.head === ("TestEnv", "0.1"))
     }
 
     @Test def testDescribeTemplate() {
-        val res = templateService.findTemplate("TestEnv", "0.1").get
+        val res = testTemplate
         assert(res.listWorkflows.size === 2)
         assert(res.listWorkflows.filter(_.name == "create").headOption.isDefined)
         assert(res.createWorkflow.variableDescriptions.filter(_.name == "nodesCount").headOption.isDefined)
@@ -108,7 +110,7 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
     }
 
     @Test def testOneOfVariable() {
-        val template = templateService.findTemplate("TestEnv", "0.1").get
+        val template = testTemplate
         var validate = template.createWorkflow.validate(Map("nodesCount" -> 1, "list" -> 2, "test" -> "test"))
         validate = template.createWorkflow.validate(Map("nodesCount" -> 1, "test" -> "test", "list" -> 10))
         assert(validate.isDefinedAt(0))
@@ -116,7 +118,7 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
     }
 
     @Test def testOneOfDS() {
-        val template = templateService.findTemplate("TestEnv", "0.1").get
+        val template = testTemplate
         val varDesc =  template.createWorkflow.variableDescriptions
         assert(varDesc.nonEmpty)
         val listDS12 = varDesc.find(_.name == "listDS12")
@@ -125,7 +127,7 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
     }
 
     @Test def testIndependentDataSource() {
-        val template = templateService.findTemplate("TestEnv", "0.1").get
+        val template = testTemplate
         val varDesc =  template.createWorkflow.variableDescriptions
         assert(varDesc.nonEmpty)
         val listDS1 = varDesc.find(_.name == "listDS1")
@@ -134,7 +136,7 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
     }
 
     @Test def testDependent() {
-        val template = templateService.findTemplate("TestEnv", "0.1").get
+        val template = testTemplate
         val varDesc =  template.createWorkflow.variableDescriptions
         assert(varDesc.nonEmpty)
         val listDS1 = varDesc.find(_.name == "dependent")

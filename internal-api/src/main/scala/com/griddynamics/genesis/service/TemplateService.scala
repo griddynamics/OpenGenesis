@@ -52,7 +52,7 @@ trait WorkflowDefinition {
 }
 
 trait TemplateService {
-    def templateRawContent(name: String, version: String): Option[String]
-    def listTemplates: Seq[(String, String)] // (name, version)
-    def findTemplate(templateName: String, templateVersion: String): Option[TemplateDefinition]
+    def templateRawContent(projectId: Int, name: String, version: String): Option[String]
+    def listTemplates(projectId: Int): Seq[(String, String)] // (name, version)
+    def findTemplate(projectId: Int, templateName: String, templateVersion: String): Option[TemplateDefinition]
 }

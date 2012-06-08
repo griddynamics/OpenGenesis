@@ -52,9 +52,9 @@ class GenesisRestService(storeService: StoreService,
 
     def countEnvs(projectId: Int) : Int = storeService.countEnvs(projectId)
 
-    def listTemplates = {
-        for {(name, version) <- templateService.listTemplates.toSeq
-             templateOpt = templateService.findTemplate(name, version)
+    def listTemplates(projectId: Int) = {
+        for {(name, version) <- templateService.listTemplates(projectId).toSeq
+             templateOpt = templateService.findTemplate(projectId, name, version)
              if templateOpt.nonEmpty
         } yield templateDesc(name, version, templateOpt.get)
     }
@@ -84,7 +84,7 @@ class GenesisRestService(storeService: StoreService,
     def describeEnv(envName: String) = {
         storeService.findEnv(envName) match {
             case Some(env) =>
-                templateService.findTemplate(env.templateName, env.templateVersion).map(
+                templateService.findTemplate(env.projectId, env.templateName, env.templateVersion).map(
                     envDesc(
                         env,
                         storeService.listVms(env),
@@ -100,8 +100,8 @@ class GenesisRestService(storeService: StoreService,
     def getLogs(envName: String,  stepId: Int) : Seq[String] =
       storeService.getLogs(stepId).map(log => "%s: %s".format(log.timestamp, log.message))
 
-    def queryVariables(templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]) = {
-        templateService.findTemplate(templateName, templateVersion).flatMap {t => {
+    def queryVariables(projectId: Int, templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]) = {
+        templateService.findTemplate(projectId, templateName, templateVersion).flatMap {t => {
                 t.getWorkflow(workflow).map(workflow => {
                     workflow.partial(variables).map(v => Variable(v.name, v.description, v.isOptional,
                         v.defaultValue, v.values))

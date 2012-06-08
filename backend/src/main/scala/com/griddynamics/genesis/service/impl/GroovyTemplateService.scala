@@ -50,15 +50,15 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
     var sourcesMap = Map[VersionedTemplate, (String, String)]()
     var templatesMap = Map[(String, String), EnvironmentTemplate]()
 
-    def findTemplate(name: String, version: String) : Option[TemplateDefinition] =
-        updateTemplates().get(name, version).map(et =>
+    def findTemplate(projectId: Int, name: String, version: String) : Option[TemplateDefinition] =
+        updateTemplates(projectId).get(name, version).map(et =>
             new GroovyTemplateDefinition(et, conversionService, stepBuilderFactories)
         )
   
-    def listTemplates = updateTemplates().keys.toSeq
+    def listTemplates(projectId: Int) = updateTemplates(projectId).keys.toSeq
 
     //TODO: remove?
-    def updateTemplates() = updateLock.synchronized {
+    def updateTemplates(projectId: Int) = updateLock.synchronized {
         val sources = templateRepository.listSources()
         val uRevisionId = TemplateRepository.revisionId(sources)
 
@@ -71,10 +71,10 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
             for ((version, body) <- sources) try {
                 val pair = sourcesMap.get(version)
                 val template : Option[EnvironmentTemplate] = pair match {
-                  case None => evaluateTemplate(body, None, None, None)
+                  case None => evaluateTemplate(projectId, body, None, None, None)
                   case Some(p) => templatesMap.get(p) match {
                       case a@Some(t) => a
-                      case _ => evaluateTemplate(body, None, None, None)
+                      case _ => evaluateTemplate(projectId, body, None, None, None)
                   }
                 }
                 template.foreach(template => {
@@ -96,7 +96,8 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
         templatesMap
     }
 
-    def evaluateTemplate(body : String, extName: Option[String], extVersion: Option[String], extProject : Option[String]) = {
+    def evaluateTemplate(projectId: Int, body : String, extName: Option[String], extVersion: Option[String],
+                         extProject : Option[String]) = {
         val templateDecl = new BlockDeclaration
         val methodClosure = new MethodClosure(templateDecl, "declare")
 
@@ -109,7 +110,7 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
             case e: GroovyRuntimeException => throw new IllegalStateException("can't process template", e)
         }
 
-        val templateBuilder = new EnvTemplateBuilder(dataSourceFactories)
+        val templateBuilder = new EnvTemplateBuilder(projectId, dataSourceFactories)
         templateDecl.bodies.headOption.map {
             templateBody => {
                 templateBody.setDelegate(templateBuilder)
@@ -119,8 +120,8 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
         }
     }
 
-    def templateRawContent(name: String, version: String) = {
-      updateTemplates()
+    def templateRawContent(projectId: Int, name: String, version: String) = {
+      updateTemplates(projectId)
 
       val templVersionOption = sourcesMap.find { case (_, nameVersionTuple) =>
         nameVersionTuple._1 == name && nameVersionTuple._2 == version

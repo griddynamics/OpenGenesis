@@ -177,8 +177,8 @@ class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with Mock
             ),
             ConversionServiceFactory.createDefaultConversionService())
 
-        templateService.listTemplates.headOption match {
-            case Some((name, version)) => templateService.findTemplate(name, version)
+        templateService.listTemplates(0).headOption match {
+            case Some((name, version)) => templateService.findTemplate(0, name, version)
             case None => None
         }
     }

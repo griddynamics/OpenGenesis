@@ -143,7 +143,7 @@ class WorkflowDeclaration {
     }
 }
 
-class EnvTemplateBuilder(val dataSourceFactories : Seq[DataSourceFactory]) {
+class EnvTemplateBuilder(val projectId: Int, val dataSourceFactories : Seq[DataSourceFactory]) {
     var name : String = _
     var version : String = _
 
@@ -202,7 +202,7 @@ class EnvTemplateBuilder(val dataSourceFactories : Seq[DataSourceFactory]) {
     }
 
     def dataSources(ds : Closure[Unit]) {
-        val dsDelegate = new DataSourceDeclaration(dataSourceFactories)
+        val dsDelegate = new DataSourceDeclaration(projectId, dataSourceFactories)
         ds.setDelegate(dsDelegate)
         ds.call()
         val dsBuilders = dsDelegate.builders
@@ -250,17 +250,17 @@ class BlockDeclaration {
 }
 
 
-class DataSourceDeclaration(dsFactories: Seq[DataSourceFactory]) {
+class DataSourceDeclaration(val projectId: Int, dsFactories: Seq[DataSourceFactory]) {
     val builders = new ListBuffer[DataSourceBuilder]
 
     def dataSource(mode : String) = dsFactories.find(mode == _.mode).map( factory => {
-        val builder = new DataSourceBuilder(factory)
+        val builder = new DataSourceBuilder(projectId, factory)
         builders += builder
         builder
     }).getOrElse(throw new IllegalArgumentException("No such variable datasource provider exists: " + mode))
 }
 
-class DataSourceBuilder(val factory : DataSourceFactory) {
+class DataSourceBuilder(val projectId: Int, val factory : DataSourceFactory) {
     var name : String = _
     var conf : Map[String, Any] = _
 
@@ -274,7 +274,7 @@ class DataSourceBuilder(val factory : DataSourceFactory) {
         this
     }
 
-    def newDS = (name, {val ds = factory.newDataSource; ds.config(conf); ds})
+    def newDS = (name, {val ds = factory.newDataSource; ds.config(conf + ("projectId" -> projectId)); ds})
 }
 
  class DSObjectSupport(val dsMap: Map[String, VarDataSource]) extends GroovyObjectSupport {
