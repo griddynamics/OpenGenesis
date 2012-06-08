@@ -41,7 +41,7 @@ class EnvironmentTemplate(val name : String,
 
 class VariableDetails(val name : String, val clazz : Class[_ <: AnyRef], val description : String,
                       val validators : Seq[Closure[Boolean]], val isOptional: Boolean = false, val defaultValue: Option[Any],
-                      val valuesList: Option[(Map[String,Any] => Seq[AnyRef])] = None, val dependsOn: Seq[String])
+                      val valuesList: Option[(Map[String,AnyRef] => Seq[AnyRef])] = None, val dependsOn: Seq[String])
 
 class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) {
     var description : String = _
@@ -49,7 +49,7 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
     var clazz : Class[_ <: AnyRef] = classOf[String]
     var defaultValue: Any = _
     var isOptional: Boolean = false
-    var parents: List[String] = List()
+    var parents = new ListBuffer[String]
     var dataSource: Option[String] = None
     var useOneOf: Boolean = false
     var oneOf: Closure[java.util.Collection[Any]] = _
@@ -79,7 +79,7 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
         if (useOneOf) {
             throw new IllegalArgumentException("dependsOn cannot be used with oneOf")
         }
-        parents = varName :: parents
+        parents += varName
         this
     }
 
@@ -97,7 +97,7 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
         this
     }
 
-    def valuesList: Option[(Map[String, Any] => Seq[AnyRef])] = {
+    def valuesList: Option[(Map[String, AnyRef] => Seq[AnyRef])] = {
         if (useOneOf) {
             dsObjSupport.foreach(oneOf.setDelegate(_))
             val values = Option({ _: Any => oneOf.call().toArray.toSeq })
@@ -108,14 +108,14 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
             }
             values
         } else {
-           dataSource.flatMap(ds => Option({params : Map[String, Any] => {
-               val p = parents.map(params.get(_)).filter(_.isDefined).map(_.get)
-               dsObjSupport.get.invokeMethod(ds, Option(p))
+           dataSource.flatMap(ds => Option({params : Map[String, AnyRef] => {
+               val p = parents.toList.map(params.get(_)).filter(_.isDefined).map(_.get)
+               dsObjSupport.get.getData(ds, p)
            }}))
         }
     }
 
-    def newVariable = new VariableDetails(name, clazz, description, validators, isOptional, Option(defaultValue), valuesList, parents)
+    def newVariable = new VariableDetails(name, clazz, description, validators, isOptional, Option(defaultValue), valuesList, parents.toList)
 }
 
 class VariableDeclaration(val dsObjSupport: Option[DSObjectSupport]) {
@@ -281,33 +281,28 @@ class DataSourceBuilder(val factory : DataSourceFactory) {
          case _ => super.getProperty(name)
      }
 
-     override def invokeMethod(name: String, args: AnyRef): Seq[String] = {
+     def getData(name: String, args: List[Any]): Seq[String] = {
          dsMap.get(name) match {
              case Some(src) => args match {
-                 case Some(Nil) => src.getData
-                 case Some(x :: Nil) => {
+                 case Nil => src.getData
+                 case x :: Nil => {
                      src.asInstanceOf[DependentDataSource].getData(x)
                  }
-                 case Some(head :: tail) => {
-                     println("Here")
-                     val params = (head :: tail).toArray
-                     println("Params: %s".format(params.getClass))
-                     src.getClass.getDeclaredMethods.foreach(m => println(m.getName))
-                     println(params.length)
+                 case head :: tail => {
+                     val params: Array[AnyRef] = Array(args.map(v => v.)).flatten
                      val find: Option[Method] = src.getClass.getDeclaredMethods.find(m => m.getName == "getData"
                        && m.getParameterTypes.length == params.length
                      )
-                     println("Method: %s".format(find))
                      find match  {
                          case Some(m) => {
-
+                             m.invoke(src, params:_*).asInstanceOf[Seq[String]]
                          }
                          case _ => throw new IllegalStateException("Cannot find method getData for args %s".format(args))
                      }
                  }
                  case _ => throw new IllegalStateException("Cannot find any suitable method at datasource %s".format(src))
              }
-             case _ => throw new IllegalStateException("")
+             case _ => throw new IllegalStateException("Can't get datasource for argument %s".format(name))
          }
      }
  }

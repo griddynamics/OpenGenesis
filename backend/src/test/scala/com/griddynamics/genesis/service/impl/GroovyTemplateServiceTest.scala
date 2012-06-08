@@ -156,11 +156,26 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
         assert(listDS1.isDefined)
         val S1 = Seq()
         expect(S1)(listDS1.get.values)
-        val partial: Seq[VariableDescription] = template.createWorkflow.partial(Map("nodesCount" -> 1, "dependent" -> 2))
+        val partial: Seq[VariableDescription] = template.createWorkflow.partial(Map("nodesCount" -> "x", "dependent" -> "z"))
         val descAfterApply = partial.find(_.name == "doubleDep")
         assert(descAfterApply.isDefined)
         assert(! descAfterApply.get.values.isEmpty)
-        expect(Seq("11", "31", "41"))(descAfterApply.get.values)
+        expect(Seq("1 < nc:x < dp:z", "3 < nc:x < dp:z", "4 < nc:x < dp:z"))(descAfterApply.get.values)
+    }
+
+    @Test def testTripleDependent() {
+        val template = templateService.findTemplate("TestEnv", "0.1").get
+        val varDesc =  template.createWorkflow.variableDescriptions
+        assert(varDesc.nonEmpty)
+        val listDS1 = varDesc.find(_.name == "triple")
+        assert(listDS1.isDefined)
+        val S1 = Seq()
+        expect(S1)(listDS1.get.values)
+        val partial: Seq[VariableDescription] = template.createWorkflow.partial(Map("list" -> "x", "nodesCount" -> "y", "dependent" -> "z"))
+        val descAfterApply = partial.find(_.name == "triple")
+        assert(descAfterApply.isDefined)
+        assert(! descAfterApply.get.values.isEmpty)
+        expect(Seq("1<x<y<z", "3<x<y<z", "4<x<y<z"))(descAfterApply.get.values)
     }
 }
 
@@ -168,7 +183,9 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
 
 class DependentListDataSource extends ListVarDataSource with DependentDataSource {
     def getData(param: Any) = values.map(_ + param.toString).toSeq
-    def getData(param1: Any, param2: Any) = values.map(_ + param1.toString + param2.toString).toSeq
+    def getData(nodesCount: Any, dependent: Any) = values.map(_ + " < nc:%s".format(nodesCount) + " < dp:%s".format(dependent)).toSeq
+    def getData(list: Any, nodesCount: Any, dependent: Any)
+    = values.map(_ + "<%s".format(list) + "<%s".format(nodesCount) + "<%s".format(dependent)).toSeq
 }
 
 class DependentListVarDSFactory extends DataSourceFactory {
