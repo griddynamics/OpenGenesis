@@ -66,7 +66,9 @@ class GenesisRestController(genesisService: GenesisService, templateService: Tem
     def partialApply(@PathVariable templateName: String, @PathVariable templateVersion: String, @PathVariable workflow: String, request: HttpServletRequest) = {
         val paramsMap: Map[String, Any] = GenesisRestController.extractParamsMap(request)
         val variables = GenesisRestController.extractVariables(paramsMap)
-        genesisService.queryVariables(templateName, templateVersion, workflow, variables).getOrElse(throw new ResourceNotFoundException)
+        genesisService.queryVariables(templateName, templateVersion, workflow, variables).getOrElse(
+          throw new ResourceNotFoundException("No variables were found for [template = %s (v%s), workflow = %s]".format(templateName, templateVersion, workflow))
+        )
     }
 
 }

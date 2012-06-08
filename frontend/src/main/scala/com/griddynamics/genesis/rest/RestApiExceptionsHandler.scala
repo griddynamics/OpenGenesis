@@ -59,7 +59,6 @@ trait RestApiExceptionsHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     def handleResourceNotFound(response : HttpServletResponse, exception: ResourceNotFoundException) {
       response.setContentType(MediaType.APPLICATION_JSON.toString)
-      val errorMsg = List(exception.msg).flatten
-      response.getWriter.write(Serialization.write(new Failure(isNotFound = true, isSuccess = false, compoundServiceErrors = errorMsg)))
+      response.getWriter.write(Serialization.write(new Failure(isNotFound = true, isSuccess = false, compoundServiceErrors = List(exception.msg))))
     }
 }

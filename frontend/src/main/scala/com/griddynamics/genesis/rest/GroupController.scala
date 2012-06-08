@@ -89,7 +89,7 @@ class GroupController extends RestApiExceptionsHandler with ApplicationContextAw
 
     def withGroup(id: Int)(block: UserGroup => ExtendedResult[_]) = {
         groupService.get(id) match {
-            case None => throw new ResourceNotFoundException
+            case None => throw new ResourceNotFoundException ("Group [id = " + id + "] was not found")
             case Some(group) => block(group)
         }
     }

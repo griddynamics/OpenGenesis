@@ -52,7 +52,7 @@ class UsersController extends RestApiExceptionsHandler {
     @ResponseBody
     def user(@PathVariable(value = "username") username: String) = userService.findByUsername(username) match {
         case Some(u) => u
-        case None => throw new ResourceNotFoundException
+        case None => throw new ResourceNotFoundException("User[username = " + username + "] was not found")
     }
 
     @RequestMapping(method = Array(RequestMethod.POST))
@@ -88,7 +88,7 @@ class UsersController extends RestApiExceptionsHandler {
 
     def withUser(username: String)(block: User => ExtendedResult[User]) = {
       userService.findByUsername(username) match {
-        case None => throw new ResourceNotFoundException
+        case None => throw new ResourceNotFoundException("User [username = " + username + "] was not found")
         case Some(group) => block(group)
       }
     }

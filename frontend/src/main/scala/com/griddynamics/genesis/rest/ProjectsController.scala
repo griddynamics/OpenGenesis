@@ -74,7 +74,7 @@ class ProjectsController(projectService: ProjectService, authorityService: Proje
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.GET))
   @ResponseBody
   def findProject(@PathVariable("projectId") projectId: Int): Project =
-    projectService.get(projectId).getOrElse { throw new ResourceNotFoundException }
+    projectService.get(projectId).getOrElse { throw new ResourceNotFoundException("Project [id = " + projectId + "]  was not found") }
 
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.PUT))
@@ -84,7 +84,7 @@ class ProjectsController(projectService: ProjectService, authorityService: Proje
     val project = extractProject(Option(projectId), paramsMap)
     projectService.get(projectId) match {
       case Some(p) => projectService.update(project)
-      case _ => throw new ResourceNotFoundException
+      case _ => throw new ResourceNotFoundException("Project [id = " + projectId + "]  was not found")
     }
   }
 
