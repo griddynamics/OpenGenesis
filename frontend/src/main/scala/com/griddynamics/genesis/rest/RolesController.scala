@@ -19,8 +19,6 @@ class RolesController(authorityService: AuthorityService, projectAuthorityServic
   private lazy val userService: Option[UserService] = Option(applicationContext.getBean(classOf[UserService]))
   private lazy val groupService: Option[GroupService] = Option(applicationContext.getBean(classOf[GroupService]))
 
-  private implicit def toSingletonList(item: String) = List(item)
-
   @RequestMapping(value = Array("roles"), method = Array(RequestMethod.GET))
   @ResponseBody
   def listSystemRoles() = authorityService.listAuthorities
@@ -31,22 +29,22 @@ class RolesController(authorityService: AuthorityService, projectAuthorityServic
 
   @RequestMapping(value = Array("users/{username}/roles"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def userRoles(@PathVariable("username")username: String): List[String] = validUsers(username) { authorityService.getUserAuthorities(username) }
+  def userRoles(@PathVariable("username")username: String): List[String] = validUser(username) { authorityService.getUserAuthorities(username) }
 
   @RequestMapping(value = Array("users/{username}/roles"), method = Array(RequestMethod.PUT))
   @ResponseBody
-  def updateUserRoles(@PathVariable("username")username: String, request: HttpServletRequest): RequestResult = validUsers(username) {
+  def updateUserRoles(@PathVariable("username")username: String, request: HttpServletRequest): RequestResult = validUser(username) {
     val roles = GenesisRestController.extractParamsList(request)
     authorityService.grantAuthoritiesToUser(username, roles)
   }
 
   @RequestMapping(value = Array("groups/{groupName}/roles"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def groupRoles(@PathVariable("groupName") groupName: String): List[String] = validGroups(groupName) { authorityService.getGroupAuthorities(groupName) }
+  def groupRoles(@PathVariable("groupName") groupName: String): List[String] = validGroup(groupName) { authorityService.getGroupAuthorities(groupName) }
 
   @RequestMapping(value = Array("groups/{groupName}/roles"), method = Array(RequestMethod.PUT))
   @ResponseBody
-  def updateGroupRoles(@PathVariable("groupName") groupName: String, request: HttpServletRequest) = validGroups(groupName) {
+  def updateGroupRoles(@PathVariable("groupName") groupName: String, request: HttpServletRequest) = validGroup(groupName) {
     val roles = GenesisRestController.extractParamsList(request)
     authorityService.grantAuthoritiesToGroup(groupName, roles)
   }
@@ -55,7 +53,7 @@ class RolesController(authorityService: AuthorityService, projectAuthorityServic
   @ResponseBody
   def describeRole(@PathVariable("roleName") roleName: String) = {
     if(!authorityService.listAuthorities.contains(roleName)) {
-      throw new ResourceNotFoundException()
+      throw new ResourceNotFoundException("Role [name = " + roleName + "] was not found")
     }
     authorityService.authorityAssociations(roleName)
   }
@@ -64,7 +62,7 @@ class RolesController(authorityService: AuthorityService, projectAuthorityServic
   @ResponseBody
   def updateRole(@PathVariable("roleName") roleName: String, request: HttpServletRequest): RequestResult = {
     if(!authorityService.listAuthorities.contains(roleName)) {
-      throw new ResourceNotFoundException()
+      throw new ResourceNotFoundException("Role [name = " + roleName + "] was not found")
     }
     val grantsMap = extractParamsMap(request)
     val groups = extractListValue("groups", grantsMap)
@@ -76,19 +74,35 @@ class RolesController(authorityService: AuthorityService, projectAuthorityServic
     }
   }
 
+  private def validUser[A](username: String)(block: => A): A = {
+    userService.map { service =>
+      if (!service.doesUserExist(username)) {
+        throw new ResourceNotFoundException("User [username=" + username + "] was not found")
+      }
+    }
+    block
+  }
   private def validUsers[A](usernames: Seq[String])(block: => A): A = {
     userService.map { service =>
       if (!service.doUsersExist(usernames)) {
-        throw new ResourceNotFoundException()
+        throw new ResourceNotFoundException("List of users contains unknown usernames")
       }
     }
     block
   }
 
+  private def validGroup[A](groupName: String)(block: => A): A = {
+    groupService.map { service =>
+      if (!service.doesGroupExist(groupName)) {
+        throw new ResourceNotFoundException("Group [name = " + groupName + "] was not found")
+      }
+    }
+    block
+  }
   private def validGroups[A](groupNames: Seq[String])(block: => A): A = {
     groupService.map { service =>
       if(!service.doGroupsExist(groupNames)) {
-        throw new ResourceNotFoundException()
+        throw new ResourceNotFoundException("List of groups contains unknown  groups")
       }
     }
     block

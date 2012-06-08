@@ -88,7 +88,7 @@ class EnvironmentsController(genesisService: GenesisService) extends RestApiExce
                   @PathVariable("envName") envName: String,
                   response : HttpServletResponse) : EnvironmentDetails = {
     assertEnvExist(projectId, envName)
-    genesisService.describeEnv(envName).getOrElse(throw new ResourceNotFoundException)
+    genesisService.describeEnv(envName).getOrElse(throw new ResourceNotFoundException("Environment [" + envName + "] was not found"))
   }
 
 
@@ -123,7 +123,7 @@ class EnvironmentsController(genesisService: GenesisService) extends RestApiExce
 
   private def assertEnvExist(projectId: Int, env: String) {
     if (!genesisService.isEnvExists(env, projectId)) {
-      throw new ResourceNotFoundException
+      throw new ResourceNotFoundException("Environment [" + env + "] wasn't found in project [id = "+ projectId + "]")
     }
   }
 }
