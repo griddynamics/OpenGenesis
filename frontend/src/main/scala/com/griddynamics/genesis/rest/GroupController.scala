@@ -144,7 +144,7 @@ class GroupController extends RestApiExceptionsHandler with ApplicationContextAw
     private def withUsers[A](users: List[String])(block: List[String] => A) :A = {
         userService.map( service =>
              if (!service.doUsersExist(users))
-                 throw new ResourceNotFoundException(Some("Some or all usernames in list not found"))
+                 throw new ResourceNotFoundException("Some or all usernames in list not found")
         )
         block(users)
     }
