@@ -40,7 +40,7 @@ trait StepExecutionContext {
 
     def envUpdate() : Option[Environment]
     def vmsUpdate() : Seq[VirtualMachine]
-    def globals : mutable.Map[String,String]
+    def globals : mutable.Map[String, AnyRef]
     def pluginContexts: mutable.Map[String, Any]
 }
 
@@ -48,7 +48,7 @@ class StepExecutionContextImpl(val step : GenesisStep,
                                iEnv : Environment,
                                iVms : Seq[VirtualMachine],
                                iWorkflow : Workflow,
-                               val globals : mutable.Map[String,String],
+                               val globals : mutable.Map[String, AnyRef],
                                val pluginContexts: mutable.Map[String, Any]) extends StepExecutionContext {
     var hEnv = iEnv
     var hVms = mutable.Seq(iVms : _ *)
