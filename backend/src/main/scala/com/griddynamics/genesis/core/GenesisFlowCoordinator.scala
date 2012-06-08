@@ -31,6 +31,7 @@ import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.common.Mistake
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.workflow.step.CoordinatorThrowable
+import com.griddynamics.genesis.logging.LoggerWrapper
 
 abstract class GenesisFlowCoordinator(envName: String,
                              flowSteps: Seq[GenesisStep],
@@ -185,7 +186,7 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
     var envState: Option[GenesisEntity.Id] = None
     val vmsState = mutable.Map[GenesisEntity.Id, GenesisEntity.Id]() // vm.id -> step.id
 
-    val globals = mutable.Map[String,String]()
+    val globals = mutable.Map[String, AnyRef]()
     val pluginContext = mutable.Map[String,Any]()
 
     def createStepExecutionContext(step: GenesisStep) =
@@ -194,8 +195,26 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
     abstract override def onStepFinish(result: GenesisStepResult) = {
         handleEnvState(result)
         handleVmsState(result)
-
+        if(!result.isStepFailed) {
+            exportToContext(result)
+        }
         super.onStepFinish(result)
+    }
+
+    private def exportToContext(result: GenesisStepResult) {
+      result.step.exportTo.foreach { case (from, to) =>
+        try {
+          val actualResult: StepResult = result.actualResult.getOrElse(
+            throw new IllegalStateException("Exporting to context was specified in template, but step produced no actual results")
+          )
+          globals(to) = actualResult.getClass.getDeclaredMethod(from).invoke(actualResult)
+        } catch {
+          case e => {
+            LoggerWrapper.writeLog(result.step.id, "Failed to export step result to context: export settings = " + result.step.exportTo)
+            throw e
+          }
+        }
+      }
     }
 
     def handleEnvState(result: GenesisStepResult) {
@@ -230,10 +249,10 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
     }
 }
 
-trait RegularWorkflow extends GenesisFlowCoordinatorBase {
-    val onFlowFinishSuccess = EnvStatus.Ready()
+trait RegularWorkflow { this: GenesisFlowCoordinatorBase =>
+    override val onFlowFinishSuccess = EnvStatus.Ready()
 }
 
-trait DestroyWorkflow extends GenesisFlowCoordinatorBase {
-    val onFlowFinishSuccess = EnvStatus.Destroyed()
+trait DestroyWorkflow { this: GenesisFlowCoordinatorBase =>
+    override val onFlowFinishSuccess = EnvStatus.Destroyed()
 }

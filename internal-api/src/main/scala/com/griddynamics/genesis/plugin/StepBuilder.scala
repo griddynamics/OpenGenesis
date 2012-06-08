@@ -38,10 +38,11 @@ trait StepBuilder {
     @BeanProperty var precedingPhases: JList[String] = Collections.emptyList()
     @BeanProperty var ignoreFail: Boolean = false
     @BeanProperty var retryCount: Int = 0
+    @BeanProperty var exportTo: JMap[String, String] = Collections.emptyMap()
     @BeanProperty var templateContext: JMap[String, String] = Collections.emptyMap()
 
     def newStep = new GenesisStep(0, phase, JC.asScalaBuffer(precedingPhases).toSet, ignoreFail,
-        if (retryCount < 0) 0 else retryCount, getDetails)
+        if (retryCount < 0) 0 else retryCount, getDetails, JC.mapAsScalaMap(exportTo).toMap)
 
     def getDetails: Step
 }
