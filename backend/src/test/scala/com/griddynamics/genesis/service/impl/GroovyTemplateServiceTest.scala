@@ -171,11 +171,12 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
         assert(listDS1.isDefined)
         val S1 = Seq()
         expect(S1)(listDS1.get.values)
-        val partial: Seq[VariableDescription] = template.createWorkflow.partial(Map("list" -> "x", "nodesCount" -> "y", "dependent" -> "z"))
+        val partial: Seq[VariableDescription] = template.createWorkflow.partial(Map("list" -> "x", "nodesCount" -> 1, "dependent" -> 'z'))
+        assert(partial.length == 3) // three calls of getData, since there is three "parent" variables
         val descAfterApply = partial.find(_.name == "triple")
         assert(descAfterApply.isDefined)
         assert(! descAfterApply.get.values.isEmpty)
-        expect(Seq("1<x<y<z", "3<x<y<z", "4<x<y<z"))(descAfterApply.get.values)
+        expect(Seq("1<x<1<z", "3<x<1<z", "4<x<1<z"))(descAfterApply.get.values)
     }
 }
 
@@ -184,8 +185,14 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
 class DependentListDataSource extends ListVarDataSource with DependentDataSource {
     def getData(param: Any) = values.map(_ + param.toString).toSeq
     def getData(nodesCount: Any, dependent: Any) = values.map(_ + " < nc:%s".format(nodesCount) + " < dp:%s".format(dependent)).toSeq
-    def getData(list: Any, nodesCount: Any, dependent: Any)
-    = values.map(_ + "<%s".format(list) + "<%s".format(nodesCount) + "<%s".format(dependent)).toSeq
+
+   /*
+    *  A method for triple dependent variable. It has three arguments, but
+    *  you don't have to declare parameters as Any since you're providing a
+    *  correct data types as input
+    */
+    def getData(list: String, nodesCount: Int, dependent: Char)
+    = values.map(_ + "<%s".format(list) + "<%d".format(nodesCount) + "<%s".format(dependent)).toSeq
 }
 
 class DependentListVarDSFactory extends DataSourceFactory {

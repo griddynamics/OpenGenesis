@@ -22,12 +22,14 @@
  */
 package com.griddynamics.genesis.template.dsl.groovy
 
-import java.lang.IllegalStateException
 import groovy.lang.{GroovyObjectSupport, Closure}
 import scala._
 import collection.mutable.ListBuffer
 import com.griddynamics.genesis.template.{DependentDataSource, DataSourceFactory, VarDataSource}
 import java.lang.reflect.Method
+import runtime.{RichDouble, RichInt}
+import java.lang.{Boolean, Double, IllegalStateException}
+import tools.cmd.gen.AnyVals
 
 class EnvWorkflow(val name : String, val variables : List[VariableDetails], val stepsGenerator : Option[Closure[Unit]])
 
@@ -41,7 +43,7 @@ class EnvironmentTemplate(val name : String,
 
 class VariableDetails(val name : String, val clazz : Class[_ <: AnyRef], val description : String,
                       val validators : Seq[Closure[Boolean]], val isOptional: Boolean = false, val defaultValue: Option[Any],
-                      val valuesList: Option[(Map[String,AnyRef] => Seq[AnyRef])] = None, val dependsOn: Seq[String])
+                      val valuesList: Option[(Map[String,Any] => Seq[AnyRef])] = None, val dependsOn: Seq[String])
 
 class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) {
     var description : String = _
@@ -97,7 +99,7 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
         this
     }
 
-    def valuesList: Option[(Map[String, AnyRef] => Seq[AnyRef])] = {
+    def valuesList: Option[(Map[String, Any] => Seq[AnyRef])] = {
         if (useOneOf) {
             dsObjSupport.foreach(oneOf.setDelegate(_))
             val values = Option({ _: Any => oneOf.call().toArray.toSeq })
@@ -108,7 +110,7 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
             }
             values
         } else {
-           dataSource.flatMap(ds => Option({params : Map[String, AnyRef] => {
+           dataSource.flatMap(ds => Option({params : Map[String, Any] => {
                val p = parents.toList.map(params.get(_)).filter(_.isDefined).map(_.get)
                dsObjSupport.get.getData(ds, p)
            }}))
@@ -289,7 +291,24 @@ class DataSourceBuilder(val factory : DataSourceFactory) {
                      src.asInstanceOf[DependentDataSource].getData(x)
                  }
                  case head :: tail => {
-                     val params: Array[AnyRef] = Array(args.map(v => v.)).flatten
+                     val params: Array[AnyRef] = Array(args.map(v => {
+                       v match {
+                         case vl: AnyRef => vl
+                         case _ => {
+                           v match {
+                             case i: scala.Int => scala.Int.box(i)
+                             case l: scala.Long => scala.Long.box(l)
+                             case d: scala.Double => scala.Double.box(d)
+                             case b: scala.Boolean => scala.Boolean.box(b)
+                             case f: scala.Float => scala.Float.box(f)
+                             case c: scala.Char => scala.Char.box(c)
+                             case s: scala.Short => scala.Short.box(s)
+                             case b: scala.Byte => scala.Byte.box(b)
+                             case _ => throw new IllegalArgumentException("Cannot convert %s to object".format(v))
+                           }
+                         }
+                       }
+                     })).flatten
                      val find: Option[Method] = src.getClass.getDeclaredMethods.find(m => m.getName == "getData"
                        && m.getParameterTypes.length == params.length
                      )
