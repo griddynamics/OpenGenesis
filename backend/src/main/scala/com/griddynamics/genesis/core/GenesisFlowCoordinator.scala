@@ -204,7 +204,9 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
     private def exportToContext(result: GenesisStepResult) {
       result.step.exportTo.foreach { case (from, to) =>
         try {
-          val actualResult: StepResult = result.actualResult.getOrElse(null)
+          val actualResult: StepResult = result.actualResult.getOrElse(
+            throw new IllegalStateException("Exporting to context was specified in template, but step produced no actual results")
+          )
           globals(to) = actualResult.getClass.getDeclaredMethod(from).invoke(actualResult)
         } catch {
           case e => {
