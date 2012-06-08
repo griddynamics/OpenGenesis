@@ -27,9 +27,7 @@ import scala._
 import collection.mutable.ListBuffer
 import com.griddynamics.genesis.template.{DependentDataSource, DataSourceFactory, VarDataSource}
 import java.lang.reflect.Method
-import runtime.{RichDouble, RichInt}
-import java.lang.{Boolean, Double, IllegalStateException}
-import tools.cmd.gen.AnyVals
+import java.lang.{Boolean, IllegalStateException}
 
 class EnvWorkflow(val name : String, val variables : List[VariableDetails], val stepsGenerator : Option[Closure[Unit]])
 
