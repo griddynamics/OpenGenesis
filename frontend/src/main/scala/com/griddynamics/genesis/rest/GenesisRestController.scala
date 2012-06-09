@@ -47,26 +47,28 @@ class GenesisRestController(genesisService: GenesisService, templateService: Tem
     @ResponseBody
     def buildInfo = JavaConversions.propertiesAsScalaMap(buildInfoProps).toMap
 
-    @RequestMapping(value = Array("templates"), method = Array(RequestMethod.GET))
+    @RequestMapping(value = Array("projects/{projectId}/templates"), method = Array(RequestMethod.GET))
     @ResponseBody
-    def listTemplates(@RequestParam(required = false) project: String, @RequestParam(required = false) tag: String) =
+    def listTemplates(@PathVariable  projectId: Int,
+                      @RequestParam(required = false) project: String, @RequestParam(required = false) tag: String) =
       paramToOption(project) match {
-        case _ => genesisService.listTemplates
+        case _ => genesisService.listTemplates(projectId)
     }
 
-  @RequestMapping(value = Array("templates/{templateName}/v{templateVersion:.+}"), method = Array(RequestMethod.GET))
+  @RequestMapping(value = Array("projects/{projectId}/templates/{templateName}/v{templateVersion:.+}"), method = Array(RequestMethod.GET))
     @ResponseBody
-    def templateContent(@PathVariable templateName: String, @PathVariable templateVersion: String) = {
-      val content = templateService.templateRawContent(templateName, templateVersion).getOrElse("")
+    def templateContent(@PathVariable  projectId: Int, @PathVariable templateName: String, @PathVariable templateVersion: String) = {
+      val content = templateService.templateRawContent(projectId, templateName, templateVersion).getOrElse("")
       Map("content" -> content)
     }
 
-    @RequestMapping(value = Array("templates/{templateName}/v{templateVersion:.+}/{workflow}"), method = Array(RequestMethod.POST))
+    @RequestMapping(value = Array("projects/{projectId}/templates/{templateName}/v{templateVersion:.+}/{workflow}"), method = Array(RequestMethod.POST))
     @ResponseBody
-    def partialApply(@PathVariable templateName: String, @PathVariable templateVersion: String, @PathVariable workflow: String, request: HttpServletRequest) = {
+    def partialApply(@PathVariable projectId: Int,
+                     @PathVariable templateName: String, @PathVariable templateVersion: String, @PathVariable workflow: String, request: HttpServletRequest) = {
         val paramsMap: Map[String, Any] = GenesisRestController.extractParamsMap(request)
         val variables = GenesisRestController.extractVariables(paramsMap)
-        genesisService.queryVariables(templateName, templateVersion, workflow, variables).getOrElse(
+        genesisService.queryVariables(projectId, templateName, templateVersion, workflow, variables).getOrElse(
           throw new ResourceNotFoundException("No variables were found for [template = %s (v%s), workflow = %s]".format(templateName, templateVersion, workflow))
         )
     }

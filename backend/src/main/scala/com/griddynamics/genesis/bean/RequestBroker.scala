@@ -59,7 +59,7 @@ class RequestBrokerImpl(storeService: StoreService,
             case _ =>
         }
 
-        val twf = templateService.findTemplate(templateName, templateVersion) match  {
+        val twf = templateService.findTemplate(projectId, templateName, templateVersion) match  {
             case None => return RR(compoundVariablesErrors = Seq("Template %s with version %s not found".format(templateName, templateVersion)),
                 isSuccess = false, isNotFound = true)
             case Some(template) => template.createWorkflow
@@ -90,7 +90,7 @@ class RequestBrokerImpl(storeService: StoreService,
             case Left(rr) => return rr
         }
 
-        val twf = templateService.findTemplate(env.templateName, env.templateVersion).get.destroyWorkflow
+        val twf = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion).get.destroyWorkflow
 
         validateWorkflow(twf, variables, envName) match {
             case Some(rr) => return rr
@@ -116,7 +116,7 @@ class RequestBrokerImpl(storeService: StoreService,
             case Left(rr) => return rr
         }
 
-        val template = templateService.findTemplate(env.templateName, env.templateVersion)
+        val template = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion)
         if (template.filter(workflowName == _.createWorkflow.name).isDefined) {
             return RR(serviceErrors = Map(RR.envName ->
                 "It's not allowed to execute create workflow['%s'] in existing environment '%s'"
