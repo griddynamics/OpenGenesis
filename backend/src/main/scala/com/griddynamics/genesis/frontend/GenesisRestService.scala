@@ -130,7 +130,7 @@ object GenesisRestService {
 
     def workflowDesc(workflow: service.WorkflowDefinition) = {
         val vars = for (variable <- workflow.variableDescriptions) yield Variable(variable.name, variable.description, variable.isOptional,
-            variable.defaultValue, variable.values)
+            variable.defaultValue, variable.values.toMap)
         Workflow(workflow.name, vars)
     }
 

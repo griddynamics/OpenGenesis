@@ -31,13 +31,12 @@ template {
             variable("test").description("test")
             variable("optional").description("Optional variable").optional(defaultValue = 1)
             variable("optionalNoValue").description("Optional variable without default value").optional()
-            variable("list").as(Integer).description("Variable that has one value from a list").oneOf {[1, 2, 3]}.optional()
+            variable("list").as(Integer).description("Variable that has one value from a list").oneOf {[1:1, 2:2, 3:3]}.optional()
             variable("listDS1").as(String).description("Variable that has one value from DS").dataSource("ds1").optional()
             variable("listDS12").as(String).description("Variable that has one value from DS").oneOf {ds1 + ds2}.optional()
             variable("dependent").as(String).description("Dependent variable").dependsOn("nodesCount").dataSource("ds3").optional()
             variable("doubleDep").as(String).description("Double dependent variable").dependsOn("nodesCount").dependsOn("dependent").dataSource("ds3").optional()
-            variable("triple").as(String).description("Double dependent variable").dependsOn("list")
-                    .dependsOn("nodesCount").dependsOn("dependent").dataSource("ds3").optional()
+            variable("triple").as(String).description("Double dependent variable").dependsOn("list", "nodesCount", "dependent").dataSource("ds3").optional()
         }
 
         steps {

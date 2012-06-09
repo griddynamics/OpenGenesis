@@ -27,7 +27,7 @@ class ListVarDataSource extends VarDataSource {
     val Key = "list"
     var values: Seq[String] = _
 
-    def getData = values
+    def getData = values.zip(values).toMap
 
     def config(map: Map[String, Any])  { values = map.get(Key) match {
             case Some(s: java.lang.Iterable[AnyRef]) => collection.JavaConversions.iterableAsScalaIterable(s).toArray.map(_.toString).toSeq

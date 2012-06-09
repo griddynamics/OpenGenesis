@@ -43,7 +43,7 @@ case class EnvironmentDetails(name : String,
                               projectId: Int,
                               workflowsHistory : Option[Seq[WorkflowDetails]] = None )
 
-case class Variable(name : String, description : String, optional: Boolean = false, defaultValue: String = null, values:Seq[String] = Seq())
+case class Variable(name : String, description : String, optional: Boolean = false, defaultValue: String = null, values:Map[String,String] = Map())
 
 case class Template(name : String, version : String, createWorkflow : Workflow)
 
@@ -70,7 +70,7 @@ case class VirtualMachine(envName : String,
 /**
  * @deprecated use {@see com.griddynamics.genesis.api.ExtendedResult} instead
  */
-@deprecated
+@deprecated("Use ExtendedResult instead of RequestResult", "1.1.0")
 case class RequestResult(serviceErrors : Map[String, String] = Map(),
                          variablesErrors : Map[String, String] = Map(),
                          compoundServiceErrors : Seq[String] = Seq(),
