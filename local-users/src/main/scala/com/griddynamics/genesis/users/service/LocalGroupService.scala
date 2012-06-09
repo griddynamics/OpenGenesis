@@ -118,7 +118,7 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
     private def validate(c: UserGroup) : ExtendedResult[UserGroup] = {
         notEmpty(c, c.description, "Description") ++
         mustMatchName(c, c.name, "Group name") ++
-        must(c, "Mailing list must be empty or contain E-mail address"){ g =>
+        must(c, "Mailing list must contain E-mail address"){ g =>
             g.mailingList match {
                 case None => true
                 case Some("") => true
