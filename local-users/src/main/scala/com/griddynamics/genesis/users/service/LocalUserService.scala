@@ -106,9 +106,9 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
 
     protected def validateUpdate(user: User) =
             mustExist(user){ it => repository.findByUsername(it.username) } ++
-            mustMatchName(user, user.firstName, "firstName") ++
-            mustMatchName(user, user.lastName, "lastName")++
-            mustMatchEmail(user, user.email, "email") ++
+            mustMatch(user, "First Name", Validation.nameErrorMessage)(Validation.namePattern)(user.firstName) ++
+            mustMatch(user, "Last Name", Validation.nameErrorMessage)(Validation.namePattern)(user.lastName) ++
+            mustMatchEmail(user, user.email, "E-Mail") ++
             must(user, "Email [%s] is already registered for other user".format(user.email)) {
                 user => repository.findByEmail(user.email).filter(_.username != user.username).isEmpty
             }
@@ -120,11 +120,11 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
             must(user, "User with email [%s] is already registered".format(user.email)) {
                 user => repository.findByEmail(user.email).isEmpty
             } ++
-            mustMatchUserName(user, user.username, "username") ++
-            mustMatchName(user, user.firstName, "firstName") ++
-            mustMatchName(user, user.lastName, "lastName") ++
-            mustMatchEmail(user, user.email, "email") ++
-            notEmpty(user, user.password.getOrElse(""), "password")
+            mustMatch(user, "User name", Validation.usernameErrorMessage)(Validation.usernamePattern)(user.username) ++
+            mustMatch(user, "First Name", Validation.nameErrorMessage)(Validation.namePattern)(user.firstName) ++
+            mustMatch(user, "Last Name", Validation.nameErrorMessage)(Validation.namePattern)(user.lastName) ++
+            mustMatchEmail(user, user.email, "E-Mail") ++
+            notEmpty(user, user.password.getOrElse(""), "Password")
     }
 
 
