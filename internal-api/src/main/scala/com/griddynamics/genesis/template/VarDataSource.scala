@@ -23,19 +23,15 @@
 
 package com.griddynamics.genesis.template
 
-trait VarDataSource {
-    def getData : Seq[String]
+trait VarDataSource{
+    def getData : Map[String,String]
     def config(map: Map[String, Any])
 }
-
 trait DependentDataSource extends VarDataSource {
-    def getData(param: Any) : Seq[String]
-    override def getData = Seq()
+    def getData(param: Any) : Map[String,String]
 }
-
 
 trait DataSourceFactory {
     val mode: String
-
     def newDataSource: VarDataSource
 }

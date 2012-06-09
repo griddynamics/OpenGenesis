@@ -194,8 +194,8 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
             workflow.variables.find(p => p.dependsOn.find(_ == variable._1).isDefined).get
         }
         dependents.map(v => new VariableDescription(v.name, v.description, v.isOptional, null, v.valuesList.map(lambda => {
-            lambda.apply(variables).map(_.toString)
-        }).getOrElse(Seq()))).toSeq
+            lambda.apply(variables)
+        }).getOrElse(Map()))).toSeq
     }
 
 
@@ -262,7 +262,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
             new VariableDescription(variable.name, variable.description, variable.isOptional, variable.defaultValue match {
               case None => null
               case Some(v) => String.valueOf(v)
-            }, variable.valuesList.map(_.apply(Map()).map(_.toString)).getOrElse(Seq()))
+            }, variable.valuesList.map(_.apply(Map())).getOrElse(Map()))
         }
     }
 
