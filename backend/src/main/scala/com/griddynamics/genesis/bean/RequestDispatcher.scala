@@ -62,7 +62,7 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
     def startWorkflow(envName: String) {
         val (env, workflow) = storeService.retrieveWorkflow(envName)
 
-        val definition = templateService.findTemplate(env.templateName, env.templateVersion)
+        val definition = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion)
         val rawSteps = definition.flatMap(_.getWorkflow(workflow.name)
             .map(_.embody(workflow.variables, Option(env.name))))
         rawSteps.map(sortByPhase).map(applyIds(_)).foreach(s => {

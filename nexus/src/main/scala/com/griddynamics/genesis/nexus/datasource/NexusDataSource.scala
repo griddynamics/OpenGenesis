@@ -25,33 +25,36 @@ package com.griddynamics.genesis.nexus.datasource
 
 import com.griddynamics.genesis.template.{VarDataSource, DataSourceFactory}
 import util.parsing.json.JSON
-import com.griddynamics.genesis.util.IoUtil
 import org.apache.commons.codec.binary.Base64
 import java.net.{HttpURLConnection, URLConnection, URL}
+import org.apache.commons.io.FilenameUtils
+import com.griddynamics.genesis.util.{Logging, IoUtil}
+import com.griddynamics.genesis.service.CredentialsStoreService
+import com.griddynamics.genesis.api.Credentials
 
-class NexusDataSource extends VarDataSource {
+class NexusDataSource(val credStore: CredentialsStoreService) extends VarDataSource with Logging {
     private var url: URL = _
-    private var artifactProperty = "resourceURI"
-    private var usernameOpt: Option[String] = None
-    private var passwordOpt: Option[String] = None
-    private val ServicePathDefault = "/nexus/service/local/data_index"
-    
+    private val resourceURI = "resourceURI"
+    private var credOpt: Option[Credentials] = None
+    private var wildcard = "*"
+
     import NexusDataSource._
 
-    private def basicAuth(con : URLConnection) = (usernameOpt, passwordOpt) match {
-        case (Some(user), Some(pass)) =>
-        val encoded = Base64.encodeBase64String((user + ":" + pass).getBytes)
+    private def basicAuth(con : URLConnection) = credOpt match {
+        case Some(creds) =>
+        val credential = credStore.decrypt(creds).credential.getOrElse("")
+        val encoded = Base64.encodeBase64String((creds.identity + ":" + credential).getBytes)
         con.setRequestProperty("Authorization", "Basic " + encoded)
-        case _ => // no basic auth
+        con
+        case _ => con// no basic auth
     }
 
-    private def request = {
+    private def getResponse(url: URL) = {
         var con: URLConnection = null
         try {
             con = url.openConnection
             con.addRequestProperty("Accept", "application/json")
-            basicAuth(con)
-            con.connect
+            basicAuth(con).connect
             IoUtil.streamAsString(con.getInputStream)
         } finally con match {
             case c: HttpURLConnection => c.disconnect
@@ -59,48 +62,48 @@ class NexusDataSource extends VarDataSource {
         }
     }
 
-    def getData = JSON.parseFull(request) match {
+    private def list(json: String) = JSON.parseFull(json) match {
         case Some(m: Map[String, _]) => m.get(KeyData) match {
             case Some(s: Seq[_]) => s.collect {
-                case artifact: Map[String, _] =>
-                    artifact.getOrElse(artifactProperty, "").toString
+                case artifact: Map[String, _] => artifact
             }
             case _ => Seq()
         }
         case _ => Seq()
     }
 
-    def config(map: Map[String, Any])  {
-        val base = map(Url).toString + map.getOrElse(ServicePath, ServicePathDefault)
-        val params = ParamsGAV.flatMap(p => map.get(p.name).map(p.getParam(_))).mkString("&")
-        map.get(ArtifactProperty).foreach(p => artifactProperty = String.valueOf(p))
-        usernameOpt = map.get(Username).map(_.toString)
-        passwordOpt = map.get(Password).map(_.toString)
-        url = new URL(base + "?" +params)
+    private def getData(url: URL): Seq[String] = (list(getResponse(url)) collect {
+        case m if m.contains(resourceURI) =>
+            val prop = m(resourceURI).toString
+            m.get(KeyLeaf) match {
+                case Some(false) => getData(new URL(prop))
+                case _ if FilenameUtils.wildcardMatch(prop, wildcard) => Seq(prop)
+                case _ => Seq()
+            }
+
+    }).flatten
+
+    def getData = getData(url).sortBy(FilenameUtils.getName(_))
+
+    def config(map: Map[String, Any]) {
+        val projId = map.get("projectId").map(_.asInstanceOf[Int])
+        credOpt = projId.flatMap(credStore.find(_, CredProvider, map(Credential).toString))
+        url = new URL(map(Url).toString)
+        wildcard = map.getOrElse(Filter, wildcard).toString
     }
 }
 
-case class SearchParam(name: String, paramName: String) {
-    def getParam(value: Any) = "%s=%s".format(paramName, value) 
-}
-
 object NexusDataSource {
-    val Url = "url"
-    val ServicePath = "servicePath"
+    val Url = "query"
     val KeyData = "data"
-    val Username = "username"
-    val Password = "password"
-    val Group = SearchParam("group", "g")
-    val Artifact = SearchParam("artifact", "a")
-    val Version = SearchParam("version", "v")
-    val Pkg = SearchParam("pkg", "p")
-    val Classifier = SearchParam("classifier", "c")
-    val ParamsGAV = Seq(Group, Artifact, Version, Pkg, Classifier)
-    val ArtifactProperty = "artifactProperty"
+    val KeyLeaf = "leaf"
+    val Credential = "credential"
+    val Filter = "filter"
+    val CredProvider = "nexus"
 }
 
-class NexusDSFactory extends DataSourceFactory {
+class NexusDSFactory(val credStore: CredentialsStoreService) extends DataSourceFactory {
     val mode = "nexus"
 
-    def newDataSource = new NexusDataSource
+    def newDataSource = new NexusDataSource(credStore)
 }

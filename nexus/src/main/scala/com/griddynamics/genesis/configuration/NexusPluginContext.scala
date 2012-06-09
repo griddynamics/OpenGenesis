@@ -25,9 +25,12 @@ package com.griddynamics.genesis.configuration
 
 import org.springframework.context.annotation.{Bean, Configuration}
 import com.griddynamics.genesis.nexus.datasource.NexusDSFactory
+import org.springframework.beans.factory.annotation.Autowired
+import com.griddynamics.genesis.service.CredentialsStoreService
 
 
 @Configuration
 class NexusPluginContext {
-    @Bean def nexusDsFactory = new NexusDSFactory
+    @Autowired var credStore: CredentialsStoreService = _
+    @Bean def nexusDsFactory = new NexusDSFactory(credStore)
 }

@@ -108,7 +108,7 @@ class GenesisRestServiceStub() extends GenesisService {
 
     def countEnvs(projectId: Int) = envs.size
 
-    def listTemplates = templates
+    def listTemplates(projectId: Int) = templates
 
     def describeEnv(envName : String) = envsDescr.get(envName)
 
@@ -150,5 +150,5 @@ class GenesisRestServiceStub() extends GenesisService {
 
     def isEnvExists(envName: String, projectId: Int) = true
 
-    def queryVariables(templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]) = Some(Seq())
+    def queryVariables(projectId: Int, templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]) = Some(Seq())
 }
