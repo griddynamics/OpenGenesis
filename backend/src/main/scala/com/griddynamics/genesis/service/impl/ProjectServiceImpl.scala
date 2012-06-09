@@ -40,12 +40,12 @@ class ProjectServiceImpl(repository: ProjectRepository) extends ProjectService w
       must(project, "Project with name '" + project.name + "' already exists") {
         project => findByName(project.name).isEmpty
       } ++
-      mustMatch(project, "Name", Validation.projectNameErrorMessage)(Validation.projectNamePattern)(project.name) ++
-      mustMatch(project, "Manager", Validation.nameErrorMessage)(Validation.namePattern)(project.projectManager)
+      mustMatchName(project, project.name, "Name") ++
+      mustMatchPersonName(project, project.projectManager, "Manager")
 
   protected def validateUpdate(project: Project) =
-      mustMatch(project, "Name", Validation.projectNameErrorMessage)(Validation.projectNamePattern)(project.name) ++
-      mustMatch(project, "Manager", Validation.nameErrorMessage)(Validation.namePattern)(project.projectManager) ++
+      mustMatchName(project, project.name, "Name") ++
+      mustMatchPersonName(project, project.projectManager, "Manager") ++
       mustExist(project) { it => get(it.id.get) } ++
       must(project, "Project with name '" + project.name + "' already exists") {
         project => repository.findByName(project.name).forall { _.id == project.id}

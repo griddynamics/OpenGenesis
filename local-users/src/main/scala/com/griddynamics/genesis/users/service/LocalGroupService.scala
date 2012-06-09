@@ -30,7 +30,7 @@ import Validation._
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.service.AuthorityService
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.api.{Success, UserGroup}
+import com.griddynamics.genesis.api.{ExtendedResult, Success, UserGroup}
 
 class LocalGroupService(val repository: LocalGroupRepository) extends GroupService with Validation[UserGroup] {
 
@@ -115,20 +115,32 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
         repository.get(id)
     }
 
+    private def validate(c: UserGroup) : ExtendedResult[UserGroup] = {
+        notEmpty(c, c.description, "Description") ++
+        mustMatchName(c, c.name, "Group name") ++
+        must(c, "Mailing list must be empty or contain E-mail address"){ g =>
+            g.mailingList match {
+                case None => true
+                case Some("") => true
+                case Some(mailingList) => mustMatchEmail(g, mailingList, "Mailing list").isInstanceOf[Success[UserGroup]]
+            }
+        }
+    }
+
     protected def validateUpdate(c: UserGroup) =
-        notEmpty(c, c.name, "name") ++
-          notEmpty(c, c.description, "description") ++
-          mustExist(c){it => get(it.id.get)} ++
-          must(c, "Group with name '" + c.name + "' already exists"){ g =>
-              findByName(g.name) match {
-                  case None => true
-                  case Some(group) => group.id == g.id
-              }
-          }
+        validate(c) ++
+        mustExist(c){it => get(it.id.get)} ++
+        must(c, "Group with name '" + c.name + "' already exists"){ g =>
+            findByName(g.name) match {
+                case None => true
+                case Some(group) => group.id == g.id
+            }
+        }
 
 
-    protected def validateCreation(c: UserGroup) = notEmpty(c, c.name, "name") ++
-      notEmpty(c, c.description, "description") ++ must(c, "name must be unique") {c => findByName(c.name).isEmpty}
+    protected def validateCreation(c: UserGroup) =
+        validate(c) ++
+        must(c, "Group name must be unique") {c => findByName(c.name).isEmpty}
 
     @Transactional(readOnly = true)
     def doesGroupExist(groupName: String) = findByName(groupName).isDefined
