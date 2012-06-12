@@ -26,10 +26,10 @@ import scala.collection.mutable
 import java.util.concurrent.ExecutorService
 import akka.actor.TypedActor
 import com.griddynamics.genesis.workflow.actor.{TypedFlowCoordinatorImpl, TypedFlowCoordinator}
-import com.griddynamics.genesis.plugin.{Cancel, StepCoordinatorFactory, GenesisStep}
 import com.griddynamics.genesis.core._
 import com.griddynamics.genesis.service.{TemplateService, StoreService}
 import collection.mutable.ArrayBuffer
+import com.griddynamics.genesis.plugin.{StepBuilder, Cancel, StepCoordinatorFactory}
 
 trait RequestDispatcher {
     def createEnv(envName: String)
@@ -74,9 +74,10 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
         })
     }
 
-    def sortByPhase(rawSteps: Seq[GenesisStep]): Seq[GenesisStep] = {
-      val sorted: mutable.ArrayBuffer[GenesisStep]  = new ArrayBuffer[GenesisStep]()
-      var toBeProcessed = rawSteps;
+    def sortByPhase(rawSteps: Seq[StepBuilder]): Seq[StepBuilder] = {
+      import scala.collection.JavaConversions._
+      val sorted: mutable.ArrayBuffer[StepBuilder]  = new ArrayBuffer[StepBuilder]()
+      var toBeProcessed = rawSteps
 
       while(sorted.size != rawSteps.size) {
         val (noPrecedingSteps, havePrecedingSteps) = toBeProcessed.partition (
@@ -99,22 +100,23 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
         coordinators -= envName
     }
 
-    def applyIds(steps: Seq[GenesisStep]) = {
-        var counter = storeService.allocateStepCounters(steps.size)
-        for (step <- steps) yield {
+    def applyIds(builders: Seq[StepBuilder]): Seq[StepBuilder] = {
+        var counter = storeService.allocateStepCounters(builders.size)
+        for (builder <- builders) yield {
             counter +=1
-            step.copy(id = counter)
+            builder.id = counter
+            builder
         }
     }
 
-    def regularCoordinator(envName: String, flowSteps: Seq[GenesisStep]) =
+    def regularCoordinator(envName: String, flowSteps: Seq[StepBuilder]) =
         new TypedFlowCoordinatorImpl(
             new GenesisFlowCoordinator(envName, flowSteps, storeService,
                 stepCoordinatorFactory) with RegularWorkflow,
             beatPeriodMs, flowTimeOutMs, executorService
         )
 
-    def destroyingCoordinator(envName: String, flowSteps: Seq[GenesisStep]) =
+    def destroyingCoordinator(envName: String, flowSteps: Seq[StepBuilder]) =
         new TypedFlowCoordinatorImpl(
             new GenesisFlowCoordinator(envName, flowSteps, storeService,
                 stepCoordinatorFactory) with DestroyWorkflow,

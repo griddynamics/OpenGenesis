@@ -1,0 +1,32 @@
+package groovy
+template {
+    name("TestEnv")
+    version("0.1")
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+
+    workflow("create") {
+        steps {
+            teststep {
+                phase = "phase1"
+                text =   "test input"
+                exportTo = ["description": "contextVar"]
+            }
+            teststep {
+                phase = "phase2"
+                precedingPhases = ["phase1"]
+                text =   $("contextVar.text")
+            }
+        }
+    }
+
+    workflow("destroy") {
+        steps {
+            teststep {
+                phase = "undeply"
+                text = "destroy"
+            }
+        }
+    }
+}

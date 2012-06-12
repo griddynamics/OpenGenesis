@@ -28,6 +28,7 @@ import collection.mutable.ListBuffer
 import com.griddynamics.genesis.template.{DependentDataSource, DataSourceFactory, VarDataSource}
 import java.lang.reflect.Method
 import java.lang.{Boolean, IllegalStateException}
+import com.griddynamics.genesis.util.ScalaUtils
 
 class EnvWorkflow(val name : String, val variables : List[VariableDetails], val stepsGenerator : Option[Closure[Unit]])
 
@@ -300,24 +301,7 @@ class DataSourceBuilder(val projectId: Int, val factory : DataSourceFactory) {
                      src.asInstanceOf[DependentDataSource].getData(x)
                  }
                  case head :: tail => {
-                     val params: Array[AnyRef] = Array(args.map(v => {
-                       v match {
-                         case vl: AnyRef => vl
-                         case _ => {
-                           v match {
-                             case i: scala.Int => scala.Int.box(i)
-                             case l: scala.Long => scala.Long.box(l)
-                             case d: scala.Double => scala.Double.box(d)
-                             case b: scala.Boolean => scala.Boolean.box(b)
-                             case f: scala.Float => scala.Float.box(f)
-                             case c: scala.Char => scala.Char.box(c)
-                             case s: scala.Short => scala.Short.box(s)
-                             case b: scala.Byte => scala.Byte.box(b)
-                             case _ => throw new IllegalArgumentException("Cannot convert %s to object".format(v))
-                           }
-                         }
-                       }
-                     })).flatten
+                     val params: Array[AnyRef] = args.map(v => ScalaUtils.toAnyRef(v)).toArray
                      val find: Option[Method] = src.getClass.getDeclaredMethods.find(m => m.getName == "getData"
                        && m.getParameterTypes.length == params.length
                      )
