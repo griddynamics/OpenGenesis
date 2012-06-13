@@ -23,11 +23,13 @@
 
 package com.griddynamics.genesis.template
 
-class ListVarDataSource extends VarDataSource {
+class ListVarDataSource extends VarDataSource with DependentDataSource {
     val Key = "list"
     var values: Seq[String] = _
 
     def getData = values.zip(values).toMap
+
+    def getData(v: Any) = values.zip(values.map(v.toString + ":" + _)).toMap
 
     def config(map: Map[String, Any])  { values = map.get(Key) match {
             case Some(s: java.lang.Iterable[AnyRef]) => collection.JavaConversions.iterableAsScalaIterable(s).toArray.map(_.toString).toSeq
@@ -36,6 +38,27 @@ class ListVarDataSource extends VarDataSource {
     }
 }
 
+class DependentList extends DependentDataSource {
+    val Key = "list"
+    var values: Seq[String] = _
+
+    def getData(v: Any) = values.zip(values.map(v.toString.takeRight(24) + ":" + _)).toMap
+    def getData(v1: Any, v2: Any) = values.zip(values.map(v1.toString.takeRight(32) + v2.toString + _)).toMap
+
+    def getData = Map()
+
+    def config(map: Map[String, Any])  { values = map.get(Key) match {
+            case Some(s: java.lang.Iterable[AnyRef]) => collection.JavaConversions.iterableAsScalaIterable(s).toArray.map(_.toString).toSeq
+            case x => Seq(x.toString)
+        }
+    }
+}
+
+class DependentListFactory extends DataSourceFactory {
+    val mode = "dependentList"
+
+    def newDataSource = new DependentList
+}
 
 class ListVarDSFactory extends DataSourceFactory {
     val mode = "staticList"

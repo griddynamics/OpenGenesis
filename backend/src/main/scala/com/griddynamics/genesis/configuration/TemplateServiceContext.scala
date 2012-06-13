@@ -30,7 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.spring.ApplicationContextAware
 import com.griddynamics.genesis.service.TemplateService
 import javax.annotation.Resource
-import com.griddynamics.genesis.template.{ListVarDSFactory, DataSourceFactory}
+import com.griddynamics.genesis.template.{DependentListFactory, ListVarDSFactory, DataSourceFactory}
 
 @Configuration
 class GroovyTemplateServiceContext {
@@ -50,4 +50,5 @@ class DefaultTemplateServiceContext extends TemplateServiceContext with Applicat
     @Resource(name="${genesis.template.service:groovy}") var service: TemplateService = _
     @Bean def templateService = service
     @Bean def listVarDsFactory = new ListVarDSFactory
+    @Bean def depList = new DependentListFactory
 }
