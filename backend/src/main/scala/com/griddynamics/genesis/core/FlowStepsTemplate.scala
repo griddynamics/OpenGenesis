@@ -25,13 +25,15 @@ package com.griddynamics.genesis.core
 import scala.collection.mutable
 import com.griddynamics.genesis.model.GenesisEntity
 import java.lang.RuntimeException
-import com.griddynamics.genesis.plugin.GenesisStep
+import com.griddynamics.genesis.plugin.{StepBuilder, GenesisStep}
 
-class CyclicFlowException(val flowSteps: Seq[GenesisStep]) extends RuntimeException
 
-class FlowStepsTemplate(val flowSteps: Seq[GenesisStep]) {
+class CyclicFlowException(val flowSteps: Seq[StepBuilder]) extends RuntimeException
+
+class FlowStepsTemplate(val flowSteps: Seq[StepBuilder]) {
     val successionMap = {
-        val result = mutable.Map[GenesisEntity.Id, Seq[GenesisStep]]()
+        import scala.collection.JavaConversions._
+        val result = mutable.Map[GenesisEntity.Id, Seq[StepBuilder]]()
 
         var stepsToStart = flowSteps
 

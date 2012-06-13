@@ -22,7 +22,7 @@
  */
 package com.griddynamics.genesis.service
 
-import com.griddynamics.genesis.plugin.GenesisStep
+import com.griddynamics.genesis.plugin.StepBuilder
 
 class VariableDescription(val name: String, val description: String, val isOptional: Boolean = false,
                           val defaultValue: String = null, val values: Map[String,String] = Map())
@@ -44,7 +44,7 @@ trait WorkflowDefinition {
 
     def variableDescriptions: Seq[VariableDescription]
 
-    def embody(variables: Map[String, String], envName: Option[String] = None): Seq[GenesisStep]
+    def embody(variables: Map[String, String], envName: Option[String] = None): Seq[StepBuilder]
 
     def validate(variables: Map[String, Any], envName: Option[String] = None): Seq[ValidationError]
 

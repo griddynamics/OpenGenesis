@@ -41,7 +41,9 @@ trait StepBuilder {
     @BeanProperty var exportTo: JMap[String, String] = Collections.emptyMap()
     @BeanProperty var templateContext: JMap[String, String] = Collections.emptyMap()
 
-    def newStep = new GenesisStep(0, phase, JC.asScalaBuffer(precedingPhases).toSet, ignoreFail,
+    var id: Int = 0
+
+    def newStep = new GenesisStep(id, phase, JC.asScalaBuffer(precedingPhases).toSet, ignoreFail,
         if (retryCount < 0) 0 else retryCount, getDetails, JC.mapAsScalaMap(exportTo).toMap)
 
     def getDetails: Step

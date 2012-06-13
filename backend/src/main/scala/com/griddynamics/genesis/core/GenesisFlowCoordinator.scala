@@ -32,16 +32,17 @@ import com.griddynamics.genesis.common.Mistake
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.workflow.step.CoordinatorThrowable
 import com.griddynamics.genesis.logging.LoggerWrapper
+import com.griddynamics.genesis.service.impl.StepBuilderProxy
 
 abstract class GenesisFlowCoordinator(envName: String,
-                             flowSteps: Seq[GenesisStep],
+                             flowSteps: Seq[StepBuilder],
                              storeService: StoreService,
                              stepCoordinatorFactory: StepCoordinatorFactory)
     extends GenesisFlowCoordinatorBase(envName, flowSteps, storeService, stepCoordinatorFactory)
     with StepIgnore with StepRestart with StepExecutionContextHolder
 
 abstract class GenesisFlowCoordinatorBase(val envName: String,
-                                          val flowSteps: Seq[GenesisStep],
+                                          val flowSteps: Seq[StepBuilder],
                                           val storeService: StoreService,
                                           val stepCoordinatorFactory: StepCoordinatorFactory)
     extends FlowCoordinator with Logging {
@@ -104,9 +105,11 @@ abstract class GenesisFlowCoordinatorBase(val envName: String,
     }
 
     def createReachableStepCoordinators() = {
-        for (step <- detectReachableSteps())
-        yield createStepCoordinator(step)
+        for (builder <- detectReachableSteps())
+        yield createStepCoordinator(buildStep(builder))
     }
+
+    def buildStep(builder: StepBuilder) = builder.newStep
 
     def createStepCoordinator(step: GenesisStep) = {
         val context = createStepExecutionContext(step)
@@ -115,12 +118,13 @@ abstract class GenesisFlowCoordinatorBase(val envName: String,
     }
 
     def detectReachableSteps() = {
+        import scala.collection.JavaConversions._
         val finishedStepsIds = finishedSteps.map(_.id)
         val unfinishedPhases = flowSteps.filter(s => !finishedStepsIds.contains(s.id))
                                         .map(_.phase).toSet
 
         val (reachableSteps, unreachableSteps) = stepsToStart.partition {
-            step => step.precedingPhases.forall {
+            builder => builder.precedingPhases.forall {
                 phase => !unfinishedPhases.contains(phase)
             }
         }
@@ -131,19 +135,20 @@ abstract class GenesisFlowCoordinatorBase(val envName: String,
 
     def createStepExecutionContext(step: GenesisStep): StepExecutionContext
 
-    private def persistSteps(steps : Seq[GenesisStep]) =
-        for (step <- steps) yield {
+    private def persistSteps(builders : Seq[StepBuilder]) =
+        for (builder <- builders) yield {
             val workflowStep =
                 storeService.insertWorkflowStep(
                     WorkflowStep(
-                        step.id,
+                        builder.id,
                         workflow.id,
-                        step.phase,
+                        builder.phase,
                         WorkflowStepStatus.Requested,
-                        step.actualStep.stepDescription
+                        builder.getDetails.stepDescription
                     )
                 )
-            step.copy(id = workflowStep.id)
+            builder.id = workflowStep.id
+            builder
         }
 
 }
@@ -199,6 +204,11 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
             exportToContext(result)
         }
         super.onStepFinish(result)
+    }
+
+    override def buildStep(builder: StepBuilder) = builder match {
+      case proxy: StepBuilderProxy => proxy.newStep(globals)
+      case _ => builder.newStep
     }
 
     private def exportToContext(result: GenesisStepResult) {
