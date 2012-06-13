@@ -28,15 +28,16 @@ import org.codehaus.groovy.runtime.MethodClosure
 import groovy.lang._
 import collection.mutable.ListBuffer
 import service._
-import com.griddynamics.genesis.plugin.StepBuilderFactory
 import org.springframework.core.convert.ConversionService
 import java.lang.IllegalStateException
 import scala.Some
-import com.griddynamics.genesis.util.Logging
 import reflect.BeanProperty
 import java.util.{Map => JMap}
 import com.griddynamics.genesis.template.dsl.groovy._
 import com.griddynamics.genesis.template.{DataSourceFactory, VersionedTemplate, TemplateRepository}
+import com.griddynamics.genesis.workflow.Step
+import com.griddynamics.genesis.plugin.{GenesisStep, StepBuilder, StepBuilderFactory}
+import com.griddynamics.genesis.util.{ScalaUtils, Logging}
 
 class GroovyTemplateService(val templateRepository : TemplateRepository,
                             val stepBuilderFactories : Seq[StepBuilderFactory],
@@ -140,6 +141,20 @@ class StepBodiesCollector(variables: Map[String, AnyRef],
         (factory.stepName, (ListBuffer[Closure[Unit]](), factory))
     }).toMap
 
+
+    def $(evalExpression: String) = {
+     new ContextAccess {
+       def apply(context: scala.collection.Map[String, Any]) = {
+
+         val binding = new Binding()
+         context.foreach { case (key, value) => binding.setVariable(key, value) }
+
+         val shell = new GroovyShell(binding)
+         shell.evaluate(evalExpression)
+       }
+     }
+    }
+
     override def invokeMethod(name: String, args: AnyRef) = {
         val opt = closures.get(name)
         if (opt.isEmpty) super.invokeMethod(name, args)
@@ -155,17 +170,57 @@ class StepBodiesCollector(variables: Map[String, AnyRef],
         variables.getOrElse(property, super.getProperty(property))
     }
 
-    def buildSteps = {
+  def buildSteps = {
         (for ((bodies, factory) <- closures.values) yield {
             for (body <- bodies) yield {
-                val stepBuilder = factory.newStepBuilder
+                val stepBuilder = new StepBuilderProxy(factory.newStepBuilder)
                 stepBuilder.setTemplateContext(templateContext)
                 body.setDelegate(stepBuilder)
                 body.setResolveStrategy(Closure.DELEGATE_FIRST)
                 body.call()
-                stepBuilder.newStep
+                stepBuilder
             }
         }).flatten
+    }
+}
+
+trait ContextAccess extends ((scala.collection.Map[String, Any]) => Any)
+
+object UninitializedStepDetails extends Step {
+    override def stepDescription = "..."
+}
+
+class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport with StepBuilder {
+    private val contextDependentProperties = mutable.Map[String, ContextAccess]()
+
+    def getDetails = if(contextDependentProperties.isEmpty) stepBuilder.getDetails else UninitializedStepDetails
+
+    def newStep(context: scala.collection.Map[String, AnyRef]): GenesisStep = {
+        contextDependentProperties.foreach { case (propertyName, contextAccess) =>
+            ScalaUtils.setProperty(stepBuilder, propertyName, contextAccess(context))
+        }
+        stepBuilder.id = this.id
+        stepBuilder.phase = this.phase
+        stepBuilder.exportTo = this.exportTo
+        stepBuilder.ignoreFail = this.ignoreFail
+        stepBuilder.precedingPhases = this.precedingPhases
+        stepBuilder.templateContext = this.templateContext
+        stepBuilder.newStep
+    }
+
+    override def newStep = newStep(Map())
+
+    override def setProperty(property: String, value: Any) {
+        value match {
+          case value: ContextAccess =>
+            contextDependentProperties(property) = value.asInstanceOf[ContextAccess]
+          case _ => {
+            ScalaUtils.setProperty(stepBuilder, property, value)
+            if (ScalaUtils.hasProperty(this, property, ScalaUtils.getType(value))) {
+              ScalaUtils.setProperty(this, property, value)
+            }
+          }
+        }
     }
 }
 
