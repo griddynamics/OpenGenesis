@@ -68,7 +68,7 @@ object ScalaUtils extends com.griddynamics.genesis.cache.Cache {
   def setProperty(obj: AnyRef, name: String, value: Any) {
     val valueRef = toAnyRef(value)
     val setter = findPropertyMutator(obj, name, valueRef.getClass).getOrElse(
-      throw new IllegalArgumentException("Can't find setter for property [%s] in class [%s]".format(name, obj.getClass.getCanonicalName))
+      throw new IllegalArgumentException("Can't find setter for property [%s] in class [%s]".format(name, obj.getClass.getName))
     )
 
     setter.setAccessible(true)
