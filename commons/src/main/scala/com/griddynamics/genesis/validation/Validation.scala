@@ -43,7 +43,7 @@ object Validation {
     val usernamePattern = """^([a-zA-Z0-9.-]{2,32})$""".r
     val namePattern = """^([\p{L}0-9@.\-/_ ]{2,64})$""".r
     val personNamePattern = """^([\p{L} ]{2,64})$""".r
-    val emailPattern = """^[\w][\w.-]+@([\w-]+\.)+[a-zA-Z]{2,5}$""".r
+    val emailPattern = """^(?=.{7,64}$)[\w][\w.-]+@([\w-]+\.)+[a-zA-Z]{2,5}$""".r
 
     val nameErrorMessage = "Invalid format. Use a combination of alphanumerics, " +
                                   "spaces and following symbols: @.-/_. Length must be from 2 to 64"
