@@ -42,7 +42,7 @@ template {
         steps {
             teststep {
                 phase = "provision"
-                text = nodesCount
+                text = nodesCount.toString()
             }
             teststep {
                 phase = "install"

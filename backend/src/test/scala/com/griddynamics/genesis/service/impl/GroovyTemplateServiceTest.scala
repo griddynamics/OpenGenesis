@@ -59,10 +59,10 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
     private def testTemplate = templateService.findTemplate(0, "TestEnv", "0.1").get
 
     @Test def testEmbody() {
-        val res = testTemplate.createWorkflow.embody(Map("nodesCount" -> "1", "test" -> "test"))
+        val res = testTemplate.createWorkflow.embody(Map("nodesCount" -> "666", "test" -> "test"))
         assert(res.size === 2)
         assert(res.head.phase == "provision")
-
+        assert(res.apply(0).getDetails.asInstanceOf[DoNothingStep].name === "666")
         testTemplate.destroyWorkflow.embody(Map())
     }
 
