@@ -25,7 +25,7 @@ package com.griddynamics.genesis.service
 import com.griddynamics.genesis.plugin.StepBuilder
 
 class VariableDescription(val name: String, val description: String, val isOptional: Boolean = false,
-                          val defaultValue: String = null, val values: Map[String,String] = Map())
+                          val defaultValue: String = null, val values: Map[String,String] = Map(), val dependsOn: Option[List[String]] = None)
 
 case class ValidationError(variableName: String, description: String)
 
