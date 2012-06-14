@@ -72,7 +72,7 @@
                             hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"/>
 
         <s:intercept-url pattern="/rest/projects/*" method="DELETE" access="hasRole('ROLE_GENESIS_ADMIN')"/>
-        <s:intercept-url pattern="/rest/projects/*" method="POST"   access="hasRole('ROLE_GENESIS_ADMIN')"/>
+        <s:intercept-url pattern="/rest/projects*"  method="POST"   access="hasRole('ROLE_GENESIS_ADMIN')"/>
         <s:intercept-url pattern="/rest/projects/*" method="PUT"    access="hasRole('ROLE_GENESIS_ADMIN') or
                             hasPermission( #urlId('/rest/projects/{id}', #url), 'com.griddynamics.genesis.api.Project', 'administration')" />
 
