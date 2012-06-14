@@ -30,6 +30,9 @@ import com.griddynamics.genesis.core._
 import com.griddynamics.genesis.service.{TemplateService, StoreService}
 import collection.mutable.ArrayBuffer
 import com.griddynamics.genesis.plugin.{StepBuilder, Cancel, StepCoordinatorFactory}
+import com.griddynamics.genesis.model.{EnvStatus, Workflow, Environment}
+import com.griddynamics.genesis.model.WorkflowStatus._
+import com.griddynamics.genesis.util.Logging
 
 trait RequestDispatcher {
     def createEnv(envName: String)
@@ -47,7 +50,7 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
                             templateService: TemplateService,
                             executorService: ExecutorService,
                             stepCoordinatorFactory: StepCoordinatorFactory)
-    extends TypedActor with RequestDispatcher {
+    extends TypedActor with RequestDispatcher with Logging {
 
     val coordinators = mutable.Map[String, TypedFlowCoordinator]()
 
@@ -60,11 +63,13 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
     }
 
     def startWorkflow(envName: String) {
-        val (env, workflow) = storeService.retrieveWorkflow(envName)
+      val (env, workflow) = storeService.retrieveWorkflow(envName)
 
+      try{
         val definition = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion)
         val rawSteps = definition.flatMap(_.getWorkflow(workflow.name)
             .map(_.embody(workflow.variables, Option(env.name))))
+
         rawSteps.map(sortByPhase).map(applyIds(_)).foreach(s => {
             coordinators(env.name) = if (Option(workflow.name) == definition.map(_.destroyWorkflow.name))
                 destroyingCoordinator(envName, s)
@@ -72,6 +77,14 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
 
             coordinators(env.name).start
         })
+      } catch {
+        case e => {
+          log.error(e, "Failed to workflow [%s] for env [%s]".format(workflow.name, envName))
+          env.status = EnvStatus.Failed(workflow.name)
+          workflow.status = Failed
+          storeService.finishWorkflow(env, workflow)
+        }
+      }
     }
 
     def sortByPhase(rawSteps: Seq[StepBuilder]): Seq[StepBuilder] = {
