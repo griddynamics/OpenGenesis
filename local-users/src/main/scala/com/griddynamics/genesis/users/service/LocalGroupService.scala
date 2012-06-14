@@ -130,6 +130,7 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
     protected def validateUpdate(c: UserGroup) =
         validate(c) ++
         mustExist(c){it => get(it.id.get)} ++
+        must(c, "Group name change is not allowed") { it => get(it.id.get).get.name == c.name } ++
         must(c, "Group with name '" + c.name + "' already exists"){ g =>
             findByName(g.name) match {
                 case None => true
