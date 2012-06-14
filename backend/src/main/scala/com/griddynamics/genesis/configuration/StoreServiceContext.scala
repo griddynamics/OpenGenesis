@@ -51,7 +51,7 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 
     @Bean def credentialsRepository: repository.CredentialsRepository = new CredentialsRepository
 
-    @Bean def credentialsStoreService: service.CredentialsStoreService = new CredentialsStoreService(credentialsRepository)
+    @Bean def credentialsStoreService: service.CredentialsStoreService = new CredentialsStoreService(credentialsRepository, projectRepository)
 }
 
 class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager,
