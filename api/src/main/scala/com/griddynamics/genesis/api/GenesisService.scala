@@ -25,6 +25,8 @@ package com.griddynamics.genesis.api
 trait GenesisService {
     def queryVariables(projectId: Int, templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]) : Option[Seq[Variable]]
 
+    def getTemplate(projectId: Int, templateName: String, templateVersion: String) : Option[Template]
+
     def getLogs(envName: String, stepId: Int) : Seq[String]
 
     def listEnvs (projectId: Int) : Seq[Environment]

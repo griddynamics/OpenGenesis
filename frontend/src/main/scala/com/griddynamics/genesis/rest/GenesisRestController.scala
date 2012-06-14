@@ -74,6 +74,12 @@ class GenesisRestController(genesisService: GenesisService, templateService: Tem
         )
     }
 
+    @RequestMapping(value = Array("projects/{projectId}/templates/{templateName}/v{templateVersion:.+}/desc"), method = Array(RequestMethod.GET))
+    @ResponseBody
+    def templateDesc(@PathVariable projectId: Int,
+                     @PathVariable("templateName") templateName: String, @PathVariable("templateVersion") templateVersion: String) =
+        genesisService.getTemplate(projectId, templateName, templateVersion)
+
 }
 
 object GenesisRestController {
