@@ -40,7 +40,7 @@ class CredentialsController(service: CredentialsStoreService) extends RestApiExc
   @ResponseBody
   def create(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = {
       val creds = extractCredentials(request, projectId, None)
-      service.create(creds)
+      service.create(creds).map(_.copy(credential = None))
   }
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
