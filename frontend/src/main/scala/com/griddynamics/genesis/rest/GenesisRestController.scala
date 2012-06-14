@@ -65,7 +65,8 @@ class GenesisRestController(genesisService: GenesisService, templateService: Tem
     @RequestMapping(value = Array("projects/{projectId}/templates/{templateName}/v{templateVersion:.+}/{workflow}"), method = Array(RequestMethod.POST))
     @ResponseBody
     def partialApply(@PathVariable projectId: Int,
-                     @PathVariable templateName: String, @PathVariable templateVersion: String, @PathVariable workflow: String, request: HttpServletRequest) = {
+                     @PathVariable("templateName") templateName: String, @PathVariable("templateVersion") templateVersion: String,
+                     @PathVariable("workflow") workflow: String, request: HttpServletRequest) = {
         val paramsMap: Map[String, Any] = GenesisRestController.extractParamsMap(request)
         val variables = GenesisRestController.extractVariables(paramsMap)
         genesisService.queryVariables(projectId, templateName, templateVersion, workflow, variables).getOrElse(

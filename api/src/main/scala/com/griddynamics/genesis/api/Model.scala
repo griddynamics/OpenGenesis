@@ -43,7 +43,8 @@ case class EnvironmentDetails(name : String,
                               projectId: Int,
                               workflowsHistory : Option[Seq[WorkflowDetails]] = None )
 
-case class Variable(name : String, description : String, optional: Boolean = false, defaultValue: String = null, values:Map[String,String] = Map())
+case class Variable(name : String, description : String, optional: Boolean = false, defaultValue: String = null,
+                    values:Map[String,String] = Map(), dependsOn: Option[List[String]] = None)
 
 case class Template(name : String, version : String, createWorkflow : Workflow)
 
