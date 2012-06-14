@@ -48,7 +48,7 @@ class UsersController extends RestApiExceptionsHandler {
     def pick(@RequestParam("tag") search: String) =
       userService.search("*" + search + "*").map(item => Map("key" -> item.username, "value" -> item.username))
 
-    @RequestMapping(value = Array("{username}"), method=Array(RequestMethod.GET))
+    @RequestMapping(value = Array("{username:.+}"), method=Array(RequestMethod.GET))
     @ResponseBody
     def user(@PathVariable(value = "username") username: String) = userService.findByUsername(username) match {
         case Some(u) => u
@@ -63,7 +63,7 @@ class UsersController extends RestApiExceptionsHandler {
         userService.create(user, readGroups(map, "groups"))
     }
 
-    @RequestMapping(value = Array("{username}"), method = Array(RequestMethod.PUT))
+    @RequestMapping(value = Array("{username:.+}"), method = Array(RequestMethod.PUT))
     @ResponseBody
     def update(@PathVariable username: String, request: HttpServletRequest) = {
         val params: Map[String, Any] = extractParamsMap(request)
@@ -74,7 +74,7 @@ class UsersController extends RestApiExceptionsHandler {
         }
     }
 
-    @RequestMapping(value = Array("{username}"), method = Array(RequestMethod.DELETE))
+    @RequestMapping(value = Array("{username:.+}"), method = Array(RequestMethod.DELETE))
     @ResponseBody
     def delete(@PathVariable(value="username") username: String) = {
       withUser(username) {
