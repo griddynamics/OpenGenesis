@@ -22,7 +22,6 @@
  */
 package com.griddynamics.genesis.service.impl
 
-import com.griddynamics.genesis.repository.CredentialsRepository
 import com.griddynamics.genesis.validation.Validation
 import com.griddynamics.genesis.api
 import api.{Failure, ExtendedResult, RequestResult}
@@ -34,8 +33,9 @@ import java.util.UUID
 import com.griddynamics.genesis.crypto.BasicCrypto
 import org.springframework.beans.factory.annotation.Value
 import javax.crypto.spec.SecretKeySpec
+import com.griddynamics.genesis.repository.{ProjectRepository, CredentialsRepository}
 
-class CredentialsStoreService(repository: CredentialsRepository) extends Validation[api.Credentials] with service.CredentialsStoreService {
+class CredentialsStoreService(repository: CredentialsRepository, projectRepository: ProjectRepository) extends Validation[api.Credentials] with service.CredentialsStoreService {
 
   var keySpec: SecretKeySpec = _
 
@@ -86,6 +86,7 @@ class CredentialsStoreService(repository: CredentialsRepository) extends Validat
     notEmpty(c, c.cloudProvider, "cloudProvider") ++
     notEmpty(c, c.pairName, "pairName") ++
     notEmpty(c, c.identity, "identity") ++
+    (mustExist(c, "Project [id = %] was not found".format(c.projectId)) { it => projectRepository.get(it.projectId) }) ++
     must(c, "key pair name must be unique per provider") {
       item => repository.find(item.projectId, item.cloudProvider, item.pairName).isEmpty
     }
