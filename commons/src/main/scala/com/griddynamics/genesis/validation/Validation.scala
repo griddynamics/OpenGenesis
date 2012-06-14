@@ -87,7 +87,7 @@ object Validation {
         }
     }
 
-    def mustExist[C](value: C, errorMessage: String = "Not found")(finder: C => Option[C]) = {
+    def mustExist[C](value: C, errorMessage: String = "Not found")(finder: C => Option[_]) = {
       finder(value) match {
         case None => Failure(isNotFound = true, compoundServiceErrors = Seq(errorMessage))
         case Some(_) => Success(value)
