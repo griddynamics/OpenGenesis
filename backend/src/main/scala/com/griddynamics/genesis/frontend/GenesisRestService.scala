@@ -52,12 +52,8 @@ class GenesisRestService(storeService: StoreService,
 
     def countEnvs(projectId: Int) : Int = storeService.countEnvs(projectId)
 
-    def listTemplates(projectId: Int) = {
-        for {(name, version) <- templateService.listTemplates(projectId).toSeq
-             templateOpt = templateService.findTemplate(projectId, name, version)
-             if templateOpt.nonEmpty
-        } yield templateDesc(name, version, templateOpt.get)
-    }
+    def listTemplates(projectId: Int) =
+        for {(name, version) <- templateService.listTemplates(projectId)} yield Template(name, version, null)
 
     def createEnv(projectId: Int, envName: String, creator: String, templateName: String,
                   templateVersion: String, variables: Map[String, String]) = {
@@ -109,6 +105,10 @@ class GenesisRestService(storeService: StoreService,
             }
         }
     }
+
+    def getTemplate(projectId: Int, templateName: String, templateVersion: String) =
+    templateService.findTemplate(projectId, templateName, templateVersion).map(templateDesc(templateName, templateVersion, _))
+
 }
 
 object GenesisRestService {

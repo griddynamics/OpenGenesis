@@ -55,11 +55,23 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
         updateTemplates(projectId).get(name, version).map(et =>
             new GroovyTemplateDefinition(et, conversionService, stepBuilderFactories)
         )
-  
-    def listTemplates(projectId: Int) = updateTemplates(projectId).keys.toSeq
+
+    def listTemplates(projectId: Int) = {
+        val sources = templateRepository.listSources()
+        (for ((version, body) <- sources) yield try {
+            val template = evaluateTemplate(projectId, body, None, None, None, true)
+            template.map(t => (t.name, t.version))
+        } catch {
+            case t: Throwable => {
+                log.error(t, "Error in template name or version: %s", t)
+                None
+            }
+        }).flatten.toSeq
+
+    }
 
     //TODO: remove?
-    def updateTemplates(projectId: Int) = updateLock.synchronized {
+    private def updateTemplates(projectId: Int) = updateLock.synchronized {
         val sources = templateRepository.listSources()
         val uRevisionId = TemplateRepository.revisionId(sources)
 
@@ -89,7 +101,6 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
                     None
                 }
             }
-
             sourcesMap = uSourcesMap.toMap
             templatesMap = uTemplatesMap.toMap
         }
@@ -98,7 +109,7 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
     }
 
     def evaluateTemplate(projectId: Int, body : String, extName: Option[String], extVersion: Option[String],
-                         extProject : Option[String]) = {
+                         extProject : Option[String], listOnly : Boolean = false) = {
         val templateDecl = new BlockDeclaration
         val methodClosure = new MethodClosure(templateDecl, "declare")
 
@@ -111,7 +122,7 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
             case e: GroovyRuntimeException => throw new IllegalStateException("can't process template", e)
         }
 
-        val templateBuilder = new EnvTemplateBuilder(projectId, dataSourceFactories)
+        val templateBuilder = if (listOnly) new NameVersionDelegate else new EnvTemplateBuilder(projectId, dataSourceFactories)
         templateDecl.bodies.headOption.map {
             templateBody => {
                 templateBody.setDelegate(templateBuilder)

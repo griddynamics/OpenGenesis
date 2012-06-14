@@ -151,9 +151,43 @@ class WorkflowDeclaration {
     }
 }
 
-class EnvTemplateBuilder(val projectId: Int, val dataSourceFactories : Seq[DataSourceFactory]) {
+class NameVersionDelegate {
     var name : String = _
     var version : String = _
+    def workflow(name: String, details : Closure[Unit]) = this
+
+    def name(value : String) : NameVersionDelegate = {
+        if (name != null)
+            throw new IllegalStateException("name is already set")
+        this.name = value
+        this
+    }
+
+    def version(value : String): NameVersionDelegate = {
+        if (version != null) throw new IllegalStateException("version is already set")
+        this.version = value
+        this
+    }
+
+    def newTemplate(extName: Option[String], extVersion: Option[String], extProject: Option[String]) = {
+      val templateName = extName match {
+        case None => name
+        case Some(s) => s
+      }
+      val templateVersion = extVersion match {
+        case None => version
+        case Some(s) => s
+      }
+      new EnvironmentTemplate(templateName, templateVersion, extProject, "create", "destroy",
+          List(new EnvWorkflow("create", List(), None), new EnvWorkflow("destroy", List(), None)))
+    }
+
+    def createWorkflow(name : String) = this    
+    def destroyWorkflow(name : String)  = this
+    def dataSources(ds : Closure[Unit]){}
+}
+
+class EnvTemplateBuilder(val projectId: Int, val dataSourceFactories : Seq[DataSourceFactory]) extends NameVersionDelegate {
 
     var createWorkflow : String = _
     var destroyWorkflow : String = _
@@ -162,7 +196,7 @@ class EnvTemplateBuilder(val projectId: Int, val dataSourceFactories : Seq[DataS
     
     var dsObjSupport : Option[DSObjectSupport] = None
 
-    def workflow(name: String, details : Closure[Unit]) = {
+    override def workflow(name: String, details : Closure[Unit]) = {
         if (workflows.find(_.name == name).isDefined)
             throw new IllegalStateException("workflow with name '%s' is already defined".format(name))
         val delegate = new WorkflowDeclaration
@@ -184,32 +218,19 @@ class EnvTemplateBuilder(val projectId: Int, val dataSourceFactories : Seq[DataS
         this
     }
 
-    def name(value : String) : EnvTemplateBuilder = {
-        if (name != null)
-            throw new IllegalStateException("name is already set")
-        this.name = value
-        this
-    }
-
-    def version(value : String) : EnvTemplateBuilder = {
-        if (version != null) throw new IllegalStateException("version is already set")
-        this.version = value
-        this
-    }
-
-    def createWorkflow(name : String) : EnvTemplateBuilder = {
+    override def createWorkflow(name : String) : EnvTemplateBuilder = {
         if (createWorkflow != null) throw new IllegalStateException("create workflow name is already set")
         this.createWorkflow = name
         this
     }
 
-    def destroyWorkflow(name : String) : EnvTemplateBuilder = {
+    override def destroyWorkflow(name : String) : EnvTemplateBuilder = {
         if (destroyWorkflow != null) throw new IllegalStateException("destroy workflow name is already set")
         this.destroyWorkflow = name
         this
     }
 
-    def dataSources(ds : Closure[Unit]) {
+    override def dataSources(ds : Closure[Unit]) {
         val dsDelegate = new DataSourceDeclaration(projectId, dataSourceFactories)
         ds.setDelegate(dsDelegate)
         ds.call()
@@ -219,7 +240,7 @@ class EnvTemplateBuilder(val projectId: Int, val dataSourceFactories : Seq[DataS
         dsObjSupport = Option(new DSObjectSupport(map))
     }
 
-    def newTemplate = {
+    private def newTemplate = {
         if (name == null) throw new IllegalStateException("name is not set")
         if (version == null) throw new IllegalStateException("version is not set")
         if (createWorkflow == null) throw new IllegalStateException("create workflow name is not set")
@@ -229,7 +250,7 @@ class EnvTemplateBuilder(val projectId: Int, val dataSourceFactories : Seq[DataS
         new EnvironmentTemplate(name, version, None, createWorkflow, destroyWorkflow, workflows.toList)
     }
   
-    def newTemplate(extName: Option[String], extVersion: Option[String], extProject: Option[String]) = {
+    override def newTemplate(extName: Option[String], extVersion: Option[String], extProject: Option[String]) = {
       val templateName = extName match {
         case None => name
         case Some(s) => s
