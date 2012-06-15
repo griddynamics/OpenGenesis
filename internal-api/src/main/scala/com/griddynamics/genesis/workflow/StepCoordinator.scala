@@ -81,15 +81,18 @@ trait LoggableActions extends ActionOrientedStepCoordinator {
         trackActionsStart(result)
     }
 
+    abstract override def onActionFinish(result: ActionResult) : Seq[Action] = {
+        storeService.endAction(result.action.uuid, None)
+        trackActionsStart(super.onActionFinish(result))
+    }
+
+    abstract override def onStepInterrupt(signal: Signal): Seq[Action] = {
+        trackActionsStart(super.onStepInterrupt(signal))
+    }
 
     private def trackActionsStart(result: scala.Seq[Action]) : Seq[Action] = {
         result.foreach(a => storeService.startAction(ActionTracking(stepId, a)))
         result
-    }
-
-    abstract override def onActionFinish(result: ActionResult) : Seq[Action] = {
-        storeService.endAction(result.action.uuid, None)
-        trackActionsStart(super.onActionFinish(result))
     }
 }
 
