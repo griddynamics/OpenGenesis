@@ -55,11 +55,21 @@ class GenesisRestController(genesisService: GenesisService, templateService: Tem
         case _ => genesisService.listTemplates(projectId)
     }
 
-  @RequestMapping(value = Array("projects/{projectId}/templates/{templateName}/v{templateVersion:.+}"), method = Array(RequestMethod.GET))
+    @RequestMapping(value = Array("projects/{projectId}/templates/{templateName}/v{templateVersion:.+}"), method = Array(RequestMethod.GET))
     @ResponseBody
-    def templateContent(@PathVariable  projectId: Int, @PathVariable templateName: String, @PathVariable templateVersion: String) = {
-      val content = templateService.templateRawContent(projectId, templateName, templateVersion).getOrElse("")
-      Map("content" -> content)
+    def getTemplate(@PathVariable("projectId") projectId: Int,
+                    @PathVariable("templateName") templateName: String,
+                    @PathVariable("templateVersion") templateVersion: String,
+                    @RequestParam(defaultValue = "desc") format: String
+                     ) = {
+      val result = format match {
+        case "src" => {
+          val contentOpt = templateService.templateRawContent(projectId, templateName, templateVersion)
+          contentOpt.map { src => Map("name" -> templateName, "version" -> templateVersion, "content" -> src) }
+        }
+        case "desc" => genesisService.getTemplate(projectId, templateName, templateVersion)
+      }
+      result.getOrElse(throw new ResourceNotFoundException("Template not found"))
     }
 
     @RequestMapping(value = Array("projects/{projectId}/templates/{templateName}/v{templateVersion:.+}/{workflow}"), method = Array(RequestMethod.POST))
@@ -73,13 +83,6 @@ class GenesisRestController(genesisService: GenesisService, templateService: Tem
           throw new ResourceNotFoundException("No variables were found for [template = %s (v%s), workflow = %s]".format(templateName, templateVersion, workflow))
         )
     }
-
-    @RequestMapping(value = Array("projects/{projectId}/templates/{templateName}/v{templateVersion:.+}/desc"), method = Array(RequestMethod.GET))
-    @ResponseBody
-    def templateDesc(@PathVariable projectId: Int,
-                     @PathVariable("templateName") templateName: String, @PathVariable("templateVersion") templateVersion: String) =
-        genesisService.getTemplate(projectId, templateName, templateVersion)
-
 }
 
 object GenesisRestController {

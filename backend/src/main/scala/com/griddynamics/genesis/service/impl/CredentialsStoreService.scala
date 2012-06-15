@@ -86,7 +86,7 @@ class CredentialsStoreService(repository: CredentialsRepository, projectReposito
     notEmpty(c, c.cloudProvider, "cloudProvider") ++
     notEmpty(c, c.pairName, "pairName") ++
     notEmpty(c, c.identity, "identity") ++
-    (mustExist(c, "Project [id = %] was not found".format(c.projectId)) { it => projectRepository.get(it.projectId) }) ++
+    (mustExist(c, "Project [id = %s] was not found".format(c.projectId)) { it => projectRepository.get(it.projectId) }) ++
     must(c, "key pair name must be unique per provider") {
       item => repository.find(item.projectId, item.cloudProvider, item.pairName).isEmpty
     }
