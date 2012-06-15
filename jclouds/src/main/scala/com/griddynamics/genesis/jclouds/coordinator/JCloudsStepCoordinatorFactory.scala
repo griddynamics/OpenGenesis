@@ -24,7 +24,7 @@ package com.griddynamics.genesis.jclouds.coordinators
 
 import com.griddynamics.genesis.plugin.{StepExecutionContext, PartialStepCoordinatorFactory}
 import com.griddynamics.genesis.jclouds.step.{DestroyEnv, DestroyVm, ProvisionVm, JCloudsStep}
-import com.griddynamics.genesis.workflow.Step
+import com.griddynamics.genesis.workflow.{LoggableActions, Step}
 import com.griddynamics.genesis.jclouds.JCloudsProvisionContext
 
 class JCloudsStepCoordinatorFactory(pluginContext: () => JCloudsProvisionContext) extends PartialStepCoordinatorFactory {
@@ -35,7 +35,11 @@ class JCloudsStepCoordinatorFactory(pluginContext: () => JCloudsProvisionContext
 
     step match {
       case s: ProvisionVm => {
-        new ProvisionVmsStepCoordinator(s, context, currentContext)
+        import com.griddynamics.genesis.workflow.ActionOrientedStepCoordinator.toStepCoordinator
+        new ProvisionVmsStepCoordinator(s, context, currentContext) with LoggableActions {
+            def stepId = context.step.id
+            def storeService = currentContext.storeService
+        }
       }
       case s: DestroyEnv => {
         new DestroyEnvStepCoordinator(s, context, currentContext)

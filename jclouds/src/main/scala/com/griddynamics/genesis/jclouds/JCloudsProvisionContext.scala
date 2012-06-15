@@ -51,6 +51,7 @@ import com.griddynamics.genesis.model.{IpAddresses, VirtualMachine}
 trait JCloudsProvisionContext extends ProvisionContext[JCloudsProvisionVm] {
   def cloudProvider: String
   def computeSettings: Map[String, Any]
+  def storeService: StoreService
 }
 
 private object Plugin {
@@ -115,7 +116,7 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
       pluginConfig,
       this
     )
-  });
+  })
 
 
   @Bean def provisionVmsStepBuilderFactory = new ProvisionVmsStepBuilderFactory
@@ -156,14 +157,14 @@ class JCloudsComputeContextProvider {
   def computeContext(vm: VirtualMachine): ComputeServiceContext = {
     val computeSettings = vm.computeSettings.getOrElse {
       throw new IllegalArgumentException("Vm [" + vm + "] wasn't created by jclouds compute plugin")
-    };
+    }
     computeContext(computeSettings)
   }
 
   private case class Settings(provider: String, endpoint: Option[String], identity: String, credentials: String)
 }
 
-class JCloudsProvisionContextImpl(storeService: StoreService,
+class JCloudsProvisionContextImpl(override val storeService: StoreService,
                               computeService: ComputeService,
                               sshService: SshService,
                               strategies: Map[String, JCloudsVmCreationStrategyProvider],
