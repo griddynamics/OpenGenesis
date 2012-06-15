@@ -98,9 +98,8 @@
     </bean>
 
     <bean id="authenticationSuccessHandler"
-          class="com.griddynamics.genesis.spring.security.AuthenticationSuccessHandler">
-        <constructor-arg value="${genesis.auth.role:GENESIS}" />
-    </bean>
+          class="com.griddynamics.genesis.spring.security.AuthenticationSuccessHandler"/>
+
     <bean id="authenticationFailureHandler"
           class="com.griddynamics.genesis.spring.security.AuthenticationFailureHandler"/>
 
