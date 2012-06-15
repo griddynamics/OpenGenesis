@@ -41,12 +41,12 @@ trait Validation[C] {
 
 object Validation {
     val usernamePattern = """^([a-zA-Z0-9.-]{2,32})$""".r
-    val namePattern = """^([\p{L}0-9@.\-/_ ]{2,64})$""".r
+    val namePattern = """^([\p{L}0-9.\-_ ]{2,64})$""".r
     val personNamePattern = """^([\p{L} ]{2,64})$""".r
     val emailPattern = """^(?=.{7,64}$)[\w][\w.-]+@([\w-]+\.)+[a-zA-Z]{2,5}$""".r
 
     val nameErrorMessage = "Invalid format. Use a combination of alphanumerics, " +
-                                  "spaces and following symbols: @.-/_. Length must be from 2 to 64"
+                                  "spaces, dots, hyphens and underscores. Length must be from 2 to 64"
     val personNameErrorMessage = "Invalid format. Use a combination of letters and spaces. " +
                            "Length must be from 2 to 64"
     val usernameErrorMessage = "Invalid format. Use a combination of latin letters, numbers, " +
