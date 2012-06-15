@@ -286,6 +286,7 @@ class StoreService extends service.StoreService {
         GS.actionTracking.insert(actionTracking)
     }
 
+    @Transactional
     def endAction(uuid: String, message: Option[String]) {
         GS.actionTracking.update(at => {
             where(at.actionUUID === uuid) set (
@@ -293,6 +294,11 @@ class StoreService extends service.StoreService {
                 at.desc := message
             )
         })
+    }
+
+    @Transactional
+    def getActionLog(stepId : Int) = {
+        from(GS.actionTracking)(at => where(at.workflowStepId === stepId) select (at) orderBy(at.started asc)).toList
     }
 }
 
