@@ -144,8 +144,7 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
 }
 
 class StepBodiesCollector(variables: Map[String, AnyRef],
-                          stepBuilderFactories : Seq[StepBuilderFactory],
-                          @BeanProperty var templateContext: JMap[String, String])
+                          stepBuilderFactories : Seq[StepBuilderFactory])
     extends GroovyObjectSupport {
 
     val closures = (for (factory <- stepBuilderFactories) yield {
@@ -185,7 +184,6 @@ class StepBodiesCollector(variables: Map[String, AnyRef],
         (for ((bodies, factory) <- closures.values) yield {
             for (body <- bodies) yield {
                 val stepBuilder = new StepBuilderProxy(factory.newStepBuilder)
-                stepBuilder.setTemplateContext(templateContext)
                 body.setDelegate(stepBuilder)
                 body.setResolveStrategy(Closure.DELEGATE_FIRST)
                 body.call()
@@ -215,7 +213,6 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
         stepBuilder.exportTo = this.exportTo
         stepBuilder.ignoreFail = this.ignoreFail
         stepBuilder.precedingPhases = this.precedingPhases
-        stepBuilder.templateContext = this.templateContext
         stepBuilder.newStep
     }
 
@@ -310,9 +307,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
           }
           (variable.name, res)
         }).toMap
-        val templateContext = Map("templateProject" -> template.projectId.getOrElse(""), "templateVersion" -> template.version)
-        import scala.collection.JavaConversions._
-        val delegate = new StepBodiesCollector(typedVariables, stepBuilderFactories, mapAsJavaMap(templateContext))
+        val delegate = new StepBodiesCollector(typedVariables, stepBuilderFactories)
         workflow.stepsGenerator match {
             case Some(generator) => {
                 generator.setDelegate(delegate)
