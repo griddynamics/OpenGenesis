@@ -39,7 +39,6 @@ trait StepBuilder {
     @BeanProperty var ignoreFail: Boolean = false
     @BeanProperty var retryCount: Int = 0
     @BeanProperty var exportTo: JMap[String, String] = Collections.emptyMap()
-    @BeanProperty var templateContext: JMap[String, String] = Collections.emptyMap()
 
     var id: Int = 0
 
