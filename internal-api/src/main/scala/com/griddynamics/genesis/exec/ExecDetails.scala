@@ -22,18 +22,6 @@
  */
 package com.griddynamics.genesis.exec
 
-/*
- * Copyright (c) 2011 Grid Dynamics Consulting Services, Inc, All Rights Reserved
- *   http://www.griddynamics.com
- *
- *   For information about the licensing and copyright of this document please
- *   contact Grid Dynamics at info@griddynamics.com.
- *
- *   $Id: $
- *   @Project:     Genesis
- *   @Description: A cloud deployment platform
- */
-
 import com.griddynamics.genesis.util.shell.Path
 import com.griddynamics.genesis.model.{Environment, VirtualMachine}
 
