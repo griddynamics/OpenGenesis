@@ -8,6 +8,6 @@ class ActionTracking(val workflowStepId: GenesisEntity.Id, val actionName: Strin
                      val finished: Option[Timestamp] = None) extends GenesisEntity
 
 object ActionTracking {
-    def start(step: WorkflowStep, action: Action) = new ActionTracking(step.id,
+    def apply(stepId: Int, action: Action) = new ActionTracking(stepId,
         action.desc, action.uuid, None, new Timestamp(System.currentTimeMillis()))
 }
