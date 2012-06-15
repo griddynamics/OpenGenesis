@@ -49,6 +49,6 @@ class BuildStepBuilder extends StepBuilder {
 
   def getDetails = {
     val toMap: Map[String, String] = (for((k,v) <- attrs.toMap) yield (String.valueOf(k), String.valueOf(v))).toMap
-    new BuildStep(toMap ++ templateContext, provider)
+    new BuildStep(toMap, provider)
   }
 }
