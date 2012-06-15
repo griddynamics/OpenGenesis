@@ -45,6 +45,8 @@ trait GenesisSchema extends Schema {
 
     val userAuthorities = table[Authority]("user_authorities")
     val groupAuthorities = table[Authority]("group_authorities")
+
+    val actionTracking = table[ActionTracking]("action_tracking")
 }
 
 trait GenesisSchemaPrimitive extends GenesisSchema {
@@ -120,6 +122,14 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
 
     on(groupAuthorities)(authority => declare(
       columns(authority.principalName, authority.authority) are (unique)
+    ))
+
+    on(actionTracking)(tracking => declare(
+        tracking.desc is dbType("text"),
+        tracking.actionName is dbType("varchar(256)"),
+        tracking.actionUUID is dbType("varchar(36"),
+        columns(tracking.workflowStepId) are (indexed("step_idx")),
+        columns(tracking.actionUUID) are (indexed("action_uuid_idx"))
     ))
 }
 

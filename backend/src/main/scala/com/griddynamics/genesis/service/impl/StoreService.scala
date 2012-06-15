@@ -280,6 +280,20 @@ class StoreService extends service.StoreService {
         orderBy(log.timestamp asc)
       ).toList
     }
+
+    @Transactional
+    def startAction(actionTracking: ActionTracking) = {
+        GS.actionTracking.insert(actionTracking)
+    }
+
+    def endAction(uuid: String, message: Option[String]) {
+        GS.actionTracking.update(at => {
+            where(at.actionUUID === uuid) set (
+                at.finished := Some(new Timestamp(System.currentTimeMillis())),
+                at.desc := message
+            )
+        })
+    }
 }
 
 object StoreService {

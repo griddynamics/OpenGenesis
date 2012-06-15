@@ -22,8 +22,13 @@
  */
 package com.griddynamics.genesis.workflow
 
+import java.util
+
 /* Marker trait for any particular action */
-trait Action
+trait Action {
+    def desc = getClass.getSimpleName
+    final val uuid = util.UUID.randomUUID().toString
+}
 
 /* Base trait for result of particular action */
 trait ActionResult {
