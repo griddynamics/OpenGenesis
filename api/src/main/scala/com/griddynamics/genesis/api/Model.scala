@@ -137,7 +137,7 @@ case class Credentials( id: Option[Int],
 
 case class AuthorityDescription(name: String, users: List[String], groups: List[String])
 
-case class ActionTracking(name: String, desc: String, started: Timestamp, finished: Option[Timestamp])
+case class ActionTracking(name: String, desc: Option[String], started: Timestamp, finished: Option[Timestamp])
 
 object RequestResult {
     val envName = "envName"
