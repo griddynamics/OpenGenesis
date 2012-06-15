@@ -29,24 +29,11 @@ import com.griddynamics.genesis.spring.security.Utils._
 import javax.servlet.http.{Cookie, HttpServletResponseWrapper, HttpServletResponse, HttpServletRequest}
 import org.springframework.security.core.userdetails.UserDetails
 
-class AuthenticationSuccessHandler(val authRole : String) extends SpringAuthenticationSuccessHandler {
+class AuthenticationSuccessHandler extends SpringAuthenticationSuccessHandler {
 
     def onAuthenticationSuccess(request: HttpServletRequest, response: HttpServletResponse, auth: Authentication) {
-        import collection.JavaConversions.collectionAsScalaIterable
-
-        val (granted, responseMessage) = auth.getAuthorities.map(_.getAuthority)
-            .exists(_.toUpperCase.contains(authRole)) match {
-            case true => (true, "{\"success\": true}")
-            case _ => (false, "{\"success\": false, \"errors\": \"Access to Genesis application is denied.\"}")
-        }
-
-        if (granted) {
-          createSessionIfNotExist(request)
-        } else {
-          Option(request.getSession(false)).map(_.invalidate())
-        }
-
-        writeResponse(response, responseMessage)
+      createSessionIfNotExist(request)
+      writeResponse(response, "{\"success\": true}")
     }
 
     private def createSessionIfNotExist(request: HttpServletRequest) {
