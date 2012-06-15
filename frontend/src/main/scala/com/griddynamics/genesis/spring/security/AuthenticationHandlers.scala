@@ -40,7 +40,11 @@ class AuthenticationSuccessHandler(val authRole : String) extends SpringAuthenti
             case _ => (false, "{\"success\": false, \"errors\": \"Access to Genesis application is denied.\"}")
         }
 
-        if (granted) createSessionIfNotExist(request)
+        if (granted) {
+          createSessionIfNotExist(request)
+        } else {
+          Option(request.getSession(false)).map(_.invalidate())
+        }
 
         writeResponse(response, responseMessage)
     }
