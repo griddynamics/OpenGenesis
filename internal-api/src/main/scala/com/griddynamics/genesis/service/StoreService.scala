@@ -80,6 +80,10 @@ trait StoreService {
     def writeLog(stepId: Int, message: String)
     
     def getLogs(stepId: Int) : Seq[StepLogEntry]
+
+    def startAction(actionTracking: ActionTracking): ActionTracking
+    def endAction(uuid: String, message: Option[String])
+    def getActionLog(stepId: Int) : List[ActionTracking]
 }
 
 class StoreServiceException extends RuntimeException
