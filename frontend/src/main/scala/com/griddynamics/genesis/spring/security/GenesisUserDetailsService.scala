@@ -58,6 +58,9 @@ class GenesisUserDetailsService( adminUsername: String,
             groups.map("GROUP_" + _.name) ++
             (if (projectAuthorityService.isUserProjectAdmin(user.username, groups)) List(GenesisRole.ProjectAdmin.toString) else List())
           ).distinct
+        if(!authorities.contains(GenesisRole.GenesisUser.toString)) {
+          throw new UsernameNotFoundException("User doesn't have required role [%s]".format(GenesisRole.GenesisUser))
+        }
         new User(user.username, user.password.get, RoleBasedAuthority(authorities))
       }
 
