@@ -98,6 +98,7 @@
         <module>jclouds</module>
         <module>chef</module>
         <module>nexus</module>
+        <module>run-local</module>
         <module>distribution</module>
     </modules>
 
@@ -209,6 +210,11 @@
             <dependency>
                 <groupId>com.griddynamics.genesis</groupId>
                 <artifactId>nexus</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.griddynamics.genesis</groupId>
+                <artifactId>run-local</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
