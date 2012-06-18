@@ -94,6 +94,10 @@
             <groupId>com.griddynamics.genesis</groupId>
             <artifactId>nexus</artifactId>
         </dependency>
+        <dependency>
+            <artifactId>run-local</artifactId>
+            <groupId>com.griddynamics.genesis</groupId>
+        </dependency>
     </dependencies>
     <build>
         <resources>

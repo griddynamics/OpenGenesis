@@ -28,4 +28,9 @@ object TryingUtil {
     try { Some( f ) }
     catch { case _ => None }
   }
+
+  def silently [A](f: => A) {
+    try{ f }
+    catch { case _ => }
+  }
 }
