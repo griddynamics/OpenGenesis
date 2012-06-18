@@ -39,10 +39,8 @@ class RunLocalStepCoordinator(stepContext: StepExecutionContext, val step: RunLo
       }
     }
 
-    var actionIndex = 0
-    val actions = step.commands.map { command =>
-      val outputDirectory = step.output.map(new File(_, actionIndex.toString))
-      actionIndex+=1
+    val actions = step.commands.zipWithIndex.map { case (command, index) =>
+      val outputDirectory = step.output.map(new File(_, index.toString))
       new RunLocalShell(step.shell, command, outputDirectory)
     }
 

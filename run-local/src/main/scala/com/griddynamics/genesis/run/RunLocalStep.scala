@@ -42,7 +42,7 @@ class RunLocalStepBuilderFactory extends StepBuilderFactory {
     @BeanProperty var successExitCode: Int = 0
     @BeanProperty var outputDirectory: String = _
 
-    def getDetails = RunLocalStep(shell, commands, runInParallel, successExitCode, Some(outputDirectory).map{new File(_)})
+    def getDetails = RunLocalStep(shell, commands, runInParallel, successExitCode, Option(outputDirectory).map{new File(_)})
   }
 }
 
