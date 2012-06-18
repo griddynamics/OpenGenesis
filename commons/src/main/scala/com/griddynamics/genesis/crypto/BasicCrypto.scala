@@ -68,20 +68,16 @@ object BasicCrypto {
 
 
   def fingerPrint(privateKey: String): String = {
-    if (!privateKey.isEmpty) {
-      val digestVal = digestSHA1(privateKey)
+    val digestVal = digestSHA1(privateKey)
 
-      val buf = new StringBuilder()
-      val hex = Hex.encodeHex(digestVal)
-      for (i <- 0 until hex.length by 2) {
-        if (buf.length > 0) buf.append(':')
-        buf.appendAll(hex, i, 2)
-      }
-
-      buf.toString()
-    } else {
-      ""
+    val buf = new StringBuilder()
+    val hex = Hex.encodeHex(digestVal)
+    for (i <- 0 until hex.length by 2) {
+      if (buf.length > 0) buf.append(':')
+      buf.appendAll(hex, i, 2)
     }
+
+    buf.toString()
   }
 
   def digestSHA1(content: String): Array[Byte] = {
