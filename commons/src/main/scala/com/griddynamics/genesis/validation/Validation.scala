@@ -94,4 +94,10 @@ object Validation {
       }
     }
 
+    def mustSatisfyLengthConstraints[C](obj: C, value: String, fieldName: String)(minLen: Int = 0, maxLen: Int) : ExtendedResult[C] = {
+      if (value.length < minLen || value.length > maxLen)
+        Failure(variablesErrors = Map(fieldName -> "Length must be from %d to %d".format(minLen, maxLen)))
+      else
+        Success(obj)
+    }
 }
