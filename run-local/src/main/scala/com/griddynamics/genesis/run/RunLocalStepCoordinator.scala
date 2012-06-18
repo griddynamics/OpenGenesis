@@ -35,7 +35,7 @@ class RunLocalStepCoordinator(stepContext: StepExecutionContext, val step: RunLo
   def onStepStart() = {
     step.output.map { directory =>
       if(!directory.exists() && !directory.mkdirs()) {
-        throw new IllegalStateException("Failed to create outpu directory %s".format(directory.getAbsolutePath))
+        throw new IllegalStateException("Failed to create output directory %s".format(directory.getAbsolutePath))
       }
     }
 
