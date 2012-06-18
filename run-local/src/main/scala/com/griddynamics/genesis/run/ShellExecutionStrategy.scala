@@ -67,3 +67,21 @@ class CmdExecutionStrategy extends ShellExecutionStrategy {
     scriptCall.getOrElse(normalize(command))
   }
 }
+
+class ShExecutionStrategy extends ShellExecutionStrategy {
+  var shell = "sh"
+
+  var runtimeProcess = "sh"
+
+  val newLine = System.getProperty("line.separator")
+
+  def generateShellCommand(command: String, outputDirectory: Option[File]) = {
+    val scriptCall = outputDirectory.map {path =>
+      val scriptPath = new File(path, "script1.sh").getAbsolutePath
+      val withHeader = "#!/bin/sh" + newLine + command
+      Closeables.using(new FileOutputStream(scriptPath)) { _.write(withHeader.getBytes) }
+      scriptPath
+    }
+    scriptCall.getOrElse(command)
+  }
+}

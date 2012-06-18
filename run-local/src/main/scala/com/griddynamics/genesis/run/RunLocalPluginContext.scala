@@ -29,7 +29,7 @@ import com.griddynamics.genesis.plugin._
 @GenesisPlugin(id="run-local", description = "Execute local shell script")
 class RunLocalPluginContext {
 
-  val strategies = List(new CmdExecutionStrategy(), new PowerShellExecutions())
+  val strategies = List(new CmdExecutionStrategy, new PowerShellExecutions, new ShExecutionStrategy)
 
   @Bean def shellExecutionService = new LocalShellExecutionService(strategies)
 
