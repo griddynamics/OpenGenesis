@@ -26,9 +26,10 @@ import org.springframework.stereotype.Controller
 import scala.Array
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import com.griddynamics.genesis.http.TunnelFilter
-import org.springframework.web.bind.annotation.{PathVariable, ResponseBody, RequestMethod, RequestMapping}
+import org.springframework.web.bind.annotation._
 import org.springframework.beans.factory.annotation.Value
-import com.griddynamics.genesis.api.{GenesisService, RequestResult, EnvironmentDetails}
+import com.griddynamics.genesis.api._
+import com.griddynamics.genesis.api.EnvironmentDetails
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
@@ -119,6 +120,16 @@ class EnvironmentsController(genesisService: GenesisService) extends RestApiExce
 
       case _ => throw new InvalidInputException ()
     }
+  }
+
+  @RequestMapping(value = Array("{envName}/steps/{stepId}/actions"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  def getStepActions(@PathVariable("projectId") projectId: Int,
+                     @PathVariable("envName") env: String,
+                     @PathVariable("stepId") stepId: Int,
+                     request: HttpServletRequest): Seq[ActionTracking] = {
+    assertEnvExist(projectId, env)
+    genesisService.getStepLog(stepId)
   }
 
   private def assertEnvExist(projectId: Int, env: String) {

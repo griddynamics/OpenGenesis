@@ -26,7 +26,14 @@ import java.util
 
 /* Marker trait for any particular action */
 trait Action {
-    def desc = getClass.getSimpleName
+    def desc = getClass.getSimpleName.replaceAll(
+      String.format("%s|%s|%s",        // PascalCaseName  -> Pascal Case Name
+        "(?<=[A-Z])(?=[A-Z][a-z])",
+        "(?<=[^A-Z])(?=[A-Z])",
+        "(?<=[A-Za-z])(?=[^A-Za-z])"
+      ),
+      " ")
+
     final val uuid = util.UUID.randomUUID().toString
 }
 
