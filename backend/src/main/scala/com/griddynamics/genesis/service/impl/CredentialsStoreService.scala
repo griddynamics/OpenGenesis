@@ -75,9 +75,10 @@ class CredentialsStoreService(repository: CredentialsRepository, projectReposito
   def create(creds: api.Credentials) = validCreate(creds, saveWithFingerprints(_))
 
   private def saveWithFingerprints(validatedCreds: api.Credentials): api.Credentials = {
-    val fingerPrint = validatedCreds.credential.map(BasicCrypto.fingerPrint(_))
-    val encrypted = validatedCreds.credential.map(BasicCrypto.encrypt(keySpec, _))
-    repository.save(validatedCreds.copy(fingerPrint = fingerPrint, credential = encrypted))
+    val credential = validatedCreds.credential.getOrElse("")
+    val fingerPrint = BasicCrypto.fingerPrint(credential)
+    val encrypted = BasicCrypto.encrypt(keySpec, credential)
+    repository.save(validatedCreds.copy(fingerPrint = Some(fingerPrint), credential = Some(encrypted)))
   }
 
   protected def validateUpdate(c: api.Credentials): ExtendedResult[api.Credentials] = Failure()

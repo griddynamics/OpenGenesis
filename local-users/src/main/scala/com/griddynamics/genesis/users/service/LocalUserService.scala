@@ -47,7 +47,8 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
     override def create(user: User)  = {
-        validCreate(user, u => repository.insert(u))
+        validCreate(user.copy(username = user.username.toLowerCase, email = user.email.toLowerCase),
+                    u => repository.insert(u))
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
@@ -66,7 +67,8 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
     override def update(user: User) = {
-       validUpdate(user, repository.update(_) )
+       validUpdate(user.copy(username = user.username.toLowerCase, email = user.email.toLowerCase),
+                   repository.update(_) )
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
