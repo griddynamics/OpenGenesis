@@ -24,6 +24,7 @@ package com.griddynamics.genesis.rest
 
 import com.griddynamics.genesis.api._
 import scala.Some
+import java.sql.Timestamp
 
 class GenesisRestServiceStub() extends GenesisService {
     val createWorkflow = Workflow("create",
@@ -153,4 +154,6 @@ class GenesisRestServiceStub() extends GenesisService {
     def queryVariables(projectId: Int, templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]) = Some(Seq())
 
     def getTemplate(projectId: Int, templateName: String, templateVersion: String) = listTemplates(0).headOption
+
+    def getStepLog(stepId: Int) = List(new ActionTracking("test", Option("test descriptuion"), System.currentTimeMillis(), None))
 }

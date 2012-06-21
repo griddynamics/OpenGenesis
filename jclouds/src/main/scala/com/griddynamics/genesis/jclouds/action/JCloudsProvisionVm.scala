@@ -39,6 +39,8 @@ case class JCloudsProvisionVm(env: Environment,
                               keyPair: Option[String] = None,
                               securityGroup: Option[String] = None,
                               provision: Map[String, Any] = Map()) extends SpecificProvisionVmAction {
+  override val desc = "Provision VM Action"
+
   def newVm = {
     val vm = new VirtualMachine(
       envId = env.id,
