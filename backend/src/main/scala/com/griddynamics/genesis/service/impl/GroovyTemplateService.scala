@@ -238,7 +238,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
     def convertAndValidate(value: Any, variable: VariableDetails): Seq[ValidationError] = {
       try {
         //all values stored as strings, so we need to use string repr. to convert here as well
-        val typedVal = conversionService.convert(String.valueOf(value), variable.clazz)
+        val typedVal = convert(String.valueOf(value), variable)
 
         (for (validator <- variable.validators) yield {
           if (!validator.call(typedVal))
@@ -256,8 +256,10 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
         val dependents = for (variable <- variables) yield {
             workflow.variables.find(p => p.dependsOn.find(_ == variable._1).isDefined).get
         }
+        val typedVars = variables.map(v => (v._1, convert(String.valueOf(v._2), workflow.variables.find(_.name == v._1)
+            .getOrElse(throw new RuntimeException("No such variable: " + v._1)))))
         dependents.map(v => new VariableDescription(v.name, v.description, v.isOptional, null, v.valuesList.map(lambda => {
-            lambda.apply(variables)
+            lambda.apply(typedVars)
         }).getOrElse(Map()), if (v.dependsOn.isEmpty) None else Some(v.dependsOn.toList))).toSeq
     }
 
@@ -283,14 +285,15 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
         res.flatten.toSeq
     }
 
+    def convert(value: String, variable: VariableDetails): AnyRef = {
+      try {
+        conversionService.convert(value, variable.clazz)
+      } catch {
+        case _ => throw new IllegalArgumentException("Variable '%s' has an invalid format: %s".format(variable.name, String.valueOf(value)))
+      }
+    }
+
     def embody(variables: Map[String, String], envName: Option[String] = None) = {
-        def convert(value: String, variable: VariableDetails): AnyRef = {
-          try {
-            conversionService.convert(value, variable.clazz)
-          } catch {
-            case _ => throw new IllegalArgumentException("Variable '%s' has an invalid format: %s".format(variable.name, String.valueOf(value)))
-          }
-        }
         val typedVariables = (for (variable <- workflow.variables) yield {
           val res = variables.get(variable.name) match {
             case Some(value) =>
