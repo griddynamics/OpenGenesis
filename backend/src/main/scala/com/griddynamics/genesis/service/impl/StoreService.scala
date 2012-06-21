@@ -291,7 +291,7 @@ class StoreService extends service.StoreService {
         GS.actionTracking.update(at => {
             where(at.actionUUID === uuid) set (
                 at.finished := Some(new Timestamp(System.currentTimeMillis())),
-                at.desc := message
+                at.description := message
             )
         })
     }

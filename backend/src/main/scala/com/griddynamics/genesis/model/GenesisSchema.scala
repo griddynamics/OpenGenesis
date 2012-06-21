@@ -125,7 +125,7 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     ))
 
     on(actionTracking)(tracking => declare(
-        tracking.desc is dbType("text"),
+        tracking.description is dbType("varchar(256)"),
         tracking.actionName is dbType("varchar(256)"),
         tracking.actionUUID is dbType("varchar(36)"),
         columns(tracking.workflowStepId) are (indexed("step_idx")),

@@ -49,4 +49,6 @@ trait GenesisService {
     def cancelWorkflow(envName : String)
 
     def isEnvExists(envName: String, projectId: Int): Boolean
+
+    def getStepLog(stepId: Int): Seq[ActionTracking]
 }
