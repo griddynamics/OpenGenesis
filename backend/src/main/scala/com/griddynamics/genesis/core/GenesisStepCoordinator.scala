@@ -22,12 +22,14 @@
  */
 package com.griddynamics.genesis.core
 
-import com.griddynamics.genesis.workflow.{ActionResult, Signal, StepCoordinator}
+import com.griddynamics.genesis.workflow._
 import com.griddynamics.genesis.plugin._
-import scala.Some
 import com.griddynamics.genesis.service.StoreService
-import com.griddynamics.genesis.model.{Workflow, WorkflowStep}
+import com.griddynamics.genesis.model.{ActionTracking, Workflow, WorkflowStep}
 import com.griddynamics.genesis.model.WorkflowStepStatus._
+import scala.Some
+import com.griddynamics.genesis.plugin.GenesisStepResult
+import com.griddynamics.genesis.plugin.GenesisStep
 
 
 class GenesisStepCoordinator(val step: GenesisStep,
@@ -36,10 +38,13 @@ class GenesisStepCoordinator(val step: GenesisStep,
                              storeService : StoreService) extends StepCoordinator {
     def onStepStart() = {
         setStepStatus(Executing)
-        stepCoordinator.onStepStart()
+        trackStart(stepCoordinator.onStepStart())
     }
 
-    def onActionFinish(result: ActionResult) = stepCoordinator.onActionFinish(result)
+    def onActionFinish(result: ActionResult) = {
+        storeService.endAction(result.action.uuid, Some(result.desc))
+        trackStart(stepCoordinator.onActionFinish(result))
+    }
 
     def getStepResult() = {
         val genesisStepResult = stepCoordinator.getStepResult() match {
@@ -67,7 +72,7 @@ class GenesisStepCoordinator(val step: GenesisStep,
 
     def onStepInterrupt(signal: Signal) = {
         setStepStatus(Canceled)
-        stepCoordinator.onStepInterrupt(signal)
+        trackStart(stepCoordinator.onStepInterrupt(signal))
     }
 
     private def setStepStatus(status : WorkflowStepStatus) {
@@ -80,5 +85,12 @@ class GenesisStepCoordinator(val step: GenesisStep,
                     step.actualStep.stepDescription
                 )
         )
+    }
+
+    private def trackStart(result: scala.Seq[ActionExecutor]) : Seq[ActionExecutor] = {
+        result.map(a => {
+            storeService.startAction(ActionTracking(step.id, a.action))
+            a
+        })
     }
 }

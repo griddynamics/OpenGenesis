@@ -40,6 +40,7 @@ trait Action {
 /* Base trait for result of particular action */
 trait ActionResult {
     val action: Action
+    def desc = getClass.getSimpleName
 }
 
 package action {
