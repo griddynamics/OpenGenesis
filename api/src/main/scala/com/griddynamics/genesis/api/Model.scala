@@ -22,8 +22,6 @@
  */
 package com.griddynamics.genesis.api
 
-import java.sql.Timestamp
-
 
 case class Environment(name : String,
                        status : String,
@@ -137,7 +135,7 @@ case class Credentials( id: Option[Int],
 
 case class AuthorityDescription(name: String, users: List[String], groups: List[String])
 
-case class ActionTracking(name: String, desc: Option[String], startedTimestamp: Long, finishedTimestamp: Option[Long])
+case class ActionTracking(name: String, description: Option[String], startedTimestamp: Long, finishedTimestamp: Option[Long])
 
 object RequestResult {
     val envName = "envName"

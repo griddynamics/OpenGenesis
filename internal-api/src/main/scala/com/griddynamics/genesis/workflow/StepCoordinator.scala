@@ -23,8 +23,6 @@
 package com.griddynamics.genesis.workflow
 
 import com.griddynamics.genesis.workflow.step.{ActionStepResult, ActionStep}
-import com.griddynamics.genesis.service.StoreService
-import com.griddynamics.genesis.model.ActionTracking
 
 /* Trait for classes responsible for coordination of step
  * execution process. Main life cycle involves creating
@@ -71,29 +69,6 @@ trait ActionOrientedStepCoordinator {
 
     /* Factory method for creating ActionExecutor by action */
     def getActionExecutor(action: Action): ActionExecutor
-}
-
-trait LoggableActions extends ActionOrientedStepCoordinator {
-    def storeService: StoreService
-    def stepId: Int
-    abstract override def onStepStart() = {
-        val result = super.onStepStart()
-        trackActionsStart(result)
-    }
-
-    abstract override def onActionFinish(result: ActionResult) : Seq[Action] = {
-        storeService.endAction(result.action.uuid, None)
-        trackActionsStart(super.onActionFinish(result))
-    }
-
-    abstract override def onStepInterrupt(signal: Signal): Seq[Action] = {
-        trackActionsStart(super.onStepInterrupt(signal))
-    }
-
-    private def trackActionsStart(result: scala.Seq[Action]) : Seq[Action] = {
-        result.foreach(a => storeService.startAction(ActionTracking(stepId, a)))
-        result
-    }
 }
 
 object ActionOrientedStepCoordinator {
