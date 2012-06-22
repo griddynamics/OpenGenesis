@@ -14,6 +14,7 @@ object ActionTrackingStatus extends Enumeration {
     val Failed = Value(1, "Failed")
     val Succeed = Value(2, "Succeed")
     val Canceled = Value(3, "Canceled")
+    val Interrupted = Value(4, "Interrupted")
 
 }
 object ActionTracking {
