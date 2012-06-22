@@ -23,6 +23,7 @@
 package com.griddynamics.genesis.workflow
 
 import java.util
+import com.griddynamics.genesis.model.ActionTrackingStatus
 
 /* Marker trait for any particular action */
 trait Action {
@@ -41,14 +42,19 @@ trait Action {
 trait ActionResult {
     val action: Action
     def desc = getClass.getSimpleName
+    def outcome: ActionTrackingStatus.ActionStatus = ActionTrackingStatus.Succeed
+}
+
+trait ActionFailed extends ActionResult {
+    override val outcome = ActionTrackingStatus.Failed
 }
 
 package action {
 /* Result of action which executor has thrown an exception */
-case class ExecutorThrowable private[workflow](action: Action, throwable: Throwable) extends ActionResult
+case class ExecutorThrowable private[workflow](action: Action, throwable: Throwable) extends ActionResult with ActionFailed
 
 /* Result of action which wasn't finished because of executor interrupt */
-case class ExecutorInterrupt private[workflow](action: Action, signal: Signal) extends ActionResult
+case class ExecutorInterrupt private[workflow](action: Action, signal: Signal) extends ActionResult with ActionFailed
   
-case class DelayedExecutorInterrupt private[workflow](action: Action, result : ActionResult, signal : Signal) extends ActionResult
+case class DelayedExecutorInterrupt private[workflow](action: Action, result : ActionResult, signal : Signal) extends ActionResult with ActionFailed
 }

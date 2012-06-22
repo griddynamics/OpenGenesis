@@ -36,7 +36,8 @@ package action
  */
 
 import com.griddynamics.genesis.model.{VirtualMachine, Environment}
-import com.griddynamics.genesis.workflow.{ActionResult, Action}
+import com.griddynamics.genesis.workflow.{ActionFailed, ActionResult, Action}
+import com.griddynamics.genesis.model
 
 sealed trait ExecAction extends Action
 
@@ -58,8 +59,12 @@ trait ExecResult extends ActionResult
 
 case class ExecInitSuccess(action: InitExecNode) extends ExecResult
 
-case class ExecInitFail(action: InitExecNode) extends ExecResult
+case class ExecInitFail(action: InitExecNode) extends ExecResult with ActionFailed
 
 case class ExecFinished(action: RunExec, exitStatus: Option[Int]) extends ExecResult {
     def isExecSuccess = exitStatus.isDefined && exitStatus.get == 0
+    override def outcome = if (isExecSuccess)
+        model.ActionTrackingStatus.Succeed
+    else
+        model.ActionTrackingStatus.Failed
 }

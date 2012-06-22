@@ -82,7 +82,8 @@ trait StoreService {
     def getLogs(stepId: Int) : Seq[StepLogEntry]
 
     def startAction(actionTracking: ActionTracking): ActionTracking
-    def endAction(uuid: String, message: Option[String])
+    def endAction(uuid: String, message: Option[String], status: ActionTrackingStatus.ActionStatus)
+    def cancelRunningActions(stepId: Int)
     def getActionLog(stepId: Int) : List[ActionTracking]
 }
 

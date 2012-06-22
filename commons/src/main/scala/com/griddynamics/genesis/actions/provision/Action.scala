@@ -22,7 +22,7 @@
  */
 package com.griddynamics.genesis.actions.provision
 
-import com.griddynamics.genesis.workflow.{Action, ActionResult}
+import com.griddynamics.genesis.workflow.{ActionFailed, Action, ActionResult}
 import com.griddynamics.genesis.model.{Workflow, VirtualMachine, Environment}
 import com.griddynamics.genesis.plugin.GenesisStep
 
@@ -54,19 +54,19 @@ case class ProvisionCompleted(action: SpecificProvisionVmAction,
                               vm: VirtualMachine) extends ProvisionResult
 
 case class ProvisionFailed(action: SpecificProvisionVmAction,
-                           vm: Option[VirtualMachine]) extends ProvisionResult
+                           vm: Option[VirtualMachine]) extends ProvisionResult with ActionFailed
 
 
 case class PublicIpCheckCompleted(action: CheckPublicIpAction) extends ProvisionResult
 
-case class PublicIpCheckFailed(action: CheckPublicIpAction, vm: VirtualMachine) extends ProvisionResult
+case class PublicIpCheckFailed(action: CheckPublicIpAction, vm: VirtualMachine) extends ProvisionResult with ActionFailed
 
 case class SshCheckCompleted(action: CheckSshPortAction, vm: VirtualMachine) extends ProvisionResult
 
-case class SshCheckFailed(action: CheckSshPortAction, vm: VirtualMachine) extends ProvisionResult
+case class SshCheckFailed(action: CheckSshPortAction, vm: VirtualMachine) extends ProvisionResult with ActionFailed
 
 case class VmDestroyed(action: DestroyVmAction, vm: VirtualMachine) extends ProvisionResult
 
 case class PortTestCompleted(action: CheckPortAction) extends ProvisionResult
 
-case class PortTestFailed(action: CheckPortAction, vm: VirtualMachine) extends ProvisionResult
+case class PortTestFailed(action: CheckPortAction, vm: VirtualMachine) extends ProvisionResult with ActionFailed
