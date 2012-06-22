@@ -110,7 +110,7 @@ class GenesisRestService(storeService: StoreService,
     templateService.findTemplate(projectId, templateName, templateVersion).map(templateDesc(templateName, templateVersion, _))
 
     def getStepLog(stepId: Int) = storeService.getActionLog(stepId).map { action =>
-      new ActionTracking(action.actionName, action.description, action.started.getTime, action.finished.map(_.getTime))
+      new ActionTracking(action.actionName, action.description, action.started.getTime, action.finished.map(_.getTime), action.status.toString)
     }
 }
 

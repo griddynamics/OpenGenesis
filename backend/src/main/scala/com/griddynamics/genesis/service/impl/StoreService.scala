@@ -287,12 +287,23 @@ class StoreService extends service.StoreService {
     }
 
     @Transactional
-    def endAction(uuid: String, message: Option[String]) {
+    def endAction(uuid: String, message: Option[String], status: ActionTrackingStatus.ActionStatus) {
         GS.actionTracking.update(at => {
             where(at.actionUUID === uuid) set (
                 at.finished := Some(new Timestamp(System.currentTimeMillis())),
-                at.description := message
+                at.description := message,
+                at.status := status
             )
+        })
+    }
+
+    @Transactional
+    def cancelRunningActions(stepId: Int) {
+        GS.actionTracking.update( at => {
+            where(at.workflowStepId === stepId and at.finished === None) set (
+              at.status := ActionTrackingStatus.Canceled,
+              at.finished := Some(new Timestamp(System.currentTimeMillis()))
+              )
         })
     }
 

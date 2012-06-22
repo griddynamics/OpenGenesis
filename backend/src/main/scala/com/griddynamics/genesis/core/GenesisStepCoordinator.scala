@@ -42,7 +42,7 @@ class GenesisStepCoordinator(val step: GenesisStep,
     }
 
     def onActionFinish(result: ActionResult) = {
-        storeService.endAction(result.action.uuid, Some(result.desc))
+        storeService.endAction(result.action.uuid, Some(result.desc), result.outcome)
         trackStart(stepCoordinator.onActionFinish(result))
     }
 
@@ -72,6 +72,7 @@ class GenesisStepCoordinator(val step: GenesisStep,
 
     def onStepInterrupt(signal: Signal) = {
         setStepStatus(Canceled)
+        storeService.cancelRunningActions(step.id)
         trackStart(stepCoordinator.onStepInterrupt(signal))
     }
 
