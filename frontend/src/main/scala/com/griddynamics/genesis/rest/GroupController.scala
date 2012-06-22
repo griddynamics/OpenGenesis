@@ -72,7 +72,7 @@ class GroupController extends RestApiExceptionsHandler with ApplicationContextAw
             map => {
                 withGroup(id) {
                     group => withUsers(readUsers(map, "users")) {
-                        groupService.update(readGroup(map, Some(group.name)), _)
+                        groupService.update(readGroup(map, Some(group.name), Some(id)), _)
                     }
                 }
             }
@@ -126,11 +126,11 @@ class GroupController extends RestApiExceptionsHandler with ApplicationContextAw
         }
     }
 
-    private def readGroup(map: Map[String, Any], groupName: Option[String] = None): UserGroup = {
+    private def readGroup(map: Map[String, Any], groupName: Option[String] = None, groupId: Option[Int] = None): UserGroup = {
         UserGroup(groupName.getOrElse(extractValue("name", map)),
             extractValue("description", map),
             extractOption("mailingList", map),
-            extractOption("id", map).map(_.toInt)
+            groupId.orElse(extractOption("id", map).map(_.toInt))
         )
     }
 
