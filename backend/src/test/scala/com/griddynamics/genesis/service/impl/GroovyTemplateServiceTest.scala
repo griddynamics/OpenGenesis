@@ -158,11 +158,11 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
         assert(listDS1.isDefined)
         val S1 = Map()
         expect(S1)(listDS1.get.values)
-        val partial: Seq[VariableDescription] = template.createWorkflow.partial(Map("nodesCount" -> "x", "dependent" -> "z"))
+        val partial: Seq[VariableDescription] = template.createWorkflow.partial(Map("nodesCount" -> 1, "dependent" -> "z"))
         val descAfterApply = partial.find(_.name == "doubleDep")
         assert(descAfterApply.isDefined)
         assert(! descAfterApply.get.values.isEmpty)
-        expect(Map("1 < nc:x < dp:z" -> "1", "3 < nc:x < dp:z" -> "3", "4 < nc:x < dp:z" -> "4"))(descAfterApply.get.values)
+        expect(Map("1 < nc:1 < dp:z" -> "1", "3 < nc:1 < dp:z" -> "3", "4 < nc:1 < dp:z" -> "4"))(descAfterApply.get.values)
     }
 
     @Test def testTripleDependent() {
@@ -174,12 +174,12 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
         assert(listDS1.isDefined)
         val S1 = Map()
         expect(S1)(listDS1.get.values)
-        val partial: Seq[VariableDescription] = template.createWorkflow.partial(Map("list" -> "x", "nodesCount" -> 1, "dependent" -> 'z'))
+        val partial: Seq[VariableDescription] = template.createWorkflow.partial(Map("list" -> 13, "nodesCount" -> 1, "dependent" -> 'z'))
         assert(partial.length == 3) // three calls of getData, since there is three "parent" variables
         val descAfterApply = partial.find(_.name == "triple")
         assert(descAfterApply.isDefined)
         assert(! descAfterApply.get.values.isEmpty)
-        expect(Map("1<x<1<z" -> "1", "3<x<1<z" -> "3", "4<x<1<z" -> "4"))(descAfterApply.get.values)
+        expect(Map("1<13<1<z" -> "1", "3<13<1<z" -> "3", "4<13<1<z" -> "4"))(descAfterApply.get.values)
     }
 }
 
@@ -193,7 +193,7 @@ class DependentListDataSource extends ListVarDataSource with DependentDataSource
     *  you don't have to declare parameters as Any since you're providing a
     *  correct data types as input
     */
-    def getData(list: String, nodesCount: Int, dependent: Char)
+    def getData(list: /*String*/Int, nodesCount: Int, dependent: Char)
     = values.map(_ + "<%s".format(list) + "<%d".format(nodesCount) + "<%s".format(dependent)).zip(values).toMap
     override def getData = Map()
 }
