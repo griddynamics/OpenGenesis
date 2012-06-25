@@ -49,12 +49,16 @@ trait ActionFailed extends ActionResult {
     override val outcome = ActionTrackingStatus.Failed
 }
 
+trait ActionInterrupted extends ActionResult {
+    override val outcome = ActionTrackingStatus.Interrupted
+}
+
 package action {
 /* Result of action which executor has thrown an exception */
 case class ExecutorThrowable private[workflow](action: Action, throwable: Throwable) extends ActionResult with ActionFailed
 
 /* Result of action which wasn't finished because of executor interrupt */
-case class ExecutorInterrupt private[workflow](action: Action, signal: Signal) extends ActionResult with ActionFailed
+case class ExecutorInterrupt private[workflow](action: Action, signal: Signal) extends ActionResult with ActionInterrupted
   
-case class DelayedExecutorInterrupt private[workflow](action: Action, result : ActionResult, signal : Signal) extends ActionResult with ActionFailed
+case class DelayedExecutorInterrupt private[workflow](action: Action, result : ActionResult, signal : Signal) extends ActionResult with ActionInterrupted
 }
