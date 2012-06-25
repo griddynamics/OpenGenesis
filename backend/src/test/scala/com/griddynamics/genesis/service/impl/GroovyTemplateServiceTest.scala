@@ -174,8 +174,8 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
         assert(listDS1.isDefined)
         val S1 = Map()
         expect(S1)(listDS1.get.values)
-        val partial: Seq[VariableDescription] = template.createWorkflow.partial(Map("list" -> 13, "nodesCount" -> 1, "dependent" -> 'z'))
-        assert(partial.length == 3) // three calls of getData, since there is three "parent" variables
+        val partial = template.createWorkflow.partial(Map("list" -> 13, "nodesCount" -> 1, "dependent" -> 'z'))
+        assert(partial.length == 3)
         val descAfterApply = partial.find(_.name == "triple")
         assert(descAfterApply.isDefined)
         assert(! descAfterApply.get.values.isEmpty)

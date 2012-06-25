@@ -32,8 +32,8 @@ import java.security.Principal
 import java.util.Properties
 import org.springframework.beans.factory.annotation.{Qualifier, Autowired}
 import collection.JavaConversions
-import com.griddynamics.genesis.service.TemplateService
-import com.griddynamics.genesis.api.GenesisService
+import com.griddynamics.genesis.service.{ConversionException, TemplateService}
+import com.griddynamics.genesis.api.{Failure, GenesisService}
 
 @Controller
 @RequestMapping(Array("/rest"))
@@ -79,9 +79,14 @@ class GenesisRestController(genesisService: GenesisService, templateService: Tem
                      @PathVariable("workflow") workflow: String, request: HttpServletRequest) = {
         val paramsMap: Map[String, Any] = GenesisRestController.extractParamsMap(request)
         val variables = GenesisRestController.extractVariables(paramsMap)
-        genesisService.queryVariables(projectId, templateName, templateVersion, workflow, variables).getOrElse(
-          throw new ResourceNotFoundException("No variables were found for [template = %s (v%s), workflow = %s]".format(templateName, templateVersion, workflow))
-        )
+        try {
+            genesisService.queryVariables(projectId, templateName, templateVersion, workflow, variables).getOrElse(
+                throw new ResourceNotFoundException("No variables were found for [template = %s (v%s), workflow = %s]".format(templateName, templateVersion, workflow))
+            )
+        } catch {
+            case e: ConversionException => Failure(variablesErrors = Map(e.fieldId -> e.message))
+            case x: Exception => Failure(compoundServiceErrors = Seq(x.getMessage))
+        }
     }
 }
 
