@@ -31,7 +31,6 @@ import service._
 import org.springframework.core.convert.ConversionService
 import java.lang.IllegalStateException
 import scala.Some
-import reflect.BeanProperty
 import java.util.{Map => JMap}
 import com.griddynamics.genesis.template.dsl.groovy._
 import com.griddynamics.genesis.template.{DataSourceFactory, VersionedTemplate, TemplateRepository}
@@ -234,7 +233,7 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
 
 class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow : EnvWorkflow,
                                conversionService : ConversionService,
-                               stepBuilderFactories : Seq[StepBuilderFactory]) extends WorkflowDefinition {
+                               stepBuilderFactories : Seq[StepBuilderFactory]) extends WorkflowDefinition with Logging {
     def convertAndValidate(value: Any, variable: VariableDetails): Seq[ValidationError] = {
       try {
         //all values stored as strings, so we need to use string repr. to convert here as well
@@ -242,13 +241,13 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
 
         (for (validator <- variable.validators) yield {
           if (!validator.call(typedVal))
-            Some(ValidationError(variable.name, "Validation failed for variable '%s'".format(variable.name)))
+            Some(ValidationError(variable.name, "Validation failed"))
           else
             None
         }).flatten.toSeq
       } catch {
         case e => val className: String = variable.clazz.getName
-        Seq(ValidationError(variable.name, "Conversion failed for variable %s. Expected type is %s".format(variable.name, className.substring(className.lastIndexOf('.') + 1))))
+        Seq(ValidationError(variable.name, "Conversion failed. Expected type is %s".format(className.substring(className.lastIndexOf('.') + 1))))
       }
     }
 
@@ -256,6 +255,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
         val dependents = for (variable <- variables) yield {
             workflow.variables.find(p => p.dependsOn.find(_ == variable._1).isDefined).get
         }
+
         val typedVars = variables.map(v => (v._1, convert(String.valueOf(v._2), workflow.variables.find(_.name == v._1)
             .getOrElse(throw new RuntimeException("No such variable: " + v._1)))))
         dependents.map(v => new VariableDescription(v.name, v.description, v.isOptional, null, v.valuesList.map(lambda => {
@@ -273,7 +273,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
                     case None =>  if (variable.isOptional)
                         Seq()
                       else
-                        Seq(ValidationError(variable.name, "Variable '%s' is not set".format(variable.name)))
+                        Seq(ValidationError(variable.name, "This field is required"))
                   }
                 }
                 case Some(value) => {
