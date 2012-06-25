@@ -28,6 +28,7 @@ class VariableDescription(val name: String, val description: String, val isOptio
                           val defaultValue: String = null, val values: Map[String,String] = Map(), val dependsOn: Option[List[String]] = None)
 
 case class ValidationError(variableName: String, description: String)
+class ConversionException(val fieldId: String, val message: String) extends Exception
 
 trait TemplateDefinition {
     def createWorkflow: WorkflowDefinition
