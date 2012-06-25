@@ -246,14 +246,13 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
             None
         }).flatten.toSeq
       } catch {
-        case e => val className: String = variable.clazz.getName
-        Seq(ValidationError(variable.name, "Conversion failed. Expected type is %s".format(className.substring(className.lastIndexOf('.') + 1))))
+        case e: ConversionException => Seq(ValidationError(e.fieldId, e.message))
       }
     }
 
     override def partial(variables: Map[String, Any]): Seq[VariableDescription] = {
         val dependents = for (variable <- variables) yield {
-            workflow.variables.find(p => p.dependsOn.find(_ == variable._1).isDefined).get
+            workflow.variables.find(p => p.dependsOn.find(_ == variable._1).isDefined).getOrElse(throw new RuntimeException("Unexpected variable %s".format(variable._1)))
         }
 
         val typedVars = variables.map(v => (v._1, convert(String.valueOf(v._2), workflow.variables.find(_.name == v._1)
@@ -289,7 +288,10 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
       try {
         conversionService.convert(value, variable.clazz)
       } catch {
-        case _ => throw new IllegalArgumentException("Variable '%s' has an invalid format: %s".format(variable.name, String.valueOf(value)))
+        case _ => {
+            val className = variable.clazz.getName
+            throw new ConversionException(variable.name, "Conversion failed. Expected type is %s".format(className.substring(className.lastIndexOf('.') + 1)))
+        }
       }
     }
 
