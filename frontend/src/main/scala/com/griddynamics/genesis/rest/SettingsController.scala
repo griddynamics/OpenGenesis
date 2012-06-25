@@ -36,7 +36,7 @@ class SettingsController(configService: ConfigService) extends RestApiExceptions
 
     @RequestMapping(method = Array(RequestMethod.GET))
     @ResponseBody
-    def listSettings(@RequestParam(required = false) prefix: String) = configService.listSettings(paramToOption(prefix))
+    def listSettings(@RequestParam(value = "prefix", required = false) prefix: String) = configService.listSettings(paramToOption(prefix))
 
     @RequestMapping(value = Array("{key:.+}"), method = Array(RequestMethod.PUT))
     @ResponseBody
@@ -50,7 +50,7 @@ class SettingsController(configService: ConfigService) extends RestApiExceptions
 
     @RequestMapping(method = Array(RequestMethod.DELETE))
     @ResponseBody
-    def clear(@RequestParam(required = false) prefix: String) = using{ _ => configService.clear(Option(prefix))}
+    def clear(@RequestParam(value = "prefix", required = false) prefix: String) = using{ _ => configService.clear(Option(prefix))}
 
     private def using (block : Any => Any) = {
         try {
