@@ -47,8 +47,7 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
     override def create(user: User)  = {
-        validCreate(user.copy(username = user.username.toLowerCase, email = user.email.toLowerCase),
-                    u => repository.insert(u))
+        validCreate(user, u => repository.insert(u))
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
@@ -67,8 +66,7 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
     override def update(user: User) = {
-       validUpdate(user.copy(username = user.username.toLowerCase, email = user.email.toLowerCase),
-                   repository.update(_) )
+       validUpdate(user, repository.update(_) )
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
@@ -122,7 +120,7 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
             must(user, "User with email [%s] is already registered".format(user.email)) {
                 user => repository.findByEmail(user.email).isEmpty
             } ++
-            mustMatchUserName(user, user.username, "User name") ++
+            mustMatchName(user, user.username, "User name") ++
             mustMatchPersonName(user, user.firstName, "First Name") ++
             mustMatchPersonName(user, user.lastName, "Last Name") ++
             mustMatchEmail(user, user.email, "E-Mail") ++
