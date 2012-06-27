@@ -102,6 +102,16 @@ sealed abstract class ExtendedResult[+S]() extends Product with Serializable {
         case (_, b@Failure(_, _, _, _, _, _)) => b.asInstanceOf[ExtendedResult[B]]
         case (a@Failure(_, _, _, _, _, _), _) => a.asInstanceOf[ExtendedResult[B]]
    }
+
+    def ::[B >: S](r: ExtendedResult[B]) : ExtendedResult[List[B]] = (this, r) match {
+        case (Success(a, _), Success(b, _)) => (a,b) match {
+            case (x: List[B], y: List[B]) => Success(x ++ y)
+            case (x: List[B], y: B) => Success(y :: x)
+            case (x: B, y: B) => Success(x :: y :: Nil)
+            case (x: B, y: List[B]) => Success(x :: y)
+        }
+        case _ => (this ++ r).asInstanceOf[ExtendedResult[List[B]]]
+    }
 }
 
 final case class Success[+S](result: S, isSuccess: Boolean = true) extends ExtendedResult[S]

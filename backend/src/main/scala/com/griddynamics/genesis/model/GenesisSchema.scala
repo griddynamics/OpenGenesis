@@ -39,7 +39,7 @@ trait GenesisSchema extends Schema {
     val logs = table[StepLogEntry]("step_logs")
   
     val projects = table[Project]("project")
-    val projectProperties = table[ProjectProperty]("project_property")
+    val projectProperties = table[ProjectContextEntry]("project_property")
     val settings = table[ConfigProperty]("settings")
     val credentials = table[Credentials]("credentials")
 
