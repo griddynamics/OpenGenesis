@@ -38,7 +38,7 @@ import repository.SchemaCreator
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import scala.Some
-import com.griddynamics.genesis.squeryl.adapters.MSSQLServerWithPagination
+import com.griddynamics.genesis.adapters.MSSQLServerWithPagination
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
