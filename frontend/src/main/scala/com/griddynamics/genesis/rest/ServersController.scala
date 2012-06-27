@@ -1,0 +1,120 @@
+/**
+ * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
+ * http://www.griddynamics.com
+ *
+ * This library is free software; you can redistribute it and/or modify it under the terms of
+ * the GNU Lesser General Public License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or any later version.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @Project:     Genesis
+ * @Description: Execution Workflow Engine
+ */
+package com.griddynamics.genesis.rest
+
+import org.springframework.web.bind.annotation._
+import org.springframework.stereotype.Controller
+import scala.Array
+import javax.servlet.http.HttpServletRequest
+import com.griddynamics.genesis.service.impl.ServersService
+import com.griddynamics.genesis.rest.GenesisRestController._
+import com.griddynamics.genesis.api
+import api.ExtendedResult
+import scala.Some
+
+@Controller
+@RequestMapping(Array("/rest/projects/{projectId}/server-arrays"))
+class ServersController(service: ServersService) extends RestApiExceptionsHandler {
+
+  @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
+  @ResponseBody
+  def create(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = {
+    val array = extractServerArray(request, projectId, None)
+    service.create(array)
+  }
+
+  @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.POST))
+  @ResponseBody
+  def update(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) = {
+    val array = extractServerArray(request, projectId, Some(id))
+    service.update(array)
+  }
+
+  @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
+  @ResponseBody
+  def list(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = service.list(projectId)
+
+  @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  def get(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) = service.get(id, projectId)
+
+  @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.DELETE))
+  @ResponseBody
+  def delete(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) = service.deleteServerArray(projectId, id)
+
+  @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.PUT))
+  @ResponseBody
+  def updateServerArray(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) = {
+    val array = extractServerArray(request, projectId, Some(id))
+    service.update(array)
+  }
+
+  @RequestMapping(value = Array("{arrayId}/servers"), method = Array(RequestMethod.POST))
+  @ResponseBody
+  def addServer(@PathVariable("projectId") projectId: Int, @PathVariable("arrayId") arrayId: Int, request: HttpServletRequest) = {
+    assertArrayBelongsToProject(projectId, arrayId)
+
+    val server = extractServer(request, projectId, arrayId, None)
+    service.create(server)
+  }
+
+  @RequestMapping(value = Array("{arrayId}/servers"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  def getServersInArray(@PathVariable("projectId") projectId: Int, @PathVariable("arrayId") arrayId: Int, request: HttpServletRequest): Seq[api.Server] = {
+    assertArrayBelongsToProject(projectId, arrayId)
+
+    service.getServers(arrayId)
+  }
+
+  @RequestMapping(value = Array("{arrayId}/servers/{serverId}"), method = Array(RequestMethod.DELETE))
+  @ResponseBody
+  def deleteServer(@PathVariable("projectId") projectId: Int,
+                   @PathVariable("arrayId") arrayId: Int,
+                   @PathVariable("serverId") serverId: Int,
+                   request: HttpServletRequest): ExtendedResult[_] = {
+    assertArrayBelongsToProject(projectId, arrayId)
+    service.deleteServer(arrayId, serverId)
+  }
+
+  private[this] def assertArrayBelongsToProject(projectId: Int, arrayId: Int) {
+    service.get(projectId, arrayId).getOrElse(throw new ResourceNotFoundException("Server array wasn't found in project"))
+  }
+
+  private[this] def extractServer(request: HttpServletRequest, projectId: Int, arrayId: Int, id: Option[Int]) = {
+    val params = extractParamsMap(request)
+    val address = extractValue("address", params)
+    val instanceId = extractOption("instanceId", params)
+    if (instanceId.isDefined && !instanceId.get.isEmpty) {
+      new api.Server(id, arrayId, instanceId.get, address)
+    } else {
+      new api.Server(id, arrayId, address)
+    }
+  }
+
+  private[this] def extractServerArray(request: HttpServletRequest, projectId: Int, id: Option[Int]) = {
+    val params = extractParamsMap(request)
+    val description = extractOption("description", params)
+    val name = extractValue("name", params)
+    new api.ServerArray(id, projectId, name, description)
+  }
+}

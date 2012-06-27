@@ -48,7 +48,7 @@ abstract class AbstractGenericRepository[Model <: KeyedEntity[GenesisEntity.Id],
     @Transactional(readOnly = true)
     def list: List[Api] = from(table) {
         select(_)
-    }.toList.map(convert(_));
+    }.toList.map(convert(_))
 
     @Transactional
     def delete(entity: Api): Int = table.deleteWhere(a => a.id === entity.id)
@@ -58,24 +58,24 @@ abstract class AbstractGenericRepository[Model <: KeyedEntity[GenesisEntity.Id],
 
     @Transactional
     def save(entity: Api): Api = entity.id match {
-        case 0 => insert(entity);
-        case _ => update(entity);
-    };
+        case 0 => insert(entity)
+        case _ => update(entity)
+    }
 
     @Transactional
     def insert(entity: Api): Api = table.insert(entity)
 
     @Transactional
     def update(entity: Api): Api = {
-        table.update(entity);
+        table.update(entity)
         entity
     }
 
     protected def toModelId(id: Option[Int]): GenesisEntity.Id = id.getOrElse(0)
 
     protected def fromModelId(id: GenesisEntity.Id): Option[Int] = id match {
-          case 0 => None;
-          case _ => Some(id);
+          case 0 => None
+          case _ => Some(id)
         }
 
 }
