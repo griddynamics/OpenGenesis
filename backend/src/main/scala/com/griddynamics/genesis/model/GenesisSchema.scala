@@ -46,6 +46,9 @@ trait GenesisSchema extends Schema {
     val userAuthorities = table[Authority]("user_authorities")
     val groupAuthorities = table[Authority]("group_authorities")
 
+    val serverArrays = table[ServerArray]("server_array")
+    val servers = table[Server]("static_server")
+
     val actionTracking = table[ActionTracking]("action_tracking")
 }
 
@@ -73,6 +76,8 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
 
     val projectPropertiesToProject = oneToManyRelation(projects, projectProperties).via((project, projectProperty) => project.id === projectProperty.projectId)
     projectPropertiesToProject.foreignKeyDeclaration.constrainReference(onDelete cascade)
+
+    val serverToServerArray = oneToManyRelation(serverArrays, servers).via((array, server) => array.id === server.serverArrayId)
 
     on(envs)(env => declare(
         env.name is (unique)
@@ -130,6 +135,17 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
         tracking.actionUUID is dbType("varchar(36)"),
         columns(tracking.workflowStepId) are (indexed("step_idx")),
         columns(tracking.actionUUID) are (indexed("action_uuid_idx"))
+    ))
+
+    on(serverArrays)(array => declare (
+      array.id is (primaryKey, autoIncremented),
+      array.name is dbType("varchar(128)"),
+      array.description is dbType("varchar(128)")
+    ))
+
+    on(servers)(server => declare (
+      server.id is (primaryKey, autoIncremented),
+      server.instanceId is dbType("varchar(128)")
     ))
 }
 

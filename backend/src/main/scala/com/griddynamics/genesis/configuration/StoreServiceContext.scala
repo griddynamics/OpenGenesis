@@ -29,14 +29,15 @@ import com.griddynamics.genesis.model.GenesisSchema
 import org.squeryl.internals.DatabaseAdapter
 import org.springframework.jdbc.datasource.{DataSourceUtils, DataSourceTransactionManager}
 import com.griddynamics.genesis.service.impl
-import impl.{CredentialsStoreService, ProjectServiceImpl}
+import impl.{ServersService, ServersServiceImpl, CredentialsStoreService, ProjectServiceImpl}
 import org.squeryl.adapters.{PostgreSqlAdapter, MSSQLServer, MySQLAdapter, H2Adapter}
 import com.griddynamics.genesis.repository
 import com.griddynamics.genesis.service
-import com.griddynamics.genesis.repository.impl.{ProjectPropertyRepository, ProjectRepository, CredentialsRepository}
+import repository.impl._
 import repository.SchemaCreator
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
+import scala.Some
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
@@ -52,6 +53,11 @@ class JdbcStoreServiceContext extends StoreServiceContext {
     @Bean def credentialsRepository: repository.CredentialsRepository = new CredentialsRepository
 
     @Bean def credentialsStoreService: service.CredentialsStoreService = new CredentialsStoreService(credentialsRepository, projectRepository)
+
+    @Bean def serversArrayRepository: repository.ServerArrayRepository = new ServerArrayRepository()
+    @Bean def serversRepository: repository.ServerRepository = new ServerRepository()
+
+    @Bean def serversService: ServersService = new ServersServiceImpl(serversArrayRepository, serversRepository)
 }
 
 class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager,
