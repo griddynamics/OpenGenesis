@@ -22,6 +22,8 @@
  */
 package com.griddynamics.genesis.api
 
+import java.util
+
 
 case class Environment(name : String,
                        status : String,
@@ -136,6 +138,12 @@ case class Credentials( id: Option[Int],
 case class AuthorityDescription(name: String, users: List[String], groups: List[String])
 
 case class ActionTracking(name: String, description: Option[String], startedTimestamp: Long, finishedTimestamp: Option[Long], status: String)
+
+case class ServerArray(id: Option[Int], projectId: Int, name: String, description: Option[String])
+
+case class Server(id: Option[Int], arrayId: Int, instanceId: String, address: String) {
+  def this(id: Option[Int], arrayId: Int, address: String) = this(id, arrayId, util.UUID.randomUUID().toString, address)
+}
 
 object RequestResult {
     val envName = "envName"

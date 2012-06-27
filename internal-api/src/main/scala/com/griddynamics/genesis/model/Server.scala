@@ -20,25 +20,6 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.repository
+package com.griddynamics.genesis.model
 
-import com.griddynamics.genesis._
-import api.RequestResult
-
-trait ProjectPropertyRepository {
-  def listForProject(projectId: Int): List[api.ProjectProperty]
-
-  def updateForProject(projectId: Int, properties : List[api.ProjectProperty]): RequestResult
-
-  def convert(entity: model.ProjectProperty): api.ProjectProperty
-
-  def convert(dto: api.ProjectProperty): model.ProjectProperty
-
-  def load(id: Int): api.ProjectProperty
-
-  def list: List[api.ProjectProperty]
-
-  def delete(id: Int): Int
-
-  def save(entity: api.ProjectProperty): api.ProjectProperty
-}
+class Server (var serverArrayId: GenesisEntity.Id, var instanceId: String, var address: String) extends GenesisEntity

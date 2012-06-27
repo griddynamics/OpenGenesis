@@ -22,23 +22,11 @@
  */
 package com.griddynamics.genesis.repository
 
-import com.griddynamics.genesis._
-import api.RequestResult
+import com.griddynamics.genesis.api
 
-trait ProjectPropertyRepository {
-  def listForProject(projectId: Int): List[api.ProjectProperty]
-
-  def updateForProject(projectId: Int, properties : List[api.ProjectProperty]): RequestResult
-
-  def convert(entity: model.ProjectProperty): api.ProjectProperty
-
-  def convert(dto: api.ProjectProperty): model.ProjectProperty
-
-  def load(id: Int): api.ProjectProperty
-
-  def list: List[api.ProjectProperty]
-
-  def delete(id: Int): Int
-
-  def save(entity: api.ProjectProperty): api.ProjectProperty
+trait ServerArrayRepository extends Repository[api.ServerArray] {
+  def list(projectId: Int): Seq[api.ServerArray]
+  def get(projectId: Int, id: Int): Option[api.ServerArray]
+  def delete(projectId: Int, id: Int): Int
+  def findByName(s: String, projectId: Int): Option[api.ServerArray]
 }
