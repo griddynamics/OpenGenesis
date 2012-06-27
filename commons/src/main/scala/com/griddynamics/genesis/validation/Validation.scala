@@ -40,17 +40,18 @@ trait Validation[C] {
 }
 
 object Validation {
-    val usernamePattern = """^([a-zA-Z0-9.-]{2,32})$""".r
-    val namePattern = """^([\p{L}0-9.\-_ ]{2,64})$""".r
+    val namePattern = """^([a-z0-9.\-_]{2,32})$""".r
+    val projectNamePattern = """^([\p{L}0-9.\-_ ]{2,64})$""".r
     val personNamePattern = """^([\p{L} ]{2,64})$""".r
-    val emailPattern = """^(?=.{7,64}$)[\w][\w.-]+@([\w-]+\.)+[a-zA-Z]{2,5}$""".r
+    val emailPattern = """^(?=.{7,64}$)[a-z0-9_][a-z0-9_.\-]+@([a-z0-9_\-]+\.)+[a-z]{2,5}$""".r
 
-    val nameErrorMessage = "Invalid format. Use a combination of alphanumerics, " +
+    val projectNameErrorMessage = "Invalid format. Use a combination of alphanumerics, " +
                                   "spaces, dots, hyphens and underscores. Length must be from 2 to 64"
     val personNameErrorMessage = "Invalid format. Use a combination of letters and spaces. " +
                            "Length must be from 2 to 64"
-    val usernameErrorMessage = "Invalid format. Use a combination of latin letters, numbers, " +
-                                  "dots and hyphens. Length must be from 2 to 32"
+    val nameErrorMessage = "Invalid format. Use a combination of latin lowercase letters, numbers, " +
+                                  "dots, hyphens and underscores. Length must be from 2 to 32"
+    val emailErrorMessage = "Invalid format. Note that only lowercase letters are allowed"
 
     def mustMatch[C](obj: C, fieldName: String, error : String = "Invalid format")(pattern: Regex)(value: String) : ExtendedResult[C] = {
         value match {
@@ -61,12 +62,12 @@ object Validation {
 
     def mustMatchPersonName[C](obj: C, value: String, fieldName: String) : ExtendedResult[C] =
       mustMatch(obj, fieldName, personNameErrorMessage)(personNamePattern)(value)
-    def mustMatchUserName[C](obj: C, value: String, fieldName: String) : ExtendedResult[C] =
-      mustMatch(obj, fieldName, usernameErrorMessage)(usernamePattern)(value)
     def mustMatchName[C](obj: C, value: String, fieldName: String) : ExtendedResult[C] =
       mustMatch(obj, fieldName, nameErrorMessage)(namePattern)(value)
+    def mustMatchProjectName[C](obj: C, value: String, fieldName: String) : ExtendedResult[C] =
+      mustMatch(obj, fieldName, projectNameErrorMessage)(projectNamePattern)(value)
     def mustMatchEmail[C](obj: C, value: String, fieldName: String) : ExtendedResult[C] =
-      mustMatch(obj, fieldName)(emailPattern)(value)
+      mustMatch(obj, fieldName, emailErrorMessage)(emailPattern)(value)
 
     def mustPresent[C](obj:C, value: Option[_], fieldName: String, error : String = "Must be present") : ExtendedResult[C] = {
         value match {
