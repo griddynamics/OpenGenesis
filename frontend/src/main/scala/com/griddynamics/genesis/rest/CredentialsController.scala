@@ -59,9 +59,9 @@ class CredentialsController(service: CredentialsStoreService) extends RestApiExc
   private def extractCredentials(request: HttpServletRequest, projectId: Int, id: Option[Int]): api.Credentials = {
     val params = extractParamsMap(request)
     val credential = extractOption("credential", params)
-    val cloudProvider = extractValue("cloudProvider", params)
-    val identity = extractValue("identity", params)
-    val pairName = extractValue("pairName", params)
+    val cloudProvider = extractValue("cloudProvider", params).trim()
+    val identity = extractValue("identity", params).trim()
+    val pairName = extractValue("pairName", params).trim()
 
     new api.Credentials(id, projectId, cloudProvider, pairName, identity, credential)
   }
