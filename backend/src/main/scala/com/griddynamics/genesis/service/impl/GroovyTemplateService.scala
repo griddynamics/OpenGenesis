@@ -30,9 +30,8 @@ import service._
 import org.springframework.core.convert.ConversionService
 import java.lang.IllegalStateException
 import scala.Some
-import java.util.{Map => JMap}
 import com.griddynamics.genesis.template.dsl.groovy._
-import com.griddynamics.genesis.template.{DataSourceFactory, VersionedTemplate, TemplateRepository}
+import com.griddynamics.genesis.template.{DataSourceFactory, TemplateRepository}
 import com.griddynamics.genesis.workflow.Step
 import com.griddynamics.genesis.plugin.{GenesisStep, StepBuilder, StepBuilderFactory}
 import com.griddynamics.genesis.util.{ScalaUtils, Logging}
@@ -44,67 +43,26 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
                             val dataSourceFactories : Seq[DataSourceFactory] = Seq()   )
     extends service.TemplateService with Logging {
 
-    val updateLock = new Object
-
-    var revisionId = ""
-    var sourcesMap = Map[VersionedTemplate, (String, String)]()
-    var templatesMap = Map[(String, String), EnvironmentTemplate]()
-
-    def findTemplate(projectId: Int, name: String, version: String) : Option[TemplateDefinition] =
-        updateTemplates(projectId).get(name, version).map(et =>
+    def findTemplate(projectId: Int, name: String, version: String) : Option[TemplateDefinition] = {
+        val body = templatesMap(projectId).get(name, version)
+        body.flatMap(evaluateTemplate(projectId, _, None, None, None).map(et =>
             new GroovyTemplateDefinition(et, conversionService, stepBuilderFactories)
-        )
+        ))
+    }
 
-    def listTemplates(projectId: Int) = {
+    def listTemplates(projectId: Int) = templatesMap(projectId).keys.toSeq
+
+    private def templatesMap(projectId: Int) = {
         val sources = templateRepository.listSources()
         (for ((version, body) <- sources) yield try {
             val template = evaluateTemplate(projectId, body, None, None, None, true)
-            template.map(t => (t.name, t.version))
-        } catch {
+            template.map(t => ((t.name, t.version), body))
+       } catch {
             case t: Throwable => {
                 log.error(t, "Error in template name or version: %s", t)
                 None
             }
-        }).flatten.toSeq
-
-    }
-
-    //TODO: remove?
-    private def updateTemplates(projectId: Int) = updateLock.synchronized {
-        val sources = templateRepository.listSources()
-        val uRevisionId = TemplateRepository.revisionId(sources)
-
-        if (revisionId != uRevisionId) {
-            revisionId = uRevisionId
-
-            val uSourcesMap = mutable.Map[VersionedTemplate, (String, String)]()
-            val uTemplatesMap = mutable.Map[(String, String), EnvironmentTemplate]()
-
-            for ((version, body) <- sources) try {
-                val pair = sourcesMap.get(version)
-                val template : Option[EnvironmentTemplate] = pair match {
-                  case None => evaluateTemplate(projectId, body, None, None, None)
-                  case Some(p) => templatesMap.get(p) match {
-                      case a@Some(t) => a
-                      case _ => evaluateTemplate(projectId, body, None, None, None)
-                  }
-                }
-                template.foreach(template => {
-                    uSourcesMap(version) = (template.name, template.version)
-                    uTemplatesMap((template.name, template.version)) = template
-                })
-            }  catch {
-                // TODO: log exception stack trace?
-                case t: Throwable => {
-                    log.error(t, "Error processing template: %s", t)
-                    None
-                }
-            }
-            sourcesMap = uSourcesMap.toMap
-            templatesMap = uTemplatesMap.toMap
-        }
-
-        templatesMap
+        }).flatten.toMap        
     }
 
     def evaluateTemplate(projectId: Int, body : String, extName: Option[String], extVersion: Option[String],
@@ -132,13 +90,8 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
     }
 
     def templateRawContent(projectId: Int, name: String, version: String) = {
-      updateTemplates(projectId)
-
-      val templVersionOption = sourcesMap.find { case (_, nameVersionTuple) =>
-        nameVersionTuple._1 == name && nameVersionTuple._2 == version
-      }.map(_._1)
-
-      templVersionOption.flatMap ( templateRepository.getContent(_))
+        val map = templatesMap(projectId)
+        map.get(name, version)
     }
 }
 
