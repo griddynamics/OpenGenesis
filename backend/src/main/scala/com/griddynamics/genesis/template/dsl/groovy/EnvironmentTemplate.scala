@@ -291,7 +291,7 @@ class DataSourceDeclaration(val projectId: Int, dsFactories: Seq[DataSourceFacto
 
 class DataSourceBuilder(val projectId: Int, val factory : DataSourceFactory) {
     var name : String = _
-    var conf : Map[String, Any] = _
+    var conf : Map[String, Any] = Map.empty[String, Any]
 
     def name(nm : String) = {
         name_=(nm)
