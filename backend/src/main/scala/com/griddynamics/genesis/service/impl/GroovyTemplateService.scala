@@ -24,7 +24,6 @@ package com.griddynamics.genesis.service.impl
 
 import collection.mutable
 import com.griddynamics.genesis.service
-import org.codehaus.groovy.runtime.MethodClosure
 import groovy.lang._
 import collection.mutable.ListBuffer
 import service._
@@ -37,6 +36,7 @@ import com.griddynamics.genesis.template.{DataSourceFactory, VersionedTemplate, 
 import com.griddynamics.genesis.workflow.Step
 import com.griddynamics.genesis.plugin.{GenesisStep, StepBuilder, StepBuilderFactory}
 import com.griddynamics.genesis.util.{ScalaUtils, Logging}
+import org.codehaus.groovy.runtime.{InvokerHelper, MethodClosure}
 
 class GroovyTemplateService(val templateRepository : TemplateRepository,
                             val stepBuilderFactories : Seq[StepBuilderFactory],
@@ -228,6 +228,10 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
             }
           }
         }
+    }
+
+    override def getProperty(property: String) =  {
+        InvokerHelper.getProperty(stepBuilder, property)
     }
 }
 
