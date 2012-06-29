@@ -27,32 +27,33 @@ import java.io.{FilenameFilter, File}
 import io.Source
 import org.apache.commons.io.FilenameUtils
 import com.griddynamics.genesis.util.Logging
+import org.apache.commons.codec.digest.DigestUtils
 
 
 class FilesystemTemplateRepository(filesystemFolder: String, wildcard: String) extends ModeAwareTemplateRepository with Logging {
     
     var sources: Map[VersionedTemplate, String] = Map()
-    var lastTimeChecked = lastModification
+    var lastModifiedHash = lastModification
     
     def listSources() = {
-        if (sources.isEmpty || lastTimeChecked < lastModification) {
+        if (sources.isEmpty || lastModifiedHash != lastModification) {
             sources = readSources()
-            lastTimeChecked = lastModification
+            lastModifiedHash = lastModification
         }
         sources
     }
     
-    private def readSources() = {
+    private def readSources() = files.map(f => (VersionedTemplate(f.getAbsolutePath, f.lastModified.toString), Source.fromFile(f).getLines().mkString("\n"))).toMap
+
+
+    def files: Array[File] = {
         val topDir = new File(filesystemFolder)
         topDir.listFiles(new FilenameFilter {
             def accept(dir: File, name: String) = FilenameUtils.wildcardMatch(name, wildcard, TemplateRepository.wildCardIOCase)
-        }).map(f => (VersionedTemplate(f.getAbsolutePath, f.lastModified.toString), Source.fromFile(f).getLines().mkString("\n"))).toMap
+        })
     }
-    
-    private def lastModification = {
-        val topDir = new File(filesystemFolder)
-        topDir.lastModified()
-    }
+
+    private def lastModification: String = DigestUtils.sha256Hex(files.map(_.lastModified()).mkString(""))
 
     def respondTo = Modes.Local
 }
