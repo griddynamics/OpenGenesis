@@ -79,7 +79,8 @@ case class RequestResult(serviceErrors : Map[String, String] = Map(),
                          compoundServiceErrors : Seq[String] = Seq(),
                          compoundVariablesErrors : Seq[String] = Seq(),
                          isSuccess : Boolean = false,
-                         isNotFound : Boolean = false)  {
+                         isNotFound : Boolean = false,
+                         stackTrace : Option[String] = None)  {
     def hasValidationErrors = ! isSuccess && (! variablesErrors.isEmpty || ! serviceErrors.isEmpty)
     def ++(other: RequestResult) : RequestResult = {
         RequestResult(serviceErrors = this.serviceErrors ++ other.serviceErrors,
@@ -87,7 +88,8 @@ case class RequestResult(serviceErrors : Map[String, String] = Map(),
             compoundServiceErrors = this.compoundServiceErrors ++ other.compoundServiceErrors,
             compoundVariablesErrors = this.compoundVariablesErrors ++ other.compoundVariablesErrors,
             isSuccess = this.isSuccess && other.isSuccess,
-            isNotFound = this.isNotFound && other.isNotFound
+            isNotFound = this.isNotFound && other.isNotFound,
+            stackTrace = other.stackTrace
         )
     }
 }
@@ -100,9 +102,9 @@ sealed abstract class ExtendedResult[+S]() extends Product with Serializable {
 
   def ++[B >: S](r: ExtendedResult[B]) : ExtendedResult[B] = (this, r) match {
         case (Success(a, _), Success(b, _)) => Success(a)
-        case (a@Failure(s, v, cs, cw, nf, _), b@Failure(s1, v1, cs1, cw1, nf1, _)) => Failure(s ++ s1, v ++ v1, cs ++ cs1, cw ++ cw1, nf || nf1)
-        case (_, b@Failure(_, _, _, _, _, _)) => b.asInstanceOf[ExtendedResult[B]]
-        case (a@Failure(_, _, _, _, _, _), _) => a.asInstanceOf[ExtendedResult[B]]
+        case (a@Failure(s, v, cs, cw, nf, _, _), b@Failure(s1, v1, cs1, cw1, nf1, _, _)) => Failure(s ++ s1, v ++ v1, cs ++ cs1, cw ++ cw1, nf || nf1)
+        case (_, b@Failure(_, _, _, _, _, _, _)) => b.asInstanceOf[ExtendedResult[B]]
+        case (a@Failure(_, _, _, _, _, _, _), _) => a.asInstanceOf[ExtendedResult[B]]
    }
 
     def ::[B >: S](r: ExtendedResult[B]) : ExtendedResult[List[B]] = (this, r) match {
@@ -119,10 +121,12 @@ sealed abstract class ExtendedResult[+S]() extends Product with Serializable {
 final case class Success[+S](result: S, isSuccess: Boolean = true) extends ExtendedResult[S]
 
 final case class Failure(serviceErrors : Map[String, String] = Map(),
-                   variablesErrors : Map[String, String] = Map(),
-                   compoundServiceErrors : Seq[String] = Seq(),
-                   compoundVariablesErrors : Seq[String] = Seq(),
-                   isNotFound: Boolean = false, isSuccess: Boolean = false) extends ExtendedResult[Nothing]
+                         variablesErrors : Map[String, String] = Map(),
+                         compoundServiceErrors : Seq[String] = Seq(),
+                         compoundVariablesErrors : Seq[String] = Seq(),
+                         isNotFound: Boolean = false,
+                         isSuccess: Boolean = false,
+                         stackTrace: Option[String] = None) extends ExtendedResult[Nothing]
 
 case class User(username: String, email: String, firstName: String, lastName: String, jobTitle: Option[String], password: Option[String])
 case class UserGroup(name: String, description: String, mailingList: Option[String], id: Option[Int] = None)
