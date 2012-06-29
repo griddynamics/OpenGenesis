@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,29 +20,17 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.plugin
+package com.griddynamics.genesis.template
 
-import reflect.BeanProperty
-import java.util.{Collections, List => JList, Map => JMap}
-import scala.collection.{JavaConversions => JC}
-import com.griddynamics.genesis.workflow.Step
 
-trait StepBuilderFactory {
-    val stepName: String
-
-    def newStepBuilder: StepBuilder
+trait ProjectContextSupport {
+    def context(s: String): String
+    def id: Int
 }
 
-trait StepBuilder {
-    @BeanProperty var phase: String = _
-    @BeanProperty var precedingPhases: JList[String] = Collections.emptyList()
-    @BeanProperty var ignoreFail: Boolean = false
-    @BeanProperty var retryCount: Int = 0
-    @BeanProperty var exportTo: JMap[String, String] = Collections.emptyMap()
-    var id: Int = 0
-
-    def newStep = new GenesisStep(id, phase, JC.asScalaBuffer(precedingPhases).toSet, ignoreFail,
-        if (retryCount < 0) 0 else retryCount, getDetails, JC.mapAsScalaMap(exportTo).toMap)
-
-    def getDetails: Step
+trait ProjectContextAware {
+    def getProject = new ProjectContextSupport {
+        def context(s: String) = "abc"
+        def id = 0
+    }
 }

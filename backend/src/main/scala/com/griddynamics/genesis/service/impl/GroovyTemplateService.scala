@@ -31,7 +31,7 @@ import org.springframework.core.convert.ConversionService
 import java.lang.IllegalStateException
 import scala.Some
 import com.griddynamics.genesis.template.dsl.groovy._
-import com.griddynamics.genesis.template.{DataSourceFactory, TemplateRepository}
+import com.griddynamics.genesis.template.{ProjectContextAware, DataSourceFactory, TemplateRepository}
 import com.griddynamics.genesis.workflow.Step
 import com.griddynamics.genesis.plugin.{GenesisStep, StepBuilder, StepBuilderFactory}
 import com.griddynamics.genesis.util.{ScalaUtils, Logging}
@@ -97,7 +97,7 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
 
 class StepBodiesCollector(variables: Map[String, AnyRef],
                           stepBuilderFactories : Seq[StepBuilderFactory])
-    extends GroovyObjectSupport {
+    extends GroovyObjectSupport with ProjectContextAware {
 
     val closures = (for (factory <- stepBuilderFactories) yield {
         (factory.stepName, (ListBuffer[Closure[Unit]](), factory))
@@ -110,7 +110,6 @@ class StepBodiesCollector(variables: Map[String, AnyRef],
 
          val binding = new Binding()
          context.foreach { case (key, value) => binding.setVariable(key, value) }
-
          val shell = new GroovyShell(binding)
          shell.evaluate(evalExpression)
        }
@@ -151,7 +150,7 @@ object UninitializedStepDetails extends Step {
     override def stepDescription = "..."
 }
 
-class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport with StepBuilder {
+class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport with StepBuilder with ProjectContextAware{
     private val contextDependentProperties = mutable.Map[String, ContextAccess]()
 
     def getDetails = if(contextDependentProperties.isEmpty) stepBuilder.getDetails else UninitializedStepDetails
@@ -170,6 +169,7 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
 
     override def newStep = newStep(Map())
 
+
     override def setProperty(property: String, value: Any) {
         value match {
           case value: ContextAccess =>
@@ -184,6 +184,7 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
     }
 
     override def getProperty(property: String) =  {
+        println(property)
         InvokerHelper.getProperty(stepBuilder, property)
     }
 }
