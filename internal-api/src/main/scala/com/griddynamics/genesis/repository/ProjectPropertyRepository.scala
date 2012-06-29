@@ -23,22 +23,17 @@
 package com.griddynamics.genesis.repository
 
 import com.griddynamics.genesis._
-import api.RequestResult
+import api.ExtendedResult
 
 trait ProjectPropertyRepository {
   def listForProject(projectId: Int): List[api.ProjectProperty]
-
-  def updateForProject(projectId: Int, properties : List[api.ProjectProperty]): RequestResult
-
-  def convert(entity: model.ProjectProperty): api.ProjectProperty
-
-  def convert(dto: api.ProjectProperty): model.ProjectProperty
-
+  def updateForProject(projectId: Int, properties : List[api.ProjectProperty]): ExtendedResult[Int]
+  def delete(pid: Int, properties: List[String]): ExtendedResult[Int]
+  def convert(entity: model.ProjectContextEntry): api.ProjectProperty
+  def convert(dto: api.ProjectProperty): model.ProjectContextEntry
   def load(id: Int): api.ProjectProperty
-
   def list: List[api.ProjectProperty]
-
   def delete(id: Int): Int
-
   def save(entity: api.ProjectProperty): api.ProjectProperty
+  def create(pid: Int, properties: List[api.ProjectProperty]) : ExtendedResult[Int]
 }

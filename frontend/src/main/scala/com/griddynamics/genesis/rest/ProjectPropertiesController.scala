@@ -26,13 +26,11 @@ import org.springframework.stereotype.Controller
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.repository.ProjectPropertyRepository
 import org.springframework.web.bind.annotation.{PathVariable, ResponseBody, RequestMethod, RequestMapping}
-import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
+import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis._
-import api.RequestResult
-import net.liftweb.json.{Formats, JsonParser}
 
 @Controller
-@RequestMapping(value = Array("/rest/projects/{projectId}/properties"))
+@RequestMapping(value = Array("/rest/projects/{projectId}/context"))
 class ProjectPropertiesController extends RestApiExceptionsHandler {
   @Autowired
   var projectPropertyRepository: ProjectPropertyRepository = null
@@ -45,13 +43,26 @@ class ProjectPropertiesController extends RestApiExceptionsHandler {
 
   @RequestMapping(method = Array(RequestMethod.PUT))
   @ResponseBody
-  def updateForProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest): RequestResult = {
-    val properties = for (p <- GenesisRestController.extractParamsMapList(request)) yield {
-      val name = GenesisRestController.extractValue("name", p)
-      val value = GenesisRestController.extractValue("value", p)
-      new api.ProjectProperty(0, 0, name, value)
-    }
-
-    projectPropertyRepository.updateForProject(projectId, properties)
+  def updateForProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = {
+    projectPropertyRepository.updateForProject(projectId, extractProperties(request))
   }
+
+    @RequestMapping(method = Array(RequestMethod.POST))
+    @ResponseBody
+    def create(@PathVariable("projectId") projectId: Int, request: HttpServletRequest)  =
+        projectPropertyRepository.create(projectId, extractProperties(request))
+
+    @RequestMapping(method = Array(RequestMethod.DELETE))
+    @ResponseBody
+    def delete(@PathVariable("projectId") projectId: Int, request: HttpServletRequest)  =
+        projectPropertyRepository.delete(projectId, GenesisRestController.extractParamsList(request))
+
+    def extractProperties(request: HttpServletRequest): List[api.ProjectProperty] = {
+        val properties = for (p <- GenesisRestController.extractParamsMapList(request)) yield {
+            val name = GenesisRestController.extractValue("name", p)
+            val value = GenesisRestController.extractValue("value", p)
+            new api.ProjectProperty(0, 0, name, value)
+        }
+        properties
+    }
 }
