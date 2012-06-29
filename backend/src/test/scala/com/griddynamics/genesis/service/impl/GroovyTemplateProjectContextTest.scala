@@ -31,7 +31,6 @@ import com.griddynamics.genesis.util.IoUtil
 import org.mockito.Mockito
 import com.griddynamics.genesis.service.VariableDescription
 import com.griddynamics.genesis.plugin.{StepBuilder, GenesisStep}
-import com.griddynamics.genesis.workflow.Step
 
 class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSugar {
     val templateRepository = mock[TemplateRepository]
@@ -56,6 +55,7 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
     @Test def testApplyVariable() {
         var head: StepBuilder = createWorkflow.embody(Map()).head
         var embody: GenesisStep = head.newStep
-        var actualStep: Step = embody.actualStep
+        var actualStep: DoNothingStep = embody.actualStep.asInstanceOf[DoNothingStep]
+        assert(actualStep.name == "abc")
     }
 }
