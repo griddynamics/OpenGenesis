@@ -24,68 +24,88 @@ package com.griddynamics.genesis.repository.impl
 
 import com.griddynamics.genesis.repository.AbstractGenericRepository
 import com.griddynamics.genesis.{repository, api, model}
-import api.RequestResult
-import model.GenesisSchema
+import api._
+import api.Failure
+import api.Success
+import model.{GenesisSchema => GS, ProjectContextEntry => PP}
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.util.Logging
-import collection.mutable.{ArrayBuffer, HashSet}
 
-class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectProperty, api.ProjectProperty](GenesisSchema.projectProperties)
-  with repository.ProjectPropertyRepository with Logging {
+class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectContextEntry, api.ProjectProperty](GS.projectProperties)
+with repository.ProjectPropertyRepository with Logging {
 
-  val namePattern = """^([a-zA-Z0-9.]{1,1024})$""".r
+    val namePattern = """^([a-zA-Z0-9.]{1,1024})$""".r
 
-  @Transactional(readOnly = true)
-  def listForProject(projectId: Int): List[api.ProjectProperty] = {
-    val modelProperties = from(GenesisSchema.projectProperties)(pp => where(pp.projectId === projectId) select(pp) orderBy(pp.id asc)).toList
-    modelProperties.map(convert(_))
-  }
+    @Transactional(readOnly = true)
+    def listForProject(projectId: Int): List[api.ProjectProperty] = {
+        val modelProperties = from(table)(pp => where(pp.projectId === projectId) select(pp) orderBy(pp.name asc)).toList
+        modelProperties.map(convert(_))
+    }
 
-  @Transactional
-  def updateForProject(projectId: Int, properties : List[api.ProjectProperty]): RequestResult = {
-    var result = RequestResult(isSuccess = true)
-    val names = new HashSet[String]()
-    val modelProperties = new ArrayBuffer[model.ProjectProperty]
-    for (pp <- properties.map(convert(_))) {
-      result = result ++ validate(pp)
-      if (result.isSuccess) {
-        if (names.contains(pp.name)) {
-          result = result ++ RequestResult(isSuccess = false, compoundServiceErrors = Seq("Project property name '%s' is duplicated".format(pp.name)))
+    @Transactional
+    def delete(pid: Int, keys: List[String]) = {
+        val count: Int = keys.map(p =>
+            table.deleteWhere(pp => pp.projectId === pid and pp.name === p)
+        ).reduceLeft(_ + _)
+        Success(count)
+    }
+
+    @Transactional
+    def create(pid: Int, properties: List[api.ProjectProperty]) : ExtendedResult[Int] = {
+        val validated = properties.groupBy(_.name).map(e => if (e._2.size > 1)
+            Failure(compoundServiceErrors = Seq("Project property name '%s' is duplicated".format(e._1)))
+        else
+            validate(e._2.head) ++ uniqueName(e._2.head, pid)).fold(Success(List()))((total, n) => n :: total)
+        validated.map(list => {
+            val iterable: Iterable[PP] = list.asInstanceOf[Iterable[PP]]
+            table.insert(iterable.map(pp => new PP(pid, pp.name, pp.value)))
+            iterable.size
+        })
+    }
+
+    @Transactional
+    def updateForProject(pid: Int, properties : List[api.ProjectProperty]): ExtendedResult[Int] = {
+        val left = properties.groupBy(_.name).map(e => if (e._2.size > 1)
+            Failure(compoundServiceErrors = Seq("Project property name '%s' is duplicated".format(e._1)))
+        else
+            validate(e._2.head)).fold(Success(List()))((total, n) => n :: total)
+        left.map(list => {
+            table.deleteWhere(pp => pp.projectId === pid)
+            val model: List[PP] = list.asInstanceOf[Iterable[PP]].map(pp => new PP(pid, pp.name, pp.value)).toList
+            table.insert(model)
+            model.size
+        })
+    }
+
+
+    override implicit def convert(entity: PP): api.ProjectProperty = {
+        new api.ProjectProperty(entity.id, entity.projectId, entity.name, entity.value)
+    }
+
+    override implicit def convert(dto: api.ProjectProperty): PP = {
+        val projectProperty = new PP(dto.projectId, dto.name, dto.value)
+        projectProperty.id = dto.id
+        projectProperty
+    }
+
+    def uniqueName(property: PP, pid: Int) : ExtendedResult[PP] =
+        from(table)(pp => where(pp.name === property.name and pp.projectId === pid).select(pp)).headOption match {
+            case None => Success(property)
+            case _ => Failure(compoundServiceErrors = Seq("Duplicated property name %s".format(property.name)))
         }
-        if (result.isSuccess) {
-          names.add(pp.name)
-          modelProperties.append(new model.ProjectProperty(projectId, pp.name, pp.value))
+
+    def validate(property: PP): ExtendedResult[PP] = {
+        val nameValid = if ((property.name == null) || property.name.isEmpty) {
+            Failure(compoundServiceErrors = Seq("Project property name is empty"))
+        } else {
+            Success(property)
         }
-      }
+        val patternValid = if (namePattern.findFirstIn(property.name) == None) {
+            Failure(compoundServiceErrors = Seq("Project property name '%s' does not match required form".format(property.name)))
+        } else {
+            Success(property)
+        }
+        nameValid ++ patternValid
     }
-
-    if (result.isSuccess) {
-      GenesisSchema.projectProperties.deleteWhere(pp => pp.projectId === projectId)
-      GenesisSchema.projectProperties.insert(modelProperties)
-    }
-
-    result
-  }
-
-  override implicit def convert(entity: model.ProjectProperty): api.ProjectProperty = {
-    new api.ProjectProperty(entity.id, entity.projectId, entity.name, entity.value)
-  }
-
-  override implicit def convert(dto: api.ProjectProperty): model.ProjectProperty = {
-    val projectProperty = new model.ProjectProperty(dto.projectId, dto.name, dto.value)
-    projectProperty.id = dto.id
-    projectProperty
-  }
-
-  def validate(property: api.ProjectProperty): RequestResult = {
-    if ((property.name == null) || property.name.isEmpty) {
-      return RequestResult(isSuccess = false, compoundServiceErrors = Seq("Project property name is empty"))
-    }
-    if (namePattern.findFirstIn(property.name) == None) {
-      return RequestResult(isSuccess = false, compoundServiceErrors = Seq("Project property name '%s' does not match required form".format(property.name)))
-    }
-
-    RequestResult(isSuccess = true)
-  }
 }
