@@ -184,14 +184,13 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
     }
 
     override def getProperty(property: String) =  {
-        println(property)
         InvokerHelper.getProperty(stepBuilder, property)
     }
 }
 
 class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow : EnvWorkflow,
                                conversionService : ConversionService,
-                               stepBuilderFactories : Seq[StepBuilderFactory]) extends WorkflowDefinition with Logging {
+                               stepBuilderFactories : Seq[StepBuilderFactory]) extends WorkflowDefinition with Logging with ProjectContextAware {
     def convertAndValidate(value: Any, variable: VariableDetails): Seq[ValidationError] = {
       try {
         //all values stored as strings, so we need to use string repr. to convert here as well
@@ -268,7 +267,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
             }
           }
           (variable.name, res)
-        }).toMap
+        }).toMap ++ Map("project" -> getProject)
         val delegate = new StepBodiesCollector(typedVariables, stepBuilderFactories)
         workflow.stepsGenerator match {
             case Some(generator) => {

@@ -33,4 +33,6 @@ trait ProjectContextAware {
         def context(s: String) = "abc"
         def id = 0
     }
+
+    def project = getProject
 }
