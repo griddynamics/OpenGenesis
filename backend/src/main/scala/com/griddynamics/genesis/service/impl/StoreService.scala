@@ -92,6 +92,22 @@ class StoreService extends service.StoreService {
         ).toList
     }
 
+    @Transactional(readOnly = true)
+    def listWorkflows(env: Environment, pageOffset: Int, pageLength: Int) = {
+        from(GS.workflows)(w =>
+            where(w.envId === env.id)
+                select (w)
+                orderBy(w.id desc)
+        ).page(pageOffset, pageLength).toList
+    }
+
+    @Transactional(readOnly = true)
+    def countWorkflows(env: Environment): Int =
+        from(GS.workflows)(w =>
+            where(w.envId === env.id)
+                compute(count)
+        ).single.measures.toInt
+
     //TODO switch to join query
     @Transactional(readOnly = true)
     def listEnvsWithWorkflow(projectId: Int) = {
@@ -120,6 +136,11 @@ class StoreService extends service.StoreService {
     @Transactional(readOnly = true)
     def workflowsHistory(env : Environment): Seq[(Workflow, Seq[WorkflowStep])] =
         for(workflow <- listWorkflows(env)) yield
+            (workflow, listWorkflowSteps(workflow))
+
+    @Transactional(readOnly = true)
+    def workflowsHistory(env : Environment, pageOffset: Int, pageLength: Int): Seq[(Workflow, Seq[WorkflowStep])] =
+        for(workflow <- listWorkflows(env, pageOffset, pageLength)) yield
             (workflow, listWorkflowSteps(workflow))
 
     @Transactional(readOnly = true)

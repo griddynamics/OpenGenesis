@@ -80,17 +80,26 @@ class GenesisRestService(storeService: StoreService,
     def describeEnv(envName: String) = {
         storeService.findEnv(envName) match {
             case Some(env) =>
-                templateService.findTemplate(env.projectId, env.templateName, env.templateVersion).map(
+                templateService.findTemplate(env.projectId, env.templateName, env.templateVersion).map {
                     envDesc(
                         env,
                         storeService.listVms(env),
-                        storeService.workflowsHistory(env),
                         _,
-                        computeService
+                        computeService,
+                        storeService.countWorkflows(env)
                     )
-                )
+                }
             case None => None
         }
+    }
+
+    def workflowHistory(envName: String, pageOffset: Int, pageLength: Int): Option[WorkflowHistory] = {
+        storeService.findEnv(envName).map(env =>
+            workflowHistoryDesc(
+                storeService.workflowsHistory(env, pageOffset, pageLength),
+                storeService.countWorkflows(env)
+            )
+        )
     }
 
     def getLogs(envName: String,  stepId: Int) : Seq[String] =
@@ -139,9 +148,9 @@ object GenesisRestService {
 
     def envDesc(env: model.Environment,
                 vms: Seq[model.VirtualMachine],
-                history: Seq[(Workflow, Seq[model.WorkflowStep])],
                 template: service.TemplateDefinition,
-                computeService: ComputeService) = {
+                computeService: ComputeService,
+                historyCount: Int) = {
 
         val workflows = for (wf <- template.listWorkflows) yield workflowDesc(wf)
 
@@ -158,14 +167,17 @@ object GenesisRestService {
             template.destroyWorkflow.name,
             vmDescs.toSeq,
             env.projectId,
-            workflowHistoryDesc(history)
+            historyCount
         )
     }
 
-    def workflowHistoryDesc(history: Seq[(Workflow, Seq[model.WorkflowStep])]) =
-        wrap(history)(() =>
+    def workflowHistoryDesc(history: Seq[(Workflow, Seq[model.WorkflowStep])], workflowsTotalCount: Int) = {
+        val h = wrap(history)(() =>
             (for ((flow, steps) <- history) yield
                 new WorkflowDetails(flow.name, flow.status.toString, stepsCompleted(Some(flow)), stepDesc(steps), flow.executionStarted.map (_.getTime))).toSeq)
+
+        WorkflowHistory(h, workflowsTotalCount)
+    }
 
     def stepDesc(steps : Seq[model.WorkflowStep]) =
         wrap(steps)(() =>

@@ -93,6 +93,20 @@ class EnvironmentsController(genesisService: GenesisService) extends RestApiExce
   }
 
 
+  @RequestMapping(value = Array("{envName}/history"), method = Array(RequestMethod.GET), params = Array("page_offset", "page_length"))
+  @ResponseBody
+  def workflowsHistory(@PathVariable("projectId") projectId: Int,
+                       @PathVariable("envName") envName: String,
+                       @RequestParam("page_offset") pageOffset: Int,
+                       @RequestParam("page_length") pageLength: Int,
+                       response : HttpServletResponse): WorkflowHistory = {
+    assertEnvExist(projectId, envName)
+    genesisService.workflowHistory(envName, pageOffset, pageLength).getOrElse(
+        throw new ResourceNotFoundException("Environment [" + envName + "] was not found")
+    )
+  }
+
+
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
   def listEnvs(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = genesisService.listEnvs(projectId)

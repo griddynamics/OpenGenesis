@@ -55,7 +55,8 @@ class GenesisRestServiceStub() extends GenesisService {
             "create",
             "destroy",
             Seq(vmT, vmT, vmT),
-            1
+            1,
+            0
         )
 
     var envs = Seq(
@@ -111,6 +112,8 @@ class GenesisRestServiceStub() extends GenesisService {
     def listTemplates(projectId: Int) = templates
 
     def describeEnv(envName : String) = envsDescr.get(envName)
+
+    def workflowHistory(envName : String, pageOffset: Int, pageLength: Int) = Some(WorkflowHistory())
 
     def listEnvs(projectId: Int) = {
         envs = envs map {e =>
