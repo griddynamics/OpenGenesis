@@ -255,9 +255,8 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
     }
 
     override def partial(variables: Map[String, Any]): Seq[VariableDescription] = {
-        val dependents = for (variable <- variables) yield {
-            workflow.variables.find(p => p.dependsOn.find(_ == variable._1).isDefined).getOrElse(throw new RuntimeException("Unexpected variable %s".format(variable._1)))
-        }
+        val dependents = workflow.variables.filter(p => p.dependsOn.sorted == variables.keys.toList.sorted).
+          groupBy(_.name).map(_._2.head).toList
 
         val typedVars = variables.map(v => (v._1, convert(String.valueOf(v._2), workflow.variables.find(_.name == v._1)
             .getOrElse(throw new RuntimeException("No such variable: " + v._1)))))
