@@ -25,7 +25,7 @@ package com.griddynamics.genesis.template.dsl.groovy
 import groovy.lang.{GroovyObjectSupport, Closure}
 import scala._
 import collection.mutable.ListBuffer
-import com.griddynamics.genesis.template.{DependentDataSource, DataSourceFactory, VarDataSource}
+import com.griddynamics.genesis.template.{ProjectContextAware, DependentDataSource, DataSourceFactory, VarDataSource}
 import java.lang.reflect.Method
 import java.lang.{Boolean, IllegalStateException}
 import com.griddynamics.genesis.util.ScalaUtils
@@ -205,7 +205,7 @@ class EnvTemplateBuilder(val projectId: Int, val dataSourceFactories : Seq[DataS
 
         val variableBuilders = delegate.variablesBlock match {
             case Some(block) => {
-                val variablesDelegate = new VariableDeclaration(dsObjSupport)
+                val variablesDelegate = new VariableDeclaration(dsObjSupport) with ProjectContextAware
                 block.setDelegate(variablesDelegate)
                 block.call()
                 variablesDelegate.builders
@@ -231,7 +231,7 @@ class EnvTemplateBuilder(val projectId: Int, val dataSourceFactories : Seq[DataS
     }
 
     override def dataSources(ds : Closure[Unit]) {
-        val dsDelegate = new DataSourceDeclaration(projectId, dataSourceFactories)
+        val dsDelegate = new DataSourceDeclaration(projectId, dataSourceFactories) with ProjectContextAware
         ds.setDelegate(dsDelegate)
         ds.call()
         val dsBuilders = dsDelegate.builders
@@ -277,7 +277,6 @@ class BlockDeclaration {
         bodies += body
     }
 }
-
 
 class DataSourceDeclaration(val projectId: Int, dsFactories: Seq[DataSourceFactory]) {
     val builders = new ListBuffer[DataSourceBuilder]
