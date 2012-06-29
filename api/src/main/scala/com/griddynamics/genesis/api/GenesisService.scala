@@ -37,6 +37,8 @@ trait GenesisService {
 
     def describeEnv(envName : String) : Option[EnvironmentDetails]
 
+    def workflowHistory(envName: String, pageOffset: Int, pageLength: Int) : Option[WorkflowHistory]
+
     def listTemplates(projectId: Int) : Seq[Template]
 
     def createEnv(projectId: Int, envName : String, creator : String, templateName : String,

@@ -41,11 +41,14 @@ trait StoreService {
     def listVms(env: Environment): Seq[VirtualMachine]
 
     def listWorkflows(env: Environment): Seq[Workflow]
+    def listWorkflows(env: Environment, pageOffset: Int, pageLength: Int): Seq[Workflow]
+    def countWorkflows(env: Environment): Int
 
     def listEnvsWithWorkflow(projectId: Int): Seq[(Environment, Option[Workflow])]
     def listEnvsWithWorkflow(projectId: Int, start : Int, limit : Int): Seq[(Environment, Option[Workflow])]
 
     def workflowsHistory(env : Environment): Seq[(Workflow, Seq[WorkflowStep])]
+    def workflowsHistory(env : Environment, pageOffset: Int, pageLength: Int): Seq[(Workflow, Seq[WorkflowStep])]
 
     def listWorkflowSteps(workflow : Workflow): Seq[WorkflowStep]
 
