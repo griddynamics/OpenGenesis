@@ -22,17 +22,23 @@
  */
 package com.griddynamics.genesis.template
 
+import com.griddynamics.genesis.repository.ProjectPropertyRepository
+
 
 trait ProjectContextSupport {
     def context(s: String): String
-    def id: Int
 }
 
 trait ProjectContextAware {
     def getProject = new ProjectContextSupport {
         def context(s: String) = "abc"
-        def id = 0
     }
+}
 
-    def project = getProject
+trait ProjectContextFromProperties extends ProjectContextAware {
+  def repository: ProjectPropertyRepository
+  def projectId: Int
+  override def getProject = new ProjectContextSupport {
+    def context(s: String) = repository.read(projectId, s).getOrElse(throw new IllegalArgumentException("Key %s is not defined for current project".format(s)))
+  }
 }
