@@ -31,31 +31,33 @@ import com.griddynamics.genesis.util.IoUtil
 import org.mockito.Mockito
 import com.griddynamics.genesis.service.VariableDescription
 import com.griddynamics.genesis.plugin.{StepBuilder, GenesisStep}
+import com.griddynamics.genesis.repository.impl.ProjectPropertyRepository
 
 class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSugar {
     val templateRepository = mock[TemplateRepository]
-
+    val ppRepository = mock[ProjectPropertyRepository]
     val templateService = new GroovyTemplateService(templateRepository,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-        Seq(new ListVarDSFactory, new DependentListVarDSFactory))
+        Seq(new ListVarDSFactory, new DependentListVarDSFactory), ppRepository)
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/ProjectContextExample.genesis"))
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
+    Mockito.when(ppRepository.read(0, "key")).thenReturn(Some("abc"))
     val createWorkflow = templateService.findTemplate(0, "Projects", "0.1").get.createWorkflow
 
     @Test def testDefaultValue() {
-        val projectVariable: VariableDescription = createWorkflow.variableDescriptions.find(_.name == "project").getOrElse(fail("Variable project must be declared"))
+        val projectVariable: VariableDescription = createWorkflow.variableDescriptions.find(_.name == "projectKey").getOrElse(fail("Variable projectKey must be declared"))
         assert(projectVariable.defaultValue == "abc")
     }
 
     @Test def testDSConfig() {
-        val listVariable: VariableDescription = createWorkflow.variableDescriptions.find(_.name == "projectList").getOrElse(fail("Variable project must be declared"))
+        val listVariable: VariableDescription = createWorkflow.variableDescriptions.find(_.name == "projectList").getOrElse(fail("Variable projectList must be declared"))
         assert(listVariable.values == Map("abc" -> "abc"))
     }
 
     @Test def testApplyVariable() {
-        var head: StepBuilder = createWorkflow.embody(Map()).head
-        var embody: GenesisStep = head.newStep
-        var actualStep: DoNothingStep = embody.actualStep.asInstanceOf[DoNothingStep]
+        val builder: StepBuilder = createWorkflow.embody(Map()).head
+        val newStep: GenesisStep = builder.newStep
+        val actualStep: DoNothingStep = newStep.actualStep.asInstanceOf[DoNothingStep]
         assert(actualStep.name == "abc")
     }
 }

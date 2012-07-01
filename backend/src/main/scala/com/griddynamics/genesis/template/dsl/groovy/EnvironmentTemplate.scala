@@ -25,10 +25,12 @@ package com.griddynamics.genesis.template.dsl.groovy
 import groovy.lang.{GroovyObjectSupport, Closure}
 import scala._
 import collection.mutable.ListBuffer
-import com.griddynamics.genesis.template.{ProjectContextAware, DependentDataSource, DataSourceFactory, VarDataSource}
+import com.griddynamics.genesis.template._
 import java.lang.reflect.Method
 import java.lang.{Boolean, IllegalStateException}
 import com.griddynamics.genesis.util.ScalaUtils
+import scala.Some
+import com.griddynamics.genesis.repository.ProjectPropertyRepository
 
 class EnvWorkflow(val name : String, val variables : List[VariableDetails], val stepsGenerator : Option[Closure[Unit]])
 
@@ -187,7 +189,7 @@ class NameVersionDelegate {
     def dataSources(ds : Closure[Unit]){}
 }
 
-class EnvTemplateBuilder(val projectId: Int, val dataSourceFactories : Seq[DataSourceFactory]) extends NameVersionDelegate {
+class EnvTemplateBuilder(val projectId: Int, val dataSourceFactories : Seq[DataSourceFactory], ppRepository: ProjectPropertyRepository) extends NameVersionDelegate {
 
     var createWorkflow : String = _
     var destroyWorkflow : String = _
@@ -202,10 +204,13 @@ class EnvTemplateBuilder(val projectId: Int, val dataSourceFactories : Seq[DataS
         val delegate = new WorkflowDeclaration
         details.setDelegate(delegate)
         details.call()
-
+        val pid = projectId
         val variableBuilders = delegate.variablesBlock match {
             case Some(block) => {
-                val variablesDelegate = new VariableDeclaration(dsObjSupport) with ProjectContextAware
+                val variablesDelegate = new VariableDeclaration(dsObjSupport) with ProjectContextFromProperties {
+                  override val repository = ppRepository
+                  override val projectId = pid
+                }
                 block.setDelegate(variablesDelegate)
                 block.call()
                 variablesDelegate.builders
@@ -231,7 +236,11 @@ class EnvTemplateBuilder(val projectId: Int, val dataSourceFactories : Seq[DataS
     }
 
     override def dataSources(ds : Closure[Unit]) {
-        val dsDelegate = new DataSourceDeclaration(projectId, dataSourceFactories) with ProjectContextAware
+        val pid = projectId
+        val dsDelegate = new DataSourceDeclaration(projectId, dataSourceFactories) with ProjectContextFromProperties {
+          override val repository = ppRepository
+          override val projectId = pid
+        }
         ds.setDelegate(dsDelegate)
         ds.call()
         val dsBuilders = dsDelegate.builders
