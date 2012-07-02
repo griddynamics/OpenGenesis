@@ -31,6 +31,7 @@ import com.griddynamics.genesis.spring.ApplicationContextAware
 import com.griddynamics.genesis.service.TemplateService
 import javax.annotation.Resource
 import com.griddynamics.genesis.template.{DependentListFactory, ListVarDSFactory, DataSourceFactory}
+import com.griddynamics.genesis.repository.impl.ProjectPropertyRepository
 
 @Configuration
 class GroovyTemplateServiceContext {
