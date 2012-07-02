@@ -36,4 +36,5 @@ trait ProjectPropertyRepository {
   def delete(id: Int): Int
   def save(entity: api.ProjectProperty): api.ProjectProperty
   def create(pid: Int, properties: List[api.ProjectProperty]) : ExtendedResult[Int]
+  def read(pid: Int, key: String): Option[String]
 }

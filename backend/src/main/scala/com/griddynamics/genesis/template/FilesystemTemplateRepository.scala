@@ -33,7 +33,7 @@ import org.apache.commons.codec.digest.DigestUtils
 class FilesystemTemplateRepository(filesystemFolder: String, wildcard: String) extends ModeAwareTemplateRepository with Logging {
     
     var sources: Map[VersionedTemplate, String] = Map()
-    var lastModifiedHash = lastModification
+    var lastModifiedHash = "0"
     
     def listSources() = {
         if (sources.isEmpty || lastModifiedHash != lastModification) {

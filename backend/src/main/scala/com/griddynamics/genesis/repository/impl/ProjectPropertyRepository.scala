@@ -78,6 +78,11 @@ with repository.ProjectPropertyRepository with Logging {
         })
     }
 
+    @Transactional
+    def read(pid: Int, key: String) = {
+      from(table)(pp => where(pp.projectId === pid and pp.name === key) select(pp)).headOption.map(_.value)
+    }
+
 
     override implicit def convert(entity: PP): api.ProjectProperty = {
         new api.ProjectProperty(entity.id, entity.projectId, entity.name, entity.value)

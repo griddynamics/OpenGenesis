@@ -29,24 +29,28 @@ import collection.mutable.ListBuffer
 import service._
 import org.springframework.core.convert.ConversionService
 import java.lang.IllegalStateException
-import scala.Some
 import com.griddynamics.genesis.template.dsl.groovy._
-import com.griddynamics.genesis.template.{DataSourceFactory, TemplateRepository}
+import com.griddynamics.genesis.template._
 import com.griddynamics.genesis.workflow.Step
-import com.griddynamics.genesis.plugin.{GenesisStep, StepBuilder, StepBuilderFactory}
+import com.griddynamics.genesis.plugin.{StepBuilder, StepBuilderFactory}
 import com.griddynamics.genesis.util.{ScalaUtils, Logging}
 import org.codehaus.groovy.runtime.{InvokerHelper, MethodClosure}
+import scala.Some
+import service.ValidationError
+import com.griddynamics.genesis.plugin.GenesisStep
+import com.griddynamics.genesis.repository.ProjectPropertyRepository
 
 class GroovyTemplateService(val templateRepository : TemplateRepository,
                             val stepBuilderFactories : Seq[StepBuilderFactory],
                             val conversionService : ConversionService,
-                            val dataSourceFactories : Seq[DataSourceFactory] = Seq()   )
+                            val dataSourceFactories : Seq[DataSourceFactory] = Seq(),
+                            val projectPropertyRepository: ProjectPropertyRepository)
     extends service.TemplateService with Logging {
 
     def findTemplate(projectId: Int, name: String, version: String) : Option[TemplateDefinition] = {
         val body = templatesMap(projectId).get(name, version)
         body.flatMap(evaluateTemplate(projectId, _, None, None, None).map(et =>
-            new GroovyTemplateDefinition(et, conversionService, stepBuilderFactories)
+            new GroovyTemplateDefinition(et, conversionService, stepBuilderFactories, projectPropertyRepository, projectId)
         ))
     }
 
@@ -79,7 +83,7 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
             case e: GroovyRuntimeException => throw new IllegalStateException("can't process template", e)
         }
 
-        val templateBuilder = if (listOnly) new NameVersionDelegate else new EnvTemplateBuilder(projectId, dataSourceFactories)
+        val templateBuilder = if (listOnly) new NameVersionDelegate else new EnvTemplateBuilder(projectId, dataSourceFactories, projectPropertyRepository)
         templateDecl.bodies.headOption.map {
             templateBody => {
                 templateBody.setDelegate(templateBuilder)
@@ -96,8 +100,10 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
 }
 
 class StepBodiesCollector(variables: Map[String, AnyRef],
-                          stepBuilderFactories : Seq[StepBuilderFactory])
-    extends GroovyObjectSupport {
+                          stepBuilderFactories : Seq[StepBuilderFactory],
+                           override val repository: ProjectPropertyRepository,
+                           override val projectId: Int)
+    extends GroovyObjectSupport with ProjectContextFromProperties {
 
     val closures = (for (factory <- stepBuilderFactories) yield {
         (factory.stepName, (ListBuffer[Closure[Unit]](), factory))
@@ -110,7 +116,7 @@ class StepBodiesCollector(variables: Map[String, AnyRef],
 
          val binding = new Binding()
          context.foreach { case (key, value) => binding.setVariable(key, value) }
-
+         binding.setVariable("project", getProject)
          val shell = new GroovyShell(binding)
          shell.evaluate(evalExpression)
        }
@@ -135,7 +141,7 @@ class StepBodiesCollector(variables: Map[String, AnyRef],
   def buildSteps = {
         (for ((bodies, factory) <- closures.values) yield {
             for (body <- bodies) yield {
-                val stepBuilder = new StepBuilderProxy(factory.newStepBuilder)
+                val stepBuilder = new StepBuilderProxy(factory.newStepBuilder, getProject)
                 body.setDelegate(stepBuilder)
                 body.setResolveStrategy(Closure.DELEGATE_FIRST)
                 body.call()
@@ -151,9 +157,8 @@ object UninitializedStepDetails extends Step {
     override def stepDescription = "..."
 }
 
-class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport with StepBuilder {
+class StepBuilderProxy(stepBuilder: StepBuilder, project: ProjectContextSupport) extends GroovyObjectSupport with StepBuilder {
     private val contextDependentProperties = mutable.Map[String, ContextAccess]()
-
     def getDetails = if(contextDependentProperties.isEmpty) stepBuilder.getDetails else UninitializedStepDetails
 
     def newStep(context: scala.collection.Map[String, AnyRef]): GenesisStep = {
@@ -169,6 +174,7 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
     }
 
     override def newStep = newStep(Map())
+
 
     override def setProperty(property: String, value: Any) {
         value match {
@@ -190,7 +196,9 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
 
 class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow : EnvWorkflow,
                                conversionService : ConversionService,
-                               stepBuilderFactories : Seq[StepBuilderFactory]) extends WorkflowDefinition with Logging {
+                               stepBuilderFactories : Seq[StepBuilderFactory],
+                               override val repository: ProjectPropertyRepository,
+                               override val projectId: Int) extends WorkflowDefinition with Logging with ProjectContextFromProperties {
     def convertAndValidate(value: Any, variable: VariableDetails): Seq[ValidationError] = {
       try {
         //all values stored as strings, so we need to use string repr. to convert here as well
@@ -268,7 +276,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
           }
           (variable.name, res)
         }).toMap
-        val delegate = new StepBodiesCollector(typedVariables, stepBuilderFactories)
+        val delegate = new StepBodiesCollector(typedVariables, stepBuilderFactories, repository, projectId)
         workflow.stepsGenerator match {
             case Some(generator) => {
                 generator.setDelegate(delegate)
@@ -293,7 +301,8 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
 
 class GroovyTemplateDefinition(val envTemplate : EnvironmentTemplate,
                                conversionService : ConversionService,
-                               stepBuilderFactories : Seq[StepBuilderFactory]) extends TemplateDefinition {
+                               stepBuilderFactories : Seq[StepBuilderFactory],
+                               projectPropertiesRepository: ProjectPropertyRepository, projectId: Int) extends TemplateDefinition {
     def getWorkflow(name: String) = {
         envTemplate.workflows.filter(_.name==name).headOption.map(workflowDefinition(_))
     }
@@ -311,5 +320,5 @@ class GroovyTemplateDefinition(val envTemplate : EnvironmentTemplate,
     }
 
     def workflowDefinition(workflow : EnvWorkflow) =
-        new GroovyWorkflowDefinition(envTemplate, workflow, conversionService, stepBuilderFactories)
+        new GroovyWorkflowDefinition(envTemplate, workflow, conversionService, stepBuilderFactories, projectPropertiesRepository, projectId)
 }
