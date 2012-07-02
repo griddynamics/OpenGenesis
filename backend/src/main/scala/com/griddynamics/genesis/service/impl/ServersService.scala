@@ -104,7 +104,7 @@ class ServersServiceImpl(repository: ServerArrayRepository, serverRepo: ServerRe
   protected def validateUpdate(c: ServerArray) =
     mustSatisfyLengthConstraints(c, c.name, "name")(1, 128) ++
     mustSatisfyLengthConstraints(c, c.description.getOrElse(""), "description")(0, 128) ++
-    mustExist(c){ it => repository.get(it.id.get, it.projectId) } ++
+    mustExist(c){ it => repository.get(it.projectId, it.id.get) } ++
     must(c, "Server array with name '" + c.name + "' already exists") {
       array => repository.findByName(array.name, array.projectId).forall { _.id == array.id}
     }
