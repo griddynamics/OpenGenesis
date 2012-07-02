@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,14 +20,25 @@
  *   @Project:     Genesis
  *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.configuration
+package com.griddynamics.genesis.template
 
-import com.griddynamics.genesis.service.StoreService
-import com.griddynamics.genesis.repository.{ProjectPropertyRepository, ProjectRepository}
+import com.griddynamics.genesis.repository.ProjectPropertyRepository
 
-trait StoreServiceContext {
-    def storeService : StoreService
-    def projectRepository : ProjectRepository
-    def projectPropertyRepository: ProjectPropertyRepository
+
+trait ProjectContextSupport {
+    def context(s: String): String
 }
 
+trait ProjectContextAware {
+    def getProject = new ProjectContextSupport {
+        def context(s: String) = "abc"
+    }
+}
+
+trait ProjectContextFromProperties extends ProjectContextAware {
+  def repository: ProjectPropertyRepository
+  def projectId: Int
+  override def getProject = new ProjectContextSupport {
+    def context(s: String) = repository.read(projectId, s).getOrElse(throw new IllegalArgumentException("Key %s is not defined for current project".format(s)))
+  }
+}

@@ -1,0 +1,34 @@
+package groovy
+template {
+    name("Projects")
+    version("0.1")
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+    dataSources {
+        dataSource("staticList").name("ds2").config(list:[project.context("key")])
+    }
+
+    workflow("create") {
+        variables {
+            variable("projectKey").optional(defaultValue = project.context("key"))
+            variable("projectList").dataSource("ds2").optional()
+        }
+
+        steps {
+            teststep {
+                phase = "phase1"
+                text = project.context('key')
+            }
+        }
+    }
+
+    workflow("destroy") {
+        steps {
+            teststep {
+                phase = "undeply"
+                text = "destroy"
+            }
+        }
+    }
+}

@@ -79,7 +79,7 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
         })
       } catch {
         case e => {
-          log.error(e, "Failed to workflow [%s] for env [%s]".format(workflow.name, envName))
+          log.error(e, "Failed to start workflow [%s] for env [%s]".format(workflow.name, envName))
           env.status = EnvStatus.Failed(workflow.name)
           workflow.status = Failed
           storeService.finishWorkflow(env, workflow)

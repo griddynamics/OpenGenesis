@@ -26,6 +26,7 @@ import reflect.BeanProperty
 import java.util.{Collections, List => JList, Map => JMap}
 import scala.collection.{JavaConversions => JC}
 import com.griddynamics.genesis.workflow.Step
+import com.griddynamics.genesis.template.ProjectContextSupport
 
 trait StepBuilderFactory {
     val stepName: String
@@ -39,7 +40,6 @@ trait StepBuilder {
     @BeanProperty var ignoreFail: Boolean = false
     @BeanProperty var retryCount: Int = 0
     @BeanProperty var exportTo: JMap[String, String] = Collections.emptyMap()
-
     var id: Int = 0
 
     def newStep = new GenesisStep(id, phase, JC.asScalaBuffer(precedingPhases).toSet, ignoreFail,
