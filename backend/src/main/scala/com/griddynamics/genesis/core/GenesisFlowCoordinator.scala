@@ -48,7 +48,7 @@ abstract class GenesisFlowCoordinatorBase(val envName: String,
     extends FlowCoordinator with Logging {
 
     var env: Environment = _
-    var vms: Seq[VirtualMachine] = _
+    var servers: Seq[EnvResource] = _
 
     var workflow: Workflow = _
 
@@ -63,10 +63,10 @@ abstract class GenesisFlowCoordinatorBase(val envName: String,
     }
 
     def onFlowStart() = {
-        val (iEnv, iWorkflow, iVms) = storeService.startWorkflow(envName)
+        val (iEnv, iWorkflow, iServers) = storeService.startWorkflow(envName)
 
         env = iEnv
-        vms = iVms
+        servers = iServers
         workflow = iWorkflow
 
         workflow.stepsCount = stepsToStart.size
@@ -191,11 +191,13 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
     var envState: Option[GenesisEntity.Id] = None
     val vmsState = mutable.Map[GenesisEntity.Id, GenesisEntity.Id]() // vm.id -> step.id
 
+    val serverState = mutable.Map[GenesisEntity.Id, GenesisEntity.Id]() //server.id -> step.id
+
     val globals = mutable.Map[String, AnyRef]()
     val pluginContext = mutable.Map[String,Any]()
 
     def createStepExecutionContext(step: GenesisStep) =
-        new StepExecutionContextImpl(step, env.copy(), vms.map(_.copy()), workflow.copy(), globals, pluginContext)
+        new StepExecutionContextImpl(step, env.copy(), servers.map(_.copy()), workflow.copy(), globals, pluginContext)
 
     abstract override def onStepFinish(result: GenesisStepResult) = {
         handleEnvState(result)
@@ -238,25 +240,31 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
     }
 
     def handleVmsState(result: GenesisStepResult) {
-        for (uVm <- result.vmsUpdate) {
-            val vmsStateId = vmsState.get(uVm.id)
+        for (uVm <- result.serversUpdate) {
+            val stateMap = uVm match {
+              case vm: VirtualMachine => vmsState
+              case server: BorrowedMachine => serverState
+            }
+
+            val vmsStateId = stateMap.get(uVm.id)
 
             if (vmsStateId.isDefined && flowStepsTemplate.isStepsParallel(vmsStateId.get, result.step.id))
                 log.warn("Parallel modification of vm '%s' detected on step '%s'", uVm, result.step)
 
             updateVm(uVm)
-            vmsState(uVm.id) = result.step.id
+            stateMap(uVm.id) = result.step.id
         }
     }
 
-    def updateVm(vm: VirtualMachine) {
-        val index = vms.indexWhere(_.id == vm.id)
+    def updateVm(vm: EnvResource) {
+        val index = servers.indexWhere(it => it.id == vm.id && it.getClass == vm.getClass)
 
         if (index == -1)
-            vms = vms :+ vm
+            servers = servers :+ vm
         else
-            vms = vms.updated(index, vm)
+            servers = servers.updated(index, vm)
     }
+
 }
 
 trait RegularWorkflow { this: GenesisFlowCoordinatorBase =>

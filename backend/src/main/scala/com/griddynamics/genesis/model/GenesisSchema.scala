@@ -31,6 +31,10 @@ trait GenesisSchema extends Schema {
     val envs = table[Environment]("environment")
     val workflows = table[Workflow]("workflow")
     val vms = table[VirtualMachine]("virtual_machine")
+
+    val borrowedMachines = table[BorrowedMachine]("borrowed_machine")
+    val serverAttrs = table[SquerylEntityAttr]("borrowed_machine_attrs")
+
     val steps = table[WorkflowStep]("workflow_step")
 
     val vmAttrs = table[SquerylEntityAttr]("vm_attribute")
@@ -47,7 +51,7 @@ trait GenesisSchema extends Schema {
     val groupAuthorities = table[Authority]("group_authorities")
 
     val serverArrays = table[ServerArray]("server_array")
-    val servers = table[Server]("static_server")
+    val servers = table[Server]("predefined_server")
 
     val actionTracking = table[ActionTracking]("action_tracking")
 }
@@ -147,6 +151,10 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     on(servers)(server => declare (
       server.id is (primaryKey, autoIncremented),
       server.instanceId is dbType("varchar(128)")
+    ))
+
+    on(serverAttrs)(attr => declare (
+      attr.value is (dbType("text"))
     ))
 }
 

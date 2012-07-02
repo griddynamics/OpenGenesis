@@ -84,6 +84,7 @@ class GenesisRestService(storeService: StoreService,
                     envDesc(
                         env,
                         storeService.listVms(env),
+                        storeService.listServers(env),
                         _,
                         computeService,
                         storeService.countWorkflows(env),
@@ -149,6 +150,7 @@ object GenesisRestService {
 
     def envDesc(env: model.Environment,
                 vms: Seq[model.VirtualMachine],
+                bms: Seq[model.BorrowedMachine],
                 template: service.TemplateDefinition,
                 computeService: ComputeService,
                 historyCount: Int,
@@ -157,6 +159,8 @@ object GenesisRestService {
         val workflows = for (wf <- template.listWorkflows) yield workflowDesc(wf)
 
         val vmDescs = for (vm <- vms) yield vmDesc(env, vm, computeService)
+
+        val bmDescs = for (server <- bms) yield serversDesc(env, server)
 
         EnvironmentDetails(
             env.name,
@@ -168,6 +172,7 @@ object GenesisRestService {
             template.createWorkflow.name,
             template.destroyWorkflow.name,
             vmDescs.toSeq,
+            bmDescs.toSeq,
             env.projectId,
             historyCount,
             workflowCompleted
@@ -200,8 +205,12 @@ object GenesisRestService {
         }
     }
 
+    def serversDesc(env: model.Environment, bm: model.BorrowedMachine) = {
+      BorrowedMachine(env.name, bm.roleName, bm.instanceId.getOrElse("unknown"), bm.getIp.map(_.address).getOrElse("unknown"), bm.status.toString )
+    }
+
     def vmDesc(env: model.Environment, vm: model.VirtualMachine, computeService: ComputeService) = {
-      val status:EnvStatus = EnvStatusField.envStatusFieldToStatus(env.status);
+      val status:EnvStatus = EnvStatusField.envStatusFieldToStatus(env.status)
       val ipAddressOtp =
         status match {
           case EnvStatus.Destroyed() => None

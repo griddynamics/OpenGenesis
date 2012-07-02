@@ -22,31 +22,39 @@
  */
 package com.griddynamics.genesis.service.impl
 
-import com.griddynamics.genesis.model.{VirtualMachine, Environment}
+import com.griddynamics.genesis.model.{BorrowedMachine, EnvResource, VirtualMachine, Environment}
 import com.griddynamics.genesis.service.{Credentials, CredentialService}
 import com.griddynamics.genesis.service
 
 class DefaultCredentialsService(credentialsStore: service.CredentialsStoreService, val defaultCredentials: Option[Credentials]) extends CredentialService {
 
-  def getCredentialsForVm(env: Environment, vm: VirtualMachine): Option[Credentials] = {
+  def getCredentials(env: Environment, resource: EnvResource): Option[Credentials] = {
+    val provider = resource match {
+      case vm: VirtualMachine => vm.cloudProvider
+      case server: BorrowedMachine => Option("static")   //todo: !!!
+    }
+
     for {
-      provider <- vm.cloudProvider
-      keypair <- vm.keyPair
+      provider <- provider
+      keypair <- resource.keyPair
       creds <- credentialsStore.find(env.projectId, provider, keypair)
       credential <- credentialsStore.decrypt(creds).credential
     } yield new Credentials(creds.identity, credential)
   }
 
-  def updateVmCredentials(env: Environment, vm: VirtualMachine, credentials: Credentials) {
-    val cloudProvider = vm.cloudProvider.getOrElse(throw new UnsupportedOperationException("Not-cloud based servers are not supported yet"))
-    val credsOption = credentialsStore.findCredentials(env.projectId, cloudProvider, credentials.credential);
+  def updateServerCredentials(env: Environment, server: EnvResource, credentials: Credentials) {
+    val cloudProvider = server match {
+      case vm: VirtualMachine => vm.cloudProvider.getOrElse(throw new IllegalArgumentException("cloud provider isn't set"))
+      case server: BorrowedMachine => "static"   //todo: !!!
+    }
+    val credsOption = credentialsStore.findCredentials(env.projectId, cloudProvider, credentials.credential)
     credsOption match {
       case None => {
         val creds = credentialsStore.generate(env.projectId, cloudProvider, credentials.identity, credentials.credential)
-        vm.keyPair = Some(creds.pairName)
+        server.keyPair = Some(creds.pairName)
       }
       case Some(creds) => {
-        vm.keyPair = Some(creds.pairName)
+        server.keyPair = Some(creds.pairName)
       }
     }
   }

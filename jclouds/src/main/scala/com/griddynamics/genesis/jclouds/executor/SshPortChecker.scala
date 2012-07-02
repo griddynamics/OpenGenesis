@@ -48,7 +48,7 @@ class SshPortChecker(val action: CheckSshPortAction,
       case e: NoCredentialsFoundException => {
         log.debug("Ssh port check was failed: %s", e.getMessage)
         action.vm.status = VmStatus.Failed
-        storeService.updateVm(action.vm)
+        storeService.updateServer(action.vm)
         Some(NoCredentialsFound(action, action.vm))
       }
     }

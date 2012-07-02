@@ -36,7 +36,7 @@ class ProvisionVmsStepCoordinator(override val step: ProvisionVmStep,
 
   def onStepStart() = {
     LoggerWrapper.writeLog(context.step.id, "Starting phase %s".format(context.step.phase))
-    val existingVms = context.vms.filter(_.stepId == context.step.id)
+    val existingVms = context.virtualMachines.filter(_.stepId == context.step.id)
       .filter(_.status == VmStatus.Ready)
     for (n <- 1 to (step.quantity - existingVms.size)) yield {
       JCloudsProvisionVm(context.env,

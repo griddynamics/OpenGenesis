@@ -26,15 +26,15 @@ import org.springframework.web.bind.annotation._
 import org.springframework.stereotype.Controller
 import scala.Array
 import javax.servlet.http.HttpServletRequest
-import com.griddynamics.genesis.service.impl.ServersService
+import com.griddynamics.genesis.service.{ServersLoanService, ServersService}
 import com.griddynamics.genesis.rest.GenesisRestController._
 import com.griddynamics.genesis.api
-import api.ExtendedResult
+import api.{ServerDescription, ExtendedResult}
 import scala.Some
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/server-arrays"))
-class ServersController(service: ServersService) extends RestApiExceptionsHandler {
+class ServersController(service: ServersService, loanService: ServersLoanService) extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
@@ -96,6 +96,20 @@ class ServersController(service: ServersService) extends RestApiExceptionsHandle
     service.deleteServer(arrayId, serverId)
   }
 
+  @RequestMapping(value = Array("{arrayId}/servers/{serverId}"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  def getServerDescription(@PathVariable("projectId") projectId: Int,
+                   @PathVariable("arrayId") arrayId: Int,
+                   @PathVariable("serverId") serverId: Int,
+                   request: HttpServletRequest): ServerDescription = {
+    assertArrayBelongsToProject(projectId, arrayId)
+    val server = service.getServer(arrayId, serverId).getOrElse(throw new ResourceNotFoundException("Couldn't find server in the array"))
+    val envs = loanService.debtorEnvironments(server)
+    ServerDescription(server.id, server.arrayId, server.instanceId, server.address, envs)
+  }
+
+
+
   private[this] def assertArrayBelongsToProject(projectId: Int, arrayId: Int) {
     service.get(projectId, arrayId).getOrElse(throw new ResourceNotFoundException("Server array wasn't found in project"))
   }
@@ -104,10 +118,11 @@ class ServersController(service: ServersService) extends RestApiExceptionsHandle
     val params = extractParamsMap(request)
     val address = extractValue("address", params)
     val instanceId = extractOption("instanceId", params)
+    val credentialsId = extractOption("credentialsId", params).flatMap(id => if (id.isEmpty) None else Some(id.toInt))
     if (instanceId.isDefined && !instanceId.get.isEmpty) {
-      new api.Server(id, arrayId, instanceId.get, address)
+      new api.Server(id, arrayId, instanceId.get, address, credentialsId)
     } else {
-      new api.Server(id, arrayId, address)
+      new api.Server(id, arrayId, address, credentialsId)
     }
   }
 

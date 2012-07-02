@@ -20,11 +20,17 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.model
+package com.griddynamics.genesis.service
 
-class Server (var serverArrayId: GenesisEntity.Id,
-              var instanceId: String,
-              var address: String,
-              var credentialsId: Option[GenesisEntity.Id]) extends GenesisEntity {
-  def this() = this(0, "","", Some(0))
+import com.griddynamics.genesis.api.{ServerArray, LeaseDescription, Server}
+import com.griddynamics.genesis.model.{BorrowedMachine, Environment}
+
+trait ServersLoanService {
+  def loanServersToEnvironment(servers: Seq[Server], env: Environment, roleName: String, workflowId: Int, stepId: Int): Seq[BorrowedMachine]
+
+  def releaseServers(env: Environment, machines: Seq[BorrowedMachine]): Seq[BorrowedMachine]
+
+  def debtorEnvironments(server: Server): Seq[LeaseDescription]
+
+  def borrowedMachines(env: Environment): Seq[BorrowedMachine]
 }

@@ -44,7 +44,7 @@ case class CoordinatorInterrupt private[workflow](step: Step, signal: Signal) ex
 case class ActionStep(action: Action) extends Step
 
 case class ActionStepResult(step: ActionStep, actionResult: ActionResult) extends FallibleResult {
-    override def isStepFailed = actionResult.isInstanceOf[ExecutorThrowable]
+    override def isStepFailed = actionResult.isInstanceOf[ActionFailed]
 }
 
 case class FlowStepResult(step: Step, signal: Signal) extends StepResult

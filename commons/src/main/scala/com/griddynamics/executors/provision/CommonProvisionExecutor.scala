@@ -55,7 +55,7 @@ abstract class CommonProvisionExecutor extends SimpleAsyncActionExecutor
         case Some(instanceId) => {
           vm.instanceId = Some(instanceId)
           log.debug("vm '%s' is provisioned successfuly", vm)
-          storeService.updateVm(vm)
+          storeService.updateServer(vm)
           Some(ProvisionCompleted(action, vm))
         }
       })
@@ -63,7 +63,7 @@ abstract class CommonProvisionExecutor extends SimpleAsyncActionExecutor
 
   def getResultOnTimeout = {
     vm.status = VmStatus.Failed
-    storeService.updateVm(vm)
+    storeService.updateServer(vm)
     ProvisionFailed(action, Some(vm))
   }
 

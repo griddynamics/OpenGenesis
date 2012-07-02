@@ -38,9 +38,6 @@ class StoreService extends service.StoreService {
     import StoreService._
 
     @Transactional(readOnly = true)
-    def listEnvs(): Seq[Environment] = from(GS.envs)(select (_)).toList
-
-    @Transactional(readOnly = true)
     def listEnvs(projectId: Int): Seq[Environment] = listEnvQuery(projectId).toList
 
     @Transactional(readOnly = true)
@@ -76,12 +73,27 @@ class StoreService extends service.StoreService {
     }
 
     @Transactional(readOnly = true)
+    def findEnv(id: Int) = {
+        val result = from(GS.envs)(e => where(e.id === id) select (e))
+        val envs = if (result.size == 1) Some(result.single) else None
+        envs.foreach(loadAttrs(_, GS.envAttrs))
+        envs
+    }
+
+    @Transactional(readOnly = true)
     def getVm(instanceId: String) = {
         from(GS.envs, GS.vms)((env, vm) =>
             where(vm.envId === env.id and
                 vm.instanceId === Some(instanceId))
                 select ((env, vm))
         ).single
+    }
+
+    @Transactional(readOnly = true)
+    def listServers(env: Environment): Seq[BorrowedMachine] = {
+        val vms = from(GS.borrowedMachines)(server => where(server.envId === env.id) select (server)).toList
+        vms.foreach(loadAttrs(_, GS.serverAttrs))
+        vms
     }
 
     @Transactional(readOnly = true)
@@ -184,9 +196,24 @@ class StoreService extends service.StoreService {
     }
 
     @Transactional
-    def updateVm(vm: VirtualMachine) {
-        GS.vms.update(vm)
-        updateAttrs(vm, GS.vmAttrs)
+    def updateServer(resource: EnvResource) {
+      resource match {
+        case vm: VirtualMachine => {
+          GS.vms.update(vm)
+          updateAttrs(vm, GS.vmAttrs)
+        }
+        case server: BorrowedMachine => {
+          GS.borrowedMachines.update(server)
+          updateAttrs(server, GS.serverAttrs)
+        }
+      }
+    }
+
+    @Transactional
+    def createBM(bm: BorrowedMachine) = {
+      val cbm = GS.borrowedMachines.insert(bm)
+      updateAttrs(cbm, GS.serverAttrs)
+      cbm
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -249,7 +276,7 @@ class StoreService extends service.StoreService {
         updateEnv(e)
         GS.workflows.update(w)
 
-        (e, w, listVms(e))
+        (e, w, listVms(e) ++ listServers(e))
     }
 
     @Transactional
@@ -334,6 +361,10 @@ class StoreService extends service.StoreService {
     @Transactional
     def getActionLog(stepId : Int) = {
         from(GS.actionTracking)(at => where(at.workflowStepId === stepId) select (at) orderBy(at.started asc)).toList
+    }
+
+    def findBorrowedMachinesByServerId(serverId: Int) = {
+      from(GS.borrowedMachines)(bm => where(bm.serverId === serverId and bm.status <> MachineStatus.Released) select (bm)).toList
     }
 }
 

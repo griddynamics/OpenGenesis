@@ -42,7 +42,7 @@ class CommonCheckPublicIpExecutor(val action: CheckPublicIpAction,
 
   def getResultOnTimeout = {
     action.vm.status = VmStatus.Failed
-    storeService.updateVm(action.vm)
+    storeService.updateServer(action.vm)
     PublicIpCheckFailed(action, action.vm)
   }
 }

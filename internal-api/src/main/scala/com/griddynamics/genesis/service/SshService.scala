@@ -23,13 +23,13 @@
 package com.griddynamics.genesis.service
 
 import org.jclouds.ssh.SshClient
-import com.griddynamics.genesis.model.{VirtualMachine, Environment}
+import com.griddynamics.genesis.model.{EnvResource, Environment}
 
 trait SshService {
-  def sshClient(env : Environment,  vm : VirtualMachine) : SshClient
+  def sshClient(env : Environment,  server : EnvResource) : SshClient
 
   //todo this is workaround until proper CredentialService is implemented
   @Deprecated
-  def sshClient(vm : VirtualMachine, credentials: Option[Credentials]) : SshClient
+  def sshClient(server : EnvResource, credentials: Option[Credentials]) : SshClient
 }
 

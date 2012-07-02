@@ -29,7 +29,7 @@ import com.griddynamics.genesis.workflow.action.{DelayedExecutorInterrupt, Execu
 import com.griddynamics.genesis.workflow._
 import com.griddynamics.genesis.logging.LoggerWrapper
 import com.griddynamics.genesis.model.VmStatus._
-import com.griddynamics.genesis.model.{VmStatus, VirtualMachine}
+import com.griddynamics.genesis.model.{EnvResource, VmStatus, VirtualMachine}
 
 case class ProvisionStepResult(step: Step, virtualMachines: Seq[VirtualMachine]) extends StepResult
 
@@ -55,11 +55,12 @@ abstract class AbstractProvisionVmsStepCoordinator[A <: SpecificProvisionVmActio
       case true => "Fail"
       case false => "Success"
     }))
+    val readyVMs = context.virtualMachines.filter(_.status == VmStatus.Ready)
     GenesisStepResult(context.step,
       isStepFailed = stepFailed,
       envUpdate = context.envUpdate(),
-      vmsUpdate = context.vmsUpdate(),
-      actualResult = Some(new ProvisionStepResult(context.step, context.vms.filter(_.status == VmStatus.Ready)))
+      serversUpdate = context.serversUpdate(),
+      actualResult = Some(new ProvisionStepResult(context.step, readyVMs))
     )
   }
 
@@ -67,11 +68,11 @@ abstract class AbstractProvisionVmsStepCoordinator[A <: SpecificProvisionVmActio
     LoggerWrapper.writeLog(context.step.id, "Action %s finished with result %s".format(result.action.getClass.getSimpleName, result.getClass.getSimpleName))
     result match {
       case ProvisionCompleted(a, vm) => {
-        context.updateVm(vm)
+        context.updateServer(vm)
         Seq(CheckPublicIpAction(vm))
       }
       case ProvisionFailed(_, Some(vm)) => {
-        context.updateVm(vm)
+        context.updateServer(vm)
         stepFailed = true
         Seq(DestroyVmAction(vm))
       }
@@ -83,21 +84,21 @@ abstract class AbstractProvisionVmsStepCoordinator[A <: SpecificProvisionVmActio
         Seq(CheckSshPortAction(context.env, a.vm))
       }
       case PortTestFailed(_, vm) => {
-        context.updateVm(vm)
+        context.updateServer(vm)
         stepFailed = true
         Seq(DestroyVmAction(vm))
       }
       case SshCheckCompleted(_, vm) => {
-        context.updateVm(vm)
+        context.updateServer(vm)
         Seq()
       }
       case SshCheckFailed(_, vm) => {
-        context.updateVm(vm)
+        context.updateServer(vm)
         stepFailed = true
         Seq(DestroyVmAction(vm))
       }
       case NoCredentialsFound(_, vm) => {
-        context.updateVm(vm)
+        context.updateServer(vm)
         stepFailed = true
         Seq(DestroyVmAction(vm))
       }
@@ -105,12 +106,12 @@ abstract class AbstractProvisionVmsStepCoordinator[A <: SpecificProvisionVmActio
         Seq(CheckPortAction(a.vm, 22))
       }
       case PublicIpCheckFailed(_, vm) => {
-        context.updateVm(vm)
+        context.updateServer(vm)
         stepFailed = true
         Seq(DestroyVmAction(vm))
       }
       case VmDestroyed(_, vm) => {
-        context.updateVm(vm)
+        context.updateServer(vm)
         Seq()
       }
       case _ : ExecutorThrowable => {
@@ -124,7 +125,7 @@ abstract class AbstractProvisionVmsStepCoordinator[A <: SpecificProvisionVmActio
             interrupt.result match {
               case ProvisionCompleted(_, vm) =>
               {
-                context.updateVm(vm)
+                context.updateServer(vm)
                 Seq(DestroyVmAction(vm))
               }
               case _ => Seq()
@@ -141,6 +142,6 @@ abstract class AbstractProvisionVmsStepCoordinator[A <: SpecificProvisionVmActio
   }
 
   override def onStepInterrupt(signal: Signal) = {
-    for (vm <- context.vmsUpdate()) yield DestroyVmAction(vm)
+    for (vm <- context.serversUpdate() if vm.isInstanceOf[VirtualMachine]) yield DestroyVmAction(vm.asInstanceOf[VirtualMachine])
   }
 }

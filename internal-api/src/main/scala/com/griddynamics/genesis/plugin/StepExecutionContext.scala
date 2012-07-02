@@ -23,30 +23,33 @@
 package com.griddynamics.genesis.plugin
 
 import collection.mutable
-import com.griddynamics.genesis.model.{GenesisEntity, Workflow, VirtualMachine, Environment}
+import com.griddynamics.genesis.model._
+import scala.Some
 
 trait StepExecutionContext {
     def step : GenesisStep
 
     def env : Environment
-    def vms : Seq[VirtualMachine]
+    def servers : Seq[EnvResource]
+
+    def virtualMachines: Seq[VirtualMachine]
 
     def workflow : Workflow
 
-    def vms(roleStep : RoleStep) : Seq[VirtualMachine]
+    def servers(roleStep : RoleStep) : Seq[EnvResource]
 
     def updateEnv(env : Environment)
-    def updateVm(vm : VirtualMachine)
+    def updateServer(server : EnvResource)
 
     def envUpdate() : Option[Environment]
-    def vmsUpdate() : Seq[VirtualMachine]
+    def serversUpdate() : Seq[EnvResource]
     def globals : mutable.Map[String, AnyRef]
     def pluginContexts: mutable.Map[String, Any]
 }
 
 class StepExecutionContextImpl(val step : GenesisStep,
                                iEnv : Environment,
-                               iVms : Seq[VirtualMachine],
+                               iVms : Seq[EnvResource],
                                iWorkflow : Workflow,
                                val globals : mutable.Map[String, AnyRef],
                                val pluginContexts: mutable.Map[String, Any]) extends StepExecutionContext {
@@ -57,11 +60,11 @@ class StepExecutionContextImpl(val step : GenesisStep,
     val vmsUpdates = mutable.Set[GenesisEntity.Id]()
 
     def env = hEnv.copy()
-    def vms = hVms.map(_.copy()).toSeq
+    def servers = hVms.map(_.copy()).toSeq
 
     def workflow = iWorkflow.copy()
 
-    def vms(roleStep : RoleStep) =
+    def servers(roleStep : RoleStep) =
         for (vm <- hVms.toSeq if vm.workflowId == workflow.id || roleStep.isGlobal
                               if roleStep.roles.contains(vm.roleName))
             yield vm.copy()
@@ -71,18 +74,20 @@ class StepExecutionContextImpl(val step : GenesisStep,
         hEnv = env
     }
 
-    def updateVm(vm: VirtualMachine) {
-        val index = hVms.indexWhere(_.id == vm.id)
+    def updateServer(server: EnvResource) {
+        val index = hVms.indexWhere(vm => vm.id == server.id && vm.getClass == server.getClass)
 
         if (index == -1)
-            hVms = hVms :+ vm
+            hVms = hVms :+ server
         else
-            hVms(index) = vm
+            hVms(index) = server
 
-        vmsUpdates += hVms.indexWhere(_.id == vm.id)
+        vmsUpdates += hVms.indexWhere(vm => vm.id == server.id && vm.getClass == server.getClass)
     }
 
     def envUpdate() = if (envUpdated) Some(hEnv) else None
 
-    def vmsUpdate() = vmsUpdates.toSeq.map(hVms(_))
+    def serversUpdate() = vmsUpdates.toSeq.map(hVms(_))
+
+    def virtualMachines = servers.filter(_.isInstanceOf[VirtualMachine]).map(_.asInstanceOf[VirtualMachine])
 }

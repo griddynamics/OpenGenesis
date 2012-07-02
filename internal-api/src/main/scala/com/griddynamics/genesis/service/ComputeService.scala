@@ -22,11 +22,12 @@
  */
 package com.griddynamics.genesis.service
 
-import com.griddynamics.genesis.model.{IpAddresses, VirtualMachine}
+import com.griddynamics.genesis.model.{EnvResource, IpAddresses, VirtualMachine}
 
 /**
  * Cloud library independent compute service abstraction. Implementations should be provided by plugins
  */
 trait ComputeService {
     def getIpAddresses(vm : VirtualMachine) : Option[IpAddresses]
+//    def getIpAddresses(vm : EnvResource) : Option[IpAddresses]
 }
