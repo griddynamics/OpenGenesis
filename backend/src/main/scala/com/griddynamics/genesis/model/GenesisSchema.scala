@@ -78,6 +78,7 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     projectPropertiesToProject.foreignKeyDeclaration.constrainReference(onDelete cascade)
 
     val serverToServerArray = oneToManyRelation(serverArrays, servers).via((array, server) => array.id === server.serverArrayId)
+    serverToServerArray.foreignKeyDeclaration.constrainReference(onDelete cascade)
 
     on(envs)(env => declare(
         env.name is (unique)
