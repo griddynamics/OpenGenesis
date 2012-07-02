@@ -39,13 +39,13 @@ trait CommonSshPortChecker extends AsyncTimeoutAwareActionExecutor with Logging 
 
   def startAsync() {}
 
-  def connect : Option[VirtualMachine] = {
+  def connect : Option[(VirtualMachine, Boolean)] = {
       try {
           val client = sshClient
           client.connect()
-          client.exec(echo("ssh-test"))
+          val isExecOk = client.exec(echo("ssh-test")).getOutput == "ssh-test\r\n"
           client.disconnect()
-          Some(action.vm)
+          Some((action.vm, isExecOk))
       } catch {
           case e : SshException => {
               log.debug("Ssh ping is failed: %s", e.getMessage)
@@ -56,12 +56,18 @@ trait CommonSshPortChecker extends AsyncTimeoutAwareActionExecutor with Logging 
       }
   }
 
-  def getResult() = {
+  def getResult(): Option[ActionResult] = {
       connect match {
-          case Some(vm) => {
+          case Some((vm, true)) => {
               vm.status = VmStatus.Ready
               storeService.updateVm(vm)
               Some(SshCheckCompleted(action, vm))
+          }
+          case Some((_, false)) => {
+              log.debug("Exec test is failed")
+              action.vm.status = VmStatus.Failed
+              storeService.updateVm(action.vm)
+              Some(SshCheckFailed(action, action.vm))
           }
           case None => None
       }

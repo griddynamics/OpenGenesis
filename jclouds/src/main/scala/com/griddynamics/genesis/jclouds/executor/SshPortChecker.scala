@@ -23,9 +23,11 @@
 package com.griddynamics.genesis.jclouds.executors
 
 import com.griddynamics.genesis.service.{ComputeService, SshService, StoreService}
-import com.griddynamics.genesis.actions.provision.CheckSshPortAction
 import com.griddynamics.executors.provision.CommonSshPortChecker
+import com.griddynamics.genesis.model.VmStatus
 import com.griddynamics.genesis.workflow.{AsyncTimeoutAwareActionExecutor, Signal}
+import com.griddynamics.genesis.service.impl.NoCredentialsFoundException
+import com.griddynamics.genesis.actions.provision.{NoCredentialsFound, CheckSshPortAction}
 
 class SshPortChecker(val action: CheckSshPortAction,
                      val computeService: ComputeService,
@@ -37,5 +39,18 @@ class SshPortChecker(val action: CheckSshPortAction,
   override def cleanUp(signal: Signal) {
     if (sshClient != null)
       sshClient.disconnect()
+  }
+
+  override def getResult() = {
+    try {
+      super.getResult()
+    } catch {
+      case e: NoCredentialsFoundException => {
+        log.debug("Ssh port check was failed: %s", e.getMessage)
+        action.vm.status = VmStatus.Failed
+        storeService.updateVm(action.vm)
+        Some(NoCredentialsFound(action, action.vm))
+      }
+    }
   }
 }

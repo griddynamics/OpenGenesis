@@ -61,6 +61,10 @@ class SshService(credentialService: CredentialService,
       creds => metadata.map { NodeMetadataBuilder.fromNodeMetadata(_).credentials(creds).build }
     }.getOrElse(metadata)
 
+    if (node.get.getCredentials == null) {
+      throw new NoCredentialsFoundException("No credentials found for node " + node.get.getId)
+    }
+
     log.debug("getting ssh client for machine with %s...", ip)
     val utils = computeContext.utils()
     val sshClient = node.map(utils.sshForNode().apply(_)) orElse
@@ -70,3 +74,5 @@ class SshService(credentialService: CredentialService,
     sshClient.get
   }
 }
+
+class NoCredentialsFoundException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
