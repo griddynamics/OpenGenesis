@@ -78,15 +78,16 @@ class GenesisRestService(storeService: StoreService,
     }
 
     def describeEnv(envName: String) = {
-        storeService.findEnv(envName) match {
-            case Some(env) =>
+        storeService.findEnvWithWorkflow(envName) match {
+            case Some((env, flow)) =>
                 templateService.findTemplate(env.projectId, env.templateName, env.templateVersion).map {
                     envDesc(
                         env,
                         storeService.listVms(env),
                         _,
                         computeService,
-                        storeService.countWorkflows(env)
+                        storeService.countWorkflows(env),
+                        stepsCompleted(flow)
                     )
                 }
             case None => None
@@ -128,7 +129,7 @@ object GenesisRestService {
   private def stepsCompleted(workflowOption: Option[Workflow]) = {
       workflowOption match {
         case Some(workflow) if workflow.stepsCount > 0 =>
-          Some(workflow.stepsFinished / (workflow.stepsCount: Double))
+          Some("%.2f".format(workflow.stepsFinished / (workflow.stepsCount: Double)).toDouble)
         case Some(workflow) =>
           Some(0.0)
         case None => None
@@ -150,7 +151,8 @@ object GenesisRestService {
                 vms: Seq[model.VirtualMachine],
                 template: service.TemplateDefinition,
                 computeService: ComputeService,
-                historyCount: Int) = {
+                historyCount: Int,
+                workflowCompleted: Option[Double]) = {
 
         val workflows = for (wf <- template.listWorkflows) yield workflowDesc(wf)
 
@@ -167,7 +169,8 @@ object GenesisRestService {
             template.destroyWorkflow.name,
             vmDescs.toSeq,
             env.projectId,
-            historyCount
+            historyCount,
+            workflowCompleted
         )
     }
 

@@ -25,6 +25,7 @@ package com.griddynamics.genesis.service
 import java.lang.RuntimeException
 import com.griddynamics.genesis.common.Mistake
 import com.griddynamics.genesis.model._
+import com.griddynamics.genesis.api.WorkflowDetails
 
 trait StoreService {
     def listEnvs(): Seq[Environment]
@@ -33,6 +34,7 @@ trait StoreService {
     def countEnvs(projectId: Int) : Int
 
     def findEnv(name: String): Option[Environment]
+    def findEnvWithWorkflow(name: String): Option[(Environment, Option[Workflow])]
 
     def isEnvExist(projectId: Int, envName: String): Boolean
 
@@ -47,7 +49,6 @@ trait StoreService {
     def listEnvsWithWorkflow(projectId: Int): Seq[(Environment, Option[Workflow])]
     def listEnvsWithWorkflow(projectId: Int, start : Int, limit : Int): Seq[(Environment, Option[Workflow])]
 
-    def workflowsHistory(env : Environment): Seq[(Workflow, Seq[WorkflowStep])]
     def workflowsHistory(env : Environment, pageOffset: Int, pageLength: Int): Seq[(Workflow, Seq[WorkflowStep])]
 
     def listWorkflowSteps(workflow : Workflow): Seq[WorkflowStep]
