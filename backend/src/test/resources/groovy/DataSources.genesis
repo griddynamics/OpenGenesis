@@ -1,0 +1,50 @@
+package groovy
+template {
+    name("DataSources")
+    version("0.1")
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+    dataSources {
+        staticList{
+            name = "ds1"
+            list = ["value1", "value2"]
+        }
+        staticList{
+            name = "ds2"
+            list = ["value3"]
+        }
+        dependentList {
+            name = "ds3"
+            list = [1,3,4]
+        }
+    }
+
+    workflow("create") {
+        variables {
+            variable("nodesCount").as(Integer)
+            variable("list").as(Integer).description("Variable that has one value from a list").oneOf {["1":1, "2":2, "3":3]}.optional()
+            variable("listDS1").as(String).description("Variable that has one value from DS").dataSource("ds1").optional()
+            variable("listDS12").as(String).description("Variable that has one value from DS").oneOf {ds1 + ds2}.optional()
+            variable("dependent").as(Character).description("Dependent variable").dependsOn("nodesCount").dataSource("ds3").optional()
+            variable("doubleDep").as(String).description("Double dependent variable").dependsOn("nodesCount").dependsOn("dependent").dataSource("ds3").optional()
+            variable("triple").as(String).description("Double dependent variable").dependsOn("list", "nodesCount", "dependent").dataSource("ds3").optional()
+        }
+
+        steps {
+            teststep {
+                phase = "phase1"
+                text = project.context('key')
+            }
+        }
+    }
+
+    workflow("destroy") {
+        steps {
+            teststep {
+                phase = "undeply"
+                text = "destroy"
+            }
+        }
+    }
+}

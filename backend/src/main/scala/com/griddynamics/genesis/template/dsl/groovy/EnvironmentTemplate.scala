@@ -244,7 +244,6 @@ class EnvTemplateBuilder(val projectId: Int, val dataSourceFactories : Seq[DataS
         ds.setDelegate(dsDelegate)
         ds.call()
         val dsBuilders = dsDelegate.builders
-
         val map = (for (builder <- dsBuilders) yield builder.newDS).toMap
         dsObjSupport = Option(new DSObjectSupport(map))
     }
@@ -287,31 +286,39 @@ class BlockDeclaration {
     }
 }
 
-class DataSourceDeclaration(val projectId: Int, dsFactories: Seq[DataSourceFactory]) {
+class DataSourceDeclaration(val projectId: Int, dsFactories: Seq[DataSourceFactory]) extends GroovyObjectSupport {
     val builders = new ListBuffer[DataSourceBuilder]
 
-    def dataSource(mode : String) = dsFactories.find(mode == _.mode).map( factory => {
-        val builder = new DataSourceBuilder(projectId, factory)
-        builders += builder
-        builder
-    }).getOrElse(throw new IllegalArgumentException("No such variable datasource provider exists: " + mode))
+    override def invokeMethod(name: String, args: AnyRef) = {
+        dsFactories.filter(ds => ds.mode == name).headOption match {
+            case Some(factory) => {
+                var closure = args.asInstanceOf[Array[_]](0).asInstanceOf[Closure[_]]
+                var builder: DataSourceBuilder = new DataSourceBuilder(projectId, factory)
+                closure.setDelegate(builder)
+                closure.setResolveStrategy(Closure.DELEGATE_FIRST)
+                closure.call()
+                builders += builder
+            }
+            case _ => throw new IllegalArgumentException("Datasource for mode %s is not found".format(name))
+        }
+    }
 }
 
-class DataSourceBuilder(val projectId: Int, val factory : DataSourceFactory) {
+class DataSourceBuilder(val projectId: Int, val factory : DataSourceFactory) extends GroovyObjectSupport {
     var name : String = _
-    var conf : Map[String, Any] = Map.empty[String, Any]
+    var conf = new scala.collection.mutable.HashMap[String, Any]()
+
+    override def setProperty(name: String, args: AnyRef) {
+        conf.put(name, args)
+        super.setProperty(name, args)
+    }
 
     def name(nm : String) = {
         name_=(nm)
         this
     }
 
-    def config(map : java.util.Map[String, Any]) = {
-        this.conf = collection.JavaConversions.mapAsScalaMap(map).toMap
-        this
-    }
-
-    def newDS = (name, {val ds = factory.newDataSource; ds.config(conf + ("projectId" -> projectId)); ds})
+    def newDS = (name, {val ds = factory.newDataSource; ds.config(conf.toMap + ("projectId" -> projectId)); ds})
 }
 
  class DSObjectSupport(val dsMap: Map[String, VarDataSource]) extends GroovyObjectSupport {

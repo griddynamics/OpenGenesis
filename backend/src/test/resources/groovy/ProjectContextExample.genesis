@@ -6,19 +6,22 @@ template {
     destroyWorkflow("destroy")
 
     dataSources {
-        dataSource("staticList").name("ds2").config(list:[project.context("key")])
+        staticList{
+            name = "ds2"
+            list = [project.properties("key1")]
+        }
     }
 
     workflow("create") {
         variables {
-            variable("projectKey").optional(defaultValue = project.context("key"))
+            variable("projectKey").optional(defaultValue = project.properties("key2"))
             variable("projectList").dataSource("ds2").optional()
         }
 
         steps {
             teststep {
                 phase = "phase1"
-                text = project.context('key')
+                text = project.properties('key3')
             }
         }
     }
