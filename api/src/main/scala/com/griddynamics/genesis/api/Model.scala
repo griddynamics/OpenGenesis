@@ -43,7 +43,8 @@ case class EnvironmentDetails(name : String,
                               destroyWorkflowName : String,
                               vms : Seq[VirtualMachine],
                               projectId: Int,
-                              historyCount: Int)
+                              historyCount: Int,
+                              workflowCompleted: Option[Double])
 
 case class Variable(name : String, description : String, optional: Boolean = false, defaultValue: String = null,
                     values:Map[String,String] = Map(), dependsOn: Option[List[String]] = None)
