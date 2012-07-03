@@ -96,6 +96,11 @@ abstract class AbstractProvisionVmsStepCoordinator[A <: SpecificProvisionVmActio
         stepFailed = true
         Seq(DestroyVmAction(vm))
       }
+      case NoCredentialsFound(_, vm) => {
+        context.updateVm(vm)
+        stepFailed = true
+        Seq(DestroyVmAction(vm))
+      }
       case PublicIpCheckCompleted(a) => {
         Seq(CheckPortAction(a.vm, 22))
       }

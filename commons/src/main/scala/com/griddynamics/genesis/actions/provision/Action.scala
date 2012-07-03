@@ -65,6 +65,8 @@ case class SshCheckCompleted(action: CheckSshPortAction, vm: VirtualMachine) ext
 
 case class SshCheckFailed(action: CheckSshPortAction, vm: VirtualMachine) extends ProvisionResult with ActionFailed
 
+case class NoCredentialsFound(action: CheckSshPortAction, vm: VirtualMachine) extends ProvisionResult with ActionFailed
+
 case class VmDestroyed(action: DestroyVmAction, vm: VirtualMachine) extends ProvisionResult
 
 case class PortTestCompleted(action: CheckPortAction) extends ProvisionResult
