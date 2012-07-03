@@ -53,7 +53,7 @@ class GenesisRestController(genesisService: GenesisService, templateService: Tem
     def listTemplates(@PathVariable  projectId: Int,
                       @RequestParam(required = false) project: String, @RequestParam(required = false) tag: String) =
       paramToOption(project) match {
-        case _ => genesisService.listTemplates(projectId)
+        case _ => genesisService.listTemplates(projectId).map(template =>  Map("name" -> template.name, "version" -> template.version))
     }
 
     @RequestMapping(value = Array("projects/{projectId}/templates/{templateName}/v{templateVersion:.+}"), method = Array(RequestMethod.GET))
