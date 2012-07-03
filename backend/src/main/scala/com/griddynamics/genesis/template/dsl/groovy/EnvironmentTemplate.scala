@@ -292,11 +292,18 @@ class DataSourceDeclaration(val projectId: Int, dsFactories: Seq[DataSourceFacto
     override def invokeMethod(name: String, args: AnyRef) = {
         dsFactories.filter(ds => ds.mode == name).headOption match {
             case Some(factory) => {
-                var closure = args.asInstanceOf[Array[_]](0).asInstanceOf[Closure[_]]
-                var builder: DataSourceBuilder = new DataSourceBuilder(projectId, factory)
-                closure.setDelegate(builder)
-                closure.setResolveStrategy(Closure.DELEGATE_FIRST)
-                closure.call()
+                val argsIterator: Iterator[_] = args.asInstanceOf[Array[_]].iterator
+                if (argsIterator.isEmpty) {
+                    throw new IllegalArgumentException("Both name and configuration must be provided for datasource %s".format(name))
+                }
+                val dsName = argsIterator.next().asInstanceOf[String]
+                val builder: DataSourceBuilder = new DataSourceBuilder(projectId, factory, dsName)
+                if (argsIterator.hasNext) {
+                    val closure = argsIterator.next().asInstanceOf[Closure[_]]
+                    closure.setDelegate(builder)
+                    closure.setResolveStrategy(Closure.DELEGATE_FIRST)
+                    closure.call()
+                }
                 builders += builder
             }
             case _ => throw new IllegalArgumentException("Datasource for mode %s is not found".format(name))
@@ -304,18 +311,12 @@ class DataSourceDeclaration(val projectId: Int, dsFactories: Seq[DataSourceFacto
     }
 }
 
-class DataSourceBuilder(val projectId: Int, val factory : DataSourceFactory) extends GroovyObjectSupport {
-    var name : String = _
+class DataSourceBuilder(val projectId: Int, val factory : DataSourceFactory, val name: String) extends GroovyObjectSupport {
     var conf = new scala.collection.mutable.HashMap[String, Any]()
 
     override def setProperty(name: String, args: AnyRef) {
         conf.put(name, args)
         super.setProperty(name, args)
-    }
-
-    def name(nm : String) = {
-        name_=(nm)
-        this
     }
 
     def newDS = (name, {val ds = factory.newDataSource; ds.config(conf.toMap + ("projectId" -> projectId)); ds})

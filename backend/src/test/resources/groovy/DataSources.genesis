@@ -6,24 +6,24 @@ template {
     destroyWorkflow("destroy")
 
     dataSources {
-        staticList{
-            name = "ds1"
+        staticList("ds1") {
             values = ["value1", "value2"]
         }
-        staticList{
-            name = "ds2"
+        staticList("ds2") {
             values = ["value3"]
         }
-        dependentList {
-            name = "ds3"
+        dependentList("ds3") {
             values = [1,3,4]
         }
+
+        noArgsList("noargs")
     }
 
     workflow("create") {
         variables {
             variable("nodesCount").as(Integer)
             variable("list").as(Integer).description("Variable that has one value from a list").oneOf {["1":1, "2":2, "3":3]}.optional()
+            variable("noArgs").description("No args ds").dataSource("noargs").optional()
             variable("listDS1").as(String).description("Variable that has one value from DS").dataSource("ds1").optional()
             variable("listDS12").as(String).description("Variable that has one value from DS").oneOf {ds1 + ds2}.optional()
             variable("dependent").as(Character).description("Dependent variable").dependsOn("nodesCount").dataSource("ds3").optional()

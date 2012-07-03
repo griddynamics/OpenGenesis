@@ -17,7 +17,7 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
     val ppRepository = mock[ProjectPropertyRepository]
     val templateService = new GroovyTemplateService(templateRepository,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-        Seq(new ListVarDSFactory, new DependentListVarDSFactory), ppRepository)
+        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new NoArgsDSFactory), ppRepository)
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/DataSources.genesis"))
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
     Mockito.when(ppRepository.read(0, "key")).thenReturn(Some("abc"))
@@ -37,6 +37,15 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
         val listDS12 = varDesc.find(_.name == "listDS12")
         assert(listDS12.isDefined)
         expect(Map("value1"->"value1", "value2" -> "value2", "value3" -> "value3"))(listDS12.get.values)
+    }
+
+    @Test def testNoArgsSource() {
+        val template = testTemplate
+        val varDesc =  template.createWorkflow.variableDescriptions
+        assert(varDesc.nonEmpty)
+        val listDS12 = varDesc.find(_.name == "noArgs")
+        assert(listDS12.isDefined)
+        expect(Seq("a", "b", "c").zip(Seq("a", "b", "c")).toMap)(listDS12.get.values)
     }
 
     @Test def testIndependentDataSource() {
@@ -112,4 +121,15 @@ class DependentListDataSource extends ListVarDataSource with DependentDataSource
 class DependentListVarDSFactory extends DataSourceFactory {
     val mode = "dependentList"
     def newDataSource = new DependentListDataSource
+}
+
+class NoArgsDSFactory extends DataSourceFactory {
+    val mode = "noArgsList"
+    def newDataSource = {
+        val source = new ListVarDataSource {
+            override def config(map: Map[String, Any]){}
+        }
+        source.values = Seq("a", "b", "c")
+        source
+    }
 }
