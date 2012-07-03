@@ -6,9 +6,8 @@ template {
     destroyWorkflow("destroy")
 
     dataSources {
-        staticList{
-            name = "ds2"
-            list = [project.properties("key1")]
+        staticList("ds2"){
+            values = [project.properties("key1")]
         }
     }
 
