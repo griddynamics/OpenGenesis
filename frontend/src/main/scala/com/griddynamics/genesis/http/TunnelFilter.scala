@@ -35,7 +35,6 @@ import java.security.Principal
 import org.springframework.security.core.context.{SecurityContext, SecurityContextHolder}
 import com.griddynamics.genesis.resources.ResourceFilter
 import org.jboss.netty.buffer.{ChannelBuffer, ChannelBuffers}
-import java.io.IOException
 import java.util.concurrent.{CountDownLatch, TimeUnit, Executors}
 import java.util.zip.GZIPInputStream
 
@@ -80,9 +79,10 @@ object TunnelFilter extends Logging {
     //we will authenticate on backend with this header.
     //TODO: write Spring Sec. filter to provide normal authorization based on it, if required
     val SEC_HEADER_NAME = "X-On-Behalf-of"
+    val AUTH_HEADER_NAME = "X-Authorities"
     val TUNNELED_HEADER_NAME = "X-Tunneled-By"
     def currentUser = {
-        var context: SecurityContext = SecurityContextHolder.getContext
+        val context: SecurityContext = SecurityContextHolder.getContext
         val result = if (context != null && context.getAuthentication != null)
          context.getAuthentication.asInstanceOf[Principal].getName
         else
@@ -97,6 +97,14 @@ object TunnelFilter extends Logging {
       } finally {
         log.trace("Time spent: %s ms", System.currentTimeMillis() - millis)
       }
+    }
+
+    def authorities = {
+        val context: SecurityContext = SecurityContextHolder.getContext
+        if (context != null && context.getAuthentication != null)
+         context.getAuthentication.getAuthorities
+        else
+         java.util.Collections.emptyList()
     }
 }
 
@@ -218,6 +226,7 @@ class OutputStreamHandler(val response: HttpServletResponse, val latch: CountDow
 }
 
 trait UrlConnectionTunnel extends Tunnel with Logging {
+    import collection.JavaConversions.collectionAsScalaIterable
     def doServe(request: HttpServletRequest, response: CatchCodeWrapper) {
         val uri = Option(request.getQueryString) match {
             case Some(s) => request.getRequestURI + "?" + s
@@ -234,6 +243,7 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
         }
         connection.setDoInput(true)
         connection.addRequestProperty(TunnelFilter.SEC_HEADER_NAME, TunnelFilter.currentUser)
+        connection.addRequestProperty(TunnelFilter.AUTH_HEADER_NAME, TunnelFilter.authorities.mkString(","))
         connection.addRequestProperty("Connection", "close") //no keep-alive
         connection.setConnectTimeout(5000)
         connection.setReadTimeout(5000)
