@@ -61,6 +61,10 @@ class SshService(credentialService: CredentialService,
       creds => metadata.map { NodeMetadataBuilder.fromNodeMetadata(_).credentials(creds).build }
     }.getOrElse(metadata)
 
+    if (node.isEmpty) {
+      log.debug("can't get node metadata for machine '%s'", vm)
+      throw new IllegalArgumentException(vm.toString)
+    }
     if (node.get.getCredentials == null) {
       throw new NoCredentialsFoundException("No credentials found for node " + node.get.getId)
     }
