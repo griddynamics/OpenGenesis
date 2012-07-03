@@ -41,23 +41,25 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
         Seq(new ListVarDSFactory, new DependentListVarDSFactory), ppRepository)
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/ProjectContextExample.genesis"))
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
-    Mockito.when(ppRepository.read(0, "key")).thenReturn(Some("abc"))
+    Mockito.when(ppRepository.read(0, "key1")).thenReturn(Some("fred"))
+    Mockito.when(ppRepository.read(0, "key2")).thenReturn(Some("barney"))
+    Mockito.when(ppRepository.read(0, "key3")).thenReturn(Some("wilma"))
     val createWorkflow = templateService.findTemplate(0, "Projects", "0.1").get.createWorkflow
 
     @Test def testDefaultValue() {
         val projectVariable: VariableDescription = createWorkflow.variableDescriptions.find(_.name == "projectKey").getOrElse(fail("Variable projectKey must be declared"))
-        assert(projectVariable.defaultValue == "abc")
+        assert(projectVariable.defaultValue == "barney")
     }
 
     @Test def testDSConfig() {
         val listVariable: VariableDescription = createWorkflow.variableDescriptions.find(_.name == "projectList").getOrElse(fail("Variable projectList must be declared"))
-        assert(listVariable.values == Map("abc" -> "abc"))
+        assert(listVariable.values == Map("fred" -> "fred"))
     }
 
     @Test def testApplyVariable() {
         val builder: StepBuilder = createWorkflow.embody(Map()).head
         val newStep: GenesisStep = builder.newStep
         val actualStep: DoNothingStep = newStep.actualStep.asInstanceOf[DoNothingStep]
-        assert(actualStep.name == "abc")
+        assert(actualStep.name == "wilma")
     }
 }
