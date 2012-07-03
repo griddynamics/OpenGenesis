@@ -67,6 +67,14 @@ class StoreService extends service.StoreService {
         envs
     }
 
+    //TODO switch to join query
+    @Transactional(readOnly = true)
+    def findEnvWithWorkflow(envName: String) = {
+        findEnv(envName).map( env =>
+            (env, listWorkflows(env).find(_.status == WorkflowStatus.Executed))
+        )
+    }
+
     @Transactional(readOnly = true)
     def getVm(instanceId: String) = {
         from(GS.envs, GS.vms)((env, vm) =>
@@ -132,11 +140,6 @@ class StoreService extends service.StoreService {
         //    select(env, w)
         //}).toList
     }
-
-    @Transactional(readOnly = true)
-    def workflowsHistory(env : Environment): Seq[(Workflow, Seq[WorkflowStep])] =
-        for(workflow <- listWorkflows(env)) yield
-            (workflow, listWorkflowSteps(workflow))
 
     @Transactional(readOnly = true)
     def workflowsHistory(env : Environment, pageOffset: Int, pageLength: Int): Seq[(Workflow, Seq[WorkflowStep])] =

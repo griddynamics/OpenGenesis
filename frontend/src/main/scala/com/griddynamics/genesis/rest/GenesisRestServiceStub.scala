@@ -56,7 +56,8 @@ class GenesisRestServiceStub() extends GenesisService {
             "destroy",
             Seq(vmT, vmT, vmT),
             1,
-            0
+            0,
+            Some(0.0)
         )
 
     var envs = Seq(
