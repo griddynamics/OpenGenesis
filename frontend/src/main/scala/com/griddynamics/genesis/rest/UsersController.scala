@@ -39,6 +39,10 @@ class UsersController extends RestApiExceptionsHandler {
     @Autowired(required = false) var userService: UserService = _
     @Autowired(required = false) var groupService: GroupService = _
 
+    @RequestMapping(method = Array(RequestMethod.GET), params = Array("available"))
+    @ResponseBody
+    def available() = userService != null
+
     @RequestMapping(method = Array(RequestMethod.GET))
     @ResponseBody
     def list() = userService.list
