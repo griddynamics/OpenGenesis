@@ -8,15 +8,15 @@ template {
     dataSources {
         staticList{
             name = "ds1"
-            list = ["value1", "value2"]
+            values = ["value1", "value2"]
         }
         staticList{
             name = "ds2"
-            list = ["value3"]
+            values = ["value3"]
         }
         dependentList {
             name = "ds3"
-            list = [1,3,4]
+            values = [1,3,4]
         }
     }
 
