@@ -24,7 +24,7 @@
 package com.griddynamics.genesis.template
 
 class ListVarDataSource extends VarDataSource with DependentDataSource {
-    val Key = "list"
+    val Key = "values"
     var values: Seq[String] = _
 
     def getData = values.zip(values).toMap
@@ -39,7 +39,7 @@ class ListVarDataSource extends VarDataSource with DependentDataSource {
 }
 
 class DependentList extends DependentDataSource {
-    val Key = "list"
+    val Key = "values"
     var values: Seq[String] = _
 
     def getData(v: Any) = values.zip(values.map(v.toString.takeRight(24) + ":" + _)).toMap

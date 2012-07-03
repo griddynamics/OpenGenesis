@@ -26,12 +26,12 @@ import com.griddynamics.genesis.repository.ProjectPropertyRepository
 
 
 trait ProjectContextSupport {
-    def context(s: String): String
+    def properties(s: String): String
 }
 
 trait ProjectContextAware {
     def getProject = new ProjectContextSupport {
-        def context(s: String) = "abc"
+        def properties(s: String) = "abc"
     }
 }
 
@@ -39,6 +39,6 @@ trait ProjectContextFromProperties extends ProjectContextAware {
   def repository: ProjectPropertyRepository
   def projectId: Int
   override def getProject = new ProjectContextSupport {
-    def context(s: String) = repository.read(projectId, s).getOrElse(throw new IllegalArgumentException("Key %s is not defined for current project".format(s)))
+    def properties(s: String) = repository.read(projectId, s).getOrElse(throw new IllegalArgumentException("Key %s is not defined for current project".format(s)))
   }
 }
