@@ -294,7 +294,10 @@ class DataSourceDeclaration(val projectId: Int, dsFactories: Seq[DataSourceFacto
             case Some(factory) => {
                 val argsIterator: Iterator[_] = args.asInstanceOf[Array[_]].iterator
                 if (argsIterator.isEmpty) {
-                    throw new IllegalArgumentException("Both name and configuration must be provided for datasource %s".format(name))
+                    throw new IllegalArgumentException(
+                        """At least name must be provided for datasource %s. Example:
+                          | %s("name") { ... }
+                        """.stripMargin.format(name, name))
                 }
                 val dsName = argsIterator.next().asInstanceOf[String]
                 val builder: DataSourceBuilder = new DataSourceBuilder(projectId, factory, dsName)
