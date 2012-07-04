@@ -78,7 +78,7 @@ class ExternalAuthentication(val username: String, val assignedGroups: List[Stri
     var principal: AnyRef = username
 
     def this(details: UserDetails, additionalGroups: List[GrantedAuthority]) = {
-        this(null, null, additionalGroups, details)
+        this(null, null, additionalGroups.distinct, details)
         principal = details
         setAuthenticated(true)
     }
