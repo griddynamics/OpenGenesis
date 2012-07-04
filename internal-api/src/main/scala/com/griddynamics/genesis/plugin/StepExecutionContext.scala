@@ -89,5 +89,5 @@ class StepExecutionContextImpl(val step : GenesisStep,
 
     def serversUpdate() = vmsUpdates.toSeq.map(hVms(_))
 
-    def virtualMachines = servers.filter(_.isInstanceOf[VirtualMachine]).map(_.asInstanceOf[VirtualMachine])
+    def virtualMachines = servers.collect { case vm: VirtualMachine => vm }
 }

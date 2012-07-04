@@ -83,6 +83,7 @@ class ServersServiceImpl(repository: ServerArrayRepository, serverRepo: ServerRe
 
   private[this] def validateServer(server: Server): ExtendedResult[Server] = {
     mustSatisfyLengthConstraints(server, server.instanceId, "instanceId")(1, 128) ++
+    mustSatisfyLengthConstraints(server, server.address, "address")(1, 128) ++
     must(server, "Server with instanceId '%s' already exists".format(server.instanceId)) { server =>
       serverRepo.findByInstanceId(server.arrayId, server.instanceId).isEmpty
     } ++

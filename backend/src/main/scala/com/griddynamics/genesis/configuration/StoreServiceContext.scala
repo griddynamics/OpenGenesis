@@ -29,7 +29,7 @@ import com.griddynamics.genesis.model.GenesisSchema
 import org.squeryl.internals.DatabaseAdapter
 import org.springframework.jdbc.datasource.{DataSourceUtils, DataSourceTransactionManager}
 import com.griddynamics.genesis.service.impl
-import com.griddynamics.genesis.service.{ServersLoanService, ServersService}
+import com.griddynamics.genesis.service.ServersService
 import com.griddynamics.genesis.service.impl.{ServersLoanServiceImpl, ServersServiceImpl, CredentialsStoreService, ProjectServiceImpl}
 import org.squeryl.adapters.{PostgreSqlAdapter, MySQLAdapter, H2Adapter}
 import com.griddynamics.genesis.repository
@@ -62,7 +62,7 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 
     @Bean def serversService: ServersService = new ServersServiceImpl(serversArrayRepository, serversRepository)
 
-    @Bean def serversLoanService: ServersLoanService = new ServersLoanServiceImpl(serversRepository, serversArrayRepository, storeService, credentialsRepository)
+    @Bean def serversLoanService: ServersLoanService = new ServersLoanServiceImpl(storeService, credentialsRepository)
 }
 
 class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager,

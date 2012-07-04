@@ -23,17 +23,15 @@
 package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.service
-import com.griddynamics.genesis.model.{MachineStatus, VmStatus, BorrowedMachine, Environment}
-import com.griddynamics.genesis.api.{ServerArray, LeaseDescription, Server}
-import com.griddynamics.genesis.repository.{CredentialsRepository, ServerRepository, ServerArrayRepository}
+import com.griddynamics.genesis.model.{MachineStatus, BorrowedMachine, Environment}
+import com.griddynamics.genesis.api.{LeaseDescription, Server}
+import com.griddynamics.genesis.repository.CredentialsRepository
 import java.net.InetAddress
 import org.springframework.transaction.annotation.Transactional
 import java.sql.Timestamp
 
-class ServersLoanServiceImpl (serversRepository: ServerRepository,
-                              serverArrayRepo: ServerArrayRepository,
-                              storeService: service.StoreService,
-                              credentialsRepository: CredentialsRepository) extends service.ServersLoanService {
+class ServersLoanServiceImpl ( storeService: service.StoreService,
+                               credentialsRepository: CredentialsRepository) extends service.ServersLoanService {
 
   @Transactional
   def loanServersToEnvironment(servers: Seq[Server], env: Environment, roleName: String, workflowId: Int, stepId: Int) = {

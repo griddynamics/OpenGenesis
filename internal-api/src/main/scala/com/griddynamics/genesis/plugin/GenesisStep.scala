@@ -23,7 +23,7 @@
 package com.griddynamics.genesis.plugin
 
 import com.griddynamics.genesis.workflow.{StepResult, Step}
-import com.griddynamics.genesis.model.{EnvResource, GenesisEntity, Environment, VirtualMachine}
+import com.griddynamics.genesis.model.{EnvResource, GenesisEntity, Environment}
 
 case class GenesisStep(id: GenesisEntity.Id,
                        phase: String,
