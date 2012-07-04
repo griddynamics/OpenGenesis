@@ -88,7 +88,8 @@
 
         <s:http-basic/>
         <s:logout logout-url="/logout" invalidate-session="true" logout-success-url="/login.html"/>
-        <s:remember-me key="GenesisRememberMeKey" token-validity-seconds="604800"/>
+        <s:remember-me key="GenesisRememberMeKey" token-validity-seconds="604800" user-service-ref="genesisUserDetailsService"/>
+        <s:custom-filter ref="headerBasedAuthFilter" after="BASIC_AUTH_FILTER"/>
 	</s:http>
 
 
@@ -108,7 +109,7 @@
             <s:password-encoder hash="sha-256"/>
             <s:jdbc-user-service data-source-ref="dataSource"/>
         </s:authentication-provider>-->
-
+        <s:authentication-provider ref="externalAuthenticationProvider"/>
         <s:authentication-provider user-service-ref="genesisUserDetailsService">
             <s:password-encoder hash="sha-256"/>
         </s:authentication-provider>
@@ -121,6 +122,16 @@
         <constructor-arg name="projectAuthorityService" ref="projectAuthorityService"/>
     </bean>
 
+    <bean id="externalAuthenticationProvider" class="com.griddynamics.genesis.spring.security.ExternalUserAuthenticationProvider">
+        <constructor-arg ref="genesisExternalDetailsService"/>
+    </bean>
+
+    <bean id="genesisExternalDetailsService" class="com.griddynamics.genesis.spring.security.ExternalUserDetailsService">
+        <constructor-arg name="authorityService" ref="authorityService" type="com.griddynamics.genesis.service.AuthorityService"/>
+        <constructor-arg name="projectAuthorityService" ref="projectAuthorityService" type="com.griddynamics.genesis.service.ProjectAuthorityService"/>
+        <constructor-arg name="adminUsername" value="" type="java.lang.String"/>
+    </bean>
+
     <bean id="adAuthProvider" lazy-init="true"
           class="org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider">
         <constructor-arg value="${genesis.auth.ad.domain:}"/>
@@ -129,5 +140,7 @@
 
     <bean id="nullProvider"
           class="org.springframework.security.config.authentication.AuthenticationManagerBeanDefinitionParser.NullAuthenticationProvider" />
+
+    <bean id="headerBasedAuthFilter" class="com.griddynamics.genesis.spring.security.HeaderBasedAuthFilter"/>
 
 </beans>

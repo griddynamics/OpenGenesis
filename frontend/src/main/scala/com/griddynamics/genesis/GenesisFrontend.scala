@@ -96,19 +96,20 @@ object GenesisFrontend extends Logging {
             context.addFilter(gzipFilterHolder, "/*", 0)
         }
 
+        val securityFilterHolder = new FilterHolder(new DelegatingFilterProxy)
+        securityFilterHolder.setName("springSecurityFilterChain")
+        context.addFilter(securityFilterHolder, "/*", 0)
+        val bean: FilterChainProxy = appContext.getBean(classOf[FilterChainProxy])
+        val logoutEnabled = bean.getFilterChains.flatMap(chain => chain.getFilters.toIterable
+          .filter(f => f.isInstanceOf[LogoutFilter])).size > 0
+        context.setInitParameter(logoutEnabledParamName, logoutEnabled.toString)
+
         if (! isBackend) {
-            val securityFilterHolder = new FilterHolder(new DelegatingFilterProxy)
-            securityFilterHolder.setName("springSecurityFilterChain")
-            context.addFilter(securityFilterHolder, "/*", 0)
             val resourceHolder = new FilterHolder(new ResourceFilter)
             resourceHolder.setName("resourceFilter")
             resourceHolder.setInitParameter("resourceRoots", resourceRoots)
             resourceHolder.setInitParameter("cacheResources", cacheResources)
             context.addFilter(resourceHolder, "/*", 0)
-            val bean: FilterChainProxy = appContext.getBean(classOf[FilterChainProxy])
-            val logoutEnabled = bean.getFilterChains.flatMap(chain => chain.getFilters.toIterable
-              .filter(f => f.isInstanceOf[LogoutFilter])).size > 0
-            context.setInitParameter(logoutEnabledParamName, logoutEnabled.toString)
         }
 
         if (isFrontend) {
