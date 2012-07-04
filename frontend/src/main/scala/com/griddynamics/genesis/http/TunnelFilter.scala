@@ -76,11 +76,10 @@ abstract class TunnelFilter(override val uriMatch: String) extends Filter with T
 
 object TunnelFilter extends Logging {
     val BACKEND_PARAMETER = "backendHost"
-    //we will authenticate on backend with this header.
-    //TODO: write Spring Sec. filter to provide normal authorization based on it, if required
     val SEC_HEADER_NAME = "X-On-Behalf-of"
     val AUTH_HEADER_NAME = "X-Authorities"
     val TUNNELED_HEADER_NAME = "X-Tunneled-By"
+    val SEPARATOR_CHAR = ","
     def currentUser = {
         val context: SecurityContext = SecurityContextHolder.getContext
         val result = if (context != null && context.getAuthentication != null)
@@ -243,7 +242,7 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
         }
         connection.setDoInput(true)
         connection.addRequestProperty(TunnelFilter.SEC_HEADER_NAME, TunnelFilter.currentUser)
-        connection.addRequestProperty(TunnelFilter.AUTH_HEADER_NAME, TunnelFilter.authorities.mkString(","))
+        connection.addRequestProperty(TunnelFilter.AUTH_HEADER_NAME, TunnelFilter.authorities.mkString(TunnelFilter.SEPARATOR_CHAR))
         connection.addRequestProperty("Connection", "close") //no keep-alive
         connection.setConnectTimeout(5000)
         connection.setReadTimeout(5000)
