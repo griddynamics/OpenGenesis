@@ -31,6 +31,7 @@ import scala.collection.JavaConversions._
 import org.springframework.security.authentication.{AbstractAuthenticationToken, AuthenticationProvider}
 import org.springframework.security.core.{GrantedAuthority, Authentication}
 import com.griddynamics.genesis.util.Logging
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 
 
 class ExternalUserDetailsService(authorityService: AuthorityService, projectAuthorityService: ProjectAuthorityService, adminUsername: String)
@@ -52,7 +53,7 @@ class ExternalUserDetailsService(authorityService: AuthorityService, projectAuth
     }
 
     def getRolesByGroupName(groupName: String): List[GrantedAuthority] = {
-        RoleBasedAuthority(authorityService.getGroupAuthorities(groupName)).toList
+        new SimpleGrantedAuthority("GROUP_" + groupName) :: RoleBasedAuthority(authorityService.getGroupAuthorities(groupName)).toList
     }
 }
 
