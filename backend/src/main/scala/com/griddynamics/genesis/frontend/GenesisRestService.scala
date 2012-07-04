@@ -129,7 +129,7 @@ object GenesisRestService {
   private def stepsCompleted(workflowOption: Option[Workflow]) = {
       workflowOption match {
         case Some(workflow) if workflow.stepsCount > 0 =>
-          Some("%.2f".format(workflow.stepsFinished / (workflow.stepsCount: Double)).toDouble)
+          Some(BigDecimal(workflow.stepsFinished / (workflow.stepsCount: Double)).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble)
         case Some(workflow) =>
           Some(0.0)
         case None => None
