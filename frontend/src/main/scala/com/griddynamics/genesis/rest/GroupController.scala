@@ -40,6 +40,11 @@ class GroupController extends RestApiExceptionsHandler with ApplicationContextAw
 
     lazy val userService: Option[UserService] = Option(applicationContext.getBean(classOf[UserService]))
 
+
+    @RequestMapping(method = Array(RequestMethod.GET), params = Array("available"))
+    @ResponseBody
+    def available() = groupService != null
+
     @RequestMapping(method = Array(RequestMethod.GET))
     @ResponseBody
     def list() = groupService.list
