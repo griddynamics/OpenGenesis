@@ -63,7 +63,7 @@
             <dependencies>
                 <dependency>
                     <groupId>com.griddynamics.genesis</groupId>
-                    <artifactId>jenkins-build-provider</artifactId>
+                    <artifactId>jenkins-ci-integration</artifactId>
                     <version>${project.version}</version>
                 </dependency>
             </dependencies>

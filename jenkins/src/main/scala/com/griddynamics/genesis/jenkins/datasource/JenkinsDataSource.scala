@@ -20,7 +20,7 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.build.jenkins
+package com.griddynamics.genesis.jenkins.datasource
 
 import com.griddynamics.genesis.template.{DataSourceFactory, VarDataSource}
 import com.griddynamics.genesis.util.Logging
@@ -31,9 +31,12 @@ import net.liftweb.json.JsonAST.JObject
 import net.liftweb.json._
 import net.sf.ehcache.CacheManager
 import com.griddynamics.genesis.service.CredentialsStoreService
+import com.griddynamics.genesis.jenkins.api.{JenkinsRemoteApi, JenkinsConnectSpecification}
 
-class JenkinsDataSource(val cacheManager: CacheManager, val credStore: CredentialsStoreService) extends VarDataSource with Logging with Cache  {
+class JenkinsDataSource(val cacheManager: CacheManager, val credStore: CredentialsStoreService) extends VarDataSource with Logging with Cache {
+
   import JenkinsDataSource._
+
   implicit val formats = DefaultFormats
 
   private var connectionSpec: JenkinsConnectSpecification = _
@@ -66,10 +69,13 @@ class JenkinsDataSource(val cacheManager: CacheManager, val credStore: Credentia
     val arts = fromCache(CacheRegion, CacheKey(connectionSpec, jobName)) {
       loadFromJenkins.toMap
     }
-    arts.filter { case (url, artifact) => artifact.matches(artifactFilter) }
+    arts.filter {
+      case (url, artifact) => artifact.matches(artifactFilter)
+    }
   }
 
-  private[this] def loadFromJenkins: List[(String, String)] =  { // (url, artifact)
+  private[this] def loadFromJenkins: List[(String, String)] = {
+    // (url, artifact)
     def artifacts(is: InputStream) = {
       for {
         build <- extractBuilds(is) if !build.artifacts.isEmpty
@@ -122,11 +128,14 @@ object JenkinsDataSource {
 
 class JenkinsDSFactory(cacheManager: CacheManager, credentialsService: CredentialsStoreService) extends DataSourceFactory {
   val mode = "jenkins"
+
   def newDataSource = new JenkinsDataSource(cacheManager, credentialsService)
 }
 
 private[jenkins] case class JenkinsBuild(actions: List[JObject], artifacts: List[JenkinsArtifact], url: String, number: Int)
+
 private[jenkins] case class JenkinsArtifact(fileName: String)
+
 private[jenkins] case class BuildAction(levelValue: Int)
 
 private[jenkins] case class CacheKey(spec: JenkinsConnectSpecification, jobName: String)

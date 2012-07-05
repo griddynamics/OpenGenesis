@@ -20,17 +20,34 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.configuration
+package com.griddynamics.genesis.jenkins.build.configuration
 
-import org.springframework.context.annotation.{Bean, Configuration}
-import com.griddynamics.genesis.build.jenkins.JenkinsDSFactory
-import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.service.CredentialsStoreService
+import com.griddynamics.genesis.util.Logging
+import com.griddynamics.genesis.jenkins.api.JenkinsConnectSpecification
+import com.griddynamics.genesis.jenkins.build.JenkinsBuildProvider
+import com.griddynamics.genesis.plugin.api.{PluginInstanceFactory, GenesisPlugin}
+import com.griddynamics.genesis.build.BuildProvider
 
-@Configuration
-class JenkinsDataSourceContext {
-  @Autowired var cacheContext: CacheContextImpl = _
-  @Autowired var credentialsService: CredentialsStoreService = _
+@GenesisPlugin(
+  id = "build-jenkins",
+  description = "Jenkins build step"
+)
+class JenkinsBuildProviderContextImpl extends Logging with PluginInstanceFactory[BuildProvider] {
 
-  @Bean def jenkinsDSFactory = new JenkinsDSFactory(cacheContext.cacheManager, credentialsService)
+  def create(pluginConfig: Map[String, Any]): BuildProvider = {
+    import Plugin._
+    val baseUrl = pluginConfig(BaseUrl).toString
+    val name = pluginConfig.get(UserName).map(_.toString)
+    val password = pluginConfig.get(Password).map(_.toString)
+    new JenkinsBuildProvider(JenkinsConnectSpecification(baseUrl, name, password))
+  }
+
+  def pluginClazz = classOf[BuildProvider]
+}
+
+private object Plugin {
+  val id: String = "build-jenkins"
+  val BaseUrl = "genesis.plugin.build-jenkins.baseUrl"
+  val UserName = "genesis.plugin.build-jenkins.username"
+  val Password = "genesis.plugin.build-jenkins.password"
 }
