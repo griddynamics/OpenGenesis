@@ -35,7 +35,7 @@ class ReleaseServersActionExecutor(val action: ReleaseServersAction,
   def cleanUp(signal: Signal) {}
 
   def startSync() = {
-    val all = context.servers.filter(_.isInstanceOf[BorrowedMachine]).map(_.asInstanceOf[BorrowedMachine])
+    val all = context.servers.collect { case bm: BorrowedMachine => bm }
 
     val machines = (action.roleName, action.serverIds) match {
       case (Some(role), None) => all.filter(_.roleName == role)

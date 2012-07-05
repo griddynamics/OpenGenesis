@@ -29,5 +29,4 @@ import com.griddynamics.genesis.model.{EnvResource, IpAddresses, VirtualMachine}
  */
 trait ComputeService {
     def getIpAddresses(vm : VirtualMachine) : Option[IpAddresses]
-//    def getIpAddresses(vm : EnvResource) : Option[IpAddresses]
 }
