@@ -45,12 +45,13 @@ class UsersController extends RestApiExceptionsHandler {
 
     @RequestMapping(method = Array(RequestMethod.GET))
     @ResponseBody
-    def list() = userService.list
+    def list() = if (available()) userService.list else List()
 
     @RequestMapping(method = Array(RequestMethod.GET), params = Array("tag"))
     @ResponseBody
     def pick(@RequestParam("tag") search: String) =
-      userService.search("*" + search + "*").map(item => Map("key" -> item.username, "value" -> item.username))
+      if (available()) userService.search("*" + search + "*").map(item => Map("key" -> item.username, "value" -> item.username))
+      else Map()
 
     @RequestMapping(value = Array("{username:.+}"), method=Array(RequestMethod.GET))
     @ResponseBody
