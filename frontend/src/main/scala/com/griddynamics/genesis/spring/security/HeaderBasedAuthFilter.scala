@@ -19,7 +19,7 @@ class HeaderBasedAuthFilter extends GenericFilterBean with Logging {
             Option(httpRequest.getHeader(TunnelFilter.AUTH_HEADER_NAME)).map(_.split(TunnelFilter.SEPARATOR_CHAR)).getOrElse(Array(""))
         val assignedUser = Option(httpRequest.getHeader(TunnelFilter.SEC_HEADER_NAME))
         val tunneled = Option(httpRequest.getHeader(TunnelFilter.TUNNELED_HEADER_NAME)).isDefined
-        if (tunneled && authenticationRequired) {
+        if (assignedUser.isDefined && authenticationRequired) {
             assignedUser.map(user => {
                 val token = new ExternalAuthentication(user, assignedRoles.toList)
                 try {
