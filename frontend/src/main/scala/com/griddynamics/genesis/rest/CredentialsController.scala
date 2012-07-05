@@ -45,7 +45,14 @@ class CredentialsController(service: CredentialsStoreService) extends RestApiExc
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
   @ResponseBody
-  def listCredentials(@PathVariable("projectId") projectId: Int) = service.list(projectId).map(_.copy(credential = None))
+  def listCredentials(@PathVariable("projectId") projectId: Int, @RequestParam(value = "type", required = false) credentialsType: String) = {
+    val creds = if(credentialsType == null) {
+      service.list(projectId)
+    } else {
+      service.findCredentials(projectId, credentialsType)
+    }
+    creds.map(_.copy(credential = None))
+  }
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.DELETE))
   @ResponseBody

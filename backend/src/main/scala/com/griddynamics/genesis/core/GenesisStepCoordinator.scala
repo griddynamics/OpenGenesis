@@ -58,8 +58,8 @@ class GenesisStepCoordinator(val step: GenesisStep,
                 if (result.isInstanceOf[EnvUpdateResult])
                     genesisResult = genesisResult.copy(envUpdate = result.asInstanceOf[EnvUpdateResult].envUpdate)
 
-                if (result.isInstanceOf[VmsUpdateResult])
-                    genesisResult = genesisResult.copy(vmsUpdate = result.asInstanceOf[VmsUpdateResult].vmsUpdate)
+                if (result.isInstanceOf[ServersUpdateResult])
+                    genesisResult = genesisResult.copy(serversUpdate = result.asInstanceOf[ServersUpdateResult].serversUpdate)
 
                 genesisResult
             }

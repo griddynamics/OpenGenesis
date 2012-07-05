@@ -72,6 +72,13 @@ object VmStatus extends Enumeration {
     val Destroyed = Value(4, "Destroyed")
 }
 
+object MachineStatus extends Enumeration {
+  type MachineStatus = Value
+
+  val Ready = Value(0, "Ready")
+  val Released = Value(1, "Released")
+}
+
 object WorkflowStepStatus extends Enumeration {
     type WorkflowStepStatus = Value
 

@@ -75,7 +75,7 @@ class RunLocalStepCoordinator(stepContext: StepExecutionContext, val step: RunLo
   def getStepResult() = GenesisStepResult(stepContext.step,
     isStepFailed = isStepFailed,
     envUpdate = stepContext.envUpdate(),
-    vmsUpdate = stepContext.vmsUpdate())
+    serversUpdate = stepContext.serversUpdate())
 
   def getActionExecutor(action: Action) = action match {
     case a: RunLocalShell => new RunLocalActionExecutor(a, stepContext.step.id, shellService)

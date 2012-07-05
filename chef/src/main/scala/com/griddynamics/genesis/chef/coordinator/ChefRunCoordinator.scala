@@ -41,7 +41,7 @@ class ChefRunCoordinator(val step: ChefRun,
 
   def onStepStart() = {
     writeLog("Starting phase %s".format(stepContext.step.phase))
-    val (tVms, clearVms) = stepContext.vms(step).filter(_.status == VmStatus.Ready).partition(_.get(ExecVmAttrs.HomeDir).isDefined)
+    val (tVms, clearVms) = stepContext.servers(step).filter(_.isReady).partition(_.get(ExecVmAttrs.HomeDir).isDefined)
     val (chefVms, execVms) = tVms.partition(_.get(ChefVmAttrs.ChefNodeName).isDefined)
 
     val clearActions = clearVms.map(InitExecNode(stepContext.env, _))
@@ -63,30 +63,30 @@ class ChefRunCoordinator(val step: ChefRun,
         Seq()
       }
       case ExecInitFail(a) => {
-        stepContext.updateVm(a.vm)
+        stepContext.updateServer(a.server)
         isStepFailed = true
         Seq()
       }
 
       case ExecInitSuccess(a) => {
-        stepContext.updateVm(a.vm)
-        Seq(InitChefNode(a.env, a.vm))
+        stepContext.updateServer(a.server)
+        Seq(InitChefNode(a.env, a.server))
       }
       case ChefInitSuccess(a, d) => {
-        stepContext.updateVm(a.vm)
+        stepContext.updateServer(a.server)
         Seq(RunPreparedExec(d, a))
       }
       case ChefRunPrepared(a, d) => {
         Seq(RunPreparedExec(d, a))
       }
       case ExecFinished(RunPreparedExec(details, _: InitChefNode), _) => {
-        Seq(PrepareInitialChefRun(details.env, details.vm))
+        Seq(PrepareInitialChefRun(details.env, details.server))
       }
       case ExecFinished(RunPreparedExec(details, _: PrepareInitialChefRun), _) => {
         val label = "%d.%d.%s".format(stepContext.workflow.id, stepContext.step.id,
           stepContext.step.phase)
 
-        Seq(PrepareRegularChefRun(label, details.env, details.vm, step.runList, step.jattrs))
+        Seq(PrepareRegularChefRun(label, details.env, details.server, step.runList, step.jattrs))
       }
       case ExecFinished(RunPreparedExec(_, _: PrepareRegularChefRun), _) => {
         Seq()
@@ -102,7 +102,7 @@ class ChefRunCoordinator(val step: ChefRun,
     GenesisStepResult(stepContext.step,
       isStepFailed = isStepFailed,
       envUpdate = stepContext.envUpdate(),
-      vmsUpdate = stepContext.vmsUpdate())
+      serversUpdate = stepContext.serversUpdate())
   }
 
   def getActionExecutor(action: Action) = {

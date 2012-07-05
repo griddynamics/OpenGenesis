@@ -60,13 +60,13 @@ trait CommonSshPortChecker extends AsyncTimeoutAwareActionExecutor with Logging 
       connect match {
           case Some((vm, true)) => {
               vm.status = VmStatus.Ready
-              storeService.updateVm(vm)
+              storeService.updateServer(vm)
               Some(SshCheckCompleted(action, vm))
           }
           case Some((_, false)) => {
               log.debug("Exec test is failed")
               action.vm.status = VmStatus.Failed
-              storeService.updateVm(action.vm)
+              storeService.updateServer(action.vm)
               Some(SshCheckFailed(action, action.vm))
           }
           case None => None
@@ -76,7 +76,7 @@ trait CommonSshPortChecker extends AsyncTimeoutAwareActionExecutor with Logging 
     def getResultOnTimeout = {
         log.debug("Action timed out")
         action.vm.status = VmStatus.Failed
-        storeService.updateVm(action.vm)
+        storeService.updateServer(action.vm)
         SshCheckFailed(action, action.vm)
     }
 }

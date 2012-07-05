@@ -70,7 +70,7 @@ class BuildStepCoordinator(val step : Step, context: StepExecutionContext, plugi
 
     def getStepResult() = {
         new GenesisStepResult(isStepFailed = stepFailed, step = context.step,
-            envUpdate = context.envUpdate(), vmsUpdate = context.vmsUpdate())
+            envUpdate = context.envUpdate(), serversUpdate = context.serversUpdate())
     }
 }
 

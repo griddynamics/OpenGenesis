@@ -20,11 +20,20 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.model
+package com.griddynamics.genesis.servers
 
-class Server (var serverArrayId: GenesisEntity.Id,
-              var instanceId: String,
-              var address: String,
-              var credentialsId: Option[GenesisEntity.Id]) extends GenesisEntity {
-  def this() = this(0, "","", Some(0))
+import com.griddynamics.genesis.service.{ServersLoanService, StoreService}
+import com.griddynamics.genesis.plugin.{StepExecutionContext, PartialStepCoordinatorFactory}
+import com.griddynamics.genesis.workflow.{ActionStepCoordinator, Step}
+
+class ReleaseServersStepCoordinatorFactory(loanService: ServersLoanService) extends PartialStepCoordinatorFactory {
+
+  def apply(step: Step, context: StepExecutionContext) = {
+    val releaseStep = step.asInstanceOf[ReleaseServersStep]
+    val action = new ReleaseServersAction(releaseStep.roleName, releaseStep.serverIds)
+    new ServerActionStepCoordinator(new ReleaseServersActionExecutor(action, loanService, context))
+  }
+
+
+  def isDefinedAt(step: Step) = step.isInstanceOf[ReleaseServersStep]
 }

@@ -20,11 +20,24 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.model
+package com.griddynamics.genesis.configuration
 
-class Server (var serverArrayId: GenesisEntity.Id,
-              var instanceId: String,
-              var address: String,
-              var credentialsId: Option[GenesisEntity.Id]) extends GenesisEntity {
-  def this() = this(0, "","", Some(0))
+import org.springframework.context.annotation.{Bean, Configuration}
+import org.springframework.beans.factory.annotation.Autowired
+import com.griddynamics.genesis.servers.{ReleaseServersStepCoordinatorFactory, ReleaseServersStepBuilderFactory, BorrowServerStepCoordinatorFactory, BorrowStepBuilderFactory}
+import com.griddynamics.genesis.service.{ServersService, ServersLoanService}
+
+@Configuration
+class ServerArrayActionsContext {
+
+  @Autowired var serversLoanService: ServersLoanService = _
+  @Autowired var serversService: ServersService = _
+
+  @Bean def borrowServerStepFactory = new BorrowStepBuilderFactory
+
+  @Bean def borrowServerStepCoordinatorFactory = new BorrowServerStepCoordinatorFactory(serversService, serversLoanService)
+
+  @Bean def releaseServerStepFactory = new ReleaseServersStepBuilderFactory
+
+  @Bean def releaseServerStepCoordinatorFactory = new ReleaseServersStepCoordinatorFactory(serversLoanService)
 }

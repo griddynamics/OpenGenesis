@@ -11,7 +11,7 @@ import com.griddynamics.genesis.util.shell.command.{exec, chmod}
 class SyncExecRunner(val action: RunExecWithArgs, sshService: SshService) extends SimpleSyncActionExecutor with Logging {
   val SCRIPT_RESOURCE_PATH = CLASSPATH_URL_PREFIX + "shell"
   val ed = action.execDetails
-  lazy val sshClient = sshService.sshClient(ed.env, ed.vm)
+  lazy val sshClient = sshService.sshClient(ed.env, ed.server)
 
   override def cleanUp(signal: Signal) = sshClient.disconnect
 

@@ -23,7 +23,7 @@
 package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.service
-import com.griddynamics.genesis.model.{VirtualMachine, Environment}
+import com.griddynamics.genesis.model._
 import org.jclouds.domain.Credentials
 import org.jclouds.compute.domain.NodeMetadataBuilder
 import org.jclouds.net.IPSocket
@@ -31,20 +31,50 @@ import com.griddynamics.genesis.util.Logging
 import org.jclouds.ssh.SshClient
 import com.griddynamics.genesis.jclouds.JCloudsComputeContextProvider
 import service.{Credentials => GenesisCredentials, ComputeService, CredentialService}
+import org.jclouds.compute.{ComputeServiceContext, ComputeServiceContextFactory}
+import java.util.Properties
+import org.jclouds.ssh.jsch.config.JschSshClientModule
+import java.util
 
-class SshService(credentialService: CredentialService,
+class SshService(
+                 credentialService: CredentialService,
                  computeService: ComputeService,
                  contextFactory: JCloudsComputeContextProvider) extends service.SshService with Logging {
 
-  def sshClient(env: Environment, vm: VirtualMachine): SshClient = {
-    val creds: Option[GenesisCredentials] = credentialService.getCredentialsForVm(env, vm).orElse(credentialService.defaultCredentials)
-    val client = sshClient(vm, creds)
+  val context: ComputeServiceContext = {
+    val contextFactory = new ComputeServiceContextFactory
+    val overrides = new Properties()
+    overrides.setProperty(org.jclouds.Constants.PROPERTY_ENDPOINT, "na")
+    contextFactory.createContext("nova", "na", "na", util.Collections.singletonList(new JschSshClientModule), overrides)
+  }
+
+  def sshClient(env: Environment, server: EnvResource): SshClient = {
+    val creds: Option[GenesisCredentials] = credentialService.getCredentials(env, server).orElse(credentialService.defaultCredentials)
+    val client = sshClient(server, creds)
     client.connect()
     client
   }
 
-  def sshClient(vm: VirtualMachine, gcredentials: Option[GenesisCredentials]): SshClient = {
-    val computeContext = contextFactory.computeContext(vm);
+
+  //todo this is workaround until proper CredentialService is implemented
+  def sshClient(server: EnvResource, credentials: Option[service.Credentials]) = server match {
+      case vm: VirtualMachine => sshClient(vm, credentials)
+      case server: BorrowedMachine => sshClient(server, credentials)
+  }
+
+  private[this] def sshClient(server: BorrowedMachine, gcredentials: Option[GenesisCredentials]) = {
+    val credentials = gcredentials.orElse(credentialService.defaultCredentials).map {
+      credentials => new Credentials(credentials.identity, credentials.credential)
+    }
+    val addresses = server.getIp.map(_.address).getOrElse(
+      throw new IllegalStateException("No address provided for server %s".format(server))
+    )
+    context.utils().getSshClientFactory.create(new IPSocket(addresses, 22), credentials.get)
+  }
+
+
+  private[this] def sshClient(vm: VirtualMachine, gcredentials: Option[GenesisCredentials]): SshClient = {
+    val computeContext = contextFactory.computeContext(vm)
 
     val credentials = gcredentials.map {
       creds => new Credentials(creds.identity, creds.credential)
@@ -65,6 +95,7 @@ class SshService(credentialService: CredentialService,
       log.debug("can't get node metadata for machine '%s'", vm)
       throw new IllegalArgumentException(vm.toString)
     }
+
     if (node.get.getCredentials == null) {
       throw new NoCredentialsFoundException("No credentials found for node " + node.get.getId)
     }
@@ -80,3 +111,4 @@ class SshService(credentialService: CredentialService,
 }
 
 class NoCredentialsFoundException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
+

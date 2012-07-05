@@ -27,7 +27,7 @@ class ExecNodeInitializer(val action: InitExecNode,
                           storeService: StoreService,
                           execResources: ExecResources) extends SyncActionExecutor
 with Logging {
-  lazy val sshClient = sshService.sshClient(action.env, action.vm)
+  lazy val sshClient = sshService.sshClient(action.env, action.server)
 
   def startSync(): ExecResult = {
     if (!checkOrInstallAtd())
@@ -44,8 +44,8 @@ with Logging {
     val homeDir = sshClient.exec("cat /etc/passwd | grep `whoami` | sed 's/.*:\\([^:]*\\):[^:]*/\\1/'")
       .getOutput.takeWhile(_ != '\n')
 
-    action.vm(ExecVmAttrs.HomeDir) = homeDir
-    storeService.updateVm(action.vm)
+    action.server(ExecVmAttrs.HomeDir) = homeDir
+    storeService.updateServer(action.server)
 
     ExecInitSuccess(action)
   }

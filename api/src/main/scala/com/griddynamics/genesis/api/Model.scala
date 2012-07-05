@@ -42,6 +42,7 @@ case class EnvironmentDetails(name : String,
                               createWorkflowName : String,
                               destroyWorkflowName : String,
                               vms : Seq[VirtualMachine],
+                              servers : Seq[BorrowedMachine],
                               projectId: Int,
                               historyCount: Int,
                               workflowCompleted: Option[Double])
@@ -73,6 +74,8 @@ case class VirtualMachine(envName : String,
                           publicIp : String,
                           privateIp : String,
                           status : String)
+
+case class BorrowedMachine(envName: String, roleName: String, instanceId: String, address: String, status: String)
 
 /**
  * @deprecated use {@see com.griddynamics.genesis.api.ExtendedResult} instead
@@ -159,9 +162,13 @@ case class ActionTracking(name: String, description: Option[String], startedTime
 
 case class ServerArray(id: Option[Int], projectId: Int, name: String, description: Option[String])
 
-case class Server(id: Option[Int], arrayId: Int, instanceId: String, address: String) {
-  def this(id: Option[Int], arrayId: Int, address: String) = this(id, arrayId, util.UUID.randomUUID().toString, address)
+case class Server(id: Option[Int], arrayId: Int, instanceId: String, address: String, credentialsId: Option[Int]) {
+  def this(id: Option[Int], arrayId: Int, address: String, credentialsId: Option[Int]) = this(id, arrayId, util.UUID.randomUUID().toString, address, credentialsId )
 }
+
+case class LeaseDescription(envId: Int, envName: String, sinceDate: Long)
+
+case class ServerDescription(id: Option[Int], arrayId: Int, instanceId: String, address: String, usage: Seq[LeaseDescription] )
 
 object RequestResult {
     val envName = "envName"

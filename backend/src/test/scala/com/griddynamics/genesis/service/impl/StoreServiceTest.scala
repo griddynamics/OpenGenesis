@@ -102,10 +102,10 @@ class StoreServiceTest extends MustMatchersForJUnit {
         env = e;
         workflow = w;
 
-        vm1 = new VirtualMachine(env.id, 0, 0, VmStatus.Provision, "vm1", 0, Some("i1"), Option("1"), Option("95"))
+        vm1 = new VirtualMachine(env.id, 0, 0, VmStatus.Provision, "vm1",  Some("i1"), Option("1"), Option("95"))
         vm1(IpAttr) = IP1
 
-        vm2 = new VirtualMachine(env.id, 0, 0, VmStatus.Provision, "vm2", 2, Some("i2"), Option("1"), Option("95"))
+        vm2 = new VirtualMachine(env.id, 0, 0, VmStatus.Provision, "vm2",  Some("i2"), Option("1"), Option("95"))
         vm2(IpAttr) = IP2
 
         vm1 = storeService.createVm(vm1)

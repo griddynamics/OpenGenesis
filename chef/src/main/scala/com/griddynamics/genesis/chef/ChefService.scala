@@ -27,7 +27,7 @@ import net.liftweb.json.JsonAST.JField
 import net.liftweb.json.JsonAST.JString
 import com.griddynamics.genesis.service.Credentials
 import com.griddynamics.genesis.chef.rest.{Role, DatabagItem, ChefRestClient}
-import com.griddynamics.genesis.model.{VirtualMachine, Environment}
+import com.griddynamics.genesis.model.{EnvResource, VirtualMachine, Environment}
 
 trait ChefService {
     def genesisId : String
@@ -36,7 +36,7 @@ trait ChefService {
 
     def validatorCredentials : Credentials
 
-    def chefClientName(env : Environment, vm : VirtualMachine) : String
+    def chefClientName(env : Environment, server : EnvResource) : String
 
     def createDatabag(env : Environment, name : String, items : Map[String, JObject], overwrite : Boolean)
 
@@ -56,7 +56,7 @@ class ChefServiceImpl(val genesisId: String, val endpoint : String,
         objectName.startsWith("genesis_%s_%s_".format(genesisId, env.name))
     }
 
-    def chefClientName(env : Environment, vm : VirtualMachine) = {
+    def chefClientName(env : Environment, vm : EnvResource) = {
         chefObjectName(env, "%s_%d".format(vm.roleName, vm.id))
     }
 

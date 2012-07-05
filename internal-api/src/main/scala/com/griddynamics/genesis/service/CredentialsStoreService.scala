@@ -15,5 +15,7 @@ trait CredentialsStoreService {
 
   def findCredentials(projectId: Int, cloudProvider: String, privateKey: String): Option[api.Credentials]
 
-  def decrypt(creds: api.Credentials): api.Credentials
+  def findCredentials(projectId: Int, cloudProvider: String): Seq[api.Credentials]
+
+   def decrypt(creds: api.Credentials): api.Credentials
 }

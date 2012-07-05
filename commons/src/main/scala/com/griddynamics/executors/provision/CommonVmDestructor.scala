@@ -34,10 +34,10 @@ abstract class CommonVmDestructor extends SimpleSyncActionExecutor with Logging 
 
   override def startSync() = {
     action.vm.status = VmStatus.Destruction
-    storeService.updateVm(action.vm)
+    storeService.updateServer(action.vm)
     deleteVm(action.vm)
     action.vm.status = VmStatus.Destroyed
-    storeService.updateVm(action.vm)
+    storeService.updateServer(action.vm)
     VmDestroyed(action, action.vm)
   }
 

@@ -39,9 +39,9 @@ class ChefNodeInitializer(val action: InitChefNode,
                           storeService: StoreService,
                           chefResources: ChefResources) extends SyncActionExecutor
 with Logging {
-  val installDetails = ExecDetails(action.env, action.vm, installDir / "chef-install.sh", installDir)
+  val installDetails = ExecDetails(action.env, action.server, installDir / "chef-install.sh", installDir)
 
-  lazy val sshClient = sshService.sshClient(action.env, action.vm)
+  lazy val sshClient = sshService.sshClient(action.env, action.server)
 
   def startSync() = {
     sshClient.put(validatorPem, chefService.validatorCredentials.credential)
@@ -51,8 +51,8 @@ with Logging {
     sshClient.put(installDetails.execPath, chefResources.chefInstallSh)
     sshClient.exec(chmod("+x", installDetails.execPath))
 
-    action.vm(ChefVmAttrs.ChefNodeName) = chefService.chefClientName(action.env, action.vm)
-    storeService.updateVm(action.vm)
+    action.server(ChefVmAttrs.ChefNodeName) = chefService.chefClientName(action.env, action.server)
+    storeService.updateServer(action.server)
 
     ChefInitSuccess(action, installDetails)
   }

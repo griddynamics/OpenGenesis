@@ -20,11 +20,23 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.model
+package com.griddynamics.genesis.service
 
-class Server (var serverArrayId: GenesisEntity.Id,
-              var instanceId: String,
-              var address: String,
-              var credentialsId: Option[GenesisEntity.Id]) extends GenesisEntity {
-  def this() = this(0, "","", Some(0))
+import com.griddynamics.genesis.api
+import api.{Server, ExtendedResult, ServerArray}
+
+trait ServersService {
+  def update(array: ServerArray): ExtendedResult[ServerArray]
+  def create(array: ServerArray): ExtendedResult[ServerArray]
+  def deleteServerArray(projectId: Int, id: Int): ExtendedResult[Option[_]]
+  def list(projectId: Int): Seq[api.ServerArray]
+  def get(projectId: Int, id: Int): Option[api.ServerArray]
+
+  def findArrayByName(projectId: Int, name: String): Option[api.ServerArray]
+
+  def create(server: Server): ExtendedResult[Server]
+  def deleteServer(arrayId: Int, serverId: Int): ExtendedResult[Option[_]]
+  def getServers(arrayId: Int): Seq[Server]
+  def getServer(arrayId: Int,  serverId: Int): Option[Server]
 }
+

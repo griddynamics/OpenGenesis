@@ -83,7 +83,7 @@ class GoGridVmCreationStrategy(nodeNamePrefix: String, computeContext: ComputeSe
       val availableIp = Iterables.getLast(availableIps) // iterate over the collection. you're not required to use Iterables
       import DefaultVmCreationStrategy._
       val serverOptions = AddServerOptions.Builder
-          .withDescription("%s: %s, host number = %d".format(VM_GROUP_PREFIX, vm.roleName, vm.hostNumber));
+          .withDescription("%s: %s, id = %d".format(VM_GROUP_PREFIX, vm.roleName, vm.id));
       val server = client.getServerServices.addServer(group(env, vm), vm.imageId.get, vm.hardwareId.get, availableIp.getIp, serverOptions)
       new GoGridVmMetadataFuture(server.getName)
     }
