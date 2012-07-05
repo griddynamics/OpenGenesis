@@ -27,7 +27,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>jenkins-build-provider</artifactId>
+    <artifactId>jenkins-ci-integration</artifactId>
     <groupId>com.griddynamics.genesis</groupId>
     <description>Genesis Jenkins build provider</description>
 
