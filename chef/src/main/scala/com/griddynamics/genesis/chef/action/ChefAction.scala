@@ -28,25 +28,25 @@ import net.liftweb.json.JsonAST.JObject
 import com.griddynamics.genesis.workflow.Action
 import com.griddynamics.genesis.exec.ExecDetails
 import com.griddynamics.genesis.workflow.ActionResult
-import com.griddynamics.genesis.model.{Environment, VirtualMachine}
+import com.griddynamics.genesis.model.{EnvResource, Environment}
 
 sealed trait ChefAction extends Action
 
-case class InitChefNode(env: Environment, vm: VirtualMachine) extends ChefAction
+case class InitChefNode(env: Environment, server: EnvResource) extends ChefAction
 
 sealed trait PrepareChefRun extends ChefAction {
     def label: String
     def env: Environment
-    def vm: VirtualMachine
+    def server: EnvResource
 }
 
 case class PrepareRegularChefRun(label: String,
                                  env: Environment,
-                                 vm: VirtualMachine,
+                                 server: EnvResource,
                                  runList: Seq[String],
                                  jattrs: JObject) extends PrepareChefRun
 
-case class PrepareInitialChefRun(env: Environment, vm: VirtualMachine) extends PrepareChefRun {
+case class PrepareInitialChefRun(env: Environment, server: EnvResource) extends PrepareChefRun {
     val label = "chef-init"
 }
 

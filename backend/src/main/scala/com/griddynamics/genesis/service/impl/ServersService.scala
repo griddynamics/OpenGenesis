@@ -32,20 +32,7 @@ import com.griddynamics.genesis.validation.Validation._
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.repository.ServerRepository
 import java.net.UnknownHostException
-
-trait ServersService {
-  def update(array: ServerArray): ExtendedResult[ServerArray]
-  def create(array: ServerArray): ExtendedResult[ServerArray]
-  def deleteServerArray(projectId: Int, id: Int): ExtendedResult[Option[_]]
-  def list(projectId: Int): Seq[api.ServerArray]
-  def get(projectId: Int, id: Int): Option[api.ServerArray]
-
-  def create(server: Server): ExtendedResult[Server]
-  def deleteServer(arrayId: Int, serverId: Int): ExtendedResult[Option[_]]
-  def getServers(arrayId: Int): Seq[Server]
-
-
-}
+import com.griddynamics.genesis.service.ServersService
 
 class ServersServiceImpl(repository: ServerArrayRepository, serverRepo: ServerRepository) extends ServersService with Validation[api.ServerArray] {
 
@@ -86,8 +73,17 @@ class ServersServiceImpl(repository: ServerArrayRepository, serverRepo: ServerRe
   @Transactional
   def getServers(arrayId: Int) = serverRepo.listServers(arrayId)
 
+  @Transactional(readOnly = true)
+  def findArrayByName(projectId: Int, name: String): Option[api.ServerArray] = {
+    repository.findByName(name, projectId)
+  }
+
+  @Transactional(readOnly = true)
+  def getServer(arrayId: Int, serverId: Int): Option[Server] = serverRepo.get(arrayId, serverId)
+
   private[this] def validateServer(server: Server): ExtendedResult[Server] = {
     mustSatisfyLengthConstraints(server, server.instanceId, "instanceId")(1, 128) ++
+    mustSatisfyLengthConstraints(server, server.address, "address")(1, 128) ++
     must(server, "Server with instanceId '%s' already exists".format(server.instanceId)) { server =>
       serverRepo.findByInstanceId(server.arrayId, server.instanceId).isEmpty
     } ++

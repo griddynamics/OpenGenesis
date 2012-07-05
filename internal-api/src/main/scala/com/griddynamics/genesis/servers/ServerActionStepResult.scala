@@ -20,11 +20,19 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.model
+package com.griddynamics.genesis.servers
 
-class Server (var serverArrayId: GenesisEntity.Id,
-              var instanceId: String,
-              var address: String,
-              var credentialsId: Option[GenesisEntity.Id]) extends GenesisEntity {
-  def this() = this(0, "","", Some(0))
+import com.griddynamics.genesis.plugin.ServersUpdateResult
+import com.griddynamics.genesis.workflow.{ActionResult, ActionFailed}
+import com.griddynamics.genesis.workflow.step.{ActionStep, ActionStepResult}
+
+class ServerActionStepResult(step: ActionStep, actionResult: ActionResult) extends ActionStepResult(step, actionResult) with ServersUpdateResult {
+  override def isStepFailed = actionResult.isInstanceOf[ActionFailed]
+
+  def serversUpdate = {
+    actionResult match {
+      case updateResult: ServersUpdateActionResult => updateResult.updatedServers
+      case _ => Seq()
+    }
+  }
 }

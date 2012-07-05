@@ -31,11 +31,11 @@ abstract class ChefRunPreparer[A <: PrepareChefRun](val action: A,
   val chefAttrs = runDir / "attrs.json"
   val chefConfig = runDir / "client.rb"
 
-  val execDetails = new ExecDetails(action.env, action.vm, runDir / "chef-run.sh", runDir)
+  val execDetails = new ExecDetails(action.env, action.server, runDir / "chef-run.sh", runDir)
 
   val chefLogLevel = ":info"
 
-  lazy val sshClient = sshService.sshClient(action.env, action.vm)
+  lazy val sshClient = sshService.sshClient(action.env, action.server)
 
   def startSync() = {
     sshClient.exec(mkdir(runDir))
@@ -52,7 +52,7 @@ abstract class ChefRunPreparer[A <: PrepareChefRun](val action: A,
   def chefClientConfig =
     "log_level              %s                   \n".format(chefLogLevel) +
       "log_location           \"#{ENV['HOME']}/%s\"\n".format(chefLog) +
-      "node_name              \"%s\"               \n".format(action.vm(ChefVmAttrs.ChefNodeName)) +
+      "node_name              \"%s\"               \n".format(action.server(ChefVmAttrs.ChefNodeName)) +
       "client_key             \"#{ENV['HOME']}/%s\"\n".format(clientPem) +
       "validation_client_name \"%s\"               \n".format(chefService.validatorCredentials.identity) +
       "validation_key         \"#{ENV['HOME']}/%s\"\n".format(validatorPem) +
@@ -73,7 +73,7 @@ trait InitialChefRun extends ChefRunPreparer[PrepareInitialChefRun] {
   def chefClientAttrs = "genesis" -> (
     ("genesis_id" -> chefService.genesisId) ~
       ("env_name" -> action.env.name) ~
-      ("role_name" -> action.vm.roleName) ~
-      ("vm_id" -> action.vm.id)
+      ("role_name" -> action.server.roleName) ~
+      ("vm_id" -> action.server.id)   //todo: !!! vm_id
     )
 }

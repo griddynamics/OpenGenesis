@@ -20,11 +20,10 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.model
+package com.griddynamics.genesis.servers
 
-class Server (var serverArrayId: GenesisEntity.Id,
-              var instanceId: String,
-              var address: String,
-              var credentialsId: Option[GenesisEntity.Id]) extends GenesisEntity {
-  def this() = this(0, "","", Some(0))
+import com.griddynamics.genesis.workflow.{ActionExecutor, ActionStepCoordinator}
+
+case class ServerActionStepCoordinator(actionExecutor: ActionExecutor) extends ActionStepCoordinator(actionExecutor) {
+  override def getStepResult() = new ServerActionStepResult(step, actionResult)
 }

@@ -35,11 +35,6 @@
 
     <s:global-method-security pre-post-annotations="enabled" proxy-target-class="true" />
 
-    <bean id="genesisService" class="com.griddynamics.genesis.spring.GenesisServiceFactoryBean">
-        <constructor-arg name="useMock" value="${genesis.system.service.rest.use.mock:false}"/>
-        <constructor-arg name="genesisRestService" ref="genesisRestService"/>
-    </bean>
-
     <bean class="com.griddynamics.genesis.rest.ProjectsController">
         <constructor-arg name="projectService" ref="projectService"/>
         <constructor-arg name="authorityService" ref="projectAuthorityService"/>
@@ -56,11 +51,11 @@
     </bean>
 
     <bean class="com.griddynamics.genesis.rest.EnvironmentsController">
-        <constructor-arg name="genesisService" ref="genesisService"/>
+        <constructor-arg name="genesisService" ref="genesisRestService"/>
     </bean>
 
     <bean class="com.griddynamics.genesis.rest.GenesisRestController">
-        <constructor-arg name="genesisService" ref="genesisService"/>
+        <constructor-arg name="genesisService" ref="genesisRestService"/>
         <constructor-arg name="templateService" ref="templateService"/>
     </bean>
 
@@ -79,6 +74,7 @@
 
     <bean class="com.griddynamics.genesis.rest.ServersController">
         <constructor-arg name="service" ref="serversService"/>
+        <constructor-arg name="loanService" ref="serversLoanService"/>
     </bean>
 
     <bean class="com.griddynamics.genesis.rest.WhoamiController"/>

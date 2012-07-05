@@ -58,6 +58,8 @@ class CredentialsStoreService(repository: CredentialsRepository, projectReposito
 
   def find(projectId: Int, cloudProvider: String, keypairName: String): Option[api.Credentials] = repository.find(projectId, cloudProvider, keypairName)
 
+  def findCredentials(projectId: Int, cloudProvider: String) = repository.find(projectId, cloudProvider)
+
   def decrypt(creds: api.Credentials): api.Credentials =
     creds.copy(credential = creds.credential.map (BasicCrypto.decrypt(keySpec, _)))
 

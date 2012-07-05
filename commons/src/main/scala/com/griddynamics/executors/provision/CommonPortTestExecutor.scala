@@ -73,7 +73,7 @@ class CommonPortTestExecutor (val action : CheckPortAction,
 
   def getResultOnTimeout = {
     action.vm.status = VmStatus.Failed
-    storeService.updateVm(action.vm)
+    storeService.updateServer(action.vm)
     PortTestFailed(action, action.vm)
   }
 }

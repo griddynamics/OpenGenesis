@@ -23,25 +23,14 @@
 package com.griddynamics.genesis.exec
 
 package action
-/*
- * Copyright (c) 2011 Grid Dynamics Consulting Services, Inc, All Rights Reserved
- *   http://www.griddynamics.com
- *
- *   For information about the licensing and copyright of this document please
- *   contact Grid Dynamics at info@griddynamics.com.
- *
- *   $Id: $
- *   @Project:     Genesis
- *   @Description: A cloud deployment platform
- */
 
-import com.griddynamics.genesis.model.{VirtualMachine, Environment}
 import com.griddynamics.genesis.workflow.{ActionFailed, ActionResult, Action}
 import com.griddynamics.genesis.model
+import model.{Environment, EnvResource}
 
 sealed trait ExecAction extends Action
 
-case class InitExecNode(env: Environment, vm: VirtualMachine) extends ExecAction
+case class InitExecNode(env: Environment, server: EnvResource) extends ExecAction
 
 trait RunExec extends ExecAction {
     val execDetails: ExecDetails

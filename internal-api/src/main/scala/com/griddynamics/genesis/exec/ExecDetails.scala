@@ -23,9 +23,9 @@
 package com.griddynamics.genesis.exec
 
 import com.griddynamics.genesis.util.shell.Path
-import com.griddynamics.genesis.model.{Environment, VirtualMachine}
+import com.griddynamics.genesis.model.{EnvResource, Environment}
 
-case class ExecDetails(env: Environment, vm: VirtualMachine,
+case class ExecDetails(env: Environment, server: EnvResource,
                        execPath: Path, outputDir: Path,
                        workingDir: Path = ".", logFiles: Seq[Path] = Seq()) {
     def pidFile = outputDir / "exec.pid"

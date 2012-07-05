@@ -28,19 +28,20 @@ import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.api.WorkflowDetails
 
 trait StoreService {
-    def listEnvs(): Seq[Environment]
     def listEnvs(projectId: Int): Seq[Environment]
     def listEnvs(projectId: Int, start : Int, limit : Int): Seq[Environment]
     def countEnvs(projectId: Int) : Int
 
     def findEnv(name: String): Option[Environment]
     def findEnvWithWorkflow(name: String): Option[(Environment, Option[Workflow])]
+    def findEnv(id: Int): Option[Environment]
 
     def isEnvExist(projectId: Int, envName: String): Boolean
 
     def getVm(instanceId: String): (Environment, VirtualMachine)
 
     def listVms(env: Environment): Seq[VirtualMachine]
+    def listServers(env: Environment): Seq[BorrowedMachine]
 
     def listWorkflows(env: Environment): Seq[Workflow]
     def listWorkflows(env: Environment, pageOffset: Int, pageLength: Int): Seq[Workflow]
@@ -62,14 +63,16 @@ trait StoreService {
 
     def createVm(vm: VirtualMachine): VirtualMachine
 
-    def updateVm(vm: VirtualMachine)
+    def updateServer(vm: EnvResource)
+
+    def createBM(bm: BorrowedMachine): BorrowedMachine
 
     // TODO @throws(classOf[WorkflowRequestFailed])
     def requestWorkflow(env: Environment, workflow: Workflow): Either[Mistake, (Environment, Workflow)]
 
     def retrieveWorkflow(envName: String): (Environment, Workflow)
 
-    def startWorkflow(envName: String): (Environment, Workflow, Seq[VirtualMachine])
+    def startWorkflow(envName: String): (Environment, Workflow, Seq[EnvResource])
 
     def finishWorkflow(env: Environment, workflow: Workflow)
 
@@ -89,6 +92,7 @@ trait StoreService {
     def endAction(uuid: String, message: Option[String], status: ActionTrackingStatus.ActionStatus)
     def cancelRunningActions(stepId: Int)
     def getActionLog(stepId: Int) : List[ActionTracking]
+    def findBorrowedMachinesByServerId(serverId: Int): Seq[BorrowedMachine]
 }
 
 class StoreServiceException extends RuntimeException

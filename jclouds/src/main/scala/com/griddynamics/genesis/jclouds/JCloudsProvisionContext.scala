@@ -46,7 +46,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import javax.annotation.PostConstruct
 import net.sf.ehcache.CacheManager
 import java.util.concurrent.TimeUnit
-import com.griddynamics.genesis.model.{IpAddresses, VirtualMachine}
+import com.griddynamics.genesis.model.{EnvResource, IpAddresses, VirtualMachine}
 
 trait JCloudsProvisionContext extends ProvisionContext[JCloudsProvisionVm] {
   def cloudProvider: String
@@ -87,7 +87,7 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
   @PostConstruct
   def initCache() {
     val cache = new net.sf.ehcache.Cache(
-      computeContextRegion, 100, false, false, TimeUnit.HOURS.toSeconds(2), TimeUnit.HOURS.toSeconds(1), false, 0);
+      computeContextRegion, 100, false, false, TimeUnit.HOURS.toSeconds(2), TimeUnit.HOURS.toSeconds(1), false, 0)
     cacheManager.addCacheIfAbsent(cache)
   }
 
@@ -209,14 +209,14 @@ class JCloudsComputeService(pluginFactory: JCloudsComputeContextProvider) extend
 
   def getIpAddresses(vm: VirtualMachine): Option[IpAddresses] = {
 
-    val jCloudsComputeService = pluginFactory.computeContext(vm).getComputeService
+    vm.getIp.orElse {
+      val jCloudsComputeService = pluginFactory.computeContext(vm).getComputeService
 
-    vm.getIp.orElse(
       for {
         instanceId <- vm.instanceId
         node = jCloudsComputeService.getNodeMetadata(instanceId)
         if node != null
       } yield (IpAddresses(node.getPublicAddresses.headOption, node.getPrivateAddresses.headOption))
-    )
+    }
   }
 }

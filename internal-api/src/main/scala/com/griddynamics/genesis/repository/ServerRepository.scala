@@ -32,4 +32,6 @@ trait ServerRepository extends Repository [Server]{
   def deleteServer (arrayId: Int, serverId: Int ): Int
 
   def listServers(serverArrayId: Int): Seq[Server]
+
+  def get(arrayId: Int, serverId: Int): Option[api.Server]
 }

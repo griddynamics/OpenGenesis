@@ -22,11 +22,66 @@
  */
 package com.griddynamics.genesis.model
 
-import VmStatus._
+import com.griddynamics.genesis.model.VmStatus._
+import com.griddynamics.genesis.model.MachineStatus._
 import collection.JavaConversions._
+import java.sql.Timestamp
 
 case class IpAddresses(publicIp:Option[String] = None,  privateIp:Option[String] = None) {
   def address = publicIp.getOrElse(privateIp.getOrElse(""))
+}
+
+sealed trait EnvResource extends EntityWithAttrs {
+  def envId: GenesisEntity.Id
+
+  def workflowId: GenesisEntity.Id
+  def stepId: GenesisEntity.Id
+
+  def roleName: String
+  def instanceId: Option[String]
+
+  def copy(): EnvResource
+
+  def isReady: Boolean
+
+  def keyPair: Option[String]
+  def keyPair_=(pair: Option[String])
+  def getIp: Option[IpAddresses]
+  def setIp(ip: String)
+}
+
+trait CommonAttrs { this: EntityWithAttrs =>
+  import VirtualMachine._
+  def getIp = this.get(IpAttr)
+
+  def setIp(ip: String) {this(IpAttr) = IpAddresses(publicIp = Option(ip))}
+
+  def keyPair: Option[String] = this.get(KeyPair)
+
+  def keyPair_=(pair: Option[String]) {
+    pair.foreach( this(KeyPair) = _ )
+  }
+}
+
+class BorrowedMachine (val serverId: GenesisEntity.Id,
+                    val instanceId: Option[String],
+                    val envId: GenesisEntity.Id,
+                    val workflowId: GenesisEntity.Id,
+                    val stepId: GenesisEntity.Id,
+                    var status: MachineStatus,
+                    val roleName: String,
+                    var borrowTime: java.sql.Timestamp,
+                    var releaseTime: Option[java.sql.Timestamp] = None) extends EnvResource with CommonAttrs {
+
+  def this() = this (0, Option(""), 0, 0, 0, MachineStatus.Ready, "", new Timestamp(System.currentTimeMillis()))
+
+  def copy = {
+    val cp  = new BorrowedMachine(serverId, instanceId, envId, workflowId, stepId, status, roleName, borrowTime, releaseTime).importAttrs(this)
+    cp.id = id
+    cp
+  }
+
+  def isReady = this.status == MachineStatus.Ready
 }
 
 class VirtualMachine(val envId: GenesisEntity.Id,
@@ -34,23 +89,20 @@ class VirtualMachine(val envId: GenesisEntity.Id,
                      val stepId: GenesisEntity.Id,
                      var status: VmStatus,
                      val roleName: String,
-                     val hostNumber: Int,
                      var instanceId: Option[String] = None,
                      val hardwareId: Option[String] = None,
                      val imageId: Option[String] = None,
-                     val cloudProvider: Option[String] = None) extends EntityWithAttrs {
-  def this() = this (0, 0, 0, Provision, "", 0)
+                     val cloudProvider: Option[String] = None) extends EnvResource with CommonAttrs {
+  def this() = this (0, 0, 0, Provision, "")
 
   def copy() = {
-    val vm = new VirtualMachine(envId, workflowId, stepId, status, roleName, hostNumber,
+    val vm = new VirtualMachine(envId, workflowId, stepId, status, roleName,
       instanceId, hardwareId, imageId, cloudProvider).importAttrs(this)
     vm.id = this.id
     vm
   }
-  import VirtualMachine._
-  def getIp = this.get(IpAttr)
 
-  def setIp(ip: String) {this(IpAttr) = IpAddresses(publicIp = Option(ip))}
+  import VirtualMachine._
 
   def computeSettings_= (settingsOption: Option[Map[String, Any]]) {
     settingsOption.foreach { settings =>
@@ -62,18 +114,13 @@ class VirtualMachine(val envId: GenesisEntity.Id,
 
   def computeSettings: Option[Map[String, Any]] = this.get(СomputeSettings).map { propertiesAsScalaMap(_).toMap }
 
-  def keyPair: Option[String] = this.get(KeyPair)
-
-  def keyPair_=(pair: Option[String]) {
-    pair.foreach( this(KeyPair) = _ )
-  }
-
   def securityGroup: Option[String] = this.get(SecurityGroup)
 
   def securityGroup_=(group: Option[String]) {
     group.foreach(this(SecurityGroup) = _)
   }
 
+  def isReady = this.status == VmStatus.Ready
 }
 
 object VirtualMachine {
@@ -81,5 +128,4 @@ object VirtualMachine {
   val СomputeSettings = EntityAttr[java.util.Properties]("compute")
   val KeyPair = EntityAttr[String]("keypair")
   val SecurityGroup = EntityAttr[String]("securityGroup")
-
 }
