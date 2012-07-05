@@ -23,6 +23,7 @@ class HeaderBasedAuthFilter extends GenericFilterBean with Logging {
             assignedUser.map(user => {
                 val token = new ExternalAuthentication(user, assignedRoles.toList)
                 try {
+                    log.debug("Authenticating user %s", user)
                     val authentication: Authentication = authenticationManager.authenticate(token)
                     SecurityContextHolder.getContext.setAuthentication(authentication)
                 } catch {
