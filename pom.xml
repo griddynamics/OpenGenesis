@@ -93,7 +93,7 @@
         <module>client</module>
         <module>api</module>
         <module>commons</module>
-        <module>build-providers/jenkins</module>
+        <module>jenkins</module>
         <module>local-users</module>
         <module>jclouds</module>
         <module>chef</module>
