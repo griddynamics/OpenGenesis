@@ -42,6 +42,8 @@ import org.apache.http.protocol.{HttpContext, BasicHttpContext}
 
 class JenkinsBuildProvider(val specification : JenkinsConnectSpecification) extends BuildProvider {
 
+    val api = new JenkinsRemoteApi(specification)
+
     override val mode = "jenkins"
     var next : Int = _
     var buildSpec : BuildSpecification = _
@@ -51,7 +53,7 @@ class JenkinsBuildProvider(val specification : JenkinsConnectSpecification) exte
         buildSpec = spec
         val nb: (Int, Int) = nextBuild(spec)
         next = nb._2
-        postNoResult(specification.buildUrl(spec.projectName))
+        api.postNoResult(specification.buildUrl(spec.projectName))
     }
   
     override def query() : Option[JenkinsBuildResult] = {
@@ -68,8 +70,8 @@ class JenkinsBuildProvider(val specification : JenkinsConnectSpecification) exte
 
     def cancel() {}
 
-    def nextBuild(spec: BuildSpecification) = get(specification.jobXmlApi(spec.projectName))(nextBuildNumber)
-    def jobStatus(spec : BuildSpecification, number : Int) = get(specification.jobUrl(spec.projectName, number))(buildResult)
+    def nextBuild(spec: BuildSpecification) = api.get(specification.jobXmlApi(spec.projectName))(nextBuildNumber)
+    def jobStatus(spec : BuildSpecification, number : Int) = api.get(specification.jobUrl(spec.projectName, number))(buildResult)
     def retry[B](retryCount : Int, delay : Int)(fun : => B) : B = {
         try {fun} catch {
             case e if retryCount > 1 => {
@@ -93,49 +95,55 @@ class JenkinsBuildProvider(val specification : JenkinsConnectSpecification) exte
         val nextNumber = xml \\ "nextBuildNumber"
         (lastNumber.text.toInt, nextNumber.text.toInt)
     }
-    def post[B <: AnyRef](s : String)(f: InputStream => B) = exec(new HttpPost(s))(f)
-    def postNoResult(s : String) { execNoResult(new HttpPost(s)) }
-    def get[B <: AnyRef](s : String)(f: InputStream => B) = exec(new HttpGet(s))(f)
-    private def exec[B <: AnyRef](method : HttpRequestBase)(f: InputStream => B) : B = {
-      execute(method) match {
-        case Left(code) => throw new IllegalStateException("Request failed, status code is " + code)
-        case Right(r) => {
-          val entity: HttpEntity = r.getEntity
-          try{
-             f(entity.getContent)
-           }finally {
-              EntityUtils.consume(entity)
-           }
+}
+
+class JenkinsRemoteApi(specification: JenkinsConnectSpecification) {
+
+  def post[B <: AnyRef](s : String)(f: InputStream => B) = exec(new HttpPost(s))(f)
+
+  def postNoResult(s : String) { execNoResult(new HttpPost(s)) }
+
+  def get[B <: AnyRef](s : String)(f: InputStream => B) = exec(new HttpGet(s))(f)
+
+  private def exec[B <: AnyRef](method : HttpRequestBase)(f: InputStream => B) : B = {
+    execute(method) match {
+      case Left(code) => throw new IllegalStateException("Request failed, status code is " + code)
+      case Right(r) => {
+        val entity: HttpEntity = r.getEntity
+        try{
+          f(entity.getContent)
+        }finally {
+          EntityUtils.consume(entity)
         }
       }
     }
+  }
 
-    private def execNoResult(method : HttpRequestBase) {
-      execute(method) match {
-        case Left(code) => throw new IllegalStateException("Request failed, status code is " + code)
-        case _ =>
-      }
+  private def execNoResult(method : HttpRequestBase) {
+    execute(method) match {
+      case Left(code) => throw new IllegalStateException("Request failed, status code is " + code)
+      case _ =>
     }
-    
-    private def execute(method: HttpRequestBase) : Either[Int, HttpResponse] = {
-      val response = specification.context match {
-        case None => specification.client.execute(method)
-        case Some(c) => specification.client.execute(method, c)
-      }
-      val code: Int = response.getStatusLine.getStatusCode
-      if (code >= 400) {
-        EntityUtils.consume(response.getEntity)
-        Left(code)
-      }
-      Right(response)
+  }
+
+
+  private def execute(method: HttpRequestBase) : Either[Int, HttpResponse] = {
+    val response = specification.context match {
+      case None => specification.client.execute(method)
+      case Some(c) => specification.client.execute(method, c)
     }
+    val code: Int = response.getStatusLine.getStatusCode
+    if (code >= 400) {
+      EntityUtils.consume(response.getEntity)
+      Left(code)
+    }
+    Right(response)
+  }
 }
+
 case class JenkinsBuildResult(success : Boolean, completed : Boolean, number : Int) extends BuildResult
 
 case class JenkinsConnectSpecification(baseUrl : String, username : Option[String], password : Option[String])  {
-    def this(baseUrl : String, jobName : String) {
-        this(baseUrl, None, None)
-    }
 
     def projectUrl(jobName : String) = {
         "%s/job/%s".format(baseUrl, jobName)
@@ -147,6 +155,10 @@ case class JenkinsConnectSpecification(baseUrl : String, username : Option[Strin
         "%s/api/xml".format(projectUrl(jobName))
     }
 
+    def buildArtifactsJson(jobName: String) = {
+      "%s/job/%s/api/json?tree=builds[number,artifacts[fileName],url,actions[levelValue]]".format(baseUrl, jobName)
+    }
+
     def buildUrl(jobName : String) = {
         "%s/build".format(projectUrl(jobName))
     }
@@ -155,10 +167,10 @@ case class JenkinsConnectSpecification(baseUrl : String, username : Option[Strin
         val client = new DefaultHttpClient()
         (username, password) match {
             case (Some(u), Some(p)) => {
-                val authpref = new ArrayList[String]();
-                authpref.add(AuthPolicy.BASIC);
-                client.getParams.setParameter(AuthPNames.PROXY_AUTH_PREF, authpref);
-                val credsProvider = new BasicCredentialsProvider();
+                val authpref = new ArrayList[String]()
+                authpref.add(AuthPolicy.BASIC)
+                client.getParams.setParameter(AuthPNames.PROXY_AUTH_PREF, authpref)
+                val credsProvider = new BasicCredentialsProvider()
                 credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(u,  p))
                 client.setCredentialsProvider(credsProvider)
             }
