@@ -116,8 +116,12 @@
     </s:authentication-manager>
 
     <bean id="genesisUserDetailsService" class="com.griddynamics.genesis.spring.security.GenesisUserDetailsService">
-        <constructor-arg name="adminPassword" value="aeebad4a796fcc2e15dc4c6061b45ed9b373f26adfc798ca7d2d8cc58182718e"/>
-        <constructor-arg name="adminUsername" value="genesis" />
+        <!--
+            genesis.system.admin.sha.password=aeebad4a796fcc2e15dc4c6061b45ed9b373f26adfc798ca7d2d8cc58182718e
+            genesis.system.admin.username=genesis
+        -->
+        <constructor-arg name="adminPassword" value="${genesis.system.admin.sha.password:}"/>
+        <constructor-arg name="adminUsername" value="${genesis.system.admin.username:}" />
         <constructor-arg name="authorityService" ref="authorityService"/>
         <constructor-arg name="projectAuthorityService" ref="projectAuthorityService"/>
     </bean>
@@ -129,7 +133,7 @@
     <bean id="genesisExternalDetailsService" class="com.griddynamics.genesis.spring.security.ExternalUserDetailsService">
         <constructor-arg name="authorityService" ref="authorityService" type="com.griddynamics.genesis.service.AuthorityService"/>
         <constructor-arg name="projectAuthorityService" ref="projectAuthorityService" type="com.griddynamics.genesis.service.ProjectAuthorityService"/>
-        <constructor-arg name="adminUsername" value="" type="java.lang.String"/>
+        <constructor-arg name="adminUsername" value="${genesis.system.admin.username:}" type="java.lang.String"/>
     </bean>
 
     <bean id="adAuthProvider" lazy-init="true"

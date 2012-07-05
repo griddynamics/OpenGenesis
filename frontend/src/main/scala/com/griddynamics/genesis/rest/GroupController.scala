@@ -47,7 +47,7 @@ class GroupController extends RestApiExceptionsHandler with ApplicationContextAw
 
     @RequestMapping(method = Array(RequestMethod.GET))
     @ResponseBody
-    def list() = groupService.list
+    def list() = if (available()) groupService.list else List()
 
     @RequestMapping(value=Array("{id}"), method = Array(RequestMethod.GET))
     @ResponseBody
@@ -55,7 +55,8 @@ class GroupController extends RestApiExceptionsHandler with ApplicationContextAw
 
     @RequestMapping(method = Array(RequestMethod.GET), params = Array("tag"))
     @ResponseBody
-    def pick(@RequestParam("tag") search: String) = groupService.search("*" + search + "*").map(item => Map("key" -> item.name, "value" -> item.name))
+    def pick(@RequestParam("tag") search: String) = if (available()) groupService.search("*" + search + "*").map(item => Map("key" -> item.name, "value" -> item.name))
+    else Map()
 
     @RequestMapping(method = Array(RequestMethod.POST))
     @ResponseBody
