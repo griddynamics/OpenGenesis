@@ -43,6 +43,7 @@ class JenkinsDataSource(val cacheManager: CacheManager, val credStore: Credentia
   private var artifactFilter: String = _
   private var api: JenkinsRemoteApi = _
   private var jobName: String = _
+  private var showBuildNumber: Boolean = _
 
   override val defaultTtl = 120
 
@@ -50,6 +51,8 @@ class JenkinsDataSource(val cacheManager: CacheManager, val credStore: Credentia
     val jenkinsUrl = config(Url).toString
     this.jobName = config(JobName).toString
     this.artifactFilter = config.getOrElse(JenkinsDataSource.ArtifactFilter, ".*").toString
+
+    this.showBuildNumber = config.getOrElse(ShowBuildNumber, false).asInstanceOf[Boolean]
 
     this.connectionSpec = {
       val credsOption = for {
@@ -67,23 +70,29 @@ class JenkinsDataSource(val cacheManager: CacheManager, val credStore: Credentia
 
   override def getData = {
     val arts = fromCache(CacheRegion, CacheKey(connectionSpec, jobName)) {
-      loadFromJenkins.toMap
+      loadFromJenkins
     }
-    arts.filter {
-      case (url, artifact) => artifact.matches(artifactFilter)
-    }
+    arts.collect {
+      case (url, artifact, title) if artifact.matches(artifactFilter) => (url, title)
+    }.toMap
   }
 
-  private[this] def loadFromJenkins: List[(String, String)] = {
-    // (url, artifact)
+  private[this] def loadFromJenkins: List[(String, String, String)] = { // (url, artifact, artifactTitle)
     def artifacts(is: InputStream) = {
       for {
-        build <- extractBuilds(is) if !build.artifacts.isEmpty
+        build <- extractBuilds(is)
+        artifact <- build.artifacts
       } yield {
-        val artifactName = build.artifacts.head.fileName
-        val downloadUrl = build.url + artifactName
+        val artifactName = artifact.fileName
+        val downloadUrl = build.url + "/artifact/" + artifact.relativePath
 
-        (downloadUrl, artifactName + status(build))
+        val title = if (showBuildNumber) {
+          "%d : %s %s".format(build.number, artifactName, status(build))
+        } else {
+          "%s %s".format(artifactName, status(build))
+        }
+
+        (downloadUrl, artifactName, title)
       }
     }
 
@@ -121,6 +130,7 @@ object JenkinsDataSource {
   val JobName = "jobName"
   val ArtifactFilter = "filter"
   val Credentials = "credentials"
+  val ShowBuildNumber = "showBuildNumber"
 
   val CredProvider = "jenkins"
   val CacheRegion = "jenkins-data-source"
@@ -133,9 +143,6 @@ class JenkinsDSFactory(cacheManager: CacheManager, credentialsService: Credentia
 }
 
 private[jenkins] case class JenkinsBuild(actions: List[JObject], artifacts: List[JenkinsArtifact], url: String, number: Int)
-
-private[jenkins] case class JenkinsArtifact(fileName: String)
-
+private[jenkins] case class JenkinsArtifact(relativePath: String, fileName: String)
 private[jenkins] case class BuildAction(levelValue: Int)
-
 private[jenkins] case class CacheKey(spec: JenkinsConnectSpecification, jobName: String)
