@@ -28,7 +28,7 @@ import org.springframework.stereotype.Controller
 import com.griddynamics.genesis.service.ConfigService
 import com.griddynamics.genesis.rest.GenesisRestController.{extractParamsMap, paramToOption}
 import javax.servlet.http.HttpServletRequest
-import com.griddynamics.genesis.api.RequestResult
+import com.griddynamics.genesis.api.{Failure, Success}
 
 @Controller
 @RequestMapping(value = Array("/rest/settings"))
@@ -55,9 +55,9 @@ class SettingsController(configService: ConfigService) extends RestApiExceptions
     private def using (block : Any => Any) = {
         try {
             block()
-            RequestResult(isSuccess = true)
+            Success(None)
         } catch {
-            case e => RequestResult(isSuccess = false, compoundServiceErrors = Seq(e.getMessage))
+            case e => Failure(compoundServiceErrors = Seq(e.getMessage))
         }
     }
 }

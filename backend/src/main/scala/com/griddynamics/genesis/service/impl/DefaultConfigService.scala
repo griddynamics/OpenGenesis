@@ -57,7 +57,10 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
          .map(k => api.ConfigProperty(k, config.getString(k), isReadOnly(k), desc(k))).toSeq.sortBy(_.name)
 
     @Transactional
-    def update(name: String, value: Any) {writeConfig.setProperty(name, value)}
+    def update(name: String, value: Any) = isReadOnly(name) match {
+        case true => throw new IllegalArgumentException("Could not modify read-only property")
+        case _ => writeConfig.setProperty(name, value)
+    }
 
     @Transactional
     def delete(key: String) = writeConfig.clearProperty(key)

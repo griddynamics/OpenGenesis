@@ -47,7 +47,7 @@ case class JenkinsConnectSpecification(baseUrl: String, username: Option[String]
   }
 
   def buildArtifactsJson(jobName: String) = {
-    "%s/job/%s/api/json?tree=builds[number,artifacts[fileName],url,actions[levelValue]]".format(baseUrl, jobName)
+    "%s/job/%s/api/json?tree=builds[number,artifacts[relativePath,fileName],url,actions[levelValue]]".format(baseUrl, jobName)
   }
 
   def buildUrl(jobName: String) = {
