@@ -60,12 +60,15 @@ class AclServiceContext {
   @Bean def lookupStrategy:LookupStrategy = new BasicLookupStrategy(dataSource, aclCache, aclAuthorizationStrategy, permissionGrantingStrategy)
 
   @Bean def aclService: MutableAclService = {
-    val acl = new JdbcMutableAclService(dataSource, lookupStrategy, aclCache)
-    if(dataSource.getUrl.startsWith("jdbc:mysql")) {
-      acl.setClassIdentityQuery("SELECT @@IDENTITY")
-      acl.setSidIdentityQuery("SELECT @@IDENTITY")
+    val service = new JdbcMutableAclService(dataSource, lookupStrategy, aclCache)
+
+    val jdbcUrl = dataSource.getUrl.toLowerCase
+    if(jdbcUrl.startsWith("jdbc:mysql") || jdbcUrl.startsWith("jdbc:sqlserver")) {
+      service.setClassIdentityQuery("SELECT @@IDENTITY")
+      service.setSidIdentityQuery("SELECT @@IDENTITY")
     }
-    acl
+
+    service
   }
 
   @Bean def aclPermissionEvaluator: PermissionEvaluator = new AclPermissionEvaluator(aclService)
