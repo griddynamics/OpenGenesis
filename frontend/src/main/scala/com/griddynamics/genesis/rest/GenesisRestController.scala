@@ -34,11 +34,11 @@ import org.springframework.beans.factory.annotation.{Qualifier, Autowired}
 import collection.JavaConversions
 import com.griddynamics.genesis.service.{ConversionException, TemplateService}
 import com.griddynamics.genesis.api.{Failure, GenesisService}
-import java.util
+import com.griddynamics.genesis.util.Logging
 
 @Controller
 @RequestMapping(Array("/rest"))
-class GenesisRestController(genesisService: GenesisService, templateService: TemplateService) extends RestApiExceptionsHandler {
+class GenesisRestController(genesisService: GenesisService, templateService: TemplateService) extends RestApiExceptionsHandler with Logging {
 
     @Autowired
     @Qualifier("buildInfo")
@@ -72,7 +72,10 @@ class GenesisRestController(genesisService: GenesisService, templateService: Tem
           try {
             genesisService.getTemplate(projectId, templateName, templateVersion)
           } catch {
-            case e: Exception => Option(Failure(compoundServiceErrors = List(e.getMessage), stackTrace = Option(e.getStackTraceString)))
+            case e: Exception => {
+              log.error(e,"Failed to get template %s version %s", templateName, templateVersion)
+              Option(Failure(compoundServiceErrors = List(e.getMessage), stackTrace = Option(e.getStackTraceString)))
+            }
           }
         }
       }
