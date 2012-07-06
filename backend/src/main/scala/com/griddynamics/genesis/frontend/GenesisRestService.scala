@@ -53,7 +53,7 @@ class GenesisRestService(storeService: StoreService,
     def countEnvs(projectId: Int) : Int = storeService.countEnvs(projectId)
 
     def listTemplates(projectId: Int) =
-        for {(name, version) <- templateService.listTemplates(projectId)} yield Template(name, version, null)
+        for {(name, version) <- templateService.listTemplates(projectId)} yield Template(name, version, null, Seq())
 
     def createEnv(projectId: Int, envName: String, creator: String, templateName: String,
                   templateVersion: String, variables: Map[String, String]) = {
@@ -80,7 +80,7 @@ class GenesisRestService(storeService: StoreService,
     def describeEnv(envName: String) = {
         storeService.findEnvWithWorkflow(envName) match {
             case Some((env, flow)) =>
-                templateService.findTemplate(env.projectId, env.templateName, env.templateVersion).map {
+                templateService.descTemplate(env.projectId, env.templateName, env.templateVersion).map {
                     envDesc(
                         env,
                         storeService.listVms(env),
@@ -139,7 +139,8 @@ object GenesisRestService {
 
     def templateDesc(name: String, version: String, template: service.TemplateDefinition) = {
         val createWorkflow = workflowDesc(template.createWorkflow)
-        Template(name, version, createWorkflow)
+        val workflows = for (wf <- template.listWorkflows) yield workflowDesc(wf)
+        Template(name, version, createWorkflow, workflows)
     }
 
     def workflowDesc(workflow: service.WorkflowDefinition) = {

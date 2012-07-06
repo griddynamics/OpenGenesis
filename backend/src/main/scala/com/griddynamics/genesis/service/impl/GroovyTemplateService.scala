@@ -47,12 +47,16 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
                             val projectPropertyRepository: ProjectPropertyRepository)
     extends service.TemplateService with Logging {
 
-    def findTemplate(projectId: Int, name: String, version: String) : Option[TemplateDefinition] = {
+    def findTemplate(projectId: Int, name: String, version: String) = getTemplate(projectId, name, version)
+
+    def getTemplate(projectId: Int, name: String, version: String, eval: Boolean = true) : Option[TemplateDefinition] = {
         val body = templatesMap(projectId).get(name, version)
-        body.flatMap(evaluateTemplate(projectId, _, None, None, None).map(et =>
+        body.flatMap(evaluateTemplate(projectId, _, None, None, None, listOnly = !eval).map(et =>
             new GroovyTemplateDefinition(et, conversionService, stepBuilderFactories, projectPropertyRepository, projectId)
         ))
     }
+
+    override def descTemplate(projectId: Int, name: String, version: String) = getTemplate(projectId, name, version, eval = false)
 
     def listTemplates(projectId: Int) = templatesMap(projectId).keys.toSeq
 

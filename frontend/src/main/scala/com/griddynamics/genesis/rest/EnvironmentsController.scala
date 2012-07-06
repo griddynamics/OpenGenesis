@@ -128,8 +128,7 @@ class EnvironmentsController(genesisService: GenesisService) extends RestApiExce
       case "execute" => {
         val parameters = extractMapValue("parameters", requestMap)
         val workflow = extractValue("workflow", parameters)
-        val variables = extractMapValue("variables", parameters)
-        genesisService.requestWorkflow(env, workflow, extractVariables(variables))
+        genesisService.requestWorkflow(env, workflow, extractVariables(parameters))
       }
 
       case _ => throw new InvalidInputException ()
