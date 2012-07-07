@@ -33,6 +33,7 @@ import org.springframework.core.convert.support.ConversionServiceFactory
 import com.griddynamics.genesis.workflow.Step
 import com.griddynamics.genesis.template._
 import com.griddynamics.genesis.repository.impl.ProjectPropertyRepository
+import com.griddynamics.genesis.repository.DatabagRepository
 
 case class DoNothingStep(name: String) extends Step {
   override def stepDescription = "Best step ever!"
@@ -51,11 +52,12 @@ class DoNothingStepBuilderFactory extends StepBuilderFactory {
 class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
     val templateRepository = mock[TemplateRepository]
     val ppRepo = mock[ProjectPropertyRepository]
+    val databagRepo = mock[DatabagRepository]
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/ExampleEnv.genesis"))
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
     val templateService = new GroovyTemplateService(templateRepository,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-        Seq(), ppRepo)
+        Seq(), ppRepo, databagRepo)
 
     private def testTemplate = templateService.findTemplate(0, "TestEnv", "0.1").get
 

@@ -47,22 +47,21 @@ class ProjectPropertiesController extends RestApiExceptionsHandler {
     projectPropertyRepository.updateForProject(projectId, extractProperties(request))
   }
 
-    @RequestMapping(method = Array(RequestMethod.POST))
-    @ResponseBody
-    def create(@PathVariable("projectId") projectId: Int, request: HttpServletRequest)  =
-        projectPropertyRepository.create(projectId, extractProperties(request))
+  @RequestMapping(method = Array(RequestMethod.POST))
+  @ResponseBody
+  def create(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) =
+    projectPropertyRepository.create(projectId, extractProperties(request))
 
-    @RequestMapping(method = Array(RequestMethod.DELETE))
-    @ResponseBody
-    def delete(@PathVariable("projectId") projectId: Int, request: HttpServletRequest)  =
-        projectPropertyRepository.delete(projectId, GenesisRestController.extractParamsList(request))
+  @RequestMapping(method = Array(RequestMethod.DELETE))
+  @ResponseBody
+  def delete(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) =
+    projectPropertyRepository.delete(projectId, GenesisRestController.extractParamsList(request))
 
-    def extractProperties(request: HttpServletRequest): List[api.ProjectProperty] = {
-        val properties = for (p <- GenesisRestController.extractParamsMapList(request)) yield {
-            val name = GenesisRestController.extractValue("name", p)
-            val value = GenesisRestController.extractValue("value", p)
-            new api.ProjectProperty(0, 0, name, value)
-        }
-        properties
+  def extractProperties(request: HttpServletRequest): List[api.ProjectProperty] = {
+    for (p <- GenesisRestController.extractParamsMapList(request)) yield {
+      val name = GenesisRestController.extractValue("name", p)
+      val value = GenesisRestController.extractValue("value", p)
+      new api.ProjectProperty(0, 0, name, value)
     }
+  }
 }

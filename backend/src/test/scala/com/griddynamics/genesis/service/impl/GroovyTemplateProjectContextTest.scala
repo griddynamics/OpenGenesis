@@ -32,13 +32,15 @@ import org.mockito.Mockito
 import com.griddynamics.genesis.service.VariableDescription
 import com.griddynamics.genesis.plugin.{StepBuilder, GenesisStep}
 import com.griddynamics.genesis.repository.impl.ProjectPropertyRepository
+import com.griddynamics.genesis.repository.DatabagRepository
 
 class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSugar {
     val templateRepository = mock[TemplateRepository]
     val ppRepository = mock[ProjectPropertyRepository]
+    val bagRepository = mock[DatabagRepository]
     val templateService = new GroovyTemplateService(templateRepository,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-        Seq(new ListVarDSFactory, new DependentListVarDSFactory), ppRepository)
+        Seq(new ListVarDSFactory, new DependentListVarDSFactory), ppRepository, bagRepository)
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/ProjectContextExample.genesis"))
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
     Mockito.when(ppRepository.read(0, "key1")).thenReturn(Some("fred"))
