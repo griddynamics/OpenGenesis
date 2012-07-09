@@ -11,13 +11,15 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import scala.Some
 import com.griddynamics.genesis.template.VersionedTemplate
+import com.griddynamics.genesis.repository.DatabagRepository
 
 class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
     val templateRepository = mock[TemplateRepository]
     val ppRepository = mock[ProjectPropertyRepository]
+    val databagRepository = mock[DatabagRepository]
     val templateService = new GroovyTemplateService(templateRepository,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new NoArgsDSFactory), ppRepository)
+        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new NoArgsDSFactory), ppRepository, databagRepository)
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/DataSources.genesis"))
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
     Mockito.when(ppRepository.read(0, "key")).thenReturn(Some("abc"))
