@@ -119,6 +119,11 @@
             <artifactId>api</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.griddynamics.genesis</groupId>
+            <artifactId>commons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
