@@ -90,6 +90,7 @@
         <module>internal-api</module>
         <module>backend</module>
         <module>frontend</module>
+        <module>notification</module>
         <module>client</module>
         <module>api</module>
         <module>commons</module>
@@ -215,6 +216,12 @@
             <dependency>
                 <groupId>com.griddynamics.genesis</groupId>
                 <artifactId>run-local</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.griddynamics.genesis</groupId>
+                <artifactId>notification</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
