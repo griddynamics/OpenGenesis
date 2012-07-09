@@ -38,13 +38,14 @@ import org.codehaus.groovy.runtime.{InvokerHelper, MethodClosure}
 import scala.Some
 import service.ValidationError
 import com.griddynamics.genesis.plugin.GenesisStep
-import com.griddynamics.genesis.repository.ProjectPropertyRepository
+import com.griddynamics.genesis.repository.{DatabagRepository, ProjectPropertyRepository}
 
 class GroovyTemplateService(val templateRepository : TemplateRepository,
                             val stepBuilderFactories : Seq[StepBuilderFactory],
                             val conversionService : ConversionService,
                             val dataSourceFactories : Seq[DataSourceFactory] = Seq(),
-                            val projectPropertyRepository: ProjectPropertyRepository)
+                            val projectPropertyRepository: ProjectPropertyRepository,
+                            databagRepository: DatabagRepository )
     extends service.TemplateService with Logging {
 
     def findTemplate(projectId: Int, name: String, version: String) = getTemplate(projectId, name, version)
@@ -87,7 +88,7 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
             case e: GroovyRuntimeException => throw new IllegalStateException("can't process template", e)
         }
 
-        val templateBuilder = if (listOnly) new NameVersionDelegate else new EnvTemplateBuilder(projectId, dataSourceFactories, projectPropertyRepository)
+        val templateBuilder = if (listOnly) new NameVersionDelegate else new EnvTemplateBuilder(projectId, dataSourceFactories, databagRepository, projectPropertyRepository)
         templateDecl.bodies.headOption.map {
             templateBody => {
                 templateBody.setDelegate(templateBuilder)

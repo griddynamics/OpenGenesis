@@ -144,6 +144,10 @@ case class ProjectProperty(id: Int, projectId: Int, name: String, value: String)
 
 case class ConfigProperty(name: String, value: String, readOnly: Boolean, description: Option[String] = None)
 
+case class DataItem(id: Option[Int], name: String, value: String, dataBagId: Int)
+
+case class DataBag(id: Option[Int], name: String, tags: Seq[String], items: Option[Seq[DataItem]] = None)
+
 case class Plugin(id: String, description: Option[String])
 
 case class PluginDetails(id: String,  description: Option[String], configuration: Seq[ConfigProperty])

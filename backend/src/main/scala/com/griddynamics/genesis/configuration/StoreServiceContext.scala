@@ -29,40 +29,39 @@ import com.griddynamics.genesis.model.GenesisSchema
 import org.squeryl.internals.DatabaseAdapter
 import org.springframework.jdbc.datasource.{DataSourceUtils, DataSourceTransactionManager}
 import com.griddynamics.genesis.service.impl
-import com.griddynamics.genesis.service.ServersService
-import com.griddynamics.genesis.service.impl.{ServersLoanServiceImpl, ServersServiceImpl, CredentialsStoreService, ProjectServiceImpl}
+import  com.griddynamics.genesis.service.impl.{ProjectServiceImpl, ProjectService, ServersServiceImpl, ServersLoanServiceImpl}
 import org.squeryl.adapters.{PostgreSqlAdapter, MySQLAdapter, H2Adapter}
 import com.griddynamics.genesis.repository
 import com.griddynamics.genesis.service
-import repository.impl._
 import repository.SchemaCreator
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
-import scala.Some
 import com.griddynamics.genesis.adapters.MSSQLServerWithPagination
-import service.ServersLoanService
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
 
     @Bean def storeService: service.StoreService = new impl.StoreService
 
-    @Bean def projectRepository: com.griddynamics.genesis.repository.ProjectRepository = new ProjectRepository
+    @Bean def projectRepository: repository.ProjectRepository = new repository.impl.ProjectRepository
 
-    @Bean def projectService = new ProjectServiceImpl(projectRepository)
+    @Bean def projectService: ProjectService = new ProjectServiceImpl(projectRepository)
 
-    @Bean def projectPropertyRepository = new ProjectPropertyRepository
+    @Bean def projectPropertyRepository: repository.ProjectPropertyRepository = new repository.impl.ProjectPropertyRepository
 
-    @Bean def credentialsRepository: repository.CredentialsRepository = new CredentialsRepository
+    @Bean def credentialsRepository: repository.CredentialsRepository = new repository.impl.CredentialsRepository
 
-    @Bean def credentialsStoreService: service.CredentialsStoreService = new CredentialsStoreService(credentialsRepository, projectRepository)
+    @Bean def credentialsStoreService: service.CredentialsStoreService = new impl.CredentialsStoreService(credentialsRepository, projectRepository)
 
-    @Bean def serversArrayRepository: repository.ServerArrayRepository = new ServerArrayRepository()
-    @Bean def serversRepository: repository.ServerRepository = new ServerRepository()
+    @Bean def serversArrayRepository: repository.ServerArrayRepository = new repository.impl.ServerArrayRepository()
+    @Bean def serversRepository: repository.ServerRepository = new repository.impl.ServerRepository()
 
-    @Bean def serversService: ServersService = new ServersServiceImpl(serversArrayRepository, serversRepository)
+    @Bean def serversService: service.ServersService = new ServersServiceImpl(serversArrayRepository, serversRepository)
+    @Bean def serversLoanService: service.ServersLoanService = new ServersLoanServiceImpl(storeService, credentialsRepository)
 
-    @Bean def serversLoanService: ServersLoanService = new ServersLoanServiceImpl(storeService, credentialsRepository)
+    @Bean def databagRepository: repository.DatabagRepository = new repository.impl.DatabagRepository
+
+    @Bean def databagService: service.DataBagService = new impl.DataBagServiceImpl(databagRepository)
 }
 
 class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager,

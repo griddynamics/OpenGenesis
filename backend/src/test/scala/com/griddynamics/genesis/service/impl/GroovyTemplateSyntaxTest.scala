@@ -31,7 +31,7 @@ import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.template.dsl.groovy.WorkflowDeclaration
 import scala.Array
 import com.griddynamics.genesis.template.{VersionedTemplate, TemplateRepository}
-import com.griddynamics.genesis.repository.ProjectPropertyRepository
+import com.griddynamics.genesis.repository.{DatabagRepository, ProjectPropertyRepository}
 
 class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with MockitoSugar {
 
@@ -171,13 +171,14 @@ class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with Mock
     def getTemplateDefinition(script: String) = {
         val templateRepository = mock[TemplateRepository]
         val ppRepository = mock[ProjectPropertyRepository]
+        val bagRepository = mock[DatabagRepository]
         Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> script))
 
         val templateService = new GroovyTemplateService(templateRepository,
             List(
               new DoNothingStepBuilderFactory
             ),
-            ConversionServiceFactory.createDefaultConversionService(), Seq(), ppRepository)
+            ConversionServiceFactory.createDefaultConversionService(), Seq(),ppRepository,  bagRepository)
 
         templateService.listTemplates(0).headOption match {
             case Some((name, version)) => templateService.findTemplate(0, name, version)
