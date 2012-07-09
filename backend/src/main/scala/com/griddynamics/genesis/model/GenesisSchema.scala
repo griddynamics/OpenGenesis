@@ -54,6 +54,9 @@ trait GenesisSchema extends Schema {
     val servers = table[Server]("predefined_server")
 
     val actionTracking = table[ActionTracking]("action_tracking")
+
+    val dataBags = table[DataBag]("system_databag")
+    val dataBagItems = table[DataBagItem]("system_databag_item")
 }
 
 trait GenesisSchemaPrimitive extends GenesisSchema {
@@ -83,6 +86,9 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
 
     val serverToServerArray = oneToManyRelation(serverArrays, servers).via((array, server) => array.id === server.serverArrayId)
     serverToServerArray.foreignKeyDeclaration.constrainReference(onDelete cascade)
+
+    val itemToDatabag = oneToManyRelation(dataBags, dataBagItems).via((bag, item) => bag.id === item.dataBagId)
+    itemToDatabag.foreignKeyDeclaration.constrainReference(onDelete cascade)
 
     on(envs)(env => declare(
         env.name is (unique)
@@ -145,16 +151,28 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     on(serverArrays)(array => declare (
       array.id is (primaryKey, autoIncremented),
       array.name is dbType("varchar(128)"),
-      array.description is dbType("varchar(128)")
+      array.description is dbType("varchar(128)"),
+      columns(array.projectId, array.name) are (unique)
     ))
 
     on(servers)(server => declare (
       server.id is (primaryKey, autoIncremented),
-      server.instanceId is dbType("varchar(128)")
+      server.instanceId is dbType("varchar(128)"),
+      columns(server.serverArrayId, server.instanceId) are (unique)
     ))
 
     on(serverAttrs)(attr => declare (
       attr.value is (dbType("text"))
+    ))
+
+    on(dataBags)(bag => declare (
+      bag.id is (primaryKey, autoIncremented),
+      bag.name is (unique)
+    ))
+
+    on(dataBagItems)(item => declare (
+      item.id is (primaryKey, autoIncremented),
+      columns(item.dataBagId, item.itemKey) are (unique)
     ))
 }
 

@@ -30,7 +30,8 @@ import java.lang.reflect.Method
 import java.lang.{Boolean, IllegalStateException}
 import com.griddynamics.genesis.util.ScalaUtils
 import scala.Some
-import com.griddynamics.genesis.repository.ProjectPropertyRepository
+import com.griddynamics.genesis.repository.{DatabagRepository, ProjectPropertyRepository}
+import support.SystemWideContextSupport
 
 class EnvWorkflow(val name : String, val variables : List[VariableDetails], val stepsGenerator : Option[Closure[Unit]])
 
@@ -205,7 +206,10 @@ class NameVersionDelegate {
     def dataSources(ds : Closure[Unit]){}
 }
 
-class EnvTemplateBuilder(val projectId: Int, val dataSourceFactories : Seq[DataSourceFactory], ppRepository: ProjectPropertyRepository) extends NameVersionDelegate {
+class EnvTemplateBuilder(val projectId: Int,
+                         val dataSourceFactories : Seq[DataSourceFactory],
+                         val databagRepository: DatabagRepository,
+                         ppRepository: ProjectPropertyRepository) extends NameVersionDelegate with SystemWideContextSupport {
 
     var dsObjSupport : Option[DSObjectSupport] = None
 
