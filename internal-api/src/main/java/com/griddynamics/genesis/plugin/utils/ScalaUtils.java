@@ -20,7 +20,7 @@
  *   @Project:     Genesis
  *   @Description: Scala interoperability utils
  */
-package com.griddynamics.genesis.utils;
+package com.griddynamics.genesis.plugin.utils;
 
 import scala.collection.immutable.$colon$colon;
 import scala.collection.immutable.List;
