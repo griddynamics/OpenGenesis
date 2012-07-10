@@ -20,19 +20,21 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.servers
+package groovy.runtime.metaclass.scala
 
-import com.griddynamics.genesis.plugin.ServersUpdateResult
-import com.griddynamics.genesis.workflow.{ActionResult, ActionFailed}
-import com.griddynamics.genesis.workflow.step.{ActionStep, ActionStepResult}
+import groovy.lang.{MissingPropertyException, MetaClass}
+import org.codehaus.groovy.runtime.InvokerHelper
 
-class ServerActionStepResult(step: ActionStep, actionResult: ActionResult) extends ActionStepResult(step, actionResult) with ServersUpdateResult {
-  override def isStepFailed = actionResult.isInstanceOf[ActionFailed]
+class SomeMetaClass(delegate: MetaClass) extends groovy.lang.DelegatingMetaClass(delegate) {
 
-  def serversUpdate = {
-    actionResult match {
-      case updateResult: ServersUpdateActionResult => updateResult.servers
-      case _ => Seq()
+  override def getProperty(`object`: Any, property: String) = {
+    try {
+      super.getProperty(`object`, property)
+    } catch {
+      case e: MissingPropertyException => {
+        InvokerHelper.getProperty(`object`.asInstanceOf[Some[_]].get, property)
+      }
     }
   }
+
 }

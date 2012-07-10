@@ -22,8 +22,8 @@
  */
 package com.griddynamics.genesis.model
 
-import com.griddynamics.genesis.model.EnvStatus._
 import org.squeryl.customtypes.StringField
+import com.griddynamics.genesis.model.EnvStatus.Requested
 import scala.Some
 
 class Environment(val name: String,
@@ -40,7 +40,21 @@ class Environment(val name: String,
         env.id = this.id
         env
     }
+
+    def deploymentAttrs: Seq[DeploymentAttribute] = {
+      this.get(Environment.DeployemntAttr).getOrElse(Seq())
+    }
+
+    def deploymentAttrs_=(attrs: Seq[DeploymentAttribute]) {
+      this(Environment.DeployemntAttr)  = attrs
+    }
 }
+
+object Environment {
+  val DeployemntAttr = EntityAttr[Seq[DeploymentAttribute]]("deployment")
+
+}
+case class DeploymentAttribute(key: String, value: String, desc: String)
 
 class EnvStatusField(value: String) extends StringField(value) {
     def this(status: EnvStatus) = this (status.toString)

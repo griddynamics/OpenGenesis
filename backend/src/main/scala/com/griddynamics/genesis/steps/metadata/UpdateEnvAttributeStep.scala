@@ -20,19 +20,33 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.servers
+package com.griddynamics.genesis.metadata
 
-import com.griddynamics.genesis.plugin.ServersUpdateResult
-import com.griddynamics.genesis.workflow.{ActionResult, ActionFailed}
-import com.griddynamics.genesis.workflow.step.{ActionStep, ActionStepResult}
+import com.griddynamics.genesis.plugin.{StepBuilderFactory, StepBuilder}
+import reflect.BeanProperty
+import java.util.Collections
+import java.util.{Map => JMap}
+import scala.collection.JavaConversions._
+import com.griddynamics.genesis.workflow.Step
+import com.griddynamics.genesis.model.DeploymentAttribute
 
-class ServerActionStepResult(step: ActionStep, actionResult: ActionResult) extends ActionStepResult(step, actionResult) with ServersUpdateResult {
-  override def isStepFailed = actionResult.isInstanceOf[ActionFailed]
+class UpdateEnvAttributesStepBuilder extends StepBuilder {
 
-  def serversUpdate = {
-    actionResult match {
-      case updateResult: ServersUpdateActionResult => updateResult.servers
-      case _ => Seq()
-    }
+  @BeanProperty var items: JMap[String, Any] = Collections.emptyMap()
+
+  override def getDetails = {
+    val data = items.collect { case (name: String, value: JMap[String, String]) => DeploymentAttribute(name, value.head._2, value.head._1) }
+    UpdateEnvAttributeStep(data.toSeq)
   }
 }
+
+class UpdateEnvAttributesStepBuilderFactory extends StepBuilderFactory {
+  override val stepName = "updateAttributes"
+
+  override def newStepBuilder = new UpdateEnvAttributesStepBuilder
+}
+
+case class UpdateEnvAttributeStep(entries: Seq[DeploymentAttribute]) extends Step {
+  override def stepDescription = "Update environment attributes"
+}
+

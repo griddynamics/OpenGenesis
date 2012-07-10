@@ -39,6 +39,7 @@ import scala.Some
 import service.ValidationError
 import com.griddynamics.genesis.plugin.GenesisStep
 import com.griddynamics.genesis.repository.{DatabagRepository, ProjectPropertyRepository}
+import groovy.util.Expando
 
 class GroovyTemplateService(val templateRepository : TemplateRepository,
                             val stepBuilderFactories : Seq[StepBuilderFactory],
@@ -183,8 +184,16 @@ class StepBuilderProxy(stepBuilder: StepBuilder, project: ProjectContextSupport)
 
     override def setProperty(property: String, value: Any) {
         value match {
+          case value: Closure[_] =>
+            contextDependentProperties(property) = new ContextAccess {
+              def apply(v1: collection.Map[String, Any]) = {
+                import scala.collection.JavaConversions._
+                value.setDelegate(new Expando(v1))
+                value.call()
+              }
+            }
           case value: ContextAccess =>
-            contextDependentProperties(property) = value.asInstanceOf[ContextAccess]
+            contextDependentProperties(property) = value
           case _ => {
             ScalaUtils.setProperty(stepBuilder, property, value)
             if (ScalaUtils.hasProperty(this, property, ScalaUtils.getType(value))) {

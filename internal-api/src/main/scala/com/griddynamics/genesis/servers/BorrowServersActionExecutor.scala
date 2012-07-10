@@ -76,7 +76,7 @@ case class BorrowServersAction(serverArray: String,
                                serverIds: Option[Set[String]],
                                quantity: Option[Int]) extends Action
 
-class BorrowServerActionResult(val updatedServers: Seq[BorrowedMachine], val action: Action) extends ActionResult  with ServersUpdateActionResult
+class BorrowServerActionResult(val servers: Seq[BorrowedMachine], val action: Action) extends ActionResult  with ServersUpdateActionResult
 
 class ServerArrayNotFoundResult(val action: Action) extends ActionResult with ActionFailed
 
