@@ -167,12 +167,15 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
 
     on(dataBags)(bag => declare (
       bag.id is (primaryKey, autoIncremented),
-      bag.name is (unique)
+      bag.name is (unique, dbType("varchar(128)")),
+      bag.tags is (dbType("varchar(512)"))
     ))
 
     on(dataBagItems)(item => declare (
       item.id is (primaryKey, autoIncremented),
-      columns(item.dataBagId, item.itemKey) are (unique)
+      columns(item.dataBagId, item.itemKey) are (unique),
+      item.itemKey is (dbType("varchar(256)")),
+      item.itemValue is (dbType("varchar(256)"))
     ))
 }
 
