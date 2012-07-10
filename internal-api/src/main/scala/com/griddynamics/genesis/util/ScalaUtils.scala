@@ -56,7 +56,8 @@ object ScalaUtils extends com.griddynamics.genesis.cache.Cache {
     }
 
     val accessorName = "set" + name.capitalize
-    obj.getClass.getDeclaredMethods.find { m =>
+    val allMethods = obj.getClass.getMethods.toSet ++ obj.getClass.getDeclaredMethods.toSet
+    allMethods.find { m =>
       m.getName == accessorName &&
         m.getParameterTypes.length == 1 &&
         isAssignable(m.getParameterTypes.apply(0), valueType)

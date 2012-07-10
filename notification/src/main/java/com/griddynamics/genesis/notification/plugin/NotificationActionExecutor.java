@@ -20,54 +20,63 @@
  *   @Project:     Genesis
  *   @Description: E-mail notifications plugin
  */
-package com.griddynamics.genesis.notification;
+package com.griddynamics.genesis.notification.plugin;
 
 import com.griddynamics.genesis.plugin.adapter.AbstractSyncActionExecutor;
 import com.griddynamics.genesis.workflow.Action;
 import org.codemonkey.simplejavamail.Email;
 import org.codemonkey.simplejavamail.Mailer;
 import org.codemonkey.simplejavamail.TransportStrategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.mail.Message;
 
 public class NotificationActionExecutor extends AbstractSyncActionExecutor {
 
-    private NotificationAction action;
+  private Logger log = LoggerFactory.getLogger(this.getClass());
 
-    private EmailSenderConfiguration configuration;
+  private NotificationAction action;
+  private EmailSenderConfiguration configuration;
 
-    public NotificationActionExecutor(NotificationAction action, EmailSenderConfiguration configuration) {
-        this.action = action;
-        this.configuration = configuration;
+  public NotificationActionExecutor(NotificationAction action,
+                                    EmailSenderConfiguration configuration) {
+    this.action = action;
+    this.configuration = configuration;
+  }
+
+  @Override
+  public NotificationResult startSync() {
+    NotificationStep notificationStep = action.getNotificationStep();
+
+    try {
+      final Email email = new Email();
+      email.setSubject(notificationStep.getSubject());
+      email.setText(action.getMessage());
+
+      for (String emailAddress : notificationStep.getEmails()) {
+        email.addRecipient(null, emailAddress, Message.RecipientType.TO);
+      }
+
+      email.setFromAddress(configuration.getSenderName(), configuration.getSenderEmail());
+
+      Mailer mailer = new Mailer(configuration.getSmtpHost(), configuration.getSmtpPort(), configuration.getSmtpUsername(),
+          configuration.getSmtpPassword(), configuration.isUseTls() ? TransportStrategy.SMTP_TLS: TransportStrategy.SMTP_PLAIN);
+
+      mailer.sendMail(email);
+
+      return new NotificationResult(action, true);
+
+    } catch (IllegalArgumentException e) {
+
+      log.error(e.getMessage());
+      return new NotificationResult(action, false);
+
     }
+  }
 
-    @Override
-    public NotificationResult startSync() {
-        NotificationStep notificationStep = action.getNotificationStep();
-
-        final Email email = new Email();
-        email.setSubject(notificationStep.getSubject());
-        email.setText(notificationStep.getMessage());
-
-        for (String emailAddress : notificationStep.getEmails()) {
-            email.addRecipient(null, emailAddress, Message.RecipientType.TO);
-        }
-
-        email.setFromAddress(configuration.getSenderName(), configuration.getSenderEmail());
-
-        Mailer mailer = new Mailer(configuration.getSmtpHost(), configuration.getSmtpPort(), configuration.getSmtpUsername(),
-                configuration.getSmtpPassword(), configuration.isUseTls() ? TransportStrategy.SMTP_TLS: TransportStrategy.SMTP_PLAIN);
-
-        try {
-            mailer.sendMail(email);
-            return new NotificationResult(action, true);
-        } catch (Exception e) {
-            return new NotificationResult(action, false);
-        }
-    }
-
-    public Action action() {
-        return action;
-    }
+  public Action action() {
+    return action;
+  }
 
 }

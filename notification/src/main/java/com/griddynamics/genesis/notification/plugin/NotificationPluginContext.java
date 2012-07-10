@@ -1,0 +1,91 @@
+/*
+ * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
+ *   http://www.griddynamics.com
+ *
+ *   This library is free software; you can redistribute it and/or modify it under the terms of
+ *   the GNU Lesser General Public License as published by the Free Software Foundation; either
+ *   version 2.1 of the License, or any later version.
+ *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ *   DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+ *   FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ *   SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ *   CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *   @Project:     Genesis
+ *   @Description: E-mail notifications plugin
+ */
+package com.griddynamics.genesis.notification.plugin;
+
+import com.griddynamics.genesis.notification.template.StringTemplateEngine;
+import com.griddynamics.genesis.notification.template.TemplateEngine;
+import com.griddynamics.genesis.plugin.api.GenesisPlugin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+@GenesisPlugin(id = "notification", description = "Sends basic notification to given emails")
+public class NotificationPluginContext {
+
+  private Logger log = LoggerFactory.getLogger(this.getClass());
+
+  @Value("${genesis.plugin.notification.sender.name}")
+  private String senderName;
+
+  @Value("${genesis.plugin.notification.sender.email}")
+  private String senderEmail;
+
+  @Value("${genesis.plugin.notification.smtp.host}")
+  private String smtpHost;
+
+  @Value("${genesis.plugin.notification.smtp.port}")
+  private Integer smtpPort;
+
+  @Value("${genesis.plugin.notification.smtp.username}")
+  private String smtpUsername;
+
+  @Value("${genesis.plugin.notification.smtp.password}")
+  private String smtpPassword;
+
+  @Value("${genesis.plugin.notification.smtp.useTls}")
+  private Boolean useTls;
+
+  @Value("${genesis.plugin.notification.template.folder}")
+  private String templateFolder;
+
+  @Bean
+  public NotificationStepBuilderFactory notificationStepBuilderFactory() {
+    return new NotificationStepBuilderFactory();
+  }
+
+  @Bean
+  public NotificationStepCoordinatorFactory notificationStepCoordinatorFactory() {
+    return new NotificationStepCoordinatorFactory(getEmailSenderConfiguration(), getTemplateEngine());
+  }
+
+  private EmailSenderConfiguration getEmailSenderConfiguration() {
+    return new EmailSenderConfiguration(senderName, senderEmail, smtpHost, smtpPort,
+        smtpUsername, smtpPassword, useTls);
+  }
+
+  private TemplateEngine getTemplateEngine() {
+    TemplateEngine templateEngine;
+    try {
+      templateEngine = new StringTemplateEngine(templateFolder);
+    } catch (IllegalArgumentException e) {
+      log.error("Error creating templates group: {}", e.getMessage());
+      e.printStackTrace();
+      templateEngine = new StringTemplateEngine(System.getProperty("user.dir"));
+    }
+    return templateEngine;
+  }
+
+}
