@@ -45,7 +45,8 @@ case class EnvironmentDetails(name : String,
                               servers : Seq[BorrowedMachine],
                               projectId: Int,
                               historyCount: Int,
-                              workflowCompleted: Option[Double])
+                              workflowCompleted: Option[Double],
+                              attributes: Map[String, String] = Map())
 
 case class Variable(name : String, description : String, optional: Boolean = false, defaultValue: String = null,
                     values:Map[String,String] = Map(), dependsOn: Option[List[String]] = None)

@@ -24,15 +24,20 @@ package com.griddynamics.genesis.core
 
 import scala.collection.mutable
 import com.griddynamics.genesis.plugin._
-import com.griddynamics.genesis.workflow.{StepCoordinator, Signal, StepResult, FlowCoordinator}
+import com.griddynamics.genesis.workflow._
 import com.griddynamics.genesis.service.StoreService
-import com.griddynamics.genesis.workflow.signal.{Success, Fail}
 import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.common.Mistake
 import com.griddynamics.genesis.util.Logging
-import com.griddynamics.genesis.workflow.step.CoordinatorThrowable
 import com.griddynamics.genesis.logging.LoggerWrapper
 import com.griddynamics.genesis.service.impl.StepBuilderProxy
+import com.griddynamics.genesis.plugin.Cancel
+import com.griddynamics.genesis.workflow.step.ActionStepResult
+import com.griddynamics.genesis.plugin.GenesisStepResult
+import com.griddynamics.genesis.workflow.signal.Success
+import com.griddynamics.genesis.workflow.step.CoordinatorThrowable
+import com.griddynamics.genesis.plugin.GenesisStep
+import com.griddynamics.genesis.workflow.signal.Fail
 
 abstract class GenesisFlowCoordinator(envName: String,
                              flowSteps: Seq[StepBuilder],
@@ -214,12 +219,26 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
     }
 
     private def exportToContext(result: GenesisStepResult) {
+      import scala.collection.JavaConversions._
       result.step.exportTo.foreach { case (from, to) =>
         try {
+
           val actualResult: StepResult = result.actualResult.getOrElse(
             throw new IllegalStateException("Exporting to context was specified in template, but step produced no actual results")
           )
-          globals(to) = actualResult.getClass.getDeclaredMethod(from).invoke(actualResult)
+
+          val resultObject = actualResult match {
+            case r: ActionStepResult => r.actionResult
+            case r => r
+          }
+          val resultValue = resultObject.getClass.getDeclaredMethod(from).invoke(resultObject)
+
+          globals(to) = resultValue match {
+            case map: scala.collection.Map[_, _] => mapAsJavaMap(map)
+            case traversable: scala.collection.Traversable[_] => seqAsJavaList(traversable.toSeq)
+            case other => other
+          }
+
         } catch {
           case e => {
             LoggerWrapper.writeLog(result.step.id, "Failed to export step result to context: export settings = " + result.step.exportTo)

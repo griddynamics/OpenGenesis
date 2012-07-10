@@ -176,7 +176,8 @@ object GenesisRestService {
             bmDescs.toSeq,
             env.projectId,
             historyCount,
-            workflowCompleted
+            workflowCompleted,
+            env.deploymentAttrs.map( attr => (attr.desc, attr.value)).toMap
         )
     }
 

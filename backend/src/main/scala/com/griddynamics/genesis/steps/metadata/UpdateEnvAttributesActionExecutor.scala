@@ -20,37 +20,31 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.servers
+package com.griddynamics.genesis.metadata
 
 import com.griddynamics.genesis.workflow.{ActionResult, Action, Signal, SyncActionExecutor}
-import com.griddynamics.genesis.model.{VmStatus, BorrowedMachine}
-import java.net.InetAddress
-import com.griddynamics.genesis.service.{ServersLoanService, StoreService}
 import com.griddynamics.genesis.plugin.StepExecutionContext
+import com.griddynamics.genesis.model.{Environment, DeploymentAttribute}
+import com.griddynamics.genesis.service.StoreService
 
-class ReleaseServersActionExecutor(val action: ReleaseServersAction,
-                                   serversLoanService: ServersLoanService,
-                                   context: StepExecutionContext) extends SyncActionExecutor {
+class UpdateEnvAttributesActionExecutor(val action: UpdateEnvAttributesAction, context: StepExecutionContext, storeService: StoreService) extends SyncActionExecutor {
 
   def cleanUp(signal: Signal) {}
 
   def startSync() = {
-    val all = context.servers.collect { case bm: BorrowedMachine => bm }
+    val env = action.env
+    val keys = action.entries.map(_.key).toSet
 
-    val machines = (action.roleName, action.serverIds) match {
-      case (Some(role), None) => all.filter(_.roleName == role)
-      case (_, Some(seq)) => all.intersect(seq)
-      case (None, None) => all
-    }
-    val updates = serversLoanService.releaseServers(context.env, machines)
-    updates.foreach { context.updateServer(_) }
+    val preserved = env.deploymentAttrs.filterNot{ attr => keys.contains(attr.key) }
+    env.deploymentAttrs = preserved ++ action.entries
 
-    new ReleaseServersResult(action, updates)
+    context.updateEnv(env)
+    storeService.updateEnv(env)
+
+    SuccessfullyUpdated(action)
   }
 }
 
+case class SuccessfullyUpdated(val action: Action) extends ActionResult
 
-case class ReleaseServersAction( roleName: Option[String],
-                                 serverIds: Option[Seq[String]] ) extends Action
-
-class ReleaseServersResult (val action: Action, val servers: Seq[BorrowedMachine]) extends ActionResult with ServersUpdateActionResult
+case class UpdateEnvAttributesAction(env: Environment, entries: Seq[DeploymentAttribute]) extends Action

@@ -28,7 +28,7 @@ import collection.JavaConversions._
 import java.sql.Timestamp
 
 case class IpAddresses(publicIp:Option[String] = None,  privateIp:Option[String] = None) {
-  def address = publicIp.getOrElse(privateIp.getOrElse(""))
+  val address = publicIp.getOrElse(privateIp.getOrElse(""))
 }
 
 sealed trait EnvResource extends EntityWithAttrs {
