@@ -25,5 +25,5 @@ package com.griddynamics.genesis.servers
 import com.griddynamics.genesis.model.EnvResource
 
 trait ServersUpdateActionResult {
-  def updatedServers: Seq[EnvResource]
+  def servers: Seq[EnvResource]
 }

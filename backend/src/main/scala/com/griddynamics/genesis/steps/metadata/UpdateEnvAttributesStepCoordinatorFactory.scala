@@ -20,19 +20,31 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.servers
+package com.griddynamics.genesis.metadata
 
-import com.griddynamics.genesis.plugin.ServersUpdateResult
-import com.griddynamics.genesis.workflow.{ActionResult, ActionFailed}
-import com.griddynamics.genesis.workflow.step.{ActionStep, ActionStepResult}
+import com.griddynamics.genesis.plugin._
+import com.griddynamics.genesis.workflow.{ActionExecutor, ActionStepCoordinator, Step}
+import com.griddynamics.genesis.workflow.step.ActionStepResult
+import com.griddynamics.genesis.service.StoreService
 
-class ServerActionStepResult(step: ActionStep, actionResult: ActionResult) extends ActionStepResult(step, actionResult) with ServersUpdateResult {
-  override def isStepFailed = actionResult.isInstanceOf[ActionFailed]
+class UpdateEnvAttributesStepCoordinatorFactory(storeService: StoreService) extends PartialStepCoordinatorFactory{
 
-  def serversUpdate = {
-    actionResult match {
-      case updateResult: ServersUpdateActionResult => updateResult.servers
-      case _ => Seq()
+  def apply(step: Step, context: StepExecutionContext) = {
+    val updateStep = step.asInstanceOf[UpdateEnvAttributeStep]
+    new UpdateEnvStepCoordinator(
+        new UpdateEnvAttributesActionExecutor(new UpdateEnvAttributesAction(context.env, updateStep.entries), context, storeService), context
+    )
+  }
+
+  def isDefinedAt(step: Step) = step.isInstanceOf[UpdateEnvAttributeStep]
+}
+
+
+class UpdateEnvStepCoordinator(executor: ActionExecutor, context: StepExecutionContext) extends ActionStepCoordinator(executor) {
+  override def getStepResult() = {
+    val result = super.getStepResult()
+    new ActionStepResult(step, result.actionResult) with EnvUpdateResult {
+      def envUpdate = context.envUpdate()
     }
   }
 }

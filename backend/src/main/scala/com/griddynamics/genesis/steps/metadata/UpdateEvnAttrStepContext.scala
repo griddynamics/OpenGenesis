@@ -20,19 +20,19 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.servers
+package com.griddynamics.genesis.steps.metadata
 
-import com.griddynamics.genesis.plugin.ServersUpdateResult
-import com.griddynamics.genesis.workflow.{ActionResult, ActionFailed}
-import com.griddynamics.genesis.workflow.step.{ActionStep, ActionStepResult}
+import org.springframework.context.annotation.{Bean, Configuration}
+import com.griddynamics.genesis.metadata.{UpdateEnvAttributesStepCoordinatorFactory, UpdateEnvAttributesStepBuilderFactory}
+import org.springframework.beans.factory.annotation.Autowired
+import com.griddynamics.genesis.configuration.StoreServiceContext
 
-class ServerActionStepResult(step: ActionStep, actionResult: ActionResult) extends ActionStepResult(step, actionResult) with ServersUpdateResult {
-  override def isStepFailed = actionResult.isInstanceOf[ActionFailed]
+@Configuration
+class UpdateEvnAttrStepContext {
 
-  def serversUpdate = {
-    actionResult match {
-      case updateResult: ServersUpdateActionResult => updateResult.servers
-      case _ => Seq()
-    }
-  }
+  @Autowired var storeServiceContext: StoreServiceContext = _
+
+  @Bean def envAttributeStepBuilderFactory = new UpdateEnvAttributesStepBuilderFactory
+
+  @Bean def envAttributeCoordinatorFactory = new UpdateEnvAttributesStepCoordinatorFactory(storeServiceContext.storeService)
 }
