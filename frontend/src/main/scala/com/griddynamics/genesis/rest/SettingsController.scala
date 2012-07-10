@@ -41,12 +41,18 @@ class SettingsController(configService: ConfigService) extends RestApiExceptions
     @RequestMapping(value = Array("{key:.+}"), method = Array(RequestMethod.PUT))
     @ResponseBody
     def update(@PathVariable("key") key: String, request: HttpServletRequest) = using { _ =>
-        configService.update(key, extractParamsMap(request)("value"))
+        validKey(key) { k =>
+          configService.update(k, extractParamsMap(request)("value"))
+        }
     }
 
     @RequestMapping(value = Array("{key:.+}"), method = Array(RequestMethod.DELETE))
     @ResponseBody
-    def delete(@PathVariable("key") key: String) = using ( _ => configService.delete(key) )
+    def delete(@PathVariable("key") key: String) = using { _ =>
+      validKey(key) { k=>
+        configService.delete(k)
+      }
+    }
 
     @RequestMapping(method = Array(RequestMethod.DELETE))
     @ResponseBody
@@ -57,7 +63,15 @@ class SettingsController(configService: ConfigService) extends RestApiExceptions
             block()
             Success(None)
         } catch {
-            case e => Failure(compoundServiceErrors = Seq(e.getMessage))
+            case e: ResourceNotFoundException => Failure(compoundServiceErrors = Seq(e.msg), isNotFound = true)
+            case ex => Failure(compoundServiceErrors = Seq(ex.getMessage))
         }
+    }
+
+    private def validKey(key: String)(block: String => Any) {
+       configService.get(key) match {
+         case Some(v) => block(key)
+         case None => throw new ResourceNotFoundException("Key %s is not found".format(key))
+       }
     }
 }
