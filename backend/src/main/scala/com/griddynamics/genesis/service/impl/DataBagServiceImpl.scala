@@ -5,9 +5,7 @@ import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.repository.DatabagRepository
 import com.griddynamics.genesis.validation.Validation
 import com.griddynamics.genesis.validation.Validation._
-import com.griddynamics.genesis.api.DataBag
-import com.griddynamics.genesis.api.Failure
-import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.api.{ExtendedResult, DataBag, Failure, Success}
 
 class DataBagServiceImpl(repository: DatabagRepository) extends DataBagService with Validation[DataBag] {
 
@@ -32,18 +30,35 @@ class DataBagServiceImpl(repository: DatabagRepository) extends DataBagService w
     }
   }
 
-  protected def validateUpdate(bag: DataBag) =
-    mustNotHaveDuplicateItems(bag) ++
+  protected def validateUpdate(bag: DataBag) = {
+    commonValidate(bag)++
     must(bag, "DataBag with name '%s' already exists".format(bag.name)) {
-        project => repository.findByName(project.name).forall { _.id == bag.id}
+      project => repository.findByName(project.name).forall { _.id == bag.id}
     }
+  }
 
-
-  protected def validateCreation(bag: DataBag) =
+  def commonValidate (bag: DataBag): ExtendedResult[DataBag] = {
     mustNotHaveDuplicateItems(bag) ++
+      mustSatisfyLengthConstraints(bag, bag.name, "name")(1, 128) ++
+      mustSatisfyLengthConstraints(bag, bag.tags.mkString(" "), "tags")(1, 512) ++
+      mustHaveAllItemsWithValidLength(bag)
+  }
+
+  protected def validateCreation(bag: DataBag) = {
+    commonValidate(bag)++
     must(bag, "DataBag with name '%s' already exists".format(bag.name)) {
         project => repository.findByName(project.name).isEmpty
     }
+  }
+
+  def mustHaveAllItemsWithValidLength(bag: DataBag) = {
+    val invalidItems = bag.items.getOrElse(List()).collect { case item if item.name.length > 256 || item.value.length > 256 => item }
+    if (invalidItems.size > 0) {
+      Failure(compoundServiceErrors = invalidItems.map( itm => "Property '%s' violates length constraint (max 256)".format(itm.name)).toSeq)
+    } else {
+      Success(bag)
+    }
+  }
 
   def mustNotHaveDuplicateItems(bag: DataBag) =  {
     val duplicates = bag.items.getOrElse(List()).
@@ -54,6 +69,4 @@ class DataBagServiceImpl(repository: DatabagRepository) extends DataBagService w
       Success(bag)
     }
   }
-
-
 }

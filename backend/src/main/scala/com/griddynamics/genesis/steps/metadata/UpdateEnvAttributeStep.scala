@@ -41,7 +41,7 @@ class UpdateEnvAttributesStepBuilder extends StepBuilder {
 }
 
 class UpdateEnvAttributesStepBuilderFactory extends StepBuilderFactory {
-  override val stepName = "updateAttributes"
+  override val stepName = "updateEnvAttributes"
 
   override def newStepBuilder = new UpdateEnvAttributesStepBuilder
 }
