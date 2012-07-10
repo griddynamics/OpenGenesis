@@ -28,7 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.configuration.StoreServiceContext
 
 @Configuration
-class UpdateEvnAttrStepContext {
+class UpdateEnvAttrStepContext {
 
   @Autowired var storeServiceContext: StoreServiceContext = _
 
