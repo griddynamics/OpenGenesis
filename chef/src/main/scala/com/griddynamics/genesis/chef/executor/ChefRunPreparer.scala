@@ -10,7 +10,7 @@ import com.griddynamics.genesis.service.SshService
 import com.griddynamics.genesis.workflow.{Signal, SyncActionExecutor}
 import com.griddynamics.genesis.util.shell.command.{chmod, mkdir}
 import com.griddynamics.genesis.chef.action.{PrepareRegularChefRun, PrepareInitialChefRun, ChefRunPrepared, PrepareChefRun}
-import com.griddynamics.genesis.chef.{ChefVmAttrs, ChefService, executor}
+import com.griddynamics.genesis.chef.{ChefVmAttrs, ChefService}
 
 
 trait RegularChefRun extends ChefRunPreparer[PrepareRegularChefRun] {
@@ -60,6 +60,7 @@ abstract class ChefRunPreparer[A <: PrepareChefRun](val action: A,
 
   def chefRunShContent =
     "#!/bin/bash            \n" +
+    "PATH=$PATH:/sbin:/usr/sbin\n" +
       "chef-client -c %s -j %s\n".format(chefConfig, chefAttrs)
 
   def chefClientAttrs: JObject
