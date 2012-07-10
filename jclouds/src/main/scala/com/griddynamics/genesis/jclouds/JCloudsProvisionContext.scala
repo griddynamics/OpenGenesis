@@ -208,7 +208,6 @@ class JCloudsProvisionContextImpl(override val storeService: StoreService,
 class JCloudsComputeService(pluginFactory: JCloudsComputeContextProvider) extends ComputeService {
 
   def getIpAddresses(vm: VirtualMachine): Option[IpAddresses] = {
-
     vm.getIp.orElse {
       val jCloudsComputeService = pluginFactory.computeContext(vm).getComputeService
 
