@@ -106,11 +106,18 @@ with repository.ProjectPropertyRepository with Logging {
         } else {
             Success(property)
         }
+
+        val notEmpty = if (property.value == null || property.value.trim.isEmpty)  {
+            Failure(compoundServiceErrors =  Seq("Property %s is empty".format(String.valueOf(property.name))))
+        } else {
+            Success(property)
+        }
+
         val patternValid = if (namePattern.findFirstIn(property.name) == None) {
             Failure(compoundServiceErrors = Seq("Invalid format. Use a combination of latin letters, numbers and dots. Length must be from 1 to 1024".format(property.name)))
         } else {
             Success(property)
         }
-        nameValid ++ patternValid
+        nameValid ++ notEmpty ++ patternValid
     }
 }
