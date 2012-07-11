@@ -50,15 +50,28 @@ abstract class CommonProvisionExecutor extends SimpleAsyncActionExecutor
 
   def getResult(): Option[ActionResult] = {
     vm.getIp.map(_ => ProvisionCompleted(action, vm)) orElse
-      (vmMetadataFuture.getMetadata match {
-        case None => None
-        case Some(instanceId) => {
-          vm.instanceId = Some(instanceId)
-          log.debug("vm '%s' is provisioned successfuly", vm)
-          storeService.updateServer(vm)
-          Some(ProvisionCompleted(action, vm))
-        }
-      })
+      (processFuture(vm))
+  }
+
+  def processFuture(vm: VirtualMachine): Option[ActionResult] = {
+      vmMetadataFuture match {
+          case f: FailedVmFuture => {
+              vm.status = VmStatus.Failed
+              storeService.updateServer(vm)
+              Some(ProvisionFailed(action, Some(vm)))
+          }
+          case v: VmMetadataFuture => {
+              v.getMetadata match {
+                  case None => None
+                  case Some(instanceId) => {
+                      vm.instanceId = Some(instanceId)
+                      log.debug("vm '%s' is provisioned successfuly", vm)
+                      storeService.updateServer(vm)
+                      Some(ProvisionCompleted(action, vm))
+                  }
+              }
+          }
+      }
   }
 
   def getResultOnTimeout = {

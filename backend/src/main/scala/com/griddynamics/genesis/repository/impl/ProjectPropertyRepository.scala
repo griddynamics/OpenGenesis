@@ -35,7 +35,7 @@ import com.griddynamics.genesis.util.Logging
 class ProjectPropertyRepository extends AbstractGenericRepository[model.ProjectContextEntry, api.ProjectProperty](GS.projectProperties)
 with repository.ProjectPropertyRepository with Logging {
 
-    val namePattern = """^([a-zA-Z0-9.]{1,1024})$""".r
+    val namePattern = """^([a-zA-Z0-9.]{1,128})$""".r
 
     @Transactional(readOnly = true)
     def listForProject(projectId: Int): List[api.ProjectProperty] = {
@@ -114,7 +114,7 @@ with repository.ProjectPropertyRepository with Logging {
         }
 
         val patternValid = if (namePattern.findFirstIn(property.name) == None) {
-            Failure(compoundServiceErrors = Seq("Invalid format. Use a combination of latin letters, numbers and dots. Length must be from 1 to 1024".format(property.name)))
+            Failure(compoundServiceErrors = Seq("Invalid format. Use a combination of latin letters, numbers and dots. Length must be from 1 to 128"))
         } else {
             Success(property)
         }

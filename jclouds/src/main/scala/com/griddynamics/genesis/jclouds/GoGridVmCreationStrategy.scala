@@ -38,7 +38,7 @@ class GoGridVmCreationStrategyProvider extends JCloudsVmCreationStrategyProvider
     val computeProperties = new Properties
 
     def createVmCreationStrategy(nodeNamePrefix: String, computeContext: ComputeServiceContext): VmCreationStrategy =
-        new GoGridVmCreationStrategy(nodeNamePrefix, computeContext);
+        new GoGridVmCreationStrategy(nodeNamePrefix, computeContext)
 }
 
 class GoGridVmCreationStrategy(nodeNamePrefix: String, computeContext: ComputeServiceContext) extends DefaultVmCreationStrategy(nodeNamePrefix, computeContext) {
@@ -78,7 +78,7 @@ class GoGridVmCreationStrategy(nodeNamePrefix: String, computeContext: ComputeSe
       val  unassignedIps = new GetIpListOptions()
           .onlyUnassigned
 //            .inDatacenter(template.getLocation().getId())
-          .onlyWithType(IpType.PUBLIC);
+          .onlyWithType(IpType.PUBLIC)
       val availableIps = client.getIpServices.getIpList(unassignedIps)
       val availableIp = Iterables.getLast(availableIps) // iterate over the collection. you're not required to use Iterables
       import DefaultVmCreationStrategy._
