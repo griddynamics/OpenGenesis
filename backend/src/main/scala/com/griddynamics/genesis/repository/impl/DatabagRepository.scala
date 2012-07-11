@@ -37,7 +37,7 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
   val itemsTable = GenesisSchema.dataBagItems
 
   implicit def convert(entity: model.DataBag) = {
-    val tags: Seq[String] = if (entity.tags.isEmpty) List() else entity.tags.trim.split(" ")
+    val tags: Seq[String] = if (entity.tags.trim.isEmpty) List() else entity.tags.trim.split(" ")
     new api.DataBag(fromModelId(entity.id), entity.name, tags)
   }
 
