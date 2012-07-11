@@ -43,18 +43,20 @@ sealed trait Tunnel {
     def backendHost: String
     def uriMatch: String
     def doServe(request: HttpServletRequest, response: CatchCodeWrapper)
+    def connectTimeout: Int
+    def readTimeout: Int
 }
 
 abstract class TunnelFilter(override val uriMatch: String) extends Filter with Tunnel with Logging {
     var backendHost: String = _
-    var connectTimeout: Long = 5000
-    var readTimeout: Long = 5000
+    var connectTimeout: Int = 5000
+    var readTimeout: Int = 5000
 
 
     def init(filterConfig: FilterConfig) {
         backendHost = filterConfig.getInitParameter(TunnelFilter.BACKEND_PARAMETER)
-        connectTimeout = filterConfig.getInitParameter(TunnelFilter.CONNECT_TIMEOUT).toLong
-        readTimeout = filterConfig.getInitParameter(TunnelFilter.READ_TIMEOUT).toLong
+        connectTimeout = filterConfig.getInitParameter(TunnelFilter.CONNECT_TIMEOUT).toInt
+        readTimeout = filterConfig.getInitParameter(TunnelFilter.READ_TIMEOUT).toInt
     }
 
     def doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
@@ -118,7 +120,7 @@ trait NettyTunnel extends Tunnel with Logging {
         val handler = new OutputStreamHandler(response, latch)
         var factory: TunnelPipelineFactory = new TunnelPipelineFactory(handler)
         bootstrap.setPipelineFactory(factory)
-        bootstrap.setOption("connectTimeoutMillis", 5000)
+        bootstrap.setOption("connectTimeoutMillis", connectTimeout)
         val future = bootstrap.connect(new InetSocketAddress(url.getHost, url.getPort))
         val channel = future.awaitUninterruptibly().getChannel
         factory.getPipeline.getChannel
@@ -126,18 +128,18 @@ trait NettyTunnel extends Tunnel with Logging {
             response.resetBuffer()
             response.sendError(502, "Cannot connect to backend")
         } else {
-            var write: ChannelFuture = channel.write(prepareRequest(request, url))
-            write.awaitUninterruptibly(5, TimeUnit.SECONDS)
-            channel.getCloseFuture.awaitUninterruptibly(5, TimeUnit.SECONDS)
+            val write: ChannelFuture = channel.write(prepareRequest(request, url))
+            write.awaitUninterruptibly(readTimeout / 1000, TimeUnit.SECONDS)
+            channel.getCloseFuture.awaitUninterruptibly(readTimeout / 1000, TimeUnit.SECONDS)
         }
-        if (! latch.await(5, TimeUnit.SECONDS)) {
+        if (! latch.await(readTimeout / 1000, TimeUnit.SECONDS)) {
           response.resetBuffer()
           response.sendError(502, "Timeout while reading remote answer")
         }
     }
 
     def prepareRequest(req: HttpServletRequest, host: URL): HttpRequest = {
-        var uri = Option(req.getQueryString) match {
+        val uri = Option(req.getQueryString) match {
             case Some(s) => req.getRequestURI + "?" + s
             case _ => req.getRequestURI
         }
@@ -240,8 +242,8 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
         connection.setDoInput(true)
         connection.addRequestProperty(TunnelFilter.SEC_HEADER_NAME, TunnelFilter.currentUser)
         connection.addRequestProperty("Connection", "close") //no keep-alive
-        connection.setConnectTimeout(5000)
-        connection.setReadTimeout(5000)
+        connection.setConnectTimeout(connectTimeout)
+        connection.setReadTimeout(readTimeout)
         try {
             connection.connect()
             if (doWrite) {
