@@ -22,26 +22,16 @@
  */
 package com.griddynamics.genesis.notification.plugin;
 
-import com.griddynamics.genesis.plugin.PluginConfigurationContext;
-import com.griddynamics.genesis.plugin.api.GenesisPlugin;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+interface NotificationPluginConfig {
 
-@Configuration
-@GenesisPlugin(id = "notification", description = "Sends basic notification to given emails")
-public class NotificationPluginContext {
-
-  @Autowired private PluginConfigurationContext pluginConfiguration;
-
-  @Bean
-  public NotificationStepBuilderFactory notificationStepBuilderFactory() {
-    return new NotificationStepBuilderFactory();
-  }
-
-  @Bean
-  public NotificationStepCoordinatorFactory notificationStepCoordinatorFactory() {
-    return new NotificationStepCoordinatorFactory(NotificationPluginConfig.id, pluginConfiguration);
-  }
+  public static final String id = "notification";
+  public static final String senderName = "genesis.plugin.notification.sender.name";
+  public static final String senderEmail = "genesis.plugin.notification.sender.email";
+  public static final String smtpHost = "genesis.plugin.notification.smtp.host";
+  public static final String smtpPort = "genesis.plugin.notification.smtp.port";
+  public static final String smtpUsername = "genesis.plugin.notification.smtp.username";
+  public static final String smtpPassword = "genesis.plugin.notification.smtp.password";
+  public static final String useTls = "genesis.plugin.notification.smtp.useTls";
+  public static final String templateFolder = "genesis.plugin.notification.template.folder";
 
 }

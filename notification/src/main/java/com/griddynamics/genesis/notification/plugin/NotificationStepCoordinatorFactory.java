@@ -22,19 +22,21 @@
  */
 package com.griddynamics.genesis.notification.plugin;
 
+import com.griddynamics.genesis.notification.template.StringTemplateEngine;
 import com.griddynamics.genesis.notification.template.TemplateEngine;
-import com.griddynamics.genesis.plugin.PartialStepCoordinatorFactory;
+import com.griddynamics.genesis.plugin.PluginConfigurationContext;
 import com.griddynamics.genesis.plugin.StepExecutionContext;
+import com.griddynamics.genesis.plugin.adapter.AbstractPartialStepCoordinatorFactory;
 import com.griddynamics.genesis.workflow.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class NotificationStepCoordinatorFactory implements PartialStepCoordinatorFactory {
+public class NotificationStepCoordinatorFactory extends AbstractPartialStepCoordinatorFactory {
 
-  private EmailSenderConfiguration emailSenderConfiguration;
-  private TemplateEngine templateEngine;
+  private Logger log = LoggerFactory.getLogger(this.getClass());
 
-  public NotificationStepCoordinatorFactory(EmailSenderConfiguration emailSenderConfiguration, TemplateEngine templateEngine) {
-    this.emailSenderConfiguration = emailSenderConfiguration;
-    this.templateEngine = templateEngine;
+  public NotificationStepCoordinatorFactory(String pluginId, PluginConfigurationContext pluginConfiguration) {
+    super(pluginId, pluginConfiguration);
   }
 
   @Override
@@ -44,7 +46,33 @@ public class NotificationStepCoordinatorFactory implements PartialStepCoordinato
 
   @Override
   public StepCoordinator apply(Step step, StepExecutionContext context) {
-    return new NotificationStepCoordinator(context, (NotificationStep) step, emailSenderConfiguration, templateEngine);
+
+    return new NotificationStepCoordinator(context, (NotificationStep) step, getEmailSenderConfiguration(), getTemplateEngine());
+  }
+
+  private EmailSenderConfiguration getEmailSenderConfiguration() {
+    String senderName = getConfig().get(NotificationPluginConfig.senderName);
+    String senderEmail = getConfig().get(NotificationPluginConfig.senderEmail);
+    String smtpHost = getConfig().get(NotificationPluginConfig.smtpHost);
+    Integer smtpPort = Integer.parseInt(getConfig().get(NotificationPluginConfig.smtpPort));
+    String smtpUsername = getConfig().get(NotificationPluginConfig.smtpUsername);
+    String smtpPassword = getConfig().get(NotificationPluginConfig.smtpPassword);
+    Boolean useTls = Boolean.parseBoolean(getConfig().get(NotificationPluginConfig.useTls));
+    return new EmailSenderConfiguration(senderName, senderEmail, smtpHost, smtpPort,
+        smtpUsername, smtpPassword, useTls);
+  }
+
+  private TemplateEngine getTemplateEngine() {
+    String templateFolder = getConfig().get(NotificationPluginConfig.templateFolder);
+    TemplateEngine templateEngine;
+    try {
+      templateEngine = new StringTemplateEngine(templateFolder);
+    } catch (IllegalArgumentException e) {
+      log.error("Error creating templates group: {}", e.getMessage());
+      e.printStackTrace();
+      templateEngine = new StringTemplateEngine(System.getProperty("user.dir"));
+    }
+    return templateEngine;
   }
 
 }
