@@ -55,7 +55,7 @@ abstract class AbstractProvisionVmsStepCoordinator[A <: SpecificProvisionVmActio
       case true => "Fail"
       case false => "Success"
     }))
-    val readyVMs = context.virtualMachines.filter(_.status == VmStatus.Ready)
+    val readyVMs = context.virtualMachines.filter(vm => vm.status == VmStatus.Ready && vm.workflowId == context.workflow.id && vm.stepId == context.step.id)
     GenesisStepResult(context.step,
       isStepFailed = stepFailed,
       envUpdate = context.envUpdate(),

@@ -78,7 +78,11 @@ case class BorrowServersAction(serverArray: String,
 
 class BorrowServerActionResult(val servers: Seq[BorrowedMachine], val action: Action) extends ActionResult  with ServersUpdateActionResult
 
-class ServerArrayNotFoundResult(val action: Action) extends ActionResult with ActionFailed
+class ServerArrayNotFoundResult(val action: BorrowServersAction) extends ActionResult with ActionFailed {
+  override def desc = "Server array %s not found".format(action.serverArray)
+}
 
-class FailedToBorrowServersResult(val action: Action) extends ActionResult with ActionFailed
+class FailedToBorrowServersResult(val action: Action) extends ActionResult with ActionFailed {
+  override def desc = "Failed to borrow requrested machines"
+}
 
