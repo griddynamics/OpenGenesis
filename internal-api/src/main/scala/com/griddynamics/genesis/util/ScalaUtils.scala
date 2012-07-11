@@ -64,16 +64,30 @@ object ScalaUtils extends com.griddynamics.genesis.cache.Cache {
     }
   }
 
+  private[this] def findPropertyMutators(obj: AnyRef, name: String): Set[Method] = {
+    val accessorName = "set" + name.capitalize
+    val allMethods = obj.getClass.getMethods.toSet ++ obj.getClass.getDeclaredMethods.toSet
+    allMethods.filter { m => m.getName == accessorName && m.getParameterTypes.length == 1 }
+  }
+
   def hasProperty(obj: AnyRef, name: String, valueType: Class[_]): Boolean = findPropertyMutator(obj, name, valueType).isDefined
 
   def setProperty(obj: AnyRef, name: String, value: Any) {
-    val valueRef = toAnyRef(value)
-    val setter = findPropertyMutator(obj, name, valueRef.getClass).getOrElse(
-      throw new IllegalArgumentException("Can't find setter for property [%s] in class [%s]".format(name, obj.getClass.getName))
-    )
+    if (value == null) {
+      val setters = findPropertyMutators(obj, name)
+      if (setters.size != 1) {
+        throw new IllegalArgumentException("Failed to set null to property [%s] in class [%s]. Ambigous name resolution".format(name, obj.getClass.getName))
+      }
+      setters.head.invoke(obj, null)
+    } else {
+      val valueRef = toAnyRef(value)
+      val setter = findPropertyMutator(obj, name, valueRef.getClass).getOrElse(
+        throw new IllegalArgumentException("Can't find setter for property [%s] in class [%s]".format(name, obj.getClass.getName))
+      )
 
-    setter.setAccessible(true)
-    setter.invoke(obj, valueRef)
+      setter.setAccessible(true)
+      setter.invoke(obj, valueRef)
+    }
   }
 
   private case class CacheKey(hostClass: Class[_], propertyName: String, valueType: Class[_])
