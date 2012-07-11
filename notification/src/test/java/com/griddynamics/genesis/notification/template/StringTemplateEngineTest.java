@@ -20,49 +20,34 @@
  *   @Project:     Genesis
  *   @Description: E-mail notifications plugin
  */
-package com.griddynamics.genesis.notification;
+package com.griddynamics.genesis.notification.template;
 
-import com.griddynamics.genesis.plugin.adapter.AbstractStep;
-import org.apache.commons.lang.StringUtils;
+import org.junit.Before;
+import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.List;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
-public class NotificationStep extends AbstractStep {
+import static org.junit.Assert.assertEquals;
 
-    private List<String> emails;
+public class StringTemplateEngineTest {
 
-    private String subject;
+  private TemplateEngine templateEngine;
 
-    private String message;
+  @Before
+  public void setUp() throws Exception {
+    templateEngine = new StringTemplateEngine(System.getProperty("user.dir") + File.separator +
+        "src" + File.separator +
+        "test" + File.separator +
+        "resources");
+  }
 
-    public NotificationStep(List<String> emails, String subject, String message) {
-        this.emails = emails;
-        this.subject = subject;
-        this.message = message;
-    }
-
-    public List<String> getEmails() {
-        return emails;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public String stepDescription() {
-        return String.format("Sends email notification to [%s]; subject: %s", StringUtils.join(emails, ","), subject);
-    }
-
-    @Override
-    public String toString() {
-        return "NotificationStep{" +
-                "emails=" + emails +
-                ", subject='" + subject + '\'' +
-                '}';
-    }
+  @Test
+  public void testRenderText() throws Exception {
+    Map<String, String> params = new HashMap<String, String>();
+    params.put("message", "12345");
+    String result = templateEngine.renderText("email", params);
+    assertEquals("12345", result);
+  }
 }

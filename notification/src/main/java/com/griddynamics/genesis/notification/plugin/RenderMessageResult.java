@@ -20,27 +20,33 @@
  *   @Project:     Genesis
  *   @Description: E-mail notifications plugin
  */
-package com.griddynamics.genesis.notification;
+package com.griddynamics.genesis.notification.plugin;
 
-import com.griddynamics.genesis.plugin.adapter.AbstractAction;
+import com.griddynamics.genesis.plugin.adapter.AbstractActionResult;
+import com.griddynamics.genesis.workflow.Action;
 
-public class NotificationAction extends AbstractAction {
+public class RenderMessageResult extends AbstractActionResult {
 
-    private NotificationStep notificationStep;
+  private String message;
 
-    public NotificationAction(NotificationStep notificationStep) {
-        this.notificationStep = notificationStep;
-    }
+  public RenderMessageResult(Action action, String message) {
+    super(action);
+    this.message = message;
+  }
 
-    public NotificationStep getNotificationStep() {
-        return notificationStep;
-    }
+  public String getMessage() {
+    return message;
+  }
 
-    @Override
-    public String toString() {
-        return "NotificationAction{" +
-                "notificationStep=" + notificationStep +
-                '}';
-    }
+  @Override
+  public String desc() {
+    return "Message rendered successfully";
+  }
+
+  @Override
+  public String toString() {
+    return "RenderMessageResult{" +
+        "message=" + message + '}';
+  }
 
 }

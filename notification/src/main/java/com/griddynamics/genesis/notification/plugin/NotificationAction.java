@@ -20,28 +20,33 @@
  *   @Project:     Genesis
  *   @Description: E-mail notifications plugin
  */
-package com.griddynamics.genesis.notification;
+package com.griddynamics.genesis.notification.plugin;
 
-import com.griddynamics.genesis.plugin.adapter.AbstractActionResult;
-import com.griddynamics.genesis.workflow.Action;
+import com.griddynamics.genesis.plugin.adapter.AbstractAction;
 
-public class NotificationResult extends AbstractActionResult {
+public class NotificationAction extends AbstractAction {
 
-    private boolean success;
+  private NotificationStep notificationStep;
+  private String message;
 
-    public NotificationResult(Action action, boolean success) {
-        super(action);
-        this.success = success;
-    }
+  public NotificationAction(NotificationStep notificationStep, String message) {
+    this.notificationStep = notificationStep;
+    this.message = message;
+  }
 
-    public boolean isSuccess() {
-        return success;
-    }
+  public NotificationStep getNotificationStep() {
+    return notificationStep;
+  }
 
-    @Override
-    public String toString() {
-        return "NotificationResult{" +
-                "success=" + success +
-                '}';
-    }
+  public String getMessage() {
+    return message;
+  }
+
+  @Override
+  public String toString() {
+    return "NotificationAction{" +
+        "notificationStep=" + notificationStep +
+        '}';
+  }
+
 }

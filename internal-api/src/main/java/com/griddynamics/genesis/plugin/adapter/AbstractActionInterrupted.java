@@ -22,47 +22,24 @@
  */
 package com.griddynamics.genesis.plugin.adapter;
 
-import com.griddynamics.genesis.model.VariablesField;
-import com.griddynamics.genesis.plugin.GenesisStepResult;
-import com.griddynamics.genesis.plugin.StepExecutionContext;
-import com.griddynamics.genesis.workflow.ActionOrientedStepCoordinator;
-import com.griddynamics.genesis.workflow.Step;
-import com.griddynamics.genesis.workflow.StepResult;
-import scala.Option;
-import scala.collection.JavaConversions;
+import com.griddynamics.genesis.workflow.*;
+import scala.Enumeration;
 
-import java.util.Map;
+public abstract class AbstractActionInterrupted extends AbstractActionResult implements ActionInterrupted {
 
-public abstract class AbstractActionOrientedStepCoordinator implements ActionOrientedStepCoordinator {
-
-  private StepExecutionContext context;
-
-  private AbstractStep step;
-
-  private Option<StepResult> result;
-
-  protected AbstractActionOrientedStepCoordinator(StepExecutionContext context, AbstractStep step) {
-    this.context = context;
-    this.step = step;
+  public AbstractActionInterrupted(Action action) {
+    super(action);
   }
 
-  @Override
-  public StepResult getStepResult() {
-    return new GenesisStepResult(context.step(), isFailed(), context.envUpdate(), context.serversUpdate(), result);
+  @Override public Enumeration.Value outcome() {
+    return ActionInterrupted$class.outcome(this);
   }
 
-  protected abstract boolean isFailed();
-
-  @Override
-  public Step step() {
-    return step;
+  /**
+   * Simply delegates to scala-generated "implementation" ActionInterrupted trait.
+   */
+  @Override public void $init$() {
+    ActionInterrupted$class.$init$(this);
   }
 
-  public void setResult(Option<StepResult> result) {
-    this.result = result;
-  }
-
-  protected Map<String, String> getContextVariables() {
-    return JavaConversions.mapAsJavaMap(VariablesField.variablesFieldToMap(context.workflow().variables()));
-  }
 }

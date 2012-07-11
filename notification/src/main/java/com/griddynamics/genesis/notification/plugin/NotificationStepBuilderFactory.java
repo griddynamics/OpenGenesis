@@ -20,7 +20,7 @@
  *   @Project:     Genesis
  *   @Description: E-mail notifications plugin
  */
-package com.griddynamics.genesis.notification;
+package com.griddynamics.genesis.notification.plugin;
 
 import com.griddynamics.genesis.plugin.StepBuilder;
 import com.griddynamics.genesis.plugin.StepBuilderFactory;
@@ -28,54 +28,62 @@ import com.griddynamics.genesis.plugin.adapter.AbstractStepBuilder;
 import com.griddynamics.genesis.workflow.Step;
 
 import java.util.List;
+import java.util.Map;
 
 public class NotificationStepBuilderFactory implements StepBuilderFactory {
 
-    @Override
-    public final String stepName() {
-        return "notify";
-    }
+  @Override
+  public final String stepName() {
+    return "notify";
+  }
 
-    @Override
-    public StepBuilder newStepBuilder() {
-        return new AbstractStepBuilder() {
+  @Override
+  public StepBuilder newStepBuilder() {
+    return new AbstractStepBuilder() {
 
-            private List<String> emails;
+      private List<String> emails;
+      private String subject;
+      private String templateName;
+      private Map<String, String> templateParams;
 
-            private String subject;
+      public List<String> getEmails() {
+        return emails;
+      }
 
-            private String message;
+      public void setEmails(List<String> emails) {
+        this.emails = emails;
+      }
 
-            public List<String> getEmails() {
-                return emails;
-            }
+      public String getTemplateName() {
+        return templateName;
+      }
 
-            public void setEmails(List<String> emails) {
-                this.emails = emails;
-            }
+      public void setTemplateName(String templateName) {
+        this.templateName = templateName;
+      }
 
-            public String getMessage() {
-                return message;
-            }
+      public String getSubject() {
+        return subject;
+      }
 
-            public void setMessage(String message) {
-                this.message = message;
-            }
+      public void setSubject(String subject) {
+        this.subject = subject;
+      }
 
-            public String getSubject() {
-                return subject;
-            }
+      public Map<String, String> getTemplateParams() {
+        return templateParams;
+      }
 
-            public void setSubject(String subject) {
-                this.subject = subject;
-            }
+      public void setTemplateParams(Map<String, String> templateParams) {
+        this.templateParams = templateParams;
+      }
 
-            @Override
-            public Step getDetails() {
-                return new NotificationStep(emails, subject, message);
-            }
-        };
-    }
+      @Override
+      public Step getDetails() {
+        return new NotificationStep(emails, subject, templateName, templateParams);
+      }
+    };
+  }
 
 
 }

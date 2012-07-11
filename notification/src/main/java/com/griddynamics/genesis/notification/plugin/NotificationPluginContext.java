@@ -20,10 +20,11 @@
  *   @Project:     Genesis
  *   @Description: E-mail notifications plugin
  */
-package com.griddynamics.genesis.notification;
+package com.griddynamics.genesis.notification.plugin;
 
+import com.griddynamics.genesis.plugin.PluginConfigurationContext;
 import com.griddynamics.genesis.plugin.api.GenesisPlugin;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -31,40 +32,16 @@ import org.springframework.context.annotation.Configuration;
 @GenesisPlugin(id = "notification", description = "Sends basic notification to given emails")
 public class NotificationPluginContext {
 
-    @Value("${genesis.plugin.notification.sender.name}")
-    private String senderName;
+  @Autowired private PluginConfigurationContext pluginConfiguration;
 
-    @Value("${genesis.plugin.notification.sender.email}")
-    private String senderEmail;
+  @Bean
+  public NotificationStepBuilderFactory notificationStepBuilderFactory() {
+    return new NotificationStepBuilderFactory();
+  }
 
-    @Value("${genesis.plugin.notification.smtp.host}")
-    private String smtpHost;
-
-    @Value("${genesis.plugin.notification.smtp.port}")
-    private Integer smtpPort;
-
-    @Value("${genesis.plugin.notification.smtp.username}")
-    private String smtpUsername;
-
-    @Value("${genesis.plugin.notification.smtp.password}")
-    private String smtpPassword;
-
-    @Value("${genesis.plugin.notification.smtp.useTls}")
-    private boolean useTls;
-
-    @Bean
-    public NotificationStepBuilderFactory notificationStepBuilderFactory() {
-        return new NotificationStepBuilderFactory();
-    }
-
-    @Bean
-    public NotificationStepCoordinatorFactory notificationStepCoordinatorFactory() {
-        return new NotificationStepCoordinatorFactory(getEmailSenderConfiguration());
-    }
-
-    private EmailSenderConfiguration getEmailSenderConfiguration() {
-        return new EmailSenderConfiguration(senderName, senderEmail, smtpHost, smtpPort,
-                smtpUsername, smtpPassword, useTls);
-    }
+  @Bean
+  public NotificationStepCoordinatorFactory notificationStepCoordinatorFactory() {
+    return new NotificationStepCoordinatorFactory(NotificationPluginConfig.id, pluginConfiguration);
+  }
 
 }

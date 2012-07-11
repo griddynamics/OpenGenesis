@@ -46,11 +46,11 @@ trait ActionResult {
 }
 
 trait ActionFailed extends ActionResult {
-    override val outcome = ActionTrackingStatus.Failed
+    override def outcome = ActionTrackingStatus.Failed
 }
 
 trait ActionInterrupted extends ActionResult {
-    override val outcome = ActionTrackingStatus.Interrupted
+    override def outcome = ActionTrackingStatus.Interrupted
 }
 
 package action {

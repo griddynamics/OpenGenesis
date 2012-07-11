@@ -20,28 +20,53 @@
  *   @Project:     Genesis
  *   @Description: E-mail notifications plugin
  */
-package com.griddynamics.genesis.notification;
+package com.griddynamics.genesis.notification.plugin;
 
-import com.griddynamics.genesis.plugin.PartialStepCoordinatorFactory;
-import com.griddynamics.genesis.plugin.StepExecutionContext;
-import com.griddynamics.genesis.workflow.*;
+import com.griddynamics.genesis.plugin.adapter.AbstractStep;
+import org.apache.commons.lang.StringUtils;
 
-public class NotificationStepCoordinatorFactory implements PartialStepCoordinatorFactory {
+import java.util.List;
+import java.util.Map;
 
-    private EmailSenderConfiguration emailSenderConfiguration;
+public class NotificationStep extends AbstractStep {
 
-    public NotificationStepCoordinatorFactory(EmailSenderConfiguration emailSenderConfiguration) {
-        this.emailSenderConfiguration = emailSenderConfiguration;
-    }
+  private List<String> emails;
+  private String subject;
+  private String templateName;
+  private Map<String, String> templateParams;
 
-    @Override
-    public boolean isDefinedAt(Step step) {
-        return step instanceof NotificationStep;
-    }
+  public NotificationStep(List<String> emails, String subject, String templateName, Map<String, String> templateParams) {
+    this.emails = emails;
+    this.subject = subject;
+    this.templateName = templateName;
+    this.templateParams = templateParams;
+  }
 
-    @Override
-    public StepCoordinator apply(Step step, StepExecutionContext context) {
-        return new NotificationStepCoordinator(context, (NotificationStep) step, emailSenderConfiguration);
-    }
+  public List<String> getEmails() {
+    return emails;
+  }
 
+  public String getTemplateName() {
+    return templateName;
+  }
+
+  public String getSubject() {
+    return subject;
+  }
+
+  public Map<String, String> getTemplateParams() {
+    return templateParams;
+  }
+
+  public String stepDescription() {
+    return String.format("Sends email notification to [%s]; subject: %s", StringUtils.join(emails, ","), subject);
+  }
+
+  @Override
+  public String toString() {
+    return "NotificationStep{" +
+        "emails=" + emails +
+        ", subject='" + subject + '\'' +
+        '}';
+  }
 }
