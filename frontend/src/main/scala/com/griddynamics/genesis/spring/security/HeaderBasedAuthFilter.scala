@@ -9,16 +9,23 @@ import org.springframework.security.core.{AuthenticationException, Authenticatio
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.beans.factory.annotation.Autowired
+import com.griddynamics.genesis.spring.ApplicationContextAware
+import com.griddynamics.genesis.users.UserService
+import org.springframework.beans.BeansException
 
-class HeaderBasedAuthFilter extends GenericFilterBean with Logging {
+class HeaderBasedAuthFilter extends GenericFilterBean with Logging with ApplicationContextAware {
     @Autowired var authenticationManager: AuthenticationManager = _
+    lazy val userService: Option[UserService] = try {
+        Some(applicationContext.getBean(classOf[UserService]))
+    } catch {
+        case e: BeansException => None
+    }
 
     def doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
         val httpRequest = request.asInstanceOf[HttpServletRequest]
         val assignedRoles: Array[String] =
             Option(httpRequest.getHeader(TunnelFilter.AUTH_HEADER_NAME)).map(_.split(TunnelFilter.SEPARATOR_CHAR)).getOrElse(Array(""))
         val assignedUser = Option(httpRequest.getHeader(TunnelFilter.SEC_HEADER_NAME))
-        val tunneled = Option(httpRequest.getHeader(TunnelFilter.TUNNELED_HEADER_NAME)).isDefined
         if (assignedUser.isDefined && authenticationRequired) {
             assignedUser.map(user => {
                 val token = new ExternalAuthentication(user, assignedRoles.toList)
@@ -41,6 +48,6 @@ class HeaderBasedAuthFilter extends GenericFilterBean with Logging {
 
     def authenticationRequired = {
         val existingAuth: Authentication = SecurityContextHolder.getContext.getAuthentication
-        existingAuth == null || !existingAuth.isAuthenticated
+        userService.isEmpty && (existingAuth == null || !existingAuth.isAuthenticated)
     }
 }
