@@ -31,7 +31,7 @@ import scala.Array
 
 @Controller
 @RequestMapping(value = Array("/rest/databags"))
-class DatabagController(service: DataBagService) {
+class DatabagController(service: DataBagService) extends RestApiExceptionsHandler {
 
   @RequestMapping(method = Array(RequestMethod.POST))
   @ResponseBody
@@ -69,13 +69,13 @@ class DatabagController(service: DataBagService) {
 
     def extractItem(map: Map[String, Any]): DataItem = {
       val id = extractOption("id", map).map(_.toInt)
-      val key = extractValue("name", map)
+      val key = extractNotEmptyValue("name", map)
       val value = extractOption("value", map).getOrElse("")
       new DataItem(id, key, value, 0)
     }
 
     val map = extractParamsMap(request)
-    val name = extractValue("name", map)
+    val name = extractNotEmptyValue("name", map)
     val tags = extractListValue("tags", map)
 
     val value = map.getOrElse("items", throw new MissingParameterException("items"))
