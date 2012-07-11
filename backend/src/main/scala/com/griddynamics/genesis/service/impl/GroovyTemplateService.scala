@@ -33,7 +33,7 @@ import com.griddynamics.genesis.template.dsl.groovy._
 import com.griddynamics.genesis.template._
 import com.griddynamics.genesis.workflow.Step
 import com.griddynamics.genesis.plugin.{StepBuilder, StepBuilderFactory}
-import com.griddynamics.genesis.util.{ScalaUtils, Logging}
+import com.griddynamics.genesis.util.{TryingUtil, ScalaUtils, Logging}
 import org.codehaus.groovy.runtime.{InvokerHelper, MethodClosure}
 import scala.Some
 import service.ValidationError
@@ -169,7 +169,8 @@ class StepBuilderProxy(stepBuilder: StepBuilder, project: ProjectContextSupport)
 
     def newStep(context: scala.collection.Map[String, AnyRef]): GenesisStep = {
         contextDependentProperties.foreach { case (propertyName, contextAccess) =>
-            ScalaUtils.setProperty(stepBuilder, propertyName, contextAccess(context))
+//            ScalaUtils.setProperty(stepBuilder, propertyName, contextAccess(context))
+          InvokerHelper.setProperty(stepBuilder, propertyName, contextAccess(context))
         }
         stepBuilder.id = this.id
         stepBuilder.phase = this.phase
@@ -194,12 +195,17 @@ class StepBuilderProxy(stepBuilder: StepBuilder, project: ProjectContextSupport)
             }
           case value: ContextAccess =>
             contextDependentProperties(property) = value
+          case null => {
+            ScalaUtils.setProperty(stepBuilder, property, null)
+            TryingUtil.silently(ScalaUtils.setProperty(this, property, null))
+          }
           case _ => {
             ScalaUtils.setProperty(stepBuilder, property, value)
             if (ScalaUtils.hasProperty(this, property, ScalaUtils.getType(value))) {
               ScalaUtils.setProperty(this, property, value)
             }
           }
+
         }
     }
 
