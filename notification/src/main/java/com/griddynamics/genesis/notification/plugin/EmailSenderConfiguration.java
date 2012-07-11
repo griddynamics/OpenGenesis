@@ -20,7 +20,7 @@
  *   @Project:     Genesis
  *   @Description: E-mail notifications plugin
  */
-package com.griddynamics.genesis.notification;
+package com.griddynamics.genesis.notification.plugin;
 
 public class EmailSenderConfiguration {
 
@@ -36,10 +36,10 @@ public class EmailSenderConfiguration {
 
     private String smtpPassword;
 
-    private boolean useTls;
+    private Boolean useTls;
 
     public EmailSenderConfiguration(String senderName, String senderEmail, String smtpHost, Integer smtpPort,
-                                    String smtpUsername, String smtpPassword, boolean useTls) {
+                                    String smtpUsername, String smtpPassword, Boolean useTls) {
         this.senderName = senderName;
         this.senderEmail = senderEmail;
         this.smtpHost = smtpHost;
@@ -73,7 +73,7 @@ public class EmailSenderConfiguration {
         return smtpPassword;
     }
 
-    public boolean isUseTls() {
+    public Boolean isUseTls() {
         return useTls;
     }
 
