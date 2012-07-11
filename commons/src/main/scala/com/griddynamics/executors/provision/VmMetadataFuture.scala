@@ -25,3 +25,7 @@ package com.griddynamics.executors.provision
 trait VmMetadataFuture {
   def getMetadata : Option[String]
 }
+
+trait FailedVmFuture extends VmMetadataFuture {
+   override def getMetadata = None
+}

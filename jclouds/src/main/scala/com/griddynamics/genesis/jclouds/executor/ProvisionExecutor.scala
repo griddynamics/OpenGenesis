@@ -24,19 +24,27 @@ package com.griddynamics.genesis.jclouds.executors
 
 import com.griddynamics.genesis.service.StoreService
 import com.griddynamics.genesis.model.{Environment, VirtualMachine}
-import com.griddynamics.executors.provision.{CommonProvisionExecutor, VmMetadataFuture}
+import com.griddynamics.executors.provision.{FailedVmFuture, CommonProvisionExecutor, VmMetadataFuture}
 import com.griddynamics.genesis.jclouds.action.JCloudsProvisionVm
 import com.griddynamics.genesis.jclouds.VmCreationStrategy
+import com.griddynamics.genesis.util.Logging
 
 class ProvisionExecutor(val action: JCloudsProvisionVm,
                         val storeService: StoreService,
                         vmCreationStrategy: VmCreationStrategy,
-                        val timeoutMillis: Long) extends CommonProvisionExecutor {
+                        val timeoutMillis: Long) extends CommonProvisionExecutor with Logging {
 
   var vm: VirtualMachine = _
   var vmMetadataFuture: VmMetadataFuture = _
 
   def createVm(env: Environment, vm: VirtualMachine) = {
-    vmCreationStrategy.createVm(env, vm)
+      try {
+        vmCreationStrategy.createVm(env, vm)
+      } catch {
+          case t: Throwable => {
+              log.error("Error when creating vm", t)
+              new FailedVmFuture {}
+          }
+      }
   }
 }
