@@ -46,7 +46,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import javax.annotation.PostConstruct
 import net.sf.ehcache.CacheManager
 import java.util.concurrent.TimeUnit
-import com.griddynamics.genesis.model.{EnvResource, IpAddresses, VirtualMachine}
+import com.griddynamics.genesis.model.{IpAddresses, VirtualMachine}
 
 trait JCloudsProvisionContext extends ProvisionContext[JCloudsProvisionVm] {
   def cloudProvider: String
@@ -188,7 +188,7 @@ class JCloudsProvisionContextImpl(override val storeService: StoreService,
     val computeContext = contextProvider.computeContext(computeSettings)
     val nodeNamePrefix = settings(Plugin.NodeNamePrefix).take(2)
 
-    val vmCreationStrategy = strategies(cloudProvider).createVmCreationStrategy(nodeNamePrefix, computeContext);
+    val vmCreationStrategy = strategies(cloudProvider).createVmCreationStrategy(nodeNamePrefix, computeContext)
     new ProvisionExecutor(action, storeService, vmCreationStrategy, provisionVmTimeout) with DurationLimitedActionExecutor
   }
 
