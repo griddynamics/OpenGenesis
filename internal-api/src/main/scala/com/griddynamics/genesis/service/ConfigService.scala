@@ -42,6 +42,8 @@ object GenesisSystemProperties {
 
     val SHUTDOWN_TIMEOUT = "genesis.system.shutdown.timeout.sec"
     val SERVICE_BACKEND_URL = "genesis.system.service.backendUrl"
+    val FRONTEND_READ_TIMEOUT = "genesis.web.frontend.readTimeout.ms"
+    val FRONTEND_CONNECT_TIMEOUT = "genesis.web.frontend.connectTimeout.ms"
     val SERVER_MODE = "genesis.system.server.mode"
     val SERVICE_REST_USEMOCK = "genesis.system.service.rest.use.mock"
     val SECURITY_CONFIG = "genesis.system.security.config"
