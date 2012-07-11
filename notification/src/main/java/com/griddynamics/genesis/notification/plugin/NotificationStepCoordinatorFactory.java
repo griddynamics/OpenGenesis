@@ -68,8 +68,7 @@ public class NotificationStepCoordinatorFactory extends AbstractPartialStepCoord
     try {
       templateEngine = new StringTemplateEngine(templateFolder);
     } catch (IllegalArgumentException e) {
-      log.error("Error creating templates group: {}", e.getMessage());
-      e.printStackTrace();
+      log.error("Error creating templates group: " + e.getMessage(), e);
       templateEngine = new StringTemplateEngine(System.getProperty("user.dir"));
     }
     return templateEngine;

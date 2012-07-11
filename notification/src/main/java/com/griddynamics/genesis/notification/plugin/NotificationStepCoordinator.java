@@ -27,7 +27,6 @@ import com.griddynamics.genesis.plugin.StepExecutionContext;
 import com.griddynamics.genesis.plugin.adapter.AbstractActionOrientedStepCoordinator;
 import com.griddynamics.genesis.plugin.utils.ScalaUtils;
 import com.griddynamics.genesis.workflow.*;
-import com.griddynamics.genesis.workflow.action.ExecutorThrowable;
 import scala.collection.Seq;
 
 @SuppressWarnings("unchecked")
@@ -55,14 +54,11 @@ public class NotificationStepCoordinator extends AbstractActionOrientedStepCoord
   @Override
   public Seq onActionFinish(ActionResult result) {
     if (result instanceof RenderMessageResult) {
-      failed = !((RenderMessageResult) result).isSuccess();
-      if (!failed) {
-        String message = ((RenderMessageResult) result).getMessage();
-        return ScalaUtils.list(new NotificationActionExecutor(new NotificationAction((NotificationStep) step(), message), emailSenderConfiguration));
-      }
+      String message = ((RenderMessageResult) result).getMessage();
+      return ScalaUtils.list(new NotificationActionExecutor(new NotificationAction((NotificationStep) step(), message), emailSenderConfiguration));
     } else if (result instanceof NotificationResult) {
-      failed = !((NotificationResult) result).isSuccess();
-    } else if (result instanceof ExecutorThrowable) {
+      failed = false;
+    } else if (result instanceof ActionFailed) {
       failed = true;
     }
     return ScalaUtils.list();

@@ -23,8 +23,10 @@
 package com.griddynamics.genesis.notification.plugin;
 
 import com.griddynamics.genesis.notification.template.TemplateEngine;
+import com.griddynamics.genesis.plugin.adapter.AbstractActionFailed;
 import com.griddynamics.genesis.plugin.adapter.AbstractSyncActionExecutor;
 import com.griddynamics.genesis.workflow.Action;
+import com.griddynamics.genesis.workflow.ActionResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,18 +56,18 @@ public class RenderMessageActionExecutor extends AbstractSyncActionExecutor {
   }
 
   @Override
-  public RenderMessageResult startSync() {
+  public ActionResult startSync() {
     NotificationStep notificationStep = action.getNotificationStep();
 
     try {
 
       String message = templateEngine.renderText(notificationStep.getTemplateName(), params);
-      return new RenderMessageResult(action, message, true);
+      return new RenderMessageResult(action, message);
 
     } catch (IllegalArgumentException e) {
 
-      log.error(e.getMessage());
-      return new RenderMessageResult(action, "", false);
+      log.error(e.getMessage(), e);
+      return new RenderMessageResultFailed(action);
 
     }
   }

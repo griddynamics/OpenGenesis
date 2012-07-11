@@ -22,31 +22,17 @@
  */
 package com.griddynamics.genesis.notification.plugin;
 
-import com.griddynamics.genesis.plugin.adapter.AbstractActionResult;
+import com.griddynamics.genesis.plugin.adapter.AbstractActionFailed;
 import com.griddynamics.genesis.workflow.Action;
 
-public class RenderMessageResult extends AbstractActionResult {
+public class NotificationResultFailed extends AbstractActionFailed {
 
-  private String message;
-
-  public RenderMessageResult(Action action, String message) {
+  public NotificationResultFailed(Action action) {
     super(action);
-    this.message = message;
-  }
-
-  public String getMessage() {
-    return message;
   }
 
   @Override
   public String desc() {
-    return "Message rendered successfully";
+    return "Notification action failed";
   }
-
-  @Override
-  public String toString() {
-    return "RenderMessageResult{" +
-        "message=" + message + '}';
-  }
-
 }

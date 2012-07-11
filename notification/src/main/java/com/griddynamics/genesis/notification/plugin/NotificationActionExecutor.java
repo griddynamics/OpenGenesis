@@ -22,8 +22,10 @@
  */
 package com.griddynamics.genesis.notification.plugin;
 
+import com.griddynamics.genesis.plugin.adapter.AbstractActionFailed;
 import com.griddynamics.genesis.plugin.adapter.AbstractSyncActionExecutor;
 import com.griddynamics.genesis.workflow.Action;
+import com.griddynamics.genesis.workflow.ActionResult;
 import org.codemonkey.simplejavamail.Email;
 import org.codemonkey.simplejavamail.Mailer;
 import org.codemonkey.simplejavamail.TransportStrategy;
@@ -46,7 +48,7 @@ public class NotificationActionExecutor extends AbstractSyncActionExecutor {
   }
 
   @Override
-  public NotificationResult startSync() {
+  public ActionResult startSync() {
     NotificationStep notificationStep = action.getNotificationStep();
 
     try {
@@ -65,12 +67,12 @@ public class NotificationActionExecutor extends AbstractSyncActionExecutor {
 
       mailer.sendMail(email);
 
-      return new NotificationResult(action, true);
+      return new NotificationResult(action);
 
-    } catch (IllegalArgumentException e) {
+    } catch (RuntimeException e) {
 
-      log.error(e.getMessage());
-      return new NotificationResult(action, false);
+      log.error(e.getMessage(), e);
+      return new NotificationResultFailed(action);
 
     }
   }

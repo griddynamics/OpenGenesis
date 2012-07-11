@@ -18,35 +18,28 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *   @Project:     Genesis
- *   @Description: E-mail notifications plugin
+ *   @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.notification.plugin;
+package com.griddynamics.genesis.plugin.adapter;
 
-import com.griddynamics.genesis.plugin.adapter.AbstractActionResult;
-import com.griddynamics.genesis.workflow.Action;
+import com.griddynamics.genesis.workflow.*;
+import scala.Enumeration;
 
-public class RenderMessageResult extends AbstractActionResult {
+public abstract class AbstractActionFailed extends AbstractActionResult implements ActionFailed {
 
-  private String message;
-
-  public RenderMessageResult(Action action, String message) {
+  public AbstractActionFailed(Action action) {
     super(action);
-    this.message = message;
   }
 
-  public String getMessage() {
-    return message;
+  @Override public Enumeration.Value outcome() {
+    return ActionFailed$class.outcome(this);
   }
 
-  @Override
-  public String desc() {
-    return "Message rendered successfully";
-  }
-
-  @Override
-  public String toString() {
-    return "RenderMessageResult{" +
-        "message=" + message + '}';
+  /**
+   * Simply delegates to scala-generated "implementation" ActionFailed trait.
+   */
+  @Override public void $init$() {
+    ActionFailed$class.$init$(this);
   }
 
 }

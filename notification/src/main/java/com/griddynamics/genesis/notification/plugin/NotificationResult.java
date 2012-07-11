@@ -27,21 +27,17 @@ import com.griddynamics.genesis.workflow.Action;
 
 public class NotificationResult extends AbstractActionResult {
 
-    private boolean success;
+  public NotificationResult(Action action) {
+    super(action);
+  }
 
-    public NotificationResult(Action action, boolean success) {
-        super(action);
-        this.success = success;
-    }
+  @Override
+  public String desc() {
+    return "Notification sent successfully";
+  }
 
-    public boolean isSuccess() {
-        return success;
-    }
-
-    @Override
-    public String toString() {
-        return "NotificationResult{" +
-                "success=" + success +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "NotificationResult{}";
+  }
 }
