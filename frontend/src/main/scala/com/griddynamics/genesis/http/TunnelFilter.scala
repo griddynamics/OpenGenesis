@@ -46,9 +46,14 @@ sealed trait Tunnel {
 
 abstract class TunnelFilter(override val uriMatch: String) extends Filter with Tunnel with Logging {
     var backendHost: String = _
+    var connectTimeout: Long = 5000
+    var readTimeout: Long = 5000
+
 
     def init(filterConfig: FilterConfig) {
         backendHost = filterConfig.getInitParameter(TunnelFilter.BACKEND_PARAMETER)
+        connectTimeout = filterConfig.getInitParameter(TunnelFilter.CONNECT_TIMEOUT).toLong
+        readTimeout = filterConfig.getInitParameter(TunnelFilter.READ_TIMEOUT).toLong
     }
 
     def doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
@@ -76,6 +81,8 @@ abstract class TunnelFilter(override val uriMatch: String) extends Filter with T
 
 object TunnelFilter extends Logging {
     val BACKEND_PARAMETER = "backendHost"
+    val READ_TIMEOUT = "readTimeout"
+    val CONNECT_TIMEOUT = "connectTiemout"
     val SEC_HEADER_NAME = "X-On-Behalf-of"
     val AUTH_HEADER_NAME = "X-Authorities"
     val TUNNELED_HEADER_NAME = "X-Tunneled-By"
