@@ -23,11 +23,11 @@
 package com.griddynamics.genesis.plugin.adapter;
 
 import com.griddynamics.genesis.workflow.Action;
-import com.griddynamics.genesis.workflow.SyncActionExecutor;
+import com.griddynamics.genesis.workflow.AsyncActionExecutor;
 
-public abstract class AbstractSyncActionExecutor extends AbstractActionExecutor implements SyncActionExecutor {
+public abstract class AbstractSimpleAsyncActionExecutor extends AbstractSimpleActionExecutor implements AsyncActionExecutor {
 
-  protected AbstractSyncActionExecutor(Action action) {
+  protected AbstractSimpleAsyncActionExecutor(Action action) {
     super(action);
   }
 

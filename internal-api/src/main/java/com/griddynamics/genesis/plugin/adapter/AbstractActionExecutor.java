@@ -23,12 +23,36 @@
 package com.griddynamics.genesis.plugin.adapter;
 
 import com.griddynamics.genesis.workflow.Action;
-import com.griddynamics.genesis.workflow.SyncActionExecutor;
+import com.griddynamics.genesis.workflow.ActionExecutor;
+import com.griddynamics.genesis.workflow.ActionExecutor$class;
+import com.griddynamics.genesis.workflow.Signal;
 
-public abstract class AbstractSyncActionExecutor extends AbstractActionExecutor implements SyncActionExecutor {
+public abstract class AbstractActionExecutor implements ActionExecutor {
 
-  protected AbstractSyncActionExecutor(Action action) {
-    super(action);
+  private final Action action;
+
+  public void $init$() {
+    ActionExecutor$class.$init$(this);
   }
 
+  public boolean canRespond(Signal signal) {
+    return ActionExecutor$class.canRespond(this, signal);
+  }
+
+  public AbstractActionExecutor(Action action) {
+    this.action = action;
+  }
+
+  /**
+   * Scala-style getter.
+   *
+   * @return action
+   */
+  public Action action() {
+    return action;
+  }
+
+  public Action getAction() {
+    return action;
+  }
 }

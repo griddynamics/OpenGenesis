@@ -22,8 +22,7 @@
  */
 package com.griddynamics.genesis.notification.plugin;
 
-import com.griddynamics.genesis.plugin.adapter.AbstractActionFailed;
-import com.griddynamics.genesis.plugin.adapter.AbstractSyncActionExecutor;
+import com.griddynamics.genesis.plugin.adapter.AbstractSimpleSyncActionExecutor;
 import com.griddynamics.genesis.workflow.Action;
 import com.griddynamics.genesis.workflow.ActionResult;
 import org.codemonkey.simplejavamail.Email;
@@ -34,27 +33,26 @@ import org.slf4j.LoggerFactory;
 
 import javax.mail.Message;
 
-public class NotificationActionExecutor extends AbstractSyncActionExecutor {
+public class NotificationActionExecutor extends AbstractSimpleSyncActionExecutor {
 
   private Logger log = LoggerFactory.getLogger(this.getClass());
 
-  private NotificationAction action;
   private EmailSenderConfiguration configuration;
 
   public NotificationActionExecutor(NotificationAction action,
                                     EmailSenderConfiguration configuration) {
-    this.action = action;
+    super(action);
     this.configuration = configuration;
   }
 
   @Override
   public ActionResult startSync() {
-    NotificationStep notificationStep = action.getNotificationStep();
+    NotificationStep notificationStep = ((NotificationAction) getAction()).getNotificationStep();
 
     try {
       final Email email = new Email();
       email.setSubject(notificationStep.getSubject());
-      email.setText(action.getMessage());
+      email.setText(((NotificationAction) getAction()).getMessage());
 
       for (String emailAddress : notificationStep.getEmails()) {
         email.addRecipient(null, emailAddress, Message.RecipientType.TO);
@@ -67,18 +65,14 @@ public class NotificationActionExecutor extends AbstractSyncActionExecutor {
 
       mailer.sendMail(email);
 
-      return new NotificationResult(action);
+      return new NotificationResult(getAction());
 
     } catch (RuntimeException e) {
 
       log.error(e.getMessage(), e);
-      return new NotificationResultFailed(action);
+      return new NotificationResultFailed(getAction());
 
     }
-  }
-
-  public Action action() {
-    return action;
   }
 
 }

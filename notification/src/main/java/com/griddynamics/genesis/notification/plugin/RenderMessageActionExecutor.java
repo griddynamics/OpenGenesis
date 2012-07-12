@@ -23,8 +23,7 @@
 package com.griddynamics.genesis.notification.plugin;
 
 import com.griddynamics.genesis.notification.template.TemplateEngine;
-import com.griddynamics.genesis.plugin.adapter.AbstractActionFailed;
-import com.griddynamics.genesis.plugin.adapter.AbstractSyncActionExecutor;
+import com.griddynamics.genesis.plugin.adapter.AbstractSimpleSyncActionExecutor;
 import com.griddynamics.genesis.workflow.Action;
 import com.griddynamics.genesis.workflow.ActionResult;
 import org.slf4j.Logger;
@@ -33,18 +32,17 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-public class RenderMessageActionExecutor extends AbstractSyncActionExecutor {
+public class RenderMessageActionExecutor extends AbstractSimpleSyncActionExecutor {
 
   private Logger log = LoggerFactory.getLogger(this.getClass());
 
-  private RenderMessageAction action;
   private TemplateEngine templateEngine;
   private Map<String, String> params;
 
   public RenderMessageActionExecutor(RenderMessageAction action,
                                      TemplateEngine templateEngine,
                                      Map<String, String> contextVariables) {
-    this.action = action;
+    super(action);
     this.templateEngine = templateEngine;
     if (action.getNotificationStep().getTemplateParams() != null) {
       params = new HashMap<String, String>();
@@ -57,23 +55,19 @@ public class RenderMessageActionExecutor extends AbstractSyncActionExecutor {
 
   @Override
   public ActionResult startSync() {
-    NotificationStep notificationStep = action.getNotificationStep();
+    NotificationStep notificationStep = ((RenderMessageAction) getAction()).getNotificationStep();
 
     try {
 
       String message = templateEngine.renderText(notificationStep.getTemplateName(), params);
-      return new RenderMessageResult(action, message);
+      return new RenderMessageResult(getAction(), message);
 
     } catch (IllegalArgumentException e) {
 
       log.error(e.getMessage(), e);
-      return new RenderMessageResultFailed(action);
+      return new RenderMessageResultFailed(getAction());
 
     }
-  }
-
-  public Action action() {
-    return action;
   }
 
 }
