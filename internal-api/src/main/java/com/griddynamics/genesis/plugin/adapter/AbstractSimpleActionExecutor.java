@@ -23,12 +23,21 @@
 package com.griddynamics.genesis.plugin.adapter;
 
 import com.griddynamics.genesis.workflow.Action;
-import com.griddynamics.genesis.workflow.SyncActionExecutor;
+import com.griddynamics.genesis.workflow.Signal;
 
-public abstract class AbstractSyncActionExecutor extends AbstractActionExecutor implements SyncActionExecutor {
+public abstract class AbstractSimpleActionExecutor extends AbstractActionExecutor {
 
-  protected AbstractSyncActionExecutor(Action action) {
+  protected AbstractSimpleActionExecutor(Action action) {
     super(action);
   }
+
+  /** Any way called by framework when action execution
+   *  was finished or interrupted by some signal
+   *
+   *  @param signal interrupt signal or
+   *  Success() in a case of normal finish
+   */
+  @Override
+  public void cleanUp(Signal signal) { }
 
 }
