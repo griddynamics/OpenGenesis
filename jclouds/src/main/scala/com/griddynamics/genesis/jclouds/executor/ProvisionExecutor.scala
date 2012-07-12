@@ -42,7 +42,7 @@ class ProvisionExecutor(val action: JCloudsProvisionVm,
         vmCreationStrategy.createVm(env, vm)
       } catch {
           case t: Throwable => {
-              log.error("Error when creating vm", t)
+              log.error(t, "Error when creating vm", t.getMessage)
               new FailedVmFuture {}
           }
       }
