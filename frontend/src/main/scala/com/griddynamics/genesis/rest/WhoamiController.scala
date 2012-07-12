@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.{ResponseBody, RequestMethod, Req
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.ServletContext
 import com.griddynamics.genesis.GenesisFrontend
-import org.springframework.beans.factory.annotation.{Value, Autowired}
+import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.users.GenesisRole
 
 @Controller
@@ -38,14 +38,11 @@ class WhoamiController {
   @Autowired
   var servletContext: ServletContext = _
 
-  @Value("${genesis.system.security.groups:ROLE_GENESIS_ADMIN}")
-  var rjaGroups: String = _ //todo (RB) : temp rja fix  to enable UI admin facilities
-
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
   def whoami(request: HttpServletRequest): Map[String, Any] = Map(
     "user" -> GenesisRestController.getCurrentUser,
     "logout_disabled" -> "false".equalsIgnoreCase(servletContext.getInitParameter(GenesisFrontend.logoutEnabledParamName)),
-    "administrator" -> (request.isUserInRole(GenesisRole.SystemAdmin.toString) || rjaGroups.split(",").exists(request.isUserInRole(_)))
+    "administrator" -> (request.isUserInRole(GenesisRole.SystemAdmin.toString))
   )
 }
