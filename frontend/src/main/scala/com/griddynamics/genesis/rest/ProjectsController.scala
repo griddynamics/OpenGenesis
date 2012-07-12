@@ -5,18 +5,12 @@ import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
 import com.griddynamics.genesis.service.impl.ProjectService
-import org.springframework.security.acls.model.{MutableAcl, NotFoundException, MutableAclService}
-import org.springframework.transaction.annotation.Transactional
-import com.griddynamics.genesis.spring.security.acls.ScalaObjectIdentityImpl
-import org.springframework.security.acls.domain.{GrantedAuthoritySid, PrincipalSid, BasePermission}
-import collection.mutable.Buffer
 import com.griddynamics.genesis.api.{ExtendedResult, RequestResult, Project}
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.Authentication
-import java.security.Principal
 import com.griddynamics.genesis.users.GenesisRole
-import org.springframework.beans.factory.annotation.{Value, Autowired}
-import com.griddynamics.genesis.service.{ProjectAuthorityService, AuthorityService}
+import org.springframework.beans.factory.annotation.Value
+import com.griddynamics.genesis.service.ProjectAuthorityService
 
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
@@ -109,9 +103,9 @@ class ProjectsController(projectService: ProjectService, authorityService: Proje
                         request: HttpServletRequest,
                         response: HttpServletResponse): RequestResult = {
     val paramsMap = GenesisRestController.extractParamsMap(request)
-    val users = GenesisRestController.extractListValue("users", paramsMap)
-    val groups = GenesisRestController.extractListValue("groups", paramsMap)
-    authorityService.updateProjectAuthority(projectId,  GenesisRole.withName(roleName), users, groups)
+    val users = GenesisRestController.extractListValue("users", paramsMap) map RolesController.unescapeAndReplace
+    val groups = GenesisRestController.extractListValue("groups", paramsMap)  map RolesController.unescapeAndReplace
+    authorityService.updateProjectAuthority(projectId,  GenesisRole.withName(roleName), users.distinct, groups.distinct)
   }
 
   @RequestMapping(value = Array("{projectId}/roles/{roleName}"), method = Array(RequestMethod.GET))
