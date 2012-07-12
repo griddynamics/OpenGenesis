@@ -268,7 +268,7 @@ class StoreService extends service.StoreService {
     @Transactional
     def startWorkflow(envName: String) = {
         val (e, w) = retrieveWorkflow(envName)
-
+        loadAttrs(e, GS.envAttrs)
         e.status = EnvStatus.Executing(w.name)
         w.status = WorkflowStatus.Executed
         w.executionStarted = Some(new Timestamp(System.currentTimeMillis()))
