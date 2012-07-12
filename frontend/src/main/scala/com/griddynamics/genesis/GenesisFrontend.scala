@@ -44,15 +44,13 @@ import org.springframework.web.context.WebApplicationContext.ROOT_WEB_APPLICATIO
 import java.util.concurrent.TimeUnit
 import java.lang.System
 import scala.collection.JavaConversions._
-import org.springframework.security.web.FilterChainProxy
-import org.springframework.security.web.authentication.logout.LogoutFilter
 
 object GenesisFrontend extends Logging {
-    val logoutEnabledParamName = "genesis.web.logout.enabled"
     def main(args: Array[String]): Unit = try{
         val genesisProperties = loadGenesisProperties()
 
         val securityConfig = genesisProperties.getOrElse(SECURITY_CONFIG, "classpath:/WEB-INF/spring/security-config.xml")
+        val logoutEnabled = genesisProperties.getOrElse(LOGOUT_ENABLED, true)
         val isFrontend = genesisProperties.get(SERVICE_BACKEND_URL).isDefined
         val isBackend = genesisProperties.getOrElse(SERVER_MODE, "frontend") == "backend"
 
@@ -99,10 +97,7 @@ object GenesisFrontend extends Logging {
         val securityFilterHolder = new FilterHolder(new DelegatingFilterProxy)
         securityFilterHolder.setName("springSecurityFilterChain")
         context.addFilter(securityFilterHolder, "/*", 0)
-        val bean: FilterChainProxy = appContext.getBean(classOf[FilterChainProxy])
-        val logoutEnabled = bean.getFilterChains.flatMap(chain => chain.getFilters.toIterable
-          .filter(f => f.isInstanceOf[LogoutFilter])).size > 0
-        context.setInitParameter(logoutEnabledParamName, logoutEnabled.toString)
+        context.setInitParameter(LOGOUT_ENABLED, logoutEnabled.toString)
 
         if (! isBackend) {
             val resourceHolder = new FilterHolder(new ResourceFilter)
