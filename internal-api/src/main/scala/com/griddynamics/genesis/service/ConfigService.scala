@@ -54,4 +54,5 @@ object GenesisSystemProperties {
     val MAX_IDLE = "genesis.system.request.maxIdle"
     val WEB_RESOURCE_ROOTS = "genesis.system.web.resourceRoots"
     val CACHE_RESOURCES = "genesis.system.web.client.cache"
+    val LOGOUT_ENABLED = "genesis.web.logout.enabled"
 }

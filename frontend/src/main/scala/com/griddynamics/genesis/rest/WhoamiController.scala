@@ -28,9 +28,9 @@ import scala.Array
 import org.springframework.web.bind.annotation.{ResponseBody, RequestMethod, RequestMapping}
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.ServletContext
-import com.griddynamics.genesis.GenesisFrontend
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.users.GenesisRole
+import com.griddynamics.genesis.service.GenesisSystemProperties
 
 @Controller
 @RequestMapping(Array("/rest/whoami"))
@@ -42,7 +42,7 @@ class WhoamiController {
   @ResponseBody
   def whoami(request: HttpServletRequest): Map[String, Any] = Map(
     "user" -> GenesisRestController.getCurrentUser,
-    "logout_disabled" -> "false".equalsIgnoreCase(servletContext.getInitParameter(GenesisFrontend.logoutEnabledParamName)),
+    "logout_disabled" -> "false".equalsIgnoreCase(servletContext.getInitParameter(GenesisSystemProperties.LOGOUT_ENABLED)),
     "administrator" -> (request.isUserInRole(GenesisRole.SystemAdmin.toString))
   )
 }
