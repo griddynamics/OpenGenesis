@@ -25,23 +25,46 @@ package com.griddynamics.genesis.jclouds
 import org.jclouds.gogrid.{GoGridAsyncClient, GoGridClient}
 import com.griddynamics.genesis.model.{VirtualMachine, Environment}
 import com.google.common.collect.Iterables
-import org.jclouds.gogrid.domain.{IpType, JobState, PowerCommand}
+import org.jclouds.gogrid.domain.{Ip, IpType, JobState, PowerCommand}
 import org.jclouds.gogrid.options.{AddServerOptions, GetIpListOptions, GetJobListOptions}
 import com.griddynamics.executors.provision.VmMetadataFuture
 import org.jclouds.compute.ComputeServiceContext
 import java.util.Properties
 import org.springframework.stereotype.Component
+import collection.mutable
+import com.griddynamics.genesis.util.Logging
 
 @Component
 class GoGridVmCreationStrategyProvider extends JCloudsVmCreationStrategyProvider {
     val name = "gogrid"
     val computeProperties = new Properties
-
+    val ipStackWrapper = new IpStackWrapper()
     def createVmCreationStrategy(nodeNamePrefix: String, computeContext: ComputeServiceContext): VmCreationStrategy =
-        new GoGridVmCreationStrategy(nodeNamePrefix, computeContext)
+        new GoGridVmCreationStrategy(nodeNamePrefix, computeContext, ipStackWrapper)
 }
 
-class GoGridVmCreationStrategy(nodeNamePrefix: String, computeContext: ComputeServiceContext) extends DefaultVmCreationStrategy(nodeNamePrefix, computeContext) {
+class IpStackWrapper() extends Logging {
+    val ipStack: mutable.Stack[Ip] = new mutable.Stack[Ip]()
+    val lock:AnyRef = new Object
+    def pop()(block: => Iterable[Ip]) =  {
+        lock.synchronized(
+            if (ipStack.isEmpty) {
+                log.debug("Stack empty. Filling it %s", this)
+                ipStack.pushAll(block)
+            } else {
+                log.debug("There is addresses available")
+            })
+        try {
+            Some(ipStack.pop())
+        } catch {
+            case _ => None
+        }
+    }
+
+
+}
+
+class GoGridVmCreationStrategy(nodeNamePrefix: String, computeContext: ComputeServiceContext, ipWrapper: IpStackWrapper) extends DefaultVmCreationStrategy(nodeNamePrefix, computeContext) {
     val restContext = computeContext.getProviderSpecificContext[GoGridClient, GoGridAsyncClient]
     val client = restContext.getApi
     val jobServices = client.getJobServices
@@ -74,17 +97,42 @@ class GoGridVmCreationStrategy(nodeNamePrefix: String, computeContext: ComputeSe
     }
 
     override def createVm(env: Environment, vm: VirtualMachine) = {
-      //   val meta = Iterables.getOnlyElement(computeService.createNodesInGroup(group(env, vm), 1, template(env, vm)))
-      val  unassignedIps = new GetIpListOptions()
-          .onlyUnassigned
-//            .inDatacenter(template.getLocation().getId())
-          .onlyWithType(IpType.PUBLIC)
-      val availableIps = client.getIpServices.getIpList(unassignedIps)
-      val availableIp = Iterables.getLast(availableIps) // iterate over the collection. you're not required to use Iterables
       import DefaultVmCreationStrategy._
       val serverOptions = AddServerOptions.Builder
-          .withDescription("%s: %s, id = %d".format(VM_GROUP_PREFIX, vm.roleName, vm.id));
-      val server = client.getServerServices.addServer(group(env, vm), vm.imageId.get, vm.hardwareId.get, availableIp.getIp, serverOptions)
-      new GoGridVmMetadataFuture(server.getName)
+          .withDescription("%s: %s, id = %d".format(VM_GROUP_PREFIX, vm.roleName, vm.id))
+      ipWrapper.pop(){
+          fillIpStack
+      }.map({ ip =>
+          log.debug("Got ip %s", ip.getIp)
+          val server = client.getServerServices.addServer(group(env, vm), vm.imageId.get, vm.hardwareId.get, ip.getIp, serverOptions)
+          new GoGridVmMetadataFuture(server.getName)
+      }).getOrElse(throw new IllegalStateException("Cannot find a free ip address for new vm"))
     }
+
+    override protected def group(env: Environment, vm: VirtualMachine) = {
+        "%s.%s.%s".format(nodeNamePrefix, vm.id, env.templateName.take(DefaultVmCreationStrategy.APP_NAME_MAXLEN))
+          .take(DefaultVmCreationStrategy.VM_GROUP_MAXLEN)
+    }
+
+    private def fillIpStack = {
+        log.debug("Filling ip stack. I am %s", this)
+        val availableIps = findAvailableIps
+        val unavailableIps = findUnavailableIps
+        import collection.JavaConversions._
+        availableIps.filter(p => unavailableIps.find(a => a.getIp == p.getIp).isEmpty).toIterable
+    }
+
+    private def findUnavailableIps = {
+        val assignedIps = new GetIpListOptions().onlyAssigned().onlyWithType(IpType.PUBLIC)
+        client.getIpServices.getIpList(assignedIps)
+    }
+
+    private def findAvailableIps = {
+        val  unassignedIps = new GetIpListOptions()
+          .onlyUnassigned
+          .onlyWithType(IpType.PUBLIC)
+        client.getIpServices.getIpList(unassignedIps)
+    }
+
+
 }
