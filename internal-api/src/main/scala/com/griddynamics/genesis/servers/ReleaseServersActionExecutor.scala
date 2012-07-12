@@ -39,7 +39,10 @@ class ReleaseServersActionExecutor(val action: ReleaseServersAction,
 
     val machines = (action.roleName, action.serverIds) match {
       case (Some(role), None) => all.filter(_.roleName == role)
-      case (_, Some(seq)) => all.intersect(seq)
+      case (_, Some(seq)) => {
+        val ids = seq.toSet
+        all.filter { s => ids.contains(s.instanceId.get) }
+      }
       case (None, None) => all
     }
     val updates = serversLoanService.releaseServers(context.env, machines)
