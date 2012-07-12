@@ -5,18 +5,12 @@ import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
 import com.griddynamics.genesis.service.impl.ProjectService
-import org.springframework.security.acls.model.{MutableAcl, NotFoundException, MutableAclService}
-import org.springframework.transaction.annotation.Transactional
-import com.griddynamics.genesis.spring.security.acls.ScalaObjectIdentityImpl
-import org.springframework.security.acls.domain.{GrantedAuthoritySid, PrincipalSid, BasePermission}
-import collection.mutable.Buffer
 import com.griddynamics.genesis.api.{ExtendedResult, RequestResult, Project}
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.Authentication
-import java.security.Principal
 import com.griddynamics.genesis.users.GenesisRole
-import org.springframework.beans.factory.annotation.{Value, Autowired}
-import com.griddynamics.genesis.service.{ProjectAuthorityService, AuthorityService}
+import org.springframework.beans.factory.annotation.Value
+import com.griddynamics.genesis.service.ProjectAuthorityService
 
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
@@ -47,13 +41,11 @@ class ProjectsController(projectService: ProjectService, authorityService: Proje
   @Value("${genesis.system.server.mode:frontend}")
   var mode = ""
 
-  lazy val backendMode = mode.matches("backend")  //todo(RB): temp workaround for 3 tier mode
-
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
   def listProjects(request: HttpServletRequest): Iterable[Project] = {
     import scala.collection.JavaConversions._
-    if (backendMode || request.isUserInRole(GenesisRole.SystemAdmin.toString)) {
+    if (request.isUserInRole(GenesisRole.SystemAdmin.toString)) {
       projectService.list
     } else {
       val auth = SecurityContextHolder.getContext.getAuthentication
@@ -129,7 +121,7 @@ class ProjectsController(projectService: ProjectService, authorityService: Proje
                        request: HttpServletRequest,
                        response: HttpServletResponse): List[String] = {
     import scala.collection.JavaConversions._
-    if (backendMode || request.isUserInRole(GenesisRole.SystemAdmin.toString)) {
+    if (request.isUserInRole(GenesisRole.SystemAdmin.toString)) {
       List(GenesisRole.ProjectAdmin.toString, GenesisRole.ProjectUser.toString)
     } else {
       val auth: Authentication = SecurityContextHolder.getContext.getAuthentication
