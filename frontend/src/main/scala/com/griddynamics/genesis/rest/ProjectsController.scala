@@ -101,9 +101,9 @@ class ProjectsController(projectService: ProjectService, authorityService: Proje
                         request: HttpServletRequest,
                         response: HttpServletResponse): RequestResult = {
     val paramsMap = GenesisRestController.extractParamsMap(request)
-    val users = GenesisRestController.extractListValue("users", paramsMap)
-    val groups = GenesisRestController.extractListValue("groups", paramsMap)
-    authorityService.updateProjectAuthority(projectId,  GenesisRole.withName(roleName), users, groups)
+    val users = GenesisRestController.extractListValue("users", paramsMap) map RolesController.unescapeAndReplace
+    val groups = GenesisRestController.extractListValue("groups", paramsMap)  map RolesController.unescapeAndReplace
+    authorityService.updateProjectAuthority(projectId,  GenesisRole.withName(roleName), users.distinct, groups.distinct)
   }
 
   @RequestMapping(value = Array("{projectId}/roles/{roleName}"), method = Array(RequestMethod.GET))

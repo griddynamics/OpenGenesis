@@ -91,16 +91,14 @@ class RolesController(authorityService: AuthorityService, projectAuthorityServic
       throw new ResourceNotFoundException("Role [name = " + roleName + "] was not found")
     }
     val grantsMap = extractParamsMap(request)
-    def unescapeAndReplace: (String) => String = {
-      URLDecoder.decode(_, "utf-8").replaceAll("\\\\\\\\", "\\\\")
-    }
+
     // sometimes special symbols are escaped by js component.
     // In this case double backslashes should be removed too
-    val groups = extractListValue("groups", grantsMap) map unescapeAndReplace
-    val users = extractListValue("users", grantsMap) map unescapeAndReplace
+    val groups = extractListValue("groups", grantsMap) map RolesController.unescapeAndReplace
+    val users = extractListValue("users", grantsMap) map RolesController.unescapeAndReplace
     validUsers(users) {
       validGroups (groups) {
-        authorityService.updateAuthority(roleName, groups, users)
+        authorityService.updateAuthority(roleName, groups.distinct, users.distinct)
       }
     }
   }
@@ -138,4 +136,10 @@ class RolesController(authorityService: AuthorityService, projectAuthorityServic
     }
     block
   }
+}
+
+object RolesController {
+    def unescapeAndReplace: (String) => String = {
+        URLDecoder.decode(_, "utf-8").replaceAll("\\\\\\\\", "\\\\")
+    }
 }
