@@ -32,4 +32,6 @@ trait ProjectAuthorityService {
   def isUserProjectAdmin(username: String, groups: Iterable[UserGroup]): Boolean
   def getGrantedAuthorities(projectId: Int, username: String, grantedAuthorities: Iterable[String]): List[GenesisRole.Value]
   def getAllowedProjectIds(username: String, authorities: Iterable[String]): List[Int]
+  def removeUserFromProjects(username: String)
+  def removeGroupFromProjects(groupname: String)
 }
