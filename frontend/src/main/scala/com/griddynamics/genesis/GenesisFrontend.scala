@@ -116,6 +116,8 @@ object GenesisFrontend extends Logging {
             val proxyFilter = new TunnelFilter("/rest") with UrlConnectionTunnel
             val proxyHolder = new FilterHolder(proxyFilter)
             proxyHolder.setInitParameter(TunnelFilter.BACKEND_PARAMETER, helper.getFileProperty(SERVICE_BACKEND_URL, ""))
+            proxyHolder.setInitParameter(TunnelFilter.READ_TIMEOUT, helper.getFileProperty(FRONTEND_READ_TIMEOUT, "5000"))
+            proxyHolder.setInitParameter(TunnelFilter.CONNECT_TIMEOUT, helper.getFileProperty(FRONTEND_CONNECT_TIMEOUT, "5000"))
             proxyHolder.setName("tunnelFilter")
             context.addFilter(proxyHolder, "/*", 0)
         }
