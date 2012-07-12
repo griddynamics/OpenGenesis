@@ -34,6 +34,7 @@ import java.util.Collections
 import com.griddynamics.genesis.users.GenesisRole._
 import org.springframework.security.acls.model._
 import scala.collection.JavaConversions._
+import com.griddynamics.genesis.model.security.AclSid
 
 class ProjectAuthorityService(aclService: MutableAclService) extends service.ProjectAuthorityService {
 
@@ -110,6 +111,54 @@ class ProjectAuthorityService(aclService: MutableAclService) extends service.Pro
 
     aclService.updateAcl(acl)
     RequestResult(isSuccess = true)
+  }
+
+
+  @Transactional
+  def removeUserFromProjects(username: String) {
+    val aclSidOption = from(aclSid)(sid => where (sid.principal === true and sid.sid === username) select (sid)).headOption
+    val apiSid = new PrincipalSid(username)
+
+    aclSidOption.foreach { removeAccessControlEntries(_, apiSid) }
+  }
+
+  // NOTE: direct removal from aclEntry table is not performed because spring AclService is actually caching data, thus it's essential to modify entries via api
+  private[this] def removeAccessControlEntries(aclSid: AclSid, apiSid: Sid) {
+    import scala.collection.JavaConversions._
+    import java.util.Collections._
+
+    val projectIds = from(aclEntry, aclObjectIdentity, aclClass)((entry, oi, clazz) =>
+      where(
+        clazz.`class` === classOf[Project].getCanonicalName and
+          entry.sid === aclSid.id and
+          oi.object_id_class === clazz.id and
+          entry.acl_object_identity === oi.id
+      ) select(oi.object_id_identity)
+    ).toList
+
+    val projectIdentities = projectIds.map { new ObjectIdentityImpl(classOf[Project], _).asInstanceOf[ObjectIdentity] }
+
+    if(!projectIdentities.isEmpty) {
+      val acls = aclService.readAclsById(projectIdentities, singletonList(apiSid))
+
+      acls.foreach { case (oi, acl: MutableAcl) =>
+        val notThisSidPermissions = acl.getEntries.filter(_.getSid != apiSid)
+
+        for(_ <- 0 until acl.getEntries.size()) { acl.deleteAce(0) }
+
+        notThisSidPermissions.foreach(ace => acl.insertAce(acl.getEntries.size, ace.getPermission, ace.getSid, true))
+        aclService.updateAcl(acl)
+      }
+    }
+  }
+
+  @Transactional
+  def removeGroupFromProjects(groupname: String) {
+    val sidName = "GROUP_" + groupname
+    val aclSidOption = from(aclSid)(sid => where (sid.principal === false and sid.sid === sidName) select (sid)).headOption
+    val apiSid = new GrantedAuthoritySid(sidName)
+
+    aclSidOption.foreach { removeAccessControlEntries(_, apiSid) }
   }
 
   @Transactional(readOnly = true)
