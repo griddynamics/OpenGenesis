@@ -33,6 +33,7 @@ import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.groups.GroupService
 import com.griddynamics.genesis.api.RequestResult
 import org.springframework.beans.factory.annotation.Autowired
+import java.net.URLDecoder
 
 @Controller
 @RequestMapping(Array("/rest"))
@@ -90,8 +91,13 @@ class RolesController(authorityService: AuthorityService, projectAuthorityServic
       throw new ResourceNotFoundException("Role [name = " + roleName + "] was not found")
     }
     val grantsMap = extractParamsMap(request)
-    val groups = extractListValue("groups", grantsMap)
-    val users = extractListValue("users", grantsMap)
+    def unescapeAndReplace: (String) => String = {
+      URLDecoder.decode(_, "utf-8").replaceAll("\\\\\\\\", "\\\\")
+    }
+    // sometimes special symbols are escaped by js component.
+    // In this case double backslashes should be removed too
+    val groups = extractListValue("groups", grantsMap) map unescapeAndReplace
+    val users = extractListValue("users", grantsMap) map unescapeAndReplace
     validUsers(users) {
       validGroups (groups) {
         authorityService.updateAuthority(roleName, groups, users)
