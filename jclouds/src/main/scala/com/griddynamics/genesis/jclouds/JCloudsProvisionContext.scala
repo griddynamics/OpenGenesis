@@ -77,6 +77,7 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
 
   @Autowired var storeServiceContext: StoreServiceContext = _
   @Autowired var credentialServiceContext: CredentialServiceContext = _
+  @Autowired var credentialStoreService: CredentialsStoreService = _
   @Autowired var configService: ConfigService = _
   @Autowired var pluginConfiguration: PluginConfigurationContext = _
   @Autowired var clientBootstrapContext: ClientBootstrapContext = _
@@ -103,7 +104,7 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
   }
 
   @Bean
-  def jcloudsCoordinatorFactory = new JCloudsStepCoordinatorFactory(() => {
+  def jcloudsCoordinatorFactory = new JCloudsStepCoordinatorFactory(credentialStoreService, credentialServiceContext.credentialService, () => {
     val pluginConfig = pluginConfiguration.configuration(Plugin.id)
 
     new JCloudsProvisionContextImpl(
@@ -123,8 +124,7 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
 
   @Bean def destroyEnvStepBuilderFactory = new DestroyEnvStepBuilderFactory
 
-  @Bean def sshService: SshService =
-    new impl.SshService(credentialServiceContext.credentialService, computeService, this)
+  @Bean def sshService: SshService = new impl.SshService(credentialServiceContext.credentialService, computeService, this)
 
   @Bean def computeService = new JCloudsComputeService(this)
 
