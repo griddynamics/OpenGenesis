@@ -44,14 +44,14 @@ case class BorrowServersStep( serverArray: String,
 class BorrowStepBuilder extends StepBuilder {
   @BeanProperty var role: String = _
   @BeanProperty var serverArray: String = _
-  @BeanProperty var quantity: Int = _
+  @BeanProperty var quantity: Int = 0
   @BeanProperty var serverIds: java.util.List[String] = java.util.Collections.emptyList()
 
   def getDetails = {
-    if (quantity == null || quantity == 0) {
-      new BorrowServersStep(serverArray, role, Option(serverIds.toSet), None)
-    } else {
+    if (serverIds.isEmpty) {
       new BorrowServersStep(serverArray, role, None, Option(quantity))
+    } else {
+      new BorrowServersStep(serverArray, role, Option(serverIds.toSet), None)
     }
   }
 }
