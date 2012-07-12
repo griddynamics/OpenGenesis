@@ -29,29 +29,43 @@ import com.griddynamics.coordinators.provision.AbstractProvisionVmsStepCoordinat
 import com.griddynamics.genesis.logging.LoggerWrapper
 import com.griddynamics.genesis.jclouds.action.JCloudsProvisionVm
 import com.griddynamics.genesis.jclouds.JCloudsProvisionContext
+import com.griddynamics.genesis.service.{CredentialService, CredentialsStoreService}
 
 class ProvisionVmsStepCoordinator(override val step: ProvisionVmStep,
                                   override val context: StepExecutionContext,
-                                  override val pluginContext: JCloudsProvisionContext) extends AbstractProvisionVmsStepCoordinator[JCloudsProvisionVm] {
+                                  override val pluginContext: JCloudsProvisionContext,
+                                  credStore: CredentialsStoreService,
+                                  credService: CredentialService) extends AbstractProvisionVmsStepCoordinator[JCloudsProvisionVm] {
 
   def onStepStart() = {
     LoggerWrapper.writeLog(context.step.id, "Starting phase %s".format(context.step.phase))
     val existingVms = context.virtualMachines.filter(_.stepId == context.step.id)
       .filter(_.status == VmStatus.Ready)
-    for (n <- 1 to (step.quantity - existingVms.size)) yield {
-      JCloudsProvisionVm(context.env,
-        context.workflow,
-        context.step,
-        step.roleName,
-        step.hardwareId,
-        step.imageId,
-        step.instanceId,
-        step.ip,
-        Some(pluginContext.cloudProvider),
-        step.keyPair,
-        step.securityGroup,
-        pluginContext.computeSettings
-      )
+
+    val credentials = step.keyPair.flatMap { credStore.find(context.env.projectId, pluginContext.cloudProvider, _) }
+
+    if(credentials.isDefined || credService.defaultCredentials.isDefined) {
+      for (n <- 1 to (step.quantity - existingVms.size)) yield {
+        JCloudsProvisionVm(context.env,
+          context.workflow,
+          context.step,
+          step.roleName,
+          step.hardwareId,
+          step.imageId,
+          step.instanceId,
+          step.ip,
+          Some(pluginContext.cloudProvider),
+          step.keyPair,
+          step.securityGroup,
+          pluginContext.computeSettings
+        )
+      }
+    } else {
+      LoggerWrapper.writeLog(context.step.id,
+        "Failed to find credentials '%s' for cloud provider '%s' in credentials store. No default credentials installed. ".format(step.keyPair.get, pluginContext.cloudProvider))
+      LoggerWrapper.writeLog(context.step.id, "Provisioning aborted.")
+      this.stepFailed = true
+      Seq()
     }
   }
 }
