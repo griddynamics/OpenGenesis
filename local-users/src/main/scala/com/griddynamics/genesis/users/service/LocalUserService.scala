@@ -28,7 +28,7 @@ import com.griddynamics.genesis.validation.Validation
 import com.griddynamics.genesis.validation.Validation._
 import com.griddynamics.genesis.users.repository.LocalUserRepository
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.service.AuthorityService
+import com.griddynamics.genesis.service.{ProjectAuthorityService, AuthorityService}
 import com.griddynamics.genesis.groups.GroupService
 import com.griddynamics.genesis.api._
 
@@ -36,6 +36,9 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
 
     @Autowired
     var authorityService: AuthorityService = null
+
+    @Autowired
+    var projectAuthorityService: ProjectAuthorityService = null
 
     @Transactional(readOnly = true)
     override def getWithCredentials(username: String) = repository.getWithCredentials(username)
@@ -86,6 +89,7 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
     override def delete(a: User) = {
       authorityService.removeAuthoritiesFromUser(a.username)
+      projectAuthorityService.removeUserFromProjects(a.username)
       if (repository.delete(a) == 0)
          Failure()
       else
