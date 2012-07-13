@@ -57,6 +57,7 @@
         <s:intercept-url pattern="/rest/databags**" access="hasRole('ROLE_GENESIS_ADMIN')" />
 
         <s:intercept-url pattern="/rest/projects" method="GET" access="isAuthenticated()"/>
+        <s:intercept-url pattern="/rest/projects/" method="GET" access="isAuthenticated()"/>
 
         <s:intercept-url pattern="/rest/projects/*/permissions" method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or
                 hasPermission( #urlId('/rest/projects/{id}/.*', #url), 'com.griddynamics.genesis.api.Project', 'read') or
