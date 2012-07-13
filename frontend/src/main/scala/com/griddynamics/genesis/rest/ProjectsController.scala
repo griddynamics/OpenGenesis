@@ -100,6 +100,8 @@ class ProjectsController(projectService: ProjectService, authorityService: Proje
                         @PathVariable("roleName") roleName: String,
                         request: HttpServletRequest,
                         response: HttpServletResponse): RequestResult = {
+    assertProjectExists(projectId)
+
     val paramsMap = GenesisRestController.extractParamsMap(request)
     val users = GenesisRestController.extractListValue("users", paramsMap) map RolesController.unescapeAndReplace
     val groups = GenesisRestController.extractListValue("groups", paramsMap)  map RolesController.unescapeAndReplace
@@ -112,7 +114,16 @@ class ProjectsController(projectService: ProjectService, authorityService: Proje
                        @PathVariable("roleName") roleName: String,
                        request: HttpServletRequest,
                        response: HttpServletResponse): ExtendedResult[Map[String, Iterable[String]]] = {
+    assertProjectExists(projectId)
+
     authorityService.getProjectAuthority(projectId, GenesisRole.withName(roleName)).map{ case (users, groups) => Map("users" -> users, "groups" -> groups) }
+  }
+
+
+  def assertProjectExists(projectId: Int) {
+    projectService.get(projectId).getOrElse {
+      throw new ResourceNotFoundException("Project [id = " + projectId + "]  was not found")
+    }
   }
 
   @RequestMapping(value = Array("{projectId}/permissions"), method = Array(RequestMethod.GET))
