@@ -75,6 +75,8 @@
     <bean class="com.griddynamics.genesis.rest.ServersController">
         <constructor-arg name="service" ref="serversService"/>
         <constructor-arg name="loanService" ref="serversLoanService"/>
+        <constructor-arg name="projectService" ref="projectService"/>
+        <constructor-arg name="credService" ref="credentialsStoreService"/>
     </bean>
 
     <bean class="com.griddynamics.genesis.rest.DatabagController">

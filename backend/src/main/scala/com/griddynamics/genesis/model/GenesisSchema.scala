@@ -84,6 +84,9 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     val projectPropertiesToProject = oneToManyRelation(projects, projectProperties).via((project, projectProperty) => project.id === projectProperty.projectId)
     projectPropertiesToProject.foreignKeyDeclaration.constrainReference(onDelete cascade)
 
+    val serverArrayToProject = oneToManyRelation(projects, serverArrays).via((project, array) => project.id === array.projectId)
+    serverArrayToProject.foreignKeyDeclaration.constrainReference(onDelete cascade)
+
     val serverToServerArray = oneToManyRelation(serverArrays, servers).via((array, server) => array.id === server.serverArrayId)
     serverToServerArray.foreignKeyDeclaration.constrainReference(onDelete cascade)
 

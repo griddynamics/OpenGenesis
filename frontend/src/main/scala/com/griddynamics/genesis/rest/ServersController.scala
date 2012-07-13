@@ -26,19 +26,21 @@ import org.springframework.web.bind.annotation._
 import org.springframework.stereotype.Controller
 import scala.Array
 import javax.servlet.http.HttpServletRequest
-import com.griddynamics.genesis.service.{ServersLoanService, ServersService}
+import com.griddynamics.genesis.service.{CredentialsStoreService, ServersLoanService, ServersService}
 import com.griddynamics.genesis.rest.GenesisRestController._
 import com.griddynamics.genesis.api
 import api.{ServerDescription, ExtendedResult}
 import scala.Some
+import com.griddynamics.genesis.service.impl.ProjectService
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/server-arrays"))
-class ServersController(service: ServersService, loanService: ServersLoanService) extends RestApiExceptionsHandler {
+class ServersController(service: ServersService, loanService: ServersLoanService, projectService: ProjectService, credService: CredentialsStoreService) extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
   def create(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = {
+    assertProjectExists(projectId)
     val array = extractServerArray(request, projectId, None)
     service.create(array)
   }
@@ -46,25 +48,42 @@ class ServersController(service: ServersService, loanService: ServersLoanService
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.POST))
   @ResponseBody
   def update(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) = {
+    assertProjectExists(projectId)
     val array = extractServerArray(request, projectId, Some(id))
     service.update(array)
   }
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
   @ResponseBody
-  def list(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = service.list(projectId)
+  def list(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = {
+    assertProjectExists(projectId)
+    service.list(projectId)
+  }
+
+
+  def assertProjectExists(projectId: Int) {
+    projectService.get(projectId).getOrElse(throw new ResourceNotFoundException("Project not found"))
+  }
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def get(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) = service.get(id, projectId)
+  def get(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) = {
+    assertArrayBelongsToProject(projectId, id)
+    service.get(id, projectId)
+  }
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
-  def delete(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) = service.deleteServerArray(projectId, id)
+  def delete(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) = {
+    assertArrayBelongsToProject(projectId, id)
+    service.deleteServerArray(projectId, id)
+  }
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.PUT))
   @ResponseBody
   def updateServerArray(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) = {
+    assertArrayBelongsToProject(projectId, id)
+
     val array = extractServerArray(request, projectId, Some(id))
     service.update(array)
   }
@@ -75,6 +94,8 @@ class ServersController(service: ServersService, loanService: ServersLoanService
     assertArrayBelongsToProject(projectId, arrayId)
 
     val server = extractServer(request, projectId, arrayId, None)
+
+    server.credentialsId.foreach { assertCredentialsExistInProject(projectId, _) }
     service.create(server)
   }
 
@@ -108,10 +129,12 @@ class ServersController(service: ServersService, loanService: ServersLoanService
     ServerDescription(server.id, server.arrayId, server.instanceId, server.address, envs)
   }
 
-
+  private[this] def assertCredentialsExistInProject(projectId: Int, credentialsId: Int) {
+    credService.get(projectId, credentialsId).getOrElse(throw new ResourceNotFoundException("Failed to find credentials record in project"))
+  }
 
   private[this] def assertArrayBelongsToProject(projectId: Int, arrayId: Int) {
-    service.get(projectId, arrayId).getOrElse(throw new ResourceNotFoundException("Server array wasn't found in project"))
+    service.get(projectId, arrayId).getOrElse(throw new ResourceNotFoundException("Server array wasn't found in project or project doesn't exist"))
   }
 
   private[this] def extractServer(request: HttpServletRequest, projectId: Int, arrayId: Int, id: Option[Int]) = {
