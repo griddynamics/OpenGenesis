@@ -24,9 +24,9 @@ package com.griddynamics.genesis.service.impl
 
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import org.junit.Test
+import org.junit.{Before, Test}
 import com.griddynamics.genesis.util.IoUtil
-import org.mockito.Mockito
+import org.mockito.{Matchers, Mockito}
 import com.griddynamics.genesis.plugin._
 import reflect.BeanProperty
 import org.springframework.core.convert.support.ConversionServiceFactory
@@ -34,6 +34,7 @@ import com.griddynamics.genesis.workflow.Step
 import com.griddynamics.genesis.template._
 import com.griddynamics.genesis.repository.impl.ProjectPropertyRepository
 import com.griddynamics.genesis.repository.DatabagRepository
+import net.sf.ehcache.CacheManager
 
 case class DoNothingStep(name: String) extends Step {
   override def stepDescription = "Best step ever!"
@@ -55,11 +56,16 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
     val databagRepo = mock[DatabagRepository]
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/ExampleEnv.genesis"))
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
+    Mockito.when(templateRepository.getContent(VersionedTemplate("1") )).thenReturn(Some(body))
     val templateService = new GroovyTemplateService(templateRepository,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-        Seq(), ppRepo, databagRepo)
+        Seq(), ppRepo, databagRepo, CacheManager.getInstance())
 
     private def testTemplate = templateService.findTemplate(0, "TestEnv", "0.1").get
+
+    @Before def setUp() {
+      CacheManager.getInstance().clearAll()
+    }
 
     @Test def testEmbody() {
         val res = testTemplate.createWorkflow.embody(Map("nodesCount" -> "666", "test" -> "test"))

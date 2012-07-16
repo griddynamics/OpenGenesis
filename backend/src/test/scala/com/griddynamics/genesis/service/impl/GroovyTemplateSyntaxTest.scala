@@ -24,7 +24,7 @@ package com.griddynamics.genesis.service.impl
 
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import org.junit.Test
+import org.junit.{Before, Test}
 import org.mockito.Mockito
 import org.springframework.core.convert.support.ConversionServiceFactory
 import com.griddynamics.genesis.util.Logging
@@ -32,8 +32,13 @@ import com.griddynamics.genesis.template.dsl.groovy.WorkflowDeclaration
 import scala.Array
 import com.griddynamics.genesis.template.{VersionedTemplate, TemplateRepository}
 import com.griddynamics.genesis.repository.{DatabagRepository, ProjectPropertyRepository}
+import net.sf.ehcache.CacheManager
 
 class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with MockitoSugar {
+
+    @Before def setUp() {
+      CacheManager.getInstance().clearAll()
+    }
 
     //Template declaration
     
@@ -173,12 +178,13 @@ class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with Mock
         val ppRepository = mock[ProjectPropertyRepository]
         val bagRepository = mock[DatabagRepository]
         Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> script))
+        Mockito.when(templateRepository.getContent(VersionedTemplate("1") )).thenReturn(Some(script))
 
         val templateService = new GroovyTemplateService(templateRepository,
             List(
               new DoNothingStepBuilderFactory
             ),
-            ConversionServiceFactory.createDefaultConversionService(), Seq(),ppRepository,  bagRepository)
+            ConversionServiceFactory.createDefaultConversionService(), Seq(), ppRepository,  bagRepository, CacheManager.getInstance())
 
         templateService.listTemplates(0).headOption match {
             case Some((name, version)) => templateService.findTemplate(0, name, version)

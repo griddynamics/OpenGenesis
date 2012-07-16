@@ -27,7 +27,7 @@ import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.util.IoUtil
 import org.springframework.core.convert.support.ConversionServiceFactory
 import com.griddynamics.genesis.template.{ListVarDSFactory, VersionedTemplate, TemplateRepository}
-import org.junit.Test
+import org.junit.{Before, Test}
 import com.griddynamics.genesis.core.{RegularWorkflow, GenesisFlowCoordinator}
 import org.mockito.Mockito._
 import org.mockito.{Matchers, Mockito}
@@ -36,6 +36,7 @@ import com.griddynamics.genesis.model.WorkflowStepStatus._
 import com.griddynamics.genesis.workflow.{Step, StepResult}
 import com.griddynamics.genesis.plugin.{GenesisStep, GenesisStepResult, StepCoordinatorFactory}
 import com.griddynamics.genesis.repository.{DatabagRepository, ProjectPropertyRepository}
+import net.sf.ehcache.CacheManager
 
 class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar {
   val templateRepository = mock[TemplateRepository]
@@ -49,6 +50,10 @@ class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar {
     storeService
   }
 
+  @Before def setUp() {
+    CacheManager.getInstance().clearAll()
+  }
+
   val stepCoordinatorFactory = mock[StepCoordinatorFactory]
   val ppRepo = mock[ProjectPropertyRepository]
   val databagRepository = mock[DatabagRepository]
@@ -57,7 +62,7 @@ class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar {
 
   val templateService = new GroovyTemplateService(templateRepository,
     List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-    Seq(new ListVarDSFactory, new DependentListVarDSFactory), ppRepo, databagRepository)
+    Seq(new ListVarDSFactory, new DependentListVarDSFactory), ppRepo, databagRepository, CacheManager.getInstance())
 
   @Test def contextVariableAccess() {
     val stepBuilders = templateService.findTemplate(0, "TestEnv", "0.1").get.createWorkflow.embody(Map())

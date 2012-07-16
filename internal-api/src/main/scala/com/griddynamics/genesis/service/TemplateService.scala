@@ -52,10 +52,12 @@ trait WorkflowDefinition {
     def partial(variables: Map[String, Any]): Seq[VariableDescription] = Seq()
 }
 
+case class TemplateDescription (name: String, version: String, createWorkflow: String, destroyWorkflow: String, workflows: Seq[String])
+
 trait TemplateService {
-    def templateRawContent(projectId: Int, name: String, version: String): Option[String]
     def listTemplates(projectId: Int): Seq[(String, String)] // (name, version)
     def findTemplate(projectId: Int, templateName: String, templateVersion: String): Option[TemplateDefinition]
-    def descTemplate(projectId: Int, templateName: String, templateVersion: String): Option[TemplateDefinition] =
-    findTemplate(projectId, templateName, templateVersion)
+
+    def descTemplate(projectId: Int, templateName: String, templateVersion: String): Option[TemplateDescription]
+    def templateRawContent(projectId: Int, name: String, version: String): Option[String]
 }
