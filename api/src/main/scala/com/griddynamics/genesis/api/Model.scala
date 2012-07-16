@@ -33,6 +33,8 @@ case class Environment(name : String,
                        templateVersion : String,
                        projectId: Int)
 
+case class Attribute(value: String, description: String)
+
 case class EnvironmentDetails(name : String,
                               status : String,
                               creator : String,
@@ -46,7 +48,7 @@ case class EnvironmentDetails(name : String,
                               projectId: Int,
                               historyCount: Int,
                               workflowCompleted: Option[Double],
-                              attributes: Map[String, String] = Map())
+                              attributes: Map[String, Attribute] = Map())
 
 case class Variable(name : String, description : String, optional: Boolean = false, defaultValue: String = null,
                     values:Map[String,String] = Map(), dependsOn: Option[List[String]] = None)

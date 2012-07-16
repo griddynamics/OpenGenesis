@@ -177,7 +177,7 @@ object GenesisRestService {
             env.projectId,
             historyCount,
             workflowCompleted,
-            env.deploymentAttrs.map( attr => (attr.desc, attr.value)).toMap
+            env.deploymentAttrs.map( attr => attr.key -> Attribute(attr.value, attr.desc)).toMap
         )
     }
 
