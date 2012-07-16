@@ -43,7 +43,6 @@ trait GenesisSchema extends Schema {
     val logs = table[StepLogEntry]("step_logs")
   
     val projects = table[Project]("project")
-    val projectProperties = table[ProjectContextEntry]("project_property")
     val settings = table[ConfigProperty]("settings")
     val credentials = table[Credentials]("credentials")
 
@@ -80,9 +79,6 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
 
     val envsToProject = oneToManyRelation(projects, envs).via((project, environment) => project.id === environment.projectId)
     envsToProject.foreignKeyDeclaration.constrainReference(onDelete cascade)
-
-    val projectPropertiesToProject = oneToManyRelation(projects, projectProperties).via((project, projectProperty) => project.id === projectProperty.projectId)
-    projectPropertiesToProject.foreignKeyDeclaration.constrainReference(onDelete cascade)
 
     val serverArrayToProject = oneToManyRelation(projects, serverArrays).via((project, array) => project.id === array.projectId)
     serverArrayToProject.foreignKeyDeclaration.constrainReference(onDelete cascade)
@@ -121,12 +117,6 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     on(projects) (project=> declare(
       project.name is (unique),
       project.description is (dbType("text"))
-    ))
-
-    on(projectProperties) (projectProperty => declare(
-      projectProperty.id is (primaryKey, autoIncremented),
-      columns(projectProperty.projectId, projectProperty.name) are (unique),
-      projectProperty.value is (dbType("text"))
     ))
 
     on(credentials)(creds => declare(
@@ -185,7 +175,6 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
 }
 
 trait GenesisSchemaCustom extends GenesisSchema {
-
 
     on(workflows)(workflow => declare(
         workflow.variables is (dbType("varchar(4096)"))

@@ -15,9 +15,15 @@ trait SystemWideContextSupport {
 
 }
 
-class SystemContext(databagRepository: DatabagRepository) {
+trait ProjectDatabagSupport extends SystemWideContextSupport {
+  protected def projectId: Int
+  lazy val projectContext = new SystemContext(databagRepository, Some(projectId))
+  def get$project = projectContext
+}
+
+class SystemContext(databagRepository: DatabagRepository, projectId: Option[Int] = None) {
   def databag(name: String): java.util.Map[String, String] = {
-    val bag = databagRepository.findByName(name)
+    val bag = databagRepository.findByName(name, projectId)
     if (bag.isEmpty) {
       java.util.Collections.emptyMap()
     } else {
