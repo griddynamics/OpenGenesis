@@ -25,7 +25,7 @@ package com.griddynamics.genesis.service
 import java.lang.RuntimeException
 import com.griddynamics.genesis.common.Mistake
 import com.griddynamics.genesis.model._
-import com.griddynamics.genesis.api.WorkflowDetails
+import com.griddynamics.genesis.model.WorkflowStepStatus._
 
 trait StoreService {
     def listEnvs(projectId: Int): Seq[Environment]
@@ -77,6 +77,8 @@ trait StoreService {
     def finishWorkflow(env: Environment, workflow: Workflow)
 
     def updateStep(step : WorkflowStep)
+
+    def updateStepStatus(stepId: Int, status: WorkflowStepStatus)
 
     def insertWorkflowSteps(steps : Seq[WorkflowStep])
 
