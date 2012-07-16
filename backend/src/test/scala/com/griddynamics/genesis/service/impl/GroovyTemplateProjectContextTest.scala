@@ -26,13 +26,14 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.template.{VersionedTemplate, ListVarDSFactory, TemplateRepository}
 import org.springframework.core.convert.support.ConversionServiceFactory
-import org.junit.Test
+import org.junit.{Before, Test}
 import com.griddynamics.genesis.util.IoUtil
 import org.mockito.Mockito
 import com.griddynamics.genesis.service.VariableDescription
 import com.griddynamics.genesis.plugin.{StepBuilder, GenesisStep}
 import com.griddynamics.genesis.repository.impl.ProjectPropertyRepository
 import com.griddynamics.genesis.repository.DatabagRepository
+import net.sf.ehcache.CacheManager
 
 class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSugar {
     val templateRepository = mock[TemplateRepository]
@@ -40,13 +41,18 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
     val bagRepository = mock[DatabagRepository]
     val templateService = new GroovyTemplateService(templateRepository,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-        Seq(new ListVarDSFactory, new DependentListVarDSFactory), ppRepository, bagRepository)
+        Seq(new ListVarDSFactory, new DependentListVarDSFactory), ppRepository, bagRepository, CacheManager.getInstance())
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/ProjectContextExample.genesis"))
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
     Mockito.when(ppRepository.read(0, "key1")).thenReturn(Some("fred"))
     Mockito.when(ppRepository.read(0, "key2")).thenReturn(Some("barney"))
     Mockito.when(ppRepository.read(0, "key3")).thenReturn(Some("wilma"))
     val createWorkflow = templateService.findTemplate(0, "Projects", "0.1").get.createWorkflow
+
+    @Before def setUp() {
+      CacheManager.getInstance().clearAll()
+    }
+
 
     @Test def testDefaultValue() {
         val projectVariable: VariableDescription = createWorkflow.variableDescriptions.find(_.name == "projectKey").getOrElse(fail("Variable projectKey must be declared"))
