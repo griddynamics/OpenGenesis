@@ -26,7 +26,6 @@ import org.springframework.stereotype.Controller
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.{PathVariable, ResponseBody, RequestMethod, RequestMapping}
 import javax.servlet.http.HttpServletRequest
-import com.griddynamics.genesis._
 import service.DataBagService
 
 @Controller
@@ -78,13 +77,5 @@ class ProjectDatabagController extends RestApiExceptionsHandler {
         else
             throw new InvalidInputException
     }).getOrElse(throw new InvalidInputException)
-  }
-
-  def extractProperties(request: HttpServletRequest): List[api.ProjectProperty] = {
-    for (p <- GenesisRestController.extractParamsMapList(request)) yield {
-      val name = GenesisRestController.extractValue("name", p)
-      val value = GenesisRestController.extractValue("value", p)
-      new api.ProjectProperty(0, 0, name, value)
-    }
   }
 }

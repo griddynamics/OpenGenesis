@@ -35,7 +35,7 @@ import com.griddynamics.genesis.model.{WorkflowStep, Workflow, Environment}
 import com.griddynamics.genesis.model.WorkflowStepStatus._
 import com.griddynamics.genesis.workflow.{Step, StepResult}
 import com.griddynamics.genesis.plugin.{GenesisStep, GenesisStepResult, StepCoordinatorFactory}
-import com.griddynamics.genesis.repository.{DatabagRepository, ProjectPropertyRepository}
+import com.griddynamics.genesis.repository.DatabagRepository
 
 class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar {
   val templateRepository = mock[TemplateRepository]
@@ -50,14 +50,13 @@ class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar {
   }
 
   val stepCoordinatorFactory = mock[StepCoordinatorFactory]
-  val ppRepo = mock[ProjectPropertyRepository]
   val databagRepository = mock[DatabagRepository]
   val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/ContextExample.genesis"))
   Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
 
   val templateService = new GroovyTemplateService(templateRepository,
     List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-    Seq(new ListVarDSFactory, new DependentListVarDSFactory), ppRepo, databagRepository)
+    Seq(new ListVarDSFactory, new DependentListVarDSFactory), databagRepository)
 
   @Test def contextVariableAccess() {
     val stepBuilders = templateService.findTemplate(0, "TestEnv", "0.1").get.createWorkflow.embody(Map())

@@ -1,7 +1,6 @@
 package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.template._
-import com.griddynamics.genesis.repository.impl.ProjectPropertyRepository
 import org.springframework.core.convert.support.ConversionServiceFactory
 import com.griddynamics.genesis.util.IoUtil
 import org.mockito.Mockito
@@ -9,20 +8,17 @@ import org.junit.Test
 import com.griddynamics.genesis.service.VariableDescription
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import scala.Some
 import com.griddynamics.genesis.template.VersionedTemplate
 import com.griddynamics.genesis.repository.DatabagRepository
 
 class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
     val templateRepository = mock[TemplateRepository]
-    val ppRepository = mock[ProjectPropertyRepository]
     val databagRepository = mock[DatabagRepository]
     val templateService = new GroovyTemplateService(templateRepository,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new NoArgsDSFactory), ppRepository, databagRepository)
+        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new NoArgsDSFactory), databagRepository)
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/DataSources.genesis"))
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
-    Mockito.when(ppRepository.read(0, "key")).thenReturn(Some("abc"))
     private def testTemplate = templateService.findTemplate(0, "DataSources", "0.1").get
 
     @Test def testOneOfVariable() {

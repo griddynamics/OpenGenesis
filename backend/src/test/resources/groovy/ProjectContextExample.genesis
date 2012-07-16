@@ -7,20 +7,20 @@ template {
 
     dataSources {
         staticList("ds2"){
-            values = [project.properties("key1")]
+            values = [$project.databag["foo"].key1]
         }
     }
 
     workflow("create") {
         variables {
-            variable("projectKey").optional(defaultValue = project.properties("key2"))
+            variable("projectKey").optional(defaultValue = $project.databag["foo"].key2)
             variable("projectList").dataSource("ds2").optional()
         }
 
         steps {
             teststep {
                 phase = "phase1"
-                text = project.properties('key3')
+                text = $project.databag["foo"].key3
             }
         }
     }

@@ -30,8 +30,8 @@ import java.lang.reflect.Method
 import java.lang.{Boolean, IllegalStateException}
 import com.griddynamics.genesis.util.ScalaUtils
 import scala.Some
-import com.griddynamics.genesis.repository.{DatabagRepository, ProjectPropertyRepository}
-import support.SystemWideContextSupport
+import com.griddynamics.genesis.repository.DatabagRepository
+import support.{ProjectDatabagSupport, SystemWideContextSupport}
 
 class EnvWorkflow(val name : String, val variables : List[VariableDetails], val stepsGenerator : Option[Closure[Unit]])
 
@@ -208,8 +208,7 @@ class NameVersionDelegate {
 
 class EnvTemplateBuilder(val projectId: Int,
                          val dataSourceFactories : Seq[DataSourceFactory],
-                         val databagRepository: DatabagRepository,
-                         ppRepository: ProjectPropertyRepository) extends NameVersionDelegate with SystemWideContextSupport {
+                         val databagRepository: DatabagRepository) extends NameVersionDelegate with SystemWideContextSupport with ProjectDatabagSupport {
 
     var dsObjSupport : Option[DSObjectSupport] = None
 
@@ -222,10 +221,7 @@ class EnvTemplateBuilder(val projectId: Int,
         val pid = projectId
         val variableBuilders = delegate.variablesBlock match {
             case Some(block) => {
-                val variablesDelegate = new VariableDeclaration(dsObjSupport) with ProjectContextFromProperties {
-                  override val repository = ppRepository
-                  override val projectId = pid
-                }
+                val variablesDelegate = new VariableDeclaration(dsObjSupport)
                 block.setDelegate(variablesDelegate)
                 block.call()
                 variablesDelegate.builders
@@ -253,11 +249,7 @@ class EnvTemplateBuilder(val projectId: Int,
 
 
     override def dataSources(ds : Closure[Unit]) {
-        val pid = projectId
-        val dsDelegate = new DataSourceDeclaration(projectId, dataSourceFactories) with ProjectContextFromProperties {
-          override val repository = ppRepository
-          override val projectId = pid
-        }
+        val dsDelegate = new DataSourceDeclaration(projectId, dataSourceFactories)
         ds.setDelegate(dsDelegate)
         ds.call()
         val dsBuilders = dsDelegate.builders

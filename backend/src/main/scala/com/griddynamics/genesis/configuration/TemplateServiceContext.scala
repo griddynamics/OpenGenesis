@@ -31,9 +31,7 @@ import com.griddynamics.genesis.spring.ApplicationContextAware
 import com.griddynamics.genesis.service.TemplateService
 import javax.annotation.Resource
 import com.griddynamics.genesis.template.{DependentListFactory, ListVarDSFactory, DataSourceFactory}
-import com.griddynamics.genesis.repository.impl.ProjectPropertyRepository
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
-import com.griddynamics.genesis.repository.DatabagRepository
 
 @Configuration
 class GroovyTemplateServiceContext {
@@ -45,8 +43,7 @@ class GroovyTemplateServiceContext {
     @Bean(name = Array("groovy")) def templateService = new GroovyTemplateService(
         templateRepositoryContext.templateRepository, stepBuilderFactories,
         ConversionServiceFactory.createDefaultConversionService(),
-        varDataSourceFactories, storeServiceContext.projectPropertyRepository,
-        storeServiceContext.databagRepository
+        varDataSourceFactories, storeServiceContext.databagRepository
     )
 }
 
