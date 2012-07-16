@@ -30,10 +30,13 @@ class DataBagServiceImpl(repository: DatabagRepository) extends DataBagService w
     }
   }
 
+  @Transactional(readOnly = true)
+  def listForProject(projectId: Int) = repository.list(Some(projectId))
+
   protected def validateUpdate(bag: DataBag) = {
     commonValidate(bag)++
     must(bag, "DataBag with name '%s' already exists".format(bag.name)) {
-      project => repository.findByName(project.name).forall { _.id == bag.id}
+      bag => repository.findByName(bag.name, bag.projectId).forall { _.id == bag.id}
     }
   }
 
@@ -47,7 +50,7 @@ class DataBagServiceImpl(repository: DatabagRepository) extends DataBagService w
   protected def validateCreation(bag: DataBag) = {
     commonValidate(bag)++
     must(bag, "DataBag with name '%s' already exists".format(bag.name)) {
-        project => repository.findByName(project.name).isEmpty
+        bag => repository.findByName(bag.name, bag.projectId).isEmpty
     }
   }
 

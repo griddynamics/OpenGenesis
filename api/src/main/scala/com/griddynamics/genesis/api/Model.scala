@@ -149,7 +149,7 @@ case class ConfigProperty(name: String, value: String, readOnly: Boolean, descri
 
 case class DataItem(id: Option[Int], name: String, value: String, dataBagId: Int)
 
-case class DataBag(id: Option[Int], name: String, tags: Seq[String], items: Option[Seq[DataItem]] = None)
+case class DataBag(id: Option[Int], name: String, tags: Seq[String], projectId: Option[Int] = None, items: Option[Seq[DataItem]] = None)
 
 case class Plugin(id: String, description: Option[String])
 

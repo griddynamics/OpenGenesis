@@ -24,38 +24,61 @@ package com.griddynamics.genesis.rest
 
 import org.springframework.stereotype.Controller
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.repository.ProjectPropertyRepository
 import org.springframework.web.bind.annotation.{PathVariable, ResponseBody, RequestMethod, RequestMapping}
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis._
+import service.DataBagService
 
 @Controller
-@RequestMapping(value = Array("/rest/projects/{projectId}/context"))
-class ProjectPropertiesController extends RestApiExceptionsHandler {
+@RequestMapping(value = Array("/rest/projects/{projectId}/databags"))
+class ProjectDatabagController extends RestApiExceptionsHandler {
   @Autowired
-  var projectPropertyRepository: ProjectPropertyRepository = null
+  var databagService: DataBagService = _
 
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
-  def listForProject(@PathVariable("projectId") projectId: Int): List[api.ProjectProperty] = {
-    projectPropertyRepository.listForProject(projectId)
+  def listForProject(@PathVariable("projectId") projectId: Int) = {
+    databagService.listForProject(projectId)
   }
 
-  @RequestMapping(method = Array(RequestMethod.PUT))
+  @RequestMapping(value = Array("{databagId}"), method = Array(RequestMethod.PUT))
   @ResponseBody
-  def updateForProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = {
-    projectPropertyRepository.updateForProject(projectId, extractProperties(request))
+  def updateForProject(@PathVariable("projectId") projectId: Int, @PathVariable("databagId") databagId: Int, request: HttpServletRequest) = {
+    val databag = DatabagController.extractDatabag(request, Some(databagId), Some(projectId))
+    databagService.update(databag)
   }
+
+    @RequestMapping(value = Array("{databagId}"), method = Array(RequestMethod.GET))
+    @ResponseBody
+    def find(@PathVariable("projectId") projectId: Int, @PathVariable("databagId") databagId: Int, request: HttpServletRequest) = {
+        val bag = databagService.get(databagId).getOrElse(throw new ResourceNotFoundException("Couldn't find databag"))
+        bag.projectId.map(id => {
+            if (id == projectId) {
+                bag
+            } else {
+                throw new ResourceNotFoundException("Couldn't find databag")
+            }
+        }).getOrElse(throw new ResourceNotFoundException("Couldn't find databag"))
+    }
 
   @RequestMapping(method = Array(RequestMethod.POST))
   @ResponseBody
-  def create(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) =
-    projectPropertyRepository.create(projectId, extractProperties(request))
+  def create(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = {
+    val databag = DatabagController.extractDatabag(request, None, Some(projectId))
+    databagService.create(databag)
+  }
 
-  @RequestMapping(method = Array(RequestMethod.DELETE))
+  @RequestMapping(value = Array("{databagId}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
-  def delete(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) =
-    projectPropertyRepository.delete(projectId, GenesisRestController.extractParamsList(request))
+  def delete(@PathVariable("projectId") projectId: Int, @PathVariable("databagId") databagId: Int, request: HttpServletRequest) = {
+    val bag = databagService.get(databagId).getOrElse(throw new ResourceNotFoundException("Couldn't find databag"))
+    bag.projectId.map(id => {
+        if (id == projectId)
+            databagService.delete(bag)
+        else
+            throw new InvalidInputException
+    }).getOrElse(throw new InvalidInputException)
+  }
 
   def extractProperties(request: HttpServletRequest): List[api.ProjectProperty] = {
     for (p <- GenesisRestController.extractParamsMapList(request)) yield {

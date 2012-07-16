@@ -1,13 +1,10 @@
 package com.griddynamics.genesis.repository
 
-import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.api.{DataItem, DataBag}
-import org.squeryl.PrimitiveTypeMode._
-import com.griddynamics.genesis.model.DataBagItem
 
 trait DatabagRepository extends Repository[DataBag]{
 
-  def findByTags(tags: Seq[String]): Seq[DataBag]
+  def findByTags(tags: Seq[String], projectId: Option[Int] = None): Seq[DataBag]
 
   def getItems(bagId: Int): Seq[DataItem]
 
@@ -15,5 +12,7 @@ trait DatabagRepository extends Repository[DataBag]{
 
   def updateItems(bagId: Int, items: Seq[DataItem])
 
-  def findByName(name: String): Option[DataBag]
+  def findByName(name: String, projectId: Option[Int] = None): Option[DataBag]
+
+  def list(projectId: Option[Int]): List[DataBag]
 }
