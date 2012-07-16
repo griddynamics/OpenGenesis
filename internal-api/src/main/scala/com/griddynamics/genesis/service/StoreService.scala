@@ -48,6 +48,7 @@ trait StoreService {
     def countWorkflows(env: Environment): Int
 
     def listEnvsWithWorkflow(projectId: Int): Seq[(Environment, Option[Workflow])]
+    def listEnvsWithWorkflow(projectId: Int, statuses: Seq[EnvStatus]): Seq[(Environment, Option[Workflow])]
     def listEnvsWithWorkflow(projectId: Int, start : Int, limit : Int): Seq[(Environment, Option[Workflow])]
 
     def workflowsHistory(env : Environment, pageOffset: Int, pageLength: Int): Seq[(Workflow, Seq[WorkflowStep])]

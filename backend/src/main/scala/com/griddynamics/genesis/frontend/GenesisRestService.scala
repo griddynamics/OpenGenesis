@@ -44,7 +44,13 @@ class GenesisRestService(storeService: StoreService,
                 env.creator, env.templateName, env.templateVersion, env.projectId)
     }
 
-    def listEnvs(projectId: Int, start : Int, limit : Int) = {
+  def listEnvs(projectId: Int, statuses: Seq[String]) = {
+    for ((env, workflowOption) <- storeService.listEnvsWithWorkflow(projectId, statuses.map(EnvStatus.fromString(_).get))) yield
+      Environment(env.name, envStatusDesc(env.status), stepsCompleted(workflowOption),
+        env.creator, env.templateName, env.templateVersion, env.projectId)
+  }
+
+  def listEnvs(projectId: Int, start : Int, limit : Int) = {
         for ((env, workflowOption) <- storeService.listEnvsWithWorkflow(projectId, start, limit)) yield
             Environment(env.name, envStatusDesc(env.status), stepsCompleted(workflowOption),
                 env.creator, env.templateName, env.templateVersion, env.projectId)

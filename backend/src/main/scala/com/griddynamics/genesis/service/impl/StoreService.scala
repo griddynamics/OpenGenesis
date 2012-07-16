@@ -143,6 +143,15 @@ class StoreService extends service.StoreService {
     }
 
     @Transactional(readOnly = true)
+    def listEnvsWithWorkflow(projectId: Int, statuses: Seq[EnvStatus]) = {
+      listEnvs(projectId).filter( env => {
+        statuses.map(_.getClass).contains(EnvStatusField.envStatusFieldToStatus(env.status).getClass)
+      }).map(env => {
+        (env, listWorkflows(env).find(w => w.status == WorkflowStatus.Executed))
+      })
+    }
+
+    @Transactional(readOnly = true)
     def listEnvsWithWorkflow(projectId: Int, start : Int, limit : Int) = {
         listEnvs(projectId, start, limit).map(env => {
             (env, listWorkflows(env).find(w => w.status == WorkflowStatus.Executed))

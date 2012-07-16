@@ -31,6 +31,8 @@ trait GenesisService {
 
     def listEnvs (projectId: Int) : Seq[Environment]
 
+    def listEnvs (projectId: Int, statuses: Seq[String]) : Seq[Environment]
+
     def listEnvs(projectId: Int, start : Int, limit : Int) : Seq[Environment]
 
     def countEnvs(projectId: Int) : Int
