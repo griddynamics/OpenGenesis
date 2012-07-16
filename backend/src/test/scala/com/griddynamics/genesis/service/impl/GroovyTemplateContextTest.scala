@@ -45,7 +45,7 @@ class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar {
     val storeService = mock[StoreService]
     when(storeService.startWorkflow(Matchers.any())).thenReturn((mock[Environment], mock[Workflow], List()))
     when(storeService.insertWorkflowStep(Matchers.any())).thenReturn(
-      new WorkflowStep(workflowId = IdGen.generate, phase = "", status = Requested, details = "" )
+      new WorkflowStep(workflowId = IdGen.generate, phase = "", status = Requested, details = "", started = None, finished = None )
     )
     storeService
   }

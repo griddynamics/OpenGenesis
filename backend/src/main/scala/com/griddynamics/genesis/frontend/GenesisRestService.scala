@@ -177,7 +177,7 @@ object GenesisRestService {
             env.projectId,
             historyCount,
             workflowCompleted,
-            env.deploymentAttrs.map( attr => (attr.desc, attr.value)).toMap
+            env.deploymentAttrs.map( attr => attr.key -> Attribute(attr.value, attr.desc)).toMap
         )
     }
 
@@ -192,7 +192,13 @@ object GenesisRestService {
     def stepDesc(steps : Seq[model.WorkflowStep]) =
         wrap(steps)(() =>
             (for (step <- steps) yield
-                new WorkflowStep(step.id.toString, step.phase, step.status.toString, step.details)).toSeq)
+                new WorkflowStep(step.id.toString,
+                  step.phase,
+                  step.status.toString,
+                  step.details,
+                  step.started.map(_.getTime),
+                  step.finished.map(_.getTime))
+            ).toSeq)
 
     def wrap[A](seq : Traversable[_])(f : () => A): Option[A] = {
         if(seq.isEmpty) None
