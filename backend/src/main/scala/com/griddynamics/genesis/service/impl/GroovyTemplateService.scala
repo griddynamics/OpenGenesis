@@ -39,33 +39,66 @@ import scala.Some
 import service.ValidationError
 import com.griddynamics.genesis.plugin.GenesisStep
 import com.griddynamics.genesis.repository.{DatabagRepository, ProjectPropertyRepository}
+import com.griddynamics.genesis.cache.Cache
 import groovy.util.Expando
+import net.sf.ehcache.{CacheManager, Element}
+import java.util.concurrent.TimeUnit
 
 class GroovyTemplateService(val templateRepository : TemplateRepository,
                             val stepBuilderFactories : Seq[StepBuilderFactory],
                             val conversionService : ConversionService,
                             val dataSourceFactories : Seq[DataSourceFactory] = Seq(),
                             val projectPropertyRepository: ProjectPropertyRepository,
-                            databagRepository: DatabagRepository )
-    extends service.TemplateService with Logging {
+                            databagRepository: DatabagRepository,
+                            val cacheManager: CacheManager)
+    extends service.TemplateService with Logging with Cache {
+
+    val cache = addCacheIfAbsent("GroovyTemplateService")
+
+
+    override def defaultTtl = TimeUnit.HOURS.toSeconds(24).toInt
 
     def findTemplate(projectId: Int, name: String, version: String) = getTemplate(projectId, name, version)
 
     def getTemplate(projectId: Int, name: String, version: String, eval: Boolean = true) : Option[TemplateDefinition] = {
-        val body = templatesMap(projectId).get(name, version)
+        val body = getTemplateBody(name, version, projectId)
         body.flatMap(evaluateTemplate(projectId, _, None, None, None, listOnly = !eval).map(et =>
             new GroovyTemplateDefinition(et, conversionService, stepBuilderFactories, projectPropertyRepository, projectId)
         ))
     }
 
-    override def descTemplate(projectId: Int, name: String, version: String) = getTemplate(projectId, name, version, eval = false)
+    override def descTemplate(projectId: Int, name: String, version: String) = {
+      for (
+        body <- getTemplateBody(name, version, projectId);
+        definition <- evaluateTemplate(projectId, body, None, None, None, listOnly = true)
+      ) yield {
+        new TemplateDescription(name, version, definition.createWorkflow, definition.destroyWorkflow, definition.workflows.map(_.name))
+      }
+    }
 
-    def listTemplates(projectId: Int) = templatesMap(projectId).keys.toSeq
+
+  def getTemplateBody(name: String, version: String, projectId: Int): Option[String] = {
+    val ref = Option(cache.get(TmplCacheKey(name, version, projectId))).map(_.getObjectValue.asInstanceOf[VersionedTemplate])
+    val bodyOpt = ref match {
+      case Some(verTmpl) => templateRepository.getContent(verTmpl)
+      case None => templatesMap(projectId).get(name, version)
+    }
+    bodyOpt
+  }
+
+  def listTemplates(projectId: Int) = templatesMap(projectId).keys.toSeq
 
     private def templatesMap(projectId: Int) = {
         val sources = templateRepository.listSources()
         (for ((version, body) <- sources) yield try {
             val template = evaluateTemplate(projectId, body, None, None, None, true)
+
+            template.foreach(t => {
+              val key = TmplCacheKey(t.name, t.version, projectId)
+              val value = new VersionedTemplate(version.name)
+              cache.putIfAbsent(new Element(key, value))//todo (RB): we assume repo is not using vsc versions
+            })
+
             template.map(t => ((t.name, t.version), body))
        } catch {
             case t: Throwable => {
@@ -318,6 +351,9 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
 
     val name = workflow.name
 }
+
+private case class TmplCacheKey(name: String, version: String, projectId: Int)
+
 
 class GroovyTemplateDefinition(val envTemplate : EnvironmentTemplate,
                                conversionService : ConversionService,

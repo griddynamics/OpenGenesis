@@ -5,13 +5,14 @@ import com.griddynamics.genesis.repository.impl.ProjectPropertyRepository
 import org.springframework.core.convert.support.ConversionServiceFactory
 import com.griddynamics.genesis.util.IoUtil
 import org.mockito.Mockito
-import org.junit.Test
+import org.junit.{Before, Test}
 import com.griddynamics.genesis.service.VariableDescription
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import scala.Some
 import com.griddynamics.genesis.template.VersionedTemplate
 import com.griddynamics.genesis.repository.DatabagRepository
+import net.sf.ehcache.CacheManager
 
 class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
     val templateRepository = mock[TemplateRepository]
@@ -19,11 +20,15 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
     val databagRepository = mock[DatabagRepository]
     val templateService = new GroovyTemplateService(templateRepository,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new NoArgsDSFactory), ppRepository, databagRepository)
+        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new NoArgsDSFactory), ppRepository, databagRepository, CacheManager.getInstance())
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/DataSources.genesis"))
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
     Mockito.when(ppRepository.read(0, "key")).thenReturn(Some("abc"))
     private def testTemplate = templateService.findTemplate(0, "DataSources", "0.1").get
+
+    @Before def setUp() {
+      CacheManager.getInstance().clearAll()
+    }
 
     @Test def testOneOfVariable() {
         val template = testTemplate

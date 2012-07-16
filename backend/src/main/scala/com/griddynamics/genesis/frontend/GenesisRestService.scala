@@ -152,12 +152,12 @@ object GenesisRestService {
     def envDesc(env: model.Environment,
                 vms: Seq[model.VirtualMachine],
                 bms: Seq[model.BorrowedMachine],
-                template: service.TemplateDefinition,
+                template: service.TemplateDescription,
                 computeService: ComputeService,
                 historyCount: Int,
                 workflowCompleted: Option[Double]) = {
 
-        val workflows = for (wf <- template.listWorkflows) yield workflowDesc(wf)
+        val workflows = template.workflows.map (Workflow(_, Seq()))
 
         val vmDescs = for (vm <- vms) yield vmDesc(env, vm, computeService)
 
@@ -169,9 +169,9 @@ object GenesisRestService {
             env.creator,
             env.templateName,
             env.templateVersion,
-            workflows.toSeq,
-            template.createWorkflow.name,
-            template.destroyWorkflow.name,
+            workflows,
+            template.createWorkflow,
+            template.destroyWorkflow,
             vmDescs.toSeq,
             bmDescs.toSeq,
             env.projectId,

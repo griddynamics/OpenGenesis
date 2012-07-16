@@ -34,6 +34,7 @@ import com.griddynamics.genesis.template.{DependentListFactory, ListVarDSFactory
 import com.griddynamics.genesis.repository.impl.ProjectPropertyRepository
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
 import com.griddynamics.genesis.repository.DatabagRepository
+import net.sf.ehcache.CacheManager
 
 @Configuration
 class GroovyTemplateServiceContext {
@@ -41,12 +42,13 @@ class GroovyTemplateServiceContext {
     @Autowired var stepBuilderFactories: Array[StepBuilderFactory] = _
     @Autowired var varDataSourceFactories: Array[DataSourceFactory] = _
     @Autowired var storeServiceContext: StoreServiceContext = _
+    @Autowired var cacheManager: CacheManager = _
 
     @Bean(name = Array("groovy")) def templateService = new GroovyTemplateService(
         templateRepositoryContext.templateRepository, stepBuilderFactories,
         ConversionServiceFactory.createDefaultConversionService(),
         varDataSourceFactories, storeServiceContext.projectPropertyRepository,
-        storeServiceContext.databagRepository
+        storeServiceContext.databagRepository, cacheManager
     )
 }
 
