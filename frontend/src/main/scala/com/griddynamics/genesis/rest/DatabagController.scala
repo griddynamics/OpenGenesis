@@ -36,14 +36,14 @@ class DatabagController(service: DataBagService) extends RestApiExceptionsHandle
   @RequestMapping(method = Array(RequestMethod.POST))
   @ResponseBody
   def createDataBag(request: HttpServletRequest) = {
-    val databag = extractDatabag(request, None)
+    val databag = DatabagController.extractDatabag(request, None)
     service.create(databag)
   }
 
   @RequestMapping(value = Array("{databagId}"), method = Array(RequestMethod.PUT))
   @ResponseBody
   def updateDataBag(request: HttpServletRequest, @PathVariable("databagId") id: Int) = {
-    val dataBag = extractDatabag(request, Some(id))
+    val dataBag = DatabagController.extractDatabag(request, Some(id))
     service.update(dataBag)
   }
 
@@ -64,26 +64,30 @@ class DatabagController(service: DataBagService) extends RestApiExceptionsHandle
   @ResponseBody
   def listDataBags(request: HttpServletRequest) = service.list
 
-  def extractDatabag(request: HttpServletRequest, id: Option[Int]): DataBag = {
-    import GenesisRestController._
 
-    def extractItem(map: Map[String, Any]): DataItem = {
-      val id = extractOption("id", map).map(_.toInt)
-      val key = extractNotEmptyValue("name", map)
-      val value = extractOption("value", map).getOrElse("")
-      new DataItem(id, key, value, 0)
+}
+
+object DatabagController {
+    def extractDatabag(request: HttpServletRequest, id: Option[Int], projectId: Option[Int] = None): DataBag = {
+        import GenesisRestController._
+
+        def extractItem(map: Map[String, Any]): DataItem = {
+            val id = extractOption("id", map).map(_.toInt)
+            val key = extractNotEmptyValue("name", map)
+            val value = extractOption("value", map).getOrElse("")
+            new DataItem(id, key, value, 0)
+        }
+
+        val map = extractParamsMap(request)
+        val name = extractNotEmptyValue("name", map)
+        val tags = extractListValue("tags", map)
+
+        val value = map.getOrElse("items", throw new MissingParameterException("items"))
+        val items = value match {
+            case list: List[Map[String, Any]] => list.map(extractItem _)
+            case _ => throw new InvalidInputException
+        }
+
+        new DataBag(id, name, tags, projectId, Some(items))
     }
-
-    val map = extractParamsMap(request)
-    val name = extractNotEmptyValue("name", map)
-    val tags = extractListValue("tags", map)
-
-    val value = map.getOrElse("items", throw new MissingParameterException("items"))
-    val items = value match {
-      case list: List[Map[String, Any]] => list.map(extractItem _)
-      case _ => throw new InvalidInputException
-    }
-
-    new DataBag(id, name, tags, Some(items) )
-  }
 }

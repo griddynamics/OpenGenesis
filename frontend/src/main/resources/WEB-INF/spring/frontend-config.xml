@@ -40,7 +40,7 @@
         <constructor-arg name="authorityService" ref="projectAuthorityService"/>
     </bean>
 
-    <bean class="com.griddynamics.genesis.rest.ProjectPropertiesController"/>
+    <bean class="com.griddynamics.genesis.rest.ProjectDatabagController"/>
 
     <bean class="com.griddynamics.genesis.rest.UsersController"/>
 
