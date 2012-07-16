@@ -25,7 +25,7 @@ package com.griddynamics.genesis.core
 import com.griddynamics.genesis.workflow._
 import com.griddynamics.genesis.plugin._
 import com.griddynamics.genesis.service.StoreService
-import com.griddynamics.genesis.model.{ActionTracking, Workflow, WorkflowStep}
+import com.griddynamics.genesis.model.{ActionTracking, Workflow}
 import com.griddynamics.genesis.model.WorkflowStepStatus._
 import scala.Some
 import com.griddynamics.genesis.plugin.GenesisStepResult
@@ -77,15 +77,7 @@ class GenesisStepCoordinator(val step: GenesisStep,
     }
 
     private def setStepStatus(status : WorkflowStepStatus) {
-        storeService.updateStep(
-                WorkflowStep(
-                    step.id,
-                    workflow.id,
-                    step.phase,
-                    status,
-                    step.actualStep.stepDescription
-                )
-        )
+        storeService.updateStepStatus(step.id, status)
     }
 
     private def trackStart(result: scala.Seq[ActionExecutor]) : Seq[ActionExecutor] = {

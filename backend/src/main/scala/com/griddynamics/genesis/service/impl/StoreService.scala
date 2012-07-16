@@ -31,6 +31,7 @@ import com.griddynamics.genesis.common.Mistake.throwableToLeft
 import org.springframework.transaction.annotation.{Isolation, Propagation, Transactional}
 import org.squeryl.{Query, Table}
 import java.sql.Timestamp
+import com.griddynamics.genesis.model.WorkflowStepStatus._
 
 //TODO think about ids as vars
 class StoreService extends service.StoreService {
@@ -281,8 +282,14 @@ class StoreService extends service.StoreService {
 
     @Transactional
     def finishWorkflow(env: Environment, workflow: Workflow) = {
-        updateEnv(env)
-        GS.workflows.update(workflow)
+      GS.steps.update(step =>
+        where((step.finished isNull) and (step.workflowId === workflow.id)) set (
+          step.finished := Some(new Timestamp(System.currentTimeMillis()))
+        )
+      )
+      updateEnv(env)
+      GS.workflows.update(workflow)
+
     }
 
     @Transactional
@@ -293,6 +300,18 @@ class StoreService extends service.StoreService {
     @Transactional
     def updateStep(step: WorkflowStep) {
         GS.steps.update(step)
+    }
+
+    @Transactional
+    def updateStepStatus(stepId: Int, status: WorkflowStepStatus) {
+      import com.griddynamics.genesis.model.WorkflowStepStatus._
+      GS.steps.update(step => {
+        where(step.id === stepId) set (
+          step.finished := (if(status == Failed || status == Succeed) Some(new Timestamp(System.currentTimeMillis())) else step.finished),
+          step.started := (if(status == Executing) Some(new Timestamp(System.currentTimeMillis())) else step.started),
+          step.status := status
+        )
+      })
     }
 
     @Transactional

@@ -57,7 +57,7 @@ case class Template(name : String, version : String, createWorkflow : Workflow, 
 
 case class Workflow(name : String, variables : Seq[Variable])
 
-case class WorkflowStep(stepId: String, phase: String, status : String, details : String)
+case class WorkflowStep(stepId: String, phase: String, status : String, details : String, started: Option[Long], finished: Option[Long])
 
 case class WorkflowDetails(name : String,
                            status: String,
