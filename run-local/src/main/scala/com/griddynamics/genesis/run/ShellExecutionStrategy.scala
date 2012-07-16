@@ -80,6 +80,7 @@ class ShExecutionStrategy extends ShellExecutionStrategy {
       val scriptPath = new File(path, "script1.sh").getAbsolutePath
       val withHeader = "#!/bin/sh" + newLine + command
       Closeables.using(new FileOutputStream(scriptPath)) { _.write(withHeader.getBytes) }
+      new File(scriptPath).setExecutable(true)
       scriptPath
     }
     scriptCall.getOrElse(command)
