@@ -102,8 +102,6 @@ class SquerylTransactionManager(dataSource : DataSource,
                     }
                 }
                 session.bindToCurrentThread
-
-                session.setLogger(msg => println(msg))
                 session
             }
         })
