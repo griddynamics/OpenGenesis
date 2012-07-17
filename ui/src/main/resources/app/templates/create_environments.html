@@ -1,0 +1,33 @@
+<div id="top-panel">
+    <div id="page-title"><h1>Create new environment for '<%= project.name %>' project</h1></div>
+    <div id="title-right">
+    </div>
+</div>
+
+<div id="tab-panel">
+    <div id="tabs" data-tabpanel="header">
+        <a href="javascript:void(0)" class="tab tab-selected" id="tab1" rel="#panel-tab-1" data-step="1"> <span> Step 1: Select manifest </span> </a>
+        <a href="javascript:void(0)" class="tab" id="tab2" rel="#panel-tab-2" data-step="2"> <span> Step 2: Environment settings </span> </a>
+    </div>
+    <div id="panel">
+
+        <div id="panel-tab-1" class="tab-content opened">
+            <div class="step-content"></div>
+            <div class="stepbutton">
+              <a href="project/<%= project.id %>" class="button" > <span> Cancel </span> </a>
+              <a href="javascript:void(0);" class="button next-button" id="nextstep-tab-1"> <span> Next </span> </a>
+                <a href="project/<%= project.id %>" class="button" id="back-button" style="display:none"> <span> Back </span> </a>
+            </div>
+        </div>
+
+        <div id="panel-tab-2" class="tab-content">
+            <div class="step-content"></div>
+            <div class="stepbutton">
+              <a href="javascript:void(0)" class="button back-button"> <span> Back </span> </a>
+              <a href="project/<%= project.id %>" class="button"  > <span> Cancel </span> </a>
+              <a href="javascript:void(0)" class="button last-step-button" id="ready"> <span> Create </span> </a>
+            </div>
+        </div>
+
+    </div>
+</div>

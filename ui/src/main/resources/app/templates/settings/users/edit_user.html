@@ -1,0 +1,64 @@
+<div id="top-panel">
+    <div id="page-title"><h1><%= user.username ? "Edit" : "Add" %> User Account</h1></div>
+    <div id="title-right">
+    </div>
+</div>
+<div id="tab-panel">
+    <div id="panel">
+        <div id="panel-tab-1">
+          <div class="notification" style="display: none;"></div>
+            <form id="user-attributes">
+                <table class="forform-table">
+                    <tr>
+                        <td style="width:12%;"><span class="label-required">* User name</span></td>
+                        <td><input name="name" type="text" class="required name" value="<%= user.username %>" <% if (user.username) { %> disabled="disabled" <% } %>></td>
+                    </tr>
+                    <tr>
+                        <td><span class="label-required">* First Name</span></td>
+                        <td  width><input name="first_name" type="text" class="required first-name" value="<%= user.firstName %>"></td>
+                     </tr>
+                    <tr>
+                        <td><span class="label-required">* Last Name</span></td>
+                        <td><input name="last_name" type="text" class="required last-name" value="<%= user.lastName %>"></td>
+                     </tr>
+                    <tr>
+                        <td><span class="label-required">* E-Mail</span></td>
+                        <td><input name="e-mail" type="text" class="required e-mail" value="<%= user.email %>"></td>
+                    </tr>
+                    <tr>
+                        <td>Job title</td>
+                        <td><input name="job_title" type="text" class="job-title" value="<%- user.jobTitle %>"></td>
+                    </tr>
+                   <% if (!user.username) { %>
+                   <tr>
+                        <td><span class="label-required">* Password</span></td>
+                        <td><input  name="password" type="password" class="password required" value="<%- user.password %>"></td>
+                    </tr>
+                   <% } %>
+                </table>
+                <h4>Roles</h4>
+                  <table class="main-table">
+                    <% for (var i = 0, count = roles.length; i < count; i++) { var role = roles[i]; %>
+                    <tr>
+                        <td class="check"><input type="checkbox" name="roles" value="<%= role %>" <% if (userRoles[role]) { %> checked="checked" <% } %> /></td>
+                        <td><%= role %> </td>
+                    </tr>
+                    <% } %>
+                  </table>
+                <h4>Groups</h4>
+                <table class="main-table">
+                    <% for (var i = 0, count = groups.length; i < count; i++) { var group = groups[i]; %>
+                    <tr>
+                        <td class="check"><input type="checkbox" name="groups" value="<%= group.name %>" <% if (userGroups[group.id]) { %> checked="checked" <% } %>/></td>
+                        <td><%= group.name %> </td>
+                    </tr>
+                    <% } %>
+                </table>
+            </form>
+            <div class="form-notice">All fields marked with * are required</div>
+            <br class="clear"/>
+            <div class="stepbutton"><a href="javascript:void(0)" class="save button"> <span> Save </span> </a>
+                <a href="javascript:void(0)" class="button back" id="ready"> <span> Cancel </span> </a></div>
+        </div>
+    </div>
+</div>

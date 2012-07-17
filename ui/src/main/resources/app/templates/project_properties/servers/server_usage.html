@@ -1,0 +1,54 @@
+<div class="tab-inner-content">
+  <div class="tab-title">
+    <a href="javascript:void(0)" class="small-crumbs back"><img src="/assets/img/back.png">Back to server arrays</a>
+    <a href="javascript:void(0)" class="small-crumbs back-to-server"><img src="/assets/img/back.png">Back to servers</a>
+    <h2 >Server: <%- server.instanceId %></h2>
+    <div class="clear"></div>
+  </div>
+
+  <div>
+    <table class="forform-table server-specification" style="width: 30%">
+      <tbody>
+      <tr>
+        <td class="first">Server array: </td>
+        <td><%- serverArray.name %></td>
+      </tr>
+      <tr>
+        <td class="first">Instance Id: </td>
+        <td><%- server.instanceId %></td>
+      </tr>
+      <tr>
+        <td class="first">Address: </td>
+        <td><%- server.address %></td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="servers-list" class="panel" style="border-top:none; ">
+    <div style="padding-top: 10px;">
+      <% if (server.usage.length > 0) { %>
+      <table class="main-table">
+        <thead>
+        <tr id="table-title">
+          <th style="width: 25%;">Env name</th>
+          <th >Used since</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% for(var i = 0, count = server.usage.length; i < count; i++) { var lease = server.usage[i]; %>
+        <tr>
+          <td class="first"><%- lease.envName %></td>
+          <td ><%- $.formatDate.date(new Date(lease.sinceDate), "dd/MM/yyyy") %></td>
+        </tr>
+        <% } %>
+        </tbody>
+      </table>
+      <% } else { %>
+      <div class="information-panel"><p> Not used in environments </p></div>
+      <% } %>
+    </div>
+  </div>
+
+</div>
+

@@ -1,0 +1,31 @@
+<% if (vms.length > 0) { %>
+  <h2> Virtual Machines </h2>
+  <table class="main-table intab">
+    <thead>
+    <tr id="table-title">
+      <th class="first" style="width:16%">Server</th>
+      <th style="width:13%">Role name</th>
+      <th style="width:10%">Host number</th>
+      <th style="width:14%">Hardware ID</th>
+      <th style="width:10%">Image ID</th>
+      <th style="width:12%">Private IP</th>
+      <th style="width:12%">Public IP</th>
+      <th style="width:13%">Status</th>
+    </tr>
+    </thead>
+    <tbody id="vms-table-body">
+    <% for (var i = 0, count = vms.length; i< count; i++) { var vm = vms[i]; %>
+    <tr>
+        <td class="first"><%= vm.instanceId %></td>
+        <td><%= vm.roleName %></td>
+        <td><%= vm.hostNumber %></td>
+        <td><%= vm.hardwareId %></td>
+        <td><%= vm.imageId %></td>
+        <td><%= vm.privateIp %></td>
+        <td><%= vm.publicIp %></td>
+        <td><%= vm.status %></td>
+    </tr>
+    <% } %>
+    </tbody>
+  </table>
+<% } %>

@@ -1,0 +1,30 @@
+<% var today = new Date(); %>
+<% if (actions.length > 0) { %>
+<table class="slide-subtable intab" style="table-layout: fixed; width: 100.1%; margin-left: -1px">
+    <tbody>
+    <% for (var i = 0, count = actions.length; i < count; i++) { var action = actions[i]; %>
+    <tr>
+      <% var nameWidth = $.browser.mozilla ? '14.1%' : '15%' %>
+      <td class="first" style="width: <%= nameWidth %> " ><%= action.name %></td>
+      <td class="phase"></td>
+      <td class="status" ><%- action.status || "" %></td>
+      <td class="details details-cell"><%- action.description || "" %></td>
+      <td class="started">
+        <%= $.formatDate.date(action.started, utils.isSameDay(today, action.started) ? "HH:mm:ss" : "HH:mm:ss dd/MM/yyyy") %>
+      </td>
+      <td  class="stopped">
+        <% if (action.finished) { %>
+          <%= $.formatDate.date(action.finished, utils.isSameDay(today, action.finished) ? "HH:mm:ss" : "HH:mm:ss dd/MM/yyyy") %>
+        <% } else { %>
+          <em> ... </em>
+        <% } %>
+      </td>
+      <td class="logs"></td>
+    </tr>
+    <% } %>
+    <tr class="refresh-link"><td colspan="7"><a href="javascript:void(0)" style="padding-left: 10px;" class="refresh">refresh</a>  </td></tr>
+    </tbody>
+  </table>
+<% } else { %>
+  <div style="padding: 5px 10px"> No action logs available </div>
+<% } %>

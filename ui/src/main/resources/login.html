@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Genesis</title>
+    <link rel="stylesheet" type="text/css" href="assets/css/reset.css"/>
+    <link rel="stylesheet" type="text/css" href="assets/css/login.css"/>
+
+    <script type="text/javascript" src="assets/js/libs/jquery.js"></script>
+    <script type="text/javascript" src="assets/js/plugins/jquery/jquery-ui.js"></script>
+    <script type="text/javascript" src="app/login.js"></script>
+
+</head>
+
+<body>
+
+<div id="page">
+    <div id="header">
+      <img src="assets/img/logo.png">
+    </div>
+        <div id="login-form">
+            <div class="error-message"></div>
+            <form action="/signin">
+                <div id="form-content">
+                  <div class="error-message-local">Incorrect login or password</div>
+                    <label for="login" class="input-label">Login</label> <input name="j_username" type="text" id="login" class="textinput"><br/>
+                    <label for="password" class="input-label">Password</label> <input name="j_password" type="password" class="password-input"
+                                                                  id="password"><br/>
+
+                    <div id="form-content-2">
+                        <input type="checkbox" name="_spring_security_remember_me" id="remember"><label for="remember">
+                        Remember me </label><br/>
+                        <input type="submit" value="Sign in" class="submit">
+                    </div>
+                </div>
+              <div id="clear"></div>
+            </form>
+        </div>
+    <div id="footer">
+        <div id="copyright">
+            &copy; 2012 Grid Dynamics. All rights reserved
+        </div>
+        <div id="footer-links">
+            <!--<a href="#">About Genesis</a>-->
+            <!--<a href="#">Feedback</a>-->
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

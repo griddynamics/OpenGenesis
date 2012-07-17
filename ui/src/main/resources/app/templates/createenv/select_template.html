@@ -1,0 +1,26 @@
+<pre class="prettyprint linenums" id="template-source-view" ></pre>
+<% if (templates.length > 0) { %>
+<table class="intab main-table">
+    <% for (var i = 0, count = templates.length; i < count; i++){ var template = templates[i]; %>
+        <tr>
+            <td class="first" style="width: 35px;" align="center">
+                <input id="template-select-<%= i %>" type="radio" name="select_template" value="<%= template.name %>" data-template-version="<%= template.version %>">
+            </td>
+            <td class="manifest-description">
+                <p>
+                  <a title="Show template source code" class="ui-widget show-sources ui-state-default" data-template-name="<%= template.name %>" data-template-version="<%= template.version %>">
+                    <span style="float:left; margin-right: 10px" class="ui-icon ui-icon-document" ></span>
+                  </a>
+                  <a style="float:left" class="template" rel="#template-select-<%= i %>"><%= template.name %> <%= template.version %></a>
+                </p>
+                <!--<p id="manifest-creator">Creator: <%= template.creator %></p>-->
+                <p><%= template.description %></p>
+            </td>
+        </tr>
+    <% } %>
+</table>
+<% } else { %>
+<div>
+  <p id="status-message">Please wait...</p>
+</div>        
+<% } %>

@@ -1,0 +1,43 @@
+<div id="top-panel">
+    <div id="page-title"><h1><%= project.name %></h1></div>
+    <span id="tools-panel" >
+      <a id="project-settings" href="#project/<%= project.id %>/properties" class="tools-button settings-button" style="display: none">
+        <span style=""> Project settings </span>
+      </a>
+    </span>
+</div>
+<div id="management-panel">
+    <div id="buttons">
+        <a href="/project/<%= project.id %>/createEnv" class="button"> <span> Create environment </span> </a>
+    </div>
+    <div id="right">
+      <label>Filter <input id="filter-name" type="text"></label>
+        <!--<label>Statuses&nbsp;</label>-->
+        <select id="filter-statuses" name="filter-statuses" multiple="multiple">
+          <% for (var i = 0, keys = _.keys(filter.statuses), count = keys.length; i < count; i++) {
+          var status = filter.statuses[keys[i]],
+          selected = status.visible ? "selected" : "";
+          %>
+          <option <%= selected %>><%= status.name %></option>
+          <% } %>
+        </select>
+    </div>
+</div>
+
+<table>
+
+
+<table class="main-table">
+  <thead>
+    <tr id="table-title">
+        <th class="first" style="width:20%">Environment name</th>
+        <th style="width:40%">Environment manifest</th>
+        <th style="width:15%">Creator</th>
+        <th style="width:25%">Status</th>
+    </tr>
+  </thead>
+  <tbody id="envs-table-body">
+
+  </tbody>
+</table>
+

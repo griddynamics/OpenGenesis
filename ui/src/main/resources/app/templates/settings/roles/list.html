@@ -1,0 +1,47 @@
+<div  style="display: block; ">
+  <div class="top-panel">
+    <div class="page-title"><h2><% if (projectId) { %> Project <% } else { %> System <% } %> Roles</h2></div>
+  </div>
+
+    <div class="panel">
+      <div>
+      <table class="main-table" id="roletable">
+        <thead>
+          <tr id="table-title">
+            <th style="width:33%">Role</th>
+            <th style="width:30%">Users</th>
+            <th style="width:30%">Groups</th>
+            <th class="actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        <% for(var i = 0, count = roles.length; i < count; i++) { var role = roles[i]; %>
+          <tr>
+            <td>
+              <span><%= LANG[role.name] %></span>
+              <p><%= LANG[role.name + ".description"] %></p>
+            </td>
+            <td>
+              <ul>
+                <% for (var j = 0, usersCount = role.users.length; j < usersCount; j++) { var user = role.users[j]; %>
+                  <li class="name"><%- user %></li>
+                <% } %>
+              </ul>
+            </td>
+            <td>
+              <ul>
+                <% for (var j = 0, groupsCount = role.groups.length; j < groupsCount; j++) { var group = role.groups[j]; %>
+                  <li class="name"><%- group %></li>
+                <% } %>
+              </ul>
+            </td>
+            <td class="actions">
+                <a href="javascript:void(0)" class="edit-link" data-role-name="<%= role.name %>"> Edit </a>
+            </td>
+          </tr>
+        <% } %>
+        </tbody>
+      </table>
+     </div>
+    </div>
+</div>
