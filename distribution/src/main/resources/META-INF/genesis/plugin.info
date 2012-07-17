@@ -1,6 +1,0 @@
-com.griddynamics.genesis.jclouds.Ec2VmCreationStrategyProvider
-com.griddynamics.genesis.jclouds.GoGridVmCreationStrategyProvider
-com.griddynamics.genesis.jclouds.JCloudsPluginContextImpl
-com.griddynamics.genesis.exec.ExecPluginContextImpl
-com.griddynamics.genesis.chef.ChefPluginContextImpl
-com.griddynamics.genesis.users.configuration.LocalUserContext
