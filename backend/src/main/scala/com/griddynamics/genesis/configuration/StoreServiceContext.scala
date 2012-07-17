@@ -47,8 +47,6 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 
     @Bean def projectService: ProjectService = new ProjectServiceImpl(projectRepository)
 
-    @Bean def projectPropertyRepository: repository.ProjectPropertyRepository = new repository.impl.ProjectPropertyRepository
-
     @Bean def credentialsRepository: repository.CredentialsRepository = new repository.impl.CredentialsRepository
 
     @Bean def credentialsStoreService: service.CredentialsStoreService = new impl.CredentialsStoreService(credentialsRepository, projectRepository)
@@ -104,7 +102,6 @@ class SquerylTransactionManager(dataSource : DataSource,
                     }
                 }
                 session.bindToCurrentThread
-
                 session
             }
         })

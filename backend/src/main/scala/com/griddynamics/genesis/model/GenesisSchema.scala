@@ -43,7 +43,6 @@ trait GenesisSchema extends Schema {
     val logs = table[StepLogEntry]("step_logs")
   
     val projects = table[Project]("project")
-    val projectProperties = table[ProjectContextEntry]("project_property")
     val settings = table[ConfigProperty]("settings")
     val credentials = table[Credentials]("credentials")
 
@@ -55,8 +54,8 @@ trait GenesisSchema extends Schema {
 
     val actionTracking = table[ActionTracking]("action_tracking")
 
-    val dataBags = table[DataBag]("system_databag")
-    val dataBagItems = table[DataBagItem]("system_databag_item")
+    val dataBags = table[DataBag]("databag")
+    val dataBagItems = table[DataBagItem]("databag_item")
 }
 
 trait GenesisSchemaPrimitive extends GenesisSchema {
@@ -80,9 +79,6 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
 
     val envsToProject = oneToManyRelation(projects, envs).via((project, environment) => project.id === environment.projectId)
     envsToProject.foreignKeyDeclaration.constrainReference(onDelete cascade)
-
-    val projectPropertiesToProject = oneToManyRelation(projects, projectProperties).via((project, projectProperty) => project.id === projectProperty.projectId)
-    projectPropertiesToProject.foreignKeyDeclaration.constrainReference(onDelete cascade)
 
     val serverArrayToProject = oneToManyRelation(projects, serverArrays).via((project, array) => project.id === array.projectId)
     serverArrayToProject.foreignKeyDeclaration.constrainReference(onDelete cascade)
@@ -121,12 +117,6 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     on(projects) (project=> declare(
       project.name is (unique),
       project.description is (dbType("text"))
-    ))
-
-    on(projectProperties) (projectProperty => declare(
-      projectProperty.id is (primaryKey, autoIncremented),
-      columns(projectProperty.projectId, projectProperty.name) are (unique),
-      projectProperty.value is (dbType("text"))
     ))
 
     on(credentials)(creds => declare(
@@ -170,8 +160,10 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
 
     on(dataBags)(bag => declare (
       bag.id is (primaryKey, autoIncremented),
-      bag.name is (unique, dbType("varchar(128)")),
-      bag.tags is (dbType("varchar(512)"))
+      bag.name is (dbType("varchar(128)")),
+      bag.tags is (dbType("varchar(512)")),
+      bag.projectId is (dbType("int")),
+      columns(bag.name, bag.projectId) are (unique)
     ))
 
     on(dataBagItems)(item => declare (
@@ -183,8 +175,6 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
 }
 
 trait GenesisSchemaCustom extends GenesisSchema {
-
-    import org.squeryl.customtypes.CustomTypesMode._
 
     on(workflows)(workflow => declare(
         workflow.variables is (dbType("varchar(4096)"))

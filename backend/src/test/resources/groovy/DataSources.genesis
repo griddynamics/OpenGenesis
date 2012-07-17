@@ -34,7 +34,7 @@ template {
         steps {
             teststep {
                 phase = "phase1"
-                text = project.context('key')
+                text = "key"
             }
         }
     }
