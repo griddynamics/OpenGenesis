@@ -29,22 +29,26 @@ import org.springframework.core.convert.support.ConversionServiceFactory
 import org.junit.{Before, Test}
 import com.griddynamics.genesis.util.IoUtil
 import org.mockito.Mockito
-import com.griddynamics.genesis.service.VariableDescription
+import com.griddynamics.genesis.service.{ValidationError, VariableDescription}
 import com.griddynamics.genesis.plugin.{StepBuilder, GenesisStep}
 import com.griddynamics.genesis.repository.DatabagRepository
 import net.sf.ehcache.CacheManager
 import com.griddynamics.genesis.api.{DataItem, DataBag}
+import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
 
 class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSugar {
     val templateRepository = mock[TemplateRepository]
     val bagRepository = mock[DatabagRepository]
     val templateService = new GroovyTemplateService(templateRepository,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-        Seq(new ListVarDSFactory, new DependentListVarDSFactory), bagRepository, CacheManager.getInstance())
+        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new DatabagDataSourceFactory(bagRepository)), bagRepository, CacheManager.getInstance())
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/ProjectContextExample.genesis"))
 
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
     Mockito.when(bagRepository.findByName("foo", Some(0))).thenReturn(Some(testDatabag))
+    Mockito.when(bagRepository.findByName("bar", None)).thenReturn(Some(systemDatabag))
+    Mockito.when(bagRepository.findByTags(Seq("bar"), None)).thenReturn(Seq(systemDatabag))
+    Mockito.when(bagRepository.findByTags(Seq("foo"), Some(0))).thenReturn(Seq(testDatabag))
     val createWorkflow = templateService.findTemplate(0, "Projects", "0.1").get.createWorkflow
 
     @Before def setUp() {
@@ -53,10 +57,19 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
 
 
     def testDatabag : DataBag = {
-        val db = DataBag(Some(0), "foo", Seq(), Some(0), Some(Seq(
+        val db = DataBag(Some(0), "foo", Seq("foo"), Some(0), Some(Seq(
             DataItem(Some(0), "key1", "fred", 0),
             DataItem(Some(0), "key2", "barney", 0),
             DataItem(Some(0), "key3", "wilma", 0)
+        )))
+        db
+    }
+
+    def systemDatabag : DataBag = {
+        val db = DataBag(Some(0), "bar", Seq("bar"), None, Some(Seq(
+            DataItem(Some(0), "key1", "barney", 0),
+            DataItem(Some(0), "key2", "wilma", 0),
+            DataItem(Some(0), "key3", "fred", 0)
         )))
         db
     }
@@ -69,6 +82,21 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
     @Test def testDSConfig() {
         val listVariable: VariableDescription = createWorkflow.variableDescriptions.find(_.name == "projectList").getOrElse(fail("Variable projectList must be declared"))
         assert(listVariable.values == Map("fred" -> "fred"))
+    }
+
+    @Test def testProjectDbSource() {
+        val validate: Seq[ValidationError] = createWorkflow.validate(Map("projectdb" -> "foo"))
+        assert(validate.isEmpty)
+    }
+
+    @Test def testSystemDbSource() {
+        val validate: Seq[ValidationError] = createWorkflow.validate(Map("sysdb" -> "bar"))
+        assert(validate.isEmpty)
+    }
+
+    @Test def testSystemDbSourceWrongValue() {
+        val validate: Seq[ValidationError] = createWorkflow.validate(Map("sysdb" -> "foo"))
+        assert(! validate.isEmpty)
     }
 
     @Test def testApplyVariable() {
