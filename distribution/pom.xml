@@ -106,6 +106,10 @@
             <artifactId>run-local</artifactId>
             <groupId>com.griddynamics.genesis</groupId>
         </dependency>
+        <dependency>
+            <artifactId>ui</artifactId>
+            <groupId>com.griddynamics.genesis</groupId>
+        </dependency>
     </dependencies>
     <build>
         <resources>

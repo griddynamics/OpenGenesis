@@ -1,0 +1,27 @@
+<div>
+  <div class="key-value-button" id="add-pair-link">
+    <img src="assets/img/add-small.png" class="icon"/>
+    <a href="javascript:void(0)">Add new key-value</a>
+  </div>
+
+  <% if (properties.length > 0) { %>
+    <table class="main-table properties" style="margin: 10px 0">
+    <% for (var i = 0, count = properties.length; i < count; ++i) { var property = properties.at(i).toJSON(); var cid = properties.at(i).cid; %>
+      <% var classes = property.isNew ? 'added' : property.removed ? 'removed' : property.dirty ? 'changed' : ''; %>
+      <tr data-cid="<%= cid %>" class="<%= classes %>">
+        <td>
+          <input id="name-input-<%= cid %>" type="text" class="name-input" value="<%= property.name %>" data-cid="<%= cid %>"/>
+        </td>
+        <td>
+          <input id="value-input-<%= cid %>" type="text" class="value-input" value="<%= property.value %>" data-cid="<%= cid %>"/>
+        </td>
+        <td class="actions">
+          <img src="assets/img/delete.png" class="icon delete-action" data-cid="<%= cid %>"/>
+        </td>
+      </tr>
+    <% } %>
+  </table>
+  <% } else { %>
+    <div class="information-panel"><p> No information </p></div>
+  <% } %>
+</div>

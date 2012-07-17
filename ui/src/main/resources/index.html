@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico"/>
+  <link rel="stylesheet" type="text/css" href="assets/css/index.css"/>
+  <link rel="stylesheet" type="text/css" href="assets/css/jqueryui/jquery-ui-1.8.18.custom.css"/>
+  <link rel="stylesheet" type="text/css" href="assets/css/bootstrap.css"/>
+  <link rel="stylesheet" type="text/css" href="assets/css/fbcomplete.css"/>
+  <link rel="stylesheet" type="text/css" href="assets/css/prettify.css"/>
+  <link rel="stylesheet" type="text/css" href="assets/css/jquery.multiselect.css"/>
+  <script data-main="app/config" src="assets/js/libs/require.js"></script>
+  <title>Genesis</title>
+</head>
+
+<body>
+
+<script id="breadcrumbs_list_template" type="text/x-underscore-tmplate">
+    <% for(var i=0, count = breadcrumbs.length; i < count; i++) { var item = breadcrumbs[i] %>
+      <% if ( i + 1 < count || count == 1) { %>
+        <a href="<%= item.url %>" class="brcr"> <span> <%= item.title %> </span> </a>
+        <% if (count != 1) { %>
+          <span class='brcr-devider'>/</span>
+        <% } %>
+      <% } else { %>
+        <div class="brcr-last-item"><span > <%= item.title %> </span></div>
+      <% } %>
+    <% } %>
+</script>
+
+<script id="project-dropdown-list-tmpl" type="text/x-underscore-tmplate">
+    <% if (projects.length > 0) { %>
+        <% for (var i = 0, count = projects.length; i < count; i++) { var project = projects[i]; %>
+            <!--<a href="project/<%= project.id %>"><%= project.name %></a><br>-->
+                <li><a href="project/<%= project.id %>"><%= project.name %></a></li>
+        <% } %>
+    <% } else { %>
+        <li ><p style="color: #000000; margin: 5px;">No projects available</p></li>
+    <% } %>
+    <li class="divider"></li>
+    <li><a href="/">View All Projects</a></li>
+</script>
+
+<script id="app-growl-message" type="text/x-underscore-tmplate">
+  <div class="<%= message.type %> ui-notify-message ui-notify-message-style">
+    <a data-bypass class="ui-notify-close" href="javascript:void(0)" title="Close notification">
+      <img src="/assets/img/cross_grey_small.png" alt="close">
+    </a>
+    <% if (message.title) { %>
+      <h1><%= message.title %></h1>
+    <% } %>
+    <% var messageClass = _.isUndefined(message.title) ? "no-title" : ""; %>
+      <% if (!_.isArray(message.text)) { %>
+        <p class='<%= messageClass %>' >
+          <%= message.text %>
+        </p>
+      <% } else { %>
+        <ul class='<%= messageClass %>'>
+          <% for (var i = 0, count = message.text.length; i < count; i++) { var msg = message.text[i]; %>
+            <li><%- msg %></li>
+          <% } %>
+        </ul>
+      <% } %>
+  </div>
+</script>
+
+<div id="page-view-loading" style="display: block; ">
+  <img src="/assets/img/ajax-loader.gif" />
+  <div class="orig" style="top: -320px; "></div>
+</div>
+
+<div id="growl-container" style="display:none" class="ui-notify"></div>
+
+<div id="page">
+	<div id="page-content">
+    	<div id="header">
+        <div id="connection-error"> No connection to server </div>
+        <div id="header-content">
+                <a id="fake-logo-link" href="#" ></a>
+                <div id="userinfo">
+                    <div id="project-list" class="toggle" rel="p2" >
+                        <div class="dropdown">
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="#menu1">
+                                <span id="current-project" class="btn">Projects</span>
+                                <b class="caret"></b>
+                            </a>
+                            <ul class="dropdown-menu project-list">
+                            </ul>
+                        </div>
+                    </div>
+                    <div  rel="p1">
+                        <div id="logout_elt" class="dropdown">
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="#menu1">
+                                <span id="btn1" class="user-name" >...</span>
+                                <b class="caret"></b>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <!--<li><a href="#">My profile</a></li>-->
+                                <!--<li class="divider"></li>-->
+                                <li ><a href="/logout" data-bypass>Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="system-settings" style="display:none">
+                        <a href="#settings" style="display: inline-block; color: white;" >Settings</a>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        <div id="wrapper">
+          <div id="breadcrumbs"></div>
+          <div class="bubble" >
+            <div id="wrapper-content" ></div>
+            <div class="empty"></div>
+          </div>
+        </div>
+     </div>
+</div>
+
+<div id="footer">
+   <div id="copyright">
+      &copy; 2012 Grid Dynamics. All rights reserved
+   </div>
+   <div id="footer-links">
+      <!--<a href="#">About Genesis</a>-->
+      <!--<a href="#">Feedback</a>-->
+   </div>
+</div>
+
+</body>
+</html>

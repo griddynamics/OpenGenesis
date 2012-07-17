@@ -1,0 +1,46 @@
+<div class="tab-section">
+  <form id="environment-settings" action="">
+    <input type="text" name="ie_quirks" style="display: none"/>  <!-- https://connect.microsoft.com/IE/feedback/ViewFeedback.aspx?FeedbackID=389736 -->
+    <table id="env-main-settings">
+        <tr>
+            <td class="first"><label for="envName" class="label-required">* Name</label></td>
+            <td><input type="text" id="envName" name="envName" class="required"></td>
+        </tr>
+        <% for(var i = 0; i < variables.length; i++) { var variable = variables[i]; %>
+        <tr>
+            <td class="first ">
+                <label for="<%= variable.name %>" class=<%= (variable.optional ? "label-plain" : "label-required") %>>
+                <% if (! variable.optional) { %>*&nbsp;<% } %><%= variable.description %>
+                </label>
+            </td>
+            <td>
+                <% if (typeof(variable.values) !== "undefined" && _.size(variable.values) || variable.dependsOn) { %>
+                <% if (! _.size(variable.values)) { %>
+                <select id="<%= variable.name %>" disabled="disabled" name="<%= variable.name %>" class="<%= (variable.optional ? "workflow-variable" : "workflow-variable required") %>">
+                <% } else { %>
+                <select id="<%= variable.name %>" name="<%= variable.name %>" class="<%= (variable.optional ? "workflow-variable" : "workflow-variable required") %>">
+                    <% if (! variable.defaultValue) { %>
+                        <option value="" disabled="disabled" selected="selected">Please select</option>
+                    <% } else { %>
+                        <option value="" disabled="disabled">Please select</option>
+                    <% } %>
+                    <% for (var key in variable.values) { %>
+                       <% if (variable.defaultValue == key) { %>
+                            <option value="<%= key %>" selected="selected"><%= variable.values[key] %></option>
+                       <% } else { %>
+                            <option value="<%= key %>"><%= variable.values[key] %></option>
+                       <% } %>
+                    <% } %>
+                </select>
+                <% } %>
+                <% } else { %>
+                <input type="text" class="<%= (variable.optional ? "workflow-variable" : "workflow-variable required") %>" id="<%= variable.name %>" name="<%= variable.name %>" value="<%= variable.defaultValue %>" >
+                <% } %>
+            </td>
+        </tr>
+        <% } %>
+    </table>
+    <div class="form-notice">All fields marked with * are required</div>
+    <br class="clear"/>
+  </form>
+</div>

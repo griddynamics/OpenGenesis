@@ -1,0 +1,36 @@
+<div class="top-panel">
+    <div class="page-title"><h1><%= !project.name ? 'Create new project' : 'Edit main settings' %></h1></div>
+</div>
+
+<div id="tab-panel">
+    <div id="panel">
+        <div id="panel-tab-1">
+          <div class="notification" style="display: none">   </div>
+            <form id="project-attributes">
+                <table class="forform-table">
+                    <tr>
+                        <td style="width:10%"><span class="label-required">* Name</span></td>
+                        <td><input name="name" type="text" class="required name" value="<%= project.name %>"></td>
+                    </tr>
+                    <tr>
+                        <td><span class="label-required">* Manager</span></td>
+                        <td><input name="projectManager" type="text" class="required name" value="<%= project.projectManager %>"></td>
+                    </tr>
+                    <tr>
+                        <td>Description</td>
+                        <td><textarea rows="" cols="" name="description" ><%= project.description %></textarea></td>
+                    </tr>
+                </table>
+                <div class="form-notice">All fields marked with * are required</div>
+                <br class="clear"/>
+            </form>
+            <div class="stepbutton">
+                <a href="javascript:void(0)" class="save button"> <span> Save </span> </a>
+                <% var cancelUrl = project.id ? ('#project/' + project.id) : '#'; %>
+                <a href="<%= cancelUrl %>" class="button" id="ready">
+                  <span> Cancel </span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

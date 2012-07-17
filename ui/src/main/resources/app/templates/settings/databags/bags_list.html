@@ -1,0 +1,45 @@
+<div id="dialog-confirm-databag-delete" style="display: none; ">
+    Are you sure you want to delete this bag?
+</div>
+<div  style="display: block; ">
+  <div class="top-panel">
+      <div class="page-title"><h2>Data bags</h2></div>
+      <a href="javascript:void(0)" class="button add-databag"> <span> Add </span> </a>
+  </div>
+
+  <div class="panel">
+    <div>
+      <% if (databags.length > 0) { %>
+        <table class="main-table">
+          <thead>
+          <tr id="table-title">
+            <th class="first" style="width: 25%">Data bag</th>
+            <th>Tags</th>
+            <th class="actions">Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% for (var i = 0, count = databags.length; i < count; i++) { var databag = databags[i]; %>
+          <tr>
+            <td class="first"><a><%- databag.name %></a></td>
+            <td>
+              <% if (databag.tags.length > 0) { %>
+                <% for (var j = 0, tagsLength = databag.tags.length; j < tagsLength; j++) { var tag = databag.tags[j]; %>
+                  <span class="data-tag" style="margin-right: 7px"><%- tag %></span>
+                <% } %>
+              <% } %>
+            </td>
+            <td class="actions">
+              <a href="javascript:void(0)" class="edit-databag" data-databag-id="<%= databag.id %>">Edit</a>
+              <a href="javascript:void(0)" class="delete-databag" data-databag-id="<%= databag.id %>">Delete</a>
+            </td>
+          </tr>
+          <% } %>
+          </tbody>
+        </table>
+      <% } else { %>
+        <div class="information-panel"><p> No data bags available </p></div>
+      <% } %>
+    </div>
+  </div>
+</div>

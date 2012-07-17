@@ -1,0 +1,57 @@
+<div>
+    <a href="javascript:void(0)" class="back"><img src="/assets/img/back.png">Back to plugins list</a>
+    <div id="tab-head-bar">
+        <span id="subtitle"><%= plugin.description %></span>
+    </div>
+    <div class="key-value-button"></div>
+    <% if(!_.isEmpty(plugin.configuration)) { %>
+      <% if (!_.isUndefined(settings["constants"])) { %>
+        <h4>Read-only Settings</h4>
+        <table class="main-table key-value-table">
+          <thead>
+          <tr>
+            <th style="width:47%">Key</th>
+            <th style="width:48%">Value</th>
+            <th  ></th>
+          </tr>
+          </thead>
+          <tbody>
+          <% for (var i = 0, count = settings["constants"].length; i < count; i++ ) { var config = settings["constants"][i]; %>
+            <tr>
+              <td ><%= config.name %></td>
+              <td ><%= config.value %></td>
+              <td></td>
+            </tr>
+          <% } %>
+          </tbody>
+        </table>
+      <% } %>
+
+      <% if(!_.isUndefined(settings["properties"])) { %>
+        <h4>Editable Settings</h4>
+        <table class="main-table key-value-table">
+          <thead>
+            <tr id="table-title">
+              <th style="width:47%">Key</th>
+              <th style="width:48%">Value</th>
+              <th ></th>
+            </tr>
+          </thead>
+          <tbody>
+          <% for (var i = 0, count = settings["properties"].length; i < count; i++ ) { var config = settings["properties"][i]; %>
+              <tr>
+                <td ><label for="<%= config.name %>" ><%= config.name %></label></td>
+                <td ><input id="<%= config.name %>" name="<%= config.name %>" type="text" value="<%= config.value %>" class="property-value"></td>
+                <td ><img src="/assets/img/delete.png" class="icon revert" alt="Revert changes" style="display: none" data-config-property="<%= config.name %>"></td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      <% } %>
+  <% } else { %>
+    <div style="padding-bottom: 15px">Plugin provides no means of configuration</div>
+  <% } %>
+</div>
+<% if(!_.isEmpty(plugin.configuration)) { %>
+    <div class="stepbutton"><a href="javascript: void(0)" class="button save"> <span> Save </span> </a> <a href="javascript:void(0)" class="button back" id="ready"> <span> Cancel </span> </a></div>
+<% } %>

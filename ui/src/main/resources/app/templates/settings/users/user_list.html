@@ -1,0 +1,42 @@
+<div id="dialog-user" style="display: none; ">
+    Are you sure you want to delete this user?
+</div>
+<div  style="display: block; ">
+  <div class="top-panel">
+      <div class="page-title"><h2>Users</h2></div>
+      <a href="javascript:void(0)" class="button add-user"> <span> Add </span> </a>
+  </div>
+
+  <div class="panel">
+
+    <div id="panel-tab-1">
+      <% if (users.length > 0) { %>
+        <table class="main-table">
+          <thead>
+          <tr id="table-title">
+            <th class="first" style="width: 25%">User name</th>
+            <th style="width: 27%">E-mail</th>
+            <th style="width: 35%">Full name</th>
+            <th class="actions">Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% for (var i = 0, count = users.length; i < count; i++) { var user = users[i]; %>
+          <tr>
+            <td class="first"><a><%= user.username %></a></td>
+            <td><%= user.email %></td>
+            <td><%= user.firstName + ' ' + user.lastName %></td>
+            <td class="actions">
+              <a href="javascript:void(0)" class="edit-user" data-index="<%= user.username %>">Edit</a>
+              <a href="javascript:void(0)" class="delete-user" data-index="<%= user.username %>">Delete</a>
+            </td>
+          </tr>
+          <% } %>
+          </tbody>
+        </table>
+      <% } else { %>
+        <div class="information-panel"><p> No active users </p></div>
+      <% } %>
+    </div>
+  </div>
+</div>

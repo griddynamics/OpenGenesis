@@ -1,0 +1,28 @@
+<div id="tab-head-bar">
+  <span id="subtitle">Add server to Server array name</span>
+</div>
+
+<div class="notification" style="display:none"></div>
+
+<form>
+  <table class="forform-table">
+    <tbody>
+    <tr>
+      <td class="first" style="width: 15%"><label for="instanceId" > Instance ID</label></td>
+      <td><input id="instanceId" name='instanceId' type="text" class="name"></td>
+    </tr>
+    <tr>
+      <td class="first"><label for="address" class="label-required">* Address (ip or domain)</label></td>
+      <td><input id='address' name='address' type="text" class="name required"></td>
+    </tr>
+    <tr>
+      <td class="first"><label for="credentials" > Credentials </label></td>
+      <td><select name="credentials" id="credentials" disabled="disabled"><option value=""> Please select </option></select></td>
+    </tr>
+    </tbody>
+  </table>
+</form>
+<div class="stepbutton" id="save-link-div">
+  <a href="javascript:void(0);" class="button save-server"> <span> Save </span> </a>
+  <a href="javascript:void(0);" class="button cancel" > <span> Cancel </span> </a>
+</div>

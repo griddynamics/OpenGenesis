@@ -1,0 +1,42 @@
+<div id="top-panel">
+    <div id="page-title"><h1>System settings</h1></div>
+    <div id="title-right">
+    </div>
+</div>
+
+<div id="tab-panel">
+    <div id="tabs" data-tabpanel="header">
+        <a href="javascript:void(0)" class="tab tab-selected" id="settings-panel-tab-header" rel="#config-panel"> <span> System settings </span></a>
+        <% if (users) { %><a href="javascript:void(0)" id="user-panel-tab-header" class="tab" rel="#user-panel" ><span> Users </span></a><% } %>
+        <% if (groups) { %><a href="javascript:void(0)" id="group-panel-tab-header" class="tab" rel="#group-panel" ><span> Groups </span></a><% } %>
+        <a href="javascript:void(0)" id="roles-panel-tab-header" class="tab" rel="#roles-panel" ><span> Roles </span></a>
+        <a href="javascript:void(0)" id="plugin-panel-tab-header" class="tab" rel="#plugin-panel" ><span> Plugins </span></a>
+        <a href="javascript:void(0)" id="databags-panel-tab-header" class="tab" rel="#databags-panel" ><span> Data bags </span></a>
+    </div>
+    <div id="panel">
+
+        <div id="config-panel" class="tab-content opened">
+
+        </div>
+
+        <div id="user-panel" class="tab-content">
+
+        </div>
+
+        <div id="group-panel" class="tab-content">
+
+        </div>
+
+        <div id="plugin-panel" class="tab-content">
+            Loading...
+        </div>
+
+        <div id="roles-panel" class="tab-content">
+            Loading...
+        </div>
+
+        <div id="databags-panel" class="tab-content">
+
+        </div>
+    </div>
+</div>
