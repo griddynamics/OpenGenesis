@@ -175,7 +175,7 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
 }
 
 trait GenesisSchemaCustom extends GenesisSchema {
-
+    import org.squeryl.customtypes.CustomTypesMode._
     on(workflows)(workflow => declare(
         workflow.variables is (dbType("varchar(4096)"))
     ))
