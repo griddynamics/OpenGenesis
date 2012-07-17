@@ -148,7 +148,7 @@ define([
         }
         var credentials = new Credentials.Model({
           projectId: parseInt(this.projectId),
-          cloudProvider: this.$("input[name='provider']").val(),
+          cloudProvider: this.$("input[name='cloudProvider']").val(),
           pairName: this.$("input[name='pairName']").val(),
           identity: this.$("input[name='identity']").val(),
           credential: this.$("textarea[name='credentials']").val()
@@ -158,7 +158,14 @@ define([
           .done(function() {
             self.trigger("back")
           })
-          .error(function(jqXHR) { self.status.error(jqXHR) });
+          .error(function(jqXHR) {
+                var json = JSON.parse(jqXHR.responseText);
+                var validation = _.extend({}, json.variablesErrors, json.serviceErrors);
+                if(!_.isEmpty(validation)){
+                    var validator = $('#install-credentials').validate();
+                    validator.showErrors(validation);
+                }
+            });
       },
 
       render: function() {

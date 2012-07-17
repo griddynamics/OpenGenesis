@@ -43,7 +43,7 @@ class DataBagServiceImpl(repository: DatabagRepository) extends DataBagService w
   def commonValidate (bag: DataBag): ExtendedResult[DataBag] = {
     mustNotHaveDuplicateItems(bag) ++
       mustSatisfyLengthConstraints(bag, bag.name, "name")(1, 128) ++
-      mustSatisfyLengthConstraints(bag, bag.tags.mkString(" "), "tags")(0, 512) ++
+      mustSatisfyLengthConstraints(bag, bag.tags.mkString(" "), "tags")(0, 510) ++
       mustHaveAllItemsWithValidLength(bag)
   }
 
