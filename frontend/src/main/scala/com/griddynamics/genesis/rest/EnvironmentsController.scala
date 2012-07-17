@@ -22,6 +22,7 @@
  */
 package com.griddynamics.genesis.rest
 
+import filters.EnvFilter
 import org.springframework.stereotype.Controller
 import scala.Array
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
@@ -110,6 +111,17 @@ class EnvironmentsController(genesisService: GenesisService) extends RestApiExce
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
   def listEnvs(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = genesisService.listEnvs(projectId)
+
+  @RequestMapping(method = Array(RequestMethod.GET), params = Array("filter"))
+  @ResponseBody
+  def listEnvsWithFilter(@PathVariable("projectId") projectId: Int,
+                         @RequestParam("filter") filter: String,
+                         request: HttpServletRequest) = {
+    filter match {
+      case EnvFilter(statuses @ _*) => genesisService.listEnvs(projectId, statuses.map(_.toString))
+      case _ => throw new InvalidInputException
+    }
+  }
 
   @RequestMapping(value = Array("{envName}/actions"), method = Array(RequestMethod.POST))
   @ResponseBody
