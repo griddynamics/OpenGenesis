@@ -102,6 +102,7 @@
         <module>chefsolo</module>
         <module>nexus</module>
         <module>run-local</module>
+        <module>ui</module>
         <module>distribution</module>
     </modules>
 
@@ -236,6 +237,11 @@
             <dependency>
                 <groupId>com.griddynamics.genesis</groupId>
                 <artifactId>notification</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.griddynamics.genesis</groupId>
+                <artifactId>ui</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

@@ -1,0 +1,24 @@
+<% if (servers.length > 0) { %>
+  <h2> Predefined Servers </h2>
+
+  <table class="main-table intab">
+    <thead>
+    <tr id="table-title">
+      <th class="first" style="width:16%">Instance id</th>
+      <th style="width:13%">Role name</th>
+      <th>Address</th>
+      <th style="width:13%">Status</th>
+    </tr>
+    </thead>
+    <tbody id="servers-table-body">
+    <% for (var i = 0, count = servers.length; i< count; i++) { var server = servers[i]; %>
+    <tr>
+      <td style="width:20%"><%= server.instanceId %></td>
+      <td class="first" style="width:40%"><%= server.roleName %></td>
+      <td style="width:20%"><%= server.address %></td>
+      <td style="width:20%"><%= server.status %></td>
+    </tr>
+    <% } %>
+    </tbody>
+  </table>
+<% } %>

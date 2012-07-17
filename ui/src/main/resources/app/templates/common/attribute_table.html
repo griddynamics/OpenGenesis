@@ -1,0 +1,29 @@
+<table class="main-table intab" >
+  <tr>
+    <td class="first">Manifest</td>
+    <td style="width: 80%">
+        <p style="float:left; margin-top: 2px; margin-bottom: 2px"><%= environment.templateName %> <%= environment.templateVersion %></p>
+
+        <a title="Show template source code" class="ui-widget show-sources ui-state-default" data-template-name="<%= environment.templateName %>" data-template-version="<%= environment.templateVersion %>">
+         <span style="float:left; margin-left: 10px" class="ui-icon ui-icon-document" ></span>
+        </a>
+    </td>
+  </tr>
+  <tr>
+    <td class="first">Creator</td>
+    <td style="width: 80%"><%= environment.creator %></td>
+  </tr>
+
+  <% for (var i = 0, keys = _.keys(attributes), count = keys.length; i < count; i++) { var key = keys[i]; var attr = attributes[key]; %>
+  <tr>
+    <td class="first"><%= attr.description %></td>
+    <td style="width: 80%">
+      <% if (attr.value && attr.value.indexOf("http://") === 0) { %>
+      <a href="<%= attr.value %>" target="_blank"> <%= attr.value %> </a>
+      <% } else { %>
+      <%= attr.value %>
+      <% } %>
+    </td>
+  </tr>
+  <% } %>
+</table>

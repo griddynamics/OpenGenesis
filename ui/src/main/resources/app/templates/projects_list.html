@@ -1,0 +1,24 @@
+<div id="top-panel" >
+  <div id="page-title"><h1>Project list</h1></div>
+  <% if (currentUser.administrator) { %>
+    <a href="admin/create/project" class="button"> <span> Create project </span> </a>
+  <% } %>
+</div>
+<% if (projects.length > 0) { %>
+    <table id="prj-list" class="main-table">
+        <tr id="table-title">
+            <th class="first">Project name</th>
+            <th>Manager</th>
+            <th>Description</th>
+        </tr>
+        <% for (var i = 0, count = projects.length; i < count; i++) { var project = projects[i]; %>
+        <tr>
+            <td class="first name" ><a href="#project/<%= project.id %>"><%- project.name %></a></td>
+            <td class="name"><%- project.projectManager %> </td>
+            <td class="multiline-description details-cell"><%- project.description %></td>
+        </tr>
+        <% } %>
+    </table>
+<% } else { %>
+    <div class="information-panel"><p> No projects available </p></div>
+<% } %>

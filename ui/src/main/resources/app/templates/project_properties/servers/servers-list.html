@@ -1,0 +1,44 @@
+<div class="dialog-confirm-delete" style="display: none; ">
+  <p>Are you sure you want to delete server?</p>
+  <p>Used in: <strong class="server-usage"></strong> environment(s)</p>
+</div>
+
+<div class="tab-inner-content">
+  <div class="tab-title">
+      <a href="javascript:void(0)" class="back"><img src="/assets/img/back.png">Back to server arrays</a>
+      <h2 >Server array: <%- array.name %></h2>
+      <a href="javascript:void(0);" class="button" id="add-server"> <span> Add server </span> </a>
+      <div class="clear"></div>
+  </div>
+
+  <div id="add-server-form" ></div>
+
+  <div id="servers-list" class="panel" style="border-top:none; ">
+    <div style="padding-top: 10px;">
+      <% if(servers.length > 0) { %>
+      <table class="main-table">
+        <thead>
+        <tr id="table-title">
+          <th style="width: 25%;">Instance ID</th>
+          <th >Address</th>
+          <th style="width: 8%;">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% for(var i = 0, count = servers.length; i < count; i++) { var server = servers[i]; %>
+        <tr>
+          <td class="first"><a href="javascript: void(0)" class="show-server" data-server-id="<%= server.id %>"> <%- server.instanceId %> </a></td>
+          <td><%= server.address %> </td>
+          <td class="actions"><a href="javascript:void(0)" class="delete-server" data-server-id="<%= server.id %>">Delete</a>
+        </tr>
+        <% } %>
+        </tbody>
+      </table>
+      <% } else { %>
+      <div class="information-panel"><p> No servers provided </p></div>
+      <% } %>
+    </div>
+  </div>
+
+</div>
+

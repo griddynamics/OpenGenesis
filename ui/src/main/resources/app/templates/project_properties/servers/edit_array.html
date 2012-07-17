@@ -1,0 +1,27 @@
+<div>
+  <div class="top-panel">
+    <div class="page-title"><h2><%= (array.id ? 'Edit' : 'Create') %> server array</h2></div>
+  </div>
+  <div class="panel">
+    <div class="notification" style="display:none"></div>
+    <form id="edit-server-array">
+      <table class="forform-table wide" >
+        <tr>
+          <td class="label-required label-column"><label for="name">* Name</label></td>
+          <td><input id="name" name="name" type="text" class="required name" value="<%= array.name %>"></td>
+        </tr>
+        <tr>
+          <td class="label-column"><label for="description">Description</label></td>
+          <td><textarea rows="2" cols="80" name="description" id="description"><%= array.description %></textarea></td>
+        </tr>
+      </table>
+      <div class="form-notice">All fields marked with * are required</div>
+      <br class="clear"/>
+      <div class="stepbutton" id="save-link-div">
+        <a href="javascript:void(0);" class="button" id="save-array"> <span> Save </span> </a>
+        <a href="javascript:void(0);" class="button cancel" > <span> Cancel </span> </a>
+      </div>
+    </form>
+  </div>
+
+</div>

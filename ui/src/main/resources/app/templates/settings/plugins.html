@@ -1,0 +1,28 @@
+<div id="plugins-overview" style="display: block; ">
+    <div>
+        <% if(plugins.length > 0) { %>
+            <table class="main-table">
+              <thead>
+                <tr id="table-title">
+                    <th style="width: 15%;">Plugin name</th>
+                    <th>Description</th>
+                    <th style="width: 8%;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                  <% for(var i = 0, count = plugins.length; i < count; i++) { var plugin = plugins[i]; %>
+                  <tr>
+                    <td class="first"><%= plugin.id %></td>
+                    <td><%= plugin.description %> </td>
+                    <td class="actions"><a href="javascript:void(0)" class="edit-settings" data-plugin-id="<%= plugin.id %>">Edit</a></td>
+                  </tr>
+                  <% } %>
+                </tbody>
+            </table>
+        <% } else { %>
+            <div class="information-panel"><p> No plugins loaded </p></div>
+        <% } %>
+    </div>
+</div>
+
+

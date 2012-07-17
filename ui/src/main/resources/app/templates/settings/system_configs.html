@@ -1,0 +1,73 @@
+<div id="dialog-confirm-reset" style="display: none; ">
+    Are you sure you want to restore default settings?
+</div>
+
+<div id="tab-panel">
+    <div id="tabs" data-tabpanel="header">
+        <a href="javascript:void(0)" class="tab tab-selected" id="ro-settings-tab" rel="#rw-settings-panel">
+            <span>Editable Settings</span>
+        </a>
+        <a href="javascript:void(0)" class="tab" id="rw-settings-tab" rel="#ro-settings-panel">
+            <span>Read-only Settings</span>
+        </a>
+    </div>
+    <div id="panel">
+
+        <div id="ro-settings-panel" class="tab-content">
+            <table class="main-table key-value-table">
+                <thead>
+                <tr id="table-title-ro">
+                    <th class="first">Description</th>
+                    <th>Value</th>
+                </tr>
+                </thead>
+                <tbody>
+                <% for (var i = 0, count = constants.length; i < count; i++) { var c = constants[i]; %>
+                <tr>
+                    <td class="first" >
+                        <%= c.description ? c.description : c.name %>
+                        <a href="javascript:void(0)" rel="#constNames<%=i%>" class="show-keys" title="Show Key">
+                          <span class="ui-icon ui-icon-carat-1-s" style="float:right"/>
+                        </a>
+                        <div class="toggle-content" id="constNames<%=i%>"> <%= c.name %></div>
+                    </td>
+                    <td><%- c.value %></td>
+                </tr>
+                <% } %>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="rw-settings-panel" class="tab-content opened">
+            <table class="main-table key-value-table">
+                <thead>
+                <tr id="table-title">
+                    <th class="first">Description</th>
+                    <th>Value</th>
+                </tr>
+                </thead>
+                <tbody>
+                <% for (var i = 0, count = properties.length; i < count; i++) { var property = properties[i]; %>
+                <tr>
+                    <td class="first" >
+                        <%= property.description ? property.description : property.name %>
+                        <a href="javascript:void(0)" rel="#propNames<%=i%>" class="show-keys" title="Show Key">
+                          <span class="ui-icon ui-icon-carat-1-s" style="float:right"/>
+                        </a>
+                        <div class="toggle-content" id="propNames<%=i%>"> <%= property.name %></div>
+                    </td>
+                    <td><input type="text" value="<%- property.value %>"
+                               class="property-value" name="<%= property.name %>"/>
+                    </td>
+                </tr>
+                <% } %>
+                </tbody>
+            </table>
+            <div class="stepbutton">
+                <a href="javascript:void(0)" class="save button"> <span> Save </span> </a>
+                <a href="javascript:void(0)" class="reset button"> <span> Reset </span> </a>
+                <a href="/" class="button" id="ready"><span> Cancel </span></a>
+            </div>
+        </div>
+    </div>
+</div>

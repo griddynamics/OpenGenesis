@@ -1,0 +1,62 @@
+<div class="top-panel">
+    <div class="page-title"><h2><%= group.id ? "Edit Group" : "Add Group" %></h2></div>
+    <div class="title-right">
+    </div>
+</div>
+<div id="tab-panel">
+    <div class="panel">
+        <div id="panel-tab-1">
+            <div class="notification" style="display: none"/>
+            <form id="group-attributes">
+                <table class="forform-table">
+                    <tr>
+                        <td style="width:12%;"><span class="label-required">* Group name</span></td>
+                        <td>
+                            <input name="name" type="text" class="required name" value="<%= group.name %>" <% if (group.id) { %> disabled <% } %>/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><span class="label-required">* Description</span></td>
+                        <td>
+                            <textarea rows="" cols="" name="description" class="required description"><%- group.description %></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Mailing List</td>
+                        <td>
+                            <input name="mailingList" type="text" class="name" value="<%= group.mailingList %>"/>
+                        </td>
+                    </tr>
+                </table>
+
+              <h4>Roles</h4>
+              <table class="main-table">
+                <% for (var i = 0, count = roles.length; i < count; i++) { var role = roles[i]; %>
+                <tr>
+                  <td class="check">
+                    <input type="checkbox" name="roles" value="<%= role %>" <% if (groupRoles[role]) { %> checked="checked" <% } %> />
+                  </td>
+                  <td> <%= role %> </td>
+                </tr>
+                <% } %>
+              </table>
+
+              <h4>Users</h4>
+                <table class="main-table">
+                    <% for (var i = 0, count = users.length; i < count; i++) { var user = users[i]; %>
+                    <tr>
+                        <td class="check">
+                            <input type="checkbox" name="users" value="<%= user.username %>" <% if (usersInGroup[user.username]) { %> checked="checked" <% } %> />
+                        </td>
+                        <td><%= user.username %> </td>
+                    </tr>
+                    <% } %>
+                </table>
+            </form>
+            <div class="form-notice">All fields marked with * are required</div>
+            <br class="clear"/>
+            <div class="stepbutton"><a href="javascript:void(0)" class="save button"> <span> Save </span> </a>
+                <a href="javascript:void(0)" class="button back" id="ready"> <span> Cancel </span> </a></div>
+        </div>
+    </div>
+</div>

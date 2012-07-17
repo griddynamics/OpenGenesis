@@ -1,0 +1,32 @@
+<div>
+  <div class="top-panel">
+    <div class="page-title"><h2><%= (databag.id ? 'Edit' : 'Create') %> data bag</h2></div>
+  </div>
+  <div class="panel">
+    <div class="notification" style="display:none"></div>
+    <form id="edit-databag">
+      <table class="forform-table wide" >
+        <tr>
+          <td class="label-required label-column"><label for="name">* Name</label></td>
+          <td><input id="name" name="name" type="text" class="required name" value="<%- databag.name %>"></td>
+        </tr>
+        <tr>
+          <td class="label-column"><label for="tags">Tags</label></td>
+          <td><textarea rows="2" cols="80" name="tags" id="tags"><%- databag.tags.join(" ") %></textarea></td>
+        </tr>
+      </table>
+
+      <div class="form-notice">All fields marked with * are required</div>
+      <br class="clear"/>
+
+      <div id="properties" style="padding-left: 10px;">
+      </div>
+
+      <div class="stepbutton" >
+        <a href="javascript:void(0);" class="button" id="save-databag"> <span> Save </span> </a>
+        <a href="javascript:void(0);" class="button cancel" > <span> Cancel </span> </a>
+      </div>
+    </form>
+  </div>
+
+</div>
