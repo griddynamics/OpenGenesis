@@ -92,6 +92,14 @@
         </dependency>
         <dependency>
             <groupId>com.griddynamics.genesis</groupId>
+            <artifactId>chefsolo</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.griddynamics.genesis</groupId>
+            <artifactId>gdnova</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.griddynamics.genesis</groupId>
             <artifactId>nexus</artifactId>
         </dependency>
         <dependency>
