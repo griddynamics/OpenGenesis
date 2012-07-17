@@ -22,7 +22,8 @@
  */
 package com.griddynamics.genesis.model
 
-class DataBag(val name: String, val tags: String) extends GenesisEntity{
+class DataBag(val name: String, val tags: String, val projectId: Option[Int]= None) extends GenesisEntity{
+    def this() = this("", "", Some(0))
 }
 
 class DataBagItem(val itemKey: String, val itemValue: String, val dataBagId: GenesisEntity.Id) extends GenesisEntity

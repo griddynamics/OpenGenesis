@@ -26,7 +26,6 @@ import reflect.BeanProperty
 import java.util.{Collections, List => JList, Map => JMap}
 import scala.collection.{JavaConversions => JC}
 import com.griddynamics.genesis.workflow.Step
-import com.griddynamics.genesis.template.ProjectContextSupport
 
 trait StepBuilderFactory {
     val stepName: String

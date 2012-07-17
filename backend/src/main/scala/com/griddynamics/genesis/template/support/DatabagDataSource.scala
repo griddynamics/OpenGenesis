@@ -1,6 +1,6 @@
 package com.griddynamics.genesis.template.support
 
-import com.griddynamics.genesis.template.{DataSourceFactory, DependentDataSource, VarDataSource}
+import com.griddynamics.genesis.template.{DataSourceFactory, VarDataSource}
 import java.util.{List => JList}
 import com.griddynamics.genesis.repository.DatabagRepository
 import scala.collection.JavaConversions._
@@ -12,7 +12,7 @@ class DatabagDataSource(repository: DatabagRepository) extends VarDataSource {
   var tags: Seq[String] = List()
 
   def getData = {
-    val bags = if (tags.isEmpty) repository.list else repository.findByTags(tags)
+    val bags = if (tags.isEmpty) repository.list(None) else repository.findByTags(tags)
     bags.map(bag => (bag.name, bag.name)).toMap
   }
 

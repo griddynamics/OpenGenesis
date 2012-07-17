@@ -38,11 +38,11 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
 
   implicit def convert(entity: model.DataBag) = {
     val tags: Seq[String] = if (entity.tags.trim.isEmpty) List() else entity.tags.trim.split(" ")
-    new api.DataBag(fromModelId(entity.id), entity.name, tags)
+    new api.DataBag(fromModelId(entity.id), entity.name, tags, entity.projectId)
   }
 
   implicit def convert(dto: DataBag) = {
-    val entity = new model.DataBag(dto.name, " " + dto.tags.distinct.mkString(" ") + " ")
+    val entity = new model.DataBag(dto.name, " " + dto.tags.distinct.mkString(" ") + " ", dto.projectId)
     entity.id = toModelId(dto.id)
     entity
   }
@@ -75,10 +75,10 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
   }
 
   @Transactional(readOnly = true)
-  def findByTags(tags: Seq[String]):Seq[api.DataBag] =  from(table)(bag => {
+  def findByTags(tags: Seq[String], projectId: Option[Int] = None):Seq[api.DataBag] =  from(table)(bag => {
     val tags_has = { s: String => bag.tags like ("% " + s + " %") }
     val alwaysTrue: BinaryOperatorNodeLogicalBoolean = 1 === 1
-    where( tags.foldLeft(alwaysTrue) { case (acc, tag) => ( tags_has (tag) and acc) } ) select (bag)
+    where(((bag.projectId === projectId.?) or (bag.projectId isNull).inhibitWhen(projectId.isDefined)) and tags.foldLeft(alwaysTrue) { case (acc, tag) => ( tags_has (tag) and acc) } ) select (bag)
   }).toList.map(convert _)
 
   @Transactional(readOnly = true)
@@ -102,12 +102,22 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
   }
 
   @Transactional(readOnly = true)
-  def findByName(name: String): Option[DataBag] = {
+  def findByName(name: String, projectId: Option[Int] = None): Option[DataBag] = {
     val bag = from(table)(
-      bag => where(bag.name === name) select(bag)
+      bag => where(bag.name === name and ((bag.projectId === projectId.?) or (bag.projectId isNull).inhibitWhen(projectId.isDefined))) select(bag)
     ).headOption.map(convert _)
     bag.map (it => it.copy(items = Option(getItems(it.id.get))))
   }
+
+    override def list = {
+       list(None)
+    }
+
+    def list(projectId: Option[Int]) = {
+        from(table) (
+            bag => where((bag.projectId === projectId.?) or (bag.projectId isNull).inhibitWhen(projectId.isDefined)) select(bag)
+        ).map(convert _).toList
+    }
 }
 
 

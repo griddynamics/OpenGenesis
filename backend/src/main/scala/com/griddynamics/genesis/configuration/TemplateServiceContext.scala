@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -31,9 +31,7 @@ import com.griddynamics.genesis.spring.ApplicationContextAware
 import com.griddynamics.genesis.service.TemplateService
 import javax.annotation.Resource
 import com.griddynamics.genesis.template.{DependentListFactory, ListVarDSFactory, DataSourceFactory}
-import com.griddynamics.genesis.repository.impl.ProjectPropertyRepository
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
-import com.griddynamics.genesis.repository.DatabagRepository
 import net.sf.ehcache.CacheManager
 
 @Configuration
@@ -47,9 +45,7 @@ class GroovyTemplateServiceContext {
     @Bean(name = Array("groovy")) def templateService = new GroovyTemplateService(
         templateRepositoryContext.templateRepository, stepBuilderFactories,
         ConversionServiceFactory.createDefaultConversionService(),
-        varDataSourceFactories, storeServiceContext.projectPropertyRepository,
-        storeServiceContext.databagRepository, cacheManager
-    )
+        varDataSourceFactories, storeServiceContext.databagRepository, cacheManager)
 }
 
 @Configuration
