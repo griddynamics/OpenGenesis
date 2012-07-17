@@ -24,6 +24,7 @@ package com.griddynamics.genesis.run
 
 import com.griddynamics.genesis.workflow.{ActionResult, Action, Signal, SyncActionExecutor}
 import java.io.File
+import com.griddynamics.genesis.model.ActionTrackingStatus._
 
 class RunLocalActionExecutor(val action: RunLocalShell, stepId: Int, shellService: LocalShellExecutionService) extends SyncActionExecutor {
 
@@ -35,6 +36,12 @@ class RunLocalActionExecutor(val action: RunLocalShell, stepId: Int, shellServic
   }
 }
 
-case class RunLocalShell(shell: String, command: String, outputDirectory: Option[File]) extends Action
+case class RunLocalShell(shell: String, command: String, expectedExitCode: Int, outputDirectory: Option[File]) extends Action
 
-class RunLocalResult(val action: Action, val response: ExecResponse) extends ActionResult
+class RunLocalResult(val action: RunLocalShell, val response: ExecResponse) extends ActionResult {
+    override def outcome = if (response.exitCode == action.expectedExitCode)
+        Succeed
+    else
+        Failed
+
+}

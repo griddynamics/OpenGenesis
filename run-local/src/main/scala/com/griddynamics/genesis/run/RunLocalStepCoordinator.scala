@@ -41,7 +41,7 @@ class RunLocalStepCoordinator(stepContext: StepExecutionContext, val step: RunLo
 
     val actions = step.commands.zipWithIndex.map { case (command, index) =>
       val outputDirectory = step.output.map(new File(_, index.toString))
-      new RunLocalShell(step.shell, command, outputDirectory)
+      new RunLocalShell(step.shell, command, step.successExitCode, outputDirectory)
     }
 
     if(step.runInParallel) {
