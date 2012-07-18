@@ -41,8 +41,8 @@ public class StringTemplateEngine implements TemplateEngine {
     String result;
     ST template = group.getInstanceOf(templateName);
     if (template != null) {
-      for (String param : params.keySet()) {
-        template.add(param, params.get(param));
+      for (String attr : template.getAttributes().keySet()) {
+        template.add(attr, params.get(attr) == null ? "" : params.get(attr));
       }
       result = template.render();
     } else {
