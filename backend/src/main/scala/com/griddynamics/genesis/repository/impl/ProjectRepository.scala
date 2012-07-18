@@ -29,24 +29,27 @@ import com.griddynamics.genesis.repository.AbstractGenericRepository
 import com.griddynamics.genesis.repository
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
+import java.sql.Timestamp
 
 class ProjectRepository extends AbstractGenericRepository[model.Project, api.Project](GenesisSchema.projects)
   with repository.ProjectRepository {
 
+  val activeProjects = from(table) { project =>
+    where(project.isDeleted === false) select(project)
+  }
 
   @Transactional(readOnly = true)
-  override def list = from(table) { project =>
+  override def list = from(activeProjects) { project =>
     select(project) orderBy(project.id)
   }.toList.map(convert(_))
 
   @Transactional(readOnly = true)
-  def findByName(name: String): Option[api.Project] = from(table) {
+  def findByName(name: String): Option[api.Project] = from(activeProjects) {
     item => where(item.name === name) select (item)
   }.headOption.map(convert(_))
 
-
   @Transactional(readOnly = true)
-  def getProjects(ids: Iterable[Int]) = from(table) {
+  def getProjects(ids: Iterable[Int]) = from(activeProjects) {
     item => where(item.id in ids) select (item) orderBy(item.id)
   }.toList.map(convert _)
 
@@ -55,11 +58,11 @@ class ProjectRepository extends AbstractGenericRepository[model.Project, api.Pro
       case 0 => None
       case _ => Some(entity.id)
     }
-    new api.Project(id, entity.name, entity.description, entity.projectManager)
+    new api.Project(id, entity.name, entity.description, entity.projectManager, entity.isDeleted, entity.removalTime.map(_.getTime))
   }
 
   override implicit def convert(dto: api.Project): model.Project = {
-    val project = new model.Project(dto.name, dto.description, dto.projectManager)
+    val project = new model.Project(dto.name, dto.description, dto.projectManager, dto.isDeleted, dto.removalTime.map(time => new Timestamp(time)))
     project.id = dto.id.getOrElse(0)
     project
   }

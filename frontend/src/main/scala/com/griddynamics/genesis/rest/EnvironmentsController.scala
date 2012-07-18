@@ -80,7 +80,7 @@ class EnvironmentsController(genesisService: GenesisService) extends RestApiExce
                  @PathVariable("envName") envName: String,
                  request: HttpServletRequest) = {
     assertEnvExist(projectId, envName)
-    genesisService.destroyEnv(envName, Map[String, String]())
+    genesisService.destroyEnv(envName, projectId, Map[String, String]())
   }
 
 
@@ -90,7 +90,7 @@ class EnvironmentsController(genesisService: GenesisService) extends RestApiExce
                   @PathVariable("envName") envName: String,
                   response : HttpServletResponse) : EnvironmentDetails = {
     assertEnvExist(projectId, envName)
-    genesisService.describeEnv(envName).getOrElse(throw new ResourceNotFoundException("Environment [" + envName + "] was not found"))
+    genesisService.describeEnv(envName, projectId).getOrElse(throw new ResourceNotFoundException("Environment [" + envName + "] was not found"))
   }
 
 
@@ -102,7 +102,7 @@ class EnvironmentsController(genesisService: GenesisService) extends RestApiExce
                        @RequestParam("page_length") pageLength: Int,
                        response : HttpServletResponse): WorkflowHistory = {
     assertEnvExist(projectId, envName)
-    genesisService.workflowHistory(envName, pageOffset, pageLength).getOrElse(
+    genesisService.workflowHistory(envName, projectId, pageOffset, pageLength).getOrElse(
         throw new ResourceNotFoundException("Environment [" + envName + "] was not found")
     )
   }
@@ -133,14 +133,14 @@ class EnvironmentsController(genesisService: GenesisService) extends RestApiExce
     val requestMap = extractParamsMap(request)
     extractNotEmptyValue("action", requestMap) match {
       case "cancel" => {
-        genesisService.cancelWorkflow(env)
+        genesisService.cancelWorkflow(env, projectId)
         RequestResult(isSuccess = true)
       }
 
       case "execute" => {
         val parameters = extractMapValue("parameters", requestMap)
         val workflow = extractValue("workflow", parameters)
-        genesisService.requestWorkflow(env, workflow, extractVariables(parameters))
+        genesisService.requestWorkflow(env, projectId, workflow, extractVariables(parameters))
       }
 
       case _ => throw new InvalidInputException ()

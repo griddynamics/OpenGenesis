@@ -1,3 +1,6 @@
+<div id="dialog-project" style="display: none; ">
+  Are you sure you want to delete this project?
+</div>
 <div id="top-panel" >
   <div id="page-title"><h1>Project list</h1></div>
   <% if (currentUser.administrator) { %>
@@ -10,6 +13,7 @@
             <th class="first">Project name</th>
             <th>Manager</th>
             <th>Description</th>
+            <th class="actions"></th>
         </tr>
       </thead>
       <tbody>
@@ -20,6 +24,7 @@
             <td class="first name" ><a href="#project/<%= project.id %>"><%- project.name %></a></td>
             <td class="name"><%- project.projectManager %> </td>
             <td class="multiline-description details-cell"><%- project.description %></td>
+            <td class="actions"><a class="delete-link" href="javascript:void(0)" data-index="<%= project.id %>">Delete</a></td>
         </tr>
         <% } %>
 

@@ -40,13 +40,15 @@ import com.griddynamics.genesis.plugin.GenesisStep
 import com.griddynamics.genesis.workflow.signal.Fail
 
 abstract class GenesisFlowCoordinator(envName: String,
-                             flowSteps: Seq[StepBuilder],
-                             storeService: StoreService,
-                             stepCoordinatorFactory: StepCoordinatorFactory)
-    extends GenesisFlowCoordinatorBase(envName, flowSteps, storeService, stepCoordinatorFactory)
+                                      projectId: Int,
+                                      flowSteps: Seq[StepBuilder],
+                                      storeService: StoreService,
+                                      stepCoordinatorFactory: StepCoordinatorFactory)
+    extends GenesisFlowCoordinatorBase(envName, projectId, flowSteps, storeService, stepCoordinatorFactory)
     with StepIgnore with StepRestart with StepExecutionContextHolder
 
 abstract class GenesisFlowCoordinatorBase(val envName: String,
+                                          val projectId: Int,
                                           val flowSteps: Seq[StepBuilder],
                                           val storeService: StoreService,
                                           val stepCoordinatorFactory: StepCoordinatorFactory)
@@ -68,7 +70,7 @@ abstract class GenesisFlowCoordinatorBase(val envName: String,
     }
 
     def onFlowStart() = {
-        val (iEnv, iWorkflow, iServers) = storeService.startWorkflow(envName)
+        val (iEnv, iWorkflow, iServers) = storeService.startWorkflow(envName, projectId)
 
         env = iEnv
         servers = iServers

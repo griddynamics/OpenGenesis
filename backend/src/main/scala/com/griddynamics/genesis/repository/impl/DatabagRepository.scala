@@ -26,18 +26,25 @@ import com.griddynamics.genesis.{model, api}
 import api.{DataItem, DataBag}
 import com.griddynamics.genesis.repository.AbstractGenericRepository
 import com.griddynamics.genesis.repository
-import model.GenesisSchema
+import model.{GenesisSchema => GS}
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
 import org.squeryl.dsl.ast.BinaryOperatorNodeLogicalBoolean
 
-class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.DataBag](GenesisSchema.dataBags)
+class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.DataBag](GS.dataBags)
   with repository.DatabagRepository {
 
-  val itemsTable = GenesisSchema.dataBagItems
+  val itemsTable = GS.dataBagItems
+
+  val availableDataBags = from(table, GS.projects) { (dataBag, project) =>
+    where(dataBag.projectId === project.id and project.isDeleted === false) select(dataBag)
+  }
+  val availableDataBagItems = from(itemsTable, availableDataBags) { (item, dataBag) =>
+    where(item.dataBagId === dataBag.id) select(item)
+  }
 
   implicit def convert(entity: model.DataBag) = {
-    val tags: Seq[String] = if (entity.tags.trim.isEmpty) List() else entity.tags.trim.split(" ")
+    val tags: Seq[String] = if (entity.tags.trim.isEmpty) List() else List(entity.tags.trim.split(" "): _*)
     new api.DataBag(fromModelId(entity.id), entity.name, tags, entity.projectId)
   }
 
@@ -75,14 +82,14 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
   }
 
   @Transactional(readOnly = true)
-  def findByTags(tags: Seq[String], projectId: Option[Int] = None):Seq[api.DataBag] =  from(table)(bag => {
+  def findByTags(tags: Seq[String], projectId: Option[Int] = None):Seq[api.DataBag] =  from(availableDataBags)(bag => {
     val tags_has = { s: String => bag.tags like ("% " + s + " %") }
     val alwaysTrue: BinaryOperatorNodeLogicalBoolean = 1 === 1
     where(((bag.projectId === projectId.?) or (bag.projectId isNull).inhibitWhen(projectId.isDefined)) and tags.foldLeft(alwaysTrue) { case (acc, tag) => ( tags_has (tag) and acc) } ) select (bag)
   }).toList.map(convert _)
 
   @Transactional(readOnly = true)
-  def getItems(bagId: Int) = from(itemsTable)(item =>
+  def getItems(bagId: Int) = from(availableDataBagItems)(item =>
     where(item.dataBagId === bagId) select (item)
   ).toList.map(convertItem _)
 
@@ -103,7 +110,7 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
 
   @Transactional(readOnly = true)
   def findByName(name: String, projectId: Option[Int] = None): Option[DataBag] = {
-    val bag = from(table)(
+    val bag = from(availableDataBags)(
       bag => where(bag.name === name and ((bag.projectId === projectId.?) or (bag.projectId isNull).inhibitWhen(projectId.isDefined))) select(bag)
     ).headOption.map(convert _)
     bag.map (it => it.copy(items = Option(getItems(it.id.get))))
@@ -114,7 +121,7 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
     }
 
     def list(projectId: Option[Int]) = {
-        from(table) (
+        from(availableDataBags) (
             bag => where((bag.projectId === projectId.?) or (bag.projectId isNull).inhibitWhen(projectId.isDefined)) select(bag)
         ).map(convert _).toList
     }

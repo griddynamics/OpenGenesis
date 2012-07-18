@@ -66,16 +66,16 @@ class GenesisRestService(storeService: StoreService,
         broker.createEnv(projectId, envName, creator, templateName, templateVersion, variables)
     }
 
-    def destroyEnv(envName: String, variables: Map[String, String]) = {
-        broker.destroyEnv(envName, variables)
+    def destroyEnv(envName: String, projectId: Int, variables: Map[String, String]) = {
+        broker.destroyEnv(envName, projectId, variables)
     }
 
-    def requestWorkflow(envName: String, workflowName: String, variables: Map[String, String]) = {
-        broker.requestWorkflow(envName, workflowName, variables)
+    def requestWorkflow(envName: String, projectId: Int, workflowName: String, variables: Map[String, String]) = {
+        broker.requestWorkflow(envName, projectId, workflowName, variables)
     }
 
-    def cancelWorkflow(envName: String) {
-        broker.cancelWorkflow(envName)
+    def cancelWorkflow(envName: String, projectId: Int) {
+        broker.cancelWorkflow(envName, projectId)
     }
 
 
@@ -83,8 +83,8 @@ class GenesisRestService(storeService: StoreService,
       storeService.isEnvExist(projectId, envName)
     }
 
-    def describeEnv(envName: String) = {
-        storeService.findEnvWithWorkflow(envName) match {
+    def describeEnv(envName: String, projectId: Int) = {
+        storeService.findEnvWithWorkflow(envName, projectId) match {
             case Some((env, flow)) =>
                 templateService.descTemplate(env.projectId, env.templateName, env.templateVersion).map {
                     envDesc(
@@ -101,8 +101,8 @@ class GenesisRestService(storeService: StoreService,
         }
     }
 
-    def workflowHistory(envName: String, pageOffset: Int, pageLength: Int): Option[WorkflowHistory] = {
-        storeService.findEnv(envName).map(env =>
+    def workflowHistory(envName: String, projectId: Int, pageOffset: Int, pageLength: Int): Option[WorkflowHistory] = {
+        storeService.findEnv(envName, projectId).map(env =>
             workflowHistoryDesc(
                 storeService.workflowsHistory(env, pageOffset, pageLength),
                 storeService.countWorkflows(env)

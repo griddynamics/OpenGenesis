@@ -1,13 +1,14 @@
 define([
   "genesis",
   "modules/status",
+  "services/backend",
   "use!backbone",
   "jquery",
   "use!showLoading",
   "use!jvalidate"
 ],
 
-function(genesis, status, Backbone, $) {
+function(genesis, status, backend, Backbone, $) {
   var DEFAULT_TIMEOUT = 4000;
 
   var Projects = genesis.module();
@@ -69,20 +70,43 @@ function(genesis, status, Backbone, $) {
     onDeleteProject: function(event) {
       var self = this;
       var projectId = event.currentTarget.getAttribute("data-index");
-      $.ajax({
-        url: "/rest/projects/" + projectId,
-        type: "DELETE",
-        timeout: DEFAULT_TIMEOUT,
-        success: function (data, textStatus, jqXHR) {
-          self.collection.fetch().done(function () {
-            self.render();
-          });
+      self.showConfirmationDialog({
+        "Yes": function () {
+          backend.ProjectManager.removeProject(
+            projectId,
+            function (data, textStatus, jqXHR) {
+              status.StatusPanel.success("Project was deleted");
+              self.collection.fetch().done(function () {
+                self.render();
+              });
+            },
+            function (jqXHR, textStatus, errorThrown) {
+              var response = $.parseJSON(jqXHR.responseText);
+              status.StatusPanel.error(response.compoundServiceErrors[0]);
+              self.render();
+            }
+          );
+          self.confirmationDialog.dialog("close");
         },
-        error: function (jqXHR, textStatus, errorThrown) {
-          status.StatusPanel.error("Error: " + errorThrown);
-          self.render();
+        "No": function () {
+          self.confirmationDialog.dialog("close");
         }
       });
+    },
+
+    showConfirmationDialog: function(buttons) {
+      if (!this.confirmationDialog) {
+        this.confirmationDialog = this.$("#dialog-project").dialog({
+          resizable: true,
+          modal: true,
+          title: 'Confirmation',
+          dialogClass: 'genesis-dialog',
+          width: 400,
+          autoOpen: false
+        });
+      }
+      this.confirmationDialog.dialog("option", "buttons", buttons);
+      this.confirmationDialog.dialog('open');
     }
   });
 
