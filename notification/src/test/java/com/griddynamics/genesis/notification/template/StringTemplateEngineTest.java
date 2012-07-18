@@ -37,17 +37,16 @@ public class StringTemplateEngineTest {
 
   @Before
   public void setUp() throws Exception {
-    templateEngine = new StringTemplateEngine(System.getProperty("user.dir") + File.separator +
-        "src" + File.separator +
-        "test" + File.separator +
-        "resources");
+    templateEngine = new StringTemplateEngine("template");
   }
 
   @Test
   public void testRenderText() throws Exception {
     Map<String, String> params = new HashMap<String, String>();
-    params.put("message", "12345");
+    params.put("message1", "test");
+    params.put("message2", "12345");
+    params.put("message3", "67890");
     String result = templateEngine.renderText("email", params);
-    assertEquals("12345", result);
+    assertEquals("test12345", result);
   }
 }
