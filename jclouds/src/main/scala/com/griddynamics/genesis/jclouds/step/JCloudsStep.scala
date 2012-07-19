@@ -35,7 +35,8 @@ case class ProvisionVm(roleName: String,
                        instanceId: Option[String],
                        ip: Option[String] = None,
                        keyPair: Option[String] = None,
-                       securityGroup: Option[String] = None) extends JCloudsStep with RoleStep {
+                       securityGroup: Option[String] = None,
+                       account: scala.collection.Map[String, String] = Map()) extends JCloudsStep with RoleStep {
   def isGlobal = true
 
   def roles = Set(roleName)

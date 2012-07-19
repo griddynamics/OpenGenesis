@@ -28,8 +28,9 @@ import com.griddynamics.genesis.model.VmStatus
 import com.griddynamics.coordinators.provision.AbstractProvisionVmsStepCoordinator
 import com.griddynamics.genesis.logging.LoggerWrapper
 import com.griddynamics.genesis.jclouds.action.JCloudsProvisionVm
-import com.griddynamics.genesis.jclouds.JCloudsProvisionContext
+import com.griddynamics.genesis.jclouds.{Account, Plugin, JCloudsProvisionContext}
 import com.griddynamics.genesis.service.{CredentialService, CredentialsStoreService}
+import com.griddynamics.genesis.workflow.Action
 
 class ProvisionVmsStepCoordinator(override val step: ProvisionVmStep,
                                   override val context: StepExecutionContext,
@@ -37,12 +38,21 @@ class ProvisionVmsStepCoordinator(override val step: ProvisionVmStep,
                                   credStore: CredentialsStoreService,
                                   credService: CredentialService) extends AbstractProvisionVmsStepCoordinator[JCloudsProvisionVm] {
 
-  def onStepStart() = {
+  def onStepStart(): Seq[Action] = {
     LoggerWrapper.writeLog(context.step.id, "Starting phase %s".format(context.step.phase))
-    val existingVms = context.virtualMachines.filter(_.stepId == context.step.id)
-      .filter(_.status == VmStatus.Ready)
+    val existingVms = context.virtualMachines.filter(vm => vm.stepId == context.step.id && vm.status == VmStatus.Ready)
 
-    val credentials = step.keyPair.flatMap { credStore.find(context.env.projectId, pluginContext.cloudProvider, _) }
+    if(!step.account.isEmpty && !Account.isValid(step.account)) {
+      LoggerWrapper.writeLog(context.step.id,
+        "Invalid 'account' properties were supplied to provision step. Provisioning aborted.")
+      this.stepFailed = true
+      return Seq()
+    }
+
+    val computeSettings = if (step.account.isEmpty) pluginContext.computeSettings else Account.mapToComputeSettings(step.account)
+    val provider = computeSettings(Plugin.Provider).toString
+
+    val credentials = step.keyPair.flatMap { credStore.find(context.env.projectId, provider, _) }
 
     if(credentials.isDefined || credService.defaultCredentials.isDefined) {
       for (n <- 1 to (step.quantity - existingVms.size)) yield {
@@ -54,15 +64,15 @@ class ProvisionVmsStepCoordinator(override val step: ProvisionVmStep,
           step.imageId,
           step.instanceId,
           step.ip,
-          Some(pluginContext.cloudProvider),
+          Some(provider),
           step.keyPair,
           step.securityGroup,
-          pluginContext.computeSettings
+          computeSettings
         )
       }
     } else {
       LoggerWrapper.writeLog(context.step.id,
-        "Failed to find credentials '%s' for cloud provider '%s' in credentials store. No default credentials installed. ".format(step.keyPair.get, pluginContext.cloudProvider))
+        "Failed to find credentials '%s' for cloud provider '%s' in credentials store. No default credentials installed. ".format(step.keyPair.get, provider))
       LoggerWrapper.writeLog(context.step.id, "Provisioning aborted.")
       this.stepFailed = true
       Seq()
