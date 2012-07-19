@@ -211,6 +211,7 @@ table td.actions {
 
 table td img.status{
 	vertical-align:text-bottom;
+    margin-right: 5px;
 }
 
 table td.check {
@@ -478,8 +479,8 @@ div.system-settings {
 }
 
 #wrapper #management-panel #right img.status{
-	margin-right:2px;
-	vertical-align: central;
+	margin-right:5px;
+	vertical-align: bottom;
 }
 
 #tools-panel {
@@ -837,6 +838,40 @@ td.subtable{
 #tab-panel #panel table.main-table {
     border: 1px solid #DEDEDE;
 }
+
+
+table.main-table.attempts td.first a:hover {
+    text-decoration: underline;
+}
+table.main-table.attempts td.first {
+    padding-left: 20px !important;
+}
+
+table.main-table.attempts td {
+    padding: 10px !important;
+    border-top: none;
+}
+
+table.main-table.attempts th {
+    font-weight: bold;
+    height: 40px;
+    background-image: none;
+}
+
+.information-panel.wide {
+    padding-top:10px;
+    padding-bottom: 10px;
+    margin: -11px;
+}
+
+table.main-table.attempts tbody tr:nth-child(odd) {
+    background-color: white;
+}
+
+table.main-table.attempts tbody tr:nth-child(even) {
+    background-color: rgb(248,248,248);
+}
+
 
 table.main-table {
     table-layout:fixed;
