@@ -5,10 +5,10 @@
             <td class="first"><a href="#project/<%= project.id %>/env/<%= environment.name %>"><%= environment.name %></a></td>
             <td><%= environment.templateName %> <%= environment.templateVersion %></a></td>
             <td><%= environment.creator %></td>
-            <td id="<%= environment.name %>-status"><img src="<%= statusImages[environment.statusValue] %>" class="status"> <%= environment.status %></td>
+            <td id="<%= environment.name %>-status"><img alt="status" src="<%= statusImages[environment.statusValue] %>" class="status" style="margin-right: 10px!important; display: inline-block;"/> <%= environment.status %></td>
         </tr>
     <% } %>
 
 <% } else { %>
-    <tr ><td colspan="4" style="padding: 0" ><div class="information-panel" style="margin: -1px;"><p>No environments available</p></div></td></tr>
+    <tr ><td colspan="4" style="padding: 0" ><div class="information-panel wide" style="margin: -11px; "><p>No environments available</p></div></td></tr>
 <% } %>

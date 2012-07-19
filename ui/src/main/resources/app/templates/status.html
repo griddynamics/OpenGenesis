@@ -1,5 +1,5 @@
 <% if (environment.statusValue !== "Executing") { %>
-  <img src="<%= statusImages[environment.statusValue] %>" class="status"> <%= environment.status %>
+  <img src="<%= statusImages[environment.statusValue] %>" class="status" > <%= environment.status %>
 <% } else { %>
 <div class="genesis-progressbar" style="width:119px;">
   <div class="progress"></div>

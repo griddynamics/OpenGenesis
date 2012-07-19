@@ -23,15 +23,18 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
    * @const
    */
   var PROCESSING = "assets/img/processing-status.png",
+//      COMPLETED = "assets/img/tick_circle.png",
+//      FAILED = "assets/img/cross_circle.png",
       COMPLETED = "assets/img/normal-status.png",
       FAILED = "assets/img/bad-status.png",
       DISABLED = "assets/img/disabled-status.png",
+      CANCELED = "assets/img/exclamation.png",
       STATUS_IMAGES = {
         "Requested": PROCESSING,
         "Ready": COMPLETED,
         "Destroyed": DISABLED,
         "Executing": PROCESSING,
-        "Canceled": COMPLETED,
+        "Canceled": CANCELED,
         "Failed": FAILED
       },
       FILTER_DEFAULTS = {
