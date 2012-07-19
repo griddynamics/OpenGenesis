@@ -292,7 +292,7 @@ class StoreService extends service.StoreService {
     @Transactional
     def finishWorkflow(env: Environment, workflow: Workflow) = {
       GS.steps.update(step =>
-        where((step.finished isNull) and (step.workflowId === workflow.id)) set (
+        where((step.finished isNull) and (step.workflowId === workflow.id) and (step.started isNotNull)) set (
           step.finished := Some(new Timestamp(System.currentTimeMillis()))
         )
       )
