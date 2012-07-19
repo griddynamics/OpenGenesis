@@ -24,6 +24,8 @@ package com.griddynamics.genesis.jclouds.step
 
 import reflect.BeanProperty
 import com.griddynamics.genesis.plugin.{StepBuilderFactory, StepBuilder}
+import java.util.{Map => JMap, Collections}
+import scala.collection.JavaConversions._
 
 class ProvisionVmsStepBuilder extends StepBuilder {
   @BeanProperty var roleName: String = _
@@ -35,8 +37,10 @@ class ProvisionVmsStepBuilder extends StepBuilder {
   @BeanProperty var keyPair: String = _
   @BeanProperty var securityGroup: String = _
 
+  @BeanProperty var account: JMap[String, String] = Collections.emptyMap()
+
   def getDetails = new ProvisionVm(roleName, Option(hardwareId), Option(imageId),
-    if (ip == null) quantity else 1, Option(instanceId), Option(ip), Option(keyPair), Option(securityGroup))
+    if (ip == null) quantity else 1, Option(instanceId), Option(ip), Option(keyPair), Option(securityGroup), account)
 }
 
 class ProvisionVmsStepBuilderFactory extends StepBuilderFactory {

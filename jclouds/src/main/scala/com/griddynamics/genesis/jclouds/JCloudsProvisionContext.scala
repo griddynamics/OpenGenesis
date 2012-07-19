@@ -24,6 +24,7 @@ package com.griddynamics.genesis.jclouds
 
 import action.JCloudsProvisionVm
 import coordinators.JCloudsStepCoordinatorFactory
+import datasource.{CloudHardwareDSFactory, CloudImageDSFactory}
 import executors.{JCloudsVmDestructor, ProvisionExecutor, SshPortChecker}
 import com.griddynamics.genesis.jclouds.step.{DestroyEnvStepBuilderFactory, ProvisionVmsStepBuilderFactory}
 import org.jclouds.Constants._
@@ -68,6 +69,18 @@ private object Plugin {
   val PublicIpCheckoutTimeout = "genesis.public.ip.check.timeout.secs"
 }
 
+object Account {
+  private val keyMap = Map("provider" -> Plugin.Provider, "endpoint" -> Plugin.Endpoint, "identity" -> Plugin.Identity, "credential" -> Plugin.Credential)
+  private val keys = keyMap.keys.toSet
+
+  def mapToComputeSettings(account: scala.collection.Map[String, String]): Map[String, String] = {
+    account.map { case(key, value) => (keyMap(key.toLowerCase), value)}.toMap
+  }
+
+  def isValid(account: scala.collection.Map[String, String]): Boolean = {
+    keys.subsetOf(account.keys.map(_.toLowerCase).toSet)
+  }
+}
 
 @Configuration
 @GenesisPlugin(id = "jclouds", description = "jclouds plugin")
@@ -128,6 +141,9 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
 
   @Bean def computeService = new JCloudsComputeService(this)
 
+  @Bean def cloudImageDSFactory = new CloudImageDSFactory(this, cacheManager)
+
+  @Bean def cloudHardwareDSFactory = new CloudHardwareDSFactory(this, cacheManager)
 }
 
 
@@ -161,6 +177,8 @@ class JCloudsComputeContextProvider {
     computeContext(computeSettings)
   }
 
+  def defaultComputeSettings: Map[String, Any] = pluginConfiguration.configuration(Plugin.id)
+
   private case class Settings(provider: String, endpoint: Option[String], identity: String, credentials: String)
 }
 
@@ -185,10 +203,13 @@ class JCloudsProvisionContextImpl(override val storeService: StoreService,
   }
 
   def provisionVmActionExecutor(action: JCloudsProvisionVm) = {
-    val computeContext = contextProvider.computeContext(computeSettings)
+    val comuteSettings = if (action.provision.isEmpty) computeSettings else action.provision
+    val computeContext = contextProvider.computeContext(comuteSettings)
+    val provider = comuteSettings(Plugin.Provider).toString
+
     val nodeNamePrefix = settings(Plugin.NodeNamePrefix).take(2)
 
-    val vmCreationStrategy = strategies(cloudProvider).createVmCreationStrategy(nodeNamePrefix, computeContext)
+    val vmCreationStrategy = strategies(provider).createVmCreationStrategy(nodeNamePrefix, computeContext)
     new ProvisionExecutor(action, storeService, vmCreationStrategy, provisionVmTimeout) with DurationLimitedActionExecutor
   }
 
