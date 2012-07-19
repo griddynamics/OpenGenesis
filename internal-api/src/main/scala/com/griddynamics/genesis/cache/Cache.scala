@@ -28,7 +28,7 @@ import net.sf.ehcache.{Element, Ehcache, CacheManager}
 trait Cache {
   def cacheManager : CacheManager
 
-  def defaultTtl: Int = 30
+  def defaultTtl: Int = 30 //seconds
   def maxEntries : Int = 1000
   def eternal : Boolean = false
 
