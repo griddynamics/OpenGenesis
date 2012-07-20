@@ -24,14 +24,18 @@ package com.griddynamics.genesis.repository.impl
 
 import com.griddynamics.genesis.{model, repository, api}
 import api.ServerArray
-import model.GenesisSchema
+import model.{GenesisSchema => GS}
 import repository.AbstractGenericRepository
 
 import org.squeryl.PrimitiveTypeMode._
-import org.squeryl._
 import org.springframework.transaction.annotation.Transactional
 
-class ServerArrayRepository extends AbstractGenericRepository[model.ServerArray, api.ServerArray](GenesisSchema.serverArrays) with repository.ServerArrayRepository {
+class ServerArrayRepository extends AbstractGenericRepository[model.ServerArray, api.ServerArray](GS.serverArrays) with repository.ServerArrayRepository {
+
+  val availableServerArrays = from(table, GS.projects) { (array, project) =>
+    where(array.projectId === project.id and project.isDeleted === false) select(array)
+  }
+
   implicit def convert(entity: model.ServerArray) = new api.ServerArray(fromModelId(entity.id), entity.projectId, entity.name, entity.description)
 
   implicit def convert(dto: ServerArray) = {
@@ -41,14 +45,14 @@ class ServerArrayRepository extends AbstractGenericRepository[model.ServerArray,
   }
 
   @Transactional(readOnly = true)
-  def findByName(name: String, projectId: Int) = from (table) (
+  def findByName(name: String, projectId: Int) = from (availableServerArrays) (
     item =>
       where((name === item.name) and (projectId === item.projectId )  )
         select (item)
   ).headOption.map(convert(_))
 
   @Transactional(readOnly = true)
-  def list(projectId: Int) = from(table) (
+  def list(projectId: Int) = from(availableServerArrays) (
     item => where( projectId === item.projectId ) select (item) orderBy(item.id)
   ).toList.map(convert(_))
 
@@ -58,7 +62,7 @@ class ServerArrayRepository extends AbstractGenericRepository[model.ServerArray,
   }
 
   @Transactional
-  def get(projectId: Int, id: Int) = from(table) (
+  def get(projectId: Int, id: Int) = from(availableServerArrays) (
     item =>
       where((id === item.id) and (projectId === item.projectId )  )
         select (item)

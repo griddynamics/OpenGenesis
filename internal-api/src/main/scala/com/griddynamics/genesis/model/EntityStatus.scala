@@ -37,6 +37,8 @@ object EnvStatus {
 
     case class Failed(workflow : String) extends EnvStatus
 
+    val active = Seq(Requested(""), Ready(), Executing(""), Canceled(""), Failed(""))
+
     private val pattern = "^(.*)\\((.*)\\)$".r
 
     def fromString(input: String): Option[EnvStatus] = input match {

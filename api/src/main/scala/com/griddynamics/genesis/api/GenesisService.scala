@@ -37,20 +37,20 @@ trait GenesisService {
 
     def countEnvs(projectId: Int) : Int
 
-    def describeEnv(envName : String) : Option[EnvironmentDetails]
+    def describeEnv(envName : String, projectId: Int) : Option[EnvironmentDetails]
 
-    def workflowHistory(envName: String, pageOffset: Int, pageLength: Int) : Option[WorkflowHistory]
+    def workflowHistory(envName: String, projectId: Int, pageOffset: Int, pageLength: Int) : Option[WorkflowHistory]
 
     def listTemplates(projectId: Int) : Seq[Template]
 
     def createEnv(projectId: Int, envName : String, creator : String, templateName : String,
                   templateVersion : String, variables : Map[String, String]) : RequestResult
 
-    def destroyEnv(envName : String, variables : Map[String, String]) : RequestResult
+    def destroyEnv(envName : String, projectId: Int, variables : Map[String, String]) : RequestResult
 
-    def requestWorkflow(envName : String, workflowName : String, variables : Map[String, String]) : RequestResult
+    def requestWorkflow(envName : String, projectId: Int, workflowName : String, variables : Map[String, String]) : RequestResult
 
-    def cancelWorkflow(envName : String)
+    def cancelWorkflow(envName : String, projectId: Int)
 
     def isEnvExists(envName: String, projectId: Int): Boolean
 

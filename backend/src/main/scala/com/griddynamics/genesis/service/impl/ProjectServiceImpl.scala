@@ -28,13 +28,16 @@ import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.repository.ProjectRepository
 import com.griddynamics.genesis.validation.Validation._
 import com.griddynamics.genesis.api.{Success, Project}
+import com.griddynamics.genesis.service
+import com.griddynamics.genesis.model.EnvStatus
+import java.sql.Timestamp
 
 trait ProjectService extends CRUDService[Project, Int] {
 
   def getProjects(ids: Iterable[Int]): Iterable[Project]
 }
 
-class ProjectServiceImpl(repository: ProjectRepository) extends ProjectService with Validation[Project] {
+class ProjectServiceImpl(repository: ProjectRepository, storeService: service.StoreService) extends ProjectService with Validation[Project] {
 
   protected def validateCreation(project: Project) =
       must(project, "Project with name '" + project.name + "' already exists") {
@@ -49,6 +52,9 @@ class ProjectServiceImpl(repository: ProjectRepository) extends ProjectService w
       mustExist(project) { it => get(it.id.get) } ++
       must(project, "Project with name '" + project.name + "' already exists") {
         project => repository.findByName(project.name).forall { _.id == project.id}
+      } ++
+      must(project, "Deleted project can not have active environments") { project =>
+        !project.isDeleted || storeService.countEnvs(project.id.get, EnvStatus.active) == 0
       }
 
   @Transactional(readOnly = true)
@@ -67,8 +73,13 @@ class ProjectServiceImpl(repository: ProjectRepository) extends ProjectService w
 
   @Transactional
   override def delete(project: Project) = {
-    repository.delete(project.id.get)
-    Success(project)
+    val currentTimeMillis = System.currentTimeMillis()
+    val deletedProject = project.copy(
+      name = project.name + "_" + currentTimeMillis.toString,
+      isDeleted = true,
+      removalTime = Some(currentTimeMillis)
+    )
+    update(deletedProject)
   }
 
   @Transactional(readOnly = true)

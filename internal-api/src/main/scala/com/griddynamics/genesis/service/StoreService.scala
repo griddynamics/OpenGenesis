@@ -30,10 +30,12 @@ import com.griddynamics.genesis.model.WorkflowStepStatus._
 trait StoreService {
     def listEnvs(projectId: Int): Seq[Environment]
     def listEnvs(projectId: Int, start : Int, limit : Int): Seq[Environment]
-    def countEnvs(projectId: Int) : Int
+    def listEnvs(projectId: Int, statuses: Seq[EnvStatus]): Seq[Environment]
+    def countEnvs(projectId: Int): Int
+    def countEnvs(projectId: Int, statuses: Seq[EnvStatus]): Int
 
-    def findEnv(name: String): Option[Environment]
-    def findEnvWithWorkflow(name: String): Option[(Environment, Option[Workflow])]
+    def findEnv(name: String, projectId: Int): Option[Environment]
+    def findEnvWithWorkflow(name: String, projectId: Int): Option[(Environment, Option[Workflow])]
     def findEnv(id: Int): Option[Environment]
 
     def isEnvExist(projectId: Int, envName: String): Boolean
@@ -71,9 +73,9 @@ trait StoreService {
     // TODO @throws(classOf[WorkflowRequestFailed])
     def requestWorkflow(env: Environment, workflow: Workflow): Either[Mistake, (Environment, Workflow)]
 
-    def retrieveWorkflow(envName: String): (Environment, Workflow)
+    def retrieveWorkflow(envName: String, projectId: Int): (Environment, Workflow)
 
-    def startWorkflow(envName: String): (Environment, Workflow, Seq[EnvResource])
+    def startWorkflow(envName: String, projectId: Int): (Environment, Workflow, Seq[EnvResource])
 
     def finishWorkflow(env: Environment, workflow: Workflow)
 

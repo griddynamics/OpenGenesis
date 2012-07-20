@@ -50,6 +50,18 @@ function(genesis, $) {
     }
   };
 
+  backend.ProjectManager = {
+    removeProject: function(projectId, success, error) {
+      $.ajax({
+        url: "/rest/projects/" + projectId,
+        dataType: "json",
+        type: "DELETE",
+        timeout: DEFAULT_TIMEOUT,
+        success: success,
+        error: error
+      });
+    }
+  };
 
   backend.EnvironmentManager = {
     createEnvironment: function(projectId, environment) {

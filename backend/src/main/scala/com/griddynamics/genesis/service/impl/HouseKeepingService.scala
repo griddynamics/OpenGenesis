@@ -47,7 +47,7 @@ class DefaultHousekeepingService extends HousekeepingService {
   }
 
   override def cancelAllWorkflows(envs: List[Environment]) {
-    envs.foreach { env => requestBroker.requestBroker.cancelWorkflow(env.name) }
+    envs.foreach { env => requestBroker.requestBroker.cancelWorkflow(env.name, env.projectId) }
   }
 
   @Transactional

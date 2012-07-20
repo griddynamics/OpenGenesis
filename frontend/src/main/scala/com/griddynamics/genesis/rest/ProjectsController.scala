@@ -5,7 +5,7 @@ import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
 import com.griddynamics.genesis.service.impl.ProjectService
-import com.griddynamics.genesis.api.{ExtendedResult, RequestResult, Project}
+import com.griddynamics.genesis.api.{Success, ExtendedResult, RequestResult, Project}
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.Authentication
 import com.griddynamics.genesis.users.GenesisRole
@@ -82,8 +82,11 @@ class ProjectsController(projectService: ProjectService, authorityService: Proje
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
-  def deleteProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response: HttpServletResponse) {
-    projectService.get(projectId).foreach( projectService.delete(_) )
+  def deleteProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response: HttpServletResponse) = {
+    projectService.get(projectId) match {
+      case Some(project) => projectService.delete(project)
+      case _ => throw new ResourceNotFoundException("Project [id = %s] was not found".format(projectId))
+    }
   }
 
   private def extractProject(projectId: Option[Int], paramsMap: Map[String, Any]): Project = {

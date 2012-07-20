@@ -43,7 +43,7 @@ class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar {
 
   val storeService = {
     val storeService = mock[StoreService]
-    when(storeService.startWorkflow(Matchers.any())).thenReturn((mock[Environment], mock[Workflow], List()))
+    when(storeService.startWorkflow(Matchers.any(), Matchers.any())).thenReturn((mock[Environment], mock[Workflow], List()))
     when(storeService.insertWorkflowStep(Matchers.any())).thenReturn(
       new WorkflowStep(workflowId = IdGen.generate, phase = "", status = Requested, details = "", started = None, finished = None )
     )
@@ -67,7 +67,7 @@ class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar {
     val stepBuilders = templateService.findTemplate(0, "TestEnv", "0.1").get.createWorkflow.embody(Map())
     stepBuilders.foreach { _.id = IdGen.generate }
 
-    val flowCoordinator = new GenesisFlowCoordinator("env", stepBuilders, storeService, stepCoordinatorFactory) with RegularWorkflow
+    val flowCoordinator = new GenesisFlowCoordinator("env", 0, stepBuilders, storeService, stepCoordinatorFactory) with RegularWorkflow
 
     flowCoordinator.onFlowStart()
 
