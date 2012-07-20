@@ -11,7 +11,7 @@
         <a href="/project/<%= project.id %>/createEnv" class="button"> <span> Create environment </span> </a>
     </div>
     <div id="right">
-      <label>Filter <input id="filter-name" type="text"></label>
+      <label>Filter <input id="filter-name" type="text" value="<%= filter.namePart %>"></label>
         <!--<label>Statuses&nbsp;</label>-->
         <select id="filter-statuses" name="filter-statuses" multiple="multiple">
           <% for (var i = 0, keys = _.keys(filter.statuses), count = keys.length; i < count; i++) {
