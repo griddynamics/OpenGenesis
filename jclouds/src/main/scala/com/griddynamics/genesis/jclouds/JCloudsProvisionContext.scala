@@ -48,6 +48,7 @@ import javax.annotation.PostConstruct
 import net.sf.ehcache.CacheManager
 import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.model.{IpAddresses, VirtualMachine}
+import org.jclouds.ec2.reference.EC2Constants
 
 trait JCloudsProvisionContext extends ProvisionContext[JCloudsProvisionVm] {
   def cloudProvider: String
@@ -74,7 +75,7 @@ object Account {
   private val keys = keyMap.keys.toSet
 
   def mapToComputeSettings(account: scala.collection.Map[String, String]): Map[String, String] = {
-    account.map { case(key, value) => (keyMap(key.toLowerCase), value)}.toMap
+    account.collect { case(key, value) if keys.contains(key.toLowerCase) => (keyMap(key.toLowerCase), value)}.toMap
   }
 
   def isValid(account: scala.collection.Map[String, String]): Boolean = {
@@ -101,7 +102,8 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
   @PostConstruct
   def initCache() {
     val cache = new net.sf.ehcache.Cache(
-      computeContextRegion, 100, false, false, TimeUnit.HOURS.toSeconds(2), TimeUnit.HOURS.toSeconds(1), false, 0)
+     computeContextRegion, 100, false, false, TimeUnit.HOURS.toSeconds(2), TimeUnit.HOURS.toSeconds(1), false, 0
+    )
     cacheManager.addCacheIfAbsent(cache)
   }
 
@@ -164,7 +166,7 @@ class JCloudsComputeContextProvider {
       val contextFactory = new ComputeServiceContextFactory
       val overrides = strategyProvider(settings.provider).computeProperties
       endpoint.foreach { overrides(PROPERTY_ENDPOINT) = _ }
-
+//      overrides.setProperty(EC2Constants.PROPERTY_EC2_AMI_OWNERS, "*")
       contextFactory.createContext(settings.provider, settings.identity, settings.credentials,
         Set(new JschSshClientModule, new SLF4JLoggingModule), overrides)
     }

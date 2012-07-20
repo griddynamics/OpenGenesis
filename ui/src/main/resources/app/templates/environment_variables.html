@@ -7,10 +7,10 @@
     <form id="workflow-parameters-form" action="">
         <% _.each(variables, function(variable) { %>
         <div style="margin-top: 10px">
-            <label for="<%= variable.name %>" style="float:left; width:47%;margin-right:5px" class=<%= (variable.optional ? "label-plain" : "label-required") %>>
+            <label for="<%= variable.name %>" style="float:left; width:37%;margin-right:5px" class=<%= (variable.optional ? "label-plain" : "label-required") %>>
             <% if (! variable.optional) { %>*&nbsp;<% } %><%= variable.description %>
             </label>
-            <div style="width: 50%; float: right">
+            <div style="width: 60%; float: right">
                 <% if (typeof(variable.values) !== "undefined" && _.size(variable.values) || variable.dependsOn) { %>
                     <% if (! _.size(variable.values)) { %>
                         <select id="<%= variable.name %>" disabled="disabled" name="<%= variable.name %>" class="<%= (variable.optional ? "workflow-variable" : "workflow-variable required") %>"></select>

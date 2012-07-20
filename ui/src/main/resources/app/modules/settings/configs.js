@@ -104,8 +104,9 @@ function(genesis, status, Backbone, $) {
             resizable: true,
             modal: true,
             title: 'Confirmation',
-            dialogClass: 'genesis-dialog',
-            width: 400,
+            dialogClass: 'dialog-without-header',
+            minHeight: 120,
+            width: 420,
             autoOpen: true,
             buttons: {
               "Yes": function () {

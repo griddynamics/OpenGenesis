@@ -29,11 +29,11 @@ import com.griddynamics.genesis.template._
 import java.lang.reflect.Method
 import java.lang.{Boolean, IllegalStateException}
 import com.griddynamics.genesis.util.ScalaUtils
+import reflect.BeanProperty
 import scala.Some
 import com.griddynamics.genesis.repository.DatabagRepository
 import support.{ProjectDatabagSupport, SystemWideContextSupport}
-
-class EnvWorkflow(val name : String, val variables : List[VariableDetails], val stepsGenerator : Option[Closure[Unit]])
+import org.codehaus.groovy.runtime.InvokerHelper
 
 class EnvironmentTemplate(val name : String,
                           val version : String,
@@ -41,117 +41,6 @@ class EnvironmentTemplate(val name : String,
                           val createWorkflow : String,
                           val destroyWorkflow : String,
                           val workflows : List[EnvWorkflow]) {
-}
-
-class VariableDetails(val name : String, val clazz : Class[_ <: AnyRef], val description : String,
-                      val validators : Seq[Closure[Boolean]], val isOptional: Boolean = false, val defaultValue: Option[Any],
-                      val valuesList: Option[(Map[String,Any] => Map[String,String])] = None, val dependsOn: Seq[String])
-
-class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) {
-    var description : String = _
-    var validators = new ListBuffer[Closure[Boolean]]
-    var clazz : Class[_ <: AnyRef] = classOf[String]
-    var defaultValue: Any = _
-    var isOptional: Boolean = false
-    var parents = new ListBuffer[String]
-    var dataSource: Option[String] = None
-    var useOneOf: Boolean = false
-    var oneOf: Closure[java.util.Map[String,String]] = _
-
-    def as(value : Class[_ <: AnyRef]) = {
-        this.clazz = value
-        this
-    }
-
-    def description(description : String) = {
-        description_=(description)
-        this
-    }
-
-    def validator(validator : Closure[Boolean]) = {
-        validators += validator
-        this
-    }
-  
-    def optional(v: Any) = {
-      isOptional = true
-      defaultValue = v
-      this
-    }
-
-    def dependsOn(varName: String) = {
-        if (useOneOf) {
-            throw new IllegalArgumentException("dependsOn cannot be used with oneOf")
-        }
-        parents += varName
-        this
-    }
-
-    def dependsOn(names: Array[String]) = {
-        if (useOneOf) {
-            throw new IllegalArgumentException("dependsOn cannot be used with oneOf")
-        }
-        parents ++= names
-        this
-    }
-
-    def dataSource(dsName: String) = {
-        if (useOneOf) {
-            throw new IllegalArgumentException("oneOf cannot be used with dataSource")
-        }
-        dataSource_=(Option(dsName))
-        this
-    }
-
-    def oneOf(values: Closure[java.util.Map[String,String]]) = {
-        useOneOf = true
-        oneOf_=(values)
-        this
-    }
-
-    def valuesList: Option[(Map[String, Any] => Map[String,String])] = {
-        if (useOneOf) {
-            import collection.JavaConversions._
-            dsObjSupport.foreach(oneOf.setDelegate(_))
-            val values = Option({ _: Any => oneOf.call().map(kv => (kv._1, kv._2)).toMap})
-            validators += new Closure[Boolean]() {
-                def doCall(args: Array[Any]): Boolean = {
-                    values.get.apply().asInstanceOf[Map[String,String]].exists(_._1.toString == args(0).toString)
-                }
-            }
-            values
-        } else {
-           dataSource.flatMap(ds => Option({params : Map[String, Any] => {
-               val p = parents.toList.map(params.get(_)).flatten
-               dsObjSupport.get.getData(ds, p)
-           }}))
-        }
-    }
-
-    def newVariable = new VariableDetails(name, clazz, description, validators, isOptional, Option(defaultValue), valuesList, parents.toList)
-}
-
-class VariableDeclaration(val dsObjSupport: Option[DSObjectSupport]) {
-    val builders = new ListBuffer[VariableBuilder]
-
-    def variable(name : String) = {
-        val builder = new VariableBuilder(name, dsObjSupport)
-        builders += builder
-        builder
-    }
-}
-
-class WorkflowDeclaration {
-    var variablesBlock : Option[Closure[Unit]] = None
-    var stepsBlock : Option[Closure[Unit]] = None
-
-    def variables(variables : Closure[Unit]) {
-        variablesBlock = Some(variables)
-    }
-
-    def steps(steps : Closure[Unit]) {
-        stepsBlock = Some(steps)
-    }
 }
 
 class NameVersionDelegate {
@@ -218,11 +107,11 @@ class EnvTemplateBuilder(val projectId: Int,
         val delegate = new WorkflowDeclaration
         details.setDelegate(delegate)
         details.call()
-        val pid = projectId
         val variableBuilders = delegate.variablesBlock match {
             case Some(block) => {
-                val variablesDelegate = new VariableDeclaration(dsObjSupport)
+                val variablesDelegate = new VariableDeclaration(dsObjSupport, dataSourceFactories, projectId )
                 block.setDelegate(variablesDelegate)
+                block.setResolveStrategy(Closure.DELEGATE_FIRST)
                 block.call()
                 variablesDelegate.builders
             } case None => Seq[VariableBuilder]()
@@ -295,75 +184,4 @@ class BlockDeclaration {
     }
 }
 
-class DataSourceDeclaration(val projectId: Int, dsFactories: Seq[DataSourceFactory]) extends GroovyObjectSupport {
-    val builders = new ListBuffer[DataSourceBuilder]
 
-    override def invokeMethod(name: String, args: AnyRef) = {
-        dsFactories.filter(ds => ds.mode == name).headOption match {
-            case Some(factory) => {
-                val argsIterator: Iterator[_] = args.asInstanceOf[Array[_]].iterator
-                if (argsIterator.isEmpty) {
-                    throw new IllegalArgumentException(
-                        """At least name must be provided for datasource %s. Example:
-                          | %s("name") { ... }
-                        """.stripMargin.format(name, name))
-                }
-                val dsName = argsIterator.next().asInstanceOf[String]
-                val builder: DataSourceBuilder = new DataSourceBuilder(projectId, factory, dsName)
-                if (argsIterator.hasNext) {
-                    val closure = argsIterator.next().asInstanceOf[Closure[_]]
-                    closure.setDelegate(builder)
-                    closure.setResolveStrategy(Closure.DELEGATE_FIRST)
-                    closure.call()
-                }
-                builders += builder
-            }
-            case _ => throw new IllegalArgumentException("Datasource for mode %s is not found".format(name))
-        }
-    }
-}
-
-class DataSourceBuilder(val projectId: Int, val factory : DataSourceFactory, val name: String) extends GroovyObjectSupport {
-    var conf = new scala.collection.mutable.HashMap[String, Any]()
-
-    override def setProperty(name: String, args: AnyRef) {
-        conf.put(name, args)
-        super.setProperty(name, args)
-    }
-
-    def newDS = (name, {val ds = factory.newDataSource; ds.config(conf.toMap + ("projectId" -> projectId)); ds})
-}
-
- class DSObjectSupport(val dsMap: Map[String, VarDataSource]) extends GroovyObjectSupport {
-     override def getProperty(name: String)  = {
-         dsMap.get(name) match {
-             case Some(src) => collection.JavaConversions.mapAsJavaMap(src.getData)
-             case _ => super.getProperty(name)
-         }
-     }
-
-     def getData(name: String, args: List[Any]): Map[String,String] = {
-         dsMap.get(name) match {
-             case Some(src) => args match {
-                 case Nil => src.getData
-                 case x :: Nil => {
-                     src.asInstanceOf[DependentDataSource].getData(x)
-                 }
-                 case head :: tail => {
-                     val params: Array[AnyRef] = args.map(v => ScalaUtils.toAnyRef(v)).toArray
-                     val find: Option[Method] = src.getClass.getDeclaredMethods.find(m => m.getName == "getData"
-                       && m.getParameterTypes.length == params.length
-                     )
-                     find match  {
-                         case Some(m) => {
-                             m.invoke(src, params:_*).asInstanceOf[Map[String,String]]
-                         }
-                         case _ => throw new IllegalStateException("Cannot find method getData for args %s".format(args))
-                     }
-                 }
-                 case _ => throw new IllegalStateException("Cannot find any suitable method at datasource %s".format(src))
-             }
-             case _ => throw new IllegalStateException("Can't get datasource for argument %s".format(name))
-         }
-     }
- }

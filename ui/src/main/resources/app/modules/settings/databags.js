@@ -153,8 +153,9 @@ function(genesis, Backbone, status, property, backend, $) {
       return this.$("#dialog-confirm-databag-delete").dialog({
         modal: true,
         title: 'Confirmation',
-        dialogClass: 'genesis-dialog',
-        width: 400,
+        dialogClass: 'dialog-without-header',
+        minHeight: 120,
+        width: 420,
         autoOpen: false
       });
     },
