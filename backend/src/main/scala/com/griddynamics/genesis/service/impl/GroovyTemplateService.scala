@@ -274,7 +274,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
     }
 
 
-    def validate(variables: Map[String, Any], envName: Option[String] = None) = {
+    def validate(variables: Map[String, Any], envName: Option[String] = None, projectId: Option[Int] = None) = {
         val res = for (variable <- workflow.variables) yield {
             variables.get(variable.name) match {
                 case None => {
@@ -306,7 +306,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
       }
     }
 
-    def embody(variables: Map[String, String], envName: Option[String] = None) = {
+    def embody(variables: Map[String, String], envName: Option[String] = None, projectId: Option[Int] = None) = {
         val typedVariables = (for (variable <- workflow.variables) yield {
           val res = variables.get(variable.name) match {
             case Some(value) =>

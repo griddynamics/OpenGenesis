@@ -89,10 +89,6 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     val itemToDatabag = oneToManyRelation(dataBags, dataBagItems).via((bag, item) => bag.id === item.dataBagId)
     itemToDatabag.foreignKeyDeclaration.constrainReference(onDelete cascade)
 
-    on(envs)(env => declare(
-        env.name is (unique)
-    ))
-
     on(vmAttrs)(attr => declare(
         attr.value is (dbType("text"))
     ))
@@ -116,7 +112,8 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
 
     on(projects) (project=> declare(
       project.name is (unique),
-      project.description is (dbType("text"))
+      project.description is (dbType("text")),
+      project.isDeleted defaultsTo(false)
     ))
 
     on(credentials)(creds => declare(

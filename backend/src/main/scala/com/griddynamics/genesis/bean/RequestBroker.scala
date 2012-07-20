@@ -22,23 +22,25 @@
  */
 package com.griddynamics.genesis.bean
 
-import com.griddynamics.genesis.model.{Workflow, Environment}
-import com.griddynamics.genesis.model.EnvStatus
-import com.griddynamics.genesis.model.WorkflowStatus
+import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.api.{RequestResult => RR}
 import com.griddynamics.genesis.service
+import service.ValidationError
 import service.{ValidationError, TemplateService, StoreService}
+import scala.Left
+import scala.Some
+import scala.Right
 
 trait RequestBroker {
     def createEnv(projectId: Int, envName: String, envCreator : String,
                   templateName: String, templateVersion: String,
                   variables: Map[String, String]) : RR
 
-    def requestWorkflow(envName: String, workflowName: String, variables: Map[String, String]) : RR
+    def requestWorkflow(envName: String, projectId: Int, workflowName: String, variables: Map[String, String]) : RR
 
-    def destroyEnv(envName: String, variables: Map[String, String]) : RR
+    def destroyEnv(envName: String, projectId: Int, variables: Map[String, String]) : RR
 
-    def cancelWorkflow(envName : String)
+    def cancelWorkflow(envName : String, projectId: Int)
 }
 
 class RequestBrokerImpl(storeService: StoreService,
@@ -49,7 +51,7 @@ class RequestBrokerImpl(storeService: StoreService,
     def createEnv(projectId: Int, envName: String, envCreator : String,
                   templateName: String, templateVersion: String,
                   variables: Map[String, String]) : RR = {
-        validateEnvName(envName) match {
+        validateEnvName(envName, projectId) match {
             case Some(rr) => return rr
             case None =>
         }
@@ -78,14 +80,14 @@ class RequestBrokerImpl(storeService: StoreService,
         storeService.createEnv(env, workflow) match {
             case Left(m) => RR(compoundVariablesErrors = Seq(m.toString))
             case Right(_) => {
-                dispatcher.createEnv(env.name)
+                dispatcher.createEnv(env.name, env.projectId)
                 RR(isSuccess = true)
             }
         }
     }
 
-    def destroyEnv(envName: String, variables: Map[String, String]) : RR = {
-        val env = findEnv(envName) match {
+    def destroyEnv(envName: String, projectId: Int, variables: Map[String, String]) : RR = {
+        val env = findEnv(envName, projectId) match {
             case Right(e) => e
             case Left(rr) => return rr
         }
@@ -103,15 +105,15 @@ class RequestBrokerImpl(storeService: StoreService,
         storeService.requestWorkflow(env, workflow) match {
             case Left(m) => RR(compoundVariablesErrors =  Seq(m.toString))
             case Right(_) => {
-                dispatcher.destroyEnv(env.name)
+                dispatcher.destroyEnv(env.name, env.projectId)
                 RR(isSuccess = true)
             }
         }
     }
 
-    def requestWorkflow(envName: String, workflowName: String,
+    def requestWorkflow(envName: String, projectId: Int, workflowName: String,
                         variables: Map[String, String]) : RR = {
-        val env = findEnv(envName) match {
+        val env = findEnv(envName, projectId) match {
             case Right(e) => e
             case Left(rr) => return rr
         }
@@ -138,18 +140,18 @@ class RequestBrokerImpl(storeService: StoreService,
         storeService.requestWorkflow(env, workflow)  match {
             case Left(m) => RR(compoundVariablesErrors = Seq(m.toString))
             case Right(_) => {
-                dispatcher.startWorkflow(env.name)
+                dispatcher.startWorkflow(env.name, env.projectId)
                 RR(isSuccess = true)
             }
         }
     }
 
-    def cancelWorkflow(envName : String) {
-        dispatcher.cancelWorkflow(envName)
+    def cancelWorkflow(envName : String, projectId: Int) {
+        dispatcher.cancelWorkflow(envName, projectId)
     }
 
-    def findEnv(envName : String) : Either[RR, Environment] = {
-        val env = storeService.findEnv(envName)
+    def findEnv(envName : String, projectId: Int) : Either[RR, Environment] = {
+        val env = storeService.findEnv(envName, projectId)
 
         if (env.isDefined)
             Right(env.get)
@@ -157,9 +159,9 @@ class RequestBrokerImpl(storeService: StoreService,
             Left(RR(isNotFound = true, serviceErrors = Map(RR.envName -> "Failed to find environment with name '%s'".format(envName))))
     }
 
-    def validateEnvName(envName: String) = envName match {
-        case envNameRegex(name) => storeService.findEnv(name) match {
-            case Some(_) => Some(RR(serviceErrors = Map(RR.envName -> "Environment with the same name already exists")))
+    def validateEnvName(envName: String, projectId: Int) = envName match {
+        case envNameRegex(name) => storeService.findEnv(name, projectId) match {
+            case Some(_) => Some(RR(serviceErrors = Map(RR.envName -> "Environment with the same name already exists in project [id = %s]".format(projectId))))
             case None => None
         }
         case _ => Some(RR(serviceErrors = Map(RR.envName -> "Environment name must only contains from 3 to 64 lowercase alphanumerics")))

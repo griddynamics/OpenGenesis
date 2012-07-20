@@ -1,5 +1,7 @@
 package com.griddynamics.genesis.model
 
+import java.sql.Timestamp
+
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
@@ -24,7 +26,9 @@ package com.griddynamics.genesis.model
  */
 class Project (val name: String,
                val description: Option[String],
-               val projectManager: String)
+               val projectManager: String,
+               val isDeleted: Boolean = false,
+               val removalTime: Option[Timestamp] = None)
   extends GenesisEntity {
 
 }

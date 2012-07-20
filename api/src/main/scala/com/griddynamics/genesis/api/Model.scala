@@ -24,7 +24,6 @@ package com.griddynamics.genesis.api
 
 import java.util
 
-
 case class Environment(name : String,
                        status : String,
                        completed : Option[Double] = None, //optional field, only if status Executing(workflow)
@@ -141,7 +140,12 @@ final case class Failure(serviceErrors : Map[String, String] = Map(),
 case class User(username: String, email: String, firstName: String, lastName: String, jobTitle: Option[String], password: Option[String])
 case class UserGroup(name: String, description: String, mailingList: Option[String], id: Option[Int] = None)
 
-case class Project(id: Option[Int], name: String,  description: Option[String], projectManager: String)
+case class Project(id: Option[Int],
+                   name: String,
+                   description: Option[String],
+                   projectManager: String,
+                   isDeleted: Boolean = false,
+                   removalTime: Option[Long] = None)
 
 case class ConfigProperty(name: String, value: String, readOnly: Boolean, description: Option[String] = None)
 

@@ -58,7 +58,7 @@ class StoreServiceTest extends MustMatchersForJUnit {
 
     @Test def testRetrieveWorkflow() {
         transaction {
-            storeService.retrieveWorkflow(env.name)
+            storeService.retrieveWorkflow(env.name, env.projectId)
         }
     }
 
@@ -71,7 +71,7 @@ class StoreServiceTest extends MustMatchersForJUnit {
     }
 
     @Test def testFindEnv {
-        val e = transaction { storeService.findEnv(env.name)}
+        val e = transaction { storeService.findEnv(env.name, env.projectId)}
         e must be (Some(env))
         e.get(EnvAttr1) must be (EnvAttrVal1)
         e.get(EnvAttr2) must be (EnvAttrVal2)
