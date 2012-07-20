@@ -267,8 +267,11 @@ class StoreService extends service.StoreService {
     GS.steps.update(step =>
       where((step.finished isNull) and (step.workflowId === workflow.id) and (step.started isNotNull)) set (
           step.finished := Some(new Timestamp(System.currentTimeMillis()))
-        )
+          )
     )
+    updateEnv(env)
+    GS.workflows.update(workflow)
+
   }
 
   @Transactional(propagation = Propagation.MANDATORY)
