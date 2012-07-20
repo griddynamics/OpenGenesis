@@ -42,7 +42,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
         "statuses" : {
           "requested" : { "visible" : true, "name" : "Requested" },
           "ready" : { "visible" : true, "name" : "Ready" },
-          "destroyed" : { "visible" : true, "name" : "Destroyed" },
+          "destroyed" : { "visible" : false, "name" : "Destroyed" },
           "executing" : { "visible" : true, "name" : "Executing" },
           "canceled" : { "visible" : true, "name" : "Canceled" },
           "failed" : { "visible" : true, "name" : "Failed" }
@@ -179,6 +179,10 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
         throw new Error("Project option is required");
       }
       this.project = options.project;
+
+      var filter = this.getFilter();
+      filter.namePart = "";
+      this.setFilter(filter);
     },
 
     url: function() {
@@ -218,10 +222,10 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
     filterToJSON: function() {
       var filtered = this.models,
           filter = this.getFilter();
-      if (filter.namePart.length > 0) {
+      if (filter.namePart.trim().length > 0) {
         // filter by name's part
         filtered = _(filtered).filter( function(model) {
-          var searchExpr = new RegExp(filter.namePart, 'i');
+          var searchExpr = new RegExp(filter.namePart.trim(), 'i');
           return model.get("name").search(searchExpr) >= 0;
         });
       }
