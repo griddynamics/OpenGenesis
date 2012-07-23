@@ -67,7 +67,7 @@ class RequestBrokerImpl(storeService: StoreService,
             case Some(template) => template.createWorkflow
         }
 
-        validateWorkflow(twf, variables, envName) match {
+        validateWorkflow(twf, variables, envName, projectId) match {
             case Some(rr) => return rr
             case None =>
         }
@@ -94,7 +94,7 @@ class RequestBrokerImpl(storeService: StoreService,
 
         val twf = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion).get.destroyWorkflow
 
-        validateWorkflow(twf, variables, envName) match {
+        validateWorkflow(twf, variables, envName, projectId) match {
             case Some(rr) => return rr
             case None =>
         }
