@@ -30,15 +30,23 @@ import com.griddynamics.genesis.workflow.{Action, ActionResult}
 import com.griddynamics.genesis.model
 
 sealed trait ChefSoloAction extends Action
+
 case class AddKeyAction(env: Environment, server: EnvResource) extends ChefSoloAction
+
 case class PrepareNodeAction(env: Environment, server: EnvResource, json: String, label: String, cookbooksPath: String) extends ChefSoloAction
+
 case class PreprocessingJsonAction(env: Environment, server: EnvResource,
                                    patternSubst: Map[String, String],
                                    keySubst: Map[String, String],
-                                   attributes: JObject = JObject(List())) extends ChefSoloAction
+                                   attributes: JObject = JObject(List()),
+                                   templatesUrl: Option[String]) extends ChefSoloAction
+
 sealed trait ChefSoloActionResult extends ActionResult
+
 case class NodePrepared(action: PrepareNodeAction, server: EnvResource, execDetails: ExecDetails) extends ChefSoloActionResult
+
 case class PreprocessingSuccess(action: PreprocessingJsonAction, server: EnvResource, json: String) extends ActionResult
+
 sealed trait ExtendedExecResult extends ExecResult with ChefSoloActionResult {
     def exitStatus: Option[Int]
     def errLog: Option[String]
@@ -53,6 +61,9 @@ sealed trait ExtendedExecResult extends ExecResult with ChefSoloActionResult {
 }
 case class ExtendedExecFinished(action: RunExec, exitStatus: Option[Int],
                                 errLog: Option[String], log: Option[String]) extends ExtendedExecResult
+
 case class AddKeySuccess(action: AddKeyAction) extends ChefSoloActionResult
+
 case class SoloInitSuccess(action: PrepareSoloAction, execDetails: ExecDetails) extends ChefSoloActionResult
+
 case class PrepareSoloAction(env: Environment, server: EnvResource) extends ChefSoloAction

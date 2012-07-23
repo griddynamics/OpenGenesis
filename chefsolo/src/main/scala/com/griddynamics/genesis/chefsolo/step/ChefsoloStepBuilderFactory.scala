@@ -26,6 +26,7 @@ import com.griddynamics.genesis.plugin.{StepBuilder, StepBuilderFactory}
 import reflect.BeanProperty
 import java.util.{Collections, Map => JMap, List => JList}
 import com.griddynamics.genesis.util.JsonUtil
+import collection.JavaConversions._
 
 
 class ChefsoloStepBuilderFactory extends StepBuilderFactory {
@@ -35,12 +36,11 @@ class ChefsoloStepBuilderFactory extends StepBuilderFactory {
     new StepBuilder() {
       @BeanProperty var dependsOn: Array[String] = _
       @BeanProperty var roles: JList[String] = Collections.emptyList()
-      @BeanProperty var ipAddress: String = _
       @BeanProperty var jattrs : JMap[Any, Any] = Collections.emptyMap()
       @BeanProperty var cookbooks: String = _
-      import collection.JavaConversions._
-      def getDetails = new ChefsoloRunStep(roles.toList, dependsOn, Option(ipAddress),
-          JsonUtil.toJson(jattrs), cookbooks)
+      @BeanProperty var templates: String = _
+
+      def getDetails = new ChefsoloRunStep(roles.toList, dependsOn, JsonUtil.toJson(jattrs), cookbooks, Option(templates))
     }
   }
 }

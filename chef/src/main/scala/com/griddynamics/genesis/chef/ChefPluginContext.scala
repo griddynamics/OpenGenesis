@@ -64,8 +64,6 @@ private object Plugin {
   val ValidatorIdentity = "genesis.plugin.chef.validator.identity"
   val ValidatorCredential = "genesis.plugin.chef.validator.credential"
   val Endpoint = "genesis.plugin.chef.endpoint"
-
-  val ChefInstallScript = "genesis.plugin.chef.install.sh"
 }
 
 @Configuration
@@ -132,11 +130,9 @@ class ChefPluginConfig(@transient config: Map[String, String]) extends Serializa
   val chefValidatorIdentity = config(Plugin.ValidatorIdentity)
   val chefValidatorCredentialResource = config(Plugin.ValidatorCredential)
 
-  val chefInstallShResource = config(Plugin.ChefInstallScript)
-
   @transient lazy val chefCredential = InputUtil.locationAsString(chefCredentialResource)
   @transient lazy val chefValidatorCredential = InputUtil.locationAsString(chefValidatorCredentialResource)
-  @transient lazy val chefResources = new ChefResourcesImpl(chefInstallShResource)
+  @transient lazy val chefResources = new ChefResourcesImpl("classpath:shell/chef-install.sh")
 }
 
 
