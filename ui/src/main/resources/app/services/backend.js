@@ -73,6 +73,16 @@ function(genesis, $) {
         timeout: DEFAULT_TIMEOUT,
         processData: false
       });
+    },
+
+    resetEnvStatus: function(projectId, environment) {
+      return $.ajax({
+        url: "/rest/projects/" + projectId + "/envs/" + environment + "/actions",
+        dataType: "json",
+        type: "POST",
+        data: JSON.stringify({action: 'resetEnvStatus'}),
+        timeout: DEFAULT_TIMEOUT
+      });
     }
   };
 

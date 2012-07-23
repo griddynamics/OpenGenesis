@@ -23,29 +23,22 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
    * @const
    */
   var PROCESSING = "assets/img/processing-status.png",
-//      COMPLETED = "assets/img/tick_circle.png",
-//      FAILED = "assets/img/cross_circle.png",
       COMPLETED = "assets/img/normal-status.png",
-      FAILED = "assets/img/bad-status.png",
+      BROKEN = "assets/img/bad-status.png",
       DISABLED = "assets/img/disabled-status.png",
-      CANCELED = "assets/img/exclamation.png",
       STATUS_IMAGES = {
-        "Requested": PROCESSING,
+        "Busy": PROCESSING,
         "Ready": COMPLETED,
         "Destroyed": DISABLED,
-        "Executing": PROCESSING,
-        "Canceled": CANCELED,
-        "Failed": FAILED
+        "Broken": BROKEN
       },
       FILTER_DEFAULTS = {
         "namePart" : "",
         "statuses" : {
-          "requested" : { "visible" : true, "name" : "Requested" },
+          "busy" : { "visible" : true, "name" : "Busy" },
           "ready" : { "visible" : true, "name" : "Ready" },
-          "destroyed" : { "visible" : false, "name" : "Destroyed" },
-          "executing" : { "visible" : true, "name" : "Executing" },
-          "canceled" : { "visible" : true, "name" : "Canceled" },
-          "failed" : { "visible" : true, "name" : "Failed" }
+          "destroyed" : { "visible" : true, "name" : "Destroyed" },
+          "broken" : { "visible" : true, "name" : "Broken" }
         }
       };
 
@@ -63,16 +56,6 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
     },
 
     idAttribute: "name",
-
-    parse: function (jsonData) {
-      var statusRegExp = /([^\(]*)/g; //to separate status from workflow, currently status looks like "Executed(create)"
-      var status = statusRegExp.exec(jsonData.status);
-      if(status == null && $.browser.mozilla) {  // http://support.mozilla.org/ru/questions/752882
-        status = statusRegExp.exec(jsonData.status);
-      }
-      jsonData.statusValue = status != null ? status[1] : jsonData.status;
-      return jsonData;
-    },
 
     url: function () {
       var url = "/rest/projects/" + this.get("projectId") + "/envs"
@@ -413,11 +396,13 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
 
     confirmationDialog: null,
     executeWorkflowDialog: null,
+    resetEnvStatusDialog: null,
 
     events: {
       "click #tab3": "renderWorkflowList",
       "click .action-button:not(.disabled)": "executeWorkflow",
       "click .cancel-button:not(.disabled)": "cancelWorkflow",
+      "click .reset-button:not(.disabled)": "resetEnvStatus",
       "click a.show-sources" : "showSources"
     },
 
@@ -450,6 +435,9 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
       if(this.confirmationDialog) {
         this.confirmationDialog.dialog('destroy').remove();
       }
+      if(this.resetEnvStatusDialog) {
+        this.resetEnvStatusDialog.dialog('destroy').remove();
+      }
       genesis.utils.nullSafeClose(this.workflowHistory);
       genesis.utils.nullSafeClose(this.sourcesView);
 
@@ -471,6 +459,10 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
 
     cancelWorkflow: function (e) {
       this.confirmationDialog.dialog('open');
+    },
+
+    resetEnvStatus: function (e) {
+      this.resetEnvStatusDialog.dialog('open');
     },
 
     executeWorkflow: function (e) {
@@ -497,8 +489,8 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
     },
 
     renderStatus: function () {
-      var status = this.details.get('statusValue');
-      var activeExecution = (status === "Requested" || status === "Executing");
+      var status = this.details.get('status');
+      var activeExecution = (status === "Busy");
 
       this.$(".cancel-button")
         .toggleClass("disabled", !activeExecution)
@@ -507,6 +499,9 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
       this.$(".action-button")
         .toggleClass("disabled", activeExecution)
         .toggle(status !== "Destroyed");
+
+      this.$("#resetBtn")
+        .toggle(status === "Broken");
 
       var self = this;
       $.when(genesis.fetchTemplate(this.statusTemplate)).done(function(tmpl) {
@@ -596,6 +591,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
           view.renderWorkflowList();
           view.renderAttributes();
           view.confirmationDialog = view.createConfirmationDialog(view.$("#dialog-confirm"));
+          view.resetEnvStatusDialog = view.createResetEnvStatusDialog(view.$("#dialog-reset"));
         }
       );
     },
@@ -618,6 +614,34 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
               })
               .fail(function() {
                 status.StatusPanel.error("Failed to sent 'Cancel workflow' signal");
+              });
+            $(this).dialog("close");
+          },
+          "No": function () {
+            $(this).dialog("close");
+          }
+        }
+      });
+    },
+
+    createResetEnvStatusDialog: function (element) {
+      var self = this;
+      return element.dialog({
+        resizable: true,
+        modal: true,
+        title: 'Confirmation',
+        dialogClass: 'dialog-without-header',
+        minHeight: 120,
+        width: 420,
+        autoOpen: false,
+        buttons: {
+          "Yes": function () {
+            $.when(backend.EnvironmentManager.resetEnvStatus(self.details.get("projectId"), self.details.get('name')))
+              .done(function() {
+                status.StatusPanel.information("Environment status was changed to 'Ready'");
+              })
+              .fail(function() {
+                status.StatusPanel.error("Failed to reset environment status");
               });
             $(this).dialog("close");
           },

@@ -87,9 +87,14 @@ abstract class GenesisFlowCoordinatorBase(val envName: String,
     def onFlowFinish(signal: Signal) {
         import WorkflowStatus._
         val (workflowStatus, envStatus) = signal match {
-            case Success() => (Succeed, onFlowFinishSuccess)
-            case Cancel() => (Canceled, EnvStatus.Canceled(workflow.name))
-            case _ => (Failed, EnvStatus.Failed(workflow.name))
+            case Success() => {
+              (EnvStatusField.envStatusFieldToStatus(env.status),onFlowFinishSuccess) match {
+                case (broken @ EnvStatus.Broken(), EnvStatus.Ready()) => (Succeed, broken)
+                case (_, s) => (Succeed, s)
+              }
+            }
+            case Cancel() => (Canceled, EnvStatus.Broken())
+            case _ => (Failed, EnvStatus.Broken())
         }
         workflow.status = workflowStatus
         env.status = envStatus
