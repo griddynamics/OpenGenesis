@@ -22,33 +22,20 @@
  */
 package com.griddynamics.genesis.model
 
-sealed abstract class EnvStatus
+object EnvStatus extends Enumeration {
+    type EnvStatus = Value
 
-object EnvStatus {
-    case class Requested(workflow : String) extends EnvStatus
+    val Busy = Value(0, "Busy")
+    val Ready = Value(1, "Ready")
+    val Broken = Value(2, "Broken")
+    val Destroyed = Value(3, "Destroyed")
 
-    case class Ready() extends EnvStatus
+    val active = Seq(Ready, Busy, Broken)
 
-    case class Destroyed() extends EnvStatus
-
-    case class Executing(workflow : String) extends EnvStatus
-
-    case class Canceled(workflow : String) extends EnvStatus
-
-    case class Failed(workflow : String) extends EnvStatus
-
-    val active = Seq(Requested(""), Ready(), Executing(""), Canceled(""), Failed(""))
-
-    private val pattern = "^(.*)\\((.*)\\)$".r
-
-    def fromString(input: String): Option[EnvStatus] = input match {
-        case pattern("Ready", "") => Some(Ready())
-        case pattern("Destroyed", "") => Some(Destroyed())
-        case pattern("Requested", workflow) => Some(Requested(workflow))
-        case pattern("Executing", workflow) => Some(Executing(workflow))
-        case pattern("Canceled", workflow) => Some(Canceled(workflow))
-        case pattern("Failed", workflow) => Some(Failed(workflow))
-        case _ => None
+    def fromString(input: String): Option[EnvStatus] = try {
+      Some(EnvStatus.withName(input))
+    } catch {
+      case e: NoSuchElementException => None
     }
 }
 
