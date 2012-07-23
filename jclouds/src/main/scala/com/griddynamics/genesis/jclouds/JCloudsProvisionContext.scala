@@ -154,19 +154,24 @@ class JCloudsComputeContextProvider {
 
   import Plugin._
 
-  def computeContext(computeSettings: Map[String, Any]): ComputeServiceContext = {
+  def computeContext(computeSettings: Map[String, Any], specificOverrides: Option[java.util.Properties] = None): ComputeServiceContext = {
     val provider = computeSettings(Provider).toString
     val endpoint = computeSettings.get(Endpoint).map { _.toString }
     val identity = computeSettings(Identity).toString
     val credential = computeSettings(Credential).toString
 
-    val settings = Settings(provider, endpoint, identity, credential)
+    val settings = Settings(provider, endpoint, identity, credential, specificOverrides)
 
     fromCache(computeContextRegion, settings) {
       val contextFactory = new ComputeServiceContextFactory
-      val overrides = strategyProvider(settings.provider).computeProperties
+      val overrides = strategyProvider(settings.provider).computeProperties.clone.asInstanceOf[java.util.Properties]
       endpoint.foreach { overrides(PROPERTY_ENDPOINT) = _ }
-//      overrides.setProperty(EC2Constants.PROPERTY_EC2_AMI_OWNERS, "*")
+
+      for ( properties <- specificOverrides;
+            property   <- properties ) {
+        overrides.setProperty(property._1, property._2)
+      }
+
       contextFactory.createContext(settings.provider, settings.identity, settings.credentials,
         Set(new JschSshClientModule, new SLF4JLoggingModule), overrides)
     }
@@ -181,7 +186,7 @@ class JCloudsComputeContextProvider {
 
   def defaultComputeSettings: Map[String, Any] = pluginConfiguration.configuration(Plugin.id)
 
-  private case class Settings(provider: String, endpoint: Option[String], identity: String, credentials: String)
+  private case class Settings(provider: String, endpoint: Option[String], identity: String, credentials: String, props: Option[java.util.Properties])
 }
 
 class JCloudsProvisionContextImpl(override val storeService: StoreService,

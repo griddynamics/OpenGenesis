@@ -28,6 +28,7 @@ import com.griddynamics.genesis.cache.Cache
 import org.jclouds.compute.ComputeService
 import java.util.concurrent.TimeUnit
 import scala.collection.JavaConversions._
+import org.jclouds.ec2.reference.EC2Constants._
 
 abstract private[datasource] class CloudBaseDataSourceTemplate(provider: JCloudsComputeContextProvider) extends VarDataSource with Cache {
   def cacheRegion: String
@@ -38,7 +39,13 @@ abstract private[datasource] class CloudBaseDataSourceTemplate(provider: JClouds
   override def defaultTtl = TimeUnit.MINUTES.toSeconds(10).toInt
 
   def getData = {
-    val result = fromCache(cacheRegion, computeSettings) { loadData (provider.computeContext(computeSettings).getComputeService) }
+    val result = fromCache(cacheRegion, computeSettings) {
+      val overrides = new java.util.Properties()
+      // amazon, alestic, canonical, and rightscale
+      overrides.setProperty(PROPERTY_EC2_AMI_OWNERS, "137112412989,063491364108,099720109477,411009282317")
+
+      loadData (provider.computeContext(computeSettings, Option(overrides)).getComputeService)
+    }
     filter.map ( f => result.filterKeys(_.matches(f)) ).getOrElse(result)
   }
 
