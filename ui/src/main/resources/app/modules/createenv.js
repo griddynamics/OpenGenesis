@@ -86,6 +86,7 @@ function(genesis, backend,  status, variables, gtemplates, Backbone, $) {
       $.when(templates.fetch({timeout: 10000})).always(function() { self.$el.hideLoading(); }).then(
         function success() {
           selectTemplateStep.bind("no-templates", self.handleNoTemplates, self);
+          selectTemplateStep.bind("only-template", self.nextStep, self);
           selectTemplateStep.render();
         },
         function fail() {
@@ -208,6 +209,8 @@ function(genesis, backend,  status, variables, gtemplates, Backbone, $) {
         view.$("input[name='select_template']:first").click();
         if(view.collection.length == 0) {
           view.trigger("no-templates");
+        } else if (view.collection.length == 1) {
+            view.trigger("only-template");
         }
       });
     }
