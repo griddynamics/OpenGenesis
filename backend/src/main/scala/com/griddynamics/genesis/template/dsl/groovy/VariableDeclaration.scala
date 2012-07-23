@@ -112,7 +112,7 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
         this
     }
 
-    def setDataSource(ds: InlineDataSource) {
+    def inlineDataSource(ds: InlineDataSource) {
       import collection.JavaConversions._
       val vars = ds.dependancyVars
       if(!vars.isEmpty) {
@@ -166,6 +166,17 @@ class DSAwareVariableBuilder(knownVars: ListBuffer[VariableBuilder],
                              projectId: Int,
                              varName: String,
                              dsObjSupport: Option[DSObjectSupport]) extends VariableBuilder(varName, dsObjSupport)  {
+
+  def setValidator(validator : Closure[Boolean]) {
+    this.validator(validator)
+  }
+
+  def setDataSource(ds: AnyRef) {
+    ds match {
+      case name: String => this.dataSource(name)
+      case inline: InlineDataSource => this.inlineDataSource(inline)
+    }
+  }
 
   override def invokeMethod(name: String, args: AnyRef) = {
     val factory = dSourceFactories.find(_.mode == name)
