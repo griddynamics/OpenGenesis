@@ -409,9 +409,12 @@ div.system-settings {
     background-color: rgb(242,242,242);
 }
 
-#bradcrumbs a {
+#breadcrumbs a {
     font-size: 14px;
+}
 
+#breadcrumbs a.brcr:hover span{
+    text-decoration: underline !important;
 }
 
 .small-crumbs {
@@ -579,7 +582,7 @@ table#env-settings-share #addSharebutton{
 
 table#env-main-settings td.first,
 table#env-settings-share td.first{
-	width:70px;
+	width:10%;
 	text-align:right;
 }
 
@@ -1081,7 +1084,13 @@ table .pre {
     border:none;
     cursor: pointer;
 }
+
 /*genesis specific jquery-ui styling */
+
+.ui-widget-overlay {
+    background: #777 none !important;
+    opacity: 0.7 !important;
+}
 
 .ui-button-text-only .ui-button-text { padding: .2em 1em !important; }
 
@@ -1171,6 +1180,9 @@ table .pre {
     border: none;
 }
 
+.ui-dialog.dialog-without-header {
+    box-shadow: 0 0 50px rgba(0,0,0,0.4);
+}
 
 .ui-dialog.error-notification-dialog .ui-dialog-content {
     padding-left: 5px;
@@ -1208,6 +1220,15 @@ table .pre {
     float: left;
 }
 /* end: genesis specific jquery-ui styling */
+
+#workflow-parameters-form label {
+    text-align: right;
+    padding-top: 5px;
+}
+
+#workflow-parameters-form input, #workflow-parameters-form select {
+    width: 95%;
+}
 
 .information-panel {
     border: 1px solid rgb(222,222,222);

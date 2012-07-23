@@ -1,0 +1,37 @@
+package groovy
+template {
+    name("InlineSources")
+    version("0.1")
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+    workflow("create") {
+        variables {
+            key = { description = "some key" }
+
+            list = {
+               description = "This has dependency on key"
+
+               dataSource = staticList {
+                  values = [ key ]
+               }
+            }
+
+            independant = {
+              description = "With inline datasource, but without dependency"
+              dataSource = staticList {
+                  values = [ 1, 2 ]
+              }
+
+            }
+        }
+
+        steps {
+        }
+    }
+
+    workflow("destroy") {
+        steps {
+        }
+    }
+}

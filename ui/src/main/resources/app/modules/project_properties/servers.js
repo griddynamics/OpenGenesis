@@ -152,8 +152,9 @@ function(genesis, status, Backbone, $) {
       return this.dialog || this.$("#dialog-confirm-delete").dialog({
         modal: true,
         title: 'Confirmation',
-        dialogClass: 'genesis-dialog',
-        width: 400,
+        dialogClass: 'dialog-without-header',
+        minHeight: 120,
+        width: 420,
         autoOpen: false
       });
     },
@@ -258,8 +259,9 @@ function(genesis, status, Backbone, $) {
       return this.dialog || this.$(".dialog-confirm-delete").dialog({
         modal: true,
         title: 'Delete server',
-        dialogClass: 'genesis-dialog',
-        width: 400,
+        dialogClass: 'dialog-without-header',
+        minHeight: 120,
+        width: 420,
         autoOpen: false
       });
     },

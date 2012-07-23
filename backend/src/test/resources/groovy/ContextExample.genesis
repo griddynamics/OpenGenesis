@@ -16,7 +16,7 @@ template {
             teststep {
                 phase = "phase2"
                 precedingPhases = ["phase1"]
-                text =   $("contextVar.text")
+                text =   { contextVar.text }
             }
         }
     }
