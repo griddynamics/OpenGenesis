@@ -23,9 +23,9 @@
 package com.griddynamics.genesis.model
 
 import org.squeryl.customtypes.StringField
-import com.griddynamics.genesis.model.EnvStatus.Requested
 import scala.Some
 import org.squeryl.Optimistic
+import com.griddynamics.genesis.model.EnvStatus.Busy
 
 class Environment(val name: String,
                   var status: EnvStatusField,
@@ -33,7 +33,7 @@ class Environment(val name: String,
                   val templateName: String,
                   var templateVersion: String,
                   val projectId: GenesisEntity.Id) extends EntityWithAttrs with Optimistic {
-    def this() = this ("", Requested(""), "", "", "", 0)
+    def this() = this ("", Busy(), "", "", "", 0)
 
     def copy() = {
         val env = new Environment(name, status, creator, templateName,
@@ -43,16 +43,16 @@ class Environment(val name: String,
     }
 
     def deploymentAttrs: Seq[DeploymentAttribute] = {
-      this.get(Environment.DeployemntAttr).getOrElse(Seq())
+      this.get(Environment.DeploymentAttr).getOrElse(Seq())
     }
 
     def deploymentAttrs_=(attrs: Seq[DeploymentAttribute]) {
-      this(Environment.DeployemntAttr)  = attrs
+      this(Environment.DeploymentAttr)  = attrs
     }
 }
 
 object Environment {
-  val DeployemntAttr = EntityAttr[Seq[DeploymentAttribute]]("deployment")
+  val DeploymentAttr = EntityAttr[Seq[DeploymentAttribute]]("deployment")
 
 }
 case class DeploymentAttribute(key: String, value: String, desc: String)

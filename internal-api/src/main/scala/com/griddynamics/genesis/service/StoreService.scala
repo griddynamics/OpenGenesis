@@ -62,6 +62,8 @@ trait StoreService {
 
     def updateEnv(env: Environment)
 
+    def resetEnvStatus(env: Environment): Option[Mistake]
+
     def updateWorkflow(w: Workflow)
 
     def createVm(vm: VirtualMachine): VirtualMachine

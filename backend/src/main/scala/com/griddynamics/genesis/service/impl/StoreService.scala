@@ -202,7 +202,7 @@ class StoreService extends service.StoreService {
   @Transactional
   def createEnv(env: Environment, workflow: Workflow) = {
     throwableToLeft {
-      env.status = EnvStatus.Requested(workflow.name)
+      env.status = EnvStatus.Busy()
       val cenv = GS.envs.insert(env)
       updateAttrs(cenv, GS.envAttrs)
 
@@ -219,6 +219,29 @@ class StoreService extends service.StoreService {
   def updateEnv(env: Environment) {
     GS.envs.update(env)
     updateAttrs(env, GS.envAttrs)
+  }
+
+  @Transactional
+  def resetEnvStatus(env: Environment) : Option[Mistake] = {
+    isActuallyBusy(env.name) match {
+      case true =>
+        Some(Mistake("Can't reset status of environment [%s] because some workflow is requested or executed".format(env.name)))
+      case false => {
+        env.status = EnvStatus.Ready()
+        updateEnv(env)
+        None
+      }
+    }
+  }
+
+  @Transactional(readOnly = true)
+  def isActuallyBusy(envName: String) = {
+    from(GS.envs, GS.workflows)((e, w) =>
+      where(e.name === envName and
+            e.id === w.envId and
+            (w.status === WorkflowStatus.Requested or w.status === WorkflowStatus.Executed))
+      select ((e, w))
+    ).headOption.isDefined
   }
 
   @Transactional
@@ -293,7 +316,7 @@ class StoreService extends service.StoreService {
     if (!isReadyForWorkflow(actualEnv.status))
       return Left(Mistake("Environment with status %s isn't ready for workflow request".format(env.status: EnvStatus)))
 
-    env.status = EnvStatus.Requested(workflow.name)
+    changeEnvStatus(env)
     workflow.status = WorkflowStatus.Requested
     try {
       updateEnv(env)
@@ -318,7 +341,7 @@ class StoreService extends service.StoreService {
   def startWorkflow(envName: String, projectId: Int) = {
     val (e, w) = retrieveWorkflow(envName, projectId)
     loadAttrs(e, GS.envAttrs)
-    e.status = EnvStatus.Executing(w.name)
+    changeEnvStatus(e)
     w.status = WorkflowStatus.Executed
     w.executionStarted = Some(new Timestamp(System.currentTimeMillis()))
 
@@ -430,12 +453,18 @@ class StoreService extends service.StoreService {
 }
 
 object StoreService {
-  def isReadyForWorkflow(status: EnvStatus) = {
-    status match {
-      case EnvStatus.Requested(_) => false
-      case EnvStatus.Destroyed() => false
-      case EnvStatus.Executing(_) => false
-      case _ => true
+    def isReadyForWorkflow(status: EnvStatus) = {
+        status match {
+            case EnvStatus.Busy() => false
+            case EnvStatus.Destroyed() => false
+            case _ => true
+        }
     }
-  }
+
+    def changeEnvStatus(env: Environment) = {
+        env.status = EnvStatusField.envStatusFieldToStatus(env.status) match {
+            case a @ EnvStatus.Broken() => a
+            case _ => EnvStatus.Busy()
+        }
+    }
 }

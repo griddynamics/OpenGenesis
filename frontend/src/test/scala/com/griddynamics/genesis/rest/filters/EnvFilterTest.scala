@@ -28,11 +28,11 @@ import com.griddynamics.genesis.model.EnvStatus
 class EnvFilterTest extends FunSuite {
 
   test("Correct filter values") {
-    val result = "statuses[ Ready  ,  Destroyed,Failed,  Executing,,, ]" match {
+    val result = "statuses[ Ready  ,  Destroyed,Broken,  Busy,,, ]" match {
       case EnvFilter(statuses @ _*) => statuses
       case _ => Seq.empty[EnvStatus]
     }
-    assert(result === Seq(EnvStatus.Ready(), EnvStatus.Destroyed(), EnvStatus.Failed(""), EnvStatus.Executing("")))
+    assert(result === Seq(EnvStatus.Ready(), EnvStatus.Destroyed(), EnvStatus.Broken(), EnvStatus.Busy()))
   }
 
   test("One filter value") {
@@ -48,7 +48,7 @@ class EnvFilterTest extends FunSuite {
   }
 
   test("Non-existent status value") {
-    assert(EnvFilter.unapplySeq("statuses[Ready,Non-existent,Failed,Executing]") === None)
+    assert(EnvFilter.unapplySeq("statuses[Ready,Non-existent,Failed,Busy]") === None)
   }
 
   test("Incorrect filter value") {

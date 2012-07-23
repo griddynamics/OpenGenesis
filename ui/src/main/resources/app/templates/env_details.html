@@ -1,6 +1,9 @@
 <div id="dialog-confirm" style="display: none; ">
     Are you sure you want to cancel environment workflow?
 </div>
+<div id="dialog-reset" style="display: none; ">
+    Are you sure that environment is not broken?
+</div>
 <div id="top-panel">
     <div id="page-title">Environment: <h1><%= environment.name %></h1></div>
     <div id="title-right">
@@ -8,15 +11,16 @@
 </div>
 <div id="management-panel">
 	<div id="buttons">
-    <% if (environment.statusValue !== "Destroyed") { %>
+    <% if (environment.status !== "Destroyed") { %>
         <a href="javascript:void(0)" class="button cancel-button" rel="Cancel"> <span> Cancel </span> </a>
         <% for(var i = 0, count = actions.length; i < count; i++) { var action = actions[i]; %>
             <a href="javascript:void(0)" class="button action-button" rel="<%= action.name %>"> <span> <%= action.name %> </span> </a>
         <% } %>
     <% } %>
+        <a href="javascript:void(0)" class="button reset-button" id="resetBtn" style="display: none;"> <span> Change env status to 'Ready' </span> </a>
     </div>
     <div id="right" class="env-status">
-    	 <img src="<%= statusImages[environment.statusValue] %>" class="status"> <%= environment.status %>
+    	 <img src="<%= statusImages[environment.status] %>" class="status"> <%= environment.status %>
     </div>
 </div>
 <div id="tab-panel">

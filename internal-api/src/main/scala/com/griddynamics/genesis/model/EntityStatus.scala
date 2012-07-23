@@ -25,29 +25,21 @@ package com.griddynamics.genesis.model
 sealed abstract class EnvStatus
 
 object EnvStatus {
-    case class Requested(workflow : String) extends EnvStatus
-
     case class Ready() extends EnvStatus
 
     case class Destroyed() extends EnvStatus
 
-    case class Executing(workflow : String) extends EnvStatus
+    case class Busy() extends EnvStatus
 
-    case class Canceled(workflow : String) extends EnvStatus
+    case class Broken() extends EnvStatus
 
-    case class Failed(workflow : String) extends EnvStatus
-
-    val active = Seq(Requested(""), Ready(), Executing(""), Canceled(""), Failed(""))
-
-    private val pattern = "^(.*)\\((.*)\\)$".r
+    val active = Seq(Ready(), Busy(), Broken())
 
     def fromString(input: String): Option[EnvStatus] = input match {
-        case pattern("Ready", "") => Some(Ready())
-        case pattern("Destroyed", "") => Some(Destroyed())
-        case pattern("Requested", workflow) => Some(Requested(workflow))
-        case pattern("Executing", workflow) => Some(Executing(workflow))
-        case pattern("Canceled", workflow) => Some(Canceled(workflow))
-        case pattern("Failed", workflow) => Some(Failed(workflow))
+        case "Ready()" => Some(Ready())
+        case "Destroyed()" => Some(Destroyed())
+        case "Busy()" => Some(Busy())
+        case "Broken()" => Some(Broken())
         case _ => None
     }
 }

@@ -78,6 +78,9 @@ class GenesisRestService(storeService: StoreService,
         broker.cancelWorkflow(envName, projectId)
     }
 
+    def resetEnvStatus(envName: String, projectId: Int) = {
+        broker.resetEnvStatus(envName, projectId)
+    }
 
     def isEnvExists(envName: String, projectId: Int): Boolean = {
       storeService.isEnvExist(projectId, envName)
@@ -213,9 +216,7 @@ object GenesisRestService {
 
     def envStatusDesc(status: EnvStatus) = {
         status match {
-            case EnvStatus.Ready() => "Ready"
-            case EnvStatus.Destroyed() => "Destroyed"
-            case s => s.toString
+            case s => s.getClass.getSimpleName
         }
     }
 
