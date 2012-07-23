@@ -234,8 +234,7 @@ function(genesis, backend,  status, variables, gtemplates, Backbone, $) {
         var desc = new gtemplates.TemplateModel({name: newTemplate.get('name'), version:  newTemplate.get('version')}, {projectId: this.project.id});
         genesis.app.trigger("page-view-loading-started");
         var self = this;
-        $.when(desc.fetch())
-        .done(function() {
+        $.when(desc.fetch()).done(function() {
           self.variables = desc.get('createWorkflow').variables;
           variables.processVars({
                   variables: desc.get('createWorkflow').variables,
@@ -260,7 +259,7 @@ function(genesis, backend,  status, variables, gtemplates, Backbone, $) {
       var vals = {};
       $('.workflow-variable').each(function () {
         var value = $(this).val();
-        if (value) {vals[$(this).attr('name')] = value;}
+        if (value) { vals[$(this).attr('name')] = value; }
       });
       return {
         envName: $("input[name='envName']").val(),

@@ -145,19 +145,6 @@ class StepBodiesCollector(variables: Map[String, AnyRef],
         (factory.stepName, (ListBuffer[Closure[Unit]](), factory))
     }).toMap
 
-
-    def $(evalExpression: String) = {
-     new ContextAccess {
-       def apply(context: scala.collection.Map[String, Any]) = {
-
-         val binding = new Binding()
-         context.foreach { case (key, value) => binding.setVariable(key, value) }
-         val shell = new GroovyShell(binding)
-         shell.evaluate(evalExpression)
-       }
-     }
-    }
-
     override def invokeMethod(name: String, args: AnyRef) = {
         val opt = closures.get(name)
         if (opt.isEmpty) super.invokeMethod(name, args)
@@ -263,14 +250,22 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
     }
 
     override def partial(variables: Map[String, Any]): Seq[VariableDescription] = {
-        val dependents = workflow.variables.filter(p => p.dependsOn.sorted == variables.keys.toList.sorted).
-          groupBy(_.name).map(_._2.head).toList
+        val appliedVars = variables.keys.toSet
 
-        val typedVars = variables.map(v => (v._1, convert(String.valueOf(v._2), workflow.variables.find(_.name == v._1)
-            .getOrElse(throw new RuntimeException("No such variable: " + v._1)))))
-        dependents.map(v => new VariableDescription(v.name, v.description, v.isOptional, null, v.valuesList.map(lambda => {
-            lambda.apply(typedVars)
-        }).getOrElse(Map()), if (v.dependsOn.isEmpty) None else Some(v.dependsOn.toList))).toSeq
+        val dependents = workflow.variables.filter(p => p.dependsOn.toSet.subsetOf(appliedVars))
+
+        val resolvedVariables = variables.map { case (varName, varValue) =>
+          val variableDetails = workflow.variables.find(_.name == varName).getOrElse(throw new RuntimeException("No such variable: " + varName))
+          val convertedValue = convert(String.valueOf(varValue), variableDetails)
+          (varName, convertedValue)
+        }
+
+        for(v <- dependents) yield {
+          val varPossibleValues: Map[String, String] = v.valuesList.map { lambda => lambda.apply(resolvedVariables) }.getOrElse(Map())
+          val dependsOn = if (v.dependsOn.isEmpty) None else Some(v.dependsOn.toList)
+
+          new VariableDescription(v.name, v.description, v.isOptional, null, varPossibleValues, dependsOn)
+        }
     }
 
 
@@ -336,10 +331,12 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
 
     val variableDescriptions = {
         for (variable <- workflow.variables) yield {
-            new VariableDescription(variable.name, variable.description, variable.isOptional, variable.defaultValue match {
-              case None => null
-              case Some(v) => String.valueOf(v)
-            }, variable.valuesList.map(_.apply(Map())).getOrElse(Map()), if (variable.dependsOn.isEmpty) None else Some(variable.dependsOn.toList))
+            val default  = variable.defaultValue.map(String.valueOf(_)).getOrElse(null)
+            val dependsOn = if (variable.dependsOn.isEmpty) None else Some(variable.dependsOn.toList)
+
+            val valueList: Map[String, String] = variable.valuesList.map(_.apply(Map())).getOrElse(Map())
+
+            new VariableDescription(variable.name, variable.description, variable.isOptional, default, valueList, dependsOn)
         }
     }
 

@@ -606,8 +606,9 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
         resizable: true,
         modal: true,
         title: 'Confirmation',
-        dialogClass: 'genesis-dialog',
-        width: 400,
+        dialogClass: 'dialog-without-header',
+        minHeight: 120,
+        width: 420,
         autoOpen: false,
         buttons: {
           "Yes": function () {
@@ -700,15 +701,23 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
     render: function() {
       var view = this;
       $.when(genesis.fetchTemplate(this.template)).done(function (tmpl) {
-        variables.processVars({variables: view.workflow.variables, projectId: view.projectId, workflowName: view.workflow.name, templateName: view.templateName, templateVersion: view.templateVersion});
+        variables.processVars({
+          variables: view.workflow.variables,
+          projectId: view.projectId,
+          workflowName: view.workflow.name,
+          templateName: view.templateName,
+          templateVersion: view.templateVersion
+        });
+
         genesis.app.trigger("page-view-loading-completed");
         view.$el.html(tmpl({variables: view.workflow.variables, workflowName: view.workflow.name}));
 
         view.$el.dialog({
           modal: true,
           title: 'Execute ' + view.workflow.name,
-          width: 600,
-          dialogClass: 'genesis-dialog',
+          width: _.size(view.workflow.variables) > 0 ? 600 : 400,
+          minHeight: 120,
+          dialogClass: 'dialog-without-header',
           buttons: {
             "Run": _.bind(view.runWorkflow, view),
 

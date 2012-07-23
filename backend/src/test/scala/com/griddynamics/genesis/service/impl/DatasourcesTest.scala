@@ -13,14 +13,26 @@ import com.griddynamics.genesis.repository.DatabagRepository
 import net.sf.ehcache.CacheManager
 
 class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
+
     val templateRepository = mock[TemplateRepository]
     val databagRepository = mock[DatabagRepository]
     val templateService = new GroovyTemplateService(templateRepository,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
         Seq(new ListVarDSFactory, new DependentListVarDSFactory, new NoArgsDSFactory), databagRepository, CacheManager.getInstance())
+
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/DataSources.genesis"))
-    Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
+    val bodyWithInlining = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/InlineDatasources.genesis"))
+
+    Mockito.when(templateRepository.listSources).thenReturn(
+      Map(
+        VersionedTemplate("DataSources", "0.1") -> body,
+        VersionedTemplate("InlineSources", "0.1") -> bodyWithInlining
+      )
+    )
+
     private def testTemplate = templateService.findTemplate(0, "DataSources", "0.1").get
+
+    private def testInlineTemplate = templateService.findTemplate(0, "InlineSources", "0.1").get
 
     @Before def setUp() {
       CacheManager.getInstance().clearAll()
@@ -100,11 +112,48 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
         val S1 = Map()
         expect(S1)(listDS1.get.values)
         val partial = template.createWorkflow.partial(Map("list" -> 13, "dependent" -> 'z', "nodesCount" -> 1))
-        assert(partial.length == 1)
+        assert(partial.length == 8)
         val descAfterApply = partial.find(_.name == "triple")
         assert(descAfterApply.isDefined)
         assert(! descAfterApply.get.values.isEmpty)
         expect(Map("1<13<1<z" -> "1", "3<13<1<z" -> "3", "4<13<1<z" -> "4"))(descAfterApply.get.values)
+    }
+
+    @Test def testInlineDSDeclarationWithDependency() {
+        implicit val projectId: Int = 1
+        val template = testInlineTemplate
+
+        val varDesc =  template.createWorkflow.variableDescriptions
+
+        val listDS1 = varDesc.find(_.name == "list")
+        assert(listDS1.isDefined)
+
+        expect(Map())(listDS1.get.values)
+        expect(Some(List("key")))(listDS1.get.dependsOn)
+
+        val partial = template.createWorkflow.partial(Map("key" -> 666))
+
+        val descAfterApply = partial.find(_.name == "list")
+        assert(descAfterApply.isDefined)
+        expect(Map("666" -> "666"))(descAfterApply.get.values)
+    }
+
+    @Test def testInlineDSDeclaration() {
+        implicit val projectId: Int = 1
+        val template = testInlineTemplate
+
+        val varDesc =  template.createWorkflow.variableDescriptions
+
+        val listDS1 = varDesc.find(_.name == "independant")
+        assert(listDS1.isDefined)
+
+        expect(None)(listDS1.get.dependsOn)
+
+        val partial = template.createWorkflow.partial(Map())
+
+        val descAfterApply = partial.find(_.name == "independant")
+        assert(descAfterApply.isDefined)
+        expect(Map("1" -> "1", "2" -> "2"))(descAfterApply.get.values)
     }
 }
 
