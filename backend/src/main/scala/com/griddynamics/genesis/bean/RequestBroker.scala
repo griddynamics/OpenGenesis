@@ -130,7 +130,7 @@ class RequestBrokerImpl(storeService: StoreService,
             return RR(serviceErrors = Map(RR.envName ->
                 "Failed to find workflow with name '%s' in environment '%s'".format(workflowName, envName)))
         }
-        validateWorkflow(twf.get, variables, envName) match {
+        validateWorkflow(twf.get, variables, envName, projectId) match {
             case Some(rr) => return rr
             case None =>
         }
@@ -171,8 +171,8 @@ class RequestBrokerImpl(storeService: StoreService,
 object RequestBrokerImpl {
     val envNameRegex = """^([a-zA-Z0-9]\w{2,63})$""".r
 
-    def validateWorkflow(workflow : service.WorkflowDefinition, variables: Map[String, Any], envName: String) = {
-        val validationResults = workflow.validate(variables, Option(envName))
+    def validateWorkflow(workflow : service.WorkflowDefinition, variables: Map[String, Any], envName: String, projectId: Int) = {
+        val validationResults = workflow.validate(variables, Option(envName), Option(projectId))
 
         if (!validationResults.isEmpty)
             Some(toRequestResult(validationResults))
