@@ -37,7 +37,7 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
   val itemsTable = GS.dataBagItems
 
   val availableDataBags = from(table, GS.projects) { (dataBag, project) =>
-    where(dataBag.projectId === project.id and project.isDeleted === false) select(dataBag)
+    where((dataBag.projectId === project.id and project.isDeleted === false) or dataBag.projectId.isNull) select(dataBag)
   }
   val availableDataBagItems = from(itemsTable, availableDataBags) { (item, dataBag) =>
     where(item.dataBagId === dataBag.id) select(item)
