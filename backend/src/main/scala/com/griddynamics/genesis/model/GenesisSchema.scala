@@ -116,6 +116,10 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
       project.isDeleted defaultsTo(false)
     ))
 
+    on(envs) (env => declare(
+      columns(env.name, env.projectId) are (unique)
+    ))
+
     on(credentials)(creds => declare(
       creds.id is (primaryKey, autoIncremented),
       columns(creds.cloudProvider, creds.pairName, creds.projectId) are (unique),

@@ -92,8 +92,9 @@ abstract class GenesisFlowCoordinatorBase(val envName: String,
             case _ => (Failed, EnvStatus.Failed(workflow.name))
         }
         workflow.status = workflowStatus
-        env.status = envStatus
-        storeService.finishWorkflow(env, workflow)
+        val updEnv = storeService.findEnv(env.id).get // updating optimistic lock counter
+        updEnv.status = envStatus
+        storeService.finishWorkflow(updEnv, workflow)
     }
 
     def onStepFinish(result: StepResult) = result match {
