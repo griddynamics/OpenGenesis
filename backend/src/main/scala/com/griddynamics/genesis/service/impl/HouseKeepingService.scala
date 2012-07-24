@@ -59,7 +59,7 @@ class DefaultHousekeepingService extends HousekeepingService {
     )
 
     envWithFlow.iterator.foreach { case (envId, workflowName)  =>
-      val status: EnvStatusField = EnvStatus.Failed(workflowName)
+      val status: EnvStatusField = EnvStatus.Broken()
       update(GS.envs) ( env =>
         where ( env.id === envId )
           set ( env.status.value := status.value )
