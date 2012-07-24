@@ -32,16 +32,6 @@ import com.griddynamics.genesis.util.Logging
 trait SshServerFlexCredentials extends Logging {
     def env: Environment
     def sshService: SshService
-    def credentials: Option[Credentials]
     def server: EnvResource
-    lazy val sshClient: SshClient = credentials match {
-        case s@Some(c) => {
-            log.debug("Using provided keys")
-            sshService.sshClient(server, s)
-        }
-        case _ => {
-            log.debug("Using predefined keys")
-            sshService.sshClient(env, server)
-        }
-    }
+    lazy val sshClient: SshClient = sshService.sshClient(env, server)
 }

@@ -84,7 +84,7 @@ object Account {
 }
 
 @Configuration
-@GenesisPlugin(id = "jclouds", description = "jclouds plugin")
+@GenesisPlugin(id = "jclouds", description = "Default cloud account settings")
 class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache {
 
   val computeContextRegion = "computeServiceContexts"
