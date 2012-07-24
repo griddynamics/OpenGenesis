@@ -77,8 +77,8 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
   override def update(entity: DataBag) = saveItems(super.update(entity), entity.items)
 
   private[this] def saveItems(bag: DataBag, items: Option[Seq[DataItem]]): DataBag = {
-    items.foreach { updateItems(bag.id.get, _) }
-    bag.copy(items = items)
+    val persistedItems = items.map { updateItems(bag.id.get, _) }
+    bag.copy(items = persistedItems )
   }
 
   @Transactional(readOnly = true)
@@ -100,12 +100,13 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
   )
 
   @Transactional
-  def updateItems(bagId: Int, items: Seq[api.DataItem]) {
+  def updateItems(bagId: Int, items: Seq[api.DataItem]): Seq[api.DataItem] = {
     itemsTable.deleteWhere(item => item.dataBagId === bagId)
     val entitites: Seq[model.DataBagItem] = items.map {  it =>
       convertItem(bagId, it)
     }
     itemsTable.insert(entitites)
+    items.map (_.copy(dataBagId = bagId))
   }
 
   @Transactional(readOnly = true)
