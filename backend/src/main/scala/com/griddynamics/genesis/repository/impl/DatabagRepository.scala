@@ -34,12 +34,13 @@ import org.squeryl.dsl.ast.BinaryOperatorNodeLogicalBoolean
 class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.DataBag](GS.dataBags)
   with repository.DatabagRepository {
 
-  val itemsTable = GS.dataBagItems
+  private val itemsTable = GS.dataBagItems
 
-  val availableDataBags = from(table, GS.projects) { (dataBag, project) =>
-    where((dataBag.projectId === project.id and project.isDeleted === false) or dataBag.projectId.isNull) select(dataBag)
-  }
-  val availableDataBagItems = from(itemsTable, availableDataBags) { (item, dataBag) =>
+  private val availableDataBags = join(table, GS.projects.leftOuter) ( (dataBag, project) =>
+    select(dataBag)
+    on(dataBag.projectId.isNull or (dataBag.projectId === project.map(_.id) and project.map(_.isDeleted) === Some(false)))
+  )
+  private val availableDataBagItems = from(itemsTable, availableDataBags) { (item, dataBag) =>
     where(item.dataBagId === dataBag.id) select(item)
   }
 
