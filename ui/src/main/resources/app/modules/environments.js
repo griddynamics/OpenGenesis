@@ -37,7 +37,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
         "statuses" : {
           "busy" : { "visible" : true, "name" : "Busy" },
           "ready" : { "visible" : true, "name" : "Ready" },
-          "destroyed" : { "visible" : true, "name" : "Destroyed" },
+          "destroyed" : { "visible" : false, "name" : "Destroyed" },
           "broken" : { "visible" : true, "name" : "Broken" }
         }
       };
