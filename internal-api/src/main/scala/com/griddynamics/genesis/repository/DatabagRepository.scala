@@ -1,6 +1,7 @@
 package com.griddynamics.genesis.repository
 
 import com.griddynamics.genesis.api.{DataItem, DataBag}
+import com.griddynamics.genesis.api
 
 trait DatabagRepository extends Repository[DataBag]{
 
@@ -10,7 +11,7 @@ trait DatabagRepository extends Repository[DataBag]{
 
   def deleteItem(bagId: Int, keys: List[String]): Int
 
-  def updateItems(bagId: Int, items: Seq[DataItem])
+  def updateItems(bagId: Int, items: Seq[DataItem]): Seq[api.DataItem]
 
   def findByName(name: String, projectId: Option[Int] = None): Option[DataBag]
 
