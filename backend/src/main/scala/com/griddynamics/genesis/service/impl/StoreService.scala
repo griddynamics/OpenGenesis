@@ -26,6 +26,7 @@ import org.squeryl.PrimitiveTypeMode._
 import com.griddynamics.genesis.service
 import com.griddynamics.genesis.model.{GenesisSchema => GS}
 import com.griddynamics.genesis.model._
+import com.griddynamics.genesis.model.EnvStatus._
 import com.griddynamics.genesis.common.Mistake
 import com.griddynamics.genesis.common.Mistake.throwableToLeft
 import org.springframework.transaction.annotation.{Isolation, Propagation, Transactional}
@@ -61,7 +62,7 @@ class StoreService extends service.StoreService {
   @Transactional(readOnly = true)
   def listEnvs(projectId: Int, statuses: Seq[EnvStatus]): Seq[Environment] =
     listEnvs(projectId).filter( env => {
-      statuses.map(_.getClass).contains(EnvStatusField.envStatusFieldToStatus(env.status).getClass)
+      statuses.contains(env.status)
     })
 
   @Transactional(readOnly = true)
@@ -202,7 +203,7 @@ class StoreService extends service.StoreService {
   @Transactional
   def createEnv(env: Environment, workflow: Workflow) = {
     throwableToLeft {
-      env.status = EnvStatus.Busy()
+      env.status = EnvStatus.Busy
       val cenv = GS.envs.insert(env)
       updateAttrs(cenv, GS.envAttrs)
 
@@ -223,25 +224,19 @@ class StoreService extends service.StoreService {
 
   @Transactional
   def resetEnvStatus(env: Environment) : Option[Mistake] = {
-    isActuallyBusy(env.name) match {
-      case true =>
-        Some(Mistake("Can't reset status of environment [%s] because some workflow is requested or executed".format(env.name)))
-      case false => {
-        env.status = EnvStatus.Ready()
-        updateEnv(env)
-        None
-      }
-    }
-  }
+    lazy val mistake = Some(Mistake("Can't reset status of environment [%s] because it's not in 'Broken' state".format(env.name)))
 
-  @Transactional(readOnly = true)
-  def isActuallyBusy(envName: String) = {
-    from(GS.envs, GS.workflows)((e, w) =>
-      where(e.name === envName and
-            e.id === w.envId and
-            (w.status === WorkflowStatus.Requested or w.status === WorkflowStatus.Executed))
-      select ((e, w))
-    ).headOption.isDefined
+    env.status match {
+      case EnvStatus.Broken => {
+        val updatedRowCount = update(GS.envs)(e =>
+          where(e.id === env.id and
+                e.status === EnvStatus.Broken)
+          set(e.status := EnvStatus.Ready)
+        )
+        if (updatedRowCount != 1) mistake else None
+      }
+      case _ => mistake
+    }
   }
 
   @Transactional
@@ -316,7 +311,7 @@ class StoreService extends service.StoreService {
     if (!isReadyForWorkflow(actualEnv.status))
       return Left(Mistake("Environment with status %s isn't ready for workflow request".format(env.status: EnvStatus)))
 
-    changeEnvStatus(env)
+    env.status = EnvStatus.Busy
     workflow.status = WorkflowStatus.Requested
     try {
       updateEnv(env)
@@ -341,7 +336,7 @@ class StoreService extends service.StoreService {
   def startWorkflow(envName: String, projectId: Int) = {
     val (e, w) = retrieveWorkflow(envName, projectId)
     loadAttrs(e, GS.envAttrs)
-    changeEnvStatus(e)
+    e.status = EnvStatus.Busy
     w.status = WorkflowStatus.Executed
     w.executionStarted = Some(new Timestamp(System.currentTimeMillis()))
 
@@ -455,16 +450,9 @@ class StoreService extends service.StoreService {
 object StoreService {
     def isReadyForWorkflow(status: EnvStatus) = {
         status match {
-            case EnvStatus.Busy() => false
-            case EnvStatus.Destroyed() => false
+            case EnvStatus.Busy => false
+            case EnvStatus.Destroyed => false
             case _ => true
-        }
-    }
-
-    def changeEnvStatus(env: Environment) = {
-        env.status = EnvStatusField.envStatusFieldToStatus(env.status) match {
-            case a @ EnvStatus.Broken() => a
-            case _ => EnvStatus.Busy()
         }
     }
 }

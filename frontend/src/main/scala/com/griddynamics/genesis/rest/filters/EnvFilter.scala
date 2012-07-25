@@ -23,6 +23,7 @@
 package com.griddynamics.genesis.rest.filters
 
 import com.griddynamics.genesis.model.EnvStatus
+import com.griddynamics.genesis.model.EnvStatus.EnvStatus
 
 object EnvFilter {
 
@@ -34,7 +35,7 @@ object EnvFilter {
       case Some(seq) => {
         val statuses: Seq[String] = splitPattern.split(seq(0))
         val statOptions: Seq[Option[EnvStatus]] = statuses.filter(_.length > 0).map(status =>
-          EnvStatus.fromString(status.trim + "()")
+          EnvStatus.fromString(status.trim)
         )
         if (statOptions.contains(None)) None else Some(statOptions.flatten)
       }

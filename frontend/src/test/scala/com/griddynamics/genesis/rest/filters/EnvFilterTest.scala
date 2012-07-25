@@ -24,6 +24,7 @@ package com.griddynamics.genesis.rest.filters
 
 import org.scalatest.FunSuite
 import com.griddynamics.genesis.model.EnvStatus
+import com.griddynamics.genesis.model.EnvStatus.EnvStatus
 
 class EnvFilterTest extends FunSuite {
 
@@ -32,7 +33,7 @@ class EnvFilterTest extends FunSuite {
       case EnvFilter(statuses @ _*) => statuses
       case _ => Seq.empty[EnvStatus]
     }
-    assert(result === Seq(EnvStatus.Ready(), EnvStatus.Destroyed(), EnvStatus.Broken(), EnvStatus.Busy()))
+    assert(result === Seq(EnvStatus.Ready, EnvStatus.Destroyed, EnvStatus.Broken, EnvStatus.Busy))
   }
 
   test("One filter value") {
@@ -40,7 +41,7 @@ class EnvFilterTest extends FunSuite {
       case EnvFilter(statuses @ _*) => statuses
       case _ => Seq.empty[EnvStatus]
     }
-    assert(result === Seq(EnvStatus.Destroyed()))
+    assert(result === Seq(EnvStatus.Destroyed))
   }
 
   test("Empty filter value") {

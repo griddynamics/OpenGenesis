@@ -73,7 +73,7 @@ class RequestBrokerImpl(storeService: StoreService,
             case None =>
         }
 
-        val env = new Environment(envName, EnvStatus.Busy(),
+        val env = new Environment(envName, EnvStatus.Busy,
                                   envCreator, templateName, templateVersion, projectId)
         val workflow = new Workflow(env.id, twf.name,
                                     WorkflowStatus.Requested, 0, 0, variables, None)
@@ -156,14 +156,14 @@ class RequestBrokerImpl(storeService: StoreService,
             case Right(e) => e
             case Left(rr) => return rr
         }
-        EnvStatusField.envStatusFieldToStatus(env.status) match {
-            case EnvStatus.Broken() => {
+        env.status match {
+            case EnvStatus.Broken => {
                 storeService.resetEnvStatus(env) match {
-                    case Some(m) => RR(compoundVariablesErrors = Seq(m.toString))
+                    case Some(m) => RR(compoundServiceErrors = Seq(m.toString))
                     case _ => RR(isSuccess = true)
                 }
             }
-            case _ => RR(compoundVariablesErrors = Seq("Environment is not in 'Broken' state"))
+            case _ => RR(compoundServiceErrors = Seq("Environment is not in 'Broken' state"))
         }
     }
 

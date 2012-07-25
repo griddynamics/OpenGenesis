@@ -25,6 +25,7 @@ package com.griddynamics.genesis.service
 import java.lang.RuntimeException
 import com.griddynamics.genesis.common.Mistake
 import com.griddynamics.genesis.model._
+import com.griddynamics.genesis.model.EnvStatus._
 import com.griddynamics.genesis.model.WorkflowStepStatus._
 
 trait StoreService {

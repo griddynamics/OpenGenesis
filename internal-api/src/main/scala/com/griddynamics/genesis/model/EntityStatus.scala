@@ -22,25 +22,20 @@
  */
 package com.griddynamics.genesis.model
 
-sealed abstract class EnvStatus
+object EnvStatus extends Enumeration {
+    type EnvStatus = Value
 
-object EnvStatus {
-    case class Ready() extends EnvStatus
+    val Busy = Value(0, "Busy")
+    val Ready = Value(1, "Ready")
+    val Broken = Value(2, "Broken")
+    val Destroyed = Value(3, "Destroyed")
 
-    case class Destroyed() extends EnvStatus
+    val active = Seq(Ready, Busy, Broken)
 
-    case class Busy() extends EnvStatus
-
-    case class Broken() extends EnvStatus
-
-    val active = Seq(Ready(), Busy(), Broken())
-
-    def fromString(input: String): Option[EnvStatus] = input match {
-        case "Ready()" => Some(Ready())
-        case "Destroyed()" => Some(Destroyed())
-        case "Busy()" => Some(Busy())
-        case "Broken()" => Some(Broken())
-        case _ => None
+    def fromString(input: String): Option[EnvStatus] = try {
+      Some(EnvStatus.withName(input))
+    } catch {
+      case e: NoSuchElementException => None
     }
 }
 
