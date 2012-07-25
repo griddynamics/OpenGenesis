@@ -31,14 +31,19 @@ class LoggerActor(val service: StoreService) extends Actor with Logging {
     case Log(id, message) => {
       service.writeLog(id, message)
     }
+    case ActionBasedLog(actionUUID, message) => {
+      service.writeLog(actionUUID, message)
+    }
   }
 }
 
 case class Log(stepId : Int, message: String)
 
+case class ActionBasedLog(actionUID: String, message: String)
+
 trait InternalLogger {
    def stepId : Int
-   def writeLog(message : String) = {
+   def writeLog(message : String) {
        LoggerWrapper.writeLog(stepId, message)
    }
 }
@@ -52,6 +57,12 @@ object LoggerWrapper extends Logging {
         loggerRef.start()
       }
       case false =>
+    }
+  }
+
+  def writeLog(actionUUID: String, message: String) {
+    Actor.registry.actorsFor(classOf[LoggerActor]).foreach {
+      _ ! ActionBasedLog(actionUUID, message)
     }
   }
 

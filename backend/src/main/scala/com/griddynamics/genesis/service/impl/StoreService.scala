@@ -373,6 +373,12 @@ class StoreService extends service.StoreService {
   }
 
   @Transactional
+  def writeLog(actionUUID: String, message: String) {
+    val stepID = from(GS.actionTracking)((action) => where (action.actionUUID === actionUUID) select(action.workflowStepId)).headOption
+    stepID.foreach { id => writeLog(id, message) }
+  }
+
+  @Transactional
   def getLogs(stepId: Int) : Seq[StepLogEntry] = {
     from(GS.logs)((log) =>
       where(log.stepId === stepId)

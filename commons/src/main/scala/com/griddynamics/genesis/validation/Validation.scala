@@ -53,6 +53,8 @@ object Validation {
                                   "dots, hyphens and underscores. Length must be from 2 to 32"
     val emailErrorMessage = "Invalid format. Note that only lowercase letters are allowed"
 
+    val validADName = "^[^%<>]*$"
+
     def mustMatch[C](obj: C, fieldName: String, error : String = "Invalid format")(pattern: Regex)(value: String) : ExtendedResult[C] = {
         value match {
             case pattern(s) => Success(obj)

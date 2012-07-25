@@ -34,6 +34,7 @@ import com.griddynamics.genesis.groups.GroupService
 import com.griddynamics.genesis.api.RequestResult
 import org.springframework.beans.factory.annotation.Autowired
 import java.net.URLDecoder
+import com.griddynamics.genesis.validation.Validation
 
 @Controller
 @RequestMapping(Array("/rest"))
@@ -92,12 +93,22 @@ class RolesController(authorityService: AuthorityService, projectAuthorityServic
     }
     val grantsMap = extractParamsMap(request)
 
+    val groups = extractListValue("groups", grantsMap)
+    val users = extractListValue("users", grantsMap)
+
+    val invalidUsers = users.filterNot(_.matches(Validation.validADName))
+    if(!invalidUsers.isEmpty) {
+      return RequestResult(isSuccess = false, compoundServiceErrors = invalidUsers.map("Username [%s] is not valid. <,>,%% - are not alowed".format(_) ))
+    }
+    val invalidGroups = groups.filterNot(_.matches(Validation.validADName))
+    if(!invalidGroups.isEmpty) {
+      return RequestResult(isSuccess = false, compoundServiceErrors = invalidGroups.map("Group name [%s] is not valid. <,>,%% - are not alowed".format(_) ))
+    }
+
     // sometimes special symbols are escaped by js component.
     // In this case double backslashes should be removed too
-    val groups = extractListValue("groups", grantsMap) map RolesController.unescapeAndReplace
-    val users = extractListValue("users", grantsMap) map RolesController.unescapeAndReplace
-    validUsers(users) {
-      validGroups (groups) {
+    validUsers(users map RolesController.unescapeAndReplace) {
+      validGroups (groups  map RolesController.unescapeAndReplace) {
         authorityService.updateAuthority(roleName, groups.distinct, users.distinct)
       }
     }
