@@ -27,7 +27,7 @@ import com.griddynamics.genesis.users.GenesisRole
 
 trait ProjectAuthorityService {
   def projectAuthorities: Iterable[GenesisRole.Value]
-  def updateProjectAuthority(projectId: Int, roleName: GenesisRole.Value, users: List[String], groups: List[String]): RequestResult
+  def updateProjectAuthority(projectId: Int, roleName: GenesisRole.Value, users: List[String], groups: List[String]): ExtendedResult[_]
   def getProjectAuthority(projectId: Int, authorityName: GenesisRole.Value): ExtendedResult[(Iterable[String], Iterable[String])]
   def isUserProjectAdmin(username: String, groups: Iterable[String]): Boolean
   def getGrantedAuthorities(projectId: Int, username: String, grantedAuthorities: Iterable[String]): List[GenesisRole.Value]

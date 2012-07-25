@@ -5,13 +5,15 @@ import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
 import com.griddynamics.genesis.service.impl.ProjectService
-import com.griddynamics.genesis.api.{Success, ExtendedResult, RequestResult, Project}
+import com.griddynamics.genesis.api._
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.Authentication
 import com.griddynamics.genesis.users.GenesisRole
 import org.springframework.beans.factory.annotation.Value
 import com.griddynamics.genesis.service.ProjectAuthorityService
 import com.griddynamics.genesis.validation.Validation
+import scala.Some
+import com.griddynamics.genesis.api.Project
 
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
@@ -103,7 +105,7 @@ class ProjectsController(projectService: ProjectService, authorityService: Proje
   def updateProjectRole(@PathVariable("projectId") projectId: Int,
                         @PathVariable("roleName") roleName: String,
                         request: HttpServletRequest,
-                        response: HttpServletResponse): RequestResult = {
+                        response: HttpServletResponse): ExtendedResult[_] = {
     import RolesController._
     assertProjectExists(projectId)
 
@@ -112,12 +114,12 @@ class ProjectsController(projectService: ProjectService, authorityService: Proje
     val groups = GenesisRestController.extractListValue("groups", paramsMap)
 
     val invalidUsers = users.filterNot(_.matches(Validation.validADName))
-    if(!invalidUsers.isEmpty) {
-      return RequestResult(isSuccess = false, compoundServiceErrors = invalidUsers.map("Username [%s] is not valid. <,>,%%- are not alowed".format(_) ))
+    if(invalidUsers.nonEmpty) {
+      return Failure(compoundServiceErrors = invalidUsers.map("Username [%s] is not valid. <,>,%% - are not allowed. Must be non-empty".format(_) ))
     }
     val invalidGroups = groups.filterNot(_.matches(Validation.validADName))
-    if(!invalidGroups.isEmpty) {
-      return RequestResult(isSuccess = false, compoundServiceErrors = invalidGroups.map("Group name [%s] is not valid. <,>,%% - are not alowed".format(_) ))
+    if(invalidGroups.nonEmpty) {
+      return Failure(compoundServiceErrors = invalidGroups.map("Group name [%s] is not valid. <,>,%% - are not allowed. Must be non-empty".format(_) ))
     }
 
     authorityService.updateProjectAuthority(projectId,
