@@ -143,6 +143,10 @@ class EnvironmentsController(genesisService: GenesisService) extends RestApiExce
         genesisService.requestWorkflow(env, projectId, workflow, extractVariables(parameters))
       }
 
+      case "resetEnvStatus" => {
+        genesisService.resetEnvStatus(env, projectId)
+      }
+
       case _ => throw new InvalidInputException ()
     }
   }
