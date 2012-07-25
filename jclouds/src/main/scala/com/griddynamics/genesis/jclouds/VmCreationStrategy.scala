@@ -61,7 +61,11 @@ class DefaultVmCreationStrategy(nodeNamePrefix: String, pluginContext: ComputeSe
 
   def createVm(env: Environment, vm: VirtualMachine): VmMetadataFuture = {
     val nodes = computeService.createNodesInGroup(group(env, vm), 1, template(env, vm))
-    new DefaultVmMetadataFuture(nodes.headOption.map(_.getId).get)
+
+    val instanceId = nodes.headOption.map(_.getId).get
+    vm.instanceId = Option(instanceId)
+
+    new DefaultVmMetadataFuture(instanceId)
   }
 
   protected def template(env: Environment, vm: VirtualMachine) = {

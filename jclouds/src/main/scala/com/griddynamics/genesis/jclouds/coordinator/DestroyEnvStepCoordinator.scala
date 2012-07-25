@@ -29,7 +29,7 @@ import com.griddynamics.genesis.workflow.action.{ExecutorInterrupt, ExecutorThro
 import com.griddynamics.genesis.jclouds.step.{DestroyEnv => DestroyEnvStep}
 import com.griddynamics.genesis.actions.provision.{VmDestroyed, DestroyVmAction}
 import com.griddynamics.genesis.jclouds.JCloudsProvisionContext
-import com.griddynamics.genesis.model.VirtualMachine
+import com.griddynamics.genesis.model.{VmStatus, VirtualMachine}
 
 class DestroyEnvStepCoordinator(val step: DestroyEnvStep,
                                 context: StepExecutionContext,
@@ -68,5 +68,5 @@ class DestroyEnvStepCoordinator(val step: DestroyEnvStep,
 
   def onStepInterrupt(signal: Signal) = Seq()
 
-  def onStepStart() = for (vm <- context.virtualMachines ) yield DestroyVmAction(vm)
+  def onStepStart() = for (vm <- context.virtualMachines if vm.status != VmStatus.Destroyed) yield DestroyVmAction(vm)
 }

@@ -27,22 +27,28 @@ import com.griddynamics.genesis.model.ActionTrackingStatus
 
 /* Marker trait for any particular action */
 trait Action {
-    def desc = getClass.getSimpleName.replaceAll(
-      String.format("%s|%s|%s",        // PascalCaseName  -> Pascal Case Name
-        "(?<=[A-Z])(?=[A-Z][a-z])",
-        "(?<=[^A-Z])(?=[A-Z])",
-        "(?<=[A-Za-z])(?=[^A-Za-z])"
-      ),
-      " ")
+    def desc = DefaultDescription.toString(this)
 
     final val uuid = util.UUID.randomUUID().toString
 }
 
 /* Base trait for result of particular action */
 trait ActionResult {
-    val action: Action
-    def desc = getClass.getSimpleName
+    def action: Action
+
+    def desc = DefaultDescription.toString(this)
+
     def outcome: ActionTrackingStatus.ActionStatus = ActionTrackingStatus.Succeed
+}
+
+object DefaultDescription {
+  def toString(obj: AnyRef) = obj.getClass.getSimpleName.replaceAll(
+    String.format("%s|%s|%s", // PascalCaseName  -> Pascal Case Name
+      "(?<=[A-Z])(?=[A-Z][a-z])",
+      "(?<=[^A-Z])(?=[A-Z])",
+      "(?<=[A-Za-z])(?=[^A-Za-z])"
+    ),
+    " ")
 }
 
 trait ActionFailed extends ActionResult {

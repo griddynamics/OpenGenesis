@@ -23,9 +23,10 @@
 package com.griddynamics.genesis.workflow
 
 import com.griddynamics.genesis.util.Logging
-import java.util.concurrent.{Future, Callable, ExecutorService}
+import java.util.concurrent.{TimeUnit, Future, Callable, ExecutorService}
 import java.util.concurrent.atomic.AtomicReference
 import com.griddynamics.genesis.workflow.signal.Success
+import com.griddynamics.genesis.logging.LoggerWrapper
 
 /* Base trait for classes for particular actions executors */
 trait ActionExecutor {
@@ -119,10 +120,11 @@ trait SimpleSyncActionExecutor extends SimpleActionExecutor with SyncActionExecu
 /* Async executor that may be timed out */
 trait AsyncTimeoutAwareActionExecutor extends AsyncActionExecutor {
     /* Timeout value in milliseconds */
-    val timeoutMillis : Long
+    def timeoutMillis : Long
 
     /* Called after timeout when getResult returned None */
     def getResultOnTimeout : ActionResult
+
 }
 
 /* Trait to mixin in AsyncTimeoutAwareActionExecutor
@@ -141,12 +143,15 @@ trait DurationLimitedActionExecutor extends AsyncTimeoutAwareActionExecutor with
         startTimeNanos = java.lang.System.nanoTime()
         super.startAsync()
     }
-    
+
+    def timeoutDescription = "WARNING: Action '%s' timed out. Time out was set to [%d seconds]".format(action.desc, TimeUnit.MILLISECONDS.toSeconds(timeoutMillis).toInt)
+
     abstract override def getResult() = {
         (super.getResult(), isTimedOut) match {
             case (Some(ar), _) => Some(ar)
             case (None, false) => None
             case (None, true) => {
+                LoggerWrapper.writeLog(action.uuid, timeoutDescription)
                 log.debug("action '%s' is timed out, limit: %dmsec", action, timeoutMillis)
                 Some(getResultOnTimeout)
             }
