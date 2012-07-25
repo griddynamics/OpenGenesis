@@ -25,7 +25,6 @@ package com.griddynamics.genesis.bean
 import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.api.{RequestResult => RR}
 import com.griddynamics.genesis.service
-import service.ValidationError
 import service.{ValidationError, TemplateService, StoreService}
 import scala.Left
 import scala.Some
@@ -41,6 +40,8 @@ trait RequestBroker {
     def destroyEnv(envName: String, projectId: Int, variables: Map[String, String]) : RR
 
     def cancelWorkflow(envName : String, projectId: Int)
+
+    def resetEnvStatus(envName: String, projectId: Int) : RR
 }
 
 class RequestBrokerImpl(storeService: StoreService,
@@ -72,7 +73,7 @@ class RequestBrokerImpl(storeService: StoreService,
             case None =>
         }
 
-        val env = new Environment(envName, EnvStatus.Requested(twf.name),
+        val env = new Environment(envName, EnvStatus.Busy,
                                   envCreator, templateName, templateVersion, projectId)
         val workflow = new Workflow(env.id, twf.name,
                                     WorkflowStatus.Requested, 0, 0, variables, None)
@@ -148,6 +149,22 @@ class RequestBrokerImpl(storeService: StoreService,
 
     def cancelWorkflow(envName : String, projectId: Int) {
         dispatcher.cancelWorkflow(envName, projectId)
+    }
+
+    def resetEnvStatus(envName: String, projectId: Int) : RR = {
+        val env = findEnv(envName, projectId) match {
+            case Right(e) => e
+            case Left(rr) => return rr
+        }
+        env.status match {
+            case EnvStatus.Broken => {
+                storeService.resetEnvStatus(env) match {
+                    case Some(m) => RR(compoundServiceErrors = Seq(m.toString))
+                    case _ => RR(isSuccess = true)
+                }
+            }
+            case _ => RR(compoundServiceErrors = Seq("Environment is not in 'Broken' state"))
+        }
     }
 
     def findEnv(envName : String, projectId: Int) : Either[RR, Environment] = {

@@ -25,6 +25,7 @@ package com.griddynamics.genesis.service
 import java.lang.RuntimeException
 import com.griddynamics.genesis.common.Mistake
 import com.griddynamics.genesis.model._
+import com.griddynamics.genesis.model.EnvStatus._
 import com.griddynamics.genesis.model.WorkflowStepStatus._
 
 trait StoreService {
@@ -61,6 +62,8 @@ trait StoreService {
     def createEnv(env: Environment, workflow: Workflow): Either[Mistake, (Environment, Workflow)]
 
     def updateEnv(env: Environment)
+
+    def resetEnvStatus(env: Environment): Option[Mistake]
 
     def updateWorkflow(w: Workflow)
 
