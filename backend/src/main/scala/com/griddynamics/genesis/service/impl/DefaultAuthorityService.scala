@@ -105,6 +105,6 @@ class DefaultAuthorityService extends AuthorityService {
     userAuthorities.deleteWhere(auth => auth.authority === authorityName)
     groups.foreach(group => groupAuthorities.insert(new Authority(group, authorityName)))
     usernames.foreach(user => userAuthorities.insert(new Authority(user, authorityName)))
-    new RequestResult(isSuccess = true)
+    Success(None)
   }
 }
