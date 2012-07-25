@@ -26,23 +26,28 @@ import com.griddynamics.genesis.build.{BuildResult, BuildProvider, BuildSpecific
 import java.io.InputStream
 import xml.{Elem, XML}
 import com.griddynamics.genesis.jenkins.api.{JenkinsRemoteApi, JenkinsConnectSpecification}
+import com.griddynamics.genesis.util.Logging
 
-class JenkinsBuildProvider(val specification: JenkinsConnectSpecification) extends BuildProvider {
+class JenkinsBuildProvider(var specification: JenkinsConnectSpecification) extends BuildProvider with Logging {
 
-  val api = new JenkinsRemoteApi(specification)
+  var api = new JenkinsRemoteApi(specification)
 
   override val mode = "jenkins"
   var next: Int = _
   var buildSpec: BuildSpecification = _
 
   override def build(values: Map[String, String]) {
+    if(values.contains("url")) {
+      this.specification = new JenkinsConnectSpecification(values("url"), values.get("username"), values.get("password"))
+      this.api = new JenkinsRemoteApi(specification)
+    }
     doBuild(Specifications(values))
   }
 
   def doBuild(spec: BuildSpecification) {
     buildSpec = spec
-    val nb: (Int, Int) = nextBuild(spec)
-    next = nb._2
+    val (lastBuild, nextBuildNum) = nextBuild(spec)
+    next = nextBuildNum
     api.postNoResult(specification.buildUrl(spec.projectName))
   }
 
@@ -50,15 +55,20 @@ class JenkinsBuildProvider(val specification: JenkinsConnectSpecification) exten
     try {
       val result: JenkinsBuildResult = jobStatus(buildSpec, next)
       result match {
-        case r@JenkinsBuildResult(false, _, _) => None
-        case r@JenkinsBuildResult(true, _, _) => Some(r)
+        case r@JenkinsBuildResult(_, false, _) => None
+        case r@JenkinsBuildResult(_, true, _) => Some(r)
       }
     } catch {
-      case e => None
+      case e: Exception => {
+        log.warn(e, "Couldn't query job status")
+        None
+      }
     }
   }
 
-  def cancel() {}
+  def cancel() {
+    api.postNoResult(specification.stopBuildUrl(buildSpec.projectName, next))
+  }
 
   def nextBuild(spec: BuildSpecification) = api.get(specification.jobXmlApi(spec.projectName))(nextBuildNumber)
 
@@ -91,11 +101,7 @@ class JenkinsBuildProvider(val specification: JenkinsConnectSpecification) exten
   }
 }
 
-
-
 case class JenkinsBuildResult(success: Boolean, completed: Boolean, number: Int) extends BuildResult
-
-
 
 object Specifications {
   def apply(values: Map[String, String]) =

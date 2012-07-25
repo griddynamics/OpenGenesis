@@ -54,6 +54,10 @@ case class JenkinsConnectSpecification(baseUrl: String, username: Option[String]
     "%s/build".format(projectUrl(jobName))
   }
 
+  def stopBuildUrl(jobName: String, buildNumber: Int) = {
+    "%s/%s/stop".format(projectUrl(jobName), buildNumber)
+  }
+
   def client = {
     val client = new DefaultHttpClient()
     (username, password) match {
