@@ -394,20 +394,29 @@ class StoreService extends service.StoreService {
   }
 
   @Transactional
-  def writeLog(stepId: Int, message: String) {
-    GS.logs.insert(new StepLogEntry(stepId, message))
+  def writeLog(stepId: Int, message: String, timestamp: Timestamp = new Timestamp(System.currentTimeMillis())) {
+    GS.logs.insert(new StepLogEntry(stepId, message, timestamp))
   }
 
   @Transactional
-  def writeLog(actionUUID: String, message: String) {
+  def writeActionLog(actionUUID: String, message: String, timestamp: Timestamp = new Timestamp(System.currentTimeMillis())) {
     val stepID = from(GS.actionTracking)((action) => where (action.actionUUID === actionUUID) select(action.workflowStepId)).headOption
-    stepID.foreach { id => writeLog(id, message) }
+    stepID.foreach { id => GS.logs.insert(new StepLogEntry(id, message, timestamp, Option(actionUUID))) }
   }
 
   @Transactional
   def getLogs(stepId: Int) : Seq[StepLogEntry] = {
     from(GS.logs)((log) =>
       where(log.stepId === stepId)
+          select(log)
+          orderBy(log.timestamp asc)
+    ).toList
+  }
+
+  @Transactional
+  def getLogs(actionUUID: String) = {
+    from(GS.logs)((log) =>
+      where(log.actionUUID === Option(actionUUID))
           select(log)
           orderBy(log.timestamp asc)
     ).toList

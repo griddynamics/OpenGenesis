@@ -29,6 +29,8 @@ trait GenesisService {
 
     def getLogs(envName: String, stepId: Int) : Seq[String]
 
+    def getLogs(envName: String, actionUUID: String): Seq[String]
+
     def listEnvs (projectId: Int) : Seq[Environment]
 
     def listEnvs (projectId: Int, statuses: Seq[String]) : Seq[Environment]

@@ -167,7 +167,7 @@ case class Credentials( id: Option[Int],
 
 case class AuthorityDescription(name: String, users: List[String], groups: List[String])
 
-case class ActionTracking(name: String, description: Option[String], startedTimestamp: Long, finishedTimestamp: Option[Long], status: String)
+case class ActionTracking(uuid: String, name: String, description: Option[String], startedTimestamp: Long, finishedTimestamp: Option[Long], status: String)
 
 case class ServerArray(id: Option[Int], projectId: Int, name: String, description: Option[String])
 
