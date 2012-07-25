@@ -90,7 +90,8 @@ trait StoreService {
     def allocateStepCounters(count : Int = 1) : Int
   
     def writeLog(stepId: Int, message: String)
-    
+    def writeLog(actionUUID: String, message: String)
+
     def getLogs(stepId: Int) : Seq[StepLogEntry]
 
     def startAction(actionTracking: ActionTracking): ActionTracking

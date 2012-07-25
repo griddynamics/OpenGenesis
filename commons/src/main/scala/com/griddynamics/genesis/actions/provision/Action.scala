@@ -54,7 +54,14 @@ case class ProvisionCompleted(action: SpecificProvisionVmAction,
                               vm: VirtualMachine) extends ProvisionResult
 
 case class ProvisionFailed(action: SpecificProvisionVmAction,
-                           vm: Option[VirtualMachine]) extends ProvisionResult with ActionFailed
+                           vm: Option[VirtualMachine],
+                           timedOut: Boolean) extends ProvisionResult with ActionFailed {
+  override def desc = if (timedOut) {
+    "Provisioning timed out"
+  } else {
+    "Failed to complete provisioning"
+  }
+}
 
 
 case class PublicIpCheckCompleted(action: CheckPublicIpAction) extends ProvisionResult

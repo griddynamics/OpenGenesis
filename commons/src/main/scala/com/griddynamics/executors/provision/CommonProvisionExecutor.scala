@@ -41,7 +41,12 @@ abstract class CommonProvisionExecutor extends SimpleAsyncActionExecutor
     action.ip.foreach(vm.setIp(_))
     vm = storeService.createVm(vm)
     vm.getIp.getOrElse(vmMetadataFuture = action.instanceId match {
-      case None =>  createVm(action.env, vm)
+      case None =>  {
+        val future = createVm(action.env, vm)
+        storeService.updateServer(vm)
+        future
+      }
+
       case some@Some(instanceId) => new VmMetadataFuture() {
         val getMetadata = some
       }
@@ -58,7 +63,7 @@ abstract class CommonProvisionExecutor extends SimpleAsyncActionExecutor
           case f: FailedVmFuture => {
               vm.status = VmStatus.Failed
               storeService.updateServer(vm)
-              Some(ProvisionFailed(action, Some(vm)))
+              Some(ProvisionFailed(action, Some(vm), timedOut = false))
           }
           case v: VmMetadataFuture => {
               v.getMetadata match {
@@ -77,7 +82,7 @@ abstract class CommonProvisionExecutor extends SimpleAsyncActionExecutor
   def getResultOnTimeout = {
     vm.status = VmStatus.Failed
     storeService.updateServer(vm)
-    ProvisionFailed(action, Some(vm))
+    ProvisionFailed(action, Some(vm), timedOut = true)
   }
 
   override def canRespond(s : Signal) = {

@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication
 import com.griddynamics.genesis.users.GenesisRole
 import org.springframework.beans.factory.annotation.Value
 import com.griddynamics.genesis.service.ProjectAuthorityService
+import com.griddynamics.genesis.validation.Validation
 
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
@@ -103,12 +104,26 @@ class ProjectsController(projectService: ProjectService, authorityService: Proje
                         @PathVariable("roleName") roleName: String,
                         request: HttpServletRequest,
                         response: HttpServletResponse): RequestResult = {
+    import RolesController._
     assertProjectExists(projectId)
 
     val paramsMap = GenesisRestController.extractParamsMap(request)
-    val users = GenesisRestController.extractListValue("users", paramsMap) map RolesController.unescapeAndReplace
-    val groups = GenesisRestController.extractListValue("groups", paramsMap)  map RolesController.unescapeAndReplace
-    authorityService.updateProjectAuthority(projectId,  GenesisRole.withName(roleName), users.distinct, groups.distinct)
+    val users = GenesisRestController.extractListValue("users", paramsMap)
+    val groups = GenesisRestController.extractListValue("groups", paramsMap)
+
+    val invalidUsers = users.filterNot(_.matches(Validation.validADName))
+    if(!invalidUsers.isEmpty) {
+      return RequestResult(isSuccess = false, compoundServiceErrors = invalidUsers.map("Username [%s] is not valid. <,>,%%- are not alowed".format(_) ))
+    }
+    val invalidGroups = groups.filterNot(_.matches(Validation.validADName))
+    if(!invalidGroups.isEmpty) {
+      return RequestResult(isSuccess = false, compoundServiceErrors = invalidGroups.map("Group name [%s] is not valid. <,>,%% - are not alowed".format(_) ))
+    }
+
+    authorityService.updateProjectAuthority(projectId,
+      GenesisRole.withName(roleName),
+      users.map(unescapeAndReplace).distinct,
+      groups.map(unescapeAndReplace).distinct)
   }
 
   @RequestMapping(value = Array("{projectId}/roles/{roleName}"), method = Array(RequestMethod.GET))

@@ -64,10 +64,9 @@ private object Plugin {
   val Credential = "genesis.plugin.jclouds.credential"
   val NodeNamePrefix = "genesis.plugin.jclouds.nodename.prefix"
 
-  //todo: are these global?
-  val PortCheckoutTimout = "genesis.port.check.timeout.secs"
-  val ProvisionTimeout = "genesis.provision.vm.timeout.secs"
-  val PublicIpCheckoutTimeout = "genesis.public.ip.check.timeout.secs"
+  val PortCheckoutTimeout = "genesis.plugin.jclouds.port.check.timeout.secs"
+  val ProvisionTimeout = "genesis.plugin.jclouds.provision.vm.timeout.secs"
+  val PublicIpCheckoutTimeout = "genesis.plugin.jclouds.public.ip.check.timeout.secs"
 }
 
 object Account {
@@ -199,7 +198,7 @@ class JCloudsProvisionContextImpl(override val storeService: StoreService,
                               contextProvider: JCloudsComputeContextProvider) extends JCloudsProvisionContext {
 
   val provisionVmTimeout = configService.get(Plugin.ProvisionTimeout, 180) * 1000
-  val portCheckTimeout = configService.get(Plugin.PortCheckoutTimout, 180) * 1000
+  val portCheckTimeout = configService.get(Plugin.PortCheckoutTimeout, 180) * 1000
   val ipCheckTimeout = configService.get(Plugin.PublicIpCheckoutTimeout, 30) * 1000
 
   override val computeSettings = settings.filterKeys(_ != Plugin.NodeNamePrefix)
