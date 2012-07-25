@@ -29,7 +29,7 @@ import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.common.Mistake
 import com.griddynamics.genesis.common.Mistake.throwableToLeft
 import org.springframework.transaction.annotation.{Isolation, Propagation, Transactional}
-import org.squeryl.{Query, Table}
+import org.squeryl.{StaleUpdateException, Query, Table}
 import java.sql.Timestamp
 import com.griddynamics.genesis.model.WorkflowStepStatus._
 
@@ -79,9 +79,12 @@ class StoreService extends service.StoreService {
     !from(availableEnvs)(env => where(env.projectId === projectId and env.name === envName) select (env.id)).headOption.isEmpty
   }
 
+  private def findEnvQuery(envName: String, projectId: Int) =
+    from(availableEnvs)(e => where(e.name === envName and e.projectId === projectId) select (e))
+
   @Transactional(readOnly = true)
   def findEnv(envName: String, projectId: Int) = {
-    val result = from(availableEnvs)(e => where(e.name === envName and e.projectId === projectId) select (e))
+    val result = findEnvQuery(envName, projectId)
     val envs = if (result.size == 1) Some(result.single) else None
     envs.foreach(loadAttrs(_, GS.envAttrs))
     envs
@@ -196,7 +199,7 @@ class StoreService extends service.StoreService {
           orderBy(step.id asc)
     ).toList
 
-  @Transactional(isolation = Isolation.SERIALIZABLE)
+  @Transactional
   def createEnv(env: Environment, workflow: Workflow) = {
     throwableToLeft {
       env.status = EnvStatus.Requested(workflow.name)
@@ -283,7 +286,7 @@ class StoreService extends service.StoreService {
     )
   }
 
-  @Transactional(isolation = Isolation.SERIALIZABLE)
+  @Transactional
   def requestWorkflow(env: Environment, workflow: Workflow): Either[Mistake, (Environment, Workflow)] = {
     val actualEnv = findEnv(env.name, env.projectId).get
 
@@ -292,9 +295,12 @@ class StoreService extends service.StoreService {
 
     env.status = EnvStatus.Requested(workflow.name)
     workflow.status = WorkflowStatus.Requested
-
-    updateEnv(env)
-    Right((env, GS.workflows.insert(workflow)))
+    try {
+      updateEnv(env)
+      Right((env, GS.workflows.insert(workflow)))
+    } catch {
+      case e: StaleUpdateException => Left(Mistake("Optimistic lock: environment's status has been updated"))
+    }
   }
 
   @Transactional(readOnly = true)

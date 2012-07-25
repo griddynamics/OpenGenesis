@@ -25,13 +25,14 @@ package com.griddynamics.genesis.model
 import org.squeryl.customtypes.StringField
 import com.griddynamics.genesis.model.EnvStatus.Requested
 import scala.Some
+import org.squeryl.Optimistic
 
 class Environment(val name: String,
                   var status: EnvStatusField,
                   val creator: String,
                   val templateName: String,
                   var templateVersion: String,
-                  val projectId: GenesisEntity.Id) extends EntityWithAttrs {
+                  val projectId: GenesisEntity.Id) extends EntityWithAttrs with Optimistic {
     def this() = this ("", Requested(""), "", "", "", 0)
 
     def copy() = {

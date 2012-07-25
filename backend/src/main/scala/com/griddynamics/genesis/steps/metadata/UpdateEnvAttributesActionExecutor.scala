@@ -32,7 +32,7 @@ class UpdateEnvAttributesActionExecutor(val action: UpdateEnvAttributesAction, c
   def cleanUp(signal: Signal) {}
 
   def startSync() = {
-    val env = action.env
+    val env = storeService.findEnv(action.env.id).get // updating optimistic lock counter
     val keys = action.entries.map(_.key).toSet
 
     val preserved = env.deploymentAttrs.filterNot{ attr => keys.contains(attr.key) }
