@@ -88,9 +88,9 @@ class ProjectAuthorityService(aclService: MutableAclService) extends service.Pro
   }
 
   @Transactional
-  def updateProjectAuthority(projectId: Int, authorityName: GenesisRole.Value, users: List[String], groups: List[String]): RequestResult = {
+  def updateProjectAuthority(projectId: Int, authorityName: GenesisRole.Value, users: List[String], groups: List[String]): ExtendedResult[_] = {
     if(!authorityPermissionMap.contains(authorityName)){
-      return RequestResult(isSuccess = false, compoundServiceErrors = List("Name not found [" + authorityName + "]"))
+      return Failure(compoundServiceErrors = List("Name not found [" + authorityName + "]"))
     }
     val oi = new ObjectIdentityImpl(classOf[Project], projectId)
     val permission = authorityPermissionMap(authorityName)
@@ -110,7 +110,7 @@ class ProjectAuthorityService(aclService: MutableAclService) extends service.Pro
     groups.foreach { group => acl.insertAce(acl.getEntries.size(), permission,  new GrantedAuthoritySid("GROUP_" + group), true) }
 
     aclService.updateAcl(acl)
-    RequestResult(isSuccess = true)
+    Success(None)
   }
 
 
