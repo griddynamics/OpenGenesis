@@ -44,11 +44,15 @@ case class BuildStep(values: Map[String, String], provider: String) extends Step
 }
 
 class BuildStepBuilder extends StepBuilder {
-  @BeanProperty var parameters: JMap[Any, Any] = Collections.emptyMap()
+  @BeanProperty var attrs: JMap[Any, Any] = Collections.emptyMap()
   @BeanProperty var provider: String = _
 
+  def setParameters(params: JMap[Any, Any]) { //just to have more readable name in templates
+    attrs = params
+  }
+
   def getDetails = {
-    val toMap: Map[String, String] = (for((k,v) <- parameters.toMap) yield (String.valueOf(k), String.valueOf(v))).toMap
+    val toMap: Map[String, String] = (for((k,v) <- attrs.toMap) yield (String.valueOf(k), String.valueOf(v))).toMap
     new BuildStep(toMap, provider)
   }
 }
