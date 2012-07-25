@@ -74,7 +74,7 @@ class BuildStepCoordinator(val step : Step, context: StepExecutionContext, plugi
     }
 }
 
-class BuildActionExecutor(val action : BuildAction, provider : BuildProvider) extends SimpleAsyncActionExecutor with Logging{
+class BuildActionExecutor(val action : BuildAction, provider : BuildProvider) extends SimpleAsyncActionExecutor with Logging {
   def startAsync() {
         log.debug("Starting build")
         provider.build(action.step.values)

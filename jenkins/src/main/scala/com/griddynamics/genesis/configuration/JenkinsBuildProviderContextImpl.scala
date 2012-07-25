@@ -20,17 +20,17 @@
  * @Project:     Genesis
  * @Description: Execution Workflow Engine
  */
-package com.griddynamics.genesis.jenkins.build.configuration
+package com.griddynamics.genesis.configuration
 
-import com.griddynamics.genesis.util.Logging
-import com.griddynamics.genesis.jenkins.api.JenkinsConnectSpecification
-import com.griddynamics.genesis.jenkins.build.JenkinsBuildProvider
 import com.griddynamics.genesis.plugin.api.{PluginInstanceFactory, GenesisPlugin}
+import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.build.BuildProvider
+import com.griddynamics.genesis.jenkins.build.JenkinsBuildProvider
+import com.griddynamics.genesis.jenkins.api.JenkinsConnectSpecification
 
 @GenesisPlugin(
   id = "build-jenkins",
-  description = "Jenkins build step"
+  description = "Jenkins build step: global default settings"
 )
 class JenkinsBuildProviderContextImpl extends Logging with PluginInstanceFactory[BuildProvider] {
 
