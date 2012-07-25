@@ -31,7 +31,7 @@ import GenesisRestController._
 import com.griddynamics.genesis.service.{ProjectAuthorityService, AuthorityService}
 import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.groups.GroupService
-import com.griddynamics.genesis.api.RequestResult
+import com.griddynamics.genesis.api.{Failure, ExtendedResult, RequestResult}
 import org.springframework.beans.factory.annotation.Autowired
 import java.net.URLDecoder
 import com.griddynamics.genesis.validation.Validation
@@ -87,7 +87,7 @@ class RolesController(authorityService: AuthorityService, projectAuthorityServic
 
   @RequestMapping(value = Array("roles/{roleName}"), method = Array(RequestMethod.PUT))
   @ResponseBody
-  def updateRole(@PathVariable("roleName") roleName: String, request: HttpServletRequest): RequestResult = {
+  def updateRole(@PathVariable("roleName") roleName: String, request: HttpServletRequest): ExtendedResult[Any] = {
     if(!authorityService.listAuthorities.contains(roleName)) {
       throw new ResourceNotFoundException("Role [name = " + roleName + "] was not found")
     }
@@ -96,13 +96,13 @@ class RolesController(authorityService: AuthorityService, projectAuthorityServic
     val groups = extractListValue("groups", grantsMap)
     val users = extractListValue("users", grantsMap)
 
-    val invalidUsers = users.filterNot(_.matches(Validation.validADName))
-    if(!invalidUsers.isEmpty) {
-      return RequestResult(isSuccess = false, compoundServiceErrors = invalidUsers.map("Username [%s] is not valid. <,>,%% - are not alowed".format(_) ))
+    val Seq(invalidUsers, invalidGroups) = Seq(users, groups).map(_.filterNot(_.matches(Validation.validADName)))
+    if(invalidUsers.nonEmpty) {
+      return Failure(compoundServiceErrors = invalidUsers.map(Validation.ADNameErrorMessage.format("User", _) ))
     }
-    val invalidGroups = groups.filterNot(_.matches(Validation.validADName))
-    if(!invalidGroups.isEmpty) {
-      return RequestResult(isSuccess = false, compoundServiceErrors = invalidGroups.map("Group name [%s] is not valid. <,>,%% - are not alowed".format(_) ))
+//    val invalidGroups = groups.filterNot(_.matches(Validation.validADName))
+    if(invalidGroups.nonEmpty) {
+      return Failure(compoundServiceErrors = invalidGroups.map(Validation.ADNameErrorMessage.format("Group",_) ))
     }
 
     // sometimes special symbols are escaped by js component.
@@ -122,7 +122,7 @@ class RolesController(authorityService: AuthorityService, projectAuthorityServic
     }
     block
   }
-  private def validUsers[A](usernames: Seq[String])(block: => A): A = {
+  private def validUsers[A](usernames: Seq[String])(block: => ExtendedResult[_]): ExtendedResult[_] = {
     userService.map { service =>
       if (!service.doUsersExist(usernames)) {
         throw new ResourceNotFoundException("List of users contains unknown usernames")
@@ -139,7 +139,7 @@ class RolesController(authorityService: AuthorityService, projectAuthorityServic
     }
     block
   }
-  private def validGroups[A](groupNames: Seq[String])(block: => A): A = {
+  private def validGroups[A](groupNames: Seq[String])(block: => ExtendedResult[_]): ExtendedResult[_] = {
     groupService.map { service =>
       if(!service.doGroupsExist(groupNames)) {
         throw new ResourceNotFoundException("List of groups contains unknown  groups")

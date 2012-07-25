@@ -113,13 +113,14 @@ class ProjectsController(projectService: ProjectService, authorityService: Proje
     val users = GenesisRestController.extractListValue("users", paramsMap)
     val groups = GenesisRestController.extractListValue("groups", paramsMap)
 
-    val invalidUsers = users.filterNot(_.matches(Validation.validADName))
+    import Validation._
+    val invalidUsers = users.filterNot(_.matches(validADName))
     if(invalidUsers.nonEmpty) {
-      return Failure(compoundServiceErrors = invalidUsers.map("Username [%s] is not valid. <,>,%% - are not allowed. Must be non-empty".format(_) ))
+      return Failure(compoundServiceErrors = invalidUsers.map(ADNameErrorMessage.format("User", _) ))
     }
-    val invalidGroups = groups.filterNot(_.matches(Validation.validADName))
+    val invalidGroups = groups.filterNot(_.matches(validADName))
     if(invalidGroups.nonEmpty) {
-      return Failure(compoundServiceErrors = invalidGroups.map("Group name [%s] is not valid. <,>,%% - are not allowed. Must be non-empty".format(_) ))
+      return Failure(compoundServiceErrors = invalidGroups.map(ADNameErrorMessage.format("Group", _) ))
     }
 
     authorityService.updateProjectAuthority(projectId,
