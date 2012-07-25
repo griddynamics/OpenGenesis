@@ -35,12 +35,9 @@ import com.griddynamics.genesis.exec.{ExecNodeInitializer, ExecDetails}
 import com.griddynamics.genesis.util.shell.command.{mkdir, chmod}
 
 class PrepareNodeActionExecutor(override val action: PrepareNodeAction,
-                                val credentials: Option[Credentials],
-                                override val sshService: SshService) extends SimpleSyncActionExecutor
-    with Logging with SshServerFlexCredentials {
+                                val sshService: SshService) extends SimpleSyncActionExecutor with Logging  {
 
-    override val env = action.env
-    override val server = action.server
+    lazy val sshClient: SshClient = sshService.sshClient(action.env, action.server)
 
     val runDir : Path = ExecNodeInitializer.genesisDir / action.label
     val jsonResource = runDir / "local.json"

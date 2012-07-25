@@ -30,11 +30,14 @@ import com.griddynamics.genesis.exec.{ExecNodeInitializer, ExecDetails}
 import com.griddynamics.genesis.chefsolo.action.{SoloInitSuccess, PrepareSoloAction}
 import com.griddynamics.genesis.workflow.{Signal, SyncActionExecutor}
 import com.griddynamics.genesis.service.{Credentials, SshService}
+import org.jclouds.ssh.SshClient
 
 class InitChefSoloActionExecutor (override val action: PrepareSoloAction, val installScript: String,
-                                                             val sshService: SshService,
-                                                             val credentials: Option[Credentials])
-  extends SyncActionExecutor with SshServerFlexCredentials {
+                                                             val sshService: SshService)
+  extends SyncActionExecutor {
+
+    lazy val sshClient: SshClient = sshService.sshClient(env, server)
+
     override def startSync() = {
         sshClient.connect()
         val homeDir = InitChefSoloActionExecutor.workingDir

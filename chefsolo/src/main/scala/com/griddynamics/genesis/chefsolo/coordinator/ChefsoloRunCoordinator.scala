@@ -41,10 +41,7 @@ class ChefsoloRunCoordinator(val step: ChefsoloRunStep,
   def onStepStart() = {
       writeLog("Starting phase %s for role %s.".format(stepContext.step.phase, step.roles))
       val machines = stepContext.servers(step).filter(s => s.isReady)
-      if (pluginContext.putKey)
-          machines.map( AddKeyAction(stepContext.env, _))
-      else
-          machines.map( InitExecNode(stepContext.env, _))
+      machines.map( InitExecNode(stepContext.env, _) )
   }
 
   def onStepInterrupt(signal: Signal) = {
@@ -72,8 +69,6 @@ class ChefsoloRunCoordinator(val step: ChefsoloRunStep,
   def onActionFinish(result: ActionResult) = {
     writeLog("Action finished with result: %s".format(result))
     result match {
-        case AddKeySuccess(a: AddKeyAction) =>
-            Seq(InitExecNode(a.env, a.server))
 
         case ExecInitSuccess(a) => {
             stepContext.updateServer(a.server)
@@ -88,7 +83,7 @@ class ChefsoloRunCoordinator(val step: ChefsoloRunStep,
         case e@ExtendedExecFinished(RunPreparedExec(_, a: PrepareSoloAction), _, _, _) =>  {
             if (e.isExecSuccess) {
                 stepContext.updateServer(a.server)
-                Seq(PreprocessingJsonAction(stepContext.env, a.server, patternSubst, Map(), step.jattrs))
+                Seq(PreprocessingJsonAction(stepContext.env, a.server, patternSubst, Map(), step.jattrs, step.templateUrl))
             } else {
                 isStepFailed = true
                 Seq()
@@ -125,7 +120,6 @@ class ChefsoloRunCoordinator(val step: ChefsoloRunStep,
   def getActionExecutor(action: Action) = {
     writeLog("Starting action %s".format(action))
     action match {
-      case replace: AddKeyAction => pluginContext.addKeyExecutor(replace)
       case init: InitExecNode => pluginContext.initExecNodeExecutor(init)
       case json: PreprocessingJsonAction => pluginContext.preprocessJsonExecution(json)
       case prepare: PrepareNodeAction => pluginContext.prepareChefSoloExecution(prepare)

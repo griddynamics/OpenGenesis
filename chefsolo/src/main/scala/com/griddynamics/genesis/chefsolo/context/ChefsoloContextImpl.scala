@@ -36,18 +36,14 @@ import com.griddynamics.genesis.exec.{ExecNodeInitializer, ExecPluginContext, Ex
 import com.griddynamics.genesis.service.{ComputeService, SshService, CredentialService, Credentials}
 
 trait ChefSoloPluginContext {
-    def addKeyExecutor(a: AddKeyAction): AddKeyExecutor
     def initChefSoloExecution(action: PrepareSoloAction): InitChefSoloActionExecutor
     def prepareChefSoloExecution(action: PrepareNodeAction): PrepareNodeActionExecutor
     def preprocessJsonExecution(a: PreprocessingJsonAction): PreprocessJsonActionExecutor
     def execExecutor(a: RunPreparedExec): PreparedChefsoloExecutor
     def initExecNodeExecutor(a: InitExecNode)  :ExecNodeInitializer
     def computeService: ComputeService
-    def putKey: Boolean = false
-    def credentials: Option[Credentials]
 }
 
-@GenesisPlugin(id="chefsolo", description = "Chef solo plugin")
 @Configuration
 class ChefsoloContextImpl {
   @Autowired var storeServiceContext: StoreServiceContext = _
@@ -57,70 +53,35 @@ class ChefsoloContextImpl {
   @Autowired var execPluginContext: ExecPluginContext = _
   @Autowired var pluginConfiguration: PluginConfigurationContext = _
 
-  def computeService = computeContext.compService
-  
   @Bean def execResources = new ExecResourcesImpl
   
-  @Bean def chefSoloCoordinatorFactory = {
-      new ChefsoloCoordinatorFactory({() => {
-          val config = new ChefSoloPluginConfig(pluginConfiguration.configuration(Plugin.id))
-          val putKey: Boolean = config.chefSoloPutKey != null && config.chefSoloPutKey.toBoolean
-          new ChefSoloExecutionContextImpl(config, computeContext.sshService,
-              credentialServiceContext.credentialService,
-              execPluginContext, computeContext.compService, putKey)
-      }})
-  }
-  
+  @Bean def chefSoloCoordinatorFactory =  new ChefsoloCoordinatorFactory({() => {
+          new ChefSoloExecutionContextImpl(
+            computeContext.sshService,
+            credentialServiceContext.credentialService,
+            execPluginContext,
+            computeContext.compService)
+    }})
+
   @Bean def chefSoloStepBuilderFactory = new ChefsoloStepBuilderFactory
 }
 
-class ChefSoloPluginConfig (@transient config: Map[String, String]) extends Serializable {
-    import Plugin._
-
-    val chefSoloInstallSh = config(ChefInstallScript)
-    val chefSoloPutKey = config(ChefSoloPutKey)
-    val chefSoloPrivKey = config(ChefSoloPrivKey)
-    val chefSoloPubKey = config(ChefSoloPubKey)
-    val chefsoloTemplates = config(ChefSoloTemplatesPath)
-
-    @transient lazy val installResource = InputUtil.locationAsString(chefSoloInstallSh)
+object ChefSoloConfig {
+    lazy val installResource = InputUtil.locationAsString("classpath:shell/chef-install.sh")
 }
 
-private object Plugin {
-    val id = "chefsolo"
-
-    val ChefInstallScript = "genesis.plugin.chefsolo.install.sh"
-    val ChefSoloPutKey = "genesis.plugin.chefsolo.putKey"
-    val ChefSoloPubKey = "genesis.plugin.chefsolo.pubKey"
-    val ChefSoloPrivKey = "genesis.plugin.chefsolo.privKey"
-    val ChefSoloTemplatesPath = "genesis.plugin.chefsolo.templates"
-}
-
-class ChefSoloExecutionContextImpl(config: ChefSoloPluginConfig, sshService: SshService,
+class ChefSoloExecutionContextImpl(sshService: SshService,
                                    credentialService: CredentialService,
                                    execPluginContext: ExecPluginContext,
-                                   val computeService: ComputeService,
-                                   override val putKey: Boolean)  extends  ChefSoloPluginContext {
-    def addKeyExecutor(action: AddKeyAction) = new AddKeyExecutor(action, config.chefSoloPubKey, config.chefSoloPrivKey,
-        sshService, credentialService)
+                                   val computeService: ComputeService)  extends  ChefSoloPluginContext {
 
-    def initChefSoloExecution(action: PrepareSoloAction) = new InitChefSoloActionExecutor(action, config.installResource, sshService, credentials)
+    def initChefSoloExecution(action: PrepareSoloAction) = new InitChefSoloActionExecutor(action, ChefSoloConfig.installResource, sshService)
 
-    def prepareChefSoloExecution(action: PrepareNodeAction) = new PrepareNodeActionExecutor(action, credentials, sshService)
+    def prepareChefSoloExecution(action: PrepareNodeAction) = new PrepareNodeActionExecutor(action, sshService)
 
-    def preprocessJsonExecution(action: PreprocessingJsonAction) = new PreprocessJsonActionExecutor(action, config.chefsoloTemplates)
+    def preprocessJsonExecution(action: PreprocessingJsonAction) = new PreprocessJsonActionExecutor(action, action.templatesUrl.getOrElse(""))
 
-    def execExecutor(a: RunPreparedExec) = new PreparedChefsoloExecutor(a, sshService, credentials)
+    def execExecutor(a: RunPreparedExec) = new PreparedChefsoloExecutor(a, sshService)
 
     def initExecNodeExecutor(a: InitExecNode) = execPluginContext.execNodeInitializer(a)
-
-    def credentials = {
-        if (putKey)
-            Some(new Credentials(credentialService.defaultCredentials.get.identity, config.chefSoloPrivKey))
-        else
-            None
-    }
-}
-object ChefSoloExecutionContextImpl {
-
 }

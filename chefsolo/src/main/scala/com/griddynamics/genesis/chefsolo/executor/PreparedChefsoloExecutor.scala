@@ -32,14 +32,11 @@ import com.jcraft.jsch.SftpException
 import com.griddynamics.genesis.exec.ExecRunner
 import com.griddynamics.genesis.chefsolo.action.ExtendedExecFinished
 
-class PreparedChefsoloExecutor(action: RunExec, val sshService: SshService,
-                               val credentials: Option[Credentials]) extends ExecRunner(action, sshService){
+class PreparedChefsoloExecutor(action: RunExec, val sshService: SshService) extends ExecRunner(action, sshService){
     def env: Environment = action.execDetails.env
     def server = action.execDetails.server
-    override lazy val sshClient = credentials match {
-        case Some(c) => sshService.sshClient(server, credentials)
-        case _ => sshService.sshClient(env, server)
-    }
+
+    override lazy val sshClient = sshService.sshClient(env, server)
 
     def execStatus(): (Option[Int], Option[String], Option[String]) = {
         try {

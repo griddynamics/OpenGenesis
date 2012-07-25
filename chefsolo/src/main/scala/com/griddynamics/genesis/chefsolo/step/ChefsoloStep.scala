@@ -30,8 +30,11 @@ import com.griddynamics.genesis.util.Describer
 
 sealed trait ChefsoloStep extends Step
 
-case class ChefsoloRunStep(rolesList: List[String], dependsOn: Array[String], ipAddress : Option[String],
-                           jattrs: JObject = JObject(List()), cookbookUrl: String) extends ChefsoloStep with RoleStep {
+case class ChefsoloRunStep(rolesList: List[String],
+                           dependsOn: Array[String],
+                           jattrs: JObject = JObject(List()),
+                           cookbookUrl: String,
+                           templateUrl: Option[String]) extends ChefsoloStep with RoleStep {
   def roles = rolesList.toSet
   def isGlobal = false
 

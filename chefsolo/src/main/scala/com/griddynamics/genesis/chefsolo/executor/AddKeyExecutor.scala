@@ -32,33 +32,33 @@ import java.io.File
 import com.griddynamics.genesis.util.shell.command.chmod
 import com.griddynamics.genesis.chefsolo.action.{AddKeySuccess, AddKeyAction}
 
-
+//NOTE: this executor is not used right now, but can be transformed to something else in the future
 class AddKeyExecutor(override val action: AddKeyAction,
                      pubKey: String,
                      privKey: String,
                      sshService: SshService,
                      credentialService: CredentialService) extends SimpleSyncActionExecutor with Logging {
 
-    def startSync() = {
-        val sshClient = sshService.sshClient(action.env, action.server)
-        var homeDir = ""
-        PrepareNodeActionExecutor.sshDo(sshClient) {
-            c => {
-                homeDir = PrepareNodeActionExecutor.homeDir(c)
-                prepareSshKey(homeDir)(c)
-            }
-        }
-        AddKeySuccess(action)
+  def startSync() = {
+    val sshClient = sshService.sshClient(action.env, action.server)
+    var homeDir = ""
+    PrepareNodeActionExecutor.sshDo(sshClient) {
+      c => {
+        homeDir = PrepareNodeActionExecutor.homeDir(c)
+        prepareSshKey(homeDir)(c)
+      }
     }
+    AddKeySuccess(action)
+  }
 
-    def prepareSshKey(homeDir: String)(sshClient: SshClient) {
-        sshClient.put("/tmp/key", new FilePayload(new File(pubKey)))
-        val file: File = new File(privKey)
-        sshClient.put(homeDir + "/" + file.getName, new FilePayload(file))
-        sshClient.exec(chmod("0600", "/tmp/key"))
-        log.debug("Creating ssh directory")
-        sshClient.exec(install("-m", "0700", "-d", homeDir + "/.ssh"))
-        log.debug("Installing key")
-        sshClient.exec(mv("/tmp/key", homeDir + "/.ssh/authorized_keys"))
-    }
+  def prepareSshKey(homeDir: String)(sshClient: SshClient) {
+    sshClient.put("/tmp/key", new FilePayload(new File(pubKey)))
+    val file: File = new File(privKey)
+    sshClient.put(homeDir + "/" + file.getName, new FilePayload(file))
+    sshClient.exec(chmod("0600", "/tmp/key"))
+    log.debug("Creating ssh directory")
+    sshClient.exec(install("-m", "0700", "-d", homeDir + "/.ssh"))
+    log.debug("Installing key")
+    sshClient.exec(mv("/tmp/key", homeDir + "/.ssh/authorized_keys"))
+  }
 }
