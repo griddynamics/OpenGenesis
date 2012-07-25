@@ -167,7 +167,7 @@ function(genesis, status, backend, Users, Backbone, $) {
     },
 
 
-    initCompletion: function(){
+    initCompletion: function(hasGroups, hasUsers){
       var users = new Users.Collections.Users();
       var groups = new Users.Collections.Groups();
       var self = this;
@@ -179,7 +179,7 @@ function(genesis, status, backend, Users, Backbone, $) {
           filter_case: true,
           filter_hide: true,
           filter_selected: true,
-          newel: _.size(groups) == 0,
+          newel: !hasGroups,
           width: "100%",
           input_name: "groups-select",
           complete_text: "Enter group name...",
@@ -192,7 +192,7 @@ function(genesis, status, backend, Users, Backbone, $) {
           filter_case: true,
           filter_hide: true,
           filter_selected: true,
-          newel: _.size(users) == 0,
+          newel: !hasUsers,
           width: "100%",
           input_name: "users-select",
           complete_text: "Enter username...",
@@ -205,7 +205,7 @@ function(genesis, status, backend, Users, Backbone, $) {
       var self = this;
       $.when(backend.UserManager.hasUsers(), backend.UserManager.hasGroups(), genesis.fetchTemplate(this.template)).done(function(hasUsers, hasGroups, tmpl) {
         self.$el.html(tmpl({role: self.role.toJSON(), LANG: LANG}));
-        self.initCompletion();
+        self.initCompletion(hasGroups[0], hasUsers[0]);
       });
     }
   });
