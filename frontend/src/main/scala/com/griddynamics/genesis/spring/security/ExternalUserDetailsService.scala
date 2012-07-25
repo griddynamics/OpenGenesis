@@ -36,11 +36,15 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 
 class ExternalUserDetailsService(authorityService: AuthorityService, projectAuthorityService: ProjectAuthorityService, adminUsername: String)
   extends UserDetailsService with GroupBasedRoleService {
-    def loadUserByUsername(username: String) = {
+
+    // this is never called actually:
+    def loadUserByUsername(username: String) = loadUserByUsername(username, Seq())
+
+    def loadUserByUsername(username: String, groupNames : Iterable[String]) = {
         if (username != adminUsername) {
             val authorities = (
               authorityService.getUserAuthorities(username) ++
-                (if (projectAuthorityService.isUserProjectAdmin(username, List())) List(GenesisRole.ProjectAdmin.toString) else List())
+                (if (projectAuthorityService.isUserProjectAdmin(username, groupNames)) List(GenesisRole.ProjectAdmin.toString) else List())
               ).distinct
             new User(username, username, RoleBasedAuthority(authorities))
         } else {
@@ -61,7 +65,7 @@ class ExternalUserAuthenticationProvider(details: ExternalUserDetailsService) ex
 
     def authenticate(authentication: Authentication) = {
         val authRequest: ExternalAuthentication = authentication.asInstanceOf[ExternalAuthentication]
-        val user = details.loadUserByUsername(authRequest.username)
+        val user = details.loadUserByUsername(authRequest.username, authRequest.assignedGroups)
         val additionalGroups = authRequest.assignedGroups.flatMap(details.getRolesByGroupName(_)).toList ++ user.getAuthorities
         if(additionalGroups.find(_.getAuthority == GenesisRole.GenesisUser.toString).isEmpty) {
             throw new UsernameNotFoundException("User %s doesn't have required role [%s]".format(authRequest.username, GenesisRole.GenesisUser))

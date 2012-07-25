@@ -22,14 +22,14 @@
  */
 package com.griddynamics.genesis.service
 
-import com.griddynamics.genesis.api.{UserGroup, ExtendedResult, RequestResult}
+import com.griddynamics.genesis.api.{ExtendedResult, RequestResult}
 import com.griddynamics.genesis.users.GenesisRole
 
 trait ProjectAuthorityService {
   def projectAuthorities: Iterable[GenesisRole.Value]
   def updateProjectAuthority(projectId: Int, roleName: GenesisRole.Value, users: List[String], groups: List[String]): RequestResult
   def getProjectAuthority(projectId: Int, authorityName: GenesisRole.Value): ExtendedResult[(Iterable[String], Iterable[String])]
-  def isUserProjectAdmin(username: String, groups: Iterable[UserGroup]): Boolean
+  def isUserProjectAdmin(username: String, groups: Iterable[String]): Boolean
   def getGrantedAuthorities(projectId: Int, username: String, grantedAuthorities: Iterable[String]): List[GenesisRole.Value]
   def getAllowedProjectIds(username: String, authorities: Iterable[String]): List[Int]
   def removeUserFromProjects(username: String)

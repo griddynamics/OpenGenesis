@@ -43,8 +43,8 @@ class ProjectAuthorityService(aclService: MutableAclService) extends service.Pro
   val projectAuthorities = authorityPermissionMap.keys
 
   @Transactional(readOnly = true)
-  def isUserProjectAdmin(username: String, groups: Iterable[UserGroup]):Boolean = {
-    val groupNames = groups.map ( "GROUP_" + _.name )
+  def isUserProjectAdmin(username: String, groups: Iterable[String]):Boolean = {
+    val groupNames = groups.map ( "GROUP_" + _)
     from(aclSid, aclEntry)((sid, entry) => where(
       ((sid.principal === true and sid.sid === username) or (sid.principal === false and (sid.sid in groupNames)))
         and (sid.id === entry.sid and entry.mask === BasePermission.ADMINISTRATION.getMask)
