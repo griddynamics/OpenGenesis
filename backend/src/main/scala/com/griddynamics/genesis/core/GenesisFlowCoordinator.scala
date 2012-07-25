@@ -27,6 +27,7 @@ import com.griddynamics.genesis.plugin._
 import com.griddynamics.genesis.workflow._
 import com.griddynamics.genesis.service.StoreService
 import com.griddynamics.genesis.model._
+import com.griddynamics.genesis.model.EnvStatus._
 import com.griddynamics.genesis.common.Mistake
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.logging.LoggerWrapper
@@ -88,8 +89,8 @@ abstract class GenesisFlowCoordinatorBase(val envName: String,
         import WorkflowStatus._
         val (workflowStatus, envStatus) = signal match {
             case Success() => (Succeed, onFlowFinishSuccess)
-            case Cancel() => (Canceled, EnvStatus.Canceled(workflow.name))
-            case _ => (Failed, EnvStatus.Failed(workflow.name))
+            case Cancel() => (Canceled, EnvStatus.Broken)
+            case _ => (Failed, EnvStatus.Broken)
         }
         workflow.status = workflowStatus
         val updEnv = storeService.findEnv(env.id).get // updating optimistic lock counter
@@ -290,9 +291,9 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
 }
 
 trait RegularWorkflow { this: GenesisFlowCoordinatorBase =>
-    override val onFlowFinishSuccess = EnvStatus.Ready()
+    override val onFlowFinishSuccess = EnvStatus.Ready
 }
 
 trait DestroyWorkflow { this: GenesisFlowCoordinatorBase =>
-    override val onFlowFinishSuccess = EnvStatus.Destroyed()
+    override val onFlowFinishSuccess = EnvStatus.Destroyed
 }

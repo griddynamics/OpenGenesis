@@ -27,7 +27,7 @@ import com.griddynamics.genesis.service
 import com.griddynamics.genesis.bean.RequestBroker
 import GenesisRestService._
 import com.griddynamics.genesis.model
-import model.{EnvStatusField, Workflow, EnvStatus}
+import model.{Workflow, EnvStatus}
 import com.griddynamics.genesis.template.TemplateRepository
 import service.{ComputeService, TemplateService, StoreService}
 
@@ -40,19 +40,19 @@ class GenesisRestService(storeService: StoreService,
 
     def listEnvs(projectId: Int) = {
         for ((env, workflowOption) <- storeService.listEnvsWithWorkflow(projectId)) yield
-            Environment(env.name, envStatusDesc(env.status), stepsCompleted(workflowOption),
+            Environment(env.name, env.status.toString, stepsCompleted(workflowOption),
                 env.creator, env.templateName, env.templateVersion, env.projectId)
     }
 
   def listEnvs(projectId: Int, statuses: Seq[String]) = {
-    for ((env, workflowOption) <- storeService.listEnvsWithWorkflow(projectId, statuses.map(EnvStatus.fromString(_).get))) yield
-      Environment(env.name, envStatusDesc(env.status), stepsCompleted(workflowOption),
+    for ((env, workflowOption) <- storeService.listEnvsWithWorkflow(projectId, statuses.map(EnvStatus.withName(_)))) yield
+      Environment(env.name, env.status.toString, stepsCompleted(workflowOption),
         env.creator, env.templateName, env.templateVersion, env.projectId)
   }
 
   def listEnvs(projectId: Int, start : Int, limit : Int) = {
         for ((env, workflowOption) <- storeService.listEnvsWithWorkflow(projectId, start, limit)) yield
-            Environment(env.name, envStatusDesc(env.status), stepsCompleted(workflowOption),
+            Environment(env.name, env.status.toString, stepsCompleted(workflowOption),
                 env.creator, env.templateName, env.templateVersion, env.projectId)
     }
 
@@ -78,6 +78,9 @@ class GenesisRestService(storeService: StoreService,
         broker.cancelWorkflow(envName, projectId)
     }
 
+    def resetEnvStatus(envName: String, projectId: Int) = {
+        broker.resetEnvStatus(envName, projectId)
+    }
 
     def isEnvExists(envName: String, projectId: Int): Boolean = {
       storeService.isEnvExist(projectId, envName)
@@ -135,10 +138,10 @@ object GenesisRestService {
 
   private def stepsCompleted(workflowOption: Option[Workflow]) = {
       workflowOption match {
-        case Some(workflow) if workflow.stepsCount > 0 =>
+        case Some(workflow) if (workflow.stepsCount > 0 && workflow.stepsFinished > 0) =>
           Some(BigDecimal(workflow.stepsFinished / (workflow.stepsCount: Double)).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble)
         case Some(workflow) =>
-          Some(0.0)
+          Some(0.04)
         case None => None
       }
     }
@@ -171,7 +174,7 @@ object GenesisRestService {
 
         EnvironmentDetails(
             env.name,
-            envStatusDesc(env.status),
+            env.status.toString,
             env.creator,
             env.templateName,
             env.templateVersion,
@@ -211,23 +214,14 @@ object GenesisRestService {
         else Some(f())
     }
 
-    def envStatusDesc(status: EnvStatus) = {
-        status match {
-            case EnvStatus.Ready() => "Ready"
-            case EnvStatus.Destroyed() => "Destroyed"
-            case s => s.toString
-        }
-    }
-
     def serversDesc(env: model.Environment, bm: model.BorrowedMachine) = {
       BorrowedMachine(env.name, bm.roleName, bm.instanceId.getOrElse("unknown"), bm.getIp.map(_.address).getOrElse("unknown"), bm.status.toString )
     }
 
     def vmDesc(env: model.Environment, vm: model.VirtualMachine, computeService: ComputeService) = {
-      val status:EnvStatus = EnvStatusField.envStatusFieldToStatus(env.status)
       val ipAddressOtp =
-        status match {
-          case EnvStatus.Destroyed() => None
+        env.status match {
+          case EnvStatus.Destroyed => None
           case _ => computeService.getIpAddresses(vm)
         }
         val ipAddress = ipAddressOtp.getOrElse(model.IpAddresses())

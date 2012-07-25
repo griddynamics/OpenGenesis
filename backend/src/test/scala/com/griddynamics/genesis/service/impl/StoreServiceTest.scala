@@ -94,7 +94,7 @@ class StoreServiceTest extends MustMatchersForJUnit {
 
         project =  GenesisSchema.projects.insert(new Project("project1", Some("test project"), "Nina, Soto"));
 
-        env = new Environment("env", EnvStatus.Requested("workflow"), "owner", "template", "0.1", project.id)
+        env = new Environment("env", EnvStatus.Busy, "owner", "template", "0.1", project.id)
         env(EnvAttr1) = EnvAttrVal1
         workflow = new Workflow(env.id, "workflow", WorkflowStatus.Requested, 0, 0, Map[String, String](), None)
 

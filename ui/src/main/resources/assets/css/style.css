@@ -74,6 +74,10 @@ a.button.action-button span {
     text-transform: capitalize;
 }
 
+a.button.reset-button {
+    float: right;
+}
+
 a.tab {
 	margin-right: 5px;
 	display: block;
