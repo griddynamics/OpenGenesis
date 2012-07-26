@@ -110,6 +110,14 @@
             <artifactId>ui</artifactId>
             <groupId>com.griddynamics.genesis</groupId>
         </dependency>
+        <dependency>
+            <groupId>com.griddynamics.genesis</groupId>
+            <artifactId>jenkins-ci-integration</artifactId>
+        </dependency>
+        <dependency>
+            <artifactId>notification</artifactId>
+            <groupId>com.griddynamics.genesis</groupId>
+        </dependency>
     </dependencies>
     <build>
         <resources>
