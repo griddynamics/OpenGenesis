@@ -67,12 +67,13 @@
                     hasPermission( #urlId('/rest/projects/{id}/.*', #url), 'com.griddynamics.genesis.api.Project', 'read') or
                     hasPermission( #urlId('/rest/projects/{id}/.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"/>
 
+
+        <s:intercept-url pattern="/rest/projects/*/roles/**" access="hasRole('ROLE_GENESIS_ADMIN') or
+                    hasPermission( #urlId('/rest/projects/{id}/.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"  />
+
         <s:intercept-url pattern="/rest/projects/**" method="GET"    access="hasRole('ROLE_GENESIS_ADMIN') or
                     hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'read') or
                     hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')" />
-
-        <s:intercept-url pattern="/rest/projects/*/roles/**" method="PUT" access="hasRole('ROLE_GENESIS_ADMIN') or
-                    hasPermission( #urlId('/rest/projects/{id}/.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"  />
 
         <s:intercept-url pattern="/rest/projects/*/**" access="hasRole('ROLE_GENESIS_ADMIN') or
                             hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"/>
