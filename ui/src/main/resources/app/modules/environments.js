@@ -42,6 +42,16 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
         }
       };
 
+  /**
+   * Environment statuses are different for 1.0.x and 1.1.x versions of Genesis
+   * so we need to check stored filter and fix it if required.
+   */
+  Environments.fixFilter = function() {
+    var initialFilter = $.jStorage.get(genesis.app.currentUser.user + "_envFilter", FILTER_DEFAULTS);
+    if (!_.isEqual(Object.keys(initialFilter.statuses), Object.keys(FILTER_DEFAULTS.statuses)))
+      $.jStorage.set(genesis.app.currentUser.user + "_envFilter", FILTER_DEFAULTS);
+  };
+
   Environments.Model = Backbone.Model.extend({
     defaults: {
       "name": "",
@@ -640,8 +650,8 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
               .done(function() {
                 status.StatusPanel.information("Environment status was changed to 'Ready'");
               })
-              .fail(function() {
-                status.StatusPanel.error("Failed to reset environment status");
+              .fail(function(jqXHR) {
+                status.StatusPanel.error(jqXHR);
               });
             $(this).dialog("close");
           },

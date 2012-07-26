@@ -154,6 +154,7 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
 
     $.when(backend.UserManager.whoami(), userProjects.fetch()).done(function(user) {
       initCurrentUser(user[0]);
+      Environments.fixFilter();
       app.router = new Router({projects: userProjects});
       app.breadcrumbs = new Breadcrumbs.View({router: app.router, projects: userProjects});
 
