@@ -244,11 +244,51 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
       });
     },
 
+    onDeleteProject: function(event) {
+      var self = this;
+      var projectId = event.currentTarget.getAttribute("data-index");
+      self.showConfirmationDialog({
+        "Yes": function () {
+          backend.ProjectManager.removeProject(
+            projectId,
+            function (data, textStatus, jqXHR) {
+              genesis.app.router.navigate("/", {trigger: true});
+              status.StatusPanel.success("Project was deleted");
+            },
+            function (jqXHR, textStatus, errorThrown) {
+              var response = $.parseJSON(jqXHR.responseText);
+              status.StatusPanel.error(response.compoundServiceErrors[0]);
+            }
+          );
+          self.confirmationDialog.dialog("close");
+        },
+        "No": function () {
+          self.confirmationDialog.dialog("close");
+        }
+      });
+    },
+
+    showConfirmationDialog: function(buttons) {
+      if (!this.confirmationDialog) {
+        this.confirmationDialog = this.$("#dialog-project").dialog({
+          resizable: true,
+          modal: true,
+          title: 'Confirmation',
+          dialogClass: 'genesis-dialog',
+          width: 400,
+          autoOpen: false
+        });
+      }
+      this.confirmationDialog.dialog("option", "buttons", buttons);
+      this.confirmationDialog.dialog('open');
+    },
+
     events: {
       "keyup #filter-name": "nameFilterChanged",
       "multiselectclick #filter-statuses": "statusFilterChanged",
       "multiselectcheckall #filter-statuses": "statusFilterChanged",
-      "multiselectuncheckall #filter-statuses": "statusFilterChanged"
+      "multiselectuncheckall #filter-statuses": "statusFilterChanged",
+      "click #project-delete": "onDeleteProject"
     },
 
     nameFilterChanged: function() {
@@ -295,6 +335,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
         view.$el.html(tmpl({ "project": view.project.toJSON(), "filter": view.collection.getFilter() }));
         if(isAdmin) {
           view.$("#project-settings").show();
+          view.$("#project-delete").show();
         }
         view.$("#filter-statuses").multiselect({
           noneSelectedText: "no statuses selected",

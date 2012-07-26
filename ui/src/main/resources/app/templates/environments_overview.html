@@ -1,8 +1,14 @@
+<div id="dialog-project" style="display: none; ">
+  Are you sure you want to delete this project?
+</div>
 <div id="top-panel">
     <div id="page-title"><h1><%= project.name %></h1></div>
     <span id="tools-panel" >
       <a id="project-settings" href="#project/<%= project.id %>/properties" class="tools-button settings-button" style="display: none">
         <span style=""> Project settings </span>
+      </a>
+      <a id="project-delete" href="javascript:void(0)" data-index="<%= project.id %>" class="delete-button" style="display: none">
+        <span style=""> Delete project </span>
       </a>
     </span>
 </div>
