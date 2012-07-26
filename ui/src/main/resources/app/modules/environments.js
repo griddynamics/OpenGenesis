@@ -48,7 +48,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
    */
   Environments.fixFilter = function() {
     var initialFilter = $.jStorage.get(genesis.app.currentUser.user + "_envFilter", FILTER_DEFAULTS);
-    if (!_.isEqual(Object.keys(initialFilter.statuses), Object.keys(FILTER_DEFAULTS.statuses)))
+    if (!_.isEqual(_.keys(initialFilter.statuses), _.keys(FILTER_DEFAULTS.statuses)))
       $.jStorage.set(genesis.app.currentUser.user + "_envFilter", FILTER_DEFAULTS);
   };
 
