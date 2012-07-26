@@ -31,7 +31,7 @@ import com.griddynamics.genesis.workflow.Step
 import com.griddynamics.genesis.util.Describer
 
 class RunLocalStepBuilderFactory extends StepBuilderFactory {
-  val stepName = "runLocal"
+  val stepName = "execLocal"
 
   def newStepBuilder = new StepBuilder {
     import scala.collection.JavaConversions._
