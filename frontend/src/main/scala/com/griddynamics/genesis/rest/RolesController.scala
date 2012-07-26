@@ -93,22 +93,21 @@ class RolesController(authorityService: AuthorityService, projectAuthorityServic
     }
     val grantsMap = extractParamsMap(request)
 
-    val groups = extractListValue("groups", grantsMap)
-    val users = extractListValue("users", grantsMap)
+    // special symbols are escaped by js component.
+    // In this case double backslashes should be removed too
+    val groups = extractListValue("groups", grantsMap) map RolesController.unescapeAndReplace
+    val users = extractListValue("users", grantsMap) map RolesController.unescapeAndReplace
 
     val Seq(invalidUsers, invalidGroups) = Seq(users, groups).map(_.filterNot(_.matches(Validation.validADName)))
     if(invalidUsers.nonEmpty) {
       return Failure(compoundServiceErrors = invalidUsers.map(Validation.ADNameErrorMessage.format("User", _) ))
     }
-//    val invalidGroups = groups.filterNot(_.matches(Validation.validADName))
     if(invalidGroups.nonEmpty) {
       return Failure(compoundServiceErrors = invalidGroups.map(Validation.ADNameErrorMessage.format("Group",_) ))
     }
 
-    // sometimes special symbols are escaped by js component.
-    // In this case double backslashes should be removed too
-    validUsers(users map RolesController.unescapeAndReplace) {
-      validGroups (groups  map RolesController.unescapeAndReplace) {
+    validUsers(users) {
+      validGroups (groups) {
         authorityService.updateAuthority(roleName, groups.distinct, users.distinct)
       }
     }
