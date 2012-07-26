@@ -511,6 +511,21 @@ div.system-settings {
     background: no-repeat url('/assets/img/settings-wb.png');
 }
 
+#tools-panel .delete-button {
+    color: black;
+    padding: 3px 7px 3px 25px;
+    opacity: 0.7;
+}
+
+#tools-panel .delete-button:hover {
+    opacity: 1 !important;
+    text-decoration: underline;
+}
+
+#tools-panel #project-delete {
+    background: no-repeat url('/assets/img/delete-wb.png');
+}
+
 #wrapper #wrapper-content #tab-panel{
 	width:100%;
 	margin-top: 10px;
