@@ -39,6 +39,12 @@
 * string = string.replace(string[i], escape(string[i]));
 * To:
 * string = string.substring(0, i) + escape(string[i]) + string.substring(i + 1); (now line 456).
+*
+*
+* Following snippet was introduced to support resizing input field after pasting from clipboard:
+* $(input).bind("paste", function(event) {
+*  setTimeout(function() { ... }, 100);
+* });
 */
 
 (function( $, undefined ) {
@@ -223,11 +229,18 @@
           }
           //auto expand input
           var newsize = (options.input_min_size > input.val().length) ? options.input_min_size : (input.val().length + 1);
+
           input.attr("size", newsize).width(parseInt(input.css('font-size')) * newsize);
         });
 
-        input.keyup( function(event) {
+        $(input).bind("paste", function(event) {
+          setTimeout(function() {
+            var newsize = (options.input_min_size > input.val().length) ? options.input_min_size : (input.val().length + 1);
+            input.attr("size", newsize).width(parseInt(input.css('font-size')) * newsize);
+          }, 100);
+        });
 
+        input.keyup( function(event) {
           var etext = xssPrevent(input.val(), 1);
           
           if (event.keyCode == _key.backspace && etext.length == 0) {
