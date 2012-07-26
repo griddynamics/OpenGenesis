@@ -25,21 +25,22 @@ package com.griddynamics.genesis.logging
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.service.StoreService
 import akka.actor.{ActorRef, Actor}
+import java.sql.Timestamp
 
 class LoggerActor(val service: StoreService) extends Actor with Logging {
   protected def receive = {
-    case Log(id, message) => {
-      service.writeLog(id, message)
+    case Log(id, message, timestamp) => {
+      service.writeLog(id, message, timestamp)
     }
-    case ActionBasedLog(actionUUID, message) => {
-      service.writeLog(actionUUID, message)
+    case ActionBasedLog(actionUUID, message, timestamp) => {
+      service.writeActionLog(actionUUID, message, timestamp)
     }
   }
 }
 
-case class Log(stepId : Int, message: String)
+case class Log(stepId : Int, message: String, timestamp: Timestamp)
 
-case class ActionBasedLog(actionUID: String, message: String)
+case class ActionBasedLog(actionUID: String, message: String, timestamp: Timestamp)
 
 trait InternalLogger {
    def stepId : Int
@@ -60,15 +61,17 @@ object LoggerWrapper extends Logging {
     }
   }
 
+  private def timestamp = new Timestamp(System.currentTimeMillis())
+
   def writeLog(actionUUID: String, message: String) {
     Actor.registry.actorsFor(classOf[LoggerActor]).foreach {
-      _ ! ActionBasedLog(actionUUID, message)
+      _ ! ActionBasedLog(actionUUID, message, timestamp)
     }
   }
 
   def writeLog(id: Int, message: String) {
     Actor.registry.actorsFor(classOf[LoggerActor]).foreach {
-      _ ! Log(id, message)
+      _ ! Log(id, message, timestamp)
     }
   }
 }

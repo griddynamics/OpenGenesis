@@ -35,7 +35,6 @@ import java.sql.Timestamp
  *   @Project:     Genesis
  *   @Description: A cloud deployment platform
  */
-class StepLogEntry (val stepId : Int, val message: String,
-                    val timestamp: Timestamp = new Timestamp(System.currentTimeMillis())) extends GenesisEntity {
-    def this() = this(0, "")
+class StepLogEntry (val stepId: Int, val message: String, val timestamp: Timestamp, val actionUUID: Option[String] = None) extends GenesisEntity {
+    def this() = this(0, "", new Timestamp(System.currentTimeMillis()))
 }

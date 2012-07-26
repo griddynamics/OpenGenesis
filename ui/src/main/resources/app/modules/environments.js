@@ -899,6 +899,8 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
         self.$el.html(tmpl({
           actions: self.collection.toJSON(),
           isStepFinished: self.isStepFinished,
+          projectId: self.collection.projectId,
+          envName: self.collection.envName,
           "utils": genesis.utils
         }));
       });

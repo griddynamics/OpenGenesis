@@ -56,6 +56,17 @@ class EnvironmentsController(genesisService: GenesisService) extends RestApiExce
     genesisService.createEnv(projectId.toInt, envName, user, templateName, templateVersion, variables)
   }
 
+  private def produceLogs(logs: Seq[String], response: HttpServletResponse) {
+    val text = if (logs.isEmpty)
+      "No logs yet"
+    else
+      logs.reduceLeft(_ + "\n" + _)
+
+    response.setContentType("text/plain")
+    response.getWriter.write(text)
+    response.getWriter.flush()
+  }
+
   @RequestMapping(value=Array("{envName}/logs/{stepId}"))
   def stepLogs(@PathVariable("projectId") projectId: Int,
                @PathVariable("envName") envName: String,
@@ -64,14 +75,17 @@ class EnvironmentsController(genesisService: GenesisService) extends RestApiExce
                request: HttpServletRequest) {
     assertEnvExist(projectId, envName)
 
-    val logs: Seq[String] = genesisService.getLogs(envName, stepId)
-    val text = if (logs.isEmpty)
-      "No logs yet"
-    else
-      logs.reduceLeft(_ + "\n" + _)
-    response.setContentType("text/plain")
-    response.getWriter.write(text)
-    response.getWriter.flush()
+    produceLogs(genesisService.getLogs(envName, stepId), response)
+  }
+
+  @RequestMapping(value=Array("{envName}/action_logs/{actionUUID}"))
+  def actionLogs(@PathVariable("projectId") projectId: Int,
+               @PathVariable("envName") envName: String,
+               @PathVariable actionUUID: String,
+               response: HttpServletResponse) {
+    assertEnvExist(projectId, envName)
+
+    produceLogs(genesisService.getLogs(envName, actionUUID), response)
   }
 
   @RequestMapping(value = Array("{envName}"), method = Array(RequestMethod.DELETE))
