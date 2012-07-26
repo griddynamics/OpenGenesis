@@ -26,7 +26,7 @@ import org.springframework.context.annotation.{Bean, Configuration}
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.configuration.{StoreServiceContext, ComputeServiceContext}
 import com.griddynamics.genesis.plugin.StepExecutionContext
-import com.griddynamics.genesis.exec.action.{RunExecWithArgs, RunExec, InitExecNode}
+import com.griddynamics.genesis.exec.action.{UploadScripts, RunExecWithArgs, RunExec, InitExecNode}
 
 trait ExecPluginContext {
   def execNodeInitializer(action: InitExecNode): ExecNodeInitializer
@@ -36,6 +36,8 @@ trait ExecPluginContext {
   def syncExecRunner(action: RunExecWithArgs): SyncExecRunner
 
   def execStepCoordinator(s: ExecRunStep, context: StepExecutionContext): ExecStepCoordinator
+
+  def scriptsUploader(action: UploadScripts): ScriptUploader
 }
 
 @Configuration
@@ -61,4 +63,7 @@ class ExecPluginContextImpl extends ExecPluginContext {
 
   def execStepCoordinator(s: ExecRunStep, context: StepExecutionContext) =
     new ExecStepCoordinator(s, context, this, computeServiceContext.compService)
+
+  def scriptsUploader(action: UploadScripts) =
+    new ScriptUploader(action, computeServiceContext.sshService)
 }
