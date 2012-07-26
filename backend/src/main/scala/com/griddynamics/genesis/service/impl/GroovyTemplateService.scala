@@ -264,7 +264,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
           val varPossibleValues: Map[String, String] = v.valuesList.map { lambda => lambda.apply(resolvedVariables) }.getOrElse(Map())
           val dependsOn = if (v.dependsOn.isEmpty) None else Some(v.dependsOn.toList)
 
-          new VariableDescription(v.name, v.description, v.isOptional, null, varPossibleValues, dependsOn)
+          new VariableDescription(v.name, v.description, v.isOptional, v.defaultValue.map(_.toString).getOrElse(null), varPossibleValues, dependsOn)
         }
     }
 
