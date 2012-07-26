@@ -42,6 +42,8 @@ case class RunPreparedExec(execDetails: ExecDetails, prepareAction: Action) exte
 
 case class RunExecWithArgs(execDetails: ExecDetails, args: String*) extends RunExec
 
+case class UploadScripts(env:Environment, server: EnvResource, workingDir: String, script: String) extends ExecAction
+
 /* ------------------------------------- Results ------------------------------------- */
 
 trait ExecResult extends ActionResult
@@ -50,10 +52,13 @@ case class ExecInitSuccess(action: InitExecNode) extends ExecResult
 
 case class ExecInitFail(action: InitExecNode) extends ExecResult with ActionFailed
 
-case class ExecFinished(action: RunExec, exitStatus: Option[Int]) extends ExecResult {
+case class ExecFinished(action: RunExec, val exitStatus: Option[Int]) extends ExecResult {
     def isExecSuccess = exitStatus.isDefined && exitStatus.get == 0
     override def outcome = if (isExecSuccess)
         model.ActionTrackingStatus.Succeed
     else
         model.ActionTrackingStatus.Failed
 }
+
+
+case class ScriptsUploaded(action: UploadScripts, server: EnvResource, outputPath: String, scriptPath: String) extends ExecResult
