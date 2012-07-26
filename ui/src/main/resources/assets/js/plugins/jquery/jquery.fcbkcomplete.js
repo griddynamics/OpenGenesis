@@ -45,6 +45,10 @@
 * $(input).bind("paste", function(event) {
 *  setTimeout(function() { ... }, 100);
 * });
+*
+*
+* bindEvents() was fixed to always call xssPrevent with flag=1 to escape input values.
+*
 */
 
 (function( $, undefined ) {
@@ -378,7 +382,7 @@
 
           if ((event.keyCode == _key.enter || event.keyCode == _key.tab || event.keyCode == _key.comma) && !checkFocusOn()) {
             if (options.newel) {
-              var value = xssPrevent($(this).val());
+              var value = xssPrevent($(this).val(), 1);
               addItem(value, value, 0, 0, 1);
               return _preventDefault(event);
             }
