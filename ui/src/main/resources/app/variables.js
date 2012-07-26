@@ -120,7 +120,7 @@ function(genesis, status, $, _) {
                 if (descendants.contains(variable.name) && _.has(variable, "values") && _.size(variable.values) > 0) {
 
                   var $select = $("#" + variable.name)
-                    .append("<option selected='selected' value=''> Please select </option>")
+                    .append("<option value=''> Please select </option>")
                     .removeAttr("disabled");
 
                   _(variable.values).each(function(description, key) {
@@ -128,6 +128,11 @@ function(genesis, status, $, _) {
                       $("<option/>").attr("value", key).text(description)
                     );
                   });
+
+                  if(variable.defaultValue) {
+                    $select.val(variable.defaultValue);
+                    $select.change();
+                  }
                 }
               });
             }).fail(function(jqXHR) {
