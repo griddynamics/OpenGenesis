@@ -107,7 +107,9 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     ))
 
     on(logs) (log => declare(
-      log.message is (dbType("text"))
+      log.message is (dbType("text")),
+      log.actionUUID is dbType("varchar(36)"),
+      columns(log.actionUUID) are (indexed("logs_action_uuid_idx"))
     ))
 
     on(projects) (project=> declare(

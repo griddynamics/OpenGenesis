@@ -27,6 +27,7 @@ import com.griddynamics.genesis.common.Mistake
 import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.model.EnvStatus._
 import com.griddynamics.genesis.model.WorkflowStepStatus._
+import java.sql.Timestamp
 
 trait StoreService {
     def listEnvs(projectId: Int): Seq[Environment]
@@ -92,10 +93,12 @@ trait StoreService {
 
     def allocateStepCounters(count : Int = 1) : Int
   
-    def writeLog(stepId: Int, message: String)
-    def writeLog(actionUUID: String, message: String)
+    def writeLog(stepId: Int, message: String, timestamp: Timestamp)
+    def writeActionLog(actionUUID: String, message: String, timestamp: Timestamp)
 
     def getLogs(stepId: Int) : Seq[StepLogEntry]
+
+    def getLogs(actionUUID: String) : Seq[StepLogEntry]
 
     def startAction(actionTracking: ActionTracking): ActionTracking
     def endAction(uuid: String, message: Option[String], status: ActionTrackingStatus.ActionStatus)
