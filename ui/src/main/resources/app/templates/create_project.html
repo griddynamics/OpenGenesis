@@ -33,4 +33,23 @@
             </div>
         </div>
     </div>
+
+  <div id="delete-project-div" <%= project.name ? '' : 'style="display: none"' %>>
+    <div class="top-panel">
+      <div class="page-title"><h1> Delete project </h1></div>
+    </div>
+    <div class="panel">
+      <p>Removal of the project is a destructive operation and makes it impossible to access all project-related entities.
+        <br>The project can be removed if all the environments of the project are in a "destroyed" state.
+      </p>
+      <div class="stepbutton">
+        <a href="javascript:void(0)" class="delete dangerous-button">
+          <span style=""> Delete project </span>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div id="dialog-delete-project" style="display: none; ">
+    Are you sure you want to delete this project?
+  </div>
 </div>

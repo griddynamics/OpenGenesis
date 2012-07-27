@@ -39,10 +39,6 @@ function(genesis, status, backend, Backbone, $) {
   Projects.Views.ProjectsOverview = Backbone.View.extend({
     template: "app/templates/projects_list.html",
 
-    events: {
-      "click .delete-link": "onDeleteProject"
-    },
-
     initialize: function(options) {
       this.collection = options.collection;
 
@@ -65,48 +61,6 @@ function(genesis, status, backend, Backbone, $) {
           done(self.el);
         }
       });
-    },
-
-    onDeleteProject: function(event) {
-      var self = this;
-      var projectId = event.currentTarget.getAttribute("data-index");
-      self.showConfirmationDialog({
-        "Yes": function () {
-          backend.ProjectManager.removeProject(
-            projectId,
-            function (data, textStatus, jqXHR) {
-              status.StatusPanel.success("Project was deleted");
-              self.collection.fetch().done(function () {
-                self.render();
-              });
-            },
-            function (jqXHR, textStatus, errorThrown) {
-              var response = $.parseJSON(jqXHR.responseText);
-              status.StatusPanel.error(response.compoundServiceErrors[0]);
-              self.render();
-            }
-          );
-          self.confirmationDialog.dialog("close");
-        },
-        "No": function () {
-          self.confirmationDialog.dialog("close");
-        }
-      });
-    },
-
-    showConfirmationDialog: function(buttons) {
-      if (!this.confirmationDialog) {
-        this.confirmationDialog = this.$("#dialog-project").dialog({
-          resizable: true,
-          modal: true,
-          title: 'Confirmation',
-          dialogClass: 'genesis-dialog',
-          width: 400,
-          autoOpen: false
-        });
-      }
-      this.confirmationDialog.dialog("option", "buttons", buttons);
-      this.confirmationDialog.dialog('open');
     }
   });
 
@@ -114,7 +68,8 @@ function(genesis, status, backend, Backbone, $) {
     template: "app/templates/create_project.html",
 
     events: {
-      "click a.save" : "onSave"
+      "click a.save" : "onSave",
+      "click a.delete": "onDeleteProject"
     },
 
     initialize: function(options) {
@@ -144,13 +99,48 @@ function(genesis, status, backend, Backbone, $) {
         });
     },
 
+    onDeleteProject: function(event) {
+      this.confirmationDialog.dialog("open");
+    },
+
+    createConfirmationDialog: function (element) {
+      var self = this;
+      return element.dialog({
+        resizable: true,
+        modal: true,
+        title: 'Confirmation',
+        dialogClass: 'dialog-without-header',
+        minHeight: 120,
+        width: 420,
+        autoOpen: false,
+        buttons: {
+          "Yes": function () {
+            backend.ProjectManager.removeProject(
+              self.project.get("id"),
+              function (data, textStatus, jqXHR) {
+                genesis.app.router.navigate("/", {trigger: true});
+                status.StatusPanel.success("Project \"" + self.project.get("name") + "\" was deleted");
+              },
+              function (jqXHR) {
+                status.StatusPanel.error(jqXHR);
+              }
+            );
+            $(this).dialog("close");
+          },
+          "No": function () {
+            $(this).dialog("close");
+          }
+        }
+      });
+    },
+
     render: function(){
       var self = this;
       $.when(genesis.fetchTemplate(this.template)).done(function(tmpl) {
         self.$el.html( tmpl({"project" : self.project.toJSON()}));
         self.delegateEvents(self.events);
-        self.status = new status.LocalStatus({el: self.$(".notification")})
-
+        self.status = new status.LocalStatus({el: self.$(".notification")});
+        self.confirmationDialog = self.createConfirmationDialog(self.$("#dialog-delete-project"));
       });
     }
   });
