@@ -32,7 +32,7 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
       "project/:projectId" : "environments",
       "project/:projectId/env/:envName": "environmentDetails",
       "project/:projectId/createEnv": "createEnvironment",
-      "project/:projectId/properties": "createProjectProperties",
+      "project/:projectId/properties": "projectProperties",
       "admin/create/project": "createProject",
       "settings": "listSettings",
       ":hash": "index"
@@ -58,7 +58,7 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
                                                             project: new Projects.Model({name: "", description: "", projectManager: ""})}));
     },
 
-    createProjectProperties: function(projectId) {
+    projectProperties: function(projectId) {
       this.setCurrentView(new ProjectProperties.Views.Main({project: this.projects.get(projectId), el: this.$viewDiv()}));
     },
 
@@ -105,8 +105,16 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
       title: 'Failed to complete request',
       dialogClass: 'error-notification-dialog',
       width: 400,
+      minHeight: 80,
       autoOpen: false,
       resizable: false
+    });
+
+    genesis.app.bind("authorization-error", function(message) {
+      if (!errorDialog.dialog('isOpen')) {
+        $("#server-communication-error-dialog").html(message);
+        errorDialog.dialog("option", "buttons", {}).dialog('open');
+      }
     });
 
     $.ajaxSetup({cache: false, statusCode: {
