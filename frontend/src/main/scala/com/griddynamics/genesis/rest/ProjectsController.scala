@@ -110,8 +110,8 @@ class ProjectsController(projectService: ProjectService, authorityService: Proje
     assertProjectExists(projectId)
 
     val paramsMap = GenesisRestController.extractParamsMap(request)
-    val users = GenesisRestController.extractListValue("users", paramsMap)
-    val groups = GenesisRestController.extractListValue("groups", paramsMap)
+    val users = GenesisRestController.extractListValue("users", paramsMap).map(unescapeAndReplace)
+    val groups = GenesisRestController.extractListValue("groups", paramsMap).map(unescapeAndReplace)
 
     import Validation._
     val invalidUsers = users.filterNot(_.matches(validADName))
@@ -125,8 +125,8 @@ class ProjectsController(projectService: ProjectService, authorityService: Proje
 
     authorityService.updateProjectAuthority(projectId,
       GenesisRole.withName(roleName),
-      users.map(unescapeAndReplace).distinct,
-      groups.map(unescapeAndReplace).distinct)
+      users.distinct,
+      groups.distinct)
   }
 
   @RequestMapping(value = Array("{projectId}/roles/{roleName}"), method = Array(RequestMethod.GET))
