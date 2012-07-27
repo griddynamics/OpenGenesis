@@ -124,7 +124,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   }
 
 
-  @RequestMapping(method = Array(RequestMethod.GET))
+  @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
   @ResponseBody
   def listEnvs(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = genesisService.listEnvs(projectId)
 
