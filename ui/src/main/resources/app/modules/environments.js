@@ -308,7 +308,8 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
         }
         view.$("#filter-statuses").multiselect({
           noneSelectedText: "no statuses selected",
-          selectedText: "# statuses selected"
+          selectedText: "# statuses selected",
+          height: "auto"
         });
         view.tableList = new EnvironmentsTableView({
           "el": view.$('#envs-table-body'),
