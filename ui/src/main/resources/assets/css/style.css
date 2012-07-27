@@ -36,17 +36,27 @@ a.button {
     color: rgb(0, 0, 0);
 }
 
-a.button.disabled {
+a.dangerous-button {
+    margin-top: 10px;
+    display: block;
+    float: left;
+    text-decoration: none;
+    background: url(../img/button-right.png) top right no-repeat;
+    padding-right: 2px;
+    color: #cc4a48;
+}
+
+a.button.disabled, a.dangerous-button.disabled {
     background: url(../img/btn-disabled-right.png) top right no-repeat !important;
     cursor: default;
     outline: none;
 }
 
-a.button.disabled span {
+a.button.disabled span, a.dangerous-button.disabled span {
     background: url(../img/btn-disabled-left.png) no-repeat !important;
 }
 
-a.button span {
+a.button span, a.dangerous-button span {
 	display: block;
   	line-height: 13px;
  	background: url(../img/button-left.png) no-repeat;
@@ -62,11 +72,20 @@ a.button:hover span {
  	background: url(../img/btn-hovered-left.png) no-repeat;
 }
 
-a.button:active {
+a.dangerous-button:hover {
+  	background: url(../img/btn-hovered-red-right.png) top right no-repeat;
+  	color: rgb(84,84,84);
+}
+
+a.dangerous-button:hover span {
+ 	background: url(../img/btn-hovered-red-left.png) no-repeat;
+}
+
+a.button:active, a.dangerous-button:active {
   	background: url(../img/btn-pressed-right.png) top right no-repeat;
 }
 
-a.button:active span {
+a.button:active span, a.dangerous-button:active span {
  	background: url(../img/btn-pressed-left.png) no-repeat;
 }
 
