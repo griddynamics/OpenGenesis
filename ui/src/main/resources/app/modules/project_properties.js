@@ -1,6 +1,7 @@
 define([
   "genesis",
   "use!backbone",
+  "services/backend",
   "modules/projects",
   "modules/project_properties/credentials",
   "modules/project_properties/other_settings",
@@ -9,7 +10,7 @@ define([
   "modules/settings/databags"
 ],
 
-function(genesis, Backbone, Projects, Credentials, OtherSettings, Servers, Roles, Databags) {
+function(genesis, Backbone, backend, Projects, Credentials, OtherSettings, Servers, Roles, Databags) {
   var ProjectProperties = genesis.module();
 
   ProjectProperties.Views.Main = Backbone.View.extend({
@@ -74,9 +75,14 @@ function(genesis, Backbone, Projects, Credentials, OtherSettings, Servers, Roles
 
     render: function() {
       var self = this;
-      $.when(genesis.fetchTemplate(this.template)).done(function(tmpl){
-        self.$el.html(tmpl());
-        self.showMainSettings();
+      $.when(backend.AuthorityManager.haveAdministratorRights(this.project.id), genesis.fetchTemplate(self.template)).done(function(isAdmin, tmpl){
+        if (!isAdmin) {
+          genesis.app.trigger("authorization-error", "You don't have enough permissions to access this page");
+          self.delegateEvents({})
+        } else {
+          self.$el.html(tmpl());
+          self.showMainSettings();
+        }
       });
     }
   });
