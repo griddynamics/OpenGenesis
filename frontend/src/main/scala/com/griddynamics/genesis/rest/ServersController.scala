@@ -32,15 +32,19 @@ import com.griddynamics.genesis.api
 import api.{ServerDescription, ExtendedResult}
 import scala.Some
 import com.griddynamics.genesis.service.impl.ProjectService
+import org.springframework.beans.factory.annotation.Autowired
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/server-arrays"))
-class ServersController(service: ServersService, loanService: ServersLoanService, projectService: ProjectService, credService: CredentialsStoreService) extends RestApiExceptionsHandler {
+class ServersController extends RestApiExceptionsHandler {
+
+  @Autowired var service: ServersService = _
+  @Autowired var loanService: ServersLoanService = _
+  @Autowired var credService: CredentialsStoreService =_
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
   def create(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = {
-    assertProjectExists(projectId)
     val array = extractServerArray(request, projectId, None)
     service.create(array)
   }
@@ -48,7 +52,6 @@ class ServersController(service: ServersService, loanService: ServersLoanService
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.POST))
   @ResponseBody
   def update(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) = {
-    assertProjectExists(projectId)
     val array = extractServerArray(request, projectId, Some(id))
     service.update(array)
   }
@@ -56,13 +59,7 @@ class ServersController(service: ServersService, loanService: ServersLoanService
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
   @ResponseBody
   def list(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = {
-    assertProjectExists(projectId)
     service.list(projectId)
-  }
-
-
-  def assertProjectExists(projectId: Int) {
-    projectService.get(projectId).getOrElse(throw new ResourceNotFoundException("Project not found"))
   }
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.GET))

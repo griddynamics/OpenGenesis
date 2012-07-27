@@ -28,10 +28,13 @@ import com.griddynamics.genesis.api.{DataItem, DataBag}
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.service.DataBagService
 import scala.Array
+import org.springframework.beans.factory.annotation.Autowired
 
 @Controller
 @RequestMapping(value = Array("/rest/databags"))
-class DatabagController(service: DataBagService) extends RestApiExceptionsHandler {
+class DatabagController extends RestApiExceptionsHandler {
+
+  @Autowired var service: DataBagService = _
 
   @RequestMapping(method = Array(RequestMethod.POST))
   @ResponseBody
