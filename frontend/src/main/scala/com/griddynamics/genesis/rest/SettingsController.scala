@@ -29,10 +29,13 @@ import com.griddynamics.genesis.service.ConfigService
 import com.griddynamics.genesis.rest.GenesisRestController.{extractParamsMap, paramToOption}
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.api.{Failure, Success}
+import org.springframework.beans.factory.annotation.Autowired
 
 @Controller
 @RequestMapping(value = Array("/rest/settings"))
-class SettingsController(configService: ConfigService) extends RestApiExceptionsHandler {
+class SettingsController extends RestApiExceptionsHandler {
+
+    @Autowired var configService: ConfigService = _
 
     @RequestMapping(method = Array(RequestMethod.GET))
     @ResponseBody

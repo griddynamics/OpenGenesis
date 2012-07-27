@@ -9,7 +9,7 @@ import com.griddynamics.genesis.api._
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.Authentication
 import com.griddynamics.genesis.users.GenesisRole
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.annotation.{Autowired, Value}
 import com.griddynamics.genesis.service.ProjectAuthorityService
 import com.griddynamics.genesis.validation.Validation
 import scala.Some
@@ -39,7 +39,11 @@ import com.griddynamics.genesis.api.Project
  */
 @Controller
 @RequestMapping(value = Array("/rest/projects"))
-class ProjectsController(projectService: ProjectService, authorityService: ProjectAuthorityService) extends RestApiExceptionsHandler {
+class ProjectsController extends RestApiExceptionsHandler {
+
+
+  @Autowired var projectService: ProjectService = _
+  @Autowired var authorityService: ProjectAuthorityService = _
 
   @Value("${genesis.system.server.mode:frontend}")
   var mode = ""
@@ -107,7 +111,6 @@ class ProjectsController(projectService: ProjectService, authorityService: Proje
                         request: HttpServletRequest,
                         response: HttpServletResponse): ExtendedResult[_] = {
     import RolesController._
-    assertProjectExists(projectId)
 
     val paramsMap = GenesisRestController.extractParamsMap(request)
     val users = GenesisRestController.extractListValue("users", paramsMap).map(unescapeAndReplace)
@@ -135,16 +138,7 @@ class ProjectsController(projectService: ProjectService, authorityService: Proje
                        @PathVariable("roleName") roleName: String,
                        request: HttpServletRequest,
                        response: HttpServletResponse): ExtendedResult[Map[String, Iterable[String]]] = {
-    assertProjectExists(projectId)
-
     authorityService.getProjectAuthority(projectId, GenesisRole.withName(roleName)).map{ case (users, groups) => Map("users" -> users, "groups" -> groups) }
-  }
-
-
-  def assertProjectExists(projectId: Int) {
-    projectService.get(projectId).getOrElse {
-      throw new ResourceNotFoundException("Project [id = " + projectId + "]  was not found")
-    }
   }
 
   @RequestMapping(value = Array("{projectId}/permissions"), method = Array(RequestMethod.GET))
