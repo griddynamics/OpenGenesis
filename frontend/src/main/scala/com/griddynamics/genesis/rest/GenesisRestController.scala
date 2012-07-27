@@ -67,21 +67,17 @@ class GenesisRestController extends RestApiExceptionsHandler with Logging {
                     @PathVariable("templateVersion") templateVersion: String,
                     @RequestParam(defaultValue = "desc") format: String
                      ) = {
-      val result = format match {
-        case "src" => {
-          val contentOpt = templateService.templateRawContent(projectId, templateName, templateVersion)
-          contentOpt.map { src => Map("name" -> templateName, "version" -> templateVersion, "content" -> src) }
-        }
-        case "desc" => {
-          try {
-            genesisService.getTemplate(projectId, templateName, templateVersion)
-          } catch {
-            case e: Exception => {
-              log.error(e,"Failed to get template %s version %s", templateName, templateVersion)
-              Option(Failure(compoundServiceErrors = List(e.getMessage), stackTrace = Option(e.getStackTraceString)))
-            }
+      val result = try {
+          format match {
+              case "src" => val contentOpt = templateService.templateRawContent(projectId, templateName, templateVersion)
+                  contentOpt.map { src => Map("name" -> templateName, "version" -> templateVersion, "content" -> src)}
+              case "desc" => genesisService.getTemplate(projectId, templateName, templateVersion)
+
           }
-        }
+      } catch {
+          case e =>
+              log.error(e, "Failed to get template %s version %s", templateName, templateVersion)
+              Option(Failure(compoundServiceErrors = List(e.getMessage), stackTrace = Option(e.getStackTraceString)))
       }
       result.getOrElse(throw new ResourceNotFoundException("Template not found"))
     }
