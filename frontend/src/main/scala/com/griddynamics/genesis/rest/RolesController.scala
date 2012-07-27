@@ -38,8 +38,10 @@ import com.griddynamics.genesis.validation.Validation
 
 @Controller
 @RequestMapping(Array("/rest"))
-class RolesController(authorityService: AuthorityService, projectAuthorityService: ProjectAuthorityService)
-  extends RestApiExceptionsHandler {
+class RolesController extends RestApiExceptionsHandler {
+
+  @Autowired var authorityService: AuthorityService = _
+  @Autowired var  projectAuthorityService: ProjectAuthorityService= _
 
   @Autowired(required = false) var userServiceBean: UserService = _
   @Autowired(required = false) var groupServiceBean: GroupService = _

@@ -508,6 +508,12 @@
                 <artifactId>spring-tx</artifactId>
                 <version>${org.springframework.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-aop</artifactId>
+                <version>${org.springframework.version}</version>
+            </dependency>
+
 
             <dependency>
                 <groupId>org.springframework</groupId>
@@ -625,7 +631,11 @@
                 <artifactId>guava</artifactId>
                 <version>10.0.1</version>
             </dependency>
-
+            <dependency>
+                <groupId>org.aspectj</groupId>
+                <artifactId>aspectjtools</artifactId>
+                <version>1.6.2</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

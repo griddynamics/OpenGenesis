@@ -38,7 +38,11 @@ import com.griddynamics.genesis.util.Logging
 
 @Controller
 @RequestMapping(Array("/rest"))
-class GenesisRestController(genesisService: GenesisService, templateService: TemplateService) extends RestApiExceptionsHandler with Logging {
+class GenesisRestController extends RestApiExceptionsHandler with Logging {
+
+    @Autowired
+    var genesisService: GenesisService = _
+    @Autowired var templateService: TemplateService = _
 
     @Autowired
     @Qualifier("buildInfo")

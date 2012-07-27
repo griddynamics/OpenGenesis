@@ -31,10 +31,13 @@ import com.griddynamics.genesis.service.CredentialsStoreService
 import com.griddynamics.genesis.api
 import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.web.bind.annotation._
+import org.springframework.beans.factory.annotation.Autowired
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/credentials"))
-class CredentialsController(service: CredentialsStoreService) extends RestApiExceptionsHandler {
+class CredentialsController extends RestApiExceptionsHandler {
+
+  @Autowired var service: CredentialsStoreService = _
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
   @ResponseBody

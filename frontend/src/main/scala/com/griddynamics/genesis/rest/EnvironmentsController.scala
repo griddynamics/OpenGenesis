@@ -28,14 +28,16 @@ import scala.Array
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import com.griddynamics.genesis.http.TunnelFilter
 import org.springframework.web.bind.annotation._
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.annotation.{Autowired, Value}
 import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.api.EnvironmentDetails
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
-class EnvironmentsController(genesisService: GenesisService) extends RestApiExceptionsHandler {
+class EnvironmentsController extends RestApiExceptionsHandler {
   import GenesisRestController._
+
+  @Autowired var genesisService: GenesisService = _
 
   @Value("${genesis.system.server.mode:frontend}")
   var mode = ""

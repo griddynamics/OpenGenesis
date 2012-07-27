@@ -22,17 +22,18 @@
  */
 package com.griddynamics.genesis.rest
 
+// RuntimeException are important for spring aspects to work property
 
-class InvalidInputException() extends Exception
+class InvalidInputException() extends RuntimeException
 
-class MissingParameterException(s : String) extends Exception {
+class MissingParameterException(s : String) extends RuntimeException {
     val paramName = s
 }
 
 /**
  * @param msg mandatory explanation of what wasn't found
  */
-class ResourceNotFoundException(val msg: String) extends Exception
+class ResourceNotFoundException(val msg: String) extends RuntimeException
 
 
-class ResourceConflictException() extends Exception
+class ResourceConflictException() extends RuntimeException
