@@ -33,9 +33,10 @@ import org.springframework.transaction.annotation.{Isolation, Propagation, Trans
 import org.squeryl.{StaleUpdateException, Query, Table}
 import java.sql.Timestamp
 import com.griddynamics.genesis.model.WorkflowStepStatus._
+import com.griddynamics.genesis.util.Logging
 
 //TODO think about ids as vars
-class StoreService extends service.StoreService {
+class StoreService extends service.StoreService with Logging {
 
   import StoreService._
 
@@ -311,15 +312,18 @@ class StoreService extends service.StoreService {
     val actualEnv = findEnv(env.name, env.projectId).get
 
     if (!isReadyForWorkflow(actualEnv.status))
-      return Left(Mistake("Environment with status %s isn't ready for workflow request".format(env.status: EnvStatus)))
+      return Left(Mistake("Environment with status %s isn't ready for workflow request".format(actualEnv.status: EnvStatus)))
 
-    env.status = EnvStatus.Busy
+    actualEnv.status = EnvStatus.Busy
     workflow.status = WorkflowStatus.Requested
     try {
-      updateEnv(env)
-      Right((env, GS.workflows.insert(workflow)))
+      updateEnv(actualEnv)
+      Right((actualEnv, GS.workflows.insert(workflow)))
     } catch {
-      case e: StaleUpdateException => Left(Mistake("Optimistic lock: environment's status has been updated"))
+      case e: StaleUpdateException => {
+        log.warn("Optimistic lock: environment's status has been updated", e)
+        Left(Mistake("Optimistic lock: environment's status has been updated"))
+      }
     }
   }
 
