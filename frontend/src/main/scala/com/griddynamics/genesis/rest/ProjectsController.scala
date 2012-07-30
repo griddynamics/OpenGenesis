@@ -110,11 +110,10 @@ class ProjectsController extends RestApiExceptionsHandler {
                         @PathVariable("roleName") roleName: String,
                         request: HttpServletRequest,
                         response: HttpServletResponse): ExtendedResult[_] = {
-    import RolesController._
-
     val paramsMap = GenesisRestController.extractParamsMap(request)
-    val users = GenesisRestController.extractListValue("users", paramsMap).map(unescapeAndReplace)
-    val groups = GenesisRestController.extractListValue("groups", paramsMap).map(unescapeAndReplace)
+
+    val users = GenesisRestController.extractListValue("users", paramsMap)
+    val groups = GenesisRestController.extractListValue("groups", paramsMap)
 
     import Validation._
     val invalidUsers = users.filterNot(_.matches(validADUserName))
