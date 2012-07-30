@@ -24,20 +24,34 @@ package com.griddynamics.genesis.spring.aop
 
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.service.impl.ProjectService
-import org.aspectj.lang.annotation.{Before, Aspect}
-import org.springframework.web.bind.annotation.ResponseBody
+import org.aspectj.lang.annotation.{Pointcut, Before, Aspect}
 import com.griddynamics.genesis.rest.ResourceNotFoundException
+import org.aspectj.lang.JoinPoint
+import org.aspectj.lang.reflect.CodeSignature
 
 @Aspect
 class ProjectBoundaryCheckingAspect {
   @Autowired
   var projectService: ProjectService = _
 
-  @Before("execution(* com.griddynamics.genesis.rest.*Controller.*(..)) && args(projectId, ..)")
-  @ResponseBody
-  def validateAccount(projectId: Int) {
-    if (projectService.get(projectId).isEmpty) {
-      throw new ResourceNotFoundException("Project [%d] wasn't found".format(projectId))
+  @Pointcut("within(@org.springframework.web.bind.annotation.RequestMapping *)")
+  def requestMapping() {}
+
+  @Before(value = "within(@org.springframework.web.bind.annotation.RequestMapping *) && execution(* com.griddynamics.genesis.rest.*Controller.*(..))")
+  def checkProjectExists(joinPoint: JoinPoint) {
+    val paramNames = joinPoint.getSignature match {
+      case sign: CodeSignature => sign.getParameterNames
+      case _ => null
+    }
+
+    if(paramNames != null) {
+      val index = paramNames.indexWhere { it => it.equals("projectId") || it.startsWith("projectId$") } //scala adjusts argument names  with _${int}
+      if(index != -1) {
+        val projectId = joinPoint.getArgs.apply(index).asInstanceOf[Int]
+        if (projectService.get(projectId).isEmpty) {
+          throw new ResourceNotFoundException("Project [%d] wasn't found".format(projectId))
+        }
+      }
     }
   }
 }
