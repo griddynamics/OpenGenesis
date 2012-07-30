@@ -143,8 +143,10 @@ object GenesisRestService {
       workflowOption match {
         case Some(workflow) if (workflow.stepsCount > 0 && workflow.stepsFinished > 0) =>
           Some(BigDecimal(workflow.stepsFinished / (workflow.stepsCount: Double)).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble)
-        case Some(workflow) =>
+        case Some(workflow) if workflow.stepsCount > 0 =>
           Some(0.04)
+        case Some(workflow) =>
+          Some(0.0)
         case None => None
       }
     }
