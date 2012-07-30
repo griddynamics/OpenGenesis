@@ -28,17 +28,31 @@ import com.griddynamics.genesis.model.VmStatus
 import com.griddynamics.genesis.workflow.{AsyncTimeoutAwareActionExecutor, Signal}
 import com.griddynamics.genesis.service.impl.NoCredentialsFoundException
 import com.griddynamics.genesis.actions.provision.{NoCredentialsFound, CheckSshPortAction}
+import com.jcraft.jsch.JSchPartialAuthException
 
 class SshPortChecker(val action: CheckSshPortAction,
                      val computeService: ComputeService,
                      sshService: SshService,
                      val storeService: StoreService,
                      val timeoutMillis: Long = 180 * 1000) extends AsyncTimeoutAwareActionExecutor with CommonSshPortChecker {
-  lazy val sshClient = sshService.sshClient(action.env, action.vm)
+  val lock: AnyRef = new Object
+  lazy val sshClient = lock.synchronized {
+      try {
+        if (! interrupted)
+            sshService.sshClient(action.env, action.vm)
+        else
+            null
+      }
+  }
+  var interrupted = false
 
   override def cleanUp(signal: Signal) {
-    if (sshClient != null)
-      sshClient.disconnect()
+      lock.synchronized {
+          log.debug("Got cleanup signal. Should not continue trying")
+          interrupted = true
+          if (sshClient != null)
+              sshClient.disconnect()
+      }
   }
 
   override def getResult() = {
