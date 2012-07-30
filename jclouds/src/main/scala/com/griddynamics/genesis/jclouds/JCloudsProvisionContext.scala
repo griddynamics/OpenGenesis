@@ -223,7 +223,7 @@ class JCloudsProvisionContextImpl(override val storeService: StoreService,
     new CommonPortTestExecutor(action, computeService, storeService, bootstrapContext.clientBootstrap, portCheckTimeout) with DurationLimitedActionExecutor
 
   def sshPortCheckActionExecutor(action: CheckSshPortAction) =
-    new SshPortChecker(action, computeService, sshService, storeService) with DurationLimitedActionExecutor
+    new SshPortChecker(action, computeService, sshService, storeService, portCheckTimeout) with DurationLimitedActionExecutor
 
   def publicIpCheckActionExecutor(action: CheckPublicIpAction) =
     new CommonCheckPublicIpExecutor(action, computeService, storeService, ipCheckTimeout)
