@@ -63,8 +63,9 @@ class ChefServiceImpl(val genesisId: String, val endpoint : String,
     def createDatabag(env : Environment, name : String, items : Map[String, JObject], overwrite : Boolean) {
         val databagName = chefObjectName(env, name)
 
-        if (overwrite)
-            chefClient.deleteDatabag(databagName)
+        if (overwrite){
+            chefClient.listDatabags().find(_ == databagName).foreach(chefClient.deleteDatabag(_))
+        }
 
         chefClient.createDatabag(databagName)
 
@@ -81,8 +82,9 @@ class ChefServiceImpl(val genesisId: String, val endpoint : String,
 
         val chefRole = new Role(roleName, description, runList, defaults, overrides)
 
-        if (overwrite)
-            chefClient.deleteRole(roleName)
+        if (overwrite) {
+            chefClient.listRoles().find(_ == roleName).foreach(chefClient.deleteRole(_))
+        }
 
         chefClient.createRole(chefRole)
     }
