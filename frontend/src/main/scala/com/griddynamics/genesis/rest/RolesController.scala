@@ -100,12 +100,14 @@ class RolesController extends RestApiExceptionsHandler {
     val groups = extractListValue("groups", grantsMap) map RolesController.unescapeAndReplace
     val users = extractListValue("users", grantsMap) map RolesController.unescapeAndReplace
 
-    val Seq(invalidUsers, invalidGroups) = Seq(users, groups).map(_.filterNot(_.matches(Validation.validADName)))
+    import Validation._
+    val invalidUsers = users.filterNot(_.matches(validADUserName))
     if(invalidUsers.nonEmpty) {
-      return Failure(compoundServiceErrors = invalidUsers.map(Validation.ADNameErrorMessage.format("User", _) ))
+      return Failure(compoundServiceErrors = invalidUsers.map(Validation.ADUserNameErrorMessage.format(_) ))
     }
+    val invalidGroups = groups.filterNot(_.matches(validADGroupName))
     if(invalidGroups.nonEmpty) {
-      return Failure(compoundServiceErrors = invalidGroups.map(Validation.ADNameErrorMessage.format("Group",_) ))
+      return Failure(compoundServiceErrors = invalidGroups.map(Validation.ADGroupNameErrorMessage.format(_) ))
     }
 
     validUsers(users) {
