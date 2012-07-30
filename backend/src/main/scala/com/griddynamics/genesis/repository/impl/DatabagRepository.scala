@@ -36,14 +36,6 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
 
   private val itemsTable = GS.dataBagItems
 
-  private val availableDataBags = join(table, GS.projects.leftOuter) ( (dataBag, project) =>
-    select(dataBag)
-    on(dataBag.projectId.isNull or (dataBag.projectId === project.map(_.id) and project.map(_.isDeleted) === Some(false)))
-  )
-  private val availableDataBagItems = from(itemsTable, availableDataBags) { (item, dataBag) =>
-    where(item.dataBagId === dataBag.id) select(item)
-  }
-
   implicit def convert(entity: model.DataBag) = {
     val tags: Seq[String] = if (entity.tags.trim.isEmpty) List() else List(entity.tags.trim.toLowerCase.split(" "): _*)
     new api.DataBag(fromModelId(entity.id), entity.name, tags, entity.projectId)
@@ -83,14 +75,14 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
   }
 
   @Transactional(readOnly = true)
-  def findByTags(tags: Seq[String], projectId: Option[Int] = None):Seq[api.DataBag] =  from(availableDataBags)(bag => {
+  def findByTags(tags: Seq[String], projectId: Option[Int] = None):Seq[api.DataBag] =  from(table)(bag => {
     val tags_has = { s: String => bag.tags like ("% " + s.toLowerCase + " %") }
     val alwaysTrue: BinaryOperatorNodeLogicalBoolean = 1 === 1
     where(((bag.projectId === projectId.?) or (bag.projectId isNull).inhibitWhen(projectId.isDefined)) and tags.foldLeft(alwaysTrue) { case (acc, tag) => ( tags_has (tag) and acc) } ) select (bag)
   }).toList.map(convert _)
 
   @Transactional(readOnly = true)
-  def getItems(bagId: Int) = from(availableDataBagItems)(item =>
+  def getItems(bagId: Int) = from(itemsTable)(item =>
     where(item.dataBagId === bagId) select (item)
   ).toList.map(convertItem _)
 
@@ -112,7 +104,7 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
 
   @Transactional(readOnly = true)
   def findByName(name: String, projectId: Option[Int] = None): Option[DataBag] = {
-    val bag = from(availableDataBags)(
+    val bag = from(table)(
       bag => where(lower(bag.name) === name.toLowerCase and ((bag.projectId === projectId.?) or (bag.projectId isNull).inhibitWhen(projectId.isDefined))) select(bag)
     ).headOption.map(convert _)
     bag.map (it => it.copy(items = Option(getItems(it.id.get))))
@@ -123,7 +115,7 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
     }
 
     def list(projectId: Option[Int]) = {
-        from(availableDataBags) (
+        from(table) (
             bag => where((bag.projectId === projectId.?) or (bag.projectId isNull).inhibitWhen(projectId.isDefined)) select(bag)
         ).map(convert _).toList
     }

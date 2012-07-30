@@ -53,6 +53,11 @@ class ProjectRepository extends AbstractGenericRepository[model.Project, api.Pro
     item => where(item.id in ids) select (item) orderBy(item.id)
   }.toList.map(convert _)
 
+  @Transactional(readOnly = true)
+  override def get(id: Int): Option[api.Project] = from(activeProjects) {
+    item => where(item.id === id) select (item)
+  }.headOption.map(convert(_))
+
   override implicit def convert(entity: model.Project): api.Project = {
     val id = entity.id match {
       case 0 => None

@@ -43,15 +43,6 @@ class StoreService extends service.StoreService with Logging {
   val availableEnvs = from(GS.envs, GS.projects) { (env, project) =>
     where(env.projectId === project.id and project.isDeleted === false) select(env)
   }
-  val availableBorrowedMachines = from(GS.borrowedMachines, availableEnvs) { (machine, env) =>
-    where(machine.envId === env.id) select(machine)
-  }
-  val availableVms = from(GS.vms, availableEnvs) { (vms, env) =>
-    where(vms.envId === env.id) select(vms)
-  }
-  val availableWorkflows = from(GS.workflows, availableEnvs) { (workflow, env) =>
-    where(workflow.envId === env.id) select(workflow)
-  }
 
   @Transactional(readOnly = true)
   def listEnvs(projectId: Int): Seq[Environment] = listEnvQuery(projectId).toList
@@ -62,7 +53,7 @@ class StoreService extends service.StoreService with Logging {
 
   @Transactional(readOnly = true)
   def listEnvs(projectId: Int, statuses: Seq[EnvStatus]): Seq[Environment] = {
-    from(availableEnvs)(env =>
+    from(GS.envs)(env =>
       where(env.status.id in statuses.map(_.id) and env.projectId === projectId)
       select (env)
     ).toList
@@ -75,16 +66,16 @@ class StoreService extends service.StoreService with Logging {
   def countEnvs(projectId: Int, statuses: Seq[EnvStatus]) = listEnvs(projectId, statuses).size
 
   private def listEnvQuery(projectId: Int): Query[Environment] = {
-    from(availableEnvs)(env => where(env.projectId === projectId) select (env))
+    from(GS.envs)(env => where(env.projectId === projectId) select (env))
   }
 
   @Transactional(readOnly = true)
   def isEnvExist(projectId: Int, envName: String): Boolean = {
-    !from(availableEnvs)(env => where(env.projectId === projectId and env.name === envName) select (env.id)).headOption.isEmpty
+    !from(GS.envs)(env => where(env.projectId === projectId and env.name === envName) select (env.id)).headOption.isEmpty
   }
 
   private def findEnvQuery(envName: String, projectId: Int) =
-    from(availableEnvs)(e => where(e.name === envName and e.projectId === projectId) select (e))
+    from(GS.envs)(e => where(e.name === envName and e.projectId === projectId) select (e))
 
   @Transactional(readOnly = true)
   def findEnv(envName: String, projectId: Int) = {
@@ -104,7 +95,7 @@ class StoreService extends service.StoreService with Logging {
 
   @Transactional(readOnly = true)
   def findEnv(id: Int) = {
-    val result = from(availableEnvs)(e => where(e.id === id) select (e))
+    val result = from(GS.envs)(e => where(e.id === id) select (e))
     val envs = if (result.size == 1) Some(result.single) else None
     envs.foreach(loadAttrs(_, GS.envAttrs))
     envs
@@ -112,7 +103,7 @@ class StoreService extends service.StoreService with Logging {
 
   @Transactional(readOnly = true)
   def getVm(instanceId: String) = {
-    from(availableEnvs, GS.vms)((env, vm) =>
+    from(GS.envs, GS.vms)((env, vm) =>
       where(vm.envId === env.id and
           vm.instanceId === Some(instanceId))
           select ((env, vm))
@@ -121,21 +112,21 @@ class StoreService extends service.StoreService with Logging {
 
   @Transactional(readOnly = true)
   def listServers(env: Environment): Seq[BorrowedMachine] = {
-    val vms = from(availableBorrowedMachines)(server => where(server.envId === env.id) select (server)).toList
+    val vms = from(GS.borrowedMachines)(server => where(server.envId === env.id) select (server)).toList
     vms.foreach(loadAttrs(_, GS.serverAttrs))
     vms
   }
 
   @Transactional(readOnly = true)
   def listVms(env: Environment): Seq[VirtualMachine] = {
-    val vms = from(availableVms)(vm => where(vm.envId === env.id) select (vm)).toList
+    val vms = from(GS.vms)(vm => where(vm.envId === env.id) select (vm)).toList
     vms.foreach(loadAttrs(_, GS.vmAttrs))
     vms
   }
 
   @Transactional(readOnly = true)
   def listWorkflows(env: Environment) = {
-    from(availableWorkflows)(w =>
+    from(GS.workflows)(w =>
       where(w.envId === env.id)
           select (w)
           orderBy(w.id desc)
@@ -144,7 +135,7 @@ class StoreService extends service.StoreService with Logging {
 
   @Transactional(readOnly = true)
   def listWorkflows(env: Environment, pageOffset: Int, pageLength: Int) = {
-    from(availableWorkflows)(w =>
+    from(GS.workflows)(w =>
       where(w.envId === env.id)
           select (w)
           orderBy(w.id desc)
@@ -153,7 +144,7 @@ class StoreService extends service.StoreService with Logging {
 
   @Transactional(readOnly = true)
   def countWorkflows(env: Environment): Int =
-    from(availableWorkflows)(w =>
+    from(GS.workflows)(w =>
       where(w.envId === env.id)
           compute(count)
     ).single.measures.toInt
@@ -329,7 +320,7 @@ class StoreService extends service.StoreService with Logging {
 
   @Transactional(readOnly = true)
   def retrieveWorkflow(envName: String, projectId: Int) = {
-    from(availableEnvs, GS.workflows)((e, w) =>
+    from(GS.envs, GS.workflows)((e, w) =>
       where(e.name === envName and
           e.projectId === projectId and
           e.id === w.envId and
@@ -458,7 +449,7 @@ class StoreService extends service.StoreService with Logging {
   }
 
   def findBorrowedMachinesByServerId(serverId: Int) = {
-    from(availableBorrowedMachines)(bm => where(bm.serverId === serverId and bm.status <> MachineStatus.Released) select (bm)).toList
+    from(GS.borrowedMachines)(bm => where(bm.serverId === serverId and bm.status <> MachineStatus.Released) select (bm)).toList
   }
 }
 

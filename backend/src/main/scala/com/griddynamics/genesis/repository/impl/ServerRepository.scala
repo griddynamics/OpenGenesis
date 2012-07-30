@@ -32,10 +32,6 @@ import org.springframework.transaction.annotation.Transactional
 
 class ServerRepository extends AbstractGenericRepository[model.Server, api.Server](GS.servers) with repository.ServerRepository {
 
-  val availableServers = from(table, GS.serverArrays, GS.projects) { (server, array, project) =>
-    where(server.serverArrayId === array.id and array.projectId === project.id and project.isDeleted === false) select(server)
-  }
-
   implicit def convert(entity: model.Server) = new api.Server(fromModelId(entity.id), entity.serverArrayId, entity.instanceId, entity.address, entity.credentialsId)
 
   implicit def convert(dto: api.Server) = {
@@ -45,7 +41,7 @@ class ServerRepository extends AbstractGenericRepository[model.Server, api.Serve
   }
 
   @Transactional(readOnly = true)
-  def listServers(serverArrayId: Int) = from(availableServers)(
+  def listServers(serverArrayId: Int) = from(table)(
     item => where( serverArrayId === item.serverArrayId ) select (item) orderBy (item.id)
   ).toList.map(convert(_))
 
@@ -55,10 +51,10 @@ class ServerRepository extends AbstractGenericRepository[model.Server, api.Serve
   }
 
   def get(arrayId: Int, serverId: Int): Option[api.Server] = {
-    from(availableServers)(item => where(item.id === serverId and item.serverArrayId === arrayId) select(item)).headOption.map(convert(_))
+    from(table)(item => where(item.id === serverId and item.serverArrayId === arrayId) select(item)).headOption.map(convert(_))
   }
 
-  def findByInstanceId(arrayId: Int, instanceId: String):Option[api.Server] = from(availableServers)(
+  def findByInstanceId(arrayId: Int, instanceId: String):Option[api.Server] = from(table)(
     item => where((item.instanceId === instanceId) and (item.serverArrayId === arrayId)) select(item)
   ).headOption.map(convert(_))
 
