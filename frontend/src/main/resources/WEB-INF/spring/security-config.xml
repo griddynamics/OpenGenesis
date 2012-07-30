@@ -51,6 +51,7 @@
 
         <s:intercept-url pattern="/rest/groups/**"   access="hasRole('ROLE_GENESIS_ADMIN')" />
         <s:intercept-url pattern="/rest/roles/**"   access="hasRole('ROLE_GENESIS_ADMIN')" />
+        <s:intercept-url pattern="/rest/projectRoles**"   access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_PROJECT_ADMIN')" />
         <s:intercept-url pattern="/rest/users/**"    access="hasRole('ROLE_GENESIS_ADMIN')" />
         <s:intercept-url pattern="/rest/plugins/**"  access="hasRole('ROLE_GENESIS_ADMIN')" />
         <s:intercept-url pattern="/rest/settings/**" access="hasRole('ROLE_GENESIS_ADMIN')" />
