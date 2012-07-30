@@ -53,9 +53,13 @@ object Validation {
                                   "dots, hyphens and underscores. Length must be from 2 to 32"
     val emailErrorMessage = "Invalid format. Note that only lowercase letters are allowed"
 
-    val validADName = "^[^%<>]{1,128}$"
-    val ADNameErrorMessage = "%s name [%s] is not valid. <,>,%% - are not allowed." +
+    val validADUserName = "^[^%<>]{1,128}$"
+    // TODO: remove "GROUP_" prefix
+    val validADGroupName = "^[^%<>]{1,122}$" // "GROUP_" prefix is added to every group name
+    val ADUserNameErrorMessage = "User name [%s] is not valid. <,>,%% - are not allowed." +
         " Must be non-empty string no more than 128 characters long."
+    val ADGroupNameErrorMessage = "Group name [%s] is not valid. <,>,%% - are not allowed." +
+        " Must be non-empty string no more than 122 characters long."
 
     def mustMatch[C](obj: C, fieldName: String, error : String = "Invalid format")(pattern: Regex)(value: String) : ExtendedResult[C] = {
         value match {

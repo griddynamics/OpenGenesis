@@ -117,13 +117,13 @@ class ProjectsController extends RestApiExceptionsHandler {
     val groups = GenesisRestController.extractListValue("groups", paramsMap).map(unescapeAndReplace)
 
     import Validation._
-    val invalidUsers = users.filterNot(_.matches(validADName))
+    val invalidUsers = users.filterNot(_.matches(validADUserName))
     if(invalidUsers.nonEmpty) {
-      return Failure(compoundServiceErrors = invalidUsers.map(ADNameErrorMessage.format("User", _) ))
+      return Failure(compoundServiceErrors = invalidUsers.map(ADUserNameErrorMessage.format(_) ))
     }
-    val invalidGroups = groups.filterNot(_.matches(validADName))
+    val invalidGroups = groups.filterNot(_.matches(validADGroupName))
     if(invalidGroups.nonEmpty) {
-      return Failure(compoundServiceErrors = invalidGroups.map(ADNameErrorMessage.format("Group", _) ))
+      return Failure(compoundServiceErrors = invalidGroups.map(ADGroupNameErrorMessage.format(_) ))
     }
 
     authorityService.updateProjectAuthority(projectId,
