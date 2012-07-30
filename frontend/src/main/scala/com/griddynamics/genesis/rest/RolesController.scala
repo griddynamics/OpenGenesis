@@ -95,10 +95,8 @@ class RolesController extends RestApiExceptionsHandler {
     }
     val grantsMap = extractParamsMap(request)
 
-    // special symbols are escaped by js component.
-    // In this case double backslashes should be removed too
-    val groups = extractListValue("groups", grantsMap) map RolesController.unescapeAndReplace
-    val users = extractListValue("users", grantsMap) map RolesController.unescapeAndReplace
+    val groups = extractListValue("groups", grantsMap)
+    val users = extractListValue("users", grantsMap)
 
     import Validation._
     val invalidUsers = users.filterNot(_.matches(validADUserName))
@@ -152,8 +150,3 @@ class RolesController extends RestApiExceptionsHandler {
   }
 }
 
-object RolesController {
-    def unescapeAndReplace: (String) => String = {
-        URLDecoder.decode(_, "utf-8").replaceAll("\\\\\\\\", "\\\\")
-    }
-}
