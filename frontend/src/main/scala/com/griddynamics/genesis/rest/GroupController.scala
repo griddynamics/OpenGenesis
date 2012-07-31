@@ -51,7 +51,7 @@ class GroupController extends RestApiExceptionsHandler with ApplicationContextAw
 
     @RequestMapping(value=Array("{id}"), method = Array(RequestMethod.GET))
     @ResponseBody
-    def get(@PathVariable(value = "id") id: Int) = groupService.get(id)
+    def get(@PathVariable(value = "id") id: Int) = groupService.get(id).getOrElse(throw new ResourceNotFoundException("Group [id = %d] was not found".format(id)))
 
     @RequestMapping(method = Array(RequestMethod.GET), params = Array("tag"))
     @ResponseBody
