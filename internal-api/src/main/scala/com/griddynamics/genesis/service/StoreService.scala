@@ -87,6 +87,8 @@ trait StoreService {
 
     def updateStepStatus(stepId: Int, status: WorkflowStepStatus)
 
+    def updateStepDetailsAndStatus(stepId: Int, details: Option[String], status: WorkflowStepStatus)
+
     def insertWorkflowSteps(steps : Seq[WorkflowStep])
 
     def insertWorkflowStep(step : WorkflowStep): WorkflowStep
