@@ -115,7 +115,8 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
             mustMatchEmail(user, user.email, "E-Mail") ++
             must(user, "Email [%s] is already registered for other user".format(user.email)) {
                 user => repository.findByEmail(user.email).filter(_.username != user.username).isEmpty
-            }
+            } ++
+            mustSatisfyLengthConstraints(user, user.jobTitle.getOrElse(""), "Job Title")(0, 128)
 
     protected def validateCreation(user: User) = {
             must(user, "User with username [" + user.username + "] is already registered") {
@@ -128,7 +129,8 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
             mustMatchPersonName(user, user.firstName, "First Name") ++
             mustMatchPersonName(user, user.lastName, "Last Name") ++
             mustMatchEmail(user, user.email, "E-Mail") ++
-            notEmpty(user, user.password.getOrElse(""), "Password")
+            notEmpty(user, user.password.getOrElse(""), "Password") ++
+            mustSatisfyLengthConstraints(user, user.jobTitle.getOrElse(""), "Job Title")(0, 128)
     }
 
 
