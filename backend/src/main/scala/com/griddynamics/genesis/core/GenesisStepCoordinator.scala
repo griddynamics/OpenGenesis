@@ -65,7 +65,7 @@ class GenesisStepCoordinator(val step: GenesisStep,
             }
         }
 
-        setStepStatus(if(genesisStepResult.isStepFailed) Failed else Succeed)
+        setStepDetailsAndStatus(if(genesisStepResult.isStepFailed) Failed else Succeed)
         genesisStepResult
     }
 
@@ -78,6 +78,10 @@ class GenesisStepCoordinator(val step: GenesisStep,
 
     private def setStepStatus(status : WorkflowStepStatus) {
         storeService.updateStepStatus(step.id, status)
+    }
+
+    private def setStepDetailsAndStatus(status : WorkflowStepStatus) {
+        storeService.updateStepDetailsAndStatus(step.id, Some(step.actualStep.stepDescription), status)
     }
 
     private def trackStart(result: scala.Seq[ActionExecutor]) : Seq[ActionExecutor] = {
