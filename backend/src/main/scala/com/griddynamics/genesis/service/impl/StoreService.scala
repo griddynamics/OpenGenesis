@@ -355,13 +355,20 @@ class StoreService extends service.StoreService with Logging {
 
   @Transactional
   def updateStepStatus(stepId: Int, status: WorkflowStepStatus) {
+    updateStepDetailsAndStatus(stepId, None, status)
+  }
+
+
+  @Transactional
+  def updateStepDetailsAndStatus(stepId: Int, details: Option[String], status: WorkflowStepStatus.WorkflowStepStatus) {
     import com.griddynamics.genesis.model.WorkflowStepStatus._
     GS.steps.update(step => {
       where(step.id === stepId) set (
-          step.finished := (if(status == Failed || status == Succeed) Some(new Timestamp(System.currentTimeMillis())) else step.finished),
-          step.started := (if(status == Executing) Some(new Timestamp(System.currentTimeMillis())) else step.started),
-          step.status := status
-          )
+        step.finished := (if(status == Failed || status == Succeed) Some(new Timestamp(System.currentTimeMillis())) else step.finished),
+        step.started := (if(status == Executing) Some(new Timestamp(System.currentTimeMillis())) else step.started),
+        step.status := status,
+        step.details := details.getOrElse(step.details)
+      )
     })
   }
 
