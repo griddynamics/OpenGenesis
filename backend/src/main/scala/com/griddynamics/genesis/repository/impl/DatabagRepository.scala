@@ -106,8 +106,20 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
   def findByName(name: String, projectId: Option[Int] = None): Option[DataBag] = {
     val bag = from(table)(
       bag => where(lower(bag.name) === name.toLowerCase and ((bag.projectId === projectId.?) or (bag.projectId isNull).inhibitWhen(projectId.isDefined))) select(bag)
-    ).headOption.map(convert _)
-    bag.map (it => it.copy(items = Option(getItems(it.id.get))))
+    ).headOption
+    convertWithItems(bag)
+  }
+
+  @Transactional(readOnly = true)
+  def find(id: Int, projectId: Option[Int] = None): Option[DataBag] = {
+    val bag = from(table)(
+      bag => where(bag.id === id and ((bag.projectId === projectId.?) or (bag.projectId isNull).inhibitWhen(projectId.isDefined))) select(bag)
+    ).headOption
+    convertWithItems(bag)
+  }
+
+  private def convertWithItems(bag: Option[model.DataBag]): Option[DataBag] = {
+    bag.map(convert _).map(it => it.copy(items = Option(getItems(it.id.get))))
   }
 
     override def list = {

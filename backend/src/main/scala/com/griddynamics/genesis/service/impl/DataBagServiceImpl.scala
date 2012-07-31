@@ -38,6 +38,9 @@ class DataBagServiceImpl(repository: DatabagRepository) extends DataBagService w
     must(bag, "DataBag with id [%s] was not found".format(bag.id.get)) {
       bag => !repository.get(bag.id.get).isEmpty
     } ++
+    must(bag, "DataBag with id [%s] was not found in project [%s]".format(bag.id.get, bag.projectId.getOrElse(""))) {
+      bag => !repository.find(bag.id.get, bag.projectId).isEmpty
+    } ++
     must(bag, "DataBag with name '%s' already exists (note: names are case insensitive)".format(bag.name)) {
       bag => repository.findByName(bag.name, bag.projectId).forall { _.id == bag.id}
     }
