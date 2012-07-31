@@ -156,17 +156,19 @@ define([
         });
         var self = this;
         credentials.save()
-          .done(function() {
+          .done(function () {
             self.trigger("back")
           })
-          .error(function(jqXHR) {
-                var json = JSON.parse(jqXHR.responseText);
-                var validation = _.extend({}, json.variablesErrors, json.serviceErrors);
-                if(!_.isEmpty(validation)){
-                    var validator = $('#install-credentials').validate();
-                    validator.showErrors(validation);
-                }
-            });
+          .error(function (jqXHR) {
+            var json = JSON.parse(jqXHR.responseText);
+            var validation = _.extend({}, json.variablesErrors, json.serviceErrors);
+            if (!_.isEmpty(validation)) {
+              var validator = $('#install-credentials').validate();
+              validator.showErrors(validation);
+            } else {
+              self.status.error(jqXHR);
+            }
+          });
       },
 
       render: function() {
