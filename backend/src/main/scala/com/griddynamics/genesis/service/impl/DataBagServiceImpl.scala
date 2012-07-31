@@ -35,6 +35,9 @@ class DataBagServiceImpl(repository: DatabagRepository) extends DataBagService w
 
   protected def validateUpdate(bag: DataBag) = {
     commonValidate(bag)++
+    must(bag, "DataBag with id [%s] was not found".format(bag.id.get)) {
+      bag => !repository.get(bag.id.get).isEmpty
+    } ++
     must(bag, "DataBag with name '%s' already exists (note: names are case insensitive)".format(bag.name)) {
       bag => repository.findByName(bag.name, bag.projectId).forall { _.id == bag.id}
     }
