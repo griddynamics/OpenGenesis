@@ -46,7 +46,7 @@ class PowerShellExecutions extends ShellExecutionStrategy {
     val scriptCall = outputDirectory.map { path =>
       val scriptPath = new File(path, "script1.ps1").getAbsolutePath
       Closeables.using(new FileOutputStream(scriptPath)) { _.write(withEncoding.getBytes) }
-      "& { trap { break } . \"%s\" }".format(scriptPath)
+      "& { trap { break } . \"%s\" ; exit $LastExitCode }".format(scriptPath)
     }
     scriptCall.getOrElse(withEncoding)
   }
@@ -62,7 +62,7 @@ class CmdExecutionStrategy extends ShellExecutionStrategy {
     val scriptCall = outputDirectory.map { path =>
       val scriptPath = new File(path, "script1.bat").getAbsolutePath
       Closeables.using(new FileOutputStream(scriptPath)) { _.write(command.getBytes) }
-      normalize(scriptPath)
+      normalize(scriptPath) + "exit %ERRORLEVEL%\n"
     }
     scriptCall.getOrElse(normalize(command))
   }

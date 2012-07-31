@@ -26,6 +26,7 @@ import com.griddynamics.genesis.plugin.{GenesisStepResult, StepExecutionContext,
 import com.griddynamics.genesis.workflow._
 import com.griddynamics.genesis.util.Logging
 import java.io.File
+import com.griddynamics.genesis.logging.LoggerWrapper
 
 class RunLocalStepCoordinator(stepContext: StepExecutionContext, val step: RunLocalStep, shellService: LocalShellExecutionService) extends ActionOrientedStepCoordinator with Logging {
   var isStepFailed = false
@@ -60,6 +61,9 @@ class RunLocalStepCoordinator(stepContext: StepExecutionContext, val step: RunLo
     }
     case a: RunLocalResult => {
       isStepFailed = a.response.exitCode != step.successExitCode
+      if(isStepFailed) {
+        LoggerWrapper.writeLog(a.action.uuid, "FAILURE: Process finished with exit code %d, expected result = %d".format(a.response.exitCode, step.successExitCode))
+      }
       if (!isStepFailed && !toExecute.isEmpty) {
         Seq(toExecute.dequeue())
       } else {

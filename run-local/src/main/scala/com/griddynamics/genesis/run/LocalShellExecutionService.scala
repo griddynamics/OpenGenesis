@@ -33,28 +33,33 @@ class LocalShellExecutionService(executionStrategies: List[ShellExecutionStrateg
 
   val strategies = executionStrategies.map { strategy => (strategy.shell, strategy) }.toMap
 
-  private[this] def handleInputStream (logWriter: Option[PrintWriter], stepId: Option[Int]) (is: InputStream, sb: StringBuilder) {
+  private[this] def handleInputStream (logWriter: Option[PrintWriter], actionUUID: Option[String]) (is: InputStream, sb: StringBuilder) {
     Source.fromInputStream(is, "UTF-8").getLines().foreach { line =>
       log.debug(line)
       logWriter.foreach { _.println(line) }
-      stepId.foreach { LoggerWrapper.writeLog(_, line) }
+      actionUUID.foreach { LoggerWrapper.writeLog(_, line) }
       sb.append(line).append('\n')
     }
   }
 
-  def exec(shell: String, command: String, outPath : Option[File] = None, stepId : Option[Int] = None): ExecResponse = {
+  def exec(shell: String, command: String, outPath : Option[File] = None, actionUUID : Option[String] = None): ExecResponse = {
     val strategy = strategies.getOrElse(shell, throw new IllegalArgumentException)
 
     log.debug("Executing command: %s, log output path: %s, shell-run command: %s", command, outPath, shell)
 
-    outPath.foreach { path => if(!path.exists && !path.mkdirs()) throw new IllegalStateException("Failed to create %s".format(path)) }
+    outPath.foreach { path =>
+      if(!path.exists && !path.mkdirs()) {
+        actionUUID.foreach(LoggerWrapper.writeLog(_, "Couldn't create directory [%s]".format(path.getAbsolutePath)))
+        throw new IllegalStateException("Failed to create %s".format(path))
+      }
+    }
     val processCmd = strategy.generateShellCommand(command, outPath)
 
     val outputWriter = outPath.map { it => new PrintWriter(new File(it, "exec.out")) }
-    val handleOutput = handleInputStream(outputWriter, stepId) _
+    val handleOutput = handleInputStream(outputWriter, actionUUID) _
 
     val errorWriter = outPath.map { it => new PrintWriter(new File(it, "exec.err")) }
-    val handleError = handleInputStream(errorWriter, stepId) _
+    val handleError = handleInputStream(errorWriter, actionUUID) _
 
     val exitCodeWriter = outPath.map { it => new PrintWriter(new File(it, "exec.status")) }
 

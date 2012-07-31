@@ -49,13 +49,6 @@ class ServersController extends RestApiExceptionsHandler {
     service.create(array)
   }
 
-  @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.POST))
-  @ResponseBody
-  def update(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) = {
-    val array = extractServerArray(request, projectId, Some(id))
-    service.update(array)
-  }
-
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
   @ResponseBody
   def list(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = {
@@ -131,7 +124,7 @@ class ServersController extends RestApiExceptionsHandler {
   }
 
   private[this] def assertArrayBelongsToProject(projectId: Int, arrayId: Int) {
-    service.get(projectId, arrayId).getOrElse(throw new ResourceNotFoundException("Server array wasn't found in project or project doesn't exist"))
+    service.get(projectId, arrayId).getOrElse(throw new ResourceNotFoundException("Server array wasn't found in project"))
   }
 
   private[this] def extractServer(request: HttpServletRequest, projectId: Int, arrayId: Int, id: Option[Int]) = {
