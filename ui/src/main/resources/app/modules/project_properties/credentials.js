@@ -165,6 +165,8 @@ define([
                 if(!_.isEmpty(validation)){
                     var validator = $('#install-credentials').validate();
                     validator.showErrors(validation);
+                } else {
+                  self.status.error(jqXHR);
                 }
             });
       },
