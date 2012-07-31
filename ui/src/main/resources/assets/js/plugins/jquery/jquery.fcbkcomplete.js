@@ -33,21 +33,10 @@
  */
 
 /*
-* WARNING: this file has been changed manually against github version.
+*
+* WARNING: this file has been changed a lot manually against github version.
+*
 * Original repository: https://github.com/emposha/FCBKcomplete
-* Original line 446 of original file changed from:
-* string = string.replace(string[i], escape(string[i]));
-* To:
-* string = string.substring(0, i) + escape(string[i]) + string.substring(i + 1); (now line 456).
-*
-*
-* Following snippet was introduced to support resizing input field after pasting from clipboard:
-* $(input).bind("paste", function(event) {
-*  setTimeout(function() { ... }, 100);
-* });
-*
-*
-* bindEvents() was fixed to always call xssPrevent with flag=1 to escape input values.
 *
 */
 
@@ -141,12 +130,12 @@
       }
       
       function addItem(title, value, preadded, locked, focusme) {
-        if (!maxItems()) {
+        if (!maxItems() || !(/\S/.test(title))) { // has non-space character
           return false;
         }
         var liclass = "bit-box" + (locked ? " locked": "");
         var id = randomId();
-        var txt = document.createTextNode(xssDisplay(title));
+        var txt = document.createTextNode(title.replace("\\\\", "\\"));
         var aclose = $('<a class="closebutton" href="#"></a>');
         var li = $('<li class="'+liclass+'" rel="'+value+'" id="pt_'+id+'"></li>').prepend(txt).append(aclose);
 
@@ -159,7 +148,7 @@
         if (!preadded) {
           $("#" + elemid + "_annoninput").remove();
           addInput(focusme);
-          var _item = $('<option value="'+xssDisplay(value, 1)+'" id="opt_'+id+'" class="selected" selected="selected">'+xssDisplay(title)+'</option>');
+          var _item = $('<option value="'+ value +'" id="opt_'+id+'" class="selected" selected="selected">'+_.escape(title)+'</option>');
           element.append(_item);
           if (options.onselect) {
             funCall(options.onselect, _item);
@@ -212,11 +201,16 @@
           } else {
             input.focus();
           }
+          var val = $(this).val();
+          if(options.newel && val) {
+            var value = xssPrevent(val);
+            addItem(value, value, 0, 0, 0);
+          }
         });
         
         holder.click( function() {
           if (options.input_min_size < 0 && feed.length) {
-            load_feed(xssPrevent(input.val(), 1));
+            load_feed(xssPrevent(input.val()));
           }
           input.focus();
           if (feed.length && input.val().length > options.input_min_size) {
@@ -245,7 +239,7 @@
         });
 
         input.keyup( function(event) {
-          var etext = xssPrevent(input.val(), 1);
+          var etext = xssPrevent(input.val());
           
           if (event.keyCode == _key.backspace && etext.length == 0) {
             clear_feed(1);
@@ -301,7 +295,7 @@
             if (options.filter_selected && element.children('option[value="' + object.key + '"]').hasClass("selected")) {
               //nothing here...
             } else {
-              content += '<li rel="' + object.key + '">' + xssDisplay(itemIllumination(object.value, etext)) + '</li>';
+              content += '<li rel="' + object.key + '">' + itemIllumination(object.value, etext) + '</li>';
               counter++;
               maximum--;
             }
@@ -374,15 +368,15 @@
             holder.children("li.bit-box.deleted").removeClass("deleted");
           }
 
-          if ((event.keyCode == _key.enter || event.keyCode == _key.tab || event.keyCode == _key.comma) && checkFocusOn()) {
+          if ((event.keyCode == _key.enter || event.keyCode == _key.tab) && checkFocusOn()) {
             var option = focuson;
             addItem(option.text(), option.attr("rel"), 0, 0, 1);
             return _preventDefault(event);
           }
 
-          if ((event.keyCode == _key.enter || event.keyCode == _key.tab || event.keyCode == _key.comma) && !checkFocusOn()) {
+          if ((event.keyCode == _key.enter || event.keyCode == _key.tab) && !checkFocusOn()) {
             if (options.newel) {
-              var value = xssPrevent($(this).val(), 1);
+              var value = xssPrevent($(this).val());
               addItem(value, value, 0, 0, 1);
               return _preventDefault(event);
             }
@@ -438,7 +432,7 @@
           if (value.length == 0) {
             return;
           }
-          var li = $('<li rel="'+value+'" fckb="1">').html(xssDisplay(value));
+          var li = $('<li rel="'+value+'" fckb="1">').html(_.escape(value));
           feed.prepend(li);
           counter++;
         }
@@ -462,28 +456,8 @@
         return true;
       }
       
-      function xssPrevent(string, flag) {
-        if (typeof flag != "undefined") {
-          for(i = 0; i < string.length; i++) {
-            var charcode = string.charCodeAt(i);
-            if ((_key.exclamation <= charcode && charcode <= _key.slash) ||
-                (_key.colon <= charcode && charcode <= _key.at) ||
-                (_key.squarebricket_left <= charcode && charcode <= _key.apostrof)) {
-              string = string.substring(0, i) + escape(string[i]) + string.substring(i + 1);
-            }
-          }
-          string = string.replace(/(\{|\}|\*)/i, "\\$1");
-        }
+      function xssPrevent(string) {
         return string.replace(/script(.*)/g, "");
-      }
-      
-      function xssDisplay(string, flag) {
-        string = string.toString();
-        string = string.replace('\\', "");
-        if (typeof flag != "undefined") {
-          return string;
-        }
-        return unescape(string);
       }
       
       function clear_feed(flag) {
@@ -504,7 +478,7 @@
             var getBoxTimeoutValue = getBoxTimeout;
             setTimeout( function() {
               if (getBoxTimeoutValue != getBoxTimeout) return;
-              $.getJSON(options.json_url, {"tag": xssDisplay(etext)}, function(data) {
+              $.getJSON(options.json_url, {"tag": etext}, function(data) {
                 if (!isactive) return; // prevents opening the selection again after the focus is already off
                 addMembers(etext, data);
                 json_cache_object.set(etext, 1);
@@ -513,8 +487,8 @@
             }, options.delay);
           }
         } else {
-          addMembers(etext);
-          bindEvents();
+            addMembers(etext);
+            bindEvents();
         }
       }
 
@@ -587,7 +561,6 @@
                    'slash': 47,
                    'colon': 58,
                    'at': 64,
-                   'squarebricket_left': 91,
                    'apostrof': 96
                  };
       
@@ -604,7 +577,7 @@
       var cache = {
         'search': function (text, callback) {
           var temp = new Array();
-          var regex = new RegExp((options.filter_begin ? '^' : '') + text, (options.filter_case ? "g": "gi"));
+          var regex = new RegExp((options.filter_begin ? '^' : '') + escape(text), (options.filter_case ? "g": "gi"));
           $.each(element.data("cache"), function (i, _elem) {
             if (typeof _elem.search === 'function') {
               if (_elem.search(regex) != -1) {
