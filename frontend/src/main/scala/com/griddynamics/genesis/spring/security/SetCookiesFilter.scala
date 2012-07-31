@@ -17,8 +17,8 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   @Project:     Genesis
- *   @Description: Execution Workflow Engine
+ *   Project:     Genesis
+ *   Description:  Continuous Delivery Platform
  */
 package com.griddynamics.genesis.spring.security
 
@@ -29,17 +29,6 @@ import javax.servlet.http.{Cookie, HttpServletResponse, HttpServletRequest}
 import org.springframework.security.core.Authentication
 import java.security.Principal
 
-/*
- * Copyright (c) 2011 Grid Dynamics Consulting Services, Inc, All Rights Reserved
- *   http://www.griddynamics.com
- *
- *   For information about the licensing and copyright of this document please
- *   contact Grid Dynamics at info@griddynamics.com.
- *
- *   $Id: $
- *   @Project:     Genesis
- *   @Description: A cloud deployment platform
- */
 class SetCookiesFilter extends GenericFilterBean {
   def doFilter(p1: ServletRequest, p2: ServletResponse, p3: FilterChain) {
     val request = p1.asInstanceOf[HttpServletRequest]

@@ -19,8 +19,8 @@ package com.griddynamics.genesis.users.repository
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * @Project:     Genesis
- * @Description: Execution Workflow Engine
+ * Project:     Genesis
+ * Description:  Continuous Delivery Platform
  */
 
 import com.griddynamics.genesis.repository.AbstractGenericRepository
