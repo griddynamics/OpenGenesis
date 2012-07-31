@@ -62,7 +62,7 @@ class CmdExecutionStrategy extends ShellExecutionStrategy {
     val scriptCall = outputDirectory.map { path =>
       val scriptPath = new File(path, "script1.bat").getAbsolutePath
       Closeables.using(new FileOutputStream(scriptPath)) { _.write(command.getBytes) }
-      normalize(scriptPath)
+      normalize(scriptPath) + "exit %ERRORLEVEL%\n"
     }
     scriptCall.getOrElse(normalize(command))
   }
