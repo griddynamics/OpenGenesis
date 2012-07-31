@@ -63,9 +63,13 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
     },
 
     environments: function(projectId) {
-      var environments = new Environments.Collection({}, {"project" : this.projects.get(projectId)});
-      var view = new Environments.Views.List({collection: environments, el: this.$viewDiv()});
-      this.setCurrentView(view);
+      if(this.projects.get(projectId)){
+        var environments = new Environments.Collection({}, {"project" : this.projects.get(projectId)});
+        var view = new Environments.Views.List({collection: environments, el: this.$viewDiv()});
+        this.setCurrentView(view);
+      } else {
+        genesis.app.trigger("authorization-error", "You don't have enough permissions to access this page")
+      }
     },
 
     environmentDetails: function(projectId, envName) {
@@ -113,11 +117,20 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
     genesis.app.bind("authorization-error", function(message) {
       if (!errorDialog.dialog('isOpen')) {
         $("#server-communication-error-dialog").html(message);
-        errorDialog.dialog("option", "buttons", {}).dialog('open');
+        errorDialog.dialog("option", "buttons", {
+          "OK": function() {
+            $(this).dialog("close");
+            genesis.app.router.navigate("/", {trigger: true});
+          }
+        }).dialog('open');
       }
     });
 
     $.ajaxSetup({cache: false, statusCode: {
+      403: function() {
+        genesis.app.trigger("authorization-error", "You don't have enough permissions to access this page")
+      },
+
       404: function() {
         genesis.app.trigger("page-view-loading-completed");
         if (!errorDialog.dialog('isOpen')) {

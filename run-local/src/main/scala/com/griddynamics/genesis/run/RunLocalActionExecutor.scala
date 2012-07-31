@@ -31,7 +31,7 @@ class RunLocalActionExecutor(val action: RunLocalShell, stepId: Int, shellServic
   def cleanUp(signal: Signal) {}
 
   def startSync() = {
-    val result = shellService.exec(action.shell, action.command, action.outputDirectory, Some(stepId))
+    val result = shellService.exec(action.shell, action.command, action.outputDirectory, Some(action.uuid))
     new RunLocalResult(action, result)
   }
 }

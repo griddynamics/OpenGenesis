@@ -46,7 +46,7 @@ class PowerShellExecutions extends ShellExecutionStrategy {
     val scriptCall = outputDirectory.map { path =>
       val scriptPath = new File(path, "script1.ps1").getAbsolutePath
       Closeables.using(new FileOutputStream(scriptPath)) { _.write(withEncoding.getBytes) }
-      "& { trap { break } . \"%s\" }".format(scriptPath)
+      "& { trap { break } . \"%s\" ; exit $LastExitCode }".format(scriptPath)
     }
     scriptCall.getOrElse(withEncoding)
   }
