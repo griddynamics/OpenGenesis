@@ -15,5 +15,7 @@ trait DatabagRepository extends Repository[DataBag]{
 
   def findByName(name: String, projectId: Option[Int] = None): Option[DataBag]
 
+  def find(bagId: Int, projectId: Option[Int]): Option[DataBag]
+
   def list(projectId: Option[Int]): List[DataBag]
 }
