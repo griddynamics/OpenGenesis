@@ -189,8 +189,6 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
         $("#current-project").html(currentProject);
       });
 
-      app.router.bind("all", status.StatusPanel.hide, status.StatusPanel);
-
       genesis.app.trigger("page-view-loading-completed");
       Backbone.history.start();
     }).fail(function(jxhr){
