@@ -68,7 +68,8 @@ class JenkinsRemoteApi(specification: JenkinsConnectSpecification) {
     if (code >= 400) {
       EntityUtils.consume(response.getEntity)
       Left(code)
+    } else {
+      Right(response)
     }
-    Right(response)
   }
 }
