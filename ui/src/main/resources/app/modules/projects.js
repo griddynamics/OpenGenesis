@@ -118,8 +118,8 @@ function(genesis, status, backend, Backbone, $) {
             backend.ProjectManager.removeProject(
               self.project.get("id"),
               function (data, textStatus, jqXHR) {
-                genesis.app.router.navigate("/", {trigger: true});
                 status.StatusPanel.success("Project \"" + self.project.get("name") + "\" was deleted");
+                genesis.app.router.navigate("/", {trigger: true});
               },
               function (jqXHR) {
                 status.StatusPanel.error(jqXHR);
