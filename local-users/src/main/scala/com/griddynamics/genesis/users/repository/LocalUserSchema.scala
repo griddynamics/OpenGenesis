@@ -39,7 +39,7 @@ trait LocalUserPrimitiveSchema extends LocalUserSchema {
 
     on(users)(user => declare(
         user.username is (unique, dbType("varchar(64)")),
-        user.email is (unique, dbType("varchar(64)")),
+        user.email is (unique, dbType("text")),
         user.pass is (dbType("varchar(64)")),
         user.firstName is (dbType("varchar(256)")),
         user.lastName is (dbType("varchar(256)")),
@@ -49,7 +49,7 @@ trait LocalUserPrimitiveSchema extends LocalUserSchema {
     on(groups)(group => declare(
         group.name is (unique, dbType("varchar(64)")),
         group.description is (dbType("text")),
-        group.mailingList is (dbType("varchar(64)"))
+        group.mailingList is (dbType("text"))
     ))
 
     val userGroupsRelation = manyToManyRelation(users, groups).

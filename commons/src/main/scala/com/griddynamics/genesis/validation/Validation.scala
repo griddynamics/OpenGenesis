@@ -51,7 +51,7 @@ object Validation {
                            "Length must be from 2 to 64"
     val nameErrorMessage = "Invalid format. Use a combination of latin lowercase letters, numbers, " +
                                   "dots, hyphens and underscores. Length must be from 2 to 32"
-    val emailErrorMessage = "Invalid format. Note that only lowercase letters are allowed"
+    val emailErrorMessage = "Invalid format. Note that only lowercase letters are allowed. Length must be from 7 to 64."
 
     val validADUserName = "^[^%<>]{1,128}$"
     // TODO: remove "GROUP_" prefix
