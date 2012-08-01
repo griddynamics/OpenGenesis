@@ -60,7 +60,11 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
     },
 
     projectProperties: function(projectId) {
-      this.setCurrentView(new ProjectProperties.Views.Main({project: this.projects.get(projectId), el: this.$viewDiv()}));
+      if(this.projects.get(projectId)){
+        this.setCurrentView(new ProjectProperties.Views.Main({project: this.projects.get(projectId), el: this.$viewDiv()}));
+      } else {
+        genesis.app.trigger("server-communication-error", "Requested project wasn't found")
+      }
     },
 
     environments: function(projectId) {
@@ -79,7 +83,11 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
     },
 
     createEnvironment: function(projectId) {
-      this.setCurrentView(new CreateEnvironment.Views.Main({project : this.projects.get(projectId), el: this.$viewDiv()}));
+      if(this.projects.get(projectId)){
+        this.setCurrentView(new CreateEnvironment.Views.Main({project : this.projects.get(projectId), el: this.$viewDiv()}));
+      } else {
+        genesis.app.trigger("server-communication-error", "Requested project wasn't found")
+      }
     },
 
     listSettings: function() {
