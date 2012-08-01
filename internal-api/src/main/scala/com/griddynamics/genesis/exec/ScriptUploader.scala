@@ -57,10 +57,10 @@ class ScriptUploader (val action: UploadScripts, sshService: SshService) extends
   }
 
   def startSync(): ActionResult = {
-    sshClient.exec("[ -d %s ] || mkdir %1$s".format(action.workingDir))
+    sshClient.exec("[ -d %s ] || mkdir -p %1$s".format(action.workingDir))
 
     val actionDir = action.workingDir +"/" + action.uuid
-    sshClient.exec("[ -d %s ] || mkdir %1$s".format(actionDir))
+    sshClient.exec("[ -d %s ] || mkdir -p %1$s".format(actionDir))
 
     val scriptSh = actionDir + "/" + "script.sh"
 
