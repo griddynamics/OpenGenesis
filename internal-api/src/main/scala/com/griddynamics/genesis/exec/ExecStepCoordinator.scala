@@ -35,7 +35,7 @@ class ExecStepCoordinator(val step: ExecRunStep, stepContext: StepExecutionConte
       isStepFailed = true
       return Seq()
     }
-    for {server <- stepContext.servers if server.isReady && step.roles.contains(server.roleName)}
+    for {server <- stepContext.servers(step) if server.isReady }
       yield InitExecNode(stepContext.env, server)
   }
 
