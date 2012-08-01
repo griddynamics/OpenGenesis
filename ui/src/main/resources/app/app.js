@@ -35,7 +35,8 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
       "project/:projectId/properties": "projectProperties",
       "admin/create/project": "createProject",
       "settings": "listSettings",
-      ":hash": "index"
+      ":hash": "index",
+      "*invalid": "index"
     },
 
     initialize: function(options) {
@@ -68,7 +69,7 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
         var view = new Environments.Views.List({collection: environments, el: this.$viewDiv()});
         this.setCurrentView(view);
       } else {
-        genesis.app.trigger("authorization-error", "You don't have enough permissions to access this page")
+        genesis.app.trigger("server-communication-error", "Requested project wasn't found")
       }
     },
 
@@ -114,7 +115,7 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
       resizable: false
     });
 
-    genesis.app.bind("authorization-error", function(message) {
+    genesis.app.bind("server-communication-error", function(message) {
       if (!errorDialog.dialog('isOpen')) {
         $("#server-communication-error-dialog").html(message);
         errorDialog.dialog("option", "buttons", {
@@ -128,24 +129,12 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
 
     $.ajaxSetup({cache: false, statusCode: {
       403: function() {
-        genesis.app.trigger("authorization-error", "You don't have enough permissions to access this page")
+        genesis.app.trigger("server-communication-error", "You don't have enough permissions to access this page")
       },
 
       404: function() {
         genesis.app.trigger("page-view-loading-completed");
-        if (!errorDialog.dialog('isOpen')) {
-          errorDialog.dialog("option", "buttons", {
-              "Yes": function () {
-                $(this).dialog("close");
-                genesis.app.router.navigate("/", {trigger: true});
-              },
-              "No": function () {
-                $(this).dialog("close");
-              }
-          });
-          $("#server-communication-error-dialog").html("Requested resource does not exist.<br/><br/> Redirect to home page?");
-          errorDialog.dialog('open');
-        }
+        genesis.app.trigger("server-communication-error", "Requested resource wasn't found");
       },
 
       503: function() {
@@ -183,7 +172,7 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
       app.router.bind('all', function (trigger, args) {
         var path = /project\/(\d*)/g.exec(Backbone.history.fragment);
         var currentProject = "Projects";
-        if(path && path[1]) {
+        if(path && path[1] && userProjects.get(path[1])) {
           currentProject = userProjects.get(path[1]).get('name');
         }
         $("#current-project").html(currentProject);

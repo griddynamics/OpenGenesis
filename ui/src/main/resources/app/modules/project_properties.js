@@ -77,7 +77,7 @@ function(genesis, Backbone, backend, Projects, Credentials, OtherSettings, Serve
       var self = this;
       $.when(backend.AuthorityManager.haveAdministratorRights(this.project.id), genesis.fetchTemplate(self.template)).done(function(isAdmin, tmpl){
         if (!isAdmin) {
-          genesis.app.trigger("authorization-error", "You don't have enough permissions to access this page");
+          genesis.app.trigger("server-communication-error", "You don't have enough permissions to access this page");
           self.delegateEvents({})
         } else {
           self.$el.html(tmpl());
