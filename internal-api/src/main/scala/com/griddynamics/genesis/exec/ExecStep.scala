@@ -31,8 +31,7 @@ import com.griddynamics.genesis.util.Describer
 
 sealed trait ExecStep extends Step
 
-case class ExecRunStep(roles: Set[String], commands: IndexedSeq[String], successExitCode: Int, outputDirectory: String) extends ExecStep with RoleStep {
-  def isGlobal = false
+case class ExecRunStep(roles: Set[String], isGlobal: Boolean, commands: IndexedSeq[String], successExitCode: Int, outputDirectory: String) extends ExecStep with RoleStep {
 
   override val stepDescription = new Describer("Executing shell script").param("script", commands).describe
 }
@@ -48,8 +47,9 @@ class ExecRunStepBuilderFactory extends StepBuilderFactory {
     @BeanProperty var commands: JList[String] = Collections.emptyList()
     @BeanProperty var successExitCode: Int = 0
     @BeanProperty var outputDirectory: String = ExecNodeInitializer.genesisDir.toString
+    @BeanProperty var isGlobal : Boolean = false
 
-    def getDetails = ExecRunStep(JC.asScalaBuffer(roles).toSet, commands.toIndexedSeq, successExitCode, outputDirectory)
+    def getDetails = ExecRunStep(roles.toSet, isGlobal, commands.toIndexedSeq, successExitCode, outputDirectory)
   }
 }
 
