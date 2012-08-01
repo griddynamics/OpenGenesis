@@ -33,10 +33,12 @@ class RunLocalStepCoordinator(stepContext: StepExecutionContext, val step: RunLo
 
   var toExecute = new scala.collection.mutable.Queue[Action]()
 
-  def onStepStart() = {
-    step.output.map { directory =>
+  def onStepStart(): Seq[Action] = {
+    step.output.foreach { directory =>
       if(!directory.exists() && !directory.mkdirs()) {
-        throw new IllegalStateException("Failed to create output directory %s".format(directory.getAbsolutePath))
+        LoggerWrapper.writeLog(stepContext.step.id, "Couldn't create directory [%s]".format(directory.getAbsolutePath))
+        isStepFailed = true
+        return Seq()
       }
     }
 
