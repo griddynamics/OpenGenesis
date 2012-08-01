@@ -34,7 +34,11 @@ function(genesis, Backbone, Environments) {
     template: _.template($("#breadcrumbs_list_template").html()),
 
     _project: function(projectId) {
-      return _locationItem("project/" + projectId, this.projectRepository.get(projectId).get('name'));
+      if (this.projectRepository.get(projectId)) {
+        return _locationItem("project/" + projectId, this.projectRepository.get(projectId).get('name'));
+      } else {
+        return {};
+      }
     },
 
     initialize: function (options) {
@@ -77,7 +81,9 @@ function(genesis, Backbone, Environments) {
       var view = this;
       var environments = new Environments.Collection({}, {project: this.projectRepository.get(projectId)});
       $.when(environments.fetch()).done(function () {
-        locationList.push(_locationItem(Backbone.history.fragment, environments.get(envName).get('name')));
+        if (environments.get(envName)) {
+          locationList.push(_locationItem(Backbone.history.fragment, environments.get(envName).get('name')));
+        }
         view.render(locationList)
       });
     },
