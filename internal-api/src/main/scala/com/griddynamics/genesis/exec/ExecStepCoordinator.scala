@@ -28,7 +28,13 @@ class ExecStepCoordinator(val step: ExecRunStep, stepContext: StepExecutionConte
 
   }
 
-  def onStepStart() = {
+  def onStepStart(): Seq[Action] = {
+    val duplicates = step.commands.diff(step.commands.distinct)
+    if(duplicates.nonEmpty) {
+      LoggerWrapper.writeLog(stepContext.step.id, "Duplicated commands are not allowed. Following commands have duplicates: [%s]".format(duplicates.mkString(", ")))
+      isStepFailed = true
+      return Seq()
+    }
     for {server <- stepContext.servers if server.isReady && step.roles.contains(server.roleName)}
       yield InitExecNode(stepContext.env, server)
   }
