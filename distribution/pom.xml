@@ -71,10 +71,6 @@
     </profiles>
     <dependencies>
         <dependency>
-            <artifactId>client</artifactId>
-            <groupId>com.griddynamics.genesis</groupId>
-        </dependency>
-        <dependency>
             <groupId>com.griddynamics.genesis</groupId>
             <artifactId>frontend</artifactId>
         </dependency>

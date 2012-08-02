@@ -91,7 +91,6 @@
         <module>backend</module>
         <module>frontend</module>
         <module>notification</module>
-        <module>client</module>
         <module>api</module>
         <module>commons</module>
         <module>jenkins</module>
@@ -178,12 +177,6 @@
             <dependency>
                 <groupId>com.griddynamics.genesis</groupId>
                 <artifactId>internal-api</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.griddynamics.genesis</groupId>
-                <artifactId>client</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
