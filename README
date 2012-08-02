@@ -8,10 +8,8 @@ To start Genesis server run:
 
 java -Dbackend.properties=(path to the configuration file) -cp "${TARGET}/*" com.griddynamics.genesis.GenesisFrontend
 
-Run client command line utility with:
+After Genesis has started you can access Web UI at:
 
-java -cp "${TARGET}/*" com.griddynamics.genesis.client.Client
+http://<host>:<genesis_port>
 
-where TARGET is Genesis distribution target directory.
-By default it is ${PROJECT_DIR}/distribution/target/genesis-${VERSION}
-
+where <genesis_port> is port configured in properties file, 8080 by default.
