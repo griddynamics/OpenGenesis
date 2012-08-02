@@ -158,15 +158,16 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
 }
 
 class DependentListDataSource extends ListVarDataSource with DependentDataSource {
-    override def getData(param: Any) = values.map(_ + param.toString).zip(values).toMap
-    def getData(nodesCount: Any, dependent: Any) = values.map(_ + " < nc:%s".format(nodesCount) + " < dp:%s".format(dependent)).zip(values).toMap
+    override def getData(param: Any) = values.map(entry => (entry._1 + param.toString, entry._1))
+    def getData(nodesCount: Any, dependent: Any) =
+      values.map(entry => (entry._1 + " < nc:%s".format(nodesCount) + " < dp:%s".format(dependent), entry._1))
     /*
     *  A method for triple dependent variable. It has three arguments, but
     *  you don't have to declare parameters as Any since you're providing a
     *  correct data types as input
     */
     def getData(list: /*String*/Int, nodesCount: Int, dependent: Char)
-    = values.map(_ + "<%s".format(list) + "<%d".format(nodesCount) + "<%s".format(dependent)).zip(values).toMap
+    = values.map(entry => (entry._1 + "<%s".format(list) + "<%d".format(nodesCount) + "<%s".format(dependent), entry._1))
     override def getData = Map()
 }
 
@@ -181,7 +182,7 @@ class NoArgsDSFactory extends DataSourceFactory {
         val source = new ListVarDataSource {
             override def config(map: Map[String, Any]){}
         }
-        source.values = Seq("a", "b", "c")
+        source.values = Seq("a", "b", "c").map(e => (e, e)).toMap
         source
     }
 }

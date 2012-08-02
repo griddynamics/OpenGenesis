@@ -73,7 +73,7 @@ class JenkinsDataSource(val cacheManager: CacheManager, val credStore: Credentia
       loadFromJenkins
     }
     arts.collect {
-      case (url, artifact, title) if artifact.matches(artifactFilter) => (url, title)
+      case (url, artifact, title) if artifact.matches(artifactFilter) => (title, url)
     }.toMap
   }
 

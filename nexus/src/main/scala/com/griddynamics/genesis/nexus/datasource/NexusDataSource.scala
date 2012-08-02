@@ -83,11 +83,11 @@ class NexusDataSource(val credStore: CredentialsStoreService) extends VarDataSou
 
     }).flatten
 
-    def getData = getData(url).sortBy(FilenameUtils.getName(_)).map(v => (v, v.substring(v.lastIndexOf("/") + 1))).toMap
+    def getData = getData(url).sortBy(FilenameUtils.getName(_)).map(v => (v.substring(v.lastIndexOf("/") + 1), v)).toMap
 
     def config(map: Map[String, Any]) {
         val projId = map.get("projectId").map(_.asInstanceOf[Int])
-        credOpt = projId.flatMap(credStore.find(_, CredProvider, map(Credential).toString))
+        credOpt = projId.flatMap(credStore.find(_, CredProvider, map.get(Credential).getOrElse("").toString))
         url = new URL(map(Url).toString)
         wildcard = map.getOrElse(Filter, wildcard).toString
     }

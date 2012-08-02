@@ -23,9 +23,9 @@
                         <% } %>
                         <% for (var key in variable.values) { %>
                             <% if (variable.defaultValue == key) { %>
-                                <option value="<%= key %>" selected="selected"><%= variable.values[key] %></option>
+                                <option value="<%= variable.values[key] %>" selected="selected"><%= key %></option>
                             <% } else { %>
-                                <option value="<%= key %>"><%= variable.values[key] %></option>
+                                <option value="<%= variable.values[key] %>"><%= key %></option>
                             <% } %>
                         <% } %>
                         </select>
