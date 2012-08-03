@@ -39,8 +39,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import javax.annotation.PostConstruct
 import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.crypto.BasicCrypto
+import com.griddynamics.genesis.actions.json.PreprocessingJsonAction
+import com.griddynamics.genesis.executors.json.PreprocessJsonActionExecutor
 
 trait ChefPluginContext {
+    def preprocessJsonAction(action: PreprocessingJsonAction): PreprocessJsonActionExecutor
 
     def chefNodeInitializer(a: action.InitChefNode): ChefNodeInitializer
 
@@ -157,6 +160,8 @@ class ChefExecutionContextImpl(sshService: SshService,
   def chefDatabagCreator(a: action.CreateChefDatabag) = new ChefDatabagCreator(a, chefService)
 
   def chefEnvDestructor(a: action.DestroyChefEnv) = new ChefEnvDestructor(a, chefService)
+
+  def preprocessJsonAction(action: PreprocessingJsonAction) = new PreprocessJsonActionExecutor(action, action.templatesUrl.getOrElse(""))
 }
 
 object ChefPluginContextImpl {

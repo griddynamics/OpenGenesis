@@ -36,11 +36,13 @@ class ChefRunStepBuilderFactory extends StepBuilderFactory {
         @BeanProperty var isGlobal : Boolean = false
         @BeanProperty var runList : JList[String] = Collections.emptyList()
         @BeanProperty var jattrs : JMap[Any, Any] = Collections.emptyMap()
+        @BeanProperty var templates: String = null
 
         def getDetails = ChefRun(JC.asScalaBuffer(roles).toSet,
                                  isGlobal,
                                  JC.asScalaBuffer(runList).toSeq,
-                                 JsonUtil.toJson(jattrs))
+                                 JsonUtil.toJson(jattrs),
+                                 Option(templates))
     }
 }
 
