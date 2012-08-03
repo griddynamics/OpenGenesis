@@ -11,7 +11,6 @@ import com.griddynamics.genesis.workflow.{Signal, SyncActionExecutor}
 import com.griddynamics.genesis.util.shell.command.{chmod, mkdir}
 import com.griddynamics.genesis.chef.action.{PrepareRegularChefRun, PrepareInitialChefRun, ChefRunPrepared, PrepareChefRun}
 import com.griddynamics.genesis.chef.{ChefVmAttrs, ChefService}
-import net.liftweb.json.JsonParser
 
 
 trait RegularChefRun extends ChefRunPreparer[PrepareRegularChefRun] {
