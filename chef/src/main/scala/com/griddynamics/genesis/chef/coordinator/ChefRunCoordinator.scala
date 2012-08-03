@@ -31,6 +31,9 @@ import com.griddynamics.genesis.plugin.{GenesisStepResult, StepExecutionContext}
 import com.griddynamics.genesis.model.VmStatus
 import com.griddynamics.genesis.logging.InternalLogger
 import com.griddynamics.genesis.chef.{ChefVmAttrs, ChefPluginContext}
+import com.griddynamics.genesis.actions.json.{PreprocessingJsonAction, PreprocessingSuccess}
+import net.liftweb.json.JsonAST.{JObject, JField}
+import net.liftweb.json.JsonParser
 
 class ChefRunCoordinator(val step: ChefRun,
                          stepContext: StepExecutionContext,
@@ -46,10 +49,11 @@ class ChefRunCoordinator(val step: ChefRun,
 
     val clearActions = clearVms.map(InitExecNode(stepContext.env, _))
     val execActions = execVms.map(InitChefNode(stepContext.env, _))
+    val jsonActions = chefVms.map(m => PreprocessingJsonAction(stepContext.env, m, Map(), Map(), step.jattrs, step.templates, m.roleName))
     val chefActions = chefVms.map(PrepareRegularChefRun(stepContext.step.id.toString, stepContext.env,
       _, step.runList, step.jattrs))
 
-    clearActions ++ execActions ++ chefActions
+    clearActions ++ execActions ++ jsonActions ++ chefActions
   }
 
   def onActionFinish(result: ActionResult) = {
@@ -83,11 +87,15 @@ class ChefRunCoordinator(val step: ChefRun,
         Seq(PrepareInitialChefRun(details.env, details.server))
       }
       case ExecFinished(RunPreparedExec(details, _: PrepareInitialChefRun), _) => {
-        val label = "%d.%d.%s".format(stepContext.workflow.id, stepContext.step.id,
-          stepContext.step.phase)
-
-        Seq(PrepareRegularChefRun(label, details.env, details.server, step.runList, step.jattrs))
+        Seq(PreprocessingJsonAction(details.env, details.server, Map(), Map(), step.jattrs, step.templates, details.server.roleName))
       }
+
+      case PreprocessingSuccess(action, server, json)  => {
+          val label = "%d.%d.%s".format(stepContext.workflow.id, stepContext.step.id,
+              stepContext.step.phase)
+          Seq(PrepareRegularChefRun(label, action.env, action.server, step.runList, JsonParser.parse(json).asInstanceOf[JObject]))
+      }
+
       case ExecFinished(RunPreparedExec(_, _: PrepareRegularChefRun), _) => {
         Seq()
       }
@@ -111,6 +119,7 @@ class ChefRunCoordinator(val step: ChefRun,
       case a: InitExecNode => execPluginContext.execNodeInitializer(a)
       case a: InitChefNode => chefPluginContext.chefNodeInitializer(a)
       case a: PrepareInitialChefRun => chefPluginContext.initialChefRunPreparer(a)
+      case a: PreprocessingJsonAction => chefPluginContext.preprocessJsonAction(a)
       case a: PrepareRegularChefRun => chefPluginContext.regularChefRunPreparer(a)
       case a: RunExec => execPluginContext.execRunner(a)
     }

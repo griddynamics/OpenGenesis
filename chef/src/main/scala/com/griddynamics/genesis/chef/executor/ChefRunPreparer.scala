@@ -11,6 +11,7 @@ import com.griddynamics.genesis.workflow.{Signal, SyncActionExecutor}
 import com.griddynamics.genesis.util.shell.command.{chmod, mkdir}
 import com.griddynamics.genesis.chef.action.{PrepareRegularChefRun, PrepareInitialChefRun, ChefRunPrepared, PrepareChefRun}
 import com.griddynamics.genesis.chef.{ChefVmAttrs, ChefService}
+import net.liftweb.json.JsonParser
 
 
 trait RegularChefRun extends ChefRunPreparer[PrepareRegularChefRun] {
@@ -72,9 +73,9 @@ abstract class ChefRunPreparer[A <: PrepareChefRun](val action: A,
 
 trait InitialChefRun extends ChefRunPreparer[PrepareInitialChefRun] {
   def chefClientAttrs = "genesis" -> (
-    ("genesis_id" -> chefService.genesisId) ~
+      ("genesis_id" -> chefService.genesisId) ~
       ("env_name" -> action.env.name) ~
       ("role_name" -> action.server.roleName) ~
-      ("vm_id" -> action.server.id)   //todo: !!! vm_id
+      ("vm_id" -> action.server.id)
     )
 }
