@@ -35,14 +35,11 @@ class PreprocessJsonActionExecutor(val action: PreprocessingJsonAction, resource
     def startSync() = {
         val name = action.templateName
         val jsonName = resourcePath + "/" + name + ".json"
-        println(jsonName)
         val file = new File(jsonName)
         if (file.exists()) {
             val byKey = substituteByKey(Source.fromFile(file), action.keySubst)
             val byPattern = substituteByMask(byKey, action.patternSubst)
-            var merged: JValue = merge(byPattern, action.attributes)
-            println(merged)
-            PreprocessingSuccess(action, action.server, pretty(render(merged)))
+            PreprocessingSuccess(action, action.server, pretty(render(merge(byPattern, action.attributes))))
         } else
             PreprocessingSuccess(action, action.server, pretty(render(action.attributes)))
     }
