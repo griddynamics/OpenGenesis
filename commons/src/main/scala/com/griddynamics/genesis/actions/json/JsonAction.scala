@@ -17,29 +17,22 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Project:     Genesis
- * Description:  Continuous Delivery Platform
+ *   Project:     Genesis
+ *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.chefsolo.executor
+package com.griddynamics.genesis.actions.json
 
-import com.griddynamics.genesis.workflow.SimpleSyncActionExecutor
-import com.griddynamics.genesis.util.Logging
-import com.griddynamics.genesis.json.utils.JsonMerge._
-import net.liftweb.json.{render, pretty}
-import java.io.File
-import io.Source
-import com.griddynamics.genesis.chefsolo.action.{PreprocessingSuccess, PreprocessingJsonAction}
+import com.griddynamics.genesis.workflow.{ActionResult, Action}
+import com.griddynamics.genesis.model.{EnvResource, Environment}
+import net.liftweb.json.JsonAST.JObject
 
-class PreprocessJsonActionExecutor(val action: PreprocessingJsonAction, resourcePath: String) extends SimpleSyncActionExecutor with Logging {
-  def startSync() = {
-    val name = action.server.roleName
-    val jsonName = resourcePath + "/" + name + ".json"
-    val file = new File(jsonName)
-    if (file.exists())  {
-      val byKey = substituteByKey(Source.fromFile(file), action.keySubst)
-      val byPattern = substituteByMask(byKey, action.patternSubst)
-      PreprocessingSuccess(action, action.server, pretty(render(merge(byPattern, action.attributes))))
-    } else
-      PreprocessingSuccess(action, action.server, pretty(render(action.attributes)))
-  }
-}
+trait JsonAction extends Action
+
+case class PreprocessingJsonAction(env: Environment, server: EnvResource,
+                                   patternSubst: Map[String, String],
+                                   keySubst: Map[String, String],
+                                   attributes: JObject = JObject(List()),
+                                   templatesUrl: Option[String],
+                                   templateName: String) extends JsonAction
+
+case class PreprocessingSuccess(action: PreprocessingJsonAction, server: EnvResource, json: String) extends ActionResult

@@ -72,9 +72,9 @@ abstract class ChefRunPreparer[A <: PrepareChefRun](val action: A,
 
 trait InitialChefRun extends ChefRunPreparer[PrepareInitialChefRun] {
   def chefClientAttrs = "genesis" -> (
-    ("genesis_id" -> chefService.genesisId) ~
+      ("genesis_id" -> chefService.genesisId) ~
       ("env_name" -> action.env.name) ~
       ("role_name" -> action.server.roleName) ~
-      ("vm_id" -> action.server.id)   //todo: !!! vm_id
+      ("vm_id" -> action.server.id)
     )
 }
