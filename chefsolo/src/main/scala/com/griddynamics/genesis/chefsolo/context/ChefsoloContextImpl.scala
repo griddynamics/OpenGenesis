@@ -27,13 +27,14 @@ import org.springframework.context.annotation.{Bean, Configuration}
 import com.griddynamics.genesis.chefsolo.step.ChefsoloStepBuilderFactory
 import com.griddynamics.genesis.configuration.{ComputeServiceContext, CredentialServiceContext, StoreServiceContext}
 import com.griddynamics.genesis.util.InputUtil
-import com.griddynamics.genesis.plugin.api.GenesisPlugin
 import com.griddynamics.genesis.plugin.PluginConfigurationContext
-import com.griddynamics.genesis.chefsolo.action.{PrepareNodeAction, PrepareSoloAction, PreprocessingJsonAction, AddKeyAction}
+import com.griddynamics.genesis.chefsolo.action.{PrepareNodeAction, PrepareSoloAction}
 import com.griddynamics.genesis.chefsolo.executor._
 import com.griddynamics.genesis.exec.action.{InitExecNode, RunPreparedExec}
 import com.griddynamics.genesis.exec.{ExecNodeInitializer, ExecPluginContext, ExecResourcesImpl}
-import com.griddynamics.genesis.service.{ComputeService, SshService, CredentialService, Credentials}
+import com.griddynamics.genesis.service.{ComputeService, SshService, CredentialService}
+import com.griddynamics.genesis.executors.json.PreprocessJsonActionExecutor
+import com.griddynamics.genesis.actions.json.PreprocessingJsonAction
 
 trait ChefSoloPluginContext {
     def initChefSoloExecution(action: PrepareSoloAction): InitChefSoloActionExecutor

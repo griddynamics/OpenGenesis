@@ -33,9 +33,10 @@ sealed trait ChefStep extends Step
 case class ChefRun(roles: Set[String],
                    isGlobal: Boolean,
                    runList: Seq[String] = Seq(),
-                   jattrs: JObject = JObject(List())) extends ChefStep with RoleStep {
+                   jattrs: JObject = JObject(List()),
+                   templates: Option[String]) extends ChefStep with RoleStep {
 
-  override val stepDescription = new Describer("Chef recipe execution").param("receipes", runList).describe
+  override val stepDescription = new Describer("Chef recipe execution").param("recipes", runList).param("templates", templates).describe
 }
 
 case class CreateChefDatabag(databag: String,

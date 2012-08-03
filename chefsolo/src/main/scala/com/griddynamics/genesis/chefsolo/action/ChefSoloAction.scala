@@ -35,17 +35,10 @@ case class AddKeyAction(env: Environment, server: EnvResource) extends ChefSoloA
 
 case class PrepareNodeAction(env: Environment, server: EnvResource, json: String, label: String, cookbooksPath: String) extends ChefSoloAction
 
-case class PreprocessingJsonAction(env: Environment, server: EnvResource,
-                                   patternSubst: Map[String, String],
-                                   keySubst: Map[String, String],
-                                   attributes: JObject = JObject(List()),
-                                   templatesUrl: Option[String]) extends ChefSoloAction
-
 sealed trait ChefSoloActionResult extends ActionResult
 
 case class NodePrepared(action: PrepareNodeAction, server: EnvResource, execDetails: ExecDetails) extends ChefSoloActionResult
 
-case class PreprocessingSuccess(action: PreprocessingJsonAction, server: EnvResource, json: String) extends ActionResult
 
 sealed trait ExtendedExecResult extends ExecResult with ChefSoloActionResult {
     def exitStatus: Option[Int]

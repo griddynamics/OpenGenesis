@@ -31,6 +31,7 @@ import com.griddynamics.genesis.model.{BorrowedMachine, VirtualMachine}
 import com.griddynamics.genesis.logging.InternalLogger
 import com.griddynamics.genesis.exec.action.{RunPreparedExec, ExecInitSuccess, InitExecNode}
 import com.griddynamics.genesis.chefsolo.context.ChefSoloPluginContext
+import com.griddynamics.genesis.actions.json.{PreprocessingSuccess, PreprocessingJsonAction}
 
 class ChefsoloRunCoordinator(val step: ChefsoloRunStep,
                              stepContext : StepExecutionContext,
@@ -83,7 +84,7 @@ class ChefsoloRunCoordinator(val step: ChefsoloRunStep,
         case e@ExtendedExecFinished(RunPreparedExec(_, a: PrepareSoloAction), _, _, _) =>  {
             if (e.isExecSuccess) {
                 stepContext.updateServer(a.server)
-                Seq(PreprocessingJsonAction(stepContext.env, a.server, patternSubst, Map(), step.jattrs, step.templateUrl))
+                Seq(PreprocessingJsonAction(stepContext.env, a.server, patternSubst, Map(), step.jattrs, step.templateUrl, a.server.roleName))
             } else {
                 isStepFailed = true
                 Seq()
