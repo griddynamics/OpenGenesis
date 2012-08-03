@@ -26,9 +26,17 @@ import com.griddynamics.genesis.model.VmStatus._
 import com.griddynamics.genesis.model.MachineStatus._
 import collection.JavaConversions._
 import java.sql.Timestamp
+import java.io.{IOException, ObjectInputStream}
 
-case class IpAddresses(publicIp:Option[String] = None,  privateIp:Option[String] = None) {
-  val address = publicIp.getOrElse(privateIp.getOrElse(""))
+@SerialVersionUID(6868370898183761726L)
+case class IpAddresses(publicIp:Option[String] = None, privateIp:Option[String] = None) {
+  var address = publicIp.getOrElse(privateIp.getOrElse(""))
+
+  @throws(classOf[IOException])
+  private def readObject(in: ObjectInputStream) {
+    in.defaultReadObject()
+    if (address == null) address = publicIp.getOrElse(privateIp.getOrElse(""))
+  }
 }
 
 sealed trait EnvResource extends EntityWithAttrs {
@@ -52,6 +60,7 @@ sealed trait EnvResource extends EntityWithAttrs {
 
 trait CommonAttrs { this: EntityWithAttrs =>
   import VirtualMachine._
+
   def getIp = this.get(IpAttr)
 
   def setIp(ip: String) {this(IpAttr) = IpAddresses(publicIp = Option(ip))}
