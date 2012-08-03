@@ -134,7 +134,7 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
             val values = Option({ _: Any => oneOf.call().map(kv => (kv._1, kv._2)).toMap})
             validators += new Closure[Boolean]() {
                 def doCall(args: Array[Any]): Boolean = {
-                    values.get.apply().asInstanceOf[Map[String,String]].exists(_._1.toString == args(0).toString)
+                    values.get.apply().asInstanceOf[Map[String,String]].exists(_._2.toString == args(0).toString)
                 }
             }
             values
