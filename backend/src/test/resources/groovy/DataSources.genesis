@@ -22,7 +22,7 @@ template {
     workflow("create") {
         variables {
             variable("nodesCount").as(Integer)
-            variable("list").as(Integer).description("Variable that has one value from a list").oneOf {["This is option #1":1, "This is option #2":2, "This is option #4":3]}.optional()
+            variable("list").as(Integer).description("Variable that has one value from a list").oneOf {["This is option #1":"1", "This is option #2":"2", "This is option #4":"3"]}.optional()
             variable("noArgs").description("No args ds").dataSource("noargs").optional()
             variable("listDS1").as(String).description("Variable that has one value from DS").dataSource("ds1").optional()
             variable("listDS12").as(String).description("Variable that has one value from DS").oneOf {ds1 + ds2}.optional()
