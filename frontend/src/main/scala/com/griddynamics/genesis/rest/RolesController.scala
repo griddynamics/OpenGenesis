@@ -33,7 +33,6 @@ import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.groups.GroupService
 import com.griddynamics.genesis.api.{Failure, ExtendedResult, RequestResult}
 import org.springframework.beans.factory.annotation.Autowired
-import java.net.URLDecoder
 import com.griddynamics.genesis.validation.Validation
 
 @Controller
@@ -100,12 +99,12 @@ class RolesController extends RestApiExceptionsHandler {
 
     import Validation._
     val invalidUsers = users.filterNot(_.matches(validADUserName))
-    if(invalidUsers.nonEmpty) {
-      return Failure(compoundServiceErrors = invalidUsers.map(Validation.ADUserNameErrorMessage.format(_) ))
-    }
     val invalidGroups = groups.filterNot(_.matches(validADGroupName))
-    if(invalidGroups.nonEmpty) {
-      return Failure(compoundServiceErrors = invalidGroups.map(Validation.ADGroupNameErrorMessage.format(_) ))
+
+    if(invalidGroups.nonEmpty || invalidUsers.nonEmpty) {
+      return Failure(
+        compoundServiceErrors = invalidUsers.map(ADUserNameErrorMessage.format(_)) ++ invalidGroups.map(ADGroupNameErrorMessage.format(_))
+      )
     }
 
     validUsers(users) {
