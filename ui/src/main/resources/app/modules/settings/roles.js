@@ -162,7 +162,7 @@ function(genesis, status, backend, Users, Backbone, $) {
           status.StatusPanel.success("Role changes have been saved");
         })
         .error(function(jqXHR) {
-          status.StatusPanel.error(jqXHR);
+          self.status.error(jqXHR);
         });
     },
 
@@ -180,7 +180,7 @@ function(genesis, status, backend, Users, Backbone, $) {
           filter_hide: true,
           filter_selected: true,
           newel: !hasGroups,
-          width: "100%",
+          width: "",
           input_name: "groups-select",
           complete_text: "Enter group name...",
           maxitems: 10000
@@ -193,7 +193,7 @@ function(genesis, status, backend, Users, Backbone, $) {
           filter_hide: true,
           filter_selected: true,
           newel: !hasUsers,
-          width: "100%",
+          width: "",
           input_name: "users-select",
           complete_text: "Enter username...",
           maxitems: 10000
@@ -206,6 +206,7 @@ function(genesis, status, backend, Users, Backbone, $) {
       $.when(backend.UserManager.hasUsers(), backend.UserManager.hasGroups(), genesis.fetchTemplate(this.template)).done(function(hasUsers, hasGroups, tmpl) {
         self.$el.html(tmpl({role: self.role.toJSON(), LANG: LANG}));
         self.initCompletion(hasGroups[0], hasUsers[0]);
+        self.status = new status.LocalStatus({el: self.$(".notification")});
       });
     }
   });
