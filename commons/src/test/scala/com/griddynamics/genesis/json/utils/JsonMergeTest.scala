@@ -5,6 +5,11 @@ import JsonMerge._
 import io.Source
 import net.liftweb.json.JsonParser
 import junit.framework.Assert
+import net.liftweb.json.JsonAST._
+import net.liftweb.json.JsonAST.JField
+import net.liftweb.json.JsonAST.JObject
+import net.liftweb.json.JsonAST.JArray
+import com.google.gson.JsonPrimitive
 
 class JsonMergeTest {
   val source = """
@@ -39,6 +44,16 @@ class JsonMergeTest {
         }
   }""")
 
+  val mrg = JsonParser.parse("""{
+        "test" : {
+            "val1" : "%%foo%%",
+            "val2" : "%%bar%%i%%baz%%",
+            "val3" : "baz",
+            "list" : [1, 2, 3]
+        },
+        "run_list" : ["foo"]
+  }""")
+
   @Test
   def testMerge() {
     val merged_ = substituteByKey(Source.fromString(source),
@@ -58,5 +73,13 @@ class JsonMergeTest {
         val merged_ = merge(Source.fromString(source),
             mergeStruct)
         Assert.assertEquals(afterMerge, merged_)
+    }
+
+    @Test
+    def testAgain() {
+        val merged_ = merge(Source.fromString(source),
+            mergeStruct).asInstanceOf[JObject]
+        val a = new JObject(JField("run_list", JArray(List(JString("foo")))) +: merged_.obj.filter(_.name != "run_list"))
+        Assert.assertEquals(mrg, a)
     }
 }
