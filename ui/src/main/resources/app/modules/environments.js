@@ -758,8 +758,10 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
               var runBtn = $(e.target);
               if (runBtn.hasClass("disabled")) return;
               runBtn.toggleClass("disabled");
-              _.bind(view.runWorkflow, view);
               view.runWorkflow();
+              if (runBtn.hasClass("disabled")) {
+                runBtn.toggleClass("disabled");
+              }
             },
 
             "Cancel": function () {
