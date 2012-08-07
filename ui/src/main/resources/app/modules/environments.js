@@ -754,7 +754,15 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
           minHeight: 120,
           dialogClass: 'dialog-without-header',
           buttons: {
-            "Run": _.bind(view.runWorkflow, view),
+            "Run": function(e) {
+              var runBtn = $(e.target);
+              if (runBtn.hasClass("disabled")) return;
+              runBtn.toggleClass("disabled");
+              view.runWorkflow();
+              if (runBtn.hasClass("disabled")) {
+                runBtn.toggleClass("disabled");
+              }
+            },
 
             "Cancel": function () {
               $(this).dialog( "close" );
