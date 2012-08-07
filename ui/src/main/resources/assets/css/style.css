@@ -992,6 +992,7 @@ table.server-specification td.first {
     border-radius: 2px;
     -webkit-border-radius: 2px;
     border: 1px solid #bebebe;
+    overflow-x: auto;
 }
 
 #tab-panel #panel table.main-table td{
@@ -1397,6 +1398,7 @@ label.error {
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
     border-radius: 3px;
+    word-wrap: break-word;
 }
 
 .notification div {
