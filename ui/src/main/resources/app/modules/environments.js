@@ -725,6 +725,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
             view.trigger("workflow-starting-error", view.workflow, errors);
             view.$el.dialog("close");
           } else {
+            view.trigger("workflow-validation-errors");
             var validator = $('#workflow-parameters-form').validate();
             validator.showErrors(json.variablesErrors);
           }
@@ -754,7 +755,17 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
           minHeight: 120,
           dialogClass: 'dialog-without-header',
           buttons: {
-            "Run": _.bind(view.runWorkflow, view),
+            "Run": function(e) {
+              var runBtn = $(e.target);
+              if (runBtn.hasClass("disabled")) return;
+              runBtn.toggleClass("disabled");
+              var handler = function() {
+                if (runBtn.hasClass("disabled")) runBtn.toggleClass("disabled");
+              };
+              view.unbind("workflow-validation-errors");
+              view.bind("workflow-validation-errors", handler);
+              view.runWorkflow();
+            },
 
             "Cancel": function () {
               $(this).dialog( "close" );
