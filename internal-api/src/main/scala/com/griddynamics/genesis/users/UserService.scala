@@ -24,7 +24,7 @@ package com.griddynamics.genesis.users
 
 import com.griddynamics.genesis.common.CRUDService
 import org.springframework.transaction.annotation.Transactional
-import com.griddynamics.genesis.api.{ExtendedResult, User}
+import com.griddynamics.genesis.api.{Failure, ExtendedResult, User}
 
 trait UserService extends CRUDService[User, String] {
     @Transactional(readOnly = true)
@@ -43,4 +43,36 @@ trait UserService extends CRUDService[User, String] {
     def doesUserExist(userName: String): Boolean
     @Transactional(readOnly = true)
     def doUsersExist(userNames: Seq[String]): Boolean
+}
+
+class UserServiceStub extends UserService {
+    @Transactional(readOnly = false)
+    def create(user: User, groups: Seq[String]) = Failure(compoundServiceErrors = Seq("Not implemented"))
+
+    @Transactional(readOnly = false)
+    def update(user: User, groups: Seq[String]) = Failure(compoundServiceErrors = Seq("Not implemented"))
+
+    @Transactional(readOnly = true)
+    def getWithCredentials(username: String) = None
+
+    @Transactional(readOnly = true)
+    def findByUsername(username: String) = None
+
+    @Transactional(readOnly = true)
+    def search(usernameLike: String) = List()
+
+    @Transactional(readOnly = true)
+    def doesUserExist(userName: String) = false
+
+    @Transactional(readOnly = true)
+    def doUsersExist(userNames: Seq[String]) = false
+
+    @Transactional(readOnly = true)
+    def list = List()
+}
+
+object UserServiceStub {
+    private lazy val stub = new UserServiceStub
+    def get = stub
+    def isStub(obj: AnyRef) = obj.isInstanceOf[UserServiceStub]
 }

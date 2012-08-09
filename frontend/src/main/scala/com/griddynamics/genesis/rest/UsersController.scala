@@ -25,7 +25,7 @@ package com.griddynamics.genesis.rest
 
 import org.springframework.stereotype.Controller
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.users.UserService
+import com.griddynamics.genesis.users.{UserServiceStub, UserService}
 import com.griddynamics.genesis.groups.GroupService
 import javax.servlet.http.HttpServletRequest
 import GenesisRestController._
@@ -36,22 +36,23 @@ import com.griddynamics.genesis.api.{ExtendedResult, User}
 @RequestMapping(Array("/rest/users"))
 class UsersController extends RestApiExceptionsHandler {
 
-    @Autowired(required = false) var userService: UserService = _
+    @Autowired(required = false) var userServiceBean: UserService = _
     @Autowired(required = false) var groupService: GroupService = _
+
+    private lazy val userService = Option(userServiceBean).getOrElse(UserServiceStub.get)
 
     @RequestMapping(method = Array(RequestMethod.GET), params = Array("available"))
     @ResponseBody
-    def available() = userService != null
+    def available() = !UserServiceStub.isStub(userService)
 
     @RequestMapping(method = Array(RequestMethod.GET))
     @ResponseBody
-    def list() = if (available()) userService.list else List()
+    def list() = userService.list
 
     @RequestMapping(method = Array(RequestMethod.GET), params = Array("tag"))
     @ResponseBody
     def pick(@RequestParam("tag") search: String) =
-      if (available()) userService.search("*" + search + "*").map(item => Map("key" -> item.username, "value" -> item.username))
-      else Map()
+      userService.search("*" + search + "*").map(item => Map("key" -> item.username, "value" -> item.username))
 
     @RequestMapping(value = Array("{username:.+}"), method=Array(RequestMethod.GET))
     @ResponseBody
