@@ -1,0 +1,3 @@
+|projectName     | description	              	        | manager	| envName		    | templateName      |templateVersion	| var1   | cloudProvider | pairName	     | identity | credential         |
+|Nova            | Created by autotests for env testing	| Manager	| NovaProvisionTest | NovaProvision     | 0.1		        | not-set| gdnova        | genesis-key   | root     | cloud4gd.pem       |
+

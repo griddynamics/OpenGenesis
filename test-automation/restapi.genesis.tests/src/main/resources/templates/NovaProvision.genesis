@@ -1,0 +1,32 @@
+package templates
+template {
+    name("NovaProvision")
+    version("0.1")
+
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+    workflow("create") {
+         steps {
+            provisionVms {
+                phase = "provision"
+                roleName = "genesis"
+                hardwareId = "3"
+                imageId = "92"
+                quantity = 1
+                retryCount = 5
+                keyPair = "genesis-key"
+            }
+
+         }
+    }
+
+    workflow("destroy") {
+        steps {
+            undeployEnv {
+                phase = "destroy"
+                precedingPhases = ["uninstall"]
+            }
+        }
+    }
+}
