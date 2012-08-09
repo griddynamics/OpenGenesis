@@ -1,0 +1,5 @@
+|projectName     | description	              	        | manager	| envName		  | templateName           |templateVersion	| var1                                                                                                                                                                         | 
+|OpenStack       | Created by autotests for env testing	| Manager	| OSTest		  | GenesisCloud4GDServer  | 0.1		    |http://genesis:thaeph3F@nexus.vm.griddynamics.net:8081/nexus/content/repositories/gd-genesis-snapshots/com/griddynamics/genesis/distribution-gd/1.0.0-SNAPSHOT/distribution-gd-1.0.0-SNAPSHOT.tar.gz| 
+|AmazonEnvTest   | Created by autotests for env testing	| Manager	| AmazonTest      | AmazonTemplate         | 0.1            | not-set|
+
+

@@ -1,6 +1,6 @@
 <div>
   <div class="key-value-button" id="add-pair-link">
-    <img src="assets/img/add-small.png" class="icon"/>
+    <img src="assets/img/add-small.png" class="icon" alt="Add new property"/>
     <a href="javascript:void(0)">Add new key-value</a>
   </div>
 
@@ -10,10 +10,10 @@
       <% var classes = property.isNew ? 'added' : property.removed ? 'removed' : property.dirty ? 'changed' : ''; %>
       <tr data-cid="<%= cid %>" class="<%= classes %>">
         <td>
-          <input id="name-input-<%= cid %>" type="text" class="name-input" value="<%= property.name %>" data-cid="<%= cid %>"/>
+          <input id="name-input-<%= cid %>" type="text" class="name-input" value="<%- property.name %>" data-cid="<%= cid %>"/>
         </td>
         <td>
-          <input id="value-input-<%= cid %>" type="text" class="value-input" value="<%= property.value %>" data-cid="<%= cid %>"/>
+          <input id="value-input-<%= cid %>" type="text" class="value-input" value="<%- property.value %>" data-cid="<%= cid %>"/>
         </td>
         <td class="actions">
           <img src="assets/img/delete.png" class="icon delete-action" data-cid="<%= cid %>"/>

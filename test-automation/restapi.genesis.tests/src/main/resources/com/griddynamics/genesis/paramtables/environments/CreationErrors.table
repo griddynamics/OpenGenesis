@@ -1,0 +1,5 @@
+| envName			| templateName                |templateVersion		| var1         | projectId |
+| 1		            | GenesisCloud4GDServer       |0.1		            | 1            | 1         |
+| абс		        | GenesisCloud4GDServer       |0.1		            | 1            | 1         |
+| абс		        | not-existing                |0.1		            | 1            | 1         |
+|   		        | GenesisCloud4GDServer       |0.1		            | 1            | 1         |
