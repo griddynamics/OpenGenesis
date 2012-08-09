@@ -63,7 +63,10 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
     }
 
     @Transactional
-    def delete(key: String) = writeConfig.clearProperty(key)
+    def delete(key: String) = isReadOnly(key) match {
+        case true => throw new IllegalArgumentException("Could not modify read-only property")
+        case _ => writeConfig.clearProperty(key)
+    }
 
     @Transactional
     def clear(prefix: Option[String]) {prefix.map(writeConfig.subset(_)).getOrElse(writeConfig).clear}
