@@ -26,6 +26,7 @@ package com.griddynamics.genesis.rest
 import org.springframework.web.bind.annotation._
 import org.springframework.stereotype.Controller
 import com.griddynamics.genesis.service.ConfigService
+import com.griddynamics.genesis.service.GenesisSystemProperties.{PREFIX, PLUGIN_PREFIX}
 import com.griddynamics.genesis.rest.GenesisRestController.{extractParamsMap, paramToOption}
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.api.{Failure, Success}
@@ -36,10 +37,14 @@ import org.springframework.beans.factory.annotation.Autowired
 class SettingsController extends RestApiExceptionsHandler {
 
     @Autowired var configService: ConfigService = _
+    private val VISIBLE_PREFIXES = Seq(PREFIX, PLUGIN_PREFIX)
+
+    private def isVisible(key: String) = VISIBLE_PREFIXES.map(key.startsWith(_)).reduce(_ || _)
 
     @RequestMapping(method = Array(RequestMethod.GET))
     @ResponseBody
-    def listSettings(@RequestParam(value = "prefix", required = false) prefix: String) = configService.listSettings(paramToOption(prefix))
+    def listSettings(@RequestParam(value = "prefix", required = false) prefix: String) =
+        configService.listSettings(paramToOption(prefix)).filter(p => isVisible(p.name))
 
     @RequestMapping(value = Array("{key:.+}"), method = Array(RequestMethod.PUT))
     @ResponseBody
@@ -59,7 +64,12 @@ class SettingsController extends RestApiExceptionsHandler {
 
     @RequestMapping(method = Array(RequestMethod.DELETE))
     @ResponseBody
-    def clear(@RequestParam(value = "prefix", required = false) prefix: String) = using{ _ => configService.clear(Option(prefix))}
+    def clear(@RequestParam(value = "prefix", required = false) prefix: String) = using{ _ =>
+        prefix match {
+            case p: String if (isVisible(p)) => configService.clear(Option(p))
+            case _ => throw new IllegalArgumentException("Only system or plugin properties could be deleted.")
+        }
+    }
 
     private def using (block : Any => Any) = {
         try {
@@ -72,6 +82,7 @@ class SettingsController extends RestApiExceptionsHandler {
     }
 
     private def validKey(key: String)(block: String => Any) {
+       if (!isVisible(key)) throw new ResourceNotFoundException("Key %s is not found".format(key))
        configService.get(key) match {
          case Some(v) => block(key)
          case None => throw new ResourceNotFoundException("Key %s is not found".format(key))
