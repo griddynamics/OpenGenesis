@@ -24,13 +24,13 @@
                     <% } else { %>
                         <option value="" disabled="disabled">Please select</option>
                     <% } %>
-                    <% for (var key in variable.values) { %>
+                    <% _.each(_.sortBy(_.keys(variable.values), function(x) {return x}), function(key) { %>
                        <% if (variable.defaultValue == key) { %>
                             <option value="<%= variable.values[key] %>" selected="selected"><%= key %></option>
                        <% } else { %>
                             <option value="<%= variable.values[key] %>"><%= key %></option>
                        <% } %>
-                    <% } %>
+                    <% }) %>
                 </select>
                 <% } %>
                 <% } else { %>
