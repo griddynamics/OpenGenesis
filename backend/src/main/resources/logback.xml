@@ -44,8 +44,9 @@
     <logger name="jclouds.compute" level="debug"/>
     <logger name="com.jcraft" level="debug"/>
     <!--<logger name="org.eclipse.jetty" level="debug"/>-->
-    <logger name="org.springframework.web" level="error"/>
+    <logger name="org.springframework.web" level="warn"/>
     <logger name="org.springframework.security" level="error"/>
+    <logger name="org.springframework.web.servlet.PageNotFound" level="error"/>
 
     <!-- JClouds JSON body -->
     <!--<logger name="jclouds.wire" level="debug" /> -->
