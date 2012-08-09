@@ -1,0 +1,36 @@
+<assembly>
+  <id>app</id>
+  <formats>
+    <format>zip</format>
+  </formats>
+ <files>
+    <file>
+      <source>testng.xml</source>
+      <outputDirectory>/</outputDirectory>
+      <filtered>false</filtered>
+    </file>
+    <file>
+      <source>runtests.sh</source>
+      <outputDirectory>/</outputDirectory>
+      <filtered>false</filtered>
+    </file>
+    <file>
+      <source>runtests.bat</source>
+      <outputDirectory>/</outputDirectory>
+      <filtered>false</filtered>
+    </file>
+  </files>
+      <fileSets>
+        <fileSet>
+            <directory>target/classes</directory>
+            <outputDirectory>/bin</outputDirectory>
+        </fileSet>
+    </fileSets>
+  
+  <dependencySets>
+    <dependencySet>
+      <outputDirectory>/lib</outputDirectory>
+      <unpack>false</unpack>
+    </dependencySet>
+  </dependencySets>
+</assembly>

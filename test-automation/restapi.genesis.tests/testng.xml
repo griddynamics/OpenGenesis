@@ -1,0 +1,9 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<!-- Tests configuration used by TestNG runner -->
+<suite name="RestApiStoriesTestSuite">
+  <test name="AllTests">
+      <classes>
+      <class name="com.griddynamics.genesis.test.suites.CIStoriesTestSuite"/>
+      </classes>
+  </test>
+</suite>
