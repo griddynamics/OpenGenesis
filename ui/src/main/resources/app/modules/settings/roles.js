@@ -168,36 +168,32 @@ function(genesis, status, backend, Users, Backbone, $) {
 
 
     initCompletion: function(hasGroups, hasUsers){
-      var users = new Users.Collections.Users();
-      var groups = new Users.Collections.Groups();
       var self = this;
-      $.when(users.fetch(), groups.fetch() ).done(function(tmpl) {
 
-        self.$("#groups-select").fcbkcomplete({
-          json_url: "/rest/groups",
-          cache: false,
-          filter_case: true,
-          filter_hide: true,
-          filter_selected: true,
-          newel: !hasGroups,
-          width: "",
-          input_name: "groups-select",
-          complete_text: "Enter group name...",
-          maxitems: 10000
-        });
+      self.$("#groups-select").fcbkcomplete({
+        json_url: hasGroups ? "/rest/groups" : null,
+        cache: false,
+        filter_case: true,
+        filter_hide: true,
+        filter_selected: true,
+        newel: !hasGroups,
+        width: "",
+        input_name: "groups-select",
+        complete_text: "Enter group name...",
+        maxitems: 10000
+      });
 
-        self.$("#users-select").fcbkcomplete({
-          json_url: "/rest/users",
-          cache: false,
-          filter_case: true,
-          filter_hide: true,
-          filter_selected: true,
-          newel: !hasUsers,
-          width: "",
-          input_name: "users-select",
-          complete_text: "Enter username...",
-          maxitems: 10000
-        });
+      self.$("#users-select").fcbkcomplete({
+        json_url: hasUsers ? "/rest/users" : null,
+        cache: false,
+        filter_case: true,
+        filter_hide: true,
+        filter_selected: true,
+        newel: !hasUsers,
+        width: "",
+        input_name: "users-select",
+        complete_text: "Enter username...",
+        maxitems: 10000
       });
     },
     render: function(){
