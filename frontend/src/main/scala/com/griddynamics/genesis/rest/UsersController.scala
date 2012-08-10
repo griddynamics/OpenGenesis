@@ -36,22 +36,21 @@ import com.griddynamics.genesis.api.{ExtendedResult, User}
 @RequestMapping(Array("/rest/users"))
 class UsersController extends RestApiExceptionsHandler {
 
-    @Autowired(required = false) var userService: UserService = _
+    @Autowired var userService: UserService = _
     @Autowired(required = false) var groupService: GroupService = _
 
     @RequestMapping(method = Array(RequestMethod.GET), params = Array("available"))
     @ResponseBody
-    def available() = userService != null
+    def available() = !userService.isReadOnly
 
     @RequestMapping(method = Array(RequestMethod.GET))
     @ResponseBody
-    def list() = if (available()) userService.list else List()
+    def list() = userService.list
 
     @RequestMapping(method = Array(RequestMethod.GET), params = Array("tag"))
     @ResponseBody
     def pick(@RequestParam("tag") search: String) =
-      if (available()) userService.search("*" + search + "*").map(item => Map("key" -> item.username, "value" -> item.username))
-      else Map()
+      userService.search("*" + search + "*").map(item => Map("key" -> item.username, "value" -> item.username))
 
     @RequestMapping(value = Array("{username:.+}"), method=Array(RequestMethod.GET))
     @ResponseBody
