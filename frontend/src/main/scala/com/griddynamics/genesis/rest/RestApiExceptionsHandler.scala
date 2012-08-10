@@ -61,4 +61,10 @@ trait RestApiExceptionsHandler {
       response.setContentType(MediaType.APPLICATION_JSON.toString)
       response.getWriter.write(Serialization.write(new Failure(isNotFound = true, isSuccess = false, compoundServiceErrors = List(exception.msg))))
     }
+
+    @ExceptionHandler(value = Array(classOf[UnsupportedOperationException]))
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    def handleUnsupported(response : HttpServletResponse, exception: UnsupportedOperationException) {
+        response.getWriter.write("{\"error\":\"Operation not supported\"}")
+    }
 }
