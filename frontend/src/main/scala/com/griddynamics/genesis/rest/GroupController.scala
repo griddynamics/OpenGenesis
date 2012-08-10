@@ -38,7 +38,7 @@ import com.griddynamics.genesis.spring.ApplicationContextAware
 class GroupController extends RestApiExceptionsHandler with ApplicationContextAware {
     @Autowired(required = false) var groupService: GroupService = _
 
-    lazy val userService: Option[UserService] = Option(applicationContext.getBean(classOf[UserService]))
+    @Autowired var userService: UserService = _
 
 
     @RequestMapping(method = Array(RequestMethod.GET), params = Array("available"))
@@ -147,11 +147,9 @@ class GroupController extends RestApiExceptionsHandler with ApplicationContextAw
         }
     }
 
-    private def withUsers[A](users: List[String])(block: List[String] => A) :A = {
-        userService.map( service =>
-             if (!service.doUsersExist(users))
-                 throw new ResourceNotFoundException("Some or all usernames in list not found")
-        )
+    private def withUsers[A](users: List[String])(block: List[String] => A): A = {
+        if (!userService.doUsersExist(users))
+            throw new ResourceNotFoundException("Some or all usernames in list not found")
         block(users)
     }
 
