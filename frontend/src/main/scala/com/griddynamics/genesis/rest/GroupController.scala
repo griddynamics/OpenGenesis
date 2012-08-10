@@ -25,7 +25,7 @@ package com.griddynamics.genesis.rest
 
 import org.springframework.stereotype.Controller
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.groups.GroupService
+import com.griddynamics.genesis.groups.{GroupServiceStub, GroupService}
 import javax.servlet.http.HttpServletRequest
 import GenesisRestController._
 import org.springframework.web.bind.annotation._
@@ -36,18 +36,20 @@ import com.griddynamics.genesis.spring.ApplicationContextAware
 @Controller
 @RequestMapping(Array("/rest/groups"))
 class GroupController extends RestApiExceptionsHandler with ApplicationContextAware {
-    @Autowired(required = false) var groupService: GroupService = _
+    @Autowired(required = false) private var groupServiceBean: GroupService = _
+    private lazy val groupService = Option(groupServiceBean).getOrElse(GroupServiceStub.get)
 
-    lazy val userService: Option[UserService] = Option(applicationContext.getBean(classOf[UserService]))
+    @Autowired(required = false) private var userServiceBean: UserService = _
+    private lazy val userService = Option(userServiceBean)
 
 
     @RequestMapping(method = Array(RequestMethod.GET), params = Array("available"))
     @ResponseBody
-    def available() = groupService != null
+    def available() = !groupService.isReadOnly
 
     @RequestMapping(method = Array(RequestMethod.GET))
     @ResponseBody
-    def list() = if (available()) groupService.list else List()
+    def list() = groupService.list
 
     @RequestMapping(value=Array("{id}"), method = Array(RequestMethod.GET))
     @ResponseBody
