@@ -903,7 +903,6 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
 
     initialize: function(options) {
       this.isStepFinished = options.isStepFinished;
-      console.log(this);
       $.when(this.collection.fetch()).done(_.bind(this.render, this));
     },
 
