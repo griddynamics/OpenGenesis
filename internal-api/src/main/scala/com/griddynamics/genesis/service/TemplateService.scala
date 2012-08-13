@@ -45,9 +45,9 @@ trait WorkflowDefinition {
 
     def variableDescriptions: Seq[VariableDescription]
 
-    def embody(variables: Map[String, String], envName: Option[String] = None, projectId: Option[Int] = None): Seq[StepBuilder]
+    def embody(variables: Map[String, String], envId: Option[Int] = None, projectId: Option[Int] = None): Seq[StepBuilder]
 
-    def validate(variables: Map[String, Any], envName: Option[String] = None, projectId: Option[Int] = None): Seq[ValidationError]
+    def validate(variables: Map[String, Any], envId: Option[Int] = None, projectId: Option[Int] = None): Seq[ValidationError]
 
     def partial(variables: Map[String, Any]): Seq[VariableDescription] = Seq()
 }

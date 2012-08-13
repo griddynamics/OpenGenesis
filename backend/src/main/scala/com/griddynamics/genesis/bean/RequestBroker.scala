@@ -35,13 +35,13 @@ trait RequestBroker {
                   templateName: String, templateVersion: String,
                   variables: Map[String, String]) : RR
 
-    def requestWorkflow(envName: String, projectId: Int, workflowName: String, variables: Map[String, String]) : RR
+    def requestWorkflow(envId: Int, projectId: Int, workflowName: String, variables: Map[String, String]) : RR
 
-    def destroyEnv(envName: String, projectId: Int, variables: Map[String, String]) : RR
+    def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String]) : RR
 
-    def cancelWorkflow(envName : String, projectId: Int)
+    def cancelWorkflow(envId : Int, projectId: Int)
 
-    def resetEnvStatus(envName: String, projectId: Int) : RR
+    def resetEnvStatus(envId: Int, projectId: Int) : RR
 }
 
 class RequestBrokerImpl(storeService: StoreService,
@@ -68,7 +68,7 @@ class RequestBrokerImpl(storeService: StoreService,
             case Some(template) => template.createWorkflow
         }
 
-        validateWorkflow(twf, variables, envName, projectId) match {
+        validateWorkflow(twf, variables, None, projectId) match {
             case Some(rr) => return rr
             case None =>
         }
@@ -81,21 +81,21 @@ class RequestBrokerImpl(storeService: StoreService,
         storeService.createEnv(env, workflow) match {
             case Left(m) => RR(compoundVariablesErrors = Seq(m.toString))
             case Right(_) => {
-                dispatcher.createEnv(env.name, env.projectId)
+                dispatcher.createEnv(env.id, env.projectId)
                 RR(isSuccess = true)
             }
         }
     }
 
-    def destroyEnv(envName: String, projectId: Int, variables: Map[String, String]) : RR = {
-        val env = findEnv(envName, projectId) match {
+    def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String]) : RR = {
+        val env = findEnv(envId, projectId) match {
             case Right(e) => e
             case Left(rr) => return rr
         }
 
         val twf = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion).get.destroyWorkflow
 
-        validateWorkflow(twf, variables, envName, projectId) match {
+        validateWorkflow(twf, variables, Some(envId), projectId) match {
             case Some(rr) => return rr
             case None =>
         }
@@ -106,15 +106,15 @@ class RequestBrokerImpl(storeService: StoreService,
         storeService.requestWorkflow(env, workflow) match {
             case Left(m) => RR(compoundVariablesErrors =  Seq(m.toString))
             case Right(_) => {
-                dispatcher.destroyEnv(env.name, env.projectId)
+                dispatcher.destroyEnv(env.id, env.projectId)
                 RR(isSuccess = true)
             }
         }
     }
 
-    def requestWorkflow(envName: String, projectId: Int, workflowName: String,
+    def requestWorkflow(envId: Int, projectId: Int, workflowName: String,
                         variables: Map[String, String]) : RR = {
-        val env = findEnv(envName, projectId) match {
+        val env = findEnv(envId, projectId) match {
             case Right(e) => e
             case Left(rr) => return rr
         }
@@ -122,16 +122,16 @@ class RequestBrokerImpl(storeService: StoreService,
         val template = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion)
         if (template.filter(workflowName == _.createWorkflow.name).isDefined) {
             return RR(serviceErrors = Map(RR.envName ->
-                "It's not allowed to execute create workflow['%s'] in existing environment '%s'"
-                    .format(workflowName, envName)))
+                "It's not allowed to execute create workflow['%s'] in existing environment '%d'"
+                    .format(workflowName, envId)))
         }
         val twf = template.get.getWorkflow(workflowName)
 
         if (twf.isEmpty) {
             return RR(serviceErrors = Map(RR.envName ->
-                "Failed to find workflow with name '%s' in environment '%s'".format(workflowName, envName)))
+                "Failed to find workflow with name '%s' in environment '%s'".format(workflowName, envId)))
         }
-        validateWorkflow(twf.get, variables, envName, projectId) match {
+        validateWorkflow(twf.get, variables, Some(envId), projectId) match {
             case Some(rr) => return rr
             case None =>
         }
@@ -141,18 +141,18 @@ class RequestBrokerImpl(storeService: StoreService,
         storeService.requestWorkflow(env, workflow)  match {
             case Left(m) => RR(compoundVariablesErrors = Seq(m.toString))
             case Right(_) => {
-                dispatcher.startWorkflow(env.name, env.projectId)
+                dispatcher.startWorkflow(env.id, env.projectId)
                 RR(isSuccess = true)
             }
         }
     }
 
-    def cancelWorkflow(envName : String, projectId: Int) {
-        dispatcher.cancelWorkflow(envName, projectId)
+    def cancelWorkflow(envId : Int, projectId: Int) {
+        dispatcher.cancelWorkflow(envId, projectId)
     }
 
-    def resetEnvStatus(envName: String, projectId: Int) : RR = {
-        val env = findEnv(envName, projectId) match {
+    def resetEnvStatus(envId: Int, projectId: Int) : RR = {
+        val env = findEnv(envId, projectId) match {
             case Right(e) => e
             case Left(rr) => return rr
         }
@@ -167,13 +167,13 @@ class RequestBrokerImpl(storeService: StoreService,
         }
     }
 
-    def findEnv(envName : String, projectId: Int) : Either[RR, Environment] = {
-        val env = storeService.findEnv(envName, projectId)
+    def findEnv(envId : Int, projectId: Int) : Either[RR, Environment] = {
+        val env = storeService.findEnv(envId, projectId)
 
         if (env.isDefined)
             Right(env.get)
         else
-            Left(RR(isNotFound = true, serviceErrors = Map(RR.envName -> "Failed to find environment with name '%s'".format(envName))))
+            Left(RR(isNotFound = true, serviceErrors = Map(RR.envName -> "Failed to find environment with id '%s'".format(envId))))
     }
 
     def validateEnvName(envName: String, projectId: Int) = envName match {
@@ -188,8 +188,8 @@ class RequestBrokerImpl(storeService: StoreService,
 object RequestBrokerImpl {
     val envNameRegex = """^([a-zA-Z0-9]\w{2,63})$""".r
 
-    def validateWorkflow(workflow : service.WorkflowDefinition, variables: Map[String, Any], envName: String, projectId: Int) = {
-        val validationResults = workflow.validate(variables, Option(envName), Option(projectId))
+    def validateWorkflow(workflow : service.WorkflowDefinition, variables: Map[String, Any], envId: Option[Int], projectId: Int) = {
+        val validationResults = workflow.validate(variables, envId, Option(projectId))
 
         if (!validationResults.isEmpty)
             Some(toRequestResult(validationResults))

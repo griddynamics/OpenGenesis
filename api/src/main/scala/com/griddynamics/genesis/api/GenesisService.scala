@@ -27,9 +27,9 @@ trait GenesisService {
 
     def getTemplate(projectId: Int, templateName: String, templateVersion: String) : Option[Template]
 
-    def getLogs(envName: String, stepId: Int) : Seq[String]
+    def getLogs(envId: Int, stepId: Int) : Seq[String]
 
-    def getLogs(envName: String, actionUUID: String): Seq[String]
+    def getLogs(envId: Int, actionUUID: String): Seq[String]
 
     def listEnvs (projectId: Int) : Seq[Environment]
 
@@ -39,24 +39,24 @@ trait GenesisService {
 
     def countEnvs(projectId: Int) : Int
 
-    def describeEnv(envName : String, projectId: Int) : Option[EnvironmentDetails]
+    def describeEnv(envId : Int, projectId: Int) : Option[EnvironmentDetails]
 
-    def workflowHistory(envName: String, projectId: Int, pageOffset: Int, pageLength: Int) : Option[WorkflowHistory]
+    def workflowHistory(envId: Int, projectId: Int, pageOffset: Int, pageLength: Int) : Option[WorkflowHistory]
 
     def listTemplates(projectId: Int) : Seq[Template]
 
     def createEnv(projectId: Int, envName : String, creator : String, templateName : String,
                   templateVersion : String, variables : Map[String, String]) : RequestResult
 
-    def destroyEnv(envName : String, projectId: Int, variables : Map[String, String]) : RequestResult
+    def destroyEnv(envId : Int, projectId: Int, variables : Map[String, String]) : RequestResult
 
-    def requestWorkflow(envName : String, projectId: Int, workflowName : String, variables : Map[String, String]) : RequestResult
+    def requestWorkflow(envId : Int, projectId: Int, workflowName : String, variables : Map[String, String]) : RequestResult
 
-    def resetEnvStatus(envName: String, projectId: Int) : RequestResult
+    def resetEnvStatus(envId: Int, projectId: Int) : RequestResult
 
-    def cancelWorkflow(envName : String, projectId: Int)
+    def cancelWorkflow(envId : Int, projectId: Int)
 
-    def isEnvExists(envName: String, projectId: Int): Boolean
+    def isEnvExists(envId: Int, projectId: Int): Boolean
 
     def getStepLog(stepId: Int): Seq[ActionTracking]
 }
