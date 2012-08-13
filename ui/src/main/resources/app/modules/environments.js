@@ -604,7 +604,13 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
           view.confirmationDialog = view.createConfirmationDialog(view.$("#dialog-confirm"));
           view.resetEnvStatusDialog = view.createResetEnvStatusDialog(view.$("#dialog-reset"));
         }
-      );
+      ).fail(function(jqXHR) {
+          genesis.app.trigger("page-view-loading-completed");
+          genesis.app.trigger("server-communication-error",
+            "Failed to get environment details<br/><br/> Please contact administrator.",
+            "/project/" + view.details.get("projectId")
+          );
+      });
     },
 
     createConfirmationDialog: function (element) {

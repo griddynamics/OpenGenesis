@@ -123,13 +123,13 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
       resizable: false
     });
 
-    genesis.app.bind("server-communication-error", function(message) {
+    genesis.app.bind("server-communication-error", function(message, url) {
       if (!errorDialog.dialog('isOpen')) {
         $("#server-communication-error-dialog").html(message);
         errorDialog.dialog("option", "buttons", {
           "OK": function() {
             $(this).dialog("close");
-            genesis.app.router.navigate("/", {trigger: true});
+            genesis.app.router.navigate(_.isUndefined(url) ? "/" : url, {trigger: true});
           }
         }).dialog('open');
       }
