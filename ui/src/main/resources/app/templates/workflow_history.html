@@ -103,7 +103,7 @@
                 </td>
                 <td>
                   <% if ( step.status !== "Requested" ) { %>
-                    <a href="/rest/projects/<%= workflows.projectId %>/envs/<%= workflows.envName %>/logs/<%= step.stepId %>" target="_blank" data-bypass>Step Log</a>
+                    <a href="/rest/projects/<%= workflows.projectId %>/envs/<%= workflows.envId %>/logs/<%= step.stepId %>" target="_blank" data-bypass>Step Log</a>
                     <!--<a href="javascript:void(0)" class="step-details-expander" data-step-id="<%= step.stepId %>"> Actions </a>-->
                   <% } %>
                 </td>

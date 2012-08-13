@@ -24,7 +24,8 @@ package com.griddynamics.genesis.api
 
 import java.util
 
-case class Environment(name : String,
+case class Environment(id: Int,
+                       name : String,
                        status : String,
                        completed : Option[Double] = None, //optional field, only if status Executing(workflow)
                        creator : String,
@@ -34,7 +35,8 @@ case class Environment(name : String,
 
 case class Attribute(value: String, description: String)
 
-case class EnvironmentDetails(name : String,
+case class EnvironmentDetails(envId: Int,
+                              name : String,
                               status : String,
                               creator : String,
                               templateName : String,

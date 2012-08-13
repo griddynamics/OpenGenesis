@@ -58,7 +58,7 @@ class StoreServiceTest extends MustMatchersForJUnit {
 
     @Test def testRetrieveWorkflow() {
         transaction {
-            storeService.retrieveWorkflow(env.name, env.projectId)
+            storeService.retrieveWorkflow(env.id, env.projectId)
         }
     }
 
@@ -99,8 +99,8 @@ class StoreServiceTest extends MustMatchersForJUnit {
         workflow = new Workflow(env.id, "workflow", WorkflowStatus.Requested, 0, 0, Map[String, String](), None)
 
         val (e, w) = storeService.createEnv(env, workflow).right.get
-        env = e;
-        workflow = w;
+        env = e
+        workflow = w
 
         vm1 = new VirtualMachine(env.id, 0, 0, VmStatus.Provision, "vm1",  Some("i1"), Option("1"), Option("95"))
         vm1(IpAttr) = IP1
