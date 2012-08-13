@@ -35,13 +35,13 @@ import com.griddynamics.genesis.model.WorkflowStatus._
 import com.griddynamics.genesis.util.Logging
 
 trait RequestDispatcher {
-    def createEnv(envName: String, projectId: Int)
+    def createEnv(envName: Int, projectId: Int)
 
-    def startWorkflow(envName: String, projectId: Int)
+    def startWorkflow(envId: Int, projectId: Int)
 
-    def destroyEnv(envName: String, projectId: Int)
+    def destroyEnv(envId: Int, projectId: Int)
 
-    def cancelWorkflow(envName: String, projectId: Int)
+    def cancelWorkflow(envId: Int, projectId: Int)
 }
 
 class RequestDispatcherImpl(beatPeriodMs: Long,
@@ -52,34 +52,34 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
                             stepCoordinatorFactory: StepCoordinatorFactory)
     extends TypedActor with RequestDispatcher with Logging {
 
-    val coordinators = mutable.Map[(String, Int), TypedFlowCoordinator]()
+    val coordinators = mutable.Map[(Int, Int), TypedFlowCoordinator]()
 
-    def createEnv(envName: String, projectId: Int) {
-        startWorkflow(envName, projectId)
+    def createEnv(envId: Int, projectId: Int) {
+        startWorkflow(envId, projectId)
     }
 
-    def destroyEnv(envName: String, projectId: Int) {
-        startWorkflow(envName, projectId)
+    def destroyEnv(envId: Int, projectId: Int) {
+        startWorkflow(envId, projectId)
     }
 
-    def startWorkflow(envName: String, projectId: Int) {
-      val (env, workflow) = storeService.retrieveWorkflow(envName, projectId)
+    def startWorkflow(envId: Int, projectId: Int) {
+      val (env, workflow) = storeService.retrieveWorkflow(envId, projectId)
 
       try{
         val definition = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion)
         val rawSteps = definition.flatMap(_.getWorkflow(workflow.name)
-            .map(_.embody(workflow.variables, Option(env.name), Option(env.projectId))))
+            .map(_.embody(workflow.variables, Option(env.id), Option(env.projectId))))
 
         rawSteps.map(sortByPhase).map(applyIds(_)).foreach(s => {
-            coordinators((env.name, env.projectId)) = if (Option(workflow.name) == definition.map(_.destroyWorkflow.name))
-                destroyingCoordinator(envName, projectId, s)
-            else regularCoordinator(envName, projectId, s)
+            coordinators((env.id, env.projectId)) = if (Option(workflow.name) == definition.map(_.destroyWorkflow.name))
+                destroyingCoordinator(env.id, projectId, s)
+            else regularCoordinator(env.id, projectId, s)
 
-            coordinators((env.name, env.projectId)).start
+            coordinators((env.id, env.projectId)).start
         })
       } catch {
         case e => {
-          log.error(e, "Failed to start workflow [%s] for env [%s]".format(workflow.name, envName))
+          log.error(e, "Failed to start workflow [%s] for env [%d]".format(workflow.name, envId))
           env.status = EnvStatus.Broken
           workflow.status = Failed
           storeService.finishWorkflow(env, workflow)
@@ -105,12 +105,12 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
       sorted.toSeq
     }
 
-    def cancelWorkflow(envName: String, projectId: Int) {
-        for (coordinator <- coordinators.get((envName, projectId)))
+    def cancelWorkflow(envId: Int, projectId: Int) {
+        for (coordinator <- coordinators.get((envId, projectId)))
             coordinator.signal(Cancel())
 
         // TODO collect all coordinator's garbage
-        coordinators -= Tuple2(envName, projectId)
+        coordinators -= Tuple2(envId, projectId)
     }
 
     def applyIds(builders: Seq[StepBuilder]): Seq[StepBuilder] = {
@@ -122,16 +122,16 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
         }
     }
 
-    def regularCoordinator(envName: String, projectId: Int, flowSteps: Seq[StepBuilder]) =
+    def regularCoordinator(envId: Int, projectId: Int, flowSteps: Seq[StepBuilder]) =
         new TypedFlowCoordinatorImpl(
-            new GenesisFlowCoordinator(envName, projectId, flowSteps, storeService,
+            new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService,
                 stepCoordinatorFactory) with RegularWorkflow,
             beatPeriodMs, flowTimeOutMs, executorService
         )
 
-    def destroyingCoordinator(envName: String, projectId: Int, flowSteps: Seq[StepBuilder]) =
+    def destroyingCoordinator(envId: Int, projectId: Int, flowSteps: Seq[StepBuilder]) =
         new TypedFlowCoordinatorImpl(
-            new GenesisFlowCoordinator(envName, projectId, flowSteps, storeService,
+            new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService,
                 stepCoordinatorFactory) with DestroyWorkflow,
             beatPeriodMs, flowTimeOutMs, executorService
         )

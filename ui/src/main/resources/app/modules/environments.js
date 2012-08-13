@@ -54,6 +54,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
 
   Environments.Model = Backbone.Model.extend({
     defaults: {
+      "id" : 0,
       "name": "",
       "creator": "",
       "manifest": {},
@@ -65,10 +66,10 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
       "historyCount": 0
     },
 
-    idAttribute: "name",
+    idAttribute: "id",
 
     url: function () {
-      var url = "/rest/projects/" + this.get("projectId") + "/envs"
+      var url = "/rest/projects/" + this.get("projectId") + "/envs";
       if (this.id) {
         return url + "/" + this.id
       }  else {
@@ -84,7 +85,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
         this.pageOffset = 0;
         this.pageLength = PAGE_SIZE;
         this.projectId = options.projectId;
-        this.envName = options.envName;
+        this.envId = options.envId;
     },
 
     parse: function(json) {
@@ -93,7 +94,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
     },
 
     url: function() {
-        return "/rest/projects/" + this.projectId + "/envs/" + this.envName + "/history?" + $.param({"page_offset": this.pageOffset, "page_length": this.pageLength});
+        return "/rest/projects/" + this.projectId + "/envs/" + this.envId + "/history?" + $.param({"page_offset": this.pageOffset, "page_length": this.pageLength});
     },
 
     refresh: function() {
@@ -154,12 +155,12 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
 
     initialize: function(values, options) {
       this.projectId = options.projectId;
-      this.envName = options.envName;
+      this.envId = options.envId;
       this.stepId = options.stepId;
     },
 
     url: function() {
-      return "/rest/projects/" + this.projectId + "/envs/" + this.envName + "/steps/" + this.stepId + "/actions";
+      return "/rest/projects/" + this.projectId + "/envs/" + this.envId + "/steps/" + this.stepId + "/actions";
     }
   });
 
@@ -418,7 +419,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
     },
 
     initialize: function (options) {
-      this.details = new Environments.Model({"name": options.envName, projectId: options.projectId});
+      this.details = new Environments.Model({"id": options.envId, projectId: options.projectId});
       poller.PollingManager.start(this.details);
       this.details.bind("change:status", this.renderStatus, this);
       this.details.bind("change:workflowCompleted", this.renderProgress, this);
@@ -434,7 +435,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
           status.StatusPanel.error(errors);
         });
 
-      this.historyCollection = new WorkflowHistoryCollection({"projectId": options.projectId, "envName": options.envName});
+      this.historyCollection = new WorkflowHistoryCollection({"projectId": options.projectId, "envId": options.envId});
     },
 
     onClose: function (options) {
@@ -489,7 +490,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
           });
 
           if(workflow) {
-            self.executeWorkflowDialog.showFor(self.details.get("projectId"), workflow, self.details.get("name"), self.details.get('templateName'), self.details.get('templateVersion'));
+            self.executeWorkflowDialog.showFor(self.details.get("projectId"), workflow, self.details.get("id"), self.details.get('templateName'), self.details.get('templateVersion'));
           }
           genesis.app.trigger("page-view-loading-completed");
         })
@@ -619,7 +620,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
         autoOpen: false,
         buttons: {
           "Yes": function () {
-            $.when(backend.WorkflowManager.cancelWorkflow(self.details.get("projectId"), self.details.get('name')))
+            $.when(backend.WorkflowManager.cancelWorkflow(self.details.get("projectId"), self.details.get('id')))
               .done(function() {
                 status.StatusPanel.information("'Cancel workflow' signal sent");
               })
@@ -647,7 +648,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
         autoOpen: false,
         buttons: {
           "Yes": function () {
-            $.when(backend.EnvironmentManager.resetEnvStatus(self.details.get("projectId"), self.details.get('name')))
+            $.when(backend.EnvironmentManager.resetEnvStatus(self.details.get("projectId"), self.details.get('id')))
               .done(function() {
                 status.StatusPanel.information("Environment status was changed to 'Ready'");
               })
@@ -671,9 +672,9 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
       this.$el.id = "#workflowParametersDialog";
     },
 
-    showFor: function(projectId, workflow, environmentName, templateName, templateVersion) {
+    showFor: function(projectId, workflow, envId, templateName, templateVersion) {
       this.workflow = workflow;
-      this.environmentName = environmentName;
+      this.envId = envId;
       this.projectId = projectId;
       this.templateName = templateName;
       this.templateVersion = templateVersion;
@@ -697,7 +698,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
           vals[$(this).attr('name')] = $(this).val();
         });
       }
-      var execution = backend.WorkflowManager.executeWorkflow(this.projectId, this.environmentName, this.workflow.name, vals);
+      var execution = backend.WorkflowManager.executeWorkflow(this.projectId, this.envId, this.workflow.name, vals);
 
       var view = this;
       $.when(execution).then(
@@ -805,7 +806,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
       if (!$details.is(":visible")) {
         var logsCollection = new StepLogCollection([], {
           "projectId": this.collection.projectId,
-          "envName": this.collection.envName,
+          "envId": this.collection.envId,
           "stepId": stepId
         });
 
@@ -902,6 +903,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
 
     initialize: function(options) {
       this.isStepFinished = options.isStepFinished;
+      console.log(this);
       $.when(this.collection.fetch()).done(_.bind(this.render, this));
     },
 
@@ -922,7 +924,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
           actions: self.collection.toJSON(),
           isStepFinished: self.isStepFinished,
           projectId: self.collection.projectId,
-          envName: self.collection.envName,
+          envId: self.collection.envId,
           "utils": genesis.utils
         }));
       });

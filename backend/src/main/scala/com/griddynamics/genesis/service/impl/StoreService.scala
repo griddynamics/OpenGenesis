@@ -70,25 +70,36 @@ class StoreService extends service.StoreService with Logging {
   }
 
   @Transactional(readOnly = true)
-  def isEnvExist(projectId: Int, envName: String): Boolean = {
-    !from(GS.envs)(env => where(env.projectId === projectId and env.name === envName) select (env.id)).headOption.isEmpty
+  def isEnvExist(projectId: Int, envId: Int): Boolean = {
+    !from(GS.envs)(env => where(env.projectId === projectId and env.id === envId) select (env.id)).headOption.isEmpty
   }
 
-  private def findEnvQuery(envName: String, projectId: Int) =
-    from(GS.envs)(e => where(e.name === envName and e.projectId === projectId) select (e))
+  private def findEnvQuery(envId: Int, projectId: Int) =
+    from(GS.envs)(e => where(e.id === envId and e.projectId === projectId) select (e))
+
+    private def findEnvQuery(envName: String, projectId: Int) =
+        from(GS.envs)(e => where(e.name === envName and e.projectId === projectId) select (e))
 
   @Transactional(readOnly = true)
-  def findEnv(envName: String, projectId: Int) = {
-    val result = findEnvQuery(envName, projectId)
+  def findEnv(envId: Int, projectId: Int) = {
+    val result = findEnvQuery(envId, projectId)
     val envs = if (result.size == 1) Some(result.single) else None
     envs.foreach(loadAttrs(_, GS.envAttrs))
     envs
   }
 
+    @Transactional(readOnly = true)
+    def findEnv(envName: String, projectId: Int) = {
+        val result = findEnvQuery(envName, projectId)
+        val envs = if (result.size == 1) Some(result.single) else None
+        envs.foreach(loadAttrs(_, GS.envAttrs))
+        envs
+    }
+
   //TODO switch to join query
   @Transactional(readOnly = true)
-  def findEnvWithWorkflow(envName: String, projectId: Int) = {
-    findEnv(envName, projectId).map( env =>
+  def findEnvWithWorkflow(envId: Int, projectId: Int) = {
+    findEnv(envId).map( env =>
       (env, listWorkflows(env).find(_.status == WorkflowStatus.Executed))
     )
   }
@@ -319,9 +330,9 @@ class StoreService extends service.StoreService with Logging {
   }
 
   @Transactional(readOnly = true)
-  def retrieveWorkflow(envName: String, projectId: Int) = {
+  def retrieveWorkflow(envId: Int, projectId: Int) = {
     from(GS.envs, GS.workflows)((e, w) =>
-      where(e.name === envName and
+      where(e.id === envId and
           e.projectId === projectId and
           e.id === w.envId and
           w.status === WorkflowStatus.Requested)
@@ -330,8 +341,8 @@ class StoreService extends service.StoreService with Logging {
   }
 
   @Transactional
-  def startWorkflow(envName: String, projectId: Int) = {
-    val (e, w) = retrieveWorkflow(envName, projectId)
+  def startWorkflow(envId: Int, projectId: Int) = {
+    val (e, w) = retrieveWorkflow(envId, projectId)
     loadAttrs(e, GS.envAttrs)
     e.status = EnvStatus.Busy
     w.status = WorkflowStatus.Executed

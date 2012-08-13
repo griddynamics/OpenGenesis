@@ -40,19 +40,19 @@ class GenesisRestService(storeService: StoreService,
 
     def listEnvs(projectId: Int) = {
         for ((env, workflowOption) <- storeService.listEnvsWithWorkflow(projectId)) yield
-            Environment(env.name, env.status.toString, stepsCompleted(workflowOption),
+            Environment(env.id, env.name, env.status.toString, stepsCompleted(workflowOption),
                 env.creator, env.templateName, env.templateVersion, env.projectId)
     }
 
   def listEnvs(projectId: Int, statuses: Seq[String]) = {
     for ((env, workflowOption) <- storeService.listEnvsWithWorkflow(projectId, statuses.map(EnvStatus.withName(_)))) yield
-      Environment(env.name, env.status.toString, stepsCompleted(workflowOption),
+      Environment(env.id, env.name, env.status.toString, stepsCompleted(workflowOption),
         env.creator, env.templateName, env.templateVersion, env.projectId)
   }
 
   def listEnvs(projectId: Int, start : Int, limit : Int) = {
         for ((env, workflowOption) <- storeService.listEnvsWithWorkflow(projectId, start, limit)) yield
-            Environment(env.name, env.status.toString, stepsCompleted(workflowOption),
+            Environment(env.id, env.name, env.status.toString, stepsCompleted(workflowOption),
                 env.creator, env.templateName, env.templateVersion, env.projectId)
     }
 
@@ -66,28 +66,28 @@ class GenesisRestService(storeService: StoreService,
         broker.createEnv(projectId, envName, creator, templateName, templateVersion, variables)
     }
 
-    def destroyEnv(envName: String, projectId: Int, variables: Map[String, String]) = {
-        broker.destroyEnv(envName, projectId, variables)
+    def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String]) = {
+        broker.destroyEnv(envId, projectId, variables)
     }
 
-    def requestWorkflow(envName: String, projectId: Int, workflowName: String, variables: Map[String, String]) = {
-        broker.requestWorkflow(envName, projectId, workflowName, variables)
+    def requestWorkflow(envId: Int, projectId: Int, workflowName: String, variables: Map[String, String]) = {
+        broker.requestWorkflow(envId, projectId, workflowName, variables)
     }
 
-    def cancelWorkflow(envName: String, projectId: Int) {
-        broker.cancelWorkflow(envName, projectId)
+    def cancelWorkflow(envId: Int, projectId: Int) {
+        broker.cancelWorkflow(envId, projectId)
     }
 
-    def resetEnvStatus(envName: String, projectId: Int) = {
-        broker.resetEnvStatus(envName, projectId)
+    def resetEnvStatus(envId: Int, projectId: Int) = {
+        broker.resetEnvStatus(envId, projectId)
     }
 
-    def isEnvExists(envName: String, projectId: Int): Boolean = {
-      storeService.isEnvExist(projectId, envName)
+    def isEnvExists(envId: Int, projectId: Int): Boolean = {
+      storeService.isEnvExist(projectId, envId)
     }
 
-    def describeEnv(envName: String, projectId: Int) = {
-        storeService.findEnvWithWorkflow(envName, projectId) match {
+    def describeEnv(envId: Int, projectId: Int) = {
+        storeService.findEnvWithWorkflow(envId, projectId) match {
             case Some((env, flow)) =>
                 templateService.descTemplate(env.projectId, env.templateName, env.templateVersion).map {
                     envDesc(
@@ -104,8 +104,8 @@ class GenesisRestService(storeService: StoreService,
         }
     }
 
-    def workflowHistory(envName: String, projectId: Int, pageOffset: Int, pageLength: Int): Option[WorkflowHistory] = {
-        storeService.findEnv(envName, projectId).map(env =>
+    def workflowHistory(envId: Int, projectId: Int, pageOffset: Int, pageLength: Int): Option[WorkflowHistory] = {
+        storeService.findEnv(envId, projectId).map(env =>
             workflowHistoryDesc(
                 storeService.workflowsHistory(env, pageOffset, pageLength),
                 storeService.countWorkflows(env)
@@ -113,10 +113,10 @@ class GenesisRestService(storeService: StoreService,
         )
     }
 
-    def getLogs(envName: String,  stepId: Int) : Seq[String] =
+    def getLogs(envId: Int,  stepId: Int) : Seq[String] =
       storeService.getLogs(stepId).map(log => "%s: %s".format(log.timestamp, log.message))
 
-    def getLogs(envName: String, actionUUID: String) =
+    def getLogs(envId: Int, actionUUID: String) =
       storeService.getLogs(actionUUID).map(log => "%s: %s".format(log.timestamp, log.message))
 
     def queryVariables(projectId: Int, templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]) = {
@@ -178,6 +178,7 @@ object GenesisRestService {
         val bmDescs = for (server <- bms) yield serversDesc(env, server)
 
         EnvironmentDetails(
+            env.id,
             env.name,
             env.status.toString,
             env.creator,

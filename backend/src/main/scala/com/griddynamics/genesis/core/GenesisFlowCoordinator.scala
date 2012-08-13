@@ -40,15 +40,15 @@ import com.griddynamics.genesis.workflow.step.CoordinatorThrowable
 import com.griddynamics.genesis.plugin.GenesisStep
 import com.griddynamics.genesis.workflow.signal.Fail
 
-abstract class GenesisFlowCoordinator(envName: String,
+abstract class GenesisFlowCoordinator(envId: Int,
                                       projectId: Int,
                                       flowSteps: Seq[StepBuilder],
                                       storeService: StoreService,
                                       stepCoordinatorFactory: StepCoordinatorFactory)
-    extends GenesisFlowCoordinatorBase(envName, projectId, flowSteps, storeService, stepCoordinatorFactory)
+    extends GenesisFlowCoordinatorBase(envId, projectId, flowSteps, storeService, stepCoordinatorFactory)
     with StepIgnore with StepRestart with StepExecutionContextHolder
 
-abstract class GenesisFlowCoordinatorBase(val envName: String,
+abstract class GenesisFlowCoordinatorBase(val envId: Int,
                                           val projectId: Int,
                                           val flowSteps: Seq[StepBuilder],
                                           val storeService: StoreService,
@@ -67,11 +67,11 @@ abstract class GenesisFlowCoordinatorBase(val envName: String,
 
     def flowDescription = {
       val workflowName = if (workflow == null) "*undefined at this stage*" else workflow.name
-      "Workflow[env='%s', name='%s']".format(envName, workflowName)
+      "Workflow[env='%s', name='%s']".format(envId, workflowName)
     }
 
     def onFlowStart() = {
-        val (iEnv, iWorkflow, iServers) = storeService.startWorkflow(envName, projectId)
+        val (iEnv, iWorkflow, iServers) = storeService.startWorkflow(envId, projectId)
 
         env = iEnv
         servers = iServers

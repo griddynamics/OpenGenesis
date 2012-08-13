@@ -36,11 +36,12 @@ trait StoreService {
     def countEnvs(projectId: Int): Int
     def countEnvs(projectId: Int, statuses: Seq[EnvStatus]): Int
 
-    def findEnv(name: String, projectId: Int): Option[Environment]
-    def findEnvWithWorkflow(name: String, projectId: Int): Option[(Environment, Option[Workflow])]
+    def findEnv(id: Int, projectId: Int): Option[Environment]
+    def findEnvWithWorkflow(id: Int, projectId: Int): Option[(Environment, Option[Workflow])]
     def findEnv(id: Int): Option[Environment]
+    def findEnv(envName: String, projectId: Int): Option[Environment]
 
-    def isEnvExist(projectId: Int, envName: String): Boolean
+    def isEnvExist(projectId: Int, envId: Int): Boolean
 
     def getVm(instanceId: String): (Environment, VirtualMachine)
 
@@ -77,9 +78,9 @@ trait StoreService {
     // TODO @throws(classOf[WorkflowRequestFailed])
     def requestWorkflow(env: Environment, workflow: Workflow): Either[Mistake, (Environment, Workflow)]
 
-    def retrieveWorkflow(envName: String, projectId: Int): (Environment, Workflow)
+    def retrieveWorkflow(envId: Int, projectId: Int): (Environment, Workflow)
 
-    def startWorkflow(envName: String, projectId: Int): (Environment, Workflow, Seq[EnvResource])
+    def startWorkflow(envId: Int, projectId: Int): (Environment, Workflow, Seq[EnvResource])
 
     def finishWorkflow(env: Environment, workflow: Workflow)
 

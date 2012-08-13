@@ -30,7 +30,7 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
     routes: {
       "": "index",
       "project/:projectId" : "environments",
-      "project/:projectId/env/:envName": "environmentDetails",
+      "project/:projectId/env/:envId": "environmentDetails",
       "project/:projectId/createEnv": "createEnvironment",
       "project/:projectId/properties": "projectProperties",
       "admin/create/project": "createProject",
@@ -77,9 +77,9 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
       }
     },
 
-    environmentDetails: function(projectId, envName) {
+    environmentDetails: function(projectId, envId) {
       genesis.app.trigger("page-view-loading-started");
-      this.setCurrentView(new Environments.Views.Details({projectId: projectId, envName : envName, el: this.$viewDiv()}));
+      this.setCurrentView(new Environments.Views.Details({projectId: projectId, envId : envId, el: this.$viewDiv()}));
     },
 
     createEnvironment: function(projectId) {

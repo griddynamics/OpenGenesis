@@ -2,7 +2,7 @@
 
     <% for(var i = 0, count = environments.length; i < count; i++) { var environment = environments[i]; %>
         <tr>
-            <td class="first"><a href="#project/<%= project.id %>/env/<%= environment.name %>"><%= environment.name %></a></td>
+            <td class="first"><a href="#project/<%= project.id %>/env/<%= environment.id %>"><%= environment.name %></a></td>
             <td><%= environment.templateName %> <%= environment.templateVersion %></a></td>
             <td><%= environment.creator %></td>
             <td id="<%= environment.name %>-status"><img alt="status" src="<%= statusImages[environment.status] %>" class="status" style="margin-right: 10px!important; display: inline-block;"/> <%= environment.status %></td>
