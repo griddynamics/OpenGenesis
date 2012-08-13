@@ -2,7 +2,8 @@ define([
   // Libs
   "jquery",
   "use!underscore",
-  "use!backbone"
+  "use!backbone",
+  "use!jqueryui"
 ],
 
 function($, _, Backbone) {
