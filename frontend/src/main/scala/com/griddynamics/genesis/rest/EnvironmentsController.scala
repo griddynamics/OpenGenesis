@@ -96,7 +96,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
                  @PathVariable("envName") envId: Int,
                  request: HttpServletRequest) = {
     assertEnvExist(projectId, envId)
-    genesisService.destroyEnv(envId, projectId, Map[String, String]())
+    genesisService.destroyEnv(envId, projectId, Map[String, String](), getCurrentUser)
   }
 
 
@@ -156,7 +156,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
       case "execute" => {
         val parameters = extractMapValue("parameters", requestMap)
         val workflow = extractValue("workflow", parameters)
-        genesisService.requestWorkflow(env, projectId, workflow, extractVariables(parameters))
+        genesisService.requestWorkflow(env, projectId, workflow, extractVariables(parameters), getCurrentUser)
       }
 
       case "resetEnvStatus" => {

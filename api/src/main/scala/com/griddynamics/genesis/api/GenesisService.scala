@@ -48,9 +48,9 @@ trait GenesisService {
     def createEnv(projectId: Int, envName : String, creator : String, templateName : String,
                   templateVersion : String, variables : Map[String, String]) : RequestResult
 
-    def destroyEnv(envId : Int, projectId: Int, variables : Map[String, String]) : RequestResult
+    def destroyEnv(envId : Int, projectId: Int, variables : Map[String, String], startedBy: String) : RequestResult
 
-    def requestWorkflow(envId : Int, projectId: Int, workflowName : String, variables : Map[String, String]) : RequestResult
+    def requestWorkflow(envId : Int, projectId: Int, workflowName : String, variables : Map[String, String], startedBy: String) : RequestResult
 
     def resetEnvStatus(envId: Int, projectId: Int) : RequestResult
 

@@ -84,6 +84,28 @@ function($, _, Backbone) {
           memo[item] = true;
           return memo;
         }, {});
+      },
+
+      timeDuration: function(start, end) {
+        if (start === null || _.isUndefined(start)) return "0";
+
+        if (end === null || _.isUndefined(end)) end = new Date();
+
+        if (typeof start == Date) start = start.getTime();
+        if (typeof end == Date) end = end.getTime();
+
+        var duration = end - start;
+
+        var MILLISECOND = 1,
+            SECOND = 1000 * MILLISECOND,
+            MINUTE = 60 * SECOND,
+            HOUR = 60 * MINUTE;
+
+        if (duration < SECOND) return duration + " ms";
+        if (duration < MINUTE) return (duration / SECOND).toFixed(1) + " sec";
+        if (duration < HOUR) return (duration / MINUTE).toFixed(1) + " min";
+
+        return (duration / HOUR).toFixed(1) + " hour(s)";
       }
     }
   };

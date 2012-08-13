@@ -212,9 +212,9 @@ class StoreService extends service.StoreService with Logging {
       val cenv = GS.envs.insert(env)
       updateAttrs(cenv, GS.envAttrs)
 
-      var cworkflow = new Workflow(cenv.id, workflow.name,
+      var cworkflow = new Workflow(cenv.id, workflow.name, workflow.startedBy,
         WorkflowStatus.Requested, 0, 0,
-        workflow.variables, None)
+        workflow.variables, None, None)
       cworkflow = GS.workflows.insert(cworkflow)
 
       (cenv, cworkflow)
@@ -289,15 +289,18 @@ class StoreService extends service.StoreService with Logging {
   }
 
   @Transactional
-  def finishWorkflow(env: Environment, workflow: Workflow) = {
+  def finishWorkflow(env: Environment, workflow: Workflow) {
+    val finishTime: Some[Timestamp] = Some(new Timestamp(System.currentTimeMillis()))
+
     GS.steps.update(step =>
       where((step.finished isNull) and (step.workflowId === workflow.id) and (step.started isNotNull)) set (
-          step.finished := Some(new Timestamp(System.currentTimeMillis()))
+          step.finished := finishTime
           )
     )
     updateEnv(env)
-    GS.workflows.update(workflow)
 
+    workflow.executionFinished = finishTime
+    GS.workflows.update(workflow)
   }
 
   @Transactional(propagation = Propagation.MANDATORY)

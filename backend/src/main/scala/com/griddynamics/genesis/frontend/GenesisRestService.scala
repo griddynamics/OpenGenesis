@@ -66,12 +66,12 @@ class GenesisRestService(storeService: StoreService,
         broker.createEnv(projectId, envName, creator, templateName, templateVersion, variables)
     }
 
-    def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String]) = {
-        broker.destroyEnv(envId, projectId, variables)
+    def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String], startedBy: String) = {
+        broker.destroyEnv(envId, projectId, variables, startedBy)
     }
 
-    def requestWorkflow(envId: Int, projectId: Int, workflowName: String, variables: Map[String, String]) = {
-        broker.requestWorkflow(envId, projectId, workflowName, variables)
+    def requestWorkflow(envId: Int, projectId: Int, workflowName: String, variables: Map[String, String], startedBy: String) = {
+        broker.requestWorkflow(envId, projectId, workflowName, variables, startedBy)
     }
 
     def cancelWorkflow(envId: Int, projectId: Int) {
@@ -199,7 +199,8 @@ object GenesisRestService {
     def workflowHistoryDesc(history: Seq[(Workflow, Seq[model.WorkflowStep])], workflowsTotalCount: Int) = {
         val h = wrap(history)(() =>
             (for ((flow, steps) <- history) yield
-                new WorkflowDetails(flow.name, flow.status.toString, stepsCompleted(Some(flow)), stepDesc(steps), flow.executionStarted.map (_.getTime))).toSeq)
+                new WorkflowDetails(flow.name, flow.status.toString, flow.startedBy, stepsCompleted(Some(flow)),
+                  stepDesc(steps), flow.executionStarted.map (_.getTime), flow.executionFinished.map (_.getTime))).toSeq)
 
         WorkflowHistory(h, workflowsTotalCount)
     }

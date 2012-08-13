@@ -35,9 +35,9 @@ trait RequestBroker {
                   templateName: String, templateVersion: String,
                   variables: Map[String, String]) : RR
 
-    def requestWorkflow(envId: Int, projectId: Int, workflowName: String, variables: Map[String, String]) : RR
+    def requestWorkflow(envId: Int, projectId: Int, workflowName: String, variables: Map[String, String], startedBy: String) : RR
 
-    def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String]) : RR
+    def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String], startedBy: String) : RR
 
     def cancelWorkflow(envId : Int, projectId: Int)
 
@@ -75,8 +75,8 @@ class RequestBrokerImpl(storeService: StoreService,
 
         val env = new Environment(envName, EnvStatus.Busy,
                                   envCreator, templateName, templateVersion, projectId)
-        val workflow = new Workflow(env.id, twf.name,
-                                    WorkflowStatus.Requested, 0, 0, variables, None)
+        val workflow = new Workflow(env.id, twf.name, envCreator,
+                                    WorkflowStatus.Requested, 0, 0, variables, None, None)
 
         storeService.createEnv(env, workflow) match {
             case Left(m) => RR(compoundVariablesErrors = Seq(m.toString))
@@ -87,7 +87,7 @@ class RequestBrokerImpl(storeService: StoreService,
         }
     }
 
-    def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String]) : RR = {
+    def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String], startedBy: String) : RR = {
         val env = findEnv(envId, projectId) match {
             case Right(e) => e
             case Left(rr) => return rr
@@ -100,8 +100,8 @@ class RequestBrokerImpl(storeService: StoreService,
             case None =>
         }
 
-        val workflow = new Workflow(env.id, twf.name,
-                                    WorkflowStatus.Requested, 0, 0, variables, None)
+        val workflow = new Workflow(env.id, twf.name, startedBy,
+                                    WorkflowStatus.Requested, 0, 0, variables, None, None)
 
         storeService.requestWorkflow(env, workflow) match {
             case Left(m) => RR(compoundVariablesErrors =  Seq(m.toString))
@@ -113,7 +113,7 @@ class RequestBrokerImpl(storeService: StoreService,
     }
 
     def requestWorkflow(envId: Int, projectId: Int, workflowName: String,
-                        variables: Map[String, String]) : RR = {
+                        variables: Map[String, String], startedBy: String) : RR = {
         val env = findEnv(envId, projectId) match {
             case Right(e) => e
             case Left(rr) => return rr
@@ -136,7 +136,7 @@ class RequestBrokerImpl(storeService: StoreService,
             case None =>
         }
 
-        val workflow = new Workflow(env.id, workflowName, WorkflowStatus.Requested, 0, 0, variables, None)
+        val workflow = new Workflow(env.id, workflowName, startedBy, WorkflowStatus.Requested, 0, 0, variables, None, None)
 
         storeService.requestWorkflow(env, workflow)  match {
             case Left(m) => RR(compoundVariablesErrors = Seq(m.toString))
