@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.ServletContext
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.users.GenesisRole
-import com.griddynamics.genesis.service.GenesisSystemProperties
+import com.griddynamics.genesis.service.{EnvironmentAccessService, GenesisSystemProperties}
 
 @Controller
 @RequestMapping(Array("/rest/whoami"))
@@ -38,11 +38,17 @@ class WhoamiController {
   @Autowired
   var servletContext: ServletContext = _
 
+  @Autowired
+  var envSecurityService: EnvironmentAccessService = _
+
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
   def whoami(request: HttpServletRequest): Map[String, Any] = Map(
     "user" -> GenesisRestController.getCurrentUser,
     "logout_disabled" -> "false".equalsIgnoreCase(servletContext.getInitParameter(GenesisSystemProperties.LOGOUT_ENABLED)),
-    "administrator" -> (request.isUserInRole(GenesisRole.SystemAdmin.toString))
+    "administrator" -> (request.isUserInRole(GenesisRole.SystemAdmin.toString)),
+    "configuration" -> Map(
+      "environment_security_enabled" -> envSecurityService.restrictionsEnabled
+    )
   )
 }

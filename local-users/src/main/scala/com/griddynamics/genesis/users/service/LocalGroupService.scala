@@ -37,10 +37,7 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
     @Autowired
     var authorityService: AuthorityService = null
 
-    @Autowired
-    var projectAuthorityService: ProjectAuthorityService = null
-
-    @Transactional(readOnly = true)
+  @Transactional(readOnly = true)
     def list = repository.list.sortBy(_.name)
 
     @Transactional(readOnly = true)
@@ -88,7 +85,6 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
     @Transactional
     override def delete(a: UserGroup) = {
         authorityService.removeAuthoritiesFromGroup(a.name)
-        projectAuthorityService.removeGroupFromProjects(a.name)
         repository.removeAllUsersFromGroup(a.id.get)
         repository.delete(a)
         Success(a)

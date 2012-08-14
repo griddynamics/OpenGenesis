@@ -37,9 +37,6 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
     @Autowired
     var authorityService: AuthorityService = null
 
-    @Autowired
-    var projectAuthorityService: ProjectAuthorityService = null
-
     @Transactional(readOnly = true)
     override def getWithCredentials(username: String) = repository.getWithCredentials(username)
 
@@ -48,12 +45,12 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
         repository.findByUsername(username)
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
+    @Transactional(readOnly = false)
     override def create(user: User)  = {
         validCreate(user, u => repository.insert(u))
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
+    @Transactional(readOnly = false)
     override def create(user: User, groups: Seq[String]) = {
         checkGroups(groups, user) match {
             case f: Failure => f
@@ -67,12 +64,12 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
+    @Transactional(readOnly = false)
     override def update(user: User) = {
        validUpdate(user, repository.update(_) )
     }
 
-    @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
+    @Transactional(readOnly = false)
     override def update(user: User, groups: Seq[String]) = checkGroups(groups, user) match {
         case f: Failure => f
         case _ => {
@@ -85,13 +82,11 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
         }
     }
 
-
-    @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
+    @Transactional(readOnly = false)
     override def delete(a: User) = {
       authorityService.removeAuthoritiesFromUser(a.username)
-      projectAuthorityService.removeUserFromProjects(a.username)
       if (repository.delete(a) == 0)
-         Failure()
+         Failure()   //todo this will not rollback transaction
       else
          Success(a)
     }
@@ -135,9 +130,7 @@ class LocalUserService(val repository: LocalUserRepository, val groupService: Gr
 
 
     @Transactional(readOnly = true)
-    def list = {
-       repository.list
-    }
+    def list = repository.list
 
     @Transactional(readOnly = true)
     def search(usernameLike: String) = repository.search(usernameLike)

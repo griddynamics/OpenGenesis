@@ -1,5 +1,5 @@
 <div class="top-panel">
-  <div class="page-title"><h1>Role: <%= LANG[role.name] %></h1></div>
+  <div class="page-title"><h1><%- title %></h1></div>
   <div class="title-right"></div>
 </div>
 
@@ -11,7 +11,7 @@
 
       <select id="users-select" name="users-select">
         <% for (var i = 0, count = role.users.length; i < count; i++) { var user = role.users[i]; %>
-         <option value="<%= user %>" class="selected"><%- user.split('\\').join('\\\\') %></option>
+         <option value="<%= user %>" class="selected"><%- user %></option>
 
         <% } %>
       </select>
@@ -19,7 +19,7 @@
       <h4>Groups</h4>
       <select id="groups-select" name="groups-select">
         <% for (var i = 0, count = role.groups.length; i < count; i++) { var group = role.groups[i]; %>
-          <option value="<%= group %>" class="selected"><%- group.split('\\').join('\\\\') %></option>
+          <option value="<%= group %>" class="selected"><%- group %></option>
         <% } %>
       </select>
     </form>

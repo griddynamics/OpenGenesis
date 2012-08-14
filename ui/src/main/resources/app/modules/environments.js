@@ -5,6 +5,7 @@ define([
   "use!backbone",
   "utils/poller",
   "modules/status",
+  "modules/settings/roles",
   "variables",
   "modules/common/templates",
   "jquery",
@@ -13,10 +14,13 @@ define([
   "use!showLoading",
   "use!dateformat",
   "use!jstorage",
-  "use!multiselect"
+  "use!multiselect",
+
+  "use!fcbcomplete"
+
 ],
 
-function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) {
+function (genesis, backend, Backbone, poller, status, Roles, variables, gtemplates, $) {
   var Environments = genesis.module();
 
   /**
@@ -80,7 +84,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
 
   var PAGE_SIZE = 10;
 
-  WorkflowHistoryCollection = Backbone.Collection.extend({
+  var WorkflowHistoryCollection = Backbone.Collection.extend({
     initialize: function(options) {
         this.pageOffset = 0;
         this.pageLength = PAGE_SIZE;
@@ -268,10 +272,10 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
 
     statusFilterChanged: function(e, ui) {
       var newFilter = $.extend(true, {}, this.collection.getFilter());
-      if (e.type == "multiselectclick") {
+      if (e.type === "multiselectclick") {
         newFilter.statuses[ui.value.toLowerCase()].visible = ui.checked;
       } else {
-        var checked = (e.type == "multiselectcheckall" ? true : false);
+        var checked = e.type === "multiselectcheckall";
         _(newFilter.statuses).each(function(status) {
           newFilter.statuses[status.name.toLowerCase()].visible = checked;
         });
@@ -281,16 +285,14 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
 
     readFilterValues: function() {
       var $nameFilter = this.$("#filter-name"),
-          $advancedCheck = this.$("#advanced-check"),
           $statusOptions = this.$("#filter-statuses option"),
           currentFilter = {};
 
       currentFilter.namePart = $nameFilter.val();
       currentFilter.statuses = {};
       _($statusOptions).each(function(option) {
-        var status = {},
-            name = $(option).attr("value"),
-            selected = $(option).attr("selected") != undefined ? true : false;
+        var name = $(option).attr("value"),
+            selected = !_.isUndefined($(option).attr("selected"));
         currentFilter.statuses[name.toLowerCase()] = { "visible" : selected, "name" : name };
       });
       return currentFilter;
@@ -306,6 +308,10 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
         view.$el.html(tmpl({ "project": view.project.toJSON(), "filter": view.collection.getFilter() }));
         if(isAdmin) {
           view.$("#project-settings").show();
+        }
+
+        if(!genesis.app.currentConfiguration['environment_security_enabled'] || isAdmin ) {
+          view.$("#create-env-button").show();
         }
         view.$("#filter-statuses").multiselect({
           noneSelectedText: "no statuses selected",
@@ -394,7 +400,6 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
     }
   });
 
-  var UNKNOWN = "unknown";
   Environments.Views.Details = Backbone.View.extend({
     template: "app/templates/env_details.html",
     statusTemplate: "app/templates/status.html",
@@ -420,13 +425,16 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
 
     initialize: function (options) {
       this.details = new Environments.Model({"id": options.envId, projectId: options.projectId});
+
       poller.PollingManager.start(this.details);
+
       this.details.bind("change:status", this.renderStatus, this);
       this.details.bind("change:workflowCompleted", this.renderProgress, this);
       this.details.bind("change:vms", this.renderVirtualMachines, this);
       this.details.bind("change:servers", this.renderServers, this);
       this.details.bind("change:servers change:vms", this.checkServersAndVms, this);
       this.details.bind("change:attributes", this.renderAttributes, this);
+
       this.executeWorkflowDialog = new ExecuteWorkflowDialog().
         bind('workflow-started', function(workflow) {
           status.StatusPanel.information("Workflow '" + workflow.name + "' execution started");
@@ -438,7 +446,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
       this.historyCollection = new WorkflowHistoryCollection({"projectId": options.projectId, "envId": options.envId});
     },
 
-    onClose: function (options) {
+    onClose: function () {
       poller.PollingManager.stop(this.details);
       if(this.executeWorkflowDialog) {
         this.executeWorkflowDialog.destroy();
@@ -452,6 +460,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
       }
       genesis.utils.nullSafeClose(this.workflowHistory);
       genesis.utils.nullSafeClose(this.sourcesView);
+      genesis.utils.nullSafeClose(this.accessView);
 
     },
 
@@ -469,11 +478,11 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
       this.sourcesView.showTemplate(templateName, templateVersion);
     },
 
-    cancelWorkflow: function (e) {
+    cancelWorkflow: function () {
       this.confirmationDialog.dialog('open');
     },
 
-    resetEnvStatus: function (e) {
+    resetEnvStatus: function () {
       this.resetEnvStatusDialog.dialog('open');
     },
 
@@ -572,11 +581,22 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
       });
     },
 
-    renderWorkflowList: function (e) {
+    renderWorkflowList: function () {
       if (this.workflowHistory == null) {
         this.workflowHistory = new WorkflowHistoryView({model: this.details, collection: this.historyCollection, el: "#panel-tab-3"});
         this.workflowHistory.render();
       }
+    },
+
+    renderAccess: function() {
+      var view = this;
+      var access = new EnvAccess({}, { projectId: this.details.get("projectId"), envId: this.details.id });
+      this.accessView = new AccessListView({
+        el: "#panel-tab-4",
+        role: access,
+        projectId: this.details.get("projectId"),
+        tabHeader: this.$("#permissions-tab-header")
+      });
     },
 
     render: function () {
@@ -602,10 +622,11 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
           view.checkServersAndVms();
           view.renderWorkflowList();
           view.renderAttributes();
+          view.renderAccess();
           view.confirmationDialog = view.createConfirmationDialog(view.$("#dialog-confirm"));
           view.resetEnvStatusDialog = view.createResetEnvStatusDialog(view.$("#dialog-reset"));
         }
-      ).fail(function(jqXHR) {
+      ).fail(function() {
           genesis.app.trigger("page-view-loading-completed");
           genesis.app.trigger("server-communication-error",
             "Failed to get environment details<br/><br/> Please contact administrator.",
@@ -674,7 +695,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
   var ExecuteWorkflowDialog = Backbone.View.extend({
     template: "app/templates/environment_variables.html",
 
-    initialize: function(options) {
+    initialize: function() {
       this.$el.id = "#workflowParametersDialog";
     },
 
@@ -700,7 +721,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
           return;
         }
 
-        $('.workflow-variable').each(function (it) {
+        $('.workflow-variable').each(function () {
           vals[$(this).attr('name')] = $(this).val();
         });
       }
@@ -795,7 +816,7 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
       "click .back": "render"
     },
 
-    initialize: function (options) {
+    initialize: function () {
       this.expandedSections = {};
       this.actionVews = {};
       this.collection.fetch();
@@ -858,11 +879,6 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
     previousPage: function() {
         this.collection.previousPage();
         return false;
-    },
-
-    removeActionViews: function() {
-      _.chain(this.actionVews).values().each(function(view) { view.close() });
-      this.actionVews = {};
     },
 
     render: function () {
@@ -932,6 +948,65 @@ function (genesis, backend, Backbone, poller, status, variables, gtemplates, $) 
           envId: self.collection.envId,
           "utils": genesis.utils
         }));
+      });
+    }
+  });
+
+  var EnvAccess = Backbone.Model.extend({
+    initialize: function(attr, options){
+      this.envId = options.envId;
+      this.projectId = options.projectId;
+    },
+
+    url: function() {
+     return "/rest/projects/" + this.projectId + "/envs/" + this.envId + "/access"
+    },
+
+    isNew: function() {
+      return false;
+    }
+  });
+
+  var AccessListView = Backbone.View.extend({
+    template: "app/templates/environment/access_list.html",
+
+    events: {
+      "click a.modify-access" : "modifyAccess"
+    },
+
+    initialize: function(options){
+      this.accessConfiguration = options.role;
+      var self = this;
+      if (genesis.app.currentConfiguration['environment_security_enabled']) {
+        backend.AuthorityManager.haveAdministratorRights(options.projectId).done(function(isAdmin) {
+          if (isAdmin) {
+            options.tabHeader.show();
+            $.when(self.accessConfiguration.fetch()).done(
+              _.bind(self.render, self)
+            );
+          }
+        });
+      }
+    },
+
+    modifyAccess: function() {
+       var editView = new Roles.Views.Edit({
+         el: this.el,
+         role: this.accessConfiguration,
+         title: "Grant access to environment"
+       });
+       var self = this;
+       editView.bind("back", function() {
+         editView.unbind();
+         editView.undelegateEvents();
+         self.render();
+       });
+    },
+
+    render: function(){
+      var self = this;
+      $.when(genesis.fetchTemplate(this.template)).done(function(tmpl) {
+        self.$el.html(tmpl({ accessConfiguration: self.accessConfiguration.toJSON() }));
       });
     }
   });
