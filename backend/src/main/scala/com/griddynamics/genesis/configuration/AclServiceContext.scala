@@ -26,15 +26,14 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.context.annotation.{Bean, Configuration}
 import org.springframework.security.acls.domain._
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.cache.ehcache.EhCacheFactoryBean
-import net.sf.ehcache.{Ehcache, CacheManager}
-import javax.sql.DataSource
-import org.springframework.security.acls.model.{MutableAclService, AclCache, PermissionGrantingStrategy}
+import net.sf.ehcache.CacheManager
+import org.springframework.security.acls.model.{ObjectIdentityRetrievalStrategy, MutableAclService, AclCache, PermissionGrantingStrategy}
 import org.springframework.security.acls.jdbc.{JdbcMutableAclService, LookupStrategy, BasicLookupStrategy}
 import org.apache.commons.dbcp.BasicDataSource
 import org.springframework.security.acls.AclPermissionEvaluator
 import org.springframework.security.access.PermissionEvaluator
 import java.util.concurrent.TimeUnit
+import com.griddynamics.genesis.api.Identifiable
 
 @Configuration
 class AclServiceContext {
@@ -71,7 +70,21 @@ class AclServiceContext {
     service
   }
 
-  @Bean def aclPermissionEvaluator: PermissionEvaluator = new AclPermissionEvaluator(aclService)
+  @Bean def aclPermissionEvaluator: PermissionEvaluator = {
+    val eval = new AclPermissionEvaluator(aclService)
+    eval.setObjectIdentityRetrievalStrategy(objectRetrievalStategy)
+    eval
+  }
+
+  @Bean def objectRetrievalStategy: ObjectIdentityRetrievalStrategy = new ObjectIdentityRetrievalStrategy {
+    def getObjectIdentity(domainObject: Any) = {
+      domainObject match {
+        case env: Identifiable[Int] => new ObjectIdentityImpl(env.getClass, env.id)
+        case env: Identifiable[Option[Int]] => new ObjectIdentityImpl(env.getClass, env.id.getOrElse(0))
+        case obj => new ObjectIdentityImpl(obj)
+      }
+    }
+  }
 
   def cache = {
     val cache = new net.sf.ehcache.Cache("aclCache", 100, false, false, TimeUnit.HOURS.toSeconds(2), TimeUnit.HOURS.toSeconds(1), false, 0)

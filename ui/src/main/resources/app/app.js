@@ -197,6 +197,7 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
 
     function initCurrentUser(user){
       app.currentUser = user;
+      app.currentConfiguration = user.configuration || {};
       $('.user-name').text(user.user);
       if (user.administrator) {
         $(".system-settings").show();

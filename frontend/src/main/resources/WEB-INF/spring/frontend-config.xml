@@ -32,7 +32,13 @@
        http://www.springframework.org/schema/security/spring-security.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.0.xsd">
     <import resource="mvc-config.xml"/>
 
-    <s:global-method-security pre-post-annotations="enabled" proxy-target-class="true" />
+    <bean id="expressionHandler" class="com.griddynamics.genesis.spring.security.acls.ScalaMethodSecurityExpressionHandler">
+        <property name="permissionEvaluator" ref="aclPermissionEvaluator"/>
+    </bean>
+
+    <s:global-method-security pre-post-annotations="enabled" proxy-target-class="true"  >
+        <s:expression-handler ref="expressionHandler"/>
+    </s:global-method-security>
 
     <aop:aspectj-autoproxy proxy-target-class="true"/>
      <!--Aspects-->

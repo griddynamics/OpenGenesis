@@ -144,7 +144,7 @@ class ProjectsController extends RestApiExceptionsHandler {
   @ResponseBody
   def permissions(@PathVariable("projectId") projectId: Int,
                        request: HttpServletRequest,
-                       response: HttpServletResponse): List[String] = {
+                       response: HttpServletResponse): Seq[String] = {
     import scala.collection.JavaConversions._
     if (request.isUserInRole(GenesisRole.SystemAdmin.toString)) {
       List(GenesisRole.ProjectAdmin.toString, GenesisRole.ProjectUser.toString)

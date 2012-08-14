@@ -141,6 +141,7 @@ function(genesis, status, backend, Users, Backbone, $) {
 
     initialize: function(options){
       this.role = options.role;
+      this.title = options.title || LANG[this.role.get("name")];
       this.render();
     },
 
@@ -159,7 +160,7 @@ function(genesis, status, backend, Users, Backbone, $) {
       this.role.save()
         .done(function () {
           self.backToList();
-          status.StatusPanel.success("Role changes have been saved");
+          status.StatusPanel.success("Changes have been saved");
         })
         .error(function(jqXHR) {
           self.status.error(jqXHR);
@@ -200,12 +201,14 @@ function(genesis, status, backend, Users, Backbone, $) {
 
       var self = this;
       $.when(backend.UserManager.hasUsers(), backend.UserManager.hasGroups(), genesis.fetchTemplate(this.template)).done(function(hasUsers, hasGroups, tmpl) {
-        self.$el.html(tmpl({role: self.role.toJSON(), LANG: LANG}));
+        self.$el.html(tmpl({role: self.role.toJSON(), LANG: LANG, title: self.title}));
         self.initCompletion(hasGroups[0], hasUsers[0]);
         self.status = new status.LocalStatus({el: self.$(".notification")});
       });
     }
   });
+
+  Roles.Views.Edit = RoleEdit;
 
   return Roles;
 });
