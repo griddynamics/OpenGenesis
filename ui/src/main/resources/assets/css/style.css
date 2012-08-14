@@ -668,9 +668,13 @@ img.toggle {
     margin-top: 3px;
 }
 
-.workflow .date {
+.workflow .date, .workflow .username, .workflow .duration {
     margin-right: 15px;
     font-style: italic;
+}
+
+.workflow .username, .workflow .duration {
+    text-transform: none !important;
 }
 
 div.history-details {
