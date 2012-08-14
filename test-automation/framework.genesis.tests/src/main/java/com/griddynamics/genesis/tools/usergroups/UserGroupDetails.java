@@ -1,5 +1,7 @@
 package com.griddynamics.genesis.tools.usergroups;
 
+import org.apache.commons.lang.builder.ToStringBuilder;
+
 import java.util.Arrays;
 
 /**
@@ -75,5 +77,9 @@ public class UserGroupDetails {
 	public boolean equals(Object obj) {
 		return equals(obj, true);
 	}
+
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
+    }
 
 }

@@ -16,7 +16,7 @@ public class GetEnvironmentDetailsSteps extends EnvironmentBaseSteps {
     	projectId = getProjectIdByProjectName(projectName);
 		Assert.assertTrue(projectId != -1, "Project " + projectName + " was not found");
     	
-		request.setUrl(String.format(GET_ENV_DETAILS_URL, projectId, envName));
+		request.setUrl(String.format(GET_ENV_DETAILS_URL, projectId, getEnvironmentId(projectId, envName)));
         request.get();
     }
 

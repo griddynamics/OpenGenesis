@@ -47,8 +47,9 @@ public class CreateEnvironmentSteps extends EnvironmentBaseSteps{
 		Assert.assertEquals(actualResponse, expectedResponse);
 
     	Assert.assertTrue(request.checkStatusCode200(), "Status code is " + request.getResponse().getStatusCode() + ", but must be 200");
-    	Assert.assertTrue(isEnvironmentExists(String.format(GET_ENVS_URL, projectId), requestBody.getEnvName()), "[ENV is not existed]"); 
-    	waitForEnvStatus(env.getName(), 620000, "Ready");     	
+    	Assert.assertTrue(isEnvironmentExists(String.format(GET_ENVS_URL, projectId), requestBody.getEnvName()), "[ENV is not existed]");
+        env.setId(getEnvironmentId(projectId, env.getName()));
+    	waitForEnvStatus(env.getId(), 620000, "Ready");
     }
         
 }
