@@ -8,7 +8,7 @@
 </div>
 <div id="management-panel">
     <div id="buttons">
-        <a href="/project/<%= project.id %>/createEnv" class="button"> <span> Create environment </span> </a>
+        <a href="/project/<%= project.id %>/createEnv" id="create-env-button" class="button" style="display: none"> <span> Create environment </span> </a>
     </div>
     <div id="right">
       <label>Filter <input id="filter-name" type="text" value="<%= filter.namePart %>"></label>

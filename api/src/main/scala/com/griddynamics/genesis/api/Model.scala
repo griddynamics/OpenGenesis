@@ -24,6 +24,10 @@ package com.griddynamics.genesis.api
 
 import java.util
 
+trait Identifiable[T] {
+  def id: T
+}
+
 case class Environment(id: Int,
                        name : String,
                        status : String,
@@ -31,7 +35,7 @@ case class Environment(id: Int,
                        creator : String,
                        templateName : String,
                        templateVersion : String,
-                       projectId: Int)
+                       projectId: Int) extends Identifiable[Int]
 
 case class Attribute(value: String, description: String)
 
@@ -139,7 +143,7 @@ case class Project(id: Option[Int],
                    description: Option[String],
                    projectManager: String,
                    isDeleted: Boolean = false,
-                   removalTime: Option[Long] = None)
+                   removalTime: Option[Long] = None) extends Identifiable[Option[Int]]
 
 case class ConfigProperty(name: String, value: String, readOnly: Boolean, description: Option[String] = None)
 

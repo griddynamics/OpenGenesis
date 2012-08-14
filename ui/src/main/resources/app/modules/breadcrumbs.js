@@ -47,7 +47,7 @@ function(genesis, Backbone, Environments) {
       this.projectRepository = options.projects;
 
       router.bind("route:index", this.projectsList);
-      router.bind("route:createProjectProperties", this.projectProperties);
+      router.bind("route:projectProperties", this.projectProperties);
       router.bind("route:environments", this.environments);
       router.bind("route:environmentDetails", this.environmentsDetails);
       router.bind("route:createEnvironment", this.createEnvironment);

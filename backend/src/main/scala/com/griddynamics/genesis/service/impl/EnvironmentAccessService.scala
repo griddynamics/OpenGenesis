@@ -18,23 +18,29 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Project:     Genesis
- * Description:  Continuous Delivery Platform
+ * Description: Continuous Delivery Platform
  */
-package com.griddynamics.genesis.service
+package com.griddynamics.genesis.service.impl
 
-import com.griddynamics.genesis.api.{ExtendedResult, RequestResult}
-import com.griddynamics.genesis.users.GenesisRole
+import com.griddynamics.genesis.api.Environment
+import com.griddynamics.genesis.service
+import org.springframework.security.acls.domain.{BasePermission, ObjectIdentityImpl}
+import org.springframework.beans.factory.annotation.Value
 
-trait ProjectAuthorityService {
-  def projectAuthorities: Iterable[GenesisRole.Value]
+class EnvironmentAccessService(permissionService: PermissionService) extends service.EnvironmentAccessService {
 
-  def updateProjectAuthority(projectId: Int, roleName: GenesisRole.Value, users: List[String], groups: List[String]): ExtendedResult[_]
+  @Value("${genesis.system.security.environment.restriction.enabled:false}")
+  var securityEnabled: Boolean = _
 
-  def getProjectAuthority(projectId: Int, roleName: GenesisRole.Value): ExtendedResult[(Iterable[String], Iterable[String])]
+  def getAccessGrantees(envId: Int): (Iterable[String], Iterable[String]) = {   //(usernames, groupnames)
+    val oi = new ObjectIdentityImpl(classOf[Environment], envId)
+    permissionService.getPermissionAssignees(oi, BasePermission.READ)
+  }
 
-  def isUserProjectAdmin(username: String, groups: Iterable[String]): Boolean
+  def grantAccess(envId: Int, users: List[String], groups: List[String]) {
+    val oi = new ObjectIdentityImpl(classOf[Environment], envId)
+    permissionService.grantObjectPermission(oi, BasePermission.READ, users, groups)
+  }
 
-  def getGrantedAuthorities(projectId: Int, username: String, grantedAuthorities: Iterable[String]): Seq[GenesisRole.Value]
-
-  def getAllowedProjectIds(username: String, authorities: Iterable[String]): List[Int]
+  def restrictionsEnabled = securityEnabled
 }

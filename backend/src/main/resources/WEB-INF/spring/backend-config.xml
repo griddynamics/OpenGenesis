@@ -131,10 +131,20 @@
 
     <bean id="housekeeping" class="com.griddynamics.genesis.service.impl.DefaultHousekeepingService"/>
 
-    <bean id="authorityService" class="com.griddynamics.genesis.service.impl.DefaultAuthorityService"/>
+    <bean id="authorityService" class="com.griddynamics.genesis.service.impl.DefaultAuthorityService">
+        <constructor-arg name="permissionService" ref="permissionService"/>
+    </bean>
+
+    <bean id="permissionService" class="com.griddynamics.genesis.service.impl.PermissionServiceImpl">
+        <constructor-arg name="aclService" ref="aclService"/>
+    </bean>
 
     <bean id="projectAuthorityService" class="com.griddynamics.genesis.service.impl.ProjectAuthorityService">
-        <constructor-arg name="aclService" ref="aclService"/>
+        <constructor-arg name="permissionService" ref="permissionService"/>
+    </bean>
+
+    <bean id="environmentSecurity" class="com.griddynamics.genesis.service.impl.EnvironmentAccessService">
+        <constructor-arg name="permissionService" ref="permissionService"/>
     </bean>
 
     <context:component-scan base-package="com.griddynamics.genesis.configuration" />

@@ -30,7 +30,7 @@ import com.griddynamics.genesis.model.GenesisSchema.{userAuthorities, groupAutho
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.users.GenesisRole._
 
-class DefaultAuthorityService extends AuthorityService {
+class DefaultAuthorityService(permissionService: PermissionService) extends AuthorityService {
 
   val listAuthorities = List(SystemAdmin.toString, GenesisUser.toString)
 
@@ -57,14 +57,14 @@ class DefaultAuthorityService extends AuthorityService {
   @Transactional
   def removeAuthoritiesFromUser(username: String) = {
     userAuthorities.deleteWhere(item => item.principalName === username)
-
+    permissionService.cleanUserPermissions(username)
     new RequestResult(isSuccess = true)
   }
 
   @Transactional
   def removeAuthoritiesFromGroup(groupName: String) = {
     groupAuthorities.deleteWhere(item => item.principalName === groupName)
-
+    permissionService.cleanGroupPermissions(groupName)
     new RequestResult(isSuccess = true)
   }
 

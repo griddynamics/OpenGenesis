@@ -30,7 +30,13 @@ import com.griddynamics.genesis.http.TunnelFilter
 import org.springframework.web.bind.annotation._
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import com.griddynamics.genesis.api._
+import com.griddynamics.genesis.service.EnvironmentAccessService
+import com.griddynamics.genesis.validation.Validation
+import com.griddynamics.genesis.api.ActionTracking
 import com.griddynamics.genesis.api.EnvironmentDetails
+import com.griddynamics.genesis.api.Failure
+import com.griddynamics.genesis.api.WorkflowHistory
+import org.springframework.security.access.prepost.PostFilter
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
@@ -38,6 +44,8 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   import GenesisRestController._
 
   @Autowired var genesisService: GenesisService = _
+
+  @Autowired var envAuthService: EnvironmentAccessService = _
 
   @Value("${genesis.system.server.mode:frontend}")
   var mode = ""
@@ -126,10 +134,18 @@ class EnvironmentsController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
   @ResponseBody
+  @PostFilter("not(@environmentSecurity.restrictionsEnabled()) " +
+    "or hasRole('ROLE_GENESIS_ADMIN')" +
+    "or hasPermission( #projectId, 'com.griddynamics.genesis.api.Project', 'administration') " +
+    "or hasPermission(filterObject, 'read')")
   def listEnvs(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = genesisService.listEnvs(projectId)
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET), params = Array("filter"))
   @ResponseBody
+  @PostFilter("not(@environmentSecurity.restrictionsEnabled()) " +
+    "or hasRole('ROLE_GENESIS_ADMIN')" +
+    "or hasPermission( #projectId, 'com.griddynamics.genesis.api.Project', 'administration') " +
+    "or hasPermission(filterObject, 'read')")
   def listEnvsWithFilter(@PathVariable("projectId") projectId: Int,
                          @RequestParam("filter") filter: String,
                          request: HttpServletRequest) = {
@@ -175,6 +191,41 @@ class EnvironmentsController extends RestApiExceptionsHandler {
                      request: HttpServletRequest): Seq[ActionTracking] = {
     assertEnvExist(projectId, env)
     genesisService.getStepLog(stepId)
+  }
+
+  @RequestMapping(value = Array("{envId}/access"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  def getEnvAccess(@PathVariable("projectId") projectId: Int,
+                   @PathVariable("envId") envId: Int,
+                   request: HttpServletRequest) = {
+    assertEnvExist(projectId, envId)
+    val (users, groups) = envAuthService.getAccessGrantees(envId)
+    Map("users" -> users, "groups" -> groups)
+  }
+
+  @RequestMapping(value = Array("{envId}/access"), method = Array(RequestMethod.PUT))
+  @ResponseBody
+  def updateEnvAccess(@PathVariable("projectId") projectId: Int,
+                      @PathVariable("envId") envId: Int,
+                     request: HttpServletRequest): ExtendedResult[_] = {
+    assertEnvExist(projectId, envId)
+    val paramsMap = GenesisRestController.extractParamsMap(request)
+
+    val users = GenesisRestController.extractListValue("users", paramsMap)
+    val groups = GenesisRestController.extractListValue("groups", paramsMap)
+
+    import Validation._
+    val invalidUsers = users.filterNot(_.matches(validADUserName))
+    val invalidGroups = groups.filterNot(_.matches(validADGroupName))
+
+    if(invalidGroups.nonEmpty || invalidUsers.nonEmpty) {
+      return Failure(
+        compoundServiceErrors = invalidUsers.map(ADUserNameErrorMessage.format(_)) ++ invalidGroups.map(ADGroupNameErrorMessage.format(_))
+      )
+    }
+
+    envAuthService.grantAccess(envId, users.distinct, groups.distinct )
+    Success(None)
   }
 
   private def assertEnvExist(projectId: Int, envId: Int) {
