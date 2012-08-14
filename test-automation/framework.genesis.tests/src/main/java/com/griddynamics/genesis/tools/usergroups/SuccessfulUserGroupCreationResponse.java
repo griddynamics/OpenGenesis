@@ -1,6 +1,7 @@
 package com.griddynamics.genesis.tools.usergroups;
 
 import com.griddynamics.genesis.tools.usergroups.UserGroupDetails;
+import org.apache.commons.lang.builder.ToStringBuilder;
 
 /**
  * Class containing fields as in object returning in POST user group successful response.
@@ -46,5 +47,9 @@ public class SuccessfulUserGroupCreationResponse {
 		this.isSuccess=isSuccess;
 		this.result=new UserGroupDetails(group.id, group.name, group.description, group.mailingList, group.users);
 	}
+
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
+    }
 	
 }
