@@ -62,9 +62,11 @@ case class WorkflowStep(stepId: String, phase: String, status : String, details 
 
 case class WorkflowDetails(name : String,
                            status: String,
+                           startedBy: String,
                            stepsCompleted: Option[Double],
                            steps : Option[Seq[WorkflowStep]],
-                           executionStartedTimestamp: Option[Long])
+                           executionStartedTimestamp: Option[Long],
+                           executionFinishedTimestamp: Option[Long])
 
 case class WorkflowHistory(history: Option[Seq[WorkflowDetails]] = None,
                            totalCount: Int = 0)

@@ -52,6 +52,15 @@
         No information
       <% } %>
       </span>
+      By: <span class="username"><%= workflow.startedBy %></span>
+      Finished: <span class="date">
+      <% if (workflow.executionFinishedTimestamp) { %>
+        <%= $.formatDate.date(workflow.executionFinishedTimestamp, utils.isSameDay(today, workflow.executionFinishedTimestamp) ? "HH:mm:ss" : "HH:mm:ss dd/MM/yyyy") %>
+      <% } else { %>
+        --
+      <% } %>
+      </span>
+      Duration: <span class="duration"><%= utils.timeDuration(workflow.executionStartedTimestamp, workflow.executionFinishedTimestamp) %></span>
       <span class="status-section">Status: <span class=<%= (failStatuses.indexOf(workflow.status) != -1 ? "bad" : "normal") %> > <%= workflow.status %></span></span>
     </div>
   </div>
