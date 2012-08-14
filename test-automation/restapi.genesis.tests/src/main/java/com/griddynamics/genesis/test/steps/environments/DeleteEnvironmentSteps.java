@@ -21,8 +21,9 @@ public class DeleteEnvironmentSteps extends EnvironmentBaseSteps{
     	env.setName(envName);
     	projectId = getProjectIdByProjectName(projectName);
 		Assert.assertTrue(projectId != -1, "Project " + projectName + " was not found");
-
-		request.setUrl(String.format(DELETE_ENV_URL, projectId, envName));
+        Integer id = getEnvironmentId(projectId, envName);
+        env.setId(id);
+		request.setUrl(String.format(DELETE_ENV_URL, projectId, id));
 		request.delete();
     }
     
@@ -35,7 +36,7 @@ public class DeleteEnvironmentSteps extends EnvironmentBaseSteps{
 		Assert.assertEquals(actualResponse, expectedResponse);
 
 		Assert.assertTrue(request.checkStatusCode200(), "Status code is " + request.getResponse().getStatusCode() + ", but must be 200");
-    	waitForEnvStatus(env.getName(), 620000, "Destroyed");     	
+    	waitForEnvStatus(env.getId(), 620000, "Destroyed");
     }
         	
 }

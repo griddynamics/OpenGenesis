@@ -108,10 +108,12 @@ public class AllStoriesTestSuite extends ConfigurableEmbedder{
 			String stepsPath = System.getProperty("stepsPath") != null ? System
 					.getProperty("stepsPath") : "com.griddynamics.genesis.test.steps";
 			Class[] classes = getClasses(stepsPath);
-			for (int i = 0; i < classes.length; i++) {
-				Constructor constr = classes[i].getConstructor(null);
-				obj.add(constr.newInstance(null));
-			}
+            for (Class aClass : classes) {
+                if (!aClass.isAnonymousClass()) {
+                    Constructor constr = aClass.getConstructor(null);
+                    obj.add(constr.newInstance(null));
+                }
+            }
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
