@@ -46,7 +46,7 @@ object Validation {
     val emailPattern = """^(?=.{7,64}$)[a-z0-9_][a-z0-9_.\-]+@([a-z0-9_\-]+\.)+[a-z]{2,5}$""".r
 
     val projectEnvNameErrorMessage = "Invalid format. Use a combination of alphanumerics, " +
-                                  "spaces, dots, hyphens and underscores. Length must be from 2 to 64"
+                                  "spaces, dots, hyphens and underscores. Length must be from 1 to 64"
     val personNameErrorMessage = "Invalid format. Use a combination of letters and spaces. " +
                            "Length must be from 2 to 64"
     val nameErrorMessage = "Invalid format. Use a combination of latin lowercase letters, numbers, " +
@@ -72,7 +72,7 @@ object Validation {
       mustMatch(obj, fieldName, personNameErrorMessage)(personNamePattern)(value)
     def mustMatchName[C](obj: C, value: String, fieldName: String) : ExtendedResult[C] =
       mustMatch(obj, fieldName, nameErrorMessage)(namePattern)(value)
-    def mustMatchProjectName[C](obj: C, value: String, fieldName: String) : ExtendedResult[C] =
+    def mustMatchProjectEnvName[C](obj: C, value: String, fieldName: String) : ExtendedResult[C] =
       mustMatch(obj, fieldName, projectEnvNameErrorMessage)(projectEnvNamePattern)(value)
     def mustMatchEmail[C](obj: C, value: String, fieldName: String) : ExtendedResult[C] =
       mustMatch(obj, fieldName, emailErrorMessage)(emailPattern)(value)
