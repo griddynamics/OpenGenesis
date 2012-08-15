@@ -23,6 +23,8 @@
 package com.griddynamics.genesis.api
 
 trait GenesisService {
+    def updateEnvironmentName(i: Int, projectId: Int, value: String) : ExtendedResult[Int]
+
     def queryVariables(projectId: Int, templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]) : Option[Seq[Variable]]
 
     def getTemplate(projectId: Int, templateName: String, templateVersion: String) : Option[Template]

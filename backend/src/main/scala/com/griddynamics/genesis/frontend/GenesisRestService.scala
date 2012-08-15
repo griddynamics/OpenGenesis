@@ -23,13 +23,25 @@
 package com.griddynamics.genesis.frontend
 
 import com.griddynamics.genesis.api._
-import com.griddynamics.genesis.service
+import com.griddynamics.genesis.{model, service}
 import com.griddynamics.genesis.bean.RequestBroker
 import GenesisRestService._
-import com.griddynamics.genesis.model
 import model.{Workflow, EnvStatus}
 import com.griddynamics.genesis.template.TemplateRepository
 import service.{ComputeService, TemplateService, StoreService}
+import com.griddynamics.genesis.validation.Validation._
+import com.griddynamics.genesis.api.ActionTracking
+import com.griddynamics.genesis.api.EnvironmentDetails
+import com.griddynamics.genesis.api.Attribute
+import com.griddynamics.genesis.api.WorkflowHistory
+import scala.Some
+import com.griddynamics.genesis.api.WorkflowStep
+import com.griddynamics.genesis.api.Variable
+import com.griddynamics.genesis.api.Environment
+import com.griddynamics.genesis.api.Template
+import com.griddynamics.genesis.api.VirtualMachine
+import com.griddynamics.genesis.api.BorrowedMachine
+import com.griddynamics.genesis.api.WorkflowDetails
 
 class GenesisRestService(storeService: StoreService,
                          templateService: TemplateService,
@@ -134,6 +146,20 @@ class GenesisRestService(storeService: StoreService,
 
     def getStepLog(stepId: Int) = storeService.getActionLog(stepId).map { action =>
       new ActionTracking(action.actionUUID, action.actionName, action.description, action.started.getTime, action.finished.map(_.getTime), action.status.toString)
+    }
+
+    def updateEnvironmentName(envId: Int, projectId: Int, newName: String) = {
+       validateNewName(envId, projectId, newName).map(name => storeService.updateEnvName(envId, name))
+    }
+
+    private def validateNewName(envId: Int, projectId: Int, name: String) : ExtendedResult[String] = {
+        must(name, "Environment [%d] not found".format(envId)) {
+            e => storeService.findEnv(envId).isDefined
+        } ++
+        must(name, "Environment with name '" + name + "' already exists") {
+              name => storeService.findEnv(name, projectId).map(e => e.id == envId).getOrElse(true)
+        } ++
+        mustMatchProjectEnvName(name, name, "Name")
     }
 }
 
