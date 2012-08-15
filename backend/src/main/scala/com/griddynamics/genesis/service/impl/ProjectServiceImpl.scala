@@ -43,11 +43,11 @@ class ProjectServiceImpl(repository: ProjectRepository, storeService: service.St
       must(project, "Project with name '" + project.name + "' already exists") {
         project => findByName(project.name).isEmpty
       } ++
-      mustMatchProjectName(project, project.name, "Name") ++
+      mustMatchProjectEnvName(project, project.name, "Name") ++
       mustMatchPersonName(project, project.projectManager, "Manager")
 
   protected def validateUpdate(project: Project) =
-      mustMatchProjectName(project, project.name, "Name") ++
+      mustMatchProjectEnvName(project, project.name, "Name") ++
       mustMatchPersonName(project, project.projectManager, "Manager") ++
       mustExist(project) { it => get(it.id.get) } ++
       must(project, "Project with name '" + project.name + "' already exists") {

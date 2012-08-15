@@ -472,7 +472,14 @@ class StoreService extends service.StoreService with Logging {
   def findBorrowedMachinesByServerId(serverId: Int) = {
     from(GS.borrowedMachines)(bm => where(bm.serverId === serverId and bm.status <> MachineStatus.Released) select (bm)).toList
   }
+
+  @Transactional(readOnly = false)
+  def updateEnvName(i: Int, s: String) = {
+      update(GS.envs)(e => where(e.id === i) set (e.name := s))
+  }
+
 }
+
 
 object StoreService {
     def isReadyForWorkflow(status: EnvStatus) = {

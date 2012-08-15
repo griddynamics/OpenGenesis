@@ -30,6 +30,7 @@ import com.griddynamics.genesis.model.WorkflowStepStatus._
 import java.sql.Timestamp
 
 trait StoreService {
+    def updateEnvName(i: Int, s: String): Int
     def listEnvs(projectId: Int): Seq[Environment]
     def listEnvs(projectId: Int, start : Int, limit : Int): Seq[Environment]
     def listEnvs(projectId: Int, statuses: Seq[EnvStatus]): Seq[Environment]
