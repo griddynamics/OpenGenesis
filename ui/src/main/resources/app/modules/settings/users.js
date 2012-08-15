@@ -28,7 +28,7 @@ function(genesis, Backbone, status, backend, $) {
     url: "/rest/groups"
   });
 
-  var EmptyUser = new Users.Model({
+  var EMPTY_USER = new Users.Model({
     username: "",
     firstName: "",
     lastName: "",
@@ -66,10 +66,10 @@ function(genesis, Backbone, status, backend, $) {
     },
 
     addUser: function () {
-      var user = EmptyUser.clone();
+      var user = EMPTY_USER.clone();
       user.isNew = function () {
         return true;
-      }
+      };
       this.currentView = new UsersEdit({user: user, groups: new Users.Collections.Groups(), el: this.el});
       var self = this;
       this.currentView.bind("back", function () {
@@ -100,9 +100,10 @@ function(genesis, Backbone, status, backend, $) {
       var self = this;
       self.showConfirmationDialog({
         "Yes": function () {
-          backend.UserManager.removeUser(username);
-          self.collection.fetch().done(function () {
-            self.render();
+          $.when(self.collection.get(username).destroy()).done(function() {
+            self.collection.fetch().done(function () {
+              self.render();
+            });
           });
           self.confirmationDialog.dialog("close");
         },
@@ -121,13 +122,7 @@ function(genesis, Backbone, status, backend, $) {
     showConfirmationDialog: function (buttons) {
       if (!this.confirmationDialog) {
         this.confirmationDialog = this.$("#dialog-user").dialog({
-          resizable: true,
-          modal: true,
-          title: 'Confirmation',
-          dialogClass: 'dialog-without-header',
-          minHeight: 120,
-          width: 420,
-          autoOpen: false
+          title: 'Confirmation'
         });
       }
       this.confirmationDialog.dialog("option", "buttons", buttons);
@@ -138,7 +133,7 @@ function(genesis, Backbone, status, backend, $) {
   var UsersList = Backbone.View.extend({
     template: "app/templates/settings/users/user_list.html",
 
-    render: function(done) {
+    render: function() {
       var view = this;
       $.when(genesis.fetchTemplate(this.template), this.collection.fetch())
         .done(function (tmpl) {
@@ -176,7 +171,7 @@ function(genesis, Backbone, status, backend, $) {
       }
     },
 
-    render: function (done) {
+    render: function () {
       var self = this;
       $.when(genesis.fetchTemplate(this.template), backend.AuthorityManager.roles()).done(function (tmpl, availableRoles) {
         var userRolesLookupMap = genesis.utils.toBoolean(self.userRoles);

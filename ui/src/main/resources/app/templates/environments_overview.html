@@ -11,14 +11,14 @@
         <a href="/project/<%= project.id %>/createEnv" id="create-env-button" class="button" style="display: none"> <span> Create environment </span> </a>
     </div>
     <div id="right">
-      <label>Filter <input id="filter-name" type="text" value="<%= filter.namePart %>"></label>
+      <label for="filter-statuses">Filter <input id="filter-name" type="text" value="<%= filter.namePart %>"></label>
         <!--<label>Statuses&nbsp;</label>-->
         <select id="filter-statuses" name="filter-statuses" multiple="multiple">
           <% for (var i = 0, keys = _.keys(filter.statuses), count = keys.length; i < count; i++) {
           var status = filter.statuses[keys[i]],
           selected = status.visible ? "selected" : "";
           %>
-          <option <%= selected %>><%= status.name %></option>
+          <option <%= selected %> ><%= status.name %></option>
           <% } %>
         </select>
     </div>

@@ -150,12 +150,7 @@ function(genesis, status, Backbone, $) {
 
     initConfirmationDialog: function() {
       return this.dialog || this.$("#dialog-confirm-delete").dialog({
-        modal: true,
-        title: 'Confirmation',
-        dialogClass: 'dialog-without-header',
-        minHeight: 120,
-        width: 420,
-        autoOpen: false
+        title: 'Confirmation'
       });
     },
 

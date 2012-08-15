@@ -124,13 +124,7 @@ function(genesis, Backbone, Users, status, backend, $) {
     showConfirmationDialog: function(buttons) {
       if (!this.confirmationDialog) {
         this.confirmationDialog = this.$("#dialog-confirm").dialog({
-          resizable: true,
-          modal: true,
-          title: 'Confirmation',
-          dialogClass: 'dialog-without-header',
-          minHeight: 120,
-          width: 420,
-          autoOpen: false
+          title: 'Confirmation'
         });
       }
       this.confirmationDialog.dialog("option", "buttons", buttons);
