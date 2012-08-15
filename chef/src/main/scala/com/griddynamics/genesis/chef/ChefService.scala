@@ -49,11 +49,11 @@ trait ChefService {
 class ChefServiceImpl(val genesisId: String, val endpoint : String,
                       val validatorCredentials : Credentials, chefClient : ChefRestClient) extends ChefService {
     def chefObjectName(env : Environment, objectName : String) = {
-        "genesis_%s_%s_%s".format(genesisId, env.name, objectName)
+        "genesis_%s_id%s_%s".format(genesisId, env.id, objectName)
     }
 
     def isObjectInEnv(objectName : String, env : Environment) = {
-        objectName.startsWith("genesis_%s_%s_".format(genesisId, env.name))
+        objectName.startsWith("genesis_%s_id%s_".format(genesisId, env.id))
     }
 
     def chefClientName(env : Environment, vm : EnvResource) = {

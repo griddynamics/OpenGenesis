@@ -29,6 +29,7 @@ import service.{ValidationError, TemplateService, StoreService}
 import scala.Left
 import scala.Some
 import scala.Right
+import com.griddynamics.genesis.validation.Validation
 
 trait RequestBroker {
     def createEnv(projectId: Int, envName: String, envCreator : String,
@@ -177,17 +178,15 @@ class RequestBrokerImpl(storeService: StoreService,
     }
 
     def validateEnvName(envName: String, projectId: Int) = envName match {
-        case envNameRegex(name) => storeService.findEnv(name, projectId) match {
+        case Validation.projectEnvNamePattern(name) => storeService.findEnv(name, projectId) match {
             case Some(_) => Some(RR(serviceErrors = Map(RR.envName -> "Environment with the same name already exists in project [id = %s]".format(projectId))))
             case None => None
         }
-        case _ => Some(RR(serviceErrors = Map(RR.envName -> "Environment name must only contains from 3 to 64 lowercase alphanumerics")))
+        case _ => Some(RR(serviceErrors = Map(RR.envName -> Validation.projectEnvNameErrorMessage)))
     }
 }
 
 object RequestBrokerImpl {
-    val envNameRegex = """^([a-zA-Z0-9]\w{2,63})$""".r
-
     def validateWorkflow(workflow : service.WorkflowDefinition, variables: Map[String, Any], envId: Option[Int], projectId: Int) = {
         val validationResults = workflow.validate(variables, envId, Option(projectId))
 
