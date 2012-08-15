@@ -54,7 +54,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @ResponseBody
   def createEnv(@PathVariable projectId: Int, request: HttpServletRequest, response : HttpServletResponse) = {
     val paramsMap = extractParamsMap(request)
-    val envName = extractValue("envName", paramsMap)
+    val envName = extractValue("envName", paramsMap).trim
     val templateName = extractValue("templateName", paramsMap)
     val templateVersion = extractValue("templateVersion", paramsMap)
     val variables = extractVariables(paramsMap)
