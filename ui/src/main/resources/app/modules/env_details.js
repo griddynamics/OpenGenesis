@@ -534,9 +534,8 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
           autoOpen: true,
           buttons: {
             "Run": function(e) {
-              var $thisButton = $(e.target).parent("button"),
+              var $thisButton = $(this).parent().find("button:contains('Run')"),
                   disabled = $thisButton.button( "option", "disabled" );
-
               if(!disabled) {
                 $thisButton.button("disable");
 
