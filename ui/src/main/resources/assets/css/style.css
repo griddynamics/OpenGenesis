@@ -36,6 +36,16 @@ a.button {
     color: rgb(0, 0, 0);
 }
 
+a.button-inline {
+    margin-top: 10px;
+    display: inline-block;
+    float: none;
+    text-decoration: none;
+    background: url(../img/button-right.png) top right no-repeat;
+    padding-right: 2px;
+    color: rgb(0, 0, 0);
+}
+
 a.dangerous-button {
     margin-top: 10px;
     display: block;
@@ -56,7 +66,7 @@ a.button.disabled span, a.dangerous-button.disabled span {
     background: url(../img/btn-disabled-left.png) no-repeat !important;
 }
 
-a.button span, a.dangerous-button span {
+a.button span, a.dangerous-button span, a.button-inline span {
 	display: block;
   	line-height: 13px;
  	background: url(../img/button-left.png) no-repeat;
@@ -945,7 +955,9 @@ table.main-table li.name {
     max-width: 150px;
     word-wrap: break-word;
 }
-
+form.inplace {
+    display: inline;
+}
 input[type = 'text'], select {
     padding: 3px;
     font-size: 13px;
