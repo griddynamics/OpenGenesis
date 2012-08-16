@@ -31,7 +31,7 @@ trait Identifiable[T] {
 case class Environment(id: Int,
                        name : String,
                        status : String,
-                       completed : Option[Double] = None, //optional field, only if status Executing(workflow)
+                       workflowCompleted : Option[Double] = None, //optional field, only if status Executing(workflow)
                        creator : String,
                        templateName : String,
                        templateVersion : String,
