@@ -13,12 +13,9 @@ function(genesis, $) {
 
   backend.WorkflowManager = {
 
-    /**
-     * @param {string} environment name of the environment
-     */
-    cancelWorkflow: function(projectId, environment) {
+    cancelWorkflow: function(projectId, environmentId) {
       return $.ajax({
-        url: "/rest/projects/" + projectId +  "/envs/" + environment + "/actions",
+        url: "/rest/projects/" + projectId +  "/envs/" + environmentId + "/actions",
         type: "POST",
         dataType: "json",
         data: JSON.stringify({action: 'cancel'}),
@@ -28,13 +25,13 @@ function(genesis, $) {
 
     /**
      *
-     * @param {string} environment environment name
+     * @param {string} environmentId environment name
      * @param {string} workflow workflow name
      * @param variables workflow vars to be sent
      */
-    executeWorkflow: function(projectId, environment, workflow, variables) {
+    executeWorkflow: function(projectId, environmentId, workflow, variables) {
       return $.ajax({
-        url: '/rest/projects/' + projectId + '/envs/' + environment + '/actions',
+        url: '/rest/projects/' + projectId + '/envs/' + environmentId + '/actions',
         dataType: "json",
         type: "POST",
         data: JSON.stringify({
@@ -46,19 +43,6 @@ function(genesis, $) {
         }),
         timeout: DEFAULT_TIMEOUT,
         processData: false
-      });
-    }
-  };
-
-  backend.ProjectManager = {
-    removeProject: function(projectId, success, error) {
-      $.ajax({
-        url: "/rest/projects/" + projectId,
-        dataType: "json",
-        type: "DELETE",
-        timeout: DEFAULT_TIMEOUT,
-        success: success,
-        error: error
       });
     }
   };
@@ -75,9 +59,9 @@ function(genesis, $) {
       });
     },
 
-    resetEnvStatus: function(projectId, environment) {
+    resetEnvStatus: function(projectId, environmentId) {
       return $.ajax({
-        url: "/rest/projects/" + projectId + "/envs/" + environment + "/actions",
+        url: "/rest/projects/" + projectId + "/envs/" + environmentId + "/actions",
         dataType: "json",
         type: "POST",
         data: JSON.stringify({action: 'resetEnvStatus'}),
@@ -112,16 +96,6 @@ function(genesis, $) {
         timeout: DEFAULT_TIMEOUT
       });
     },
-
-      removeUser: function(username) {
-          return $.ajax({
-              url: "/rest/users/" + username,
-              dataType: "json",
-              type: "DELETE",
-              timeout: DEFAULT_TIMEOUT,
-              processData: true
-          })
-      },
 
     getUserGroups: function(username) {
       return $.ajax({
@@ -236,7 +210,6 @@ function(genesis, $) {
         processData: true
       });
     }
-
   };
 
   return backend;

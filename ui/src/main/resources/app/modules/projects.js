@@ -106,25 +106,16 @@ function(genesis, status, backend, Backbone, $) {
     createConfirmationDialog: function (element) {
       var self = this;
       return element.dialog({
-        resizable: true,
-        modal: true,
         title: 'Confirmation',
-        dialogClass: 'dialog-without-header',
-        minHeight: 120,
-        width: 420,
-        autoOpen: false,
         buttons: {
           "Yes": function () {
-            backend.ProjectManager.removeProject(
-              self.project.get("id"),
-              function (data, textStatus, jqXHR) {
-                status.StatusPanel.success("Project \"" + self.project.get("name") + "\" was deleted");
-                genesis.app.router.navigate("/", {trigger: true});
-              },
-              function (jqXHR) {
-                status.StatusPanel.error(jqXHR);
-              }
-            );
+            $.when(self.project.destroy()).done(function () {
+              status.StatusPanel.success("Project \"" + self.project.get("name") + "\" was deleted");
+              genesis.app.router.navigate("/", {trigger: true});
+            }).fail(function (jqXHR) {
+              status.StatusPanel.error(jqXHR);
+            });
+
             $(this).dialog("close");
           },
           "No": function () {

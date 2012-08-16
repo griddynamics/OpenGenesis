@@ -12,7 +12,6 @@ function(genesis, status, Backbone, $) {
   var Settings = genesis.module();
 
   var URL = "/rest/settings";
-  var TIMEOUT_INFO = 3000;
   var TIMEOUT_AJAX = 4000;
 
   Settings.Model = Backbone.Model.extend({
@@ -75,13 +74,14 @@ function(genesis, status, Backbone, $) {
       }
     },
 
-    restoreDefaults: function () {return  $.ajax({
-                                            url: this.collection.url,
-                                            dataType: "json",
-                                            type: "DELETE",
-                                            timeout: TIMEOUT_AJAX,
-                                            processData: false
-                                          });
+    restoreDefaults: function () {
+      return  $.ajax({  //todo: WHAT IS THIS??
+        url: this.collection.url,
+        dataType: "json",
+        type: "DELETE",
+        timeout: TIMEOUT_AJAX,
+        processData: false
+      });
     },
 
     reset: function() {
@@ -101,13 +101,7 @@ function(genesis, status, Backbone, $) {
       var self = this;
       if (!this.confirmationDialog) {
           this.confirmationDialog = this.$("#dialog-confirm-reset").dialog({
-            resizable: true,
-            modal: true,
             title: 'Confirmation',
-            dialogClass: 'dialog-without-header',
-            minHeight: 120,
-            width: 420,
-            autoOpen: true,
             buttons: {
               "Yes": function () {
                 $.when(self.restoreDefaults())

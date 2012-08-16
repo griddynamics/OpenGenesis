@@ -10,6 +10,7 @@ require([
   "modules/status",
   "modules/projects",
   "modules/environments",
+  "modules/env_details",
   "modules/createenv",
   "modules/breadcrumbs",
   "modules/project_properties",
@@ -19,7 +20,7 @@ require([
   "use!tabs"
 ],
 
-function(genesis, jQuery, Backbone, backend, status, Projects, Environments, CreateEnvironment, Breadcrumbs, ProjectProperties, AppSettings) {
+function(genesis, jQuery, Backbone, backend, status, Projects, Environments, EnvironmentDetails, CreateEnvironment, Breadcrumbs, ProjectProperties, AppSettings) {
 
   var app = genesis.app;
 
@@ -79,7 +80,7 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
 
     environmentDetails: function(projectId, envId) {
       genesis.app.trigger("page-view-loading-started");
-      this.setCurrentView(new Environments.Views.Details({projectId: projectId, envId : envId, el: this.$viewDiv()}));
+      this.setCurrentView(new EnvironmentDetails.Views.Details({projectId: projectId, envId : envId, el: this.$viewDiv()}));
     },
 
     createEnvironment: function(projectId) {
@@ -114,13 +115,10 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
 
   jQuery(function($) {
     var errorDialog = $("<div style='margin-top: 10px' id='server-communication-error-dialog'></div>").dialog({
-      modal: true,
       title: 'Failed to complete request',
       dialogClass: 'error-notification-dialog',
       width: 400,
-      minHeight: 80,
-      autoOpen: false,
-      resizable: false
+      minHeight: 80
     });
 
     genesis.app.bind("server-communication-error", function(message, url) {
@@ -177,7 +175,7 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
       app.breadcrumbs = new Breadcrumbs.View({router: app.router, projects: userProjects});
 
 
-      app.router.bind('all', function (trigger, args) {
+      app.router.bind('all', function () {
         var path = /project\/(\d*)/g.exec(Backbone.history.fragment);
         var currentProject = "Projects";
         if(path && path[1] && userProjects.get(path[1])) {
@@ -209,7 +207,7 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Cre
       }
     }
 
-    $("#connection-error").ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
+    $("#connection-error").ajaxError(function(event, jqXHR) {
       if (((jqXHR.status === 0 && jqXHR.statusText !== "abort") || jqXHR.status === 12029) && $(this).is(":hidden")) {
         $(this).show();
         pollServerStatus($(this));
