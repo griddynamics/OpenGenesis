@@ -78,7 +78,10 @@ object ScalaUtils extends com.griddynamics.genesis.cache.Cache {
       if (setters.size != 1) {
         throw new IllegalArgumentException("Failed to set null to property [%s] in class [%s]. Ambigous name resolution".format(name, obj.getClass.getName))
       }
-      setters.head.invoke(obj, null)
+      val setter = setters.head
+
+      setter.setAccessible(true) //for anonymous classes scala transform @BeanProperty into private setter.
+      setter.invoke(obj, null)
     } else {
       val valueRef = toAnyRef(value)
       val setter = findPropertyMutator(obj, name, valueRef.getClass).getOrElse(
