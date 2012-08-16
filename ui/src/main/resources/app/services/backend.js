@@ -70,11 +70,11 @@ function(genesis, $) {
     },
     updateEnvName: function(projectId, environmentId, envName) {
       return $.ajax({
-          url: "/rest/projects/" + projectId + "/envs/" + environmentId,
-          dataType: "json",
-          type: "PUT",
-          data: JSON.stringify({environment:{name: envName}}),
-          timeout: DEFAULT_TIMEOUT
+        url: "/rest/projects/" + projectId + "/envs/" + environmentId,
+        dataType: "json",
+        type: "PUT",
+        data: JSON.stringify({environment:{name: envName}}),
+        timeout: DEFAULT_TIMEOUT
       })
     }
   };

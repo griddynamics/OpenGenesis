@@ -268,33 +268,33 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
         .toggle(status === "Broken");
     },
 
-      showEditName: function() {
-          $('h1 > a.envname').hide();
-          $('#nameedit').show();
-      },
+    showEditName: function() {
+      $('h1 > a.envname').hide();
+      $('#nameedit').show();
+    },
 
-      hideEditName: function() {
-          $('#nameedit').hide();
-          $('h1 > a.envname').show();
-      },
+    hideEditName: function() {
+      $('#nameedit').hide();
+      $('h1 > a.envname').show();
+    },
 
-      updateName: function() {
-          var view = this;
-          genesis.app.trigger("page-view-loading-started");
-          var name = $("#new-name").val();
-          $.when(backend.EnvironmentManager.updateEnvName(view.details.get("projectId"), view.details.get('id'), name)).done(
-              function() {
-                  $('a.envname').html(name);
-                  view.hideEditName();
-                  genesis.app.trigger("page-view-loading-completed");
-              }
-          ).fail(
-              function(jqxhr) {
-                 genesis.app.trigger("page-view-loading-completed");
-                 status.StatusPanel.error(jqxhr);
-              }
-          );
-      },
+    updateName: function() {
+      var view = this;
+      genesis.app.trigger("page-view-loading-started");
+      var name = $("#new-name").val();
+      $.when(backend.EnvironmentManager.updateEnvName(view.details.get("projectId"), view.details.get('id'), name)).done(
+        function() {
+          $('a.envname').html(name);
+          view.hideEditName();
+          genesis.app.trigger("page-view-loading-completed");
+        }
+      ).fail(
+        function(jqxhr) {
+          genesis.app.trigger("page-view-loading-completed");
+          status.StatusPanel.error(jqxhr);
+        }
+      );
+    },
 
     renderVirtualMachines: function() {
       var view = this;
