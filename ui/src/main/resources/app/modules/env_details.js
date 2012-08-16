@@ -534,15 +534,19 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
           autoOpen: true,
           buttons: {
             "Run": function(e) {
-              var $thisButton = $(e.target).parent("button");
-              $thisButton.button("disable");
+              var $thisButton = $(e.target).parent("button"),
+                  disabled = $thisButton.button( "option", "disabled" );
 
-              view.unbind("workflow-validation-errors");
-              view.bind("workflow-validation-errors", function() {
-                $thisButton.button("enable");
-              });
+              if(!disabled) {
+                $thisButton.button("disable");
 
-              view.runWorkflow();
+                view.unbind("workflow-validation-errors");
+                view.bind("workflow-validation-errors", function() {
+                  $thisButton.button("enable");
+                });
+
+                view.runWorkflow();
+              }
             },
 
             "Cancel": function () {
