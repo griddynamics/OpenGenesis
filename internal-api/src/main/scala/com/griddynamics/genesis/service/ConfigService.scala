@@ -53,6 +53,6 @@ object GenesisSystemProperties {
     val BIND_PORT = "genesis.system.bind.port"
     val MAX_IDLE = "genesis.system.request.maxIdle"
     val WEB_RESOURCE_ROOTS = "genesis.system.web.resourceRoots"
-    val CACHE_RESOURCES = "genesis.system.web.client.cache"
+    val CLIENT_DEBUG_MODE = "genesis.web.client.debug"
     val LOGOUT_ENABLED = "genesis.web.logout.enabled"
 }
