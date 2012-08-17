@@ -39,7 +39,7 @@ class GenesisClient
 
 
   def delete_project(id)
-    self.class.delete(path("/projects/#{id}"), :basic_auth => auth)
+    delete("/projects/#{id}")
   end
 
   def get_template(project, template, version)
@@ -50,7 +50,7 @@ class GenesisClient
     response = get("/projects/#{project}/envs")
     found = JSON.parse(response.body).select { |e| e["name"] == name }
     if found.size > 0
-      found[0]
+      found[0]["id"]
     end
   end
 
@@ -60,8 +60,13 @@ class GenesisClient
   end
 
   def delete_projects
-    resp = get('/projects') 
+    resp = get('/projects')
     JSON.parse(resp.body).map { |p| delete_project(p["id"]) }
+  end
+
+  def rename_env(id, env_id, newname)
+    resp = {:environment => {:name => newname}}
+    put("/projects/#{id}/envs/#{env_id}", :body => resp.to_json)
   end
 
   private
