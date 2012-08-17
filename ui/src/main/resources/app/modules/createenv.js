@@ -276,6 +276,7 @@ function(genesis, backend,  status, variables, gtemplates, Backbone, $) {
         $("#ready").show();
         $.when(genesis.fetchTemplate(this.template)).done(function(tmpl){
           view.el.innerHTML = tmpl({variables: view.variables});
+          $('input:not(:hidden):first', view.el).focus();
         });
       } else {
         $("#ready").hide();
