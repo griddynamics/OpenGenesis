@@ -105,6 +105,7 @@ a.button.action-button span {
 
 a.button.reset-button {
     float: right;
+    margin-right: 20px !important
 }
 
 a.tab {
@@ -497,7 +498,7 @@ div.system-settings {
 
 #wrapper #management-panel #right{
 	float:right;
-	margin: 10px 20px 0 0;
+	margin: 13px 20px 0 0;
 }
 
 #wrapper #management-panel #right input{

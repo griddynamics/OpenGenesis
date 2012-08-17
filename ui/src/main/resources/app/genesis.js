@@ -28,12 +28,12 @@ function($, _, Backbone) {
 
   //jquery dialog default settings
   $.extend($.ui.dialog.prototype.options, {
-    resizable: true,
     modal: true,
     dialogClass: 'dialog-without-header',
     minHeight: 120,
     width: 420,
     autoOpen: false,
+    resizable: false,
     open: function() { // confirmation dialogs should have no/cancel focused by default
       $(this).parent().find(".ui-dialog-buttonpane button:eq(1)").focus();
     }
