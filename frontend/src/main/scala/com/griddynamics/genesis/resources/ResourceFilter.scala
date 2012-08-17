@@ -34,10 +34,13 @@ import com.griddynamics.genesis.http.CatchCodeWrapper
 
 
 class ResourceFilter extends Filter with Logging {
+    val OriginConfig = "requirejs-config.js"
+    var DebugModeConfig = "debug-requirejs-config.js"
+
     var resourceRoots: Seq[String] = _
     var config: FilterConfig = _
     val manager = VFS.getManager
-    var cacheResources = true
+    var debugMode = false
     val expires: Date = {
         val cal = Calendar.getInstance()
         cal.roll(Calendar.YEAR, true)
@@ -49,8 +52,12 @@ class ResourceFilter extends Filter with Logging {
             s => s.replaceAll("classpath:", "res:")
         )
         log.debug("Resource roots: %s", resourceRoots)
-        cacheResources = filterConfig.getInitParameter(ResourceFilter.CACHE_PARAMETER).toBoolean
+        debugMode = filterConfig.getInitParameter(ResourceFilter.DEBUG_MODE_PARAMETER).toBoolean
         config = filterConfig
+
+        if (locateResource("app/" + DebugModeConfig).isEmpty) {
+          DebugModeConfig = OriginConfig
+        }
     }
 
     def writeContent(response: HttpServletResponse, f: FileObject, cache: Boolean) {
@@ -62,7 +69,7 @@ class ResourceFilter extends Filter with Logging {
         val httpDateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US)
         response.setHeader("Last-modified", httpDateFormat.format(new Date(content.getLastModifiedTime)))
         if (cache) {
-            response.setHeader("Expires", httpDateFormat.format(expires));
+            response.setHeader("Expires", httpDateFormat.format(expires))
             response.setHeader("Cache-control", "public, max-age=31536000")
         } else {
             response.setHeader("Cache-control", "no-cache, no-store, must-revalidate")
@@ -75,15 +82,22 @@ class ResourceFilter extends Filter with Logging {
         stream.close()
     }
 
+    def locateResource(path: String) = {
+      resourceRoots.map ( root =>  attempt { manager.resolveFile(root + path) } ).flatten.find(_.exists)
+    }
 
     def serve(response: CatchCodeWrapper, uri: String) {
+        import ResourceFilter._
+
         val (originalPath, cache) = if (uri == null || uri == "" || uri == "/")
             ("index.html", false)
-        else
-            (uri.replaceAll("^\\/", "").takeWhile(_ != ';'), true && cacheResources)
-
-        def locateResource(path: String) = {
-            resourceRoots.map ( root =>  attempt { manager.resolveFile(root + path) } ).flatten.find(_.exists)
+        else {
+          val path = uri.replaceAll("^\\/", "").takeWhile(_ != ';')
+          if(path.endsWith(OriginConfig) && debugMode) {
+            (path.replaceAll(OriginConfig, DebugModeConfig), false)
+          } else {
+            (path, !debugMode && !NeverCacheItems.exists(path.endsWith(_)))
+          }
         }
 
         val result: Option[FileObject] = locateResource(originalPath) match {
@@ -93,7 +107,7 @@ class ResourceFilter extends Filter with Logging {
             }
         }
         result match {
-            case None => response.resume();
+            case None => response.resume()
             case Some(f) => {
                 writeContent(response, f, cache)
             }
@@ -120,8 +134,10 @@ class ResourceFilter extends Filter with Logging {
 }
 
 object ResourceFilter {
+    val NeverCacheItems = List(".html", "requirejs-config.js", "index.css")
+
     def PARAM_NAME = "resourceRoots"
-    def CACHE_PARAMETER = "cacheResources"
+    def DEBUG_MODE_PARAMETER = "debugMode"
 
     def copyStream(is: InputStream, os: OutputStream) {
         val buffer = new Array[Byte](4096)

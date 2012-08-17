@@ -22,7 +22,8 @@
       Description:  Continuous Delivery Platform
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>ui</artifactId>
@@ -34,6 +35,28 @@
         <version>1.2.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
+    <dependencies>
+        <dependency>
+            <groupId>com.google.javascript</groupId>
+            <artifactId>closure-compiler</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>args4j</groupId>
+            <artifactId>args4j</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>rhino</groupId>
+            <artifactId>js</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 
     <build>
         <resources>
@@ -49,15 +72,154 @@
                 <excludes>
                     <exclude>*.properties</exclude>
                 </excludes>
-                <filtering>false</filtering>             
-            </resource> 
+                <filtering>false</filtering>
+            </resource>
         </resources>
 
         <plugins>
-           <plugin>
-              <groupId>com.mycila.maven-license-plugin</groupId>
-              <artifactId>maven-license-plugin</artifactId>
-           </plugin>
+            <plugin>
+                <groupId>com.mycila.maven-license-plugin</groupId>
+                <artifactId>maven-license-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>pack-static-content</id>
+            <activation>
+                <property>
+                    <name>!skipPack</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>pl.project13.maven</groupId>
+                        <artifactId>git-commit-id-plugin</artifactId>
+                        <version>2.0.2</version>
+                        <executions>
+                            <execution>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>revision</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+
+                        <configuration>
+                            <prefix>git</prefix>
+                            <dateFormat>dd.MM.yyyy '@' HH:mm:ss z</dateFormat>
+                            <verbose>false</verbose>
+                        </configuration>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.2.1</version>
+
+                        <executions>
+                            <execution>
+                                <id>javascript</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <classpathScope>compile</classpathScope>
+                                    <executable>java</executable>
+                                    <workingDirectory>${project.dir}</workingDirectory>
+                                    <arguments>
+                                        <argument>-classpath</argument>
+                                        <classpath>
+                                            <dependency>args4j:args4j</dependency>
+                                            <dependency>com.google.guava:guava</dependency>
+                                            <dependency>com.google.javascript:closure-compiler</dependency>
+                                            <dependency>rhino:js</dependency>
+                                        </classpath>
+                                        <argument>org.mozilla.javascript.tools.shell.Main</argument>
+                                        <argument>r.js</argument>
+                                        <argument>-o</argument>
+                                        <argument>cssIn=src/main/resources/assets/css/index.css</argument>
+                                        <argument>out=target/appdirectory-build/style.css</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>css</id>
+                                <configuration>
+                                    <classpathScope>compile</classpathScope>
+                                    <executable>java</executable>
+                                    <workingDirectory>${project.dir}</workingDirectory>
+                                    <arguments>
+                                        <argument>-classpath</argument>
+                                        <classpath>
+                                            <dependency>args4j:args4j</dependency>
+                                            <dependency>com.google.guava:guava</dependency>
+                                            <dependency>com.google.javascript:closure-compiler</dependency>
+                                            <dependency>rhino:js</dependency>
+                                        </classpath>
+                                        <argument>org.mozilla.javascript.tools.shell.Main</argument>
+                                        <argument>r.js</argument>
+                                        <argument>-o</argument>
+                                        <argument>app.build.js</argument>
+                                    </arguments>
+                                </configuration>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.7</version>
+                        <executions>
+                            <execution>
+                                <phase>compile</phase>
+                                <configuration>
+                                    <target>
+
+                                        <copy file="target/appdirectory-build/main-built.js"
+                                              tofile="target/classes/app/main-built${git.commit.id}.js"/>
+
+                                        <copy file="target/classes/app/requirejs-config.js" tofile="target/classes/app/debug-requirejs-config.js"/>
+
+                                        <echo file="target/classes/app/requirejs-config.js"><![CDATA[
+                                            require.config({
+                                                paths: {
+                                                    "main": "main-built${git.commit.id}"
+                                                },
+                                                deps: ["main"]
+                                            });
+                                        ]]></echo>
+
+                                        <delete includeemptydirs="true">
+                                            <fileset dir="target/classes/assets/css" includes="*.css"
+                                                     excludes="reset.css login.css"/>
+                                        </delete>
+
+                                        <copy file="target/appdirectory-build/style.css"
+                                              tofile="target/classes/assets/css/style${git.commit.id}.css"/>
+
+                                        <echo file="target/classes/assets/css/index.css"><![CDATA[
+                                            @import "style${git.commit.id}.css";
+                                        ]]>
+                                        </echo>
+
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
