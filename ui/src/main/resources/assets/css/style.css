@@ -149,15 +149,12 @@ a.brcr, .brcr-devider{
 	height:27px;
 	margin-top:-1px;
     font-size: 14px;
+    padding: 7px 15px;
+    outline: none;
 }
 
 a.brcr:first-child {
     font-weight: bold;
-}
-
-a.brcr span{
-	display: inline-block;
-  	padding: 7px 15px ;
 }
 
 .brcr-devider {
