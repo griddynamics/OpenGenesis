@@ -1,0 +1,18 @@
+package templates
+template {
+    name("Simple")
+    version("0.1")
+
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+    workflow("create") {
+         steps {
+         }
+    }
+
+    workflow("destroy") {
+        steps {
+        }
+    }
+}
