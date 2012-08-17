@@ -9,7 +9,6 @@ Given /^Genesis is running$/ do
 end
 
 Given /^I am valid admin user$/ do
-  #@client.auth = {:username => arg1, :password => arg2}
   response = @client.whoami
   struct = JSON.parse(response.body)
   struct["administrator"].should == true

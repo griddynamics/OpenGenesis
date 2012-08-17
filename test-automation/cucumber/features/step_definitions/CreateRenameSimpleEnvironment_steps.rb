@@ -27,3 +27,13 @@ Then /^there must be an environment '(.+)' in project '(.+)'$/ do |env, project|
   env_id = @client.env_id(id, env)
   env_id.should_not be_nil
 end
+
+When /^I'm renaming environment '(.+)' to '(.+)' in project '(.+)'$/ do |old_name, new_name, project|
+  id = @client.project_id(project)
+  env_id = @client.env_id(id, old_name)
+  @last_response = @client.rename_env(id, env_id, new_name)
+end
+
+AfterStep('@clearprojects') do
+  @client.delete_projects
+end
