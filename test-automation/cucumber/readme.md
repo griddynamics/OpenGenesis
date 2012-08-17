@@ -15,7 +15,7 @@ gem install bundler
 ### Install tests dependencies:
 
 ```
-budle install
+bundle install
 ```
 
 ### Copy config.yml.sample to config.yml and edit it to reflect your settings:
