@@ -68,8 +68,11 @@ function(genesis, Backbone) {
           self.$el.html(content);
           if (self.sourceCodeDialog == null) {
             self.sourceCodeDialog = self.$el.dialog({
+              resizable: true,
               modal: true,
               width: 900,
+              minWidth: 500,
+              minHeight: 400,
               height: 400,
               dialogClass: 'dialog-without-header',
               autoOpen: false

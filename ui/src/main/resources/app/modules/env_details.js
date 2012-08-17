@@ -470,6 +470,7 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
       var vals = {};
       if (this.workflow.variables.length > 0) {
         if (!$('#workflow-parameters-form').valid()) {
+          this.trigger("workflow-validation-errors");
           return;
         }
 
