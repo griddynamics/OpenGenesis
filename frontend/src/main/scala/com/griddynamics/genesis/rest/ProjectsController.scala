@@ -98,8 +98,8 @@ class ProjectsController extends RestApiExceptionsHandler {
 
   private def extractProject(projectId: Option[Int], paramsMap: Map[String, Any]): Project = {
     val name = extractNotEmptyValue("name", paramsMap).trim
-    val projectManager = extractNotEmptyValue("projectManager", paramsMap)
-    val description = extractOption("description", paramsMap)
+    val projectManager = extractNotEmptyValue("projectManager", paramsMap).trim
+    val description = extractOption("description", paramsMap).map(_.trim)
 
     new Project(projectId, name, description, projectManager)
   }
