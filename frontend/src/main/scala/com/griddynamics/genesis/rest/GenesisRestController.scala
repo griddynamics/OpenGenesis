@@ -85,8 +85,10 @@ class GenesisRestController extends RestApiExceptionsHandler with Logging {
     @RequestMapping(value = Array("projects/{projectId}/templates/{templateName}/v{templateVersion:.+}/{workflow}"), method = Array(RequestMethod.POST))
     @ResponseBody
     def partialApply(@PathVariable projectId: Int,
-                     @PathVariable("templateName") templateName: String, @PathVariable("templateVersion") templateVersion: String,
-                     @PathVariable("workflow") workflow: String, request: HttpServletRequest) = {
+                     @PathVariable("templateName") templateName: String,
+                     @PathVariable("templateVersion") templateVersion: String,
+                     @PathVariable("workflow") workflow: String,
+                     request: HttpServletRequest) = {
         val paramsMap: Map[String, Any] = GenesisRestController.extractParamsMap(request)
         val variables = GenesisRestController.extractVariables(paramsMap)
         try {

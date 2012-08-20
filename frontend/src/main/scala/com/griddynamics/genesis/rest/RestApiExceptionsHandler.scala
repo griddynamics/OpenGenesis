@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.{ResponseStatus, ExceptionHandler
 import net.liftweb.json.{Serialization, MappingException}
 import org.springframework.http.{MediaType, HttpStatus}
 import com.griddynamics.genesis.api.Failure
+import org.springframework.web.bind.MethodArgumentNotValidException
 
 trait RestApiExceptionsHandler {
     implicit val formats = net.liftweb.json.DefaultFormats
@@ -66,5 +67,12 @@ trait RestApiExceptionsHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     def handleUnsupported(response : HttpServletResponse, exception: UnsupportedOperationException) {
         response.getWriter.write("{\"error\":\"Operation not supported\"}")
+    }
+
+    @ExceptionHandler(value = Array(classOf[MethodArgumentNotValidException]))
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    def handleValidation(response : HttpServletResponse, exception: MethodArgumentNotValidException) {
+
+        response.getWriter.write("{\"error\":\"%s\"}".format(exception.getMessage))
     }
 }
