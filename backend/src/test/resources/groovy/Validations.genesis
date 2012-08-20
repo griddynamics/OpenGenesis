@@ -1,0 +1,41 @@
+package groovy
+template {
+    name("Validations")
+    version("0.1")
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+
+    workflow("create") {
+        variables {
+            variable("a").description("A variable").as(Integer).validator([
+                    "Custom error message" : { it > 0 }
+            ])
+            variable("b").description("B variable").as(Integer).validator {it > 10}
+            variable("c").description("C variable").as(Integer).validator([
+                    "C error message" : {
+                        b > 20 && it > 6
+                    }
+            ]).optional()
+        }
+        steps {
+            teststep {
+                phase = "phase1"
+                text =   "test input"
+            }
+            teststep {
+                phase = "phase2"
+                precedingPhases = ["phase1"]
+            }
+        }
+    }
+
+    workflow("destroy") {
+        steps {
+            teststep {
+                phase = "undeply"
+                text = "destroy"
+            }
+        }
+    }
+}

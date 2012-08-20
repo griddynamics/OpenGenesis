@@ -233,14 +233,15 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
 class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow : EnvWorkflow,
                                conversionService : ConversionService,
                                stepBuilderFactories : Seq[StepBuilderFactory]) extends WorkflowDefinition with Logging {
-    def convertAndValidate(value: Any, variable: VariableDetails): Seq[ValidationError] = {
+    def convertAndValidate(value: Any, variable: VariableDetails, context: Map[String,Any]): Seq[ValidationError] = {
       try {
         //all values stored as strings, so we need to use string repr. to convert here as well
         val typedVal = convert(String.valueOf(value), variable)
 
         (for (validator <- variable.validators) yield {
-          if (!validator.call(typedVal))
-            Some(ValidationError(variable.name, "Validation failed"))
+          validator._2.setDelegate(typedVal)
+          if (!validator._2.call(context))
+            Some(ValidationError(variable.name, validator._1))
           else
             None
         }).flatten.toSeq
@@ -270,11 +271,15 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
 
 
     def validate(variables: Map[String, Any], envId: Option[Int] = None, projectId: Option[Int] = None) = {
+        val context = for (variable <- workflow.variables)
+            yield {
+                (variable.name, variables.get(variable.name).map(v => convert(String.valueOf(v), variable)))
+            }
         val res = for (variable <- workflow.variables) yield {
             variables.get(variable.name) match {
                 case None => {
                   variable.defaultValue match {
-                    case Some(s) => convertAndValidate(String.valueOf(s), variable)
+                    case Some(s) => convertAndValidate(String.valueOf(s), variable, context.toMap)
                     case None =>  if (variable.isOptional)
                         Seq()
                       else
@@ -282,7 +287,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
                   }
                 }
                 case Some(value) => {
-                    convertAndValidate(value, variable)
+                    convertAndValidate(value, variable, context.toMap)
                 }
             }
         }
