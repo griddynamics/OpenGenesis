@@ -51,3 +51,14 @@ Feature: Unified name rules for projects and environment. Environment part
     And there must be an environment 'newname' in project 'Environments'
     When I'm renaming environment 'Name' to 'newname' in project 'Environments'
     Then I should get response with code '400'
+
+  Scenario: I can't rename an existing environment if new name is old name + spaces
+    Given there must be an environment 'Name' in project 'Environments'
+    And there must be an environment 'newname' in project 'Environments'
+    When I'm renaming environment 'Name' to 'newname ' in project 'Environments'
+    Then I should get response with code '400'
+
+  Scenario: I can't rename an existing environment if new name contains only spaces
+    Given there must be an environment 'Name' in project 'Environments'
+    When I'm renaming environment 'Name' to '   ' in project 'Environments'
+    Then I should get response with code '400'
