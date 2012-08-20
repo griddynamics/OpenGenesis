@@ -25,26 +25,26 @@ package com.griddynamics.genesis.util
 import collection.mutable
 
 class Describer(description: String) {
-  val Unspecified: String = "unspecified";
+  val Unspecified: String = "unspecified"
 
   private val params = new mutable.LinkedHashMap[String, String]
 
   def param(key: String, value: Option[String]): Describer = {
-    params(key) = value.getOrElse(Unspecified);
+    params(key) = value.getOrElse(Unspecified)
     this
   }
 
   def param(key: String, value: String): Describer = {
-    param(key, Some(value))
+    param(key, Option(value))
   }
 
   def param(key: String, value: Iterable[_]): Describer = {
-    params(key) = toString(value)
+    params(key) = Option(value).map { toString(_) }.getOrElse(Unspecified)
     this
   }
 
   def param(key: String, values: scala.collection.Map[_, _]): Describer = {
-    params(key) = toString(values)
+    params(key) = Option(values).map { toString(_) }.getOrElse(Unspecified)
     this
   }
 
@@ -57,29 +57,19 @@ class Describer(description: String) {
   }
 
 
-  private def toString(list: Iterable[_]):String =
-    "[ " +
-      ( if(list.isEmpty)
-        Unspecified
-      else
-        list.map(toString(_)).mkString(", ") ) +
-    " ]"
-
-  private def toString(tuple: (Any, Any)): String = tuple._1.toString + " = " + toString(tuple._2);
-
-  private def toString(objRef: Any):String = objRef match {
-    case map: scala.collection.Map[_,_] => toString(map)
-    case list: Iterable[_] => toString(list)
-    case option: Option[_] => option.map { toString(_) }.getOrElse(Unspecified);
-    case other => other.toString
-  }
+  private def toString(list: Iterable[_]): String =
+    "[ " + list.map(toString(_)).mkString(", ") + " ]"
 
   private def toString(values: scala.collection.Map[_, _]): String =
-    "{ " +
-    (if (values.isEmpty)
-      Unspecified
-    else
-      values.map(toString(_)).mkString(", ")) +
-    " }"
+    "{ " + values.map(toString(_)).mkString(", ") + " }"
+
+  private def toString(tuple: (Any, Any)): String = tuple._1 + " = " + toString(tuple._2)
+
+  private def toString(objRef: Any): String = objRef match {
+    case map: scala.collection.Map[_,_] => toString(map)
+    case list: Iterable[_] => toString(list)
+    case option: Option[_] => option.map { toString(_) }.getOrElse(Unspecified)
+    case other => "" + other
+  }
 
 }
