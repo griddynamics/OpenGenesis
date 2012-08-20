@@ -152,12 +152,12 @@ trait NettyTunnel extends Tunnel with Logging {
             case Some(s) => req.getRequestURI + "?" + s
             case _ => req.getRequestURI
         }
-        val request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-        request.setHeader(HttpHeaders.Names.HOST, host.getHost);
-        request.setHeader(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE);
-        request.setHeader(HttpHeaders.Names.ACCEPT_ENCODING, HttpHeaders.Values.GZIP);
+        val request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri)
+        request.setHeader(HttpHeaders.Names.HOST, host.getHost)
+        request.setHeader(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE)
+        request.setHeader(HttpHeaders.Names.ACCEPT_ENCODING, HttpHeaders.Values.GZIP)
         if (req.getContentType != null)
-            request.setHeader(HttpHeaders.Names.CONTENT_TYPE, req.getContentType);
+            request.setHeader(HttpHeaders.Names.CONTENT_TYPE, req.getContentType)
         request.setHeader(TunnelFilter.SEC_HEADER_NAME, TunnelFilter.currentUser)
         request.setMethod(HttpMethod.valueOf(req.getMethod))
         val input = Iterator.continually(req.getInputStream.read).takeWhile(-1 != _).map(_.toByte).toArray
@@ -234,7 +234,6 @@ class OutputStreamHandler(val response: HttpServletResponse, val latch: CountDow
 }
 
 trait UrlConnectionTunnel extends Tunnel with Logging {
-    import collection.JavaConversions.collectionAsScalaIterable
     def doServe(request: HttpServletRequest, response: CatchCodeWrapper) {
         val uri = Option(request.getQueryString) match {
             case Some(s) => request.getRequestURI + "?" + s
@@ -250,6 +249,11 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
             doWrite = true
         }
         connection.setDoInput(true)
+        import collection.JavaConversions._
+        for (name <- request.getHeaderNames if (name.toString != TunnelFilter.SEC_HEADER_NAME && name.toString != TunnelFilter.SEC_HEADER_NAME
+            && name.toString != "Connection")) {
+            connection.setRequestProperty(name.toString, request.getHeader(name.toString))
+        }
         connection.addRequestProperty(TunnelFilter.SEC_HEADER_NAME, TunnelFilter.currentUser)
         connection.addRequestProperty(TunnelFilter.AUTH_HEADER_NAME, TunnelFilter.authorities.mkString(TunnelFilter.SEPARATOR_CHAR))
         connection.addRequestProperty("Connection", "close") //no keep-alive
@@ -273,7 +277,6 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
               //on codes >= 400 connection.getInputStream throws error, but all data are in connection.errorStream
               case e => connection.getErrorStream
             }
-            import scala.collection.JavaConversions._
             //I have no idea why there is nulls for header names, but we have to check it
             for(entry <- connection.getHeaderFields if (entry._1 != null && entry._1 != "Connection"
               && entry._1 != "Set-Cookie")) {
