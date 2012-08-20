@@ -210,7 +210,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
       val paramsMap = GenesisRestController.extractParamsMap(request)
       val env = GenesisRestController.extractMapValue("environment", paramsMap)
       val envName = env.getOrElse("name", throw new MissingParameterException("envrironment.name"))
-      genesisService.updateEnvironmentName(envId, projectId, envName.asInstanceOf[String])
+      genesisService.updateEnvironmentName(envId, projectId, envName.asInstanceOf[String].trim)
   }
 
   @RequestMapping(value = Array("{envId}/access"), method = Array(RequestMethod.PUT))
