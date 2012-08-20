@@ -25,11 +25,9 @@ package com.griddynamics.genesis.rest
 
 
 import scala.Array
-import javax.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Controller
 import com.griddynamics.genesis.service.CredentialsStoreService
 import com.griddynamics.genesis.api
-import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.web.bind.annotation._
 import org.springframework.beans.factory.annotation.Autowired
 
@@ -41,8 +39,7 @@ class CredentialsController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
-  def create(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = {
-      val creds = extractCredentials(request, projectId, None)
+  def create(@PathVariable("projectId") projectId: Int, @RequestBody creds: api.Credentials) = {
       service.create(creds).map(_.copy(credential = None))
   }
 
@@ -65,16 +62,7 @@ class CredentialsController extends RestApiExceptionsHandler {
   @ResponseBody
   def getCredentials(@PathVariable("projectId") projectId: Int, @PathVariable("id") credId: Int) =
       service.get(projectId, credId).map(_.copy(credential = None)).orElse(
-      throw new ResourceNotFoundException("Credential [id = %d] was not found in Project [id = %d]".format(credId, projectId)))
+       throw new ResourceNotFoundException("Credential [id = %d] was not found in Project [id = %d]".format(credId, projectId))
+      )
 
-
-  private def extractCredentials(request: HttpServletRequest, projectId: Int, id: Option[Int]): api.Credentials = {
-    val params = extractParamsMap(request)
-    val credential = extractOption("credential", params)
-    val cloudProvider = extractValue("cloudProvider", params).trim()
-    val identity = extractValue("identity", params).trim()
-    val pairName = extractValue("pairName", params).trim()
-
-    new api.Credentials(id, projectId, cloudProvider, pairName, identity, credential)
-  }
 }

@@ -133,7 +133,6 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
     )
   })
 
-
   @Bean def provisionVmsStepBuilderFactory = new ProvisionVmsStepBuilderFactory
 
   @Bean def destroyEnvStepBuilderFactory = new DestroyEnvStepBuilderFactory

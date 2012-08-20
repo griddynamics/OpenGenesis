@@ -23,6 +23,7 @@
 package com.griddynamics.genesis.api
 
 import java.util
+import annotation.target.field
 
 trait Identifiable[T] {
   def id: T

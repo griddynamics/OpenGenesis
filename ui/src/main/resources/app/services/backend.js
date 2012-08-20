@@ -16,6 +16,7 @@ function(genesis, $) {
     cancelWorkflow: function(projectId, environmentId) {
       return $.ajax({
         url: "/rest/projects/" + projectId +  "/envs/" + environmentId + "/actions",
+        contentType : 'application/json',
         type: "POST",
         dataType: "json",
         data: JSON.stringify({action: 'cancel'}),
@@ -33,6 +34,7 @@ function(genesis, $) {
       return $.ajax({
         url: '/rest/projects/' + projectId + '/envs/' + environmentId + '/actions',
         dataType: "json",
+        contentType : 'application/json',
         type: "POST",
         data: JSON.stringify({
           action: 'execute',
@@ -51,6 +53,7 @@ function(genesis, $) {
     createEnvironment: function(projectId, environment) {
       return $.ajax({
         url: "/rest/projects/" + projectId + "/envs",
+        contentType : 'application/json',
         dataType: "json",
         type: "POST",
         data: JSON.stringify(environment.toJSON()),
@@ -63,14 +66,17 @@ function(genesis, $) {
       return $.ajax({
         url: "/rest/projects/" + projectId + "/envs/" + environmentId + "/actions",
         dataType: "json",
+        contentType : 'application/json',
         type: "POST",
         data: JSON.stringify({action: 'resetEnvStatus'}),
-        timeout: DEFAULT_TIMEOUT
+        timeout: DEFAULT_TIMEOUT,
+        processData: false
       });
     },
     updateEnvName: function(projectId, environmentId, envName) {
       return $.ajax({
         url: "/rest/projects/" + projectId + "/envs/" + environmentId,
+        contentType : 'application/json',
         dataType: "json",
         type: "PUT",
         data: JSON.stringify({environment:{name: envName}}),
@@ -167,6 +173,7 @@ function(genesis, $) {
     saveUserRoles: function(username, roles) {
       return $.ajax({
         url: "/rest/users/" + username +  "/roles",
+        contentType : 'application/json',
         dataType: "json",
         type: "PUT",
         data: JSON.stringify(roles),
@@ -177,6 +184,7 @@ function(genesis, $) {
     saveGroupRoles: function(groupName, roles) {
       return $.ajax({
         url: "/rest/groups/" + groupName +  "/roles",
+        contentType : 'application/json',
         dataType: "json",
         type: "PUT",
         data: JSON.stringify(roles),

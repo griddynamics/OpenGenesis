@@ -33,6 +33,7 @@ import impl.DefaultCredentialsService
 class SingleCredentialServiceContext extends CredentialServiceContext {
     @Value("${genesis.system.default.vm.identity:not-set}") var defaultVmIdentity : String = _
     @Value("${genesis.system.default.vm.credential:not-set}") var defaultVmCredentialResource : Resource = _
+
     lazy val defaultVmCredential = {
       try {
         InputUtil.resourceAsString(defaultVmCredentialResource)
@@ -43,11 +44,11 @@ class SingleCredentialServiceContext extends CredentialServiceContext {
       }
     }
 
-    @Autowired var credentialsStore: CredentialsStoreService = _
+    @Autowired var storeServiceContext: StoreServiceContext = _
 
-    @Bean def credentialService = {
+    @Bean def credentialService: CredentialService = {
       val default = if (defaultVmIdentity != "not-set") Some(new Credentials(defaultVmIdentity, defaultVmCredential)) else None
-      new DefaultCredentialsService(credentialsStore, default)
+      new DefaultCredentialsService(storeServiceContext.credentialsStoreService, default)
     }
 
 }
