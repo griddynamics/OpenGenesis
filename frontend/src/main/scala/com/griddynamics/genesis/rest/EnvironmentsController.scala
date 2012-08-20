@@ -50,7 +50,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @Value("${genesis.system.server.mode:frontend}")
   var mode = ""
 
-  @RequestMapping(method = Array(RequestMethod.POST))
+  @RequestMapping(value=Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
   def createEnv(@PathVariable projectId: Int, request: HttpServletRequest, response : HttpServletResponse) = {
     val paramsMap = extractParamsMap(request)

@@ -23,7 +23,7 @@
 
 package com.griddynamics.genesis.users.configuration
 
-import com.griddynamics.genesis.users.UserServiceContext
+import com.griddynamics.genesis.users.{UserService, UserServiceContext}
 import org.springframework.context.annotation.{Bean, Configuration}
 import javax.sql.DataSource
 import org.springframework.transaction.PlatformTransactionManager
@@ -41,7 +41,7 @@ class LocalUserContext extends UserServiceContext with Logging {
 
     @Value("#{fileProps['genesis.system.jdbc.drop.db'] ?: false}") var dropSchema: Boolean = _
     lazy val groupRepo = new LocalGroupRepositoryImpl
-    @Bean def userService = new LocalUserService(new LocalUserRepository, groupService)
+    @Bean def userService: UserService = new LocalUserService(new LocalUserRepository, groupService)
     @Bean def groupService : GroupService = new LocalGroupService(groupRepo)
     @Bean def schemaCreator = {
         new UsersSchemaCreator(dropSchema, dataSource, transactionManager)

@@ -22,13 +22,16 @@
  */
 package com.griddynamics.genesis.spring
 
-import net.liftweb.json.Serialization
+import net.liftweb.json._
 import org.springframework.http.converter.HttpMessageConverter
 import java.nio.charset.Charset
 import java.util.Collections
 import org.springframework.http.server.ServerHttpResponse
 import org.springframework.http.{HttpStatus, HttpOutputMessage, HttpInputMessage, MediaType}
 import com.griddynamics.genesis.api.{Failure, Success, RequestResult}
+import java.io.InputStreamReader
+import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.api.Failure
 
 class JsonMessageConverter
         extends HttpMessageConverter[AnyRef]{
@@ -36,6 +39,8 @@ class JsonMessageConverter
     implicit val formats = net.liftweb.json.DefaultFormats
     val DEFAULT_CHARSET: Charset = Charset.forName("UTF-8")
     val supportedMediaTypes = Collections.singletonList(new MediaType("application", "json", DEFAULT_CHARSET))
+
+    val ApiPackage = Package.getPackage("com.griddynamics.genesis.api")
 
     def write(t: AnyRef, contentType: MediaType, outputMessage: HttpOutputMessage) {
         val statusCode  = getStatus(t)
@@ -61,11 +66,14 @@ class JsonMessageConverter
         case _ => -1
     }
 
-    def read(clazz: Class[_ <: AnyRef], inputMessage: HttpInputMessage) = null
+    def read(clazz: Class[_ <: AnyRef], inputMessage: HttpInputMessage) = { //TODO: (RB) containers(list,maps,etc) are not supported yet
+      val json = parse(scala.io.Source.fromInputStream(inputMessage.getBody).getLines().mkString(" "))
+      clazz.cast(Extraction.extract(json, TypeInfo(clazz, None)))
+    }
 
     def getSupportedMediaTypes = Collections.unmodifiableList(supportedMediaTypes)
 
     def canWrite(clazz: Class[_], mediaType: MediaType) = true
 
-    def canRead(clazz: Class[_], mediaType: MediaType) = true
+    def canRead(clazz: Class[_], mediaType: MediaType) = clazz.getPackage == ApiPackage
 }
