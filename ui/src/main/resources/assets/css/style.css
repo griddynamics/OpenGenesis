@@ -1272,10 +1272,11 @@ table .pre {
 #workflow-parameters-form label {
     text-align: right;
     padding-top: 5px;
+    width: 88%;
 }
 
 #workflow-parameters-form input, #workflow-parameters-form select {
-    width: 95%;
+    width: 96%;
 }
 
 .information-panel {
@@ -1334,7 +1335,6 @@ label.error {
     background-repeat: no-repeat !important;
     padding-left: 35px;
     display: inline-block;
-    height: 20px;
 }
 
 .template-processing-error-header-1 {
