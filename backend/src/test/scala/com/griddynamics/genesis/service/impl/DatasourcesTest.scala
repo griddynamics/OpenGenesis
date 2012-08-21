@@ -154,7 +154,7 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
         val descAfterApply = partial.find(_.name == "independant")
         assert(descAfterApply.isDefined)
         expect(Map("1" -> "1", "2" -> "2"))(descAfterApply.get.values)
-        val validation = template.createWorkflow.validate(Map("independant" -> 3))
+        val validation = template.createWorkflow.validate(Map("key" -> "a", "list" -> "a", "independant" -> 3))
         expect(1)(validation.size)
         expect("independant")(validation.head.variableName)
     }
