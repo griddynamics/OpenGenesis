@@ -138,7 +138,7 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
             import collection.JavaConversions._
             dsObjSupport.foreach(oneOf.setDelegate(_))
             val values = Option({ _: Any => oneOf.call().map(kv => (kv._1, kv._2)).toMap})
-            validator(new Closure[Boolean]() {
+            validator(new Closure[Boolean](this.oneOf) {
                 def doCall(args: Array[Any]): Boolean = {
                     values.get.apply().exists(_._2.toString == args(0).toString)
                 }

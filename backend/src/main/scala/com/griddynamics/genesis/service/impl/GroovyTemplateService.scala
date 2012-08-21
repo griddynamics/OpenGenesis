@@ -249,6 +249,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
               case e: Throwable => {
                 // todo: rare case with oneOf variables. need further investigation,
                 // but seems to be relatively harmless
+                // throw e
               }
             })
           if (!validator._2.call(typedVal))
