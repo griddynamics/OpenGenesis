@@ -49,5 +49,4 @@ class ValidationTests extends AssertionsForJUnit with MockitoSugar {
         assert(validate.size == 1)
         assert(validate.head.description == "C error message")
     }
-
 }
