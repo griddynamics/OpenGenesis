@@ -29,18 +29,25 @@ class ValidationTests extends AssertionsForJUnit with MockitoSugar {
 
     @Test
     def testSimpleValidationWithCustomMessage() {
-        val validate: Seq[ValidationError] = templateService.findTemplate(0, "Validations", "0.1").get.createWorkflow.validate(Map("a" -> "0", "b" -> "0"))
-        println(validate)
+        val validate: Seq[ValidationError] = createWorkflow.validate(Map("a" -> "0", "b" -> "0"))
         assert(validate.size == 2)
         assert(validate.head.description == "Custom error message")
         assert(validate.tail.head.description == "Validation failed")
     }
 
+    @Test
+    def testSimpleValidationWithCustomMessageAltSyntax() {
+        val validate: Seq[ValidationError] = createWorkflow.validate(Map("foo" -> "5", "a" -> 11, "b" -> 11))
+        assert(validate.size == 1)
+        assert(validate.head.description == "Foo message")
+    }
+
 
     @Test
     def testComplexValidation() {
-        val validate: Seq[ValidationError] = templateService.findTemplate(0, "Validations", "0.1").get.createWorkflow.validate(Map("a" -> "10", "b" -> "4", "c" -> "11"))
-        println(validate)
+        val validate: Seq[ValidationError] = createWorkflow.validate(Map("a" -> "10", "b" -> "11", "c" -> "11"))
+        assert(validate.size == 1)
+        assert(validate.head.description == "C error message")
     }
 
 }

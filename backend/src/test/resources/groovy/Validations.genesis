@@ -17,6 +17,14 @@ template {
                         b > 20 && it > 6
                     }
             ]).optional()
+            foo = {
+                description = "Foo variable"
+                validator = [
+                    "Foo message" : {foo == 0}
+                ]
+                clazz = Integer
+                isOptional = true
+            }
         }
         steps {
             teststep {

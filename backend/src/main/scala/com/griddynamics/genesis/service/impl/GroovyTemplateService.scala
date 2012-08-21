@@ -239,8 +239,12 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
         val typedVal = convert(String.valueOf(value), variable)
 
         (for (validator <- variable.validators) yield {
-          validator._2.setDelegate(typedVal)
-          if (!validator._2.call(context))
+          context.foreach(p => validator._2.setProperty(p._1, p._2 match {
+            case Some(f) => f
+            case None => null
+            case a => a
+          }))
+          if (!validator._2.call(typedVal))
             Some(ValidationError(variable.name, validator._1))
           else
             None

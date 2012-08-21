@@ -177,6 +177,10 @@ class DSAwareVariableBuilder(knownVars: ListBuffer[VariableBuilder],
     this.validator(validator)
   }
 
+  def setValidator(validator: java.util.Map[String, Closure[Boolean]]) {
+    this.validator(validator)
+  }
+
   def setDataSource(ds: AnyRef) {
     ds match {
       case name: String => this.dataSource(name)
