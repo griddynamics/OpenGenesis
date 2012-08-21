@@ -41,8 +41,10 @@ public class StringTemplateEngine implements TemplateEngine {
     String result;
     ST template = group.getInstanceOf(templateName);
     if (template != null) {
-      for (String attr : template.getAttributes().keySet()) {
-        template.add(attr, params.get(attr) == null ? "" : params.get(attr));
+      //Have no idea why for (String attr : template.getAttributes().keySet()) produce compilation error in java compiler 7 with target=1.6
+      for (Object attr : template.getAttributes().keySet()) {
+          String attrStr = attr.toString();
+          template.add(attrStr, params.get(attrStr) == null ? "" : params.get(attrStr));
       }
       result = template.render();
     } else {
