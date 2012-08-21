@@ -141,6 +141,8 @@ case class UserGroup(name: String, description: String, mailingList: Option[Stri
 
 case class Project(id: Option[Int],
                    name: String,
+                   creator: String,
+                   creationTime: Long,
                    description: Option[String],
                    projectManager: String,
                    isDeleted: Boolean = false,
