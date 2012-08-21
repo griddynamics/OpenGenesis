@@ -54,7 +54,8 @@ function(genesis, status, backend, Backbone, $) {
         self.$el.html(
           tmpl({
             "projects" : self.collection.toJSON(),
-            "currentUser": genesis.app.currentUser
+            "currentUser": genesis.app.currentUser,
+            "utils": genesis.utils
           })
         );
         if (_.isFunction(done)) {

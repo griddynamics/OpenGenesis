@@ -24,7 +24,7 @@ package com.griddynamics.genesis.service.impl
 
 import org.squeryl.adapters.H2Adapter
 import org.squeryl.{Session, SessionFactory}
-import java.sql.DriverManager
+import java.sql.{Timestamp, DriverManager}
 import org.junit.{Before, Test, BeforeClass}
 
 import org.squeryl.PrimitiveTypeMode.transaction
@@ -92,7 +92,8 @@ class StoreServiceTest extends MustMatchersForJUnit {
 
     def fillDb() {
 
-        project =  GenesisSchema.projects.insert(new Project("project1", Some("test project"), "Nina, Soto"));
+        project =  GenesisSchema.projects.insert(new Project("project1", "tester",
+          new Timestamp(System.currentTimeMillis()), Some("test project"), "Nina, Soto"))
 
         env = new Environment("env", EnvStatus.Busy, "owner", "template", "0.1", project.id)
         env(EnvAttr1) = EnvAttrVal1

@@ -101,7 +101,7 @@ class ProjectsController extends RestApiExceptionsHandler {
     val projectManager = extractNotEmptyValue("projectManager", paramsMap).trim
     val description = extractOption("description", paramsMap).map(_.trim)
 
-    new Project(projectId, name, description, projectManager)
+    new Project(projectId, name, getCurrentUser, System.currentTimeMillis(), description, projectManager)
   }
 
   @RequestMapping(value = Array("{projectId}/roles/{roleName}"), method = Array(RequestMethod.PUT))
