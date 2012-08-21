@@ -42,7 +42,7 @@ class VariableDeclaration(val dsObjSupport: Option[DSObjectSupport], dataSourceF
 
 
 class VariableDetails(val name : String, val clazz : Class[_ <: AnyRef], val description : String,
-                      val validators : Seq[Closure[Boolean]], val isOptional: Boolean = false, val defaultValue: Option[Any],
+                      val validators : Seq[(String, Closure[Boolean])], val isOptional: Boolean = false, val defaultValue: Option[Any],
                       val valuesList: Option[(Map[String,Any] => Map[String,String])] = None, val dependsOn: Seq[String])
 
 class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) extends GroovyObjectSupport {
@@ -51,7 +51,7 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
     @BeanProperty var defaultValue: Any = _
     @BeanProperty var isOptional: Boolean = false
 
-    var validators = new ListBuffer[Closure[Boolean]]
+    var validators = new collection.mutable.LinkedHashMap[String, Closure[Boolean]]
     var parents = new ListBuffer[String]
     var dataSourceRef: Option[String] = None
     var useOneOf: Boolean = false
@@ -72,7 +72,13 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
     }
 
     def validator(validator : Closure[Boolean]) = {
-        validators += validator
+        validators.put("Validation failed", validator)
+        this
+    }
+
+    def validator(arg : java.util.Map[String, Closure[Boolean]]) = {
+        import collection.JavaConversions._
+        validators ++= arg
         this
     }
 
@@ -132,11 +138,11 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
             import collection.JavaConversions._
             dsObjSupport.foreach(oneOf.setDelegate(_))
             val values = Option({ _: Any => oneOf.call().map(kv => (kv._1, kv._2)).toMap})
-            validators += new Closure[Boolean]() {
+            validators.put("Validation failed", new Closure[Boolean]() {
                 def doCall(args: Array[Any]): Boolean = {
                     values.get.apply().asInstanceOf[Map[String,String]].exists(_._2.toString == args(0).toString)
                 }
-            }
+            })
             values
         } else if (inlineDataSource.isDefined) {
           val inlineDS = inlineDataSource.get
@@ -157,7 +163,7 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
         }
     }
 
-    def newVariable = new VariableDetails(name, clazz, description, validators, isOptional, Option(defaultValue), valuesList, parents.toList)
+    def newVariable = new VariableDetails(name, clazz, description, validators.toSeq, isOptional, Option(defaultValue), valuesList, parents.toList)
 }
 
 
@@ -168,6 +174,10 @@ class DSAwareVariableBuilder(knownVars: ListBuffer[VariableBuilder],
                              dsObjSupport: Option[DSObjectSupport]) extends VariableBuilder(varName, dsObjSupport)  {
 
   def setValidator(validator : Closure[Boolean]) {
+    this.validator(validator)
+  }
+
+  def setValidator(validator: java.util.Map[String, Closure[Boolean]]) {
     this.validator(validator)
   }
 
