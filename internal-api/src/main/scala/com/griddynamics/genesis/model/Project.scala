@@ -25,6 +25,8 @@ import java.sql.Timestamp
  * Description:  Continuous Delivery Platform
  */
 class Project (val name: String,
+               val creator: String,
+               val creationTime: Timestamp,
                val description: Option[String],
                val projectManager: String,
                val isDeleted: Boolean = false,
