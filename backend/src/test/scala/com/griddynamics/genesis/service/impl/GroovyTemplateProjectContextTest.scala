@@ -57,20 +57,20 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
 
 
     def testDatabag : DataBag = {
-        val db = DataBag(Some(0), "foo", Seq("foo"), Some(0), Some(Seq(
-            DataItem(Some(0), "key1", "fred", 0),
-            DataItem(Some(0), "key2", "barney", 0),
-            DataItem(Some(0), "key3", "wilma", 0)
-        )))
+        val db = DataBag(Some(0), "foo", Seq("foo"), Some(0), Seq(
+            DataItem(Some(0), "key1", "fred", None),
+            DataItem(Some(0), "key2", "barney", None),
+            DataItem(Some(0), "key3", "wilma", None)
+        ))
         db
     }
 
     def systemDatabag : DataBag = {
-        val db = DataBag(Some(0), "bar", Seq("bar"), None, Some(Seq(
-            DataItem(Some(0), "key1", "barney", 0),
-            DataItem(Some(0), "key2", "wilma", 0),
-            DataItem(Some(0), "key3", "fred", 0)
-        )))
+        val db = DataBag(Some(0), "bar", Seq("bar"), None, Seq(
+            DataItem(Some(0), "key1", "barney", None),
+            DataItem(Some(0), "key2", "wilma", None),
+            DataItem(Some(0), "key3", "fred", None)
+        ))
         db
     }
 

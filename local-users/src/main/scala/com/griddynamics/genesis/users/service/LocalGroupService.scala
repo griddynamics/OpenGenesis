@@ -28,124 +28,117 @@ import com.griddynamics.genesis.users.repository.LocalGroupRepository
 import com.griddynamics.genesis.validation.Validation
 import Validation._
 import org.springframework.transaction.annotation.Transactional
-import com.griddynamics.genesis.service.{ProjectAuthorityService, AuthorityService}
+import com.griddynamics.genesis.service.AuthorityService
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.api.{ExtendedResult, Success, UserGroup}
+import com.griddynamics.genesis.api.{Failure, ExtendedResult, Success, UserGroup}
+import com.griddynamics.genesis.users.UserService
 
 class LocalGroupService(val repository: LocalGroupRepository) extends GroupService with Validation[UserGroup] {
 
-    @Autowired
-    var authorityService: AuthorityService = null
+  @Autowired
+  var authorityService: AuthorityService = null
+  @Autowired
+  var userService: UserService = _
 
   @Transactional(readOnly = true)
-    def list = repository.list.sortBy(_.name)
+  def getUsersGroups(username: String) = repository.groupsForUser(username)
 
-    @Transactional(readOnly = true)
-    def findByName(name: String) = repository.findByName(name)
+  @Transactional(readOnly = true)
+  def list = repository.list.sortBy(_.name)
 
-    @Transactional(readOnly = true)
-    def search(nameLike: String): List[UserGroup] = repository.search(nameLike)
+  @Transactional(readOnly = true)
+  def findByName(name: String) = repository.findByName(name)
 
-    @Transactional
-    override def create(a: UserGroup) = {
-        validCreate(a, a => repository.insert(a))
+  @Transactional(readOnly = true)
+  def search(nameLike: String): List[UserGroup] = repository.search(nameLike)
+
+  @Transactional(readOnly = true)
+  def get(id: Int) = repository.get(id)
+
+  @Transactional(readOnly = true)
+  def doesGroupExist(groupName: String) = findByName(groupName).isDefined
+
+  @Transactional(readOnly = true)
+  def doGroupsExist(groupNames: Seq[String]) = groupNames.forall { doesGroupExist(_) }
+
+  @Transactional
+  override def create(a: UserGroup): ExtendedResult[UserGroup] = {
+    val users = a.users.getOrElse(Seq())
+    validCreate(a, a => {
+      val newGroup = repository.insert(a)
+      newGroup.id.map(i => users.map(u => repository.addUserToGroup(i, u)))
+      newGroup
+    })
+  }
+
+  @Transactional
+  override def update(group: UserGroup): ExtendedResult[UserGroup] = {
+    val users = group.users.getOrElse(Seq())
+    validUpdate(group, a => {
+      val group = repository.update(a)
+      repository.removeAllUsersFromGroup(group.id.get)
+      group.id.map(i => users.map(u => repository.addUserToGroup(i, u)))
+      group
+    })
+  }
+
+  @Transactional(readOnly = false)
+  def setUsersGroups(username: String, groups: Seq[String]) {
+    list.foreach{g =>
+      g.id.map {
+        if(groups.contains(g.name))
+          addUserToGroup(_, username)
+        else
+          removeUserFromGroup(_, username)
+      }
     }
+  }
 
-    @Transactional
-    def create(a: UserGroup, users: List[String]) = {
-        validCreate(a, a => {
-            val newGroup = repository.insert(a)
-            newGroup.id.map(i => users.map(u => repository.addUserToGroup(i, u)))
-            newGroup
-        })
+  @Transactional
+  override def delete(a: UserGroup) = {
+    authorityService.removeAuthoritiesFromGroup(a.name)
+    repository.removeAllUsersFromGroup(a.id.get)
+    repository.delete(a)
+    Success(a)
+  }
+
+  @Transactional(readOnly = true)
+  def users(id: Int) = repository.usersForGroup(id).getOrElse(Seq())
+
+  @Transactional
+  def addUserToGroup(id: Int, username: String) =  {
+    if(!users(id).exists(_.username == username)) {
+      repository.addUserToGroup(id, username)
     }
+    Success((id, username))
+  }
 
-    @Transactional
-    def update(group: UserGroup, users: List[String]) = {
-      validUpdate(group, a => {
-          val group = repository.update(a)
-          repository.removeAllUsersFromGroup(group.id.get)
-          group.id.map(i => users.map(u => repository.addUserToGroup(i, u)))
-          group
-      })
+  @Transactional
+  def removeUserFromGroup(id: Int, username: String) = {
+    repository.removeUserFromGroup(id, username)
+    Success((id, username))
+  }
+
+ protected def validateUpdate(c: UserGroup) =
+  mustExist(c){it => get(it.id.get)} ++
+  must(c, "Group name change is not allowed") { it => get(it.id.get).get.name == c.name } ++
+  must(c, "Group with name '" + c.name + "' already exists"){ g =>
+    findByName(g.name) match {
+      case None => true
+      case Some(group) => group.id == g.id
     }
+  } ++
+  validateUsers(c)
 
-    @Transactional(readOnly = true)
-    def getUsersGroups(username: String) = repository.groupsForUser(username)
+  protected def validateCreation(c: UserGroup) =
+    must(c, "Group with name '" + c.name + "' already exists") {c => findByName(c.name).isEmpty} ++
+    validateUsers(c)
 
-    @Transactional(readOnly = false)
-    def setUsersGroups(username: String, groups: Seq[String]) {
-        list.foreach{g =>
-            g.id.map(if(groups.contains(g.name))
-                addUserToGroup(_, username) else
-                removeUserFromGroup(_, username))
-        }
+  def validateUsers(c: UserGroup): ExtendedResult[UserGroup] = {
+    if (!userService.doUsersExist(c.users.getOrElse(Seq()))) {
+      Failure(compoundServiceErrors = Seq("Some of usernames in list is not found"), isNotFound = true)
+    } else {
+      Success(c)
     }
-
-    @Transactional
-    override def delete(a: UserGroup) = {
-        authorityService.removeAuthoritiesFromGroup(a.name)
-        repository.removeAllUsersFromGroup(a.id.get)
-        repository.delete(a)
-        Success(a)
-    }
-
-    @Transactional(readOnly = true)
-    def users(id: Int) = repository.usersForGroup(id) match {
-        case None => Seq()
-        case Some(list) => list
-    }
-
-    @Transactional
-    def addUserToGroup(id: Int, username: String) =  users(id).filter(_.username == username).isEmpty match {
-        case true =>
-        repository.addUserToGroup(id, username)
-        Success((id, username))
-        case _ => Success((id, username))
-    }
-
-    @Transactional
-    def removeUserFromGroup(id: Int, username: String) = {
-        repository.removeUserFromGroup(id, username)
-        Success((id, username))
-    }
-
-    @Transactional(readOnly = true)
-    def get(id: Int) = {
-        repository.get(id)
-    }
-
-    private def validate(c: UserGroup) : ExtendedResult[UserGroup] = {
-        notEmpty(c, c.description, "Description") ++
-        mustMatchName(c, c.name, "Group name") ++
-        must(c, "Mailing list must contain E-mail address. Only lowercase letters are allowed"){ g =>
-            g.mailingList match {
-                case None => true
-                case Some("") => true
-                case Some(mailingList) => mustMatchEmail(g, mailingList, "Mailing list").isInstanceOf[Success[UserGroup]]
-            }
-        }
-    }
-
-    protected def validateUpdate(c: UserGroup) =
-        validate(c) ++
-        mustExist(c){it => get(it.id.get)} ++
-        must(c, "Group name change is not allowed") { it => get(it.id.get).get.name == c.name } ++
-        must(c, "Group with name '" + c.name + "' already exists"){ g =>
-            findByName(g.name) match {
-                case None => true
-                case Some(group) => group.id == g.id
-            }
-        }
-
-
-    protected def validateCreation(c: UserGroup) =
-        validate(c) ++
-        must(c, "Group name must be unique") {c => findByName(c.name).isEmpty}
-
-    @Transactional(readOnly = true)
-    def doesGroupExist(groupName: String) = findByName(groupName).isDefined
-
-    @Transactional(readOnly = true)
-    def doGroupsExist(groupNames: Seq[String]) = groupNames.forall { doesGroupExist(_) }
+  }
 }

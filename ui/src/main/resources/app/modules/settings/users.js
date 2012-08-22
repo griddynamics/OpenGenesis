@@ -200,8 +200,8 @@ function(genesis, Backbone, status, backend, $) {
         lastName: $("input[name='last_name']").val(),
         email: $("input[name='e-mail']").val(),
         jobTitle: $("input[name='job_title']").val(),
-        groups: groups,
-        password: $("input[name='password']").val()
+        password: $("input[name='password']").val(),
+        groups: groups
       });
 
       var user = this.user,

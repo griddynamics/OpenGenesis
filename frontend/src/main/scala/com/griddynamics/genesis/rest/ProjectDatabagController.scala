@@ -24,10 +24,10 @@ package com.griddynamics.genesis.rest
 
 import org.springframework.stereotype.Controller
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.bind.annotation.{PathVariable, ResponseBody, RequestMethod, RequestMapping}
-import javax.servlet.http.HttpServletRequest
+import org.springframework.web.bind.annotation._
 import com.griddynamics.genesis.service.DataBagService
-import com.griddynamics.genesis.service.impl.ProjectService
+import com.griddynamics.genesis.api.DataBag
+import javax.validation.Valid
 
 @Controller
 @RequestMapping(value = Array("/rest/projects/{projectId}/databags"))
@@ -37,46 +37,38 @@ class ProjectDatabagController extends RestApiExceptionsHandler {
 
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
-  def listForProject(@PathVariable("projectId") projectId: Int) = {
-    databagService.listForProject(projectId)
-  }
+  def listForProject(@PathVariable("projectId") projectId: Int) = databagService.listForProject(projectId)
 
   @RequestMapping(value = Array("{databagId}"), method = Array(RequestMethod.PUT))
   @ResponseBody
-  def updateForProject(@PathVariable("projectId") projectId: Int, @PathVariable("databagId") databagId: Int, request: HttpServletRequest) = {
-    val databag = DatabagController.extractDatabag(request, Some(databagId), Some(projectId))
-    databagService.update(databag)
+  def updateForProject(@PathVariable("projectId") projectId: Int,
+                       @PathVariable("databagId") databagId: Int,
+                       @RequestBody @Valid databag: DataBag) = {
+    databagService.update(databag.copy(id = Some(databagId), projectId = Some(projectId)))
   }
 
-    @RequestMapping(value = Array("{databagId}"), method = Array(RequestMethod.GET))
-    @ResponseBody
-    def find(@PathVariable("projectId") projectId: Int, @PathVariable("databagId") databagId: Int, request: HttpServletRequest) = {
-        val bag = databagService.get(databagId).getOrElse(throw new ResourceNotFoundException("Couldn't find databag"))
-        bag.projectId.map(id => {
-            if (id == projectId) {
-                bag
-            } else {
-                throw new ResourceNotFoundException("Couldn't find databag")
-            }
-        }).getOrElse(throw new ResourceNotFoundException("Couldn't find databag"))
-    }
+  @RequestMapping(value = Array("{databagId}"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  def find(@PathVariable("projectId") projectId: Int, @PathVariable("databagId") databagId: Int) = {
+      val bag = for {
+        databag <- databagService.get(databagId)
+        project <- databag.projectId
+        if project == projectId
+      } yield databag
+
+      bag.getOrElse(throw new ResourceNotFoundException("Couldn't find databag"))
+  }
 
   @RequestMapping(method = Array(RequestMethod.POST))
   @ResponseBody
-  def create(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = {
-    val databag = DatabagController.extractDatabag(request, None, Some(projectId))
-    databagService.create(databag)
+  def create(@PathVariable("projectId") projectId: Int, @Valid @RequestBody databag: DataBag) = {
+    databagService.create(databag.copy(projectId = Some(projectId)))
   }
 
   @RequestMapping(value = Array("{databagId}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
-  def delete(@PathVariable("projectId") projectId: Int, @PathVariable("databagId") databagId: Int, request: HttpServletRequest) = {
-    val bag = databagService.get(databagId).getOrElse(throw new ResourceNotFoundException("Couldn't find databag"))
-    bag.projectId.map(id => {
-        if (id == projectId)
-            databagService.delete(bag)
-        else
-            throw new InvalidInputException
-    }).getOrElse(throw new InvalidInputException)
+  def delete(@PathVariable("projectId") projectId: Int, @PathVariable("databagId") databagId: Int) = {
+    val bag = find(projectId, databagId)
+    databagService.delete(bag)
   }
 }

@@ -23,7 +23,7 @@
 package com.griddynamics.genesis.api
 
 import java.util
-import annotation.target.field
+import com.griddynamics.genesis.validation.FieldConstraints._
 
 trait Identifiable[T] {
   def id: T
@@ -142,23 +142,60 @@ final case class Failure(serviceErrors : Map[String, String] = Map(),
                          isSuccess: Boolean = false,
                          stackTrace: Option[String] = None) extends ExtendedResult[Nothing]
 
-case class User(username: String, email: String, firstName: String, lastName: String, jobTitle: Option[String], password: Option[String])
-case class UserGroup(name: String, description: String, mailingList: Option[String], id: Option[Int] = None)
+case class User( @Size(min = 2, max = 32) @Pattern(regexp = "[a-z0-9.\\-_]*", message = "{validation.invalid.name}")
+                 username: String,
+                 @Email @Size(min = 1, max = 256)
+                 email: String,
+                 @Size(min = 1, max = 256) @NotBlank @Pattern(regexp = "[\\p{L} ]*", message = "{validation.invalid.person.name}")
+                 firstName: String,
+                 @Size(min = 1, max = 256) @NotBlank @Pattern(regexp = "[\\p{L} ]*", message = "{validation.invalid.person.name}")
+                 lastName: String,
+                 @OptString(max = 128, notBlank = true)
+                 jobTitle: Option[String],
+                 @OptString(notBlank = true)
+                 password: Option[String],
+                 groups: Option[Seq[String]] = None)
 
-case class Project(id: Option[Int],
-                   name: String,
-                   creator: String,
-                   creationTime: Long,
-                   description: Option[String],
-                   projectManager: String,
-                   isDeleted: Boolean = false,
-                   removalTime: Option[Long] = None) extends Identifiable[Option[Int]]
+case class UserGroup( @Size(min = 2, max = 32) @Pattern(regexp = "[a-z0-9.\\-_]*", message = "{validation.invalid.name}")
+                      name: String,
+                      @NotBlank
+                      description: String,
+                      @OptEmail
+                      mailingList: Option[String],
+                      id: Option[Int] = None,
+                      users: Option[Seq[String]] = None)
+
+case class Project( id: Option[Int],
+                    name: String,
+                    creator: String,
+                    creationTime: Long,
+                    projectManager: String,
+                    description: Option[String],
+                    isDeleted: Boolean = false,
+                    removalTime: Option[Long] = None ) extends Identifiable[Option[Int]]
+
+
+case class ProjectAttributes (@Size(min = 1, max = 128) @NotBlank @Pattern(regexp = "[\\p{L}0-9.\\-_ ]*", message = "{validation.invalid.title}")
+                             name: String,
+                             @Size(min = 2, max = 128) @NotBlank @Pattern(regexp = "[\\p{L} ]*", message = "{validation.invalid.person.name}")
+                             projectManager: String,
+                             @OptString(max = 2)
+                             description: Option[String] ) //TODO!!!!
 
 case class ConfigProperty(name: String, value: String, readOnly: Boolean, description: Option[String] = None)
 
-case class DataItem(id: Option[Int], name: String, value: String, dataBagId: Int)
+case class DataItem( id: Option[Int],
+                     @Size(min = 1, max = 256) @NotBlank
+                     name: String,
+                     @Size(max = 256)
+                     value: String,
+                     dataBagId: Option[Int] )
 
-case class DataBag(id: Option[Int], name: String, tags: Seq[String], projectId: Option[Int] = None, items: Option[Seq[DataItem]] = None)
+case class DataBag( id: Option[Int],
+                    @Size(min = 1, max = 128) @NotBlank name: String,
+                    tags: Seq[String],
+                    projectId: Option[Int] = None,
+                    @ValidSeq items: Seq[DataItem] = Seq() )
 
 case class Plugin(id: String, description: Option[String])
 
@@ -166,9 +203,9 @@ case class PluginDetails(id: String,  description: Option[String], configuration
 
 case class Credentials( id: Option[Int],
                         projectId: Int,
-                        cloudProvider: String,
-                        pairName: String,
-                        identity: String,
+                        @Size(min = 1, max = 128) @NotBlank cloudProvider: String,
+                        @Size(min = 1, max = 128) @NotBlank pairName: String,
+                        @Size(min = 1, max = 128) @NotBlank identity: String,
                         credential: Option[String],
                         fingerPrint: Option[String] = None)
 
@@ -176,9 +213,19 @@ case class AuthorityDescription(name: String, users: List[String], groups: List[
 
 case class ActionTracking(uuid: String, name: String, description: Option[String], startedTimestamp: Long, finishedTimestamp: Option[Long], status: String)
 
-case class ServerArray(id: Option[Int], projectId: Int, name: String, description: Option[String])
+case class ServerArray( id: Option[Int],
+                        projectId: Int,
+                        @Size(min = 1, max = 128) @NotBlank
+                        name: String,
+                        @OptString(min = 0, max = 128, notBlank = true)
+                        description: Option[String] ) {
+}
 
-case class Server(id: Option[Int], arrayId: Int, instanceId: String, address: String, credentialsId: Option[Int]) {
+case class Server(id: Option[Int],
+                  arrayId: Int,
+                  instanceId: String,
+                  address: String,
+                  credentialsId: Option[Int]) {
   def this(id: Option[Int], arrayId: Int, address: String, credentialsId: Option[Int]) = this(id, arrayId, util.UUID.randomUUID().toString, address, credentialsId )
 }
 

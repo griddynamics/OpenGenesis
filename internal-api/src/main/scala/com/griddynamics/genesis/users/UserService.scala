@@ -29,10 +29,6 @@ import com.griddynamics.genesis.api.{Failure, ExtendedResult, User}
 trait UserService extends CRUDService[User, String] {
     @Transactional(readOnly = true)
     override def get(key: String) = findByUsername(key)
-    @Transactional(readOnly = false)
-    def create(user: User, groups: Seq[String]) : ExtendedResult[User]
-    @Transactional(readOnly = false)
-    def update(user: User, groups: Seq[String]) : ExtendedResult[User]
     @Transactional(readOnly = true)
     def getWithCredentials(username: String): Option[User]
     @Transactional(readOnly = true)
@@ -47,28 +43,16 @@ trait UserService extends CRUDService[User, String] {
 }
 
 class UserServiceStub extends UserService {
-    @Transactional(readOnly = false)
-    def create(user: User, groups: Seq[String]) = Failure(compoundServiceErrors = Seq("Not implemented"))
-
-    @Transactional(readOnly = false)
-    def update(user: User, groups: Seq[String]) = Failure(compoundServiceErrors = Seq("Not implemented"))
-
-    @Transactional(readOnly = true)
     def getWithCredentials(username: String) = throw new UnsupportedOperationException
 
-    @Transactional(readOnly = true)
     def findByUsername(username: String) = throw new UnsupportedOperationException
 
-    @Transactional(readOnly = true)
     def search(usernameLike: String) = throw new UnsupportedOperationException
 
-    @Transactional(readOnly = true)
     def doesUserExist(userName: String) = throw new UnsupportedOperationException
 
-    @Transactional(readOnly = true)
     def doUsersExist(userNames: Seq[String]) = throw new UnsupportedOperationException
 
-    @Transactional(readOnly = true)
     def list = throw new UnsupportedOperationException
 
     override val isReadOnly = true

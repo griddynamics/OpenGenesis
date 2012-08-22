@@ -28,6 +28,7 @@ import net.liftweb.json.{Serialization, MappingException}
 import org.springframework.http.{MediaType, HttpStatus}
 import com.griddynamics.genesis.api.Failure
 import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.validation.{ObjectError, FieldError}
 
 trait RestApiExceptionsHandler {
     implicit val formats = net.liftweb.json.DefaultFormats
@@ -72,7 +73,16 @@ trait RestApiExceptionsHandler {
     @ExceptionHandler(value = Array(classOf[MethodArgumentNotValidException]))
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     def handleValidation(response : HttpServletResponse, exception: MethodArgumentNotValidException) {
+      import scala.collection.JavaConversions._
+      val errors = exception.getBindingResult.getAllErrors
+      val fieldErrors = errors.collect { case error: FieldError =>
+        ( error.getField, error.getDefaultMessage)
+      }
+      val servErrors = errors.collect {case error: ObjectError if !error.isInstanceOf[FieldError] => error.getDefaultMessage }
 
-        response.getWriter.write("{\"error\":\"%s\"}".format(exception.getMessage))
+      response.getWriter.write(Serialization.write(
+        new Failure(isSuccess = false,  variablesErrors = fieldErrors.toMap, compoundServiceErrors = servErrors))
+      )
     }
+
 }
