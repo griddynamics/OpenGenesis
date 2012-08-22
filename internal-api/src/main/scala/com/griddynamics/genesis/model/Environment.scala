@@ -24,17 +24,21 @@ package com.griddynamics.genesis.model
 
 import com.griddynamics.genesis.model.EnvStatus._
 import org.squeryl.Optimistic
+import java.sql.Timestamp
 
 class Environment(val name: String,
                   var status: EnvStatus,
                   val creator: String,
+                  val creationTime: Timestamp,
+                  var modificationTime: Option[Timestamp],
+                  var modifiedBy: Option[String],
                   val templateName: String,
                   var templateVersion: String,
                   val projectId: GenesisEntity.Id) extends EntityWithAttrs with Optimistic {
-    def this() = this ("", Busy, "", "", "", 0)
+    def this() = this ("", Busy, "", new Timestamp(System.currentTimeMillis()), None, None, "", "", 0)
 
     def copy() = {
-        val env = new Environment(name, status, creator, templateName,
+        val env = new Environment(name, status, creator, creationTime, modificationTime, modifiedBy, templateName,
             templateVersion, projectId).importAttrs(this)
         env.id = this.id
         env
