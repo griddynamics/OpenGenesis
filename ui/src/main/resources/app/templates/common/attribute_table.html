@@ -1,3 +1,4 @@
+<% var now = new Date() %>
 <table class="main-table intab" >
   <tr>
     <td class="first">Manifest</td>
@@ -10,10 +11,19 @@
     </td>
   </tr>
   <tr>
-    <td class="first">Creator</td>
-    <td style="width: 80%"><%= environment.creator %></td>
+    <td class="first">Created</td>
+    <td style="width: 80%"><span class="time"><%= $.formatDate.date(environment.creationTime, utils.isSameDay(now, environment.creationTime) ? "HH:mm:ss" : "HH:mm:ss dd/MM/yyyy") %></span> by <span class="username"><%= environment.creator %></span></td>
   </tr>
-
+  <tr>
+     <td class="first">Modified</td>
+     <td>
+     <% if (environment.modificationTime) { %>
+     <span class="time"><%= $.formatDate.date(environment.modificationTime, utils.isSameDay(now, environment.modificationTime) ? "HH:mm:ss" : "HH:mm:ss dd/MM/yyyy") %></span> by <span class="username"><%= environment.creator %></span>
+     <% } else { %>
+     N/A
+     <% } %>
+     </td>
+  </tr>
   <% for (var i = 0, keys = _.keys(attributes), count = keys.length; i < count; i++) { var key = keys[i]; var attr = attributes[key]; %>
   <tr>
     <td class="first"><%= attr.description %></td>

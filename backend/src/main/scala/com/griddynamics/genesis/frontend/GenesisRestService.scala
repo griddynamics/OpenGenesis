@@ -52,20 +52,20 @@ class GenesisRestService(storeService: StoreService,
 
     def listEnvs(projectId: Int) = {
         for ((env, workflowOption) <- storeService.listEnvsWithWorkflow(projectId)) yield
-            Environment(env.id, env.name, env.status.toString, stepsCompleted(workflowOption),
-                env.creator, env.templateName, env.templateVersion, env.projectId)
+            Environment(env.id, env.name, env.status.toString, stepsCompleted(workflowOption), env.creator,
+              env.creationTime.getTime, env.modificationTime.map(_.getTime), env.modifiedBy, env.templateName, env.templateVersion, env.projectId)
     }
 
   def listEnvs(projectId: Int, statuses: Seq[String]) = {
     for ((env, workflowOption) <- storeService.listEnvsWithWorkflow(projectId, statuses.map(EnvStatus.withName(_)))) yield
-      Environment(env.id, env.name, env.status.toString, stepsCompleted(workflowOption),
-        env.creator, env.templateName, env.templateVersion, env.projectId)
+      Environment(env.id, env.name, env.status.toString, stepsCompleted(workflowOption), env.creator,
+        env.creationTime.getTime, env.modificationTime.map(_.getTime), env.modifiedBy, env.templateName, env.templateVersion, env.projectId)
   }
 
   def listEnvs(projectId: Int, start : Int, limit : Int) = {
         for ((env, workflowOption) <- storeService.listEnvsWithWorkflow(projectId, start, limit)) yield
-            Environment(env.id, env.name, env.status.toString, stepsCompleted(workflowOption),
-                env.creator, env.templateName, env.templateVersion, env.projectId)
+            Environment(env.id, env.name, env.status.toString, stepsCompleted(workflowOption), env.creator,
+              env.creationTime.getTime, env.modificationTime.map(_.getTime), env.modifiedBy, env.templateName, env.templateVersion, env.projectId)
     }
 
     def countEnvs(projectId: Int) : Int = storeService.countEnvs(projectId)
@@ -208,6 +208,9 @@ object GenesisRestService {
             env.name,
             env.status.toString,
             env.creator,
+            env.creationTime.getTime,
+            env.modificationTime.map(_.getTime),
+            env.modifiedBy,
             env.templateName,
             env.templateVersion,
             workflows,
