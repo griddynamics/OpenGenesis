@@ -1,7 +1,7 @@
 package com.griddynamics.genesis.template.dsl.groovy
 
 import com.griddynamics.genesis.template.{VarDataSource, DataSourceFactory}
-import groovy.lang.{Closure, GroovyObjectSupport}
+import groovy.lang.{MissingPropertyException, Closure, GroovyObjectSupport}
 import collection.mutable.ListBuffer
 import reflect.BeanProperty
 
@@ -52,6 +52,7 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
     @BeanProperty var isOptional: Boolean = false
 
     var validators = new collection.mutable.LinkedHashMap[String, Closure[Boolean]]
+    var props = new collection.mutable.LinkedHashMap[String, AnyRef]
     var parents = new ListBuffer[String]
     var dataSourceRef: Option[String] = None
     var useOneOf: Boolean = false
@@ -138,9 +139,9 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
             import collection.JavaConversions._
             dsObjSupport.foreach(oneOf.setDelegate(_))
             val values = Option({ _: Any => oneOf.call().map(kv => (kv._1, kv._2)).toMap})
-            validators.put("Validation failed", new Closure[Boolean]() {
+            validator(new Closure[Boolean](this.oneOf) {
                 def doCall(args: Array[Any]): Boolean = {
-                    values.get.apply().asInstanceOf[Map[String,String]].exists(_._2.toString == args(0).toString)
+                    values.get.apply().exists(_._2.toString == args(0).toString)
                 }
             })
             values
@@ -163,7 +164,26 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
         }
     }
 
-    def newVariable = new VariableDetails(name, clazz, description, validators.toSeq, isOptional, Option(defaultValue), valuesList, parents.toList)
+    def newVariable = {
+      val values = valuesList
+      new VariableDetails(name, clazz, description, validators.toSeq, isOptional, Option(defaultValue), values, parents.toList)
+    }
+
+    override def setProperty(property: String, arg: AnyRef) {
+       if (super.getMetaClass.hasProperty(this, property) != null) {
+           super.setProperty(property, arg)
+       } else {
+           props.put(property, arg)
+       }
+    }
+
+    override def getProperty(property: String): AnyRef = {
+        if (super.getMetaClass.hasProperty(this, property) != null) {
+            super.getProperty(property)
+        } else{
+            props.get(property).getOrElse(throw new MissingPropertyException(property, this.getClass))
+       }
+    }
 }
 
 
