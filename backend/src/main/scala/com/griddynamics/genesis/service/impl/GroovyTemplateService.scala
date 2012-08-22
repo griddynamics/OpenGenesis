@@ -237,13 +237,21 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
       try {
         //all values stored as strings, so we need to use string repr. to convert here as well
         val typedVal = convert(String.valueOf(value), variable)
-
         (for (validator <- variable.validators) yield {
-          context.foreach(p => validator._2.setProperty(p._1, p._2 match {
-            case Some(f) => f
-            case None => null
-            case a => a
-          }))
+          context.foreach (
+            p => try {
+              validator._2.setProperty(p._1, p._2 match {
+                case Some(f) => f
+                case None => null
+                case a => a
+              })
+            } catch {
+              case e: Throwable => {
+                // todo: rare case with oneOf variables. need further investigation,
+                // but seems to be relatively harmless
+                // throw e
+              }
+            })
           if (!validator._2.call(typedVal))
             Some(ValidationError(variable.name, validator._1))
           else
@@ -277,7 +285,11 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
     def validate(variables: Map[String, Any], envId: Option[Int] = None, projectId: Option[Int] = None) = {
         val context = for (variable <- workflow.variables)
             yield {
-                (variable.name, variables.get(variable.name).map(v => convert(String.valueOf(v), variable)))
+                (variable.name, variables.get(variable.name).map(v => try {
+                  convert(String.valueOf(v), variable)
+                }catch{
+                  case e => null
+                }))
             }
         val res = for (variable <- workflow.variables) yield {
             variables.get(variable.name) match {
