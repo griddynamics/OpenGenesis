@@ -46,7 +46,7 @@ class LocalUserRepository extends AbstractGenericRepository[LocalUser, User](Loc
     def findByUsername(s: String): Option[User] = {
         from (LocalUserSchema.users) {
             item => where (
-                item.username === s and
+                lower(item.username) === s.toLowerCase and
                 item.deleted === false
             ).select(item)
         }.headOption match {
@@ -58,7 +58,7 @@ class LocalUserRepository extends AbstractGenericRepository[LocalUser, User](Loc
     def findByEmail(email: String) : Option[User] = {
         from (LocalUserSchema.users) {
             item => where (
-                item.email  === email
+                lower(item.email)  === email.toLowerCase
             ).select(item)
         }.headOption.map(convert(_))
     }
