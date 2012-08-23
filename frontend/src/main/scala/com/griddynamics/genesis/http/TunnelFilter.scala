@@ -111,9 +111,9 @@ object TunnelFilter extends Logging {
         import collection.JavaConversions._
         val context: SecurityContext = SecurityContextHolder.getContext
         if (context != null && context.getAuthentication != null)
-         context.getAuthentication.getAuthorities.toSeq.map(ga => ga.getAuthority.stripPrefix("ROLE_"))
+            context.getAuthentication.getAuthorities
         else
-         Seq()
+            java.util.Collections.emptyList()
     }
 }
 
