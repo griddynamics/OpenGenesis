@@ -519,6 +519,11 @@ div.system-settings {
     margin-top: 5px;
 }
 
+#management-panel .env-status {
+    text-align: right;
+    width: 119px;
+}
+
 #tools-panel {
     float: right;
     padding-top: 24px;
