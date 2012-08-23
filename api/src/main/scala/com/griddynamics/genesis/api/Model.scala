@@ -179,8 +179,7 @@ case class ProjectAttributes (@Size(min = 1, max = 128) @NotBlank @Pattern(regex
                              name: String,
                              @Size(min = 2, max = 128) @NotBlank @Pattern(regexp = "[\\p{L} ]*", message = "{validation.invalid.person.name}")
                              projectManager: String,
-                             @OptString(max = 2)
-                             description: Option[String] ) //TODO!!!!
+                             description: Option[String] )
 
 case class ConfigProperty(name: String, value: String, readOnly: Boolean, description: Option[String] = None)
 
