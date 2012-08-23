@@ -56,6 +56,8 @@ trait GenesisSchema extends Schema {
 
     val dataBags = table[DataBag]("databag")
     val dataBagItems = table[DataBagItem]("databag_item")
+
+    val genesisVersion = table[GenesisVersion]("genesis_version")
 }
 
 trait GenesisSchemaPrimitive extends GenesisSchema {
@@ -174,6 +176,10 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
       columns(item.dataBagId, item.itemKey) are (unique),
       item.itemKey is (dbType("varchar(256)")),
       item.itemValue is (dbType("varchar(256)"))
+    ))
+
+    on(genesisVersion)(v => declare(
+        v.versionId is (dbType("varchar(64)"))
     ))
 }
 
