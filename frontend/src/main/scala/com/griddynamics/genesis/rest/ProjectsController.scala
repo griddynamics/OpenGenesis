@@ -12,8 +12,8 @@ import com.griddynamics.genesis.users.GenesisRole
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import com.griddynamics.genesis.service.ProjectAuthorityService
 import com.griddynamics.genesis.validation.Validation
-import scala.Some
 import com.griddynamics.genesis.api.Project
+import javax.validation.Valid
 
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
@@ -41,7 +41,6 @@ import com.griddynamics.genesis.api.Project
 @RequestMapping(value = Array("/rest/projects"))
 class ProjectsController extends RestApiExceptionsHandler {
 
-
   @Autowired var projectService: ProjectService = _
   @Autowired var authorityService: ProjectAuthorityService = _
 
@@ -64,9 +63,16 @@ class ProjectsController extends RestApiExceptionsHandler {
 
   @RequestMapping(method = Array(RequestMethod.POST))
   @ResponseBody
-  def createProject(request: HttpServletRequest, response: HttpServletResponse) = {
-    val paramsMap = extractParamsMap(request)
-    val project = extractProject(None, paramsMap)
+  def createProject(@Valid @RequestBody attr: ProjectAttributes) = {
+    val project = Project(
+      id = None,
+      name = attr.name,
+      projectManager = attr.projectManager,
+      creator = getCurrentUser,
+      creationTime = System.currentTimeMillis(),
+      description = attr.description
+    )
+
     projectService.create(project)
   }
 
@@ -78,30 +84,16 @@ class ProjectsController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.PUT))
   @ResponseBody
-  def updateProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response: HttpServletResponse) = {
-    val paramsMap = GenesisRestController.extractParamsMap(request)
-    val project = extractProject(Option(projectId), paramsMap)
-    projectService.get(projectId) match {
-      case Some(p) => projectService.update(project)
-      case _ => throw new ResourceNotFoundException("Project [id = " + projectId + "]  was not found")
-    }
+  def updateProject(@PathVariable("projectId") projectId: Int, @Valid @RequestBody attr: ProjectAttributes) = {
+    val project = findProject(projectId).copy(name = attr.name, projectManager =  attr.projectManager, description = attr.description)
+    projectService.update(project)
   }
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
-  def deleteProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response: HttpServletResponse) = {
-    projectService.get(projectId) match {
-      case Some(project) => projectService.delete(project)
-      case _ => throw new ResourceNotFoundException("Project [id = %s] was not found".format(projectId))
-    }
-  }
-
-  private def extractProject(projectId: Option[Int], paramsMap: Map[String, Any]): Project = {
-    val name = extractNotEmptyValue("name", paramsMap).trim
-    val projectManager = extractNotEmptyValue("projectManager", paramsMap).trim
-    val description = extractOption("description", paramsMap).map(_.trim)
-
-    new Project(projectId, name, getCurrentUser, System.currentTimeMillis(), description, projectManager)
+  def deleteProject(@PathVariable("projectId") projectId: Int) = {
+    val project = findProject(projectId)
+    projectService.delete(project)
   }
 
   @RequestMapping(value = Array("{projectId}/roles/{roleName}"), method = Array(RequestMethod.PUT))

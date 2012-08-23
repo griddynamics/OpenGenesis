@@ -48,9 +48,7 @@ class DataBagServiceImpl(repository: DatabagRepository) extends DataBagService w
 
   def commonValidate (bag: DataBag): ExtendedResult[DataBag] = {
     mustNotHaveDuplicateItems(bag) ++
-      mustSatisfyLengthConstraints(bag, bag.name, "name")(1, 128) ++
-      mustSatisfyLengthConstraints(bag, bag.tags.mkString(" "), "tags")(0, 510) ++
-      mustHaveAllItemsWithValidLength(bag)
+      mustSatisfyLengthConstraints(bag, bag.tags.mkString(" "), "tags")(0, 510)
   }
 
   protected def validateCreation(bag: DataBag) = {
@@ -60,18 +58,8 @@ class DataBagServiceImpl(repository: DatabagRepository) extends DataBagService w
     }
   }
 
-  def mustHaveAllItemsWithValidLength(bag: DataBag) = {
-    val invalidItems = bag.items.getOrElse(List()).collect { case item if item.name.length > 256 || item.value.length > 256 => item }
-    if (invalidItems.size > 0) {
-      Failure(compoundServiceErrors = invalidItems.map( itm => "Property '%s' violates length constraint (max 256)".format(itm.name)).toSeq)
-    } else {
-      Success(bag)
-    }
-  }
-
   def mustNotHaveDuplicateItems(bag: DataBag) =  {
-    val duplicates = bag.items.getOrElse(List()).
-      groupBy(_.name).collect { case (name, items) if items.size > 1 => name }
+    val duplicates = bag.items.groupBy(_.name).collect { case (name, items) if items.size > 1 => name }
     if (duplicates.size > 0) {
       Failure(compoundServiceErrors = duplicates.map("Property name '%s' is duplicated".format(_)).toSeq)
     } else {

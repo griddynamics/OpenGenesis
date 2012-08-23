@@ -27,10 +27,9 @@ import com.griddynamics.genesis.validation.Validation
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.repository.ProjectRepository
 import com.griddynamics.genesis.validation.Validation._
-import com.griddynamics.genesis.api.{Success, Project}
+import com.griddynamics.genesis.api.Project
 import com.griddynamics.genesis.service
 import com.griddynamics.genesis.model.EnvStatus
-import java.sql.Timestamp
 
 trait ProjectService extends CRUDService[Project, Int] {
 
@@ -42,19 +41,14 @@ class ProjectServiceImpl(repository: ProjectRepository, storeService: service.St
   protected def validateCreation(project: Project) =
       must(project, "Project with name '" + project.name + "' already exists") {
         project => findByName(project.name).isEmpty
-      } ++
-      mustMatchProjectEnvName(project, project.name, "Name") ++
-      mustMatchPersonName(project, project.projectManager, "Manager")
+      }
 
   protected def validateUpdate(project: Project) =
-      mustMatchProjectEnvName(project, project.name, "Name") ++
-      mustMatchPersonName(project, project.projectManager, "Manager") ++
-      mustExist(project) { it => get(it.id.get) } ++
       must(project, "Project with name '" + project.name + "' already exists") {
         project => repository.findByName(project.name).forall { _.id == project.id}
       } ++
       must(project, "Deleted project can not have active environments") { project =>
-        !project.isDeleted || storeService.countEnvs(project.id.get, EnvStatus.active) == 0
+        project.isDeleted != true || storeService.countEnvs(project.id.get, EnvStatus.active) == 0
       }
 
   @Transactional(readOnly = true)

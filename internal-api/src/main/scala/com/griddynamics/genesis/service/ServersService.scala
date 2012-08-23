@@ -28,7 +28,7 @@ import api.{Server, ExtendedResult, ServerArray}
 trait ServersService {
   def update(array: ServerArray): ExtendedResult[ServerArray]
   def create(array: ServerArray): ExtendedResult[ServerArray]
-  def deleteServerArray(projectId: Int, id: Int): ExtendedResult[Option[_]]
+  def delete(array: ServerArray): ExtendedResult[_]
   def list(projectId: Int): Seq[api.ServerArray]
   def get(projectId: Int, id: Int): Option[api.ServerArray]
 

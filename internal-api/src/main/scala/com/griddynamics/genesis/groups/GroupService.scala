@@ -41,10 +41,6 @@ trait GroupService extends CRUDService[UserGroup, String]{
     def removeUserFromGroup(id: Int, username: String) : ExtendedResult[_]
     @Transactional(readOnly = true)
     def get(id: Int) : Option[UserGroup]
-    @Transactional(readOnly = false)
-    def create(a: UserGroup, users: List[String]) : ExtendedResult[UserGroup]
-    @Transactional(readOnly = false)
-    def update(group: UserGroup, users: List[String]) : ExtendedResult[UserGroup]
     @Transactional(readOnly = true)
     def getUsersGroups(username: String): Iterable[UserGroup]
     @Transactional(readOnly = false)
@@ -59,43 +55,26 @@ trait GroupService extends CRUDService[UserGroup, String]{
 }
 
 class GroupServiceStub extends GroupService {
-    @Transactional(readOnly = true)
     def findByName(name: String) = throw new UnsupportedOperationException
 
-    @Transactional(readOnly = true)
     def users(name: Int) = throw new UnsupportedOperationException
 
-    @Transactional(readOnly = false)
     def addUserToGroup(id: Int, username: String) = throw new UnsupportedOperationException
 
-    @Transactional(readOnly = false)
     def removeUserFromGroup(id: Int, username: String) = throw new UnsupportedOperationException
 
-    @Transactional(readOnly = true)
     def get(id: Int) = throw new UnsupportedOperationException
 
-    @Transactional(readOnly = false)
-    def create(a: UserGroup, users: List[String]) = throw new UnsupportedOperationException
-
-    @Transactional(readOnly = false)
-    def update(group: UserGroup, users: List[String]) = throw new UnsupportedOperationException
-
-    @Transactional(readOnly = true)
     def getUsersGroups(username: String) = throw new UnsupportedOperationException
 
-    @Transactional(readOnly = false)
     def setUsersGroups(username: String, groups: Seq[String]) {throw new UnsupportedOperationException}
 
-    @Transactional(readOnly = true)
     def search(nameLike: String) = throw new UnsupportedOperationException
 
-    @Transactional(readOnly = true)
     def doesGroupExist(groupName: String) = throw new UnsupportedOperationException
 
-    @Transactional(readOnly = true)
     def doGroupsExist(groupNames: Seq[String]) = throw new UnsupportedOperationException
 
-    @Transactional(readOnly = true)
     def list = throw new UnsupportedOperationException
 
     override val isReadOnly = true

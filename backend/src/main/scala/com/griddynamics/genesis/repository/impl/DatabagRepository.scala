@@ -54,13 +54,13 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
   }
 
   def convertItem(entity: model.DataBagItem): api.DataItem  = {
-    new api.DataItem(fromModelId(entity.id), entity.itemKey, entity.itemValue, entity.dataBagId)
+    new api.DataItem(fromModelId(entity.id), entity.itemKey, entity.itemValue, Option(entity.dataBagId))
   }
 
   @Transactional(readOnly = true)
   override def get(id: Int) = {
     val bag = super.get(id)
-    bag.map (_.copy(items = Some(getItems(id))))
+    bag.map (_.copy(items = getItems(id)))
   }
 
   @Transactional
@@ -69,8 +69,8 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
   @Transactional
   override def update(entity: DataBag) = saveItems(super.update(entity), entity.items)
 
-  private[this] def saveItems(bag: DataBag, items: Option[Seq[DataItem]]): DataBag = {
-    val persistedItems = items.map { updateItems(bag.id.get, _) }
+  private[this] def saveItems(bag: DataBag, items: Seq[DataItem]): DataBag = {
+    val persistedItems =  updateItems(bag.id.get, items)
     bag.copy(items = persistedItems )
   }
 
@@ -99,7 +99,7 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
       convertItem(bagId, it)
     }
     itemsTable.insert(entitites)
-    items.map (_.copy(dataBagId = bagId))
+    items.map (_.copy(dataBagId = Option(bagId)))
   }
 
   @Transactional(readOnly = true)
@@ -119,7 +119,7 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
   }
 
   private def convertWithItems(bag: Option[model.DataBag]): Option[DataBag] = {
-    bag.map(convert _).map(it => it.copy(items = Option(getItems(it.id.get))))
+    bag.map(convert _).map(it => it.copy(items = getItems(it.id.get)))
   }
 
     override def list = {

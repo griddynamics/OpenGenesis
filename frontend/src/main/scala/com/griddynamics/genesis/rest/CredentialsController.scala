@@ -30,6 +30,7 @@ import com.griddynamics.genesis.service.CredentialsStoreService
 import com.griddynamics.genesis.api
 import org.springframework.web.bind.annotation._
 import org.springframework.beans.factory.annotation.Autowired
+import javax.validation.Valid
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/credentials"))
@@ -39,7 +40,7 @@ class CredentialsController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
-  def create(@PathVariable("projectId") projectId: Int, @RequestBody creds: api.Credentials) = {
+  def create(@PathVariable("projectId") projectId: Int, @Valid @RequestBody creds: api.Credentials) = {
       service.create(creds).map(_.copy(credential = None))
   }
 
