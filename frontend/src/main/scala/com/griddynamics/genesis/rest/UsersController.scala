@@ -27,87 +27,61 @@ import org.springframework.stereotype.Controller
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.users.{UserServiceStub, UserService}
 import com.griddynamics.genesis.groups.GroupService
-import javax.servlet.http.HttpServletRequest
-import GenesisRestController._
 import org.springframework.web.bind.annotation._
-import com.griddynamics.genesis.api.{ExtendedResult, User}
+import com.griddynamics.genesis.api.User
+import javax.validation.Valid
 
 @Controller
 @RequestMapping(Array("/rest/users"))
 class UsersController extends RestApiExceptionsHandler {
 
-    @Autowired(required = false) var userServiceBean: UserService = _
-    @Autowired(required = false) var groupService: GroupService = _
+  @Autowired(required = false) var userServiceBean: UserService = _
+  @Autowired(required = false) var groupService: GroupService = _
 
-   private lazy val userService = Option(userServiceBean).getOrElse(UserServiceStub.get)
+  private lazy val userService = Option(userServiceBean).getOrElse(UserServiceStub.get)
 
-    @RequestMapping(method = Array(RequestMethod.GET), params = Array("available"))
-    @ResponseBody
-    def available() = !userService.isReadOnly
+  @RequestMapping(method = Array(RequestMethod.GET), params = Array("available"))
+  @ResponseBody
+  def available() = !userService.isReadOnly
 
-    @RequestMapping(method = Array(RequestMethod.GET))
-    @ResponseBody
-    def list() = userService.list
+  @RequestMapping(method = Array(RequestMethod.GET))
+  @ResponseBody
+  def list() = userService.list
 
-    @RequestMapping(method = Array(RequestMethod.GET), params = Array("tag"))
-    @ResponseBody
-    def pick(@RequestParam("tag") search: String) =
-      userService.search("*" + search + "*").map(item => Map("key" -> item.username, "value" -> item.username))
+  @RequestMapping(method = Array(RequestMethod.GET), params = Array("tag"))
+  @ResponseBody
+  def pick(@RequestParam("tag") search: String) =
+    userService.search("*" + search + "*").map(item => Map("key" -> item.username, "value" -> item.username))
 
-    @RequestMapping(value = Array("{username:.+}"), method=Array(RequestMethod.GET))
-    @ResponseBody
-    def user(@PathVariable(value = "username") username: String) = userService.findByUsername(username) match {
-        case Some(u) => u
-        case None => throw new ResourceNotFoundException("User[username = " + username + "] was not found")
-    }
+  @RequestMapping(value = Array("{username:.+}"), method=Array(RequestMethod.GET))
+  @ResponseBody
+  def get(@PathVariable(value = "username") username: String) = {
+    userService.findByUsername(username).getOrElse(throw new ResourceNotFoundException("User[username = " + username + "] was not found"))
+  }
 
-    @RequestMapping(method = Array(RequestMethod.POST))
-    @ResponseBody
-    def create(request: HttpServletRequest) = RequestReader.read(request) {
-        map => 
-        val user = readUser(map)
-        userService.create(user, readGroups(map, "groups"))
-    }
+  @RequestMapping(method = Array(RequestMethod.POST))
+  @ResponseBody
+  def create(@RequestBody @Valid request: User) = userService.create(request)
 
-    @RequestMapping(value = Array("{username:.+}"), method = Array(RequestMethod.PUT))
-    @ResponseBody
-    def update(@PathVariable username: String, request: HttpServletRequest) = {
-        val params: Map[String, Any] = extractParamsMap(request)
-        val userNew = User(username, extractValue("email", params), extractValue("firstName", params),
-            extractValue("lastName", params), extractOption("jobTitle", params), None)
-        withUser(username) {
-            _ => userService.update(userNew, readGroups(params, "groups"))
-        }
-    }
+  @RequestMapping(value = Array("{username:.+}"), method = Array(RequestMethod.PUT))
+  @ResponseBody
+  def update(@PathVariable username: String, @RequestBody @Valid request: User) = {
+    val user = get(username).copy(
+      email = request.email,
+      firstName = request.firstName,
+      lastName = request.lastName,
+      jobTitle = request.jobTitle,
+      groups = request.groups,
+      password = None
+    )
+    userService.update(user)
+  }
 
-    @RequestMapping(value = Array("{username:.+}"), method = Array(RequestMethod.DELETE))
-    @ResponseBody
-    def delete(@PathVariable(value="username") username: String) = {
-      withUser(username) {
-        user => userService.delete(user)
-      }
-    }
+  @RequestMapping(value = Array("{username:.+}"), method = Array(RequestMethod.DELETE))
+  @ResponseBody
+  def delete(@PathVariable(value="username") username: String) = userService.delete(get(username))
 
   @RequestMapping(value = Array("{userName}/groups"), method = Array(RequestMethod.GET))
   @ResponseBody
   def userGroups(@PathVariable("userName") userName: String) = groupService.getUsersGroups(userName)
-
-    def withUser(username: String)(block: User => ExtendedResult[User]) = {
-      userService.findByUsername(username) match {
-        case None => throw new ResourceNotFoundException("User [username = " + username + "] was not found")
-        case Some(group) => block(group)
-      }
-    }
-
-    private def readUser(map: Map[String, Any]) =
-        User(extractValue("username", map), extractValue("email", map), extractValue("firstName", map),
-             extractValue("lastName", map), extractOption("jobTitle", map), Some(extractValue("password", map)))
-
-
-    private def readGroups(map: Map[String, Any], paramName: String) : List[String] = {
-        map.getOrElse(paramName, List()) match {
-            case (x :: xs) => (x :: xs).map(_.toString)
-            case _ => List()
-        }
-    }
 }

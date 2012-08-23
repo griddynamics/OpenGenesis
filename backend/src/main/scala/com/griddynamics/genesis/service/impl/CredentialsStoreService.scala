@@ -86,10 +86,6 @@ class CredentialsStoreService(repository: CredentialsRepository, projectReposito
   protected def validateUpdate(c: api.Credentials): ExtendedResult[api.Credentials] = Failure()
 
   protected def validateCreation(c: api.Credentials) : ExtendedResult[api.Credentials] =
-    mustSatisfyLengthConstraints(c, c.pairName, "pairName")(1, 128) ++
-    mustSatisfyLengthConstraints(c, c.cloudProvider, "cloudProvider")(1, 128) ++
-    mustSatisfyLengthConstraints(c, c.identity, "identity")(1, 128) ++
-    (mustExist(c, "Project [id = %s] was not found".format(c.projectId)) { it => projectRepository.get(it.projectId) }) ++
     must(c, "key pair name must be unique per provider") {
       item => repository.find(item.projectId, item.cloudProvider, item.pairName).isEmpty
     }

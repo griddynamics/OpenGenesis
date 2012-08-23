@@ -27,7 +27,7 @@ class SystemContext(databagRepository: DatabagRepository, projectId: Option[Int]
     if (bag.isEmpty) {
       java.util.Collections.emptyMap()
     } else {
-      val bagItems = bag.get.items.getOrElse(List()).map { case item => (item.name, item.value) }
+      val bagItems = bag.get.items.map { case item => (item.name, item.value) }
       bagItems.toMap[String, String]
     }
   }

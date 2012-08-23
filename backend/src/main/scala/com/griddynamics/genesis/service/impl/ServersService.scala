@@ -46,8 +46,8 @@ class ServersServiceImpl(repository: ServerArrayRepository, serverRepo: ServerRe
   def get(projectId: Int, id: Int) = repository.get(projectId, id)
 
   @Transactional
-  def deleteServerArray(projectId: Int, id: Int) = {
-    if (repository.delete(projectId, id) > 0){
+  def delete(array: ServerArray) = {
+    if (repository.delete(array) > 0){
       Success(None)
     } else {
       Failure(isNotFound = true, compoundServiceErrors = List("No server array was found"))
@@ -56,7 +56,6 @@ class ServersServiceImpl(repository: ServerArrayRepository, serverRepo: ServerRe
 
   @Transactional(readOnly = true)
   def list(projectId: Int) = repository.list(projectId)
-
 
   @Transactional
   def create(server: Server) = validateServer(server).map( serverRepo.insert(_) )
@@ -98,8 +97,6 @@ class ServersServiceImpl(repository: ServerArrayRepository, serverRepo: ServerRe
   }
 
   protected def validateUpdate(c: ServerArray) =
-    mustSatisfyLengthConstraints(c, c.name, "name")(1, 128) ++
-    mustSatisfyLengthConstraints(c, c.description.getOrElse(""), "description")(0, 128) ++
     mustExist(c){ it => repository.get(it.projectId, it.id.get) } ++
     must(c, "Server array with name '" + c.name + "' already exists") {
       array => repository.findByName(array.name, array.projectId).forall { _.id == array.id}
@@ -107,8 +104,6 @@ class ServersServiceImpl(repository: ServerArrayRepository, serverRepo: ServerRe
 
 
   protected def validateCreation(c: ServerArray) =
-    mustSatisfyLengthConstraints(c, c.name, "name")(1, 128) ++
-    mustSatisfyLengthConstraints(c, c.description.getOrElse(""), "description")(0, 128) ++
     must(c, "Server array with name '" + c.name + "' already exists") {
         array => repository.findByName(array.name, array.projectId).isEmpty
     }

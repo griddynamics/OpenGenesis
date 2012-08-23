@@ -63,8 +63,8 @@ class ProjectRepository extends AbstractGenericRepository[model.Project, api.Pro
       case 0 => None
       case _ => Some(entity.id)
     }
-    new api.Project(id, entity.name, entity.creator, entity.creationTime.getTime, entity.description,
-      entity.projectManager, entity.isDeleted, entity.removalTime.map(_.getTime))
+    new api.Project(id, entity.name, entity.creator, entity.creationTime.getTime, entity.projectManager, entity.description,
+       entity.isDeleted, entity.removalTime.map(_.getTime))
   }
 
   override implicit def convert(dto: api.Project): model.Project = {

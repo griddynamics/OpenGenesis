@@ -209,7 +209,7 @@ function(genesis, Backbone, Users, status, backend, $) {
       $.when(this.group.save()).pipe(
         function success() {
           var roles = $("input[name='roles']:checked").map(function () {return this.value;}).get();
-          if(!isNew || roles.length > 0) {
+          if (!isNew || roles.length > 0) {
             return backend.AuthorityManager.saveGroupRoles(self.group.get('name'), roles);
           }
         },

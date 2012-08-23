@@ -29,10 +29,11 @@ import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.service.{CredentialsStoreService, ServersLoanService, ServersService}
 import com.griddynamics.genesis.rest.GenesisRestController._
 import com.griddynamics.genesis.api
-import api.{ServerDescription, ExtendedResult}
+import api.{ServerArray, ServerDescription, ExtendedResult}
 import scala.Some
 import com.griddynamics.genesis.service.impl.ProjectService
 import org.springframework.beans.factory.annotation.Autowired
+import javax.validation.Valid
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/server-arrays"))
@@ -44,9 +45,8 @@ class ServersController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
-  def create(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = {
-    val array = extractServerArray(request, projectId, None)
-    service.create(array)
+  def create(@PathVariable("projectId") projectId: Int, @Valid @RequestBody array: ServerArray) = {
+    service.create(array.copy(projectId = projectId))
   }
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
@@ -57,24 +57,23 @@ class ServersController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def get(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) = {
-    assertArrayBelongsToProject(projectId, id)
-    service.get(id, projectId)
+  def get(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int) = {
+    service.get(projectId, id).getOrElse(throw new ResourceNotFoundException("Server array wasn't found in project"))
   }
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
   def delete(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) = {
-    assertArrayBelongsToProject(projectId, id)
-    service.deleteServerArray(projectId, id)
+    service.delete(get(projectId, id))
   }
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.PUT))
   @ResponseBody
-  def updateServerArray(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) = {
-    assertArrayBelongsToProject(projectId, id)
-
-    val array = extractServerArray(request, projectId, Some(id))
+  def updateServerArray(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, @Valid @RequestBody request: ServerArray) = {
+    val array = get(projectId, id).copy(
+      name = request.name,
+      description = request.description
+    )
     service.update(array)
   }
 
@@ -82,7 +81,6 @@ class ServersController extends RestApiExceptionsHandler {
   @ResponseBody
   def addServer(@PathVariable("projectId") projectId: Int, @PathVariable("arrayId") arrayId: Int, request: HttpServletRequest) = {
     assertArrayBelongsToProject(projectId, arrayId)
-
     val server = extractServer(request, projectId, arrayId, None)
 
     server.credentialsId.foreach { assertCredentialsExistInProject(projectId, _) }
@@ -91,7 +89,7 @@ class ServersController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{arrayId}/servers"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def getServersInArray(@PathVariable("projectId") projectId: Int, @PathVariable("arrayId") arrayId: Int, request: HttpServletRequest): Seq[api.Server] = {
+  def getServersInArray(@PathVariable("projectId") projectId: Int, @PathVariable("arrayId") arrayId: Int): Seq[api.Server] = {
     assertArrayBelongsToProject(projectId, arrayId)
 
     service.getServers(arrayId)
@@ -101,8 +99,7 @@ class ServersController extends RestApiExceptionsHandler {
   @ResponseBody
   def deleteServer(@PathVariable("projectId") projectId: Int,
                    @PathVariable("arrayId") arrayId: Int,
-                   @PathVariable("serverId") serverId: Int,
-                   request: HttpServletRequest): ExtendedResult[_] = {
+                   @PathVariable("serverId") serverId: Int): ExtendedResult[_] = {
     assertArrayBelongsToProject(projectId, arrayId)
     service.deleteServer(arrayId, serverId)
   }
@@ -137,12 +134,5 @@ class ServersController extends RestApiExceptionsHandler {
     } else {
       new api.Server(id, arrayId, address, credentialsId)
     }
-  }
-
-  private[this] def extractServerArray(request: HttpServletRequest, projectId: Int, id: Option[Int]) = {
-    val params = extractParamsMap(request)
-    val description = extractOption("description", params)
-    val name = extractValue("name", params)
-    new api.ServerArray(id, projectId, name, description)
   }
 }

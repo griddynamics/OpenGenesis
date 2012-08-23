@@ -75,5 +75,5 @@ class JsonMessageConverter
 
     def canWrite(clazz: Class[_], mediaType: MediaType) = true
 
-    def canRead(clazz: Class[_], mediaType: MediaType) = clazz.getPackage == ApiPackage
+    def canRead(clazz: Class[_], mediaType: MediaType) = true;//clazz.getPackage == ApiPackage
 }
