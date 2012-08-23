@@ -228,7 +228,8 @@ function (genesis, backend, poller, status, EnvStatus, Backbone, $) {
       $.when(genesis.fetchTemplate(this.template)).done(function (tmpl) {
         view.$el.html(tmpl({
           environments: view.collection.filterToJSON(),
-          project: view.project
+          project: view.project,
+          utils: genesis.utils
         }));
 
         view.statusViews = {};

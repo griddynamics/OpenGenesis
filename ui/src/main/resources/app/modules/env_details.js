@@ -166,7 +166,7 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
       this.details.bind("change:vms", this.renderVirtualMachines, this);
       this.details.bind("change:servers", this.renderServers, this);
       this.details.bind("change:servers change:vms", this.checkServersAndVms, this);
-      this.details.bind("change:attributes", this.renderAttributes, this);
+      this.details.bind("change:attributes change:modificationTime", this.renderAttributes, this);
 
       this.executeWorkflowDialog = new ExecuteWorkflowDialog().
         bind('workflow-started', function(workflow) {
@@ -331,7 +331,8 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
       $.when(genesis.fetchTemplate(this.envAttributesTemplate)).done(function(tmpl) {
         view.$("#panel-tab-1").html(tmpl({
           attributes: view.details.get("attributes"),
-          environment: view.details.toJSON()
+          environment: view.details.toJSON(),
+          utils: genesis.utils
         }));
       });
     },

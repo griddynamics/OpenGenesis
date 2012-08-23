@@ -30,6 +30,7 @@ import scala.Left
 import scala.Some
 import scala.Right
 import com.griddynamics.genesis.validation.Validation
+import java.sql.Timestamp
 
 trait RequestBroker {
     def createEnv(projectId: Int, envName: String, envCreator : String,
@@ -74,8 +75,8 @@ class RequestBrokerImpl(storeService: StoreService,
             case None =>
         }
 
-        val env = new Environment(envName, EnvStatus.Busy,
-                                  envCreator, templateName, templateVersion, projectId)
+        val env = new Environment(envName, EnvStatus.Busy, envCreator,
+                            new Timestamp(System.currentTimeMillis()), None, None, templateName, templateVersion, projectId)
         val workflow = new Workflow(env.id, twf.name, envCreator,
                                     WorkflowStatus.Requested, 0, 0, variables, None, None)
 

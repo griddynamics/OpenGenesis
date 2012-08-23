@@ -953,6 +953,11 @@ table.main-table li.name {
     max-width: 150px;
     word-wrap: break-word;
 }
+
+table.main-table .time, table.main-table .username{
+    font-style: italic;
+}
+
 form.inplace {
     display: inline;
 }
