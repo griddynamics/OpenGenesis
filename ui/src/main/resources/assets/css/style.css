@@ -390,6 +390,7 @@ table th{
 
 #userinfo a.dropdown-toggle {
     color: #ffffff;
+    outline: none;
 }
 
 #header #header-content #userinfo div{
@@ -498,7 +499,7 @@ div.system-settings {
 
 #wrapper #management-panel #right{
 	float:right;
-	margin: 13px 20px 0 0;
+	margin: 10px 20px 0 0;
 }
 
 #wrapper #management-panel #right input{
@@ -515,6 +516,7 @@ div.system-settings {
 #wrapper #management-panel #right img.status{
 	margin-right:5px;
 	vertical-align: bottom;
+    margin-top: 5px;
 }
 
 #tools-panel {
@@ -1279,6 +1281,12 @@ table .pre {
     padding-top: 5px;
     width: 88%;
 }
+#workflow-parameters-form label.error {
+    background: url('../img/cross_circle.png');
+    background-position: 10px 5px !important;
+    text-align: left;
+    /*padding-top: 0;*/
+}
 
 #workflow-parameters-form input, #workflow-parameters-form select {
     width: 96%;
@@ -1340,6 +1348,7 @@ label.error {
     background-repeat: no-repeat !important;
     padding-left: 35px;
     display: inline-block;
+    min-height: 20px;
 }
 
 .template-processing-error-header-1 {

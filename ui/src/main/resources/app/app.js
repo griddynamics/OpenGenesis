@@ -200,8 +200,8 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Env
       if (user.administrator) {
         $(".system-settings").show();
       }
-
       if (user.logout_disabled) {
+        $("#logout_elt a").css("cursor", "default");
         $("#logout_elt .caret").remove();
         $("#logout_elt .dropdown-menu").remove();
       }

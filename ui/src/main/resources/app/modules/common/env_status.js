@@ -31,8 +31,8 @@ function (genesis, Backbone, $) {
     },
 
     renderProgress: function() {
-      var completed = this.model.get("workflowCompleted");
-      if (!_.isUndefined(completed) && this.model.get("status") === "Busy") {
+      var completed = this.model.get("workflowCompleted") || 0;
+      if (this.model.get("status") === "Busy") {
         this.$(".genesis-progressbar > .progress").progressbar({value: completed * 100});
       }
     },
