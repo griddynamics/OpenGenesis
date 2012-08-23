@@ -25,7 +25,7 @@ package com.griddynamics.genesis.configuration
 import org.springframework.context.annotation.{Configuration, Bean}
 import javax.sql.DataSource
 import org.squeryl.{Session, SessionFactory}
-import com.griddynamics.genesis.model.GenesisSchema
+import com.griddynamics.genesis.model.{GenesisVersion, GenesisSchema}
 import org.squeryl.internals.DatabaseAdapter
 import org.springframework.jdbc.datasource.{DataSourceUtils, DataSourceTransactionManager}
 import org.squeryl.adapters.{PostgreSqlAdapter, MySQLAdapter, H2Adapter}
@@ -35,10 +35,7 @@ import repository.SchemaCreator
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import com.griddynamics.genesis.adapters.MSSQLServerWithPagination
-import org.springframework.beans.factory.annotation.{Autowired, Value}
-import org.springframework.core.io.Resource
-import com.griddynamics.genesis.util.InputUtil
-import service.{Credentials, CredentialService, impl}
+import service.impl
 import service.impl._
 
 @Configuration
@@ -66,9 +63,14 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 }
 
 class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager,
-                           override val drop: Boolean) extends SchemaCreator[GenesisSchema](GenesisSchema.envs.name) {
+                           override val drop: Boolean, val buildInfoProps: java.util.Properties) extends SchemaCreator[GenesisSchema](GenesisSchema.envs.name) {
     override val transactionTemplate = new TransactionTemplate(transactionManager)
     override val schema = GenesisSchema
+
+    override def afterPropertiesSet() {
+        super.afterPropertiesSet
+        if (drop || !isSchemaExists) GenesisVersion.fromBuildProps(buildInfoProps).foreach(schema.genesisVersion.insert(_))
+    }
 }
 
 object SquerylConfigurator {
