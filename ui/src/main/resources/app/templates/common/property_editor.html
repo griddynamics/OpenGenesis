@@ -16,7 +16,7 @@
           <input id="value-input-<%= cid %>" type="text" class="value-input" value="<%- property.value %>" data-cid="<%= cid %>"/>
         </td>
         <td class="actions">
-          <img src="assets/img/delete.png" class="icon delete-action" data-cid="<%= cid %>"/>
+          <a href="javascript: void(0)" class="delete-action" data-cid="<%= cid %>"><img src="assets/img/delete.png" class="icon" /></a>
         </td>
       </tr>
     <% } %>
