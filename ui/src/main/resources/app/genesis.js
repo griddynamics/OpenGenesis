@@ -103,7 +103,7 @@ function($, _, Backbone) {
       timeDuration: function(start, end) {
         if (start === null || _.isUndefined(start)) return "0";
 
-        if (end === null || _.isUndefined(end)) end = new Date();
+        if (end === null || _.isUndefined(end)) return "--";
 
         if (typeof start == Date) start = start.getTime();
         if (typeof end == Date) end = end.getTime();
