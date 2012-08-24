@@ -24,7 +24,7 @@
      <% } %>
      </td>
   </tr>
-  <% for (var i = 0, keys = _.keys(attributes), count = keys.length; i < count; i++) { var key = keys[i]; var attr = attributes[key]; %>
+  <% for (var i = 0; i < attributes.length; i++) { var attr = attributes[i]; %>
   <tr>
     <td class="first"><%= attr.description %></td>
     <td style="width: 80%">
