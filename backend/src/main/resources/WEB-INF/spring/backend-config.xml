@@ -125,6 +125,7 @@
         <constructor-arg ref="ds" />
         <constructor-arg ref="squerylTransactionManager" />
         <constructor-arg value="#{fileProps['genesis.system.jdbc.drop.db'] ?: false}" />
+        <constructor-arg ref="buildInformation" />
     </bean>
 
     <tx:annotation-driven transaction-manager="squerylTransactionManager"/>
