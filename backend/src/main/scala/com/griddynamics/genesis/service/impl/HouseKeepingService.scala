@@ -42,7 +42,7 @@ class DefaultHousekeepingService extends HousekeepingService {
   @Transactional(readOnly = true)
   override def allEnvsWithActiveWorkflows =  {
     val envIDs = from (GS.workflows) (wf =>
-      where ((wf.status === WorkflowStatus.Executed) or (wf.status === WorkflowStatus.Requested)) select wf.envId)
+      where ((wf.status === WorkflowStatus.Executing) or (wf.status === WorkflowStatus.Requested)) select wf.envId)
     from(GS.envs)(env => where (env.id in envIDs) select env).toList
   }
 
@@ -54,7 +54,7 @@ class DefaultHousekeepingService extends HousekeepingService {
   //todo: can we just rerun requested workflows?
   override def markExecutingWorkflowsAsFailed() {
     val envWithFlow = from(GS.workflows) ( wf =>
-      where ( (wf.status === WorkflowStatus.Executed) or (wf.status === WorkflowStatus.Requested) )
+      where ( (wf.status === WorkflowStatus.Executing) or (wf.status === WorkflowStatus.Requested) )
       select(wf.envId, wf.name)
     )
 
@@ -70,7 +70,7 @@ class DefaultHousekeepingService extends HousekeepingService {
         set ( step.status := WorkflowStepStatus.Failed )
     )
     GS.workflows.update ( wf =>
-      where( (wf.status === WorkflowStatus.Executed) or (wf.status === WorkflowStatus.Requested) )
+      where( (wf.status === WorkflowStatus.Executing) or (wf.status === WorkflowStatus.Requested) )
         set( wf.status := WorkflowStatus.Failed )
     )
   }

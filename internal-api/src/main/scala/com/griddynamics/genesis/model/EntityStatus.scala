@@ -44,7 +44,7 @@ object WorkflowStatus extends Enumeration {
     type WorkflowStatus = Value
 
     val Requested = Value(0, "Requested")
-    val Executed = Value(1, "Executed")
+    val Executing = Value(1, "Executing")
 
     val Failed = Value(2, "Failed")
     val Succeed = Value(3, "Succeed")
