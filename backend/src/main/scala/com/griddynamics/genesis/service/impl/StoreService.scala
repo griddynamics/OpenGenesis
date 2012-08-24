@@ -100,7 +100,7 @@ class StoreService extends service.StoreService with Logging {
   @Transactional(readOnly = true)
   def findEnvWithWorkflow(envId: Int, projectId: Int) = {
     findEnv(envId).map( env =>
-      (env, listWorkflows(env).find(_.status == WorkflowStatus.Executed))
+      (env, listWorkflows(env).find(_.status == WorkflowStatus.Executing))
     )
   }
 
@@ -164,7 +164,7 @@ class StoreService extends service.StoreService with Logging {
   @Transactional(readOnly = true)
   def listEnvsWithWorkflow(projectId: Int) = {
     listEnvs(projectId).map(env => {
-      (env, listWorkflows(env).find(w => w.status == WorkflowStatus.Executed))
+      (env, listWorkflows(env).find(w => w.status == WorkflowStatus.Executing))
     })
     //join(envs, workflows.leftOuter)((env, w) => {
     //    on(env.id === w.map(_.envId))
@@ -176,14 +176,14 @@ class StoreService extends service.StoreService with Logging {
   @Transactional(readOnly = true)
   def listEnvsWithWorkflow(projectId: Int, statuses: Seq[EnvStatus]) = {
     listEnvs(projectId, statuses).map(env => {
-      (env, listWorkflows(env).find(w => w.status == WorkflowStatus.Executed))
+      (env, listWorkflows(env).find(w => w.status == WorkflowStatus.Executing))
     })
   }
 
   @Transactional(readOnly = true)
   def listEnvsWithWorkflow(projectId: Int, start : Int, limit : Int) = {
     listEnvs(projectId, start, limit).map(env => {
-      (env, listWorkflows(env).find(w => w.status == WorkflowStatus.Executed))
+      (env, listWorkflows(env).find(w => w.status == WorkflowStatus.Executing))
     })
     //join(envs, workflows.leftOuter)((env, w) => {
     //    on(env.id === w.map(_.envId))
@@ -354,7 +354,7 @@ class StoreService extends service.StoreService with Logging {
     e.modificationTime = nowOpt
     e.modifiedBy = Some(w.startedBy)
 
-    w.status = WorkflowStatus.Executed
+    w.status = WorkflowStatus.Executing
     w.executionStarted = nowOpt
 
     updateEnv(e)
