@@ -18,7 +18,7 @@
      <td class="first">Modified</td>
      <td>
      <% if (environment.modificationTime) { %>
-     <span class="time"><%= $.formatDate.date(environment.modificationTime, utils.isSameDay(now, environment.modificationTime) ? "HH:mm:ss" : "HH:mm:ss dd/MM/yyyy") %></span> by <span class="username"><%= environment.creator %></span>
+     <span class="time"><%= $.formatDate.date(environment.modificationTime, utils.isSameDay(now, environment.modificationTime) ? "HH:mm:ss" : "HH:mm:ss dd/MM/yyyy") %></span> by <span class="username"><%= environment.modifiedBy %></span>
      <% } else { %>
      N/A
      <% } %>
