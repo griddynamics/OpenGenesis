@@ -330,7 +330,7 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
       var view = this;
       $.when(genesis.fetchTemplate(this.envAttributesTemplate)).done(function(tmpl) {
         view.$("#panel-tab-1").html(tmpl({
-          attributes: view.details.get("attributes"),
+          attributes: _.sortBy(view.details.get("attributes"), function(attr) { return attr.description; }),
           environment: view.details.toJSON(),
           utils: genesis.utils
         }));
