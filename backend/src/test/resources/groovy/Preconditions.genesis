@@ -1,0 +1,40 @@
+package groovy
+
+template {
+    name("Precondidions")
+    version("0.1")
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+
+    workflow("create") {
+        require {
+            "Databags not ready".$ {
+                println("I'm in closure!")
+                $system.databag("blabla") != null
+            }
+        }
+
+
+        steps {
+            teststep {
+                phase = "provision"
+                text = "1"
+            }
+            teststep {
+                phase = "install"
+                precedingPhases = ["provision"]
+                text = "erlang2"
+            }
+        }
+    }
+
+    workflow("destroy") {
+        steps {
+            teststep {
+                phase = "undeply"
+                text = "destroy"
+            }
+        }
+    }
+}
