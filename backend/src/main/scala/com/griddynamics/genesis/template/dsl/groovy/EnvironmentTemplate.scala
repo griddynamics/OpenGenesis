@@ -71,14 +71,8 @@ class NameVersionDelegate {
     }
 
     def newTemplate(extName: Option[String], extVersion: Option[String], extProject: Option[String]) = {
-      val templateName = extName match {
-        case None => name
-        case Some(s) => s
-      }
-      val templateVersion = extVersion match {
-        case None => version
-        case Some(s) => s
-      }
+      val templateName = extName.getOrElse(name)
+      val templateVersion = extVersion.getOrElse(version)
       new EnvironmentTemplate(templateName, templateVersion, extProject, createWorkflowName, destroyWorkflowName,
           workflows.toList)
     }

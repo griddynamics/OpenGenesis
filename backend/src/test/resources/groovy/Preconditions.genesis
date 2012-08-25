@@ -9,9 +9,9 @@ template {
 
     workflow("create") {
         require {
-            "Databags not ready".$ {
+            "Databags not ready".unless {
                 println("I'm in closure!")
-                $system.databag("blabla") != null
+                0 == 0
             }
         }
 
