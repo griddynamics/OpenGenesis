@@ -177,10 +177,16 @@ class EnvTemplateBuilder(val projectId: Int,
 
 class BlockDeclaration {
     val bodies = ListBuffer[Closure[Unit]]()
+    val includes = ListBuffer[String]()
 
     def declare(body : Closure[Unit]) {
         if (body == null) return
         bodies += body
+    }
+
+    def include(path: String) {
+        if (path == null) return
+        includes += path
     }
 }
 
