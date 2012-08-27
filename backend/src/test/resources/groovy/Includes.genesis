@@ -1,0 +1,20 @@
+package groovy
+
+include("test1.groovy")
+
+template {
+    name("Includes")
+    version("0.1")
+
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+    workflow("create") {
+        f("Included from create.")
+    }
+
+
+    workflow("destroy") {
+        f("Included from destroy.")
+    }
+}
