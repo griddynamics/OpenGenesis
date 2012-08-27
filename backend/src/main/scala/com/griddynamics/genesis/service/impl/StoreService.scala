@@ -297,6 +297,10 @@ class StoreService extends service.StoreService with Logging {
           step.finished := finishTime
           )
     )
+
+    env.modifiedBy = Some(workflow.startedBy)
+    env.modificationTime = finishTime
+
     updateEnv(env)
 
     workflow.executionFinished = finishTime
@@ -345,17 +349,13 @@ class StoreService extends service.StoreService with Logging {
 
   @Transactional
   def startWorkflow(envId: Int, projectId: Int) = {
-    val nowOpt: Some[Timestamp] = Some(new Timestamp(System.currentTimeMillis()))
-
     val (e, w) = retrieveWorkflow(envId, projectId)
     loadAttrs(e, GS.envAttrs)
 
     e.status = EnvStatus.Busy
-    e.modificationTime = nowOpt
-    e.modifiedBy = Some(w.startedBy)
 
     w.status = WorkflowStatus.Executing
-    w.executionStarted = nowOpt
+    w.executionStarted = Some(new Timestamp(System.currentTimeMillis()))
 
     updateEnv(e)
     GS.workflows.update(w)
