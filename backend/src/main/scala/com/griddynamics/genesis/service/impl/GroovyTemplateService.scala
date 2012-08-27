@@ -114,13 +114,15 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
 
         val binding = new Binding
         binding.setVariable("template", methodClosure)
+        binding.setVariable("include", new MethodClosure(templateDecl, "include"))
 
         try {
-            new GroovyShell(binding).evaluate(body)
+            val groovyShell = new GroovyShell(binding)
+            groovyShell.evaluate(body)
+            if(!listOnly) evaluateIncludes(projectId, templateDecl.includes, groovyShell)
         } catch {
             case e: GroovyRuntimeException => throw new IllegalStateException("can't process template", e)
         }
-
         val templateBuilder = if (listOnly) new NameVersionDelegate else new EnvTemplateBuilder(projectId, dataSourceFactories, databagRepository)
         templateDecl.bodies.headOption.map {
             templateBody => {
@@ -129,6 +131,17 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
                 templateBuilder.newTemplate(extName, extVersion, extProject)
             }
         }
+    }
+
+    private def getBody(name: String) = templateRepository.listSources
+        .find(_._1.name.toUpperCase.endsWith(name.toUpperCase)).map(_._2)
+
+    private def evaluateIncludes(projectId: Int, includes: Seq[String], groovyShell: GroovyShell) {
+        includes.foreach(i => {
+            getBody(i).foreach(b => {
+                groovyShell.evaluate(b)
+            })
+        })
     }
 
     def templateRawContent(projectId: Int, name: String, version: String) = {
