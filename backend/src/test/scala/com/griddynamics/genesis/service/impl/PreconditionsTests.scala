@@ -1,6 +1,6 @@
 package com.griddynamics.genesis.service.impl
 
-import com.griddynamics.genesis.template.{VersionedTemplate, ListVarDSFactory, TemplateRepository}
+import com.griddynamics.genesis.template.{RequirementsNotMetException, VersionedTemplate, ListVarDSFactory, TemplateRepository}
 import org.springframework.core.convert.support.ConversionServiceFactory
 import org.junit.{Test, Before}
 import com.griddynamics.genesis.util.IoUtil
@@ -10,7 +10,7 @@ import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
 import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito
 import org.scalatest.junit.AssertionsForJUnit
-import com.griddynamics.genesis.service.ValidationError
+import com.griddynamics.genesis.service.{TemplateDefinition, ValidationError}
 
 class PreconditionsTests extends AssertionsForJUnit with MockitoSugar {
     val templateRepository = mock[TemplateRepository]
@@ -21,6 +21,7 @@ class PreconditionsTests extends AssertionsForJUnit with MockitoSugar {
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/Preconditions.genesis"))
 
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
+    Mockito.when(bagRepository.findByName("foo")).thenReturn(None)
 
     @Before def setUp() {
         CacheManager.getInstance().clearAll()
@@ -28,7 +29,16 @@ class PreconditionsTests extends AssertionsForJUnit with MockitoSugar {
 
     @Test
     def testPreconditions() {
-        val createWorkflow = templateService.findTemplate(0, "Precondidions", "0.1").get.createWorkflow
+        try {
+            val definition: TemplateDefinition = templateService.findTemplate(0, "Precondidions", "0.1").get
+            assert(definition != null)
+            definition.createWorkflow
+            fail("Requirements met exception must be thrown")
+        } catch {
+            case x: RequirementsNotMetException => {
+                expect("Second requirement not met")(x.messages.head)
+            }
+        }
     }
 
 }

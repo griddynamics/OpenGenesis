@@ -43,6 +43,7 @@ import com.griddynamics.genesis.cache.Cache
 import groovy.util.Expando
 import net.sf.ehcache.{CacheManager, Element}
 import java.util.concurrent.TimeUnit
+import com.griddynamics.genesis.api.ExtendedResult
 
 class GroovyTemplateService(val templateRepository : TemplateRepository,
                             val stepBuilderFactories : Seq[StepBuilderFactory],
@@ -392,6 +393,16 @@ class GroovyTemplateDefinition(val envTemplate : EnvironmentTemplate,
         workflowDefinition(envTemplate.workflows.filter(_.name==envTemplate.createWorkflow).head)
     }
 
-    def workflowDefinition(workflow : EnvWorkflow) =
+    def workflowDefinition(workflow : EnvWorkflow) = {
+        val errors = workflow.preconditions.map(entry => {
+             if (! entry._2.call()) {
+                 Some(entry._1)
+             } else {
+                 None
+             }
+        }).filter(_.isDefined).map(_.get).toSeq
+        if (! errors.isEmpty)
+            throw new RequirementsNotMetException(errors)
         new GroovyWorkflowDefinition(envTemplate, workflow, conversionService, stepBuilderFactories)
+    }
 }

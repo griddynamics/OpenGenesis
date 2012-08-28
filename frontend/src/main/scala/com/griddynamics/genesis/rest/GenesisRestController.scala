@@ -35,6 +35,8 @@ import collection.JavaConversions
 import com.griddynamics.genesis.service.{ConversionException, TemplateService}
 import com.griddynamics.genesis.api.{Failure, GenesisService}
 import com.griddynamics.genesis.util.Logging
+import com.griddynamics.genesis.template.dsl.groovy.RequirementsNotMetException
+import com.griddynamics.genesis.template.RequirementsNotMetException
 
 @Controller
 @RequestMapping(Array("/rest"))
@@ -75,6 +77,9 @@ class GenesisRestController extends RestApiExceptionsHandler with Logging {
 
           }
       } catch {
+          case x: RequirementsNotMetException => {
+              Option(Failure(compoundServiceErrors = x.messages))
+          }
           case e =>
               log.error(e, "Failed to get template %s version %s", templateName, templateVersion)
               Option(Failure(compoundServiceErrors = List(e.getMessage), stackTrace = Option(e.getStackTraceString)))

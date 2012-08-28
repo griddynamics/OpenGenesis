@@ -24,6 +24,7 @@ package com.griddynamics.genesis.template.dsl.groovy
 
 import groovy.lang.{GroovyObjectSupport, Closure}
 import scala._
+import collection.mutable
 import collection.mutable.ListBuffer
 import com.griddynamics.genesis.template._
 import java.lang.reflect.Method
@@ -113,7 +114,7 @@ class EnvTemplateBuilder(val projectId: Int,
 
         val variables = for(builder <- variableBuilders) yield builder.newVariable
 
-        workflows += new EnvWorkflow(name, variables.toList, delegate.stepsBlock)
+        workflows += new EnvWorkflow(name, variables.toList, delegate.stepsBlock, preconditions = delegate.requirements.toMap)
         this
     }
 
@@ -183,5 +184,7 @@ class BlockDeclaration {
         includes += path
     }
 }
+
+
 
 
