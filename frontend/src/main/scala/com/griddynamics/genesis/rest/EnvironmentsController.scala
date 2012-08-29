@@ -81,11 +81,12 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   def stepLogs(@PathVariable("projectId") projectId: Int,
                @PathVariable("envId") envId: Int,
                @PathVariable stepId: Int,
+               @RequestParam(value = "include_actions", required = false, defaultValue = "false") includeActions: Boolean,
                response: HttpServletResponse,
                request: HttpServletRequest) {
     assertEnvExist(projectId, envId)
 
-    produceLogs(genesisService.getLogs(envId, stepId), response)
+    produceLogs(genesisService.getLogs(envId, stepId, includeActions), response)
   }
 
   @RequestMapping(value=Array("{envName}/action_logs/{actionUUID}"))
