@@ -29,7 +29,7 @@ trait GenesisService {
 
     def getTemplate(projectId: Int, templateName: String, templateVersion: String) : Option[Template]
 
-    def getLogs(envId: Int, stepId: Int) : Seq[String]
+    def getLogs(envId: Int, stepId: Int, includeActions: Boolean) : Seq[String]
 
     def getLogs(envId: Int, actionUUID: String): Seq[String]
 

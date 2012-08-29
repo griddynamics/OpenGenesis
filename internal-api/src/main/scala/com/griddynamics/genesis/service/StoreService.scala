@@ -100,7 +100,7 @@ trait StoreService {
     def writeLog(stepId: Int, message: String, timestamp: Timestamp)
     def writeActionLog(actionUUID: String, message: String, timestamp: Timestamp)
 
-    def getLogs(stepId: Int) : Seq[StepLogEntry]
+    def getLogs(stepId: Int, includeActions : Boolean) : Seq[StepLogEntry]
 
     def getLogs(actionUUID: String) : Seq[StepLogEntry]
 
