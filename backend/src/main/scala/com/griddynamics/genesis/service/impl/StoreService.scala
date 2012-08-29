@@ -427,9 +427,9 @@ class StoreService extends service.StoreService with Logging {
   }
 
   @Transactional
-  def getLogs(stepId: Int) : Seq[StepLogEntry] = {
+  def getLogs(stepId: Int, includeActions : Boolean) : Seq[StepLogEntry] = {
     from(GS.logs)((log) =>
-      where(log.stepId === stepId)
+      where(log.stepId === stepId and log.actionUUID.isNull.inhibitWhen(includeActions))
           select(log)
           orderBy(log.timestamp asc)
     ).toList

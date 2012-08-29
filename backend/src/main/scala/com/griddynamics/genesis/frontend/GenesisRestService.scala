@@ -125,8 +125,8 @@ class GenesisRestService(storeService: StoreService,
         )
     }
 
-    def getLogs(envId: Int,  stepId: Int) : Seq[String] =
-      storeService.getLogs(stepId).map(log => "%s: %s".format(log.timestamp, log.message))
+    def getLogs(envId: Int,  stepId: Int, includeActions: Boolean) : Seq[String] =
+      storeService.getLogs(stepId, includeActions).map(log => "%s: %s".format(log.timestamp, log.message))
 
     def getLogs(envId: Int, actionUUID: String) =
       storeService.getLogs(actionUUID).map(log => "%s: %s".format(log.timestamp, log.message))
