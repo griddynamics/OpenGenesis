@@ -4,14 +4,21 @@ define([
   "modules/status",
   "variables",
   "modules/common/templates",
+  "modules/validation",
   "use!backbone",
   "jquery",
   "use!showLoading",
   "use!jvalidate"
 ],
 
-function(genesis, backend,  status, variables, gtemplates, Backbone, $) {
+function(genesis, backend,  status, variables, gtemplates, validation, Backbone, $) {
   var createenv = genesis.module();
+
+  var EnvCreate = Backbone.Model.extend({
+    url: function() {
+      return "/rest/projects/" + this.get("projectId") + "/envs";
+    }
+  });
 
   createenv.Views.Main = Backbone.View.extend({
     template: "app/templates/create_environments.html",
@@ -31,7 +38,7 @@ function(genesis, backend,  status, variables, gtemplates, Backbone, $) {
 
         view.wizard = new CreateWizard({
           project: view.project,
-          model: new Backbone.Model(),
+          model: new EnvCreate({"projectId": view.project.id}),
           el: view.$('#tab-panel')
         });
         view.wizard.bind('finished', function(){
@@ -43,8 +50,6 @@ function(genesis, backend,  status, variables, gtemplates, Backbone, $) {
   });
 
   var CreateWizard = Backbone.View.extend({
-    currentStep: null,
-    stepViews: [],
     events: {
       "click .next-button": "nextStep",
       "click .back-button": "prevStep",
@@ -59,6 +64,9 @@ function(genesis, backend,  status, variables, gtemplates, Backbone, $) {
 
     initialize: function(options) {
       this.project = options.project;
+      this.stepViews = [];
+      this.currentStep = 0;
+
       var templates = new gtemplates.TemplatesCollection([], {projectId: this.project.id});
 
       var selectTemplateStep = new SelectTemplateStep({
@@ -79,7 +87,6 @@ function(genesis, backend,  status, variables, gtemplates, Backbone, $) {
       });
 
       this.stepViews.push(envParams);
-      this.currentStep = 0;
 
       var self = this;
       this.$el.showLoading();
@@ -107,23 +114,10 @@ function(genesis, backend,  status, variables, gtemplates, Backbone, $) {
       if($('#environment-settings').valid()) {
         this.$el.showLoading();
         var model = this.mergeModelValues();
-        model.set("projectId", this.project.id);
-
-        var deferred = backend.EnvironmentManager.createEnvironment(this.project.id, model);
         var self = this;
-        $.when(deferred).always(function() { self.$el.hideLoading(); }).then(
-          function success(){
-            self.trigger("finished");
-          },
-          function fail(response){
-            var json = JSON.parse(response.responseText);
-            var validation = _.extend({}, json.variablesErrors, json.serviceErrors);
-            if(!_.isEmpty(validation)){
-              var validator = $('#environment-settings').validate();
-              validator.showErrors(validation);
-            }
-          }
-        );
+        $.when(model.save()).always(function() { self.$el.hideLoading(); }).done(function (){
+          self.trigger("finished");
+        });
       }
     },
 
@@ -194,7 +188,7 @@ function(genesis, backend,  status, variables, gtemplates, Backbone, $) {
     },
 
     modelValues: function() {
-      var input = $("input[name='select_template']:checked");
+      var input = this.$("input[name='select_template']:checked");
       return {
         templateName: input.val(),
         templateVersion: input.attr('data-template-version'),
@@ -219,7 +213,6 @@ function(genesis, backend,  status, variables, gtemplates, Backbone, $) {
   var EnvironmentParametersStep = Step.extend({
     template: "app/templates/createenv/environment_settings.html",
     errorTemplate: "app/templates/createenv/environment_settings_error.html",
-    error: null,
 
     initialize: function(options) {
       this.variables = [];
@@ -240,48 +233,54 @@ function(genesis, backend,  status, variables, gtemplates, Backbone, $) {
         $.when(desc.fetch()).done(function() {
           self.variables = desc.get('createWorkflow').variables;
           variables.processVars({
-                  variables: desc.get('createWorkflow').variables,
-                  projectId: self.project.id,
-                  workflowName: desc.get('createWorkflow').name,
-                  templateName: newTemplate.get('name'),
-                  templateVersion: newTemplate.get('version')
+            variables: desc.get('createWorkflow').variables,
+            projectId: self.project.id,
+            workflowName: desc.get('createWorkflow').name,
+            templateName: newTemplate.get('name'),
+            templateVersion: newTemplate.get('version')
           });
-          self.error = null;
-          genesis.app.trigger("page-view-loading-completed");
           self.render();
         })
         .fail(function(jqXHR) {
-          self.error = jqXHR;
+          self.render(jqXHR);
+        }).always(function(){
           genesis.app.trigger("page-view-loading-completed");
-          self.render();
         });
       }
     },
 
     modelValues: function() {
       var vals = {};
-      $('.workflow-variable').each(function () {
+      this.$('.workflow-variable').each(function () {
         var value = $(this).val();
         if (value) { vals[$(this).attr('name')] = value; }
       });
       return {
-        envName: $("input[name='envName']").val(),
+        envName: this.$("input[name='envName']").val(),
         variables: vals
       }
     },
 
-    render: function(){
+    _settingsForm: function() {
+      return this.$('#environment-settings');
+    },
+
+    render: function(error){
       var view = this;
-      if (!this.error) {
+      validation.unbindValidation(this.model, this._settingsForm());
+
+      if (!error) {
         $("#ready").show();
         $.when(genesis.fetchTemplate(this.template)).done(function(tmpl){
-          view.el.innerHTML = tmpl({variables: view.variables});
-          $('input:not(:hidden):first', view.el).focus();
+          view.$el.html(tmpl({variables: view.variables}));
+          view.$('input:not(:hidden):first').focus();
+
+          validation.bindValidation(view.model, view._settingsForm());
         });
       } else {
         $("#ready").hide();
         $.when(genesis.fetchTemplate(this.errorTemplate)).done(function(tmpl){
-          view.el.innerHTML = tmpl({error: JSON.parse(view.error.responseText)});
+          view.el.innerHTML = tmpl({error: JSON.parse(error.responseText)});
         });
       }
     }

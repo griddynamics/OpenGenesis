@@ -3,34 +3,31 @@ define([
     "use!backbone",
     "modules/status",
     "modules/common/properties",
+    "modules/validation",
     "services/backend",
     "jquery",
     "use!showLoading",
     "use!jvalidate"
 ],
 
-function(genesis, Backbone, status, property, backend, $) {
+function(genesis, Backbone, status, property, validation, backend, $) {
   var Databags = genesis.module();
 
   var URL = "/rest/databags";
 
   Databags.Model = Backbone.Model.extend({
     initialize: function(options) {
-        if (options.projectId) {
-            this.projectId = options.projectId;
-        }
+      if (options.projectId) {
+        this.projectId = options.projectId;
+      }
     },
 
-    url: function() {
-      return this.isNew() ? this.baseUrl() : this.baseUrl() + "/" + this.id;
-    },
-
-    baseUrl: function() {
-        if (this.projectId) {
-            return "/rest/projects/" + this.projectId + "/databags"
-        } else {
-            return URL
-        }
+    urlRoot: function() {
+      if (this.projectId) {
+        return "/rest/projects/" + this.projectId + "/databags"
+      } else {
+        return URL
+      }
     }
   });
 
@@ -38,23 +35,21 @@ function(genesis, Backbone, status, property, backend, $) {
     model: Databags.Model,
 
     initialize: function(options) {
-       if (options.projectId) {
-           this.projectId = options.projectId;
-       }
+     if (options.projectId) {
+       this.projectId = options.projectId;
+     }
     },
 
     url: function() {
-        if (this.projectId) {
-            return "/rest/projects/" + this.projectId + "/databags"
-        } else {
-            return URL;
-        }
+      if (this.projectId) {
+        return "/rest/projects/" + this.projectId + "/databags"
+      } else {
+        return URL;
+      }
     }
   });
 
-  var DatabagItem = Backbone.Model.extend({
-
-  });
+  var DatabagItem = Backbone.Model.extend({ });
 
   var ItemsCollection = Backbone.Collection.extend({
     mode: DatabagItem,
@@ -63,7 +58,6 @@ function(genesis, Backbone, status, property, backend, $) {
       this.trigger("reset");
       return def.resolve();
     }
-
   });
 
   Databags.Views.Main = Backbone.View.extend({
@@ -126,14 +120,14 @@ function(genesis, Backbone, status, property, backend, $) {
 
   var DatabagsList = Backbone.View.extend({
     template: "app/templates/settings/databags/bags_list.html",
+
     events: {
       "click .delete-databag": "deleteDatabag"
     },
 
-
     deleteDatabag: function(e) {
-      var bagId = $(e.currentTarget).attr("data-databag-id");
-      var self = this;
+      var bagId = $(e.currentTarget).attr("data-databag-id"),
+          self = this;
 
       this.dialog.dialog("option", "buttons", {
         "Yes": function () {
@@ -156,10 +150,10 @@ function(genesis, Backbone, status, property, backend, $) {
     },
 
     render: function(done) {
-      var view = this;
+      var self = this;
       $.when(genesis.fetchTemplate(this.template), this.collection.fetch()).done(function(tmpl) {
-        view.$el.html(tmpl({"databags": view.collection.toJSON()}));
-        view.dialog = view.dialog || view.initConfirmationDialog();
+        self.$el.html(tmpl({"databags": self.collection.toJSON()}));
+        self.dialog = self.dialog || self.initConfirmationDialog();
       });
     }
   });
@@ -185,22 +179,19 @@ function(genesis, Backbone, status, property, backend, $) {
         return;
       }
 
-      var properties = this.propertyView.pullCollection();
-      var toBeRemoved = properties.filter(function(item) { return item.get("removed") || !item.get("name")});
+      var properties = this.propertyView.pullCollection(),
+          toBeRemoved = properties.filter(function(item) { return item.get("removed") || !item.get("name")});
+
       properties.remove(toBeRemoved, {silent: true});
 
-      var bag = this.model.clone();
-      bag.set({
+      var bag = this.model.clone().set({
         name: this.$("input[name='name']").val(),
         tags: this.$("textarea[name='tags']").val().split(" "),
         items: properties.toJSON()
       });
+      validation.bindValidation(bag, this.$("#edit-databag"), this.status);
       var self = this;
-      bag.save().done(function() {
-        self.trigger("back")
-      }).error(function(jqXHR) {
-        self.status.error(jqXHR)
-      });
+      bag.save().done(function() { self.trigger("back") });
     },
 
     render: function() {
@@ -214,10 +205,10 @@ function(genesis, Backbone, status, property, backend, $) {
           collection: itemsCollection,
           el: self.$("#properties")
         });
-        self.status = new status.LocalStatus({el: self.$(".notification")})
+
+        self.status = new status.LocalStatus({el: self.$(".notification")});
       });
     }
-
   });
 
   return Databags;
