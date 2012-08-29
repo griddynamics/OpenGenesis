@@ -12,7 +12,6 @@
           <tr>
             <th style="width:47%">Key</th>
             <th style="width:48%">Value</th>
-            <th  ></th>
           </tr>
           </thead>
           <tbody>
@@ -20,7 +19,6 @@
             <tr>
               <td ><%= config.name %></td>
               <td ><%= config.value %></td>
-              <td></td>
             </tr>
           <% } %>
           </tbody>
@@ -34,7 +32,6 @@
             <tr id="table-title">
               <th style="width:47%">Key</th>
               <th style="width:48%">Value</th>
-              <th ></th>
             </tr>
           </thead>
           <tbody>
@@ -42,7 +39,6 @@
               <tr>
                 <td ><label for="<%= config.name %>" ><%= config.name %></label></td>
                 <td ><input id="<%= config.name %>" name="<%= config.name %>" type="text" value="<%= config.value %>" class="property-value"></td>
-                <td ><img src="/assets/img/delete.png" class="icon revert" alt="Revert changes" style="display: none" data-config-property="<%= config.name %>"></td>
               </tr>
             <% } %>
           </tbody>

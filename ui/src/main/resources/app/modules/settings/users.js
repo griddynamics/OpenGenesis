@@ -2,20 +2,20 @@ define([
   "genesis",
   "use!backbone",
   "modules/status",
+  "modules/validation",
   "services/backend",
   "jquery",
   "use!showLoading",
   "use!jvalidate"
 ],
 
-function(genesis, Backbone, status, backend, $) {
+function(genesis, Backbone, status, validation, backend, $) {
   var Users = genesis.module({Collections: {}});
+
   var URL = "/rest/users";
 
   Users.Model = Backbone.Model.extend({
-    url: function () {
-      return this.isNew() ? URL : URL + "/" + this.id;
-    },
+    urlRoot: URL,
     idAttribute: "username"
   });
 
@@ -156,18 +156,19 @@ function(genesis, Backbone, status, backend, $) {
       this.userRoles = [];
       this.userGroups = [];
 
-      this.groups.fetch().done(_.bind(this.render, this));
-
       if (!this.user.isNew()) {
         var self = this;
         $.when(
           backend.AuthorityManager.getUserRoles(this.user.get('username')),
-          backend.UserManager.getUserGroups(this.user.get('username'))
+          backend.UserManager.getUserGroups(this.user.get('username')),
+          this.groups.fetch()
         ).done(function (userRoles, userGroups) {
             self.userRoles = userRoles[0];
             self.userGroups = userGroups[0];
             self.render();
         });
+      } else {
+        this.groups.fetch().done(_.bind(this.render, this));
       }
     },
 
@@ -183,7 +184,8 @@ function(genesis, Backbone, status, backend, $) {
           userRoles: userRolesLookupMap,
           userGroups: userGroupsLookupMap
         }));
-        self.status = new status.LocalStatus({el: self.$(".notification")})
+        self.status = new status.LocalStatus({el: self.$(".notification")});
+        validation.bindValidation(self.user, self.$("#user-attributes"), self.status);
       });
     },
 
@@ -195,13 +197,13 @@ function(genesis, Backbone, status, backend, $) {
       var groups = $("input[name='groups']:checked").map(function () { return this.value; }).get();
 
       this.user.set({
-        username: $("input[name='name']").val(),
-        firstName: $("input[name='first_name']").val(),
-        lastName: $("input[name='last_name']").val(),
-        email: $("input[name='e-mail']").val(),
-        jobTitle: $("input[name='job_title']").val(),
-        password: $("input[name='password']").val(),
-        groups: groups
+        username:  $("input[name='name']").val(),
+        firstName: $("input[name='firstName']").val(),
+        lastName:  $("input[name='lastName']").val(),
+        email:     $("input[name='email']").val(),
+        jobTitle:  $("input[name='jobTitle']").val(),
+        password:  $("input[name='password']").val(),
+        groups:    groups
       });
 
       var user = this.user,
@@ -220,9 +222,7 @@ function(genesis, Backbone, status, backend, $) {
         status.StatusPanel.success("User Account " + (user.isNew() ? "created" : "saved"));
         self.backToList();
       }).fail(function (error) {
-        if(error.savingFail) {
-          self.status.error(error.error)
-        } else {
+        if(!error.savingFail) {
           status.StatusPanel.error("User Account changes were saved, but ROLES changes were not applied");
           self.backToList();
         }

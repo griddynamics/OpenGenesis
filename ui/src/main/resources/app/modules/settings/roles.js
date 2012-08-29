@@ -4,6 +4,7 @@ define([
   "services/backend",
 
   "modules/settings/users",
+  "modules/validation",
 
   "use!backbone",
   "jquery",
@@ -13,7 +14,7 @@ define([
 
 ],
 
-function(genesis, status, backend, Users, Backbone, $) {
+function(genesis, status, backend, Users, validation, Backbone, $) {
   var Roles = genesis.module();
 
   var LANG = {
@@ -95,10 +96,11 @@ function(genesis, status, backend, Users, Backbone, $) {
     },
 
     editRole: function(event) {
-      var roleName = $(event.currentTarget).attr("data-role-name");
-      var role = this.listView.collection.get(roleName);
+      var roleName = $(event.currentTarget).attr("data-role-name"),
+          role = this.listView.collection.get(roleName),
+          self = this;
       this.currentView = new RoleEdit({role: role, el: this.el});
-      var self = this;
+
       this.currentView.bind("back", function() {
         self.currentView.unbind();
         self.currentView.undelegateEvents();
@@ -150,23 +152,17 @@ function(genesis, status, backend, Users, Backbone, $) {
     },
 
     saveChanges: function() {
-      var groups = this.$("#groups-select").val();
-      var users = this.$("#users-select").val();
       this.role.set({
-        "users": users || [],
-        "groups": groups || []
+        "users": this.$("#groups-select").val() || [],
+        "groups": this.$("#users-select").val() || []
       });
       var self = this;
-      this.role.save()
-        .done(function () {
-          self.backToList();
-          status.StatusPanel.success("Changes have been saved");
-        })
-        .error(function(jqXHR) {
-          self.status.error(jqXHR);
-        });
-    },
+      this.role.save().done(function () {
+        self.backToList();
+        status.StatusPanel.success("Changes have been saved");
+      })
 
+    },
 
     initCompletion: function(hasGroups, hasUsers){
       var self = this;
@@ -204,6 +200,7 @@ function(genesis, status, backend, Users, Backbone, $) {
         self.$el.html(tmpl({role: self.role.toJSON(), LANG: LANG, title: self.title}));
         self.initCompletion(hasGroups[0], hasUsers[0]);
         self.status = new status.LocalStatus({el: self.$(".notification")});
+        validation.bindValidation(self.role, self.$("form"), self.status);
       });
     }
   });

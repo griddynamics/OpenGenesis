@@ -10,21 +10,21 @@
             <form id="group-attributes">
                 <table class="forform-table">
                     <tr>
-                        <td style="width:12%;"><span class="label-required">* Group name</span></td>
+                        <td style="width:12%; min-width: 110px;" class="label-column"><label for="group-name" class="label-required">* Group name</label></td>
                         <td>
-                            <input name="name" type="text" class="required name" value="<%= group.name %>" <% if (group.id) { %> disabled <% } %>/>
+                            <input id="group-name" name="name" type="text" class="required name" value="<%= group.name %>" <% if (group.id) { %> disabled <% } %>/>
                         </td>
                     </tr>
                     <tr>
-                        <td><span class="label-required">* Description</span></td>
+                        <td class="label-column"> <label for="group-description" class="label-required">* Description</label></td>
                         <td>
-                            <textarea rows="" cols="" name="description" class="required description"><%- group.description %></textarea>
+                            <textarea id="group-description" rows="" cols="" name="description" class="required description"><%- group.description %></textarea>
                         </td>
                     </tr>
                     <tr>
-                        <td>Mailing List</td>
+                        <td class="label-column"><label for="mailingList">Mailing List</label></td>
                         <td>
-                            <input name="mailingList" type="text" class="name" value="<%= group.mailingList %>"/>
+                            <input id="mailingList" name="mailingList" type="text" class="name" value="<%= group.mailingList %>"/>
                         </td>
                     </tr>
                 </table>

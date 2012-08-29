@@ -3,23 +3,21 @@ define([
     "use!backbone",
     "modules/settings/users",
     "modules/status",
+    "modules/validation",
     "services/backend",
     "jquery",
     "use!showLoading",
     "use!jvalidate"
 ],
 
-function(genesis, Backbone, Users, status, backend, $) {
-  var DEFAULT_TIMEOUT = 4000;
+function(genesis, Backbone, Users, status, validation, backend, $) {
 
   var Groups = genesis.module();
 
   var URL = "/rest/groups";
 
   Groups.Model = Backbone.Model.extend({
-    url: function () {
-      return !this.id ? URL : URL + "/" + this.id;
-    }
+    urlRoot: URL
   });
 
   var GroupUsers = Backbone.Collection.extend({
@@ -97,7 +95,7 @@ function(genesis, Backbone, Users, status, backend, $) {
         "Yes": function () {
           var model = self.collection.get(groupId);
           model.destroy({
-            success: function(model, result) {
+            success: function() {
               self.collection.fetch().done(function() {
                 self.render();
               });
@@ -171,7 +169,7 @@ function(genesis, Backbone, Users, status, backend, $) {
       }
     },
 
-    render: function(done) {
+    render: function() {
       var self = this;
       $.when(genesis.fetchTemplate(this.template), backend.AuthorityManager.roles()).done(function(tmpl, rolesArray) {
 
@@ -187,6 +185,7 @@ function(genesis, Backbone, Users, status, backend, $) {
         }));
 
         self.status = new status.LocalStatus({el: self.$(".notification")});
+        validation.bindValidation(self.group, self.$("#group-attributes"), self.status);
       });
     },
 
@@ -220,9 +219,7 @@ function(genesis, Backbone, Users, status, backend, $) {
         status.StatusPanel.success("Group is " + (isNew ? "created" : "saved"));
         self.backToList();
       }).fail(function (error) {
-        if(error.savingFail) {
-          self.status.error(error.error)
-        } else {
+        if(!error.savingFail) {
           status.StatusPanel.error("Group changes were saved, but ROLES changes were not applied");
           self.backToList();
         }

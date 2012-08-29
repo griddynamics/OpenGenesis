@@ -50,18 +50,6 @@ function(genesis, $) {
   };
 
   backend.EnvironmentManager = {
-    createEnvironment: function(projectId, environment) {
-      return $.ajax({
-        url: "/rest/projects/" + projectId + "/envs",
-        contentType : 'application/json',
-        dataType: "json",
-        type: "POST",
-        data: JSON.stringify(environment.toJSON()),
-        timeout: DEFAULT_TIMEOUT,
-        processData: false
-      });
-    },
-
     resetEnvStatus: function(projectId, environmentId) {
       return $.ajax({
         url: "/rest/projects/" + projectId + "/envs/" + environmentId + "/actions",

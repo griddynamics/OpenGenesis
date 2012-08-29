@@ -4,11 +4,12 @@ define([
   "services/backend",
   "use!backbone",
   "jquery",
+  "modules/validation",
   "use!showLoading",
   "use!jvalidate"
 ],
 
-function(genesis, status, backend, Backbone, $) {
+function(genesis, status, backend, Backbone, $, validation) {
   var DEFAULT_TIMEOUT = 4000;
 
   var Projects = genesis.module();
@@ -22,13 +23,7 @@ function(genesis, status, backend, Backbone, $) {
       }
     },
 
-    url: function() {
-      if (!this.id) {
-        return "/rest/projects";
-      } else {
-        return "/rest/projects/" + this.id;
-      }
-    }
+    urlRoot: "/rest/projects"
   });
 
   Projects.Collection = Backbone.Collection.extend({
@@ -75,6 +70,7 @@ function(genesis, status, backend, Backbone, $) {
 
     initialize: function(options) {
       this.project = options.project;
+
       this.project.fetch().done(_.bind(this.render, this));
     },
 
@@ -83,24 +79,26 @@ function(genesis, status, backend, Backbone, $) {
         return;
       }
       var toSave = this.project.clone();
-      toSave.set({name: $("input[name='name']").val(),
-                        description: $("textarea[name='description']").val(),
-                        projectManager: $("input[name='projectManager']").val()});
+      toSave.set({
+        name: this.$("input[name='name']").val(),
+        description: this.$("textarea[name='description']").val(),
+        projectManager: this.$("input[name='projectManager']").val()
+      });
+
+      validation.bindValidation(toSave, this.$('#project-attributes'), this.status);
+
       var isNew = toSave.isNew(),
           self = this;
-      $.when(toSave.save())
-        .done(function (savedProject) {
-          self.project.fetch().done(function(){
-              genesis.app.trigger("projects-changed");
-              genesis.app.router.navigate(isNew ?  "/" : ("/project/" + savedProject.result.id), {trigger: true});
-          });
-        })
-        .fail(function (jqXHR) {
-          self.status.error(jqXHR)
+
+      $.when(toSave.save()).done(function (savedProject) {
+        self.project.fetch().done(function(){
+          genesis.app.trigger("projects-changed");
+          genesis.app.router.navigate(isNew ?  "/" : ("/project/" + savedProject.result.id), {trigger: true});
         });
+      });
     },
 
-    onDeleteProject: function(event) {
+    onDeleteProject: function() {
       this.confirmationDialog.dialog("open");
     },
 

@@ -1,20 +1,20 @@
 define([
   "genesis",
   "modules/status",
+  "modules/validation",
   "use!backbone",
   "jquery",
   "use!showLoading",
   "use!jvalidate"
-
 ],
 
-function(genesis, status, Backbone, $) {
+function(genesis, status, validation, Backbone, $) {
   var Servers = genesis.module();
 
   Servers.ArrayModel = Backbone.Model.extend({
 
-    url: function() {
-      return "/rest/projects/" + this.get("projectId") + "/server-arrays" + (this.id ? "/" + this.id : "");
+    urlRoot: function() {
+      return "/rest/projects/" + this.get("projectId") + "/server-arrays";
     },
 
     serversCollection: function() {
@@ -140,7 +140,7 @@ function(genesis, status, Backbone, $) {
       "click .delete-array": "deleteArray"
     },
 
-    initialize: function(options) {
+    initialize: function() {
       this.collection.bind("reset", _.bind(this.render, this));
     },
 
@@ -210,19 +210,16 @@ function(genesis, status, Backbone, $) {
         name: this.$("input[name='name']").val(),
         description: this.$("textarea[name='description']").val()
       });
+      validation.bindValidation(array, this.$("#edit-server-array"), this.status);
       var self = this;
-      array.save()
-        .done(function() {
-          self.trigger("back")
-        })
-        .error(function(jqXHR) { self.status.error(jqXHR) });
+      array.save().done(function() { self.trigger("back") });
     },
 
     render: function() {
       var self = this;
       $.when(genesis.fetchTemplate(this.template)).done(function(tmpl) {
         self.$el.html( tmpl({array: self.model.toJSON()}) );
-        self.status = new status.LocalStatus({el: self.$(".notification")})
+        self.status = new status.LocalStatus({el: self.$(".notification")});
       });
     }
   });
@@ -266,9 +263,9 @@ function(genesis, status, Backbone, $) {
     },
 
     deleteServer: function(e) {
-      var serverId = $(e.currentTarget).attr("data-server-id");
-      var self = this;
-      var server = self.servers.get(serverId);
+      var serverId = $(e.currentTarget).attr("data-server-id"),
+          server = this.servers.get(serverId),
+          self = this;
       server.fetch().done(function(){
         $(".server-usage").html(server.get("usage").length);
         self.dialog.dialog("option", "buttons", {
@@ -287,7 +284,11 @@ function(genesis, status, Backbone, $) {
     showAddServerForm: function() {
       var $addButton = this.$("#add-server");
       $addButton.addClass("disabled");
-      var addServerView = new AddServerView({el: $("<div/>").appendTo(this.$("#add-server-form")), collection: this.servers, projectId: this.array.get("projectId")});
+      var addServerView = new AddServerView({
+        el: $("<div/>").appendTo(this.$("#add-server-form")),
+        collection: this.servers,
+        projectId: this.array.get("projectId")
+      });
 
       addServerView.bind("closed", function(){
         $addButton.removeClass("disabled");
@@ -296,16 +297,15 @@ function(genesis, status, Backbone, $) {
     },
 
     showServer: function(e){
-      var serverId = $(e.currentTarget).attr("data-server-id");
-      var server = this.servers.get(serverId);
-      var view = new ServerUsageView({el: this.el, model: server, array: this.array});
-      var self = this;
+      var serverId = $(e.currentTarget).attr("data-server-id"),
+          server = this.servers.get(serverId),
+          view = new ServerUsageView({el: this.el, model: server, array: this.array}),
+          self = this;
       view.bind("back", function() {
         view.unbind();
         self.$el.empty();
         self.render();
       });
-
     },
 
     render: function() {
@@ -341,13 +341,14 @@ function(genesis, status, Backbone, $) {
         credentialsId: this.$("#credentials").val()
       });
       var self = this;
+
       obj.bind("sync", function(){
         self.closeForm();
       });
-      obj.bind("error", function(model, jqXHR) {
-        self.status.error(jqXHR);
-      });
+
       obj.bind("sync error", function() { self.$el.hideLoading(); });
+
+      validation.bindValidation(obj, this.$("form"), this.status);
       this.$el.showLoading();
       this.collection.create(obj,  {wait: true});
     },

@@ -36,13 +36,8 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
       "historyCount": 0
     },
 
-    url: function () {
-      var url = "/rest/projects/" + this.get("projectId") + "/envs";
-      if (this.id) {
-        return url + "/" + this.id
-      }  else {
-        return url;
-      }
+    urlRoot: function () {
+      return "/rest/projects/" + this.get("projectId") + "/envs";
     }
   });
 
