@@ -1,6 +1,7 @@
 define([
   "genesis",
   "modules/status",
+  "modules/validation",
   "use!backbone",
   "jquery",
   "use!showLoading",
@@ -8,14 +9,14 @@ define([
 
 ],
 
-  function(genesis, status, Backbone, $) {
+  function(genesis, status, validation, Backbone, $) {
 
     var Credentials = genesis.module();
 
     Credentials.Model = Backbone.Model.extend({
 
-      url: function() {
-        return "/rest/projects/" + this.get("projectId") + "/credentials" + (this.id ? "/" + this.id : "");
+      urlRoot: function() {
+        return "/rest/projects/" + this.get("projectId") + "/credentials";
       }
     });
 
@@ -42,7 +43,7 @@ define([
 
         this.listView = new CredentialsList({collection: this.collection, el: this.el});
         this.setCurrentView(this.listView);
-        this.collection.fetch()
+        this.collection.fetch();
       },
 
       onClose: function(){
@@ -142,6 +143,7 @@ define([
         if(!this.$("#install-credentials").valid()) {
           return;
         }
+
         var credentials = new Credentials.Model({
           projectId: parseInt(this.projectId),
           cloudProvider: this.$("input[name='cloudProvider']").val(),
@@ -149,21 +151,11 @@ define([
           identity: this.$("input[name='identity']").val(),
           credential: this.$("textarea[name='credentials']").val()
         });
+
+        validation.bindValidation(credentials, this.$("#install-credentials"), this.status);
+
         var self = this;
-        credentials.save()
-          .done(function() {
-            self.trigger("back")
-          })
-          .error(function(jqXHR) {
-                var json = JSON.parse(jqXHR.responseText);
-                var validation = _.extend({}, json.variablesErrors, json.serviceErrors);
-                if(!_.isEmpty(validation)){
-                    var validator = $('#install-credentials').validate();
-                    validator.showErrors(validation);
-                } else {
-                  self.status.error(jqXHR);
-                }
-            });
+        credentials.save().done(function() { self.trigger("back") });
       },
 
       render: function() {

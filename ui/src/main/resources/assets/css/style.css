@@ -36,37 +36,27 @@ a.button {
     color: rgb(0, 0, 0);
 }
 
-a.button-inline {
-    margin-top: 10px;
+a.button.inline {
     display: inline-block;
     float: none;
-    text-decoration: none;
-    background: url(../img/button-right.png) top right no-repeat;
-    padding-right: 2px;
-    color: rgb(0, 0, 0);
+    margin-top: 0 !important;
 }
 
-a.dangerous-button {
-    margin-top: 10px;
-    display: block;
-    float: left;
-    text-decoration: none;
-    background: url(../img/button-right.png) top right no-repeat;
-    padding-right: 2px;
+a.dangerous.button {
     color: #cc4a48;
 }
 
-a.button.disabled, a.dangerous-button.disabled {
+a.button.disabled {
     background: url(../img/btn-disabled-right.png) top right no-repeat !important;
     cursor: default;
     outline: none;
 }
 
-a.button.disabled span, a.dangerous-button.disabled span {
+a.button.disabled span {
     background: url(../img/btn-disabled-left.png) no-repeat !important;
 }
 
-a.button span, a.dangerous-button span, a.button-inline span {
+a.button span {
 	display: block;
   	line-height: 13px;
  	background: url(../img/button-left.png) no-repeat;
@@ -82,20 +72,20 @@ a.button:hover span {
  	background: url(../img/btn-hovered-left.png) no-repeat;
 }
 
-a.dangerous-button:hover {
+a.dangerous.button:hover {
   	background: url(../img/btn-hovered-red-right.png) top right no-repeat;
   	color: rgb(84,84,84);
 }
 
-a.dangerous-button:hover span {
+a.dangerous.button:hover span {
  	background: url(../img/btn-hovered-red-left.png) no-repeat;
 }
 
-a.button:active, a.dangerous-button:active {
+a.button:active {
   	background: url(../img/btn-pressed-right.png) top right no-repeat;
 }
 
-a.button:active span, a.dangerous-button:active span {
+a.button:active span {
  	background: url(../img/btn-pressed-left.png) no-repeat;
 }
 
@@ -220,10 +210,6 @@ table tr:nth-child(odd) {
    background-color: rgb(248,248,248);
 }
 
-table#prj-list td{
-	padding:10px;	
-}
-
 table td{
 	padding: 5px 10px;
 	border:1px solid rgb(222,222,222);
@@ -296,6 +282,10 @@ table th{
     word-wrap: break-word;
 }
 
+#prj-list td {
+    padding:10px;
+}
+
 #prj-list td.name {
     word-wrap: break-word;
     width: 24%;
@@ -340,7 +330,6 @@ table th{
 	width:100%;
 	min-height:100%;
 	height:auto !important;
-	height:100%;
 }
 
 #page-content{
@@ -352,11 +341,9 @@ table th{
 	width:100%;
 	height:42px;
     background-color: #2a2e31;
-	/*background-image: url(../img/header.png);*/
 }
 
 #header #header-content{
-	/*width:70%;*/
 	width:80%;
 	height: 42px;
 	margin: 0 auto;
@@ -417,7 +404,6 @@ div.system-settings {
 	line-height:20px;
 }
 #wrapper{
-	/*width:850px;*/
 	margin:0 auto;
 	background-color: rgb(248,248,248);
     width: 80%;
@@ -626,6 +612,11 @@ table#env-settings-share td.first{
 
 table#env-main-settings input#EnvName{
 	width:500px;
+}
+
+/* todo: why create env inputs have padding 3 instead of 5 ?*/
+table#env-main-settings label.error {
+    margin-top: 5px;
 }
 
 table#env-settings-share a{
@@ -968,15 +959,16 @@ table.main-table .time, table.main-table .username{
 form.inplace {
     display: inline;
 }
+
 input[type = 'text'], select {
     padding: 3px;
     font-size: 13px;
     background:white url('../img/bg-form-field.gif') top left repeat-x;
     border: 1px solid #bebebe;
     color:#333;
-
     -webkit-border-radius: 2px;
     border-radius: 2px;
+    margin-right: 10px;
 }
 
 #tab-panel #panel table.main-table input {
@@ -990,26 +982,29 @@ input[type = 'text'], select {
 }
 
 table.forform-table.wide label.error {
-    display:block;
+    display: inline-block;
 }
 
-table.forform-table.wide td.label-column {
+table.forform-table td.label-column {
     vertical-align: top;
+    padding-top: 8px !important;
+    min-width: 110px;
 }
 
-table.forform-table.wide .label-column label {
+table.forform-table .label-column label {
     display: inline-block;
     padding-top: 3px;
 }
 
 #tab-panel #panel table.forform-table.wide input, #tab-panel #panel table.forform-table.wide textarea {
-    width: 640px;
+    width: 500px;
 }
 
 #tab-panel #panel table.forform-table input,
 #tab-panel #panel table.forform-table textarea {
     width: 500px;
     margin-bottom: 2px !important;
+    margin-right: 10px !important;
     padding: 5px;
     font-size: 13px;
     background:white url('../img/bg-form-field.gif') top left repeat-x;
@@ -1039,13 +1034,12 @@ table.server-specification td.first {
 	width:20px;
 }
 
-
-table.main-table td.actions img{
-	margin-left:10px;
+table.properties.main-table td {
+    vertical-align: top;
 }
 
-table.properties td.actions img {
-    margin-left:0 !important;
+table.properties td.actions {
+    vertical-align: middle;
 }
 
 #panel table.main-table a.button {
@@ -1283,12 +1277,10 @@ table .pre {
 
 #workflow-parameters-form label {
     text-align: right;
-    padding-top: 5px;
     width: 88%;
 }
 #workflow-parameters-form label.error {
     background: url('../img/cross_circle.png');
-    background-position: 10px 5px !important;
     text-align: left;
     /*padding-top: 0;*/
 }
@@ -1304,6 +1296,16 @@ table .pre {
     font-size: 16px;
     background-color: rgb(255,255,255);
 }
+
+#properties .information-panel {
+    height: 37px;
+    margin: 10px 0;
+}
+
+#properties .information-panel p {
+    margin: 8px 0 0 0;
+}
+
 .manifest-description p {
     margin-top: 0;
     margin-bottom: 0;
@@ -1314,8 +1316,8 @@ table .pre {
     word-wrap: break-word;
 }
 
-input.error, textarea.error {
-    border: 1px solid #cc4a48 !important;
+input.error, textarea.error, select.error {
+    border-color: #992f2f !important;
 }
 
 .removed input {
@@ -1349,11 +1351,16 @@ label.error, .label-required {
 label.error {
     color: #665252;
     background: url('../img/cross_circle.png');
-    background-position: 10px 0 !important;
+    /*background-position: 10px 0 !important;*/
+    /*padding-left: 35px;*/
+    background-position: 0 0 !important;
+    padding-left: 25px;
     background-repeat: no-repeat !important;
-    padding-left: 35px;
     display: inline-block;
     min-height: 20px;
+
+    margin-top: 8px;
+    vertical-align: top;
 }
 
 .template-processing-error-header-1 {

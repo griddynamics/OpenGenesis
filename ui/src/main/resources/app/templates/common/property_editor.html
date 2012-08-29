@@ -10,10 +10,10 @@
       <% var classes = property.isNew ? 'added' : property.removed ? 'removed' : property.dirty ? 'changed' : ''; %>
       <tr data-cid="<%= cid %>" class="<%= classes %>">
         <td>
-          <input id="name-input-<%= cid %>" type="text" class="name-input" value="<%- property.name %>" data-cid="<%= cid %>"/>
+          <input name="items.[<%= i %>].name" id="name-input-<%= cid %>" type="text" class="name-input" value="<%- property.name %>" data-cid="<%= cid %>"/>
         </td>
         <td>
-          <input id="value-input-<%= cid %>" type="text" class="value-input" value="<%- property.value %>" data-cid="<%= cid %>"/>
+          <input name="items.[<%= i %>].value" id="value-input-<%= cid %>" type="text" class="value-input" value="<%- property.value %>" data-cid="<%= cid %>"/>
         </td>
         <td class="actions">
           <a href="javascript: void(0)" class="delete-action" data-cid="<%= cid %>"><img src="assets/img/delete.png" class="icon" /></a>

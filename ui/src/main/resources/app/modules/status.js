@@ -11,8 +11,8 @@ function(genesis, Backbone) {
 
     if (jqXHR.status == 400) {
       var parsedMsg = JSON.parse(jqXHR.responseText),
-        varErrors = parsedMsg.variablesErrors || {},
-        compServiceErrors = parsedMsg.compoundServiceErrors || [];
+          varErrors = parsedMsg.variablesErrors || {},
+          compServiceErrors = parsedMsg.compoundServiceErrors || [];
 
       errorMsg = _.chain(varErrors)
         .keys().map(function(key) { return key + ": " + varErrors[key] })
@@ -35,6 +35,7 @@ function(genesis, Backbone) {
     events: {
       "click .ui-notify-close": "hide"
     },
+
     defaultTimeouts : {
       "success" : 4000,
       "information": 5000,
@@ -46,7 +47,7 @@ function(genesis, Backbone) {
       this.tmpl = _.template($("#app-growl-message").html());
     },
 
-    hide: function(e) {
+    hide: function() {
       this._clearTimeHandler();
       var $el = this.$el;
       $el.fadeTo(1000, 0, function () {

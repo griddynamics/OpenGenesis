@@ -80,9 +80,7 @@ function(genesis, status, Backbone, $) {
 
     events: {
       "click a.back" : "backToPlugins",
-      "click a.save" : "savePluginSettings",
-      "keyup input.property-value" : "showRevertButton",
-      "click .revert" : "revertPropertyChange"
+      "click a.save" : "savePluginSettings"
     },
 
     initialize: function(options) {
@@ -94,23 +92,6 @@ function(genesis, status, Backbone, $) {
         );
         self.render();
       });
-    },
-
-    showRevertButton: function(element) {
-      var input = $(element.currentTarget);
-      var propertyName = input.attr('name');
-      if(input.val() !== this.configMap[propertyName]) {
-        this.$(".revert[data-config-property='"+ propertyName +"']").show();
-      } else {
-        this.$(".revert[data-config-property='"+ propertyName +"']").hide();
-      }
-    },
-
-    revertPropertyChange: function(element) {
-      var input = $(element.currentTarget);
-      var propertyName = input.attr('data-config-property');
-      this.$("input[name='"+ propertyName + "']").val(this.configMap[propertyName]);
-      input.hide();
     },
 
     backToPlugins: function() {
