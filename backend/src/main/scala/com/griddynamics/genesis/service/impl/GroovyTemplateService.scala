@@ -43,7 +43,8 @@ import com.griddynamics.genesis.cache.Cache
 import groovy.util.Expando
 import net.sf.ehcache.{CacheManager, Element}
 import java.util.concurrent.TimeUnit
-import com.griddynamics.genesis.api.ExtendedResult
+import com.griddynamics.genesis.api.{Failure, Success, ExtendedResult}
+import com.griddynamics.genesis.workflow.signal.Fail
 
 class GroovyTemplateService(val templateRepository : TemplateRepository,
                             val stepBuilderFactories : Seq[StepBuilderFactory],
@@ -381,6 +382,27 @@ class GroovyTemplateDefinition(val envTemplate : EnvironmentTemplate,
         envTemplate.workflows.filter(_.name==name).headOption.map(workflowDefinition(_))
     }
 
+    override def getValidWorkflow(name: String) =  {
+        envTemplate.workflows.find(_.name == name).map(w =>
+            {
+                val errors = w.preconditions.map(entry => {
+                    if (! entry._2.call()) {
+                        Some(entry._1)
+                    } else {
+                        None
+                    }
+                }).filter(_.isDefined).map(_.get).toSeq
+                if (! errors.isEmpty)
+                    Failure(compoundServiceErrors = errors)
+                else
+                    Success(workflowDefinition(w))
+            }
+        ) match {
+            case Some(s) => s
+            case _ => Failure(isNotFound = true)
+        }
+    }
+
     def listWorkflows = {
         for (wf <- envTemplate.workflows) yield workflowDefinition(wf)
     }
@@ -394,15 +416,6 @@ class GroovyTemplateDefinition(val envTemplate : EnvironmentTemplate,
     }
 
     def workflowDefinition(workflow : EnvWorkflow) = {
-        val errors = workflow.preconditions.map(entry => {
-             if (! entry._2.call()) {
-                 Some(entry._1)
-             } else {
-                 None
-             }
-        }).filter(_.isDefined).map(_.get).toSeq
-        if (! errors.isEmpty)
-            throw new RequirementsNotMetException(errors)
         new GroovyWorkflowDefinition(envTemplate, workflow, conversionService, stepBuilderFactories)
     }
 }

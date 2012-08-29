@@ -35,8 +35,6 @@ import collection.JavaConversions
 import com.griddynamics.genesis.service.{ConversionException, TemplateService}
 import com.griddynamics.genesis.api.{Failure, GenesisService}
 import com.griddynamics.genesis.util.Logging
-import com.griddynamics.genesis.template.dsl.groovy.RequirementsNotMetException
-import com.griddynamics.genesis.template.RequirementsNotMetException
 
 @Controller
 @RequestMapping(Array("/rest"))
@@ -77,14 +75,26 @@ class GenesisRestController extends RestApiExceptionsHandler with Logging {
 
           }
       } catch {
-          case x: RequirementsNotMetException => {
-              Option(Failure(compoundServiceErrors = x.messages))
-          }
           case e =>
               log.error(e, "Failed to get template %s version %s", templateName, templateVersion)
               Option(Failure(compoundServiceErrors = List(e.getMessage), stackTrace = Option(e.getStackTraceString)))
       }
       result.getOrElse(throw new ResourceNotFoundException("Template not found"))
+    }
+
+    @RequestMapping(value = Array("projects/{projectId}/templates/{templateName}/v{templateVersion:.+}/{name}"), method = Array(RequestMethod.GET))
+    @ResponseBody
+    def getWorkflow(@PathVariable("projectId") projectId: Int,
+                    @PathVariable("templateName") templateName: String,
+                    @PathVariable("templateVersion") templateVersion: String,
+                    @PathVariable("name") name: String) = {
+        try {
+            genesisService.getWorkflow(projectId, templateName, templateVersion, name)
+        } catch {
+            case e =>
+                log.error(e, "Failed to get template %s version %s", templateName, templateVersion)
+                Failure(compoundServiceErrors = List(e.getMessage), stackTrace = Option(e.getStackTraceString))
+        }
     }
 
     @RequestMapping(value = Array("projects/{projectId}/templates/{templateName}/v{templateVersion:.+}/{workflow}"), method = Array(RequestMethod.POST))

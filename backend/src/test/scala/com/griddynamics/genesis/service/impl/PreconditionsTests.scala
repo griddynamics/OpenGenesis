@@ -10,7 +10,8 @@ import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
 import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito
 import org.scalatest.junit.AssertionsForJUnit
-import com.griddynamics.genesis.service.{TemplateDefinition, ValidationError}
+import com.griddynamics.genesis.service.{WorkflowDefinition, TemplateDefinition, ValidationError}
+import com.griddynamics.genesis.api.{ExtendedResult, Failure}
 
 class PreconditionsTests extends AssertionsForJUnit with MockitoSugar {
     val templateRepository = mock[TemplateRepository]
@@ -29,16 +30,10 @@ class PreconditionsTests extends AssertionsForJUnit with MockitoSugar {
 
     @Test
     def testPreconditions() {
-        try {
-            val definition: TemplateDefinition = templateService.findTemplate(0, "Precondidions", "0.1").get
-            assert(definition != null)
-            definition.createWorkflow
-            fail("Requirements met exception must be thrown")
-        } catch {
-            case x: RequirementsNotMetException => {
-                expect("Second requirement not met")(x.messages.head)
-            }
-        }
+        val definition: TemplateDefinition = templateService.findTemplate(0, "Precondidions", "0.1").get
+        assert(definition != null)
+        val workflow: ExtendedResult[WorkflowDefinition] = definition.getValidWorkflow(definition.createWorkflow.name)
+        expect(Failure(compoundServiceErrors = Seq("Second requirement not met")))(workflow)
     }
 
 }

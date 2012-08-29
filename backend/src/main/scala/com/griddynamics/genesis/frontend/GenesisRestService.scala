@@ -148,6 +148,13 @@ class GenesisRestService(storeService: StoreService,
       new ActionTracking(action.actionUUID, action.actionName, action.description, action.started.getTime, action.finished.map(_.getTime), action.status.toString)
     }
 
+    def getWorkflow (projectId: Int, templateName: String, templateVersion: String, workflowName: String) : ExtendedResult[com.griddynamics.genesis.api.Workflow] =  {
+        templateService.findTemplate(projectId: Int, templateName: String, templateVersion).map(_.getValidWorkflow(workflowName)) match {
+            case Some(x) => x.map(workflowDesc(_))
+            case _ => Failure(isNotFound = true)
+        }
+    }
+
     def updateEnvironmentName(envId: Int, projectId: Int, newName: String) = {
        validateNewName(envId, projectId, newName).map(name => storeService.updateEnvName(envId, name))
     }
@@ -178,8 +185,8 @@ object GenesisRestService {
     }
 
     def templateDesc(name: String, version: String, template: service.TemplateDefinition) = {
-        val createWorkflow = workflowDesc(template.createWorkflow)
-        val workflows = for (wf <- template.listWorkflows) yield workflowDesc(wf)
+        val createWorkflow = Workflow(template.createWorkflow.name, Seq())
+        val workflows = for (wf <- template.listWorkflows) yield Workflow(wf.name, Seq())
         Template(name, version, createWorkflow, workflows)
     }
 
