@@ -1,14 +1,12 @@
-<% var now = new Date() %>
 <% if (environments.length > 0) { %>
-
     <% for(var i = 0, count = environments.length; i < count; i++) { var environment = environments[i]; %>
         <tr>
             <td class="first"><a href="#project/<%= project.id %>/env/<%= environment.id %>"><%= environment.name %></a></td>
             <td><%= environment.templateName %> <%= environment.templateVersion %></td>
-            <td><span class="time"><%= $.formatDate.date(environment.creationTime, utils.isSameDay(now, environment.creationTime) ? "HH:mm:ss" : "HH:mm:ss dd/MM/yyyy") %></span> by <span class="username"><%= environment.creator %></span></td>
+            <td><span class="time"><%= utils.formatDate(environment.creationTime) %></span> by <span class="username"><%= environment.creator %></span></td>
             <td>
                 <% if (environment.modificationTime) { %>
-                <span class="time"><%= $.formatDate.date(environment.modificationTime, utils.isSameDay(now, environment.modificationTime) ? "HH:mm:ss" : "HH:mm:ss dd/MM/yyyy") %></span> by <span class="username"><%= environment.creator %></span>
+                <span class="time"><%= utils.formatDate(environment.modificationTime) %></span> by <span class="username"><%= environment.creator %></span>
                 <% } else { %>
                 N/A
                 <% } %>

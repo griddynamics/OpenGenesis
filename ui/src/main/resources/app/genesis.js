@@ -3,10 +3,12 @@ define([
   "jquery",
   "use!underscore",
   "use!backbone",
-  "use!jqueryui"
+  "utils/formats",
+  "use!jqueryui",
+  "use!dateformat"
 ],
 
-function($, _, Backbone) {
+function($, _, Backbone, formats) {
 
   Backbone.View.prototype.close = function() {
     this.unbind();
@@ -39,7 +41,7 @@ function($, _, Backbone) {
     }
   });
 
-  return {
+  var genesis = {
     fetchTemplate: function(path, done) {
       done = done || function(){};
 
@@ -65,7 +67,10 @@ function($, _, Backbone) {
       return _.extend({ Views: {} }, additionalProps);
     },
 
-    app: _.extend({}, Backbone.Events),
+    app: _.extend({
+      currentConfiguration: {},
+      currentUser: null
+    }, Backbone.Events),
 
     utils: {
       nullSafeClose: function (view) {
@@ -75,13 +80,13 @@ function($, _, Backbone) {
       },
 
       isSameDay: function(date1, date2) {
-        if(_.isUndefined(date1) || _.isUndefined(date2)) {
+        if (_.isUndefined(date1) || _.isUndefined(date2)) {
           return false;
         }
-        if(_.isNumber(date1)) {
+        if (_.isNumber(date1)) {
           date1 = new Date(date1);
         }
-        if(_.isNumber(date2)) {
+        if (_.isNumber(date2)) {
           date2 = new Date(date2);
         }
 
@@ -91,13 +96,26 @@ function($, _, Backbone) {
       },
 
       toBoolean: function(collection) {
-        if(_.isArray(collection)) {
+        if (_.isArray(collection)) {
           collection = _(collection);
         }
-        return collection.reduce(function(memo, item) {
+        return collection.reduce(function (memo, item) {
           memo[item] = true;
           return memo;
         }, {});
+      },
+
+      formatDate: function(date, alwaysShowDate){
+        date = _.isNumber(date) ? new Date(date) : date;
+
+        var locale = genesis.app.currentConfiguration['locale'] || "en-US", //todo: get rid of global object dependency
+            currentFormat = formats.ShortDate[locale] || formats.ShortDate["en-US"];
+
+        if (!alwaysShowDate && this.isSameDay(new Date(), date)) {
+          return date.toLocaleTimeString();
+        } else {
+          return date.toLocaleTimeString() + " " + $.formatDate.date(date, currentFormat);
+        }
       },
 
       timeDuration: function(start, end) {
@@ -123,4 +141,6 @@ function($, _, Backbone) {
       }
     }
   };
+
+  return genesis;
 });

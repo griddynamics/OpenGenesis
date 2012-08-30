@@ -1,4 +1,3 @@
-<% var today = new Date(); %>
 <% if (actions.length > 0) { %>
 <table class="slide-subtable intab" style="table-layout: fixed; width: 100.1%; margin-left: -1px">
     <tbody>
@@ -9,12 +8,10 @@
       <td class="phase"></td>
       <td class="status" ><%- action.status || "" %></td>
       <td class="details details-cell"><%- action.description || "" %></td>
-      <td class="started">
-        <%= $.formatDate.date(action.started, utils.isSameDay(today, action.started) ? "HH:mm:ss" : "HH:mm:ss dd/MM/yyyy") %>
-      </td>
+      <td class="started"> <%= utils.formatDate(action.started) %> </td>
       <td  class="stopped">
         <% if (action.finished) { %>
-          <%= $.formatDate.date(action.finished, utils.isSameDay(today, action.finished) ? "HH:mm:ss" : "HH:mm:ss dd/MM/yyyy") %>
+          <%= utils.formatDate(action.finished) %>
         <% } else { %>
           <em> ... </em>
         <% } %>
