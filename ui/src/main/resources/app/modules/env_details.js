@@ -10,8 +10,7 @@ define([
   "use!backbone",
   "jquery",
   "use!jqueryui",
-  "use!jvalidate",
-  "use!dateformat"
+  "use!jvalidate"
 ],
 
 function (genesis, backend, poller, status, roles, variables, gtemplates, EnvStatus, Backbone, $) {
