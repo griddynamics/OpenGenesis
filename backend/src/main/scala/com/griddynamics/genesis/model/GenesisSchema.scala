@@ -101,7 +101,8 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
 
     on(steps)(step => declare(
         step.id is (primaryKey),
-        step.details is (dbType("text"))
+        step.details is (dbType("text")),
+        step.title is (dbType("varchar(256)"))
     ))
 
     on (counters) (counter => declare(
