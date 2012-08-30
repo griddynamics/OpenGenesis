@@ -242,8 +242,9 @@ object GenesisRestService {
                   step.status.toString,
                   step.details,
                   step.started.map(_.getTime),
-                  step.finished.map(_.getTime))
-            ).toSeq)
+                  step.finished.map(_.getTime),
+                  step.title
+            )).toSeq)
 
     def wrap[A](seq : Traversable[_])(f : () => A): Option[A] = {
         if(seq.isEmpty) None

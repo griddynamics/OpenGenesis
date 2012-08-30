@@ -36,6 +36,7 @@ public abstract class AbstractStepBuilder implements StepBuilder {
     private boolean ignoreFail;
     private int retryCount;
     private Map<String, String> exportTo;
+    private String title;
 
     private int id = 0;
 
@@ -216,6 +217,34 @@ public abstract class AbstractStepBuilder implements StepBuilder {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(final String title) {
+        this.title = title;
+    }
+
+    /**
+     * Scala-style getter.
+     *
+     * @return title
+     */
+    @Override
+    public String title() {
+        return getTitle();
+    }
+
+    /**
+     * Scala-style setter.
+     *
+     * @param title -
+     */
+    @Override
+    public void title_$eq(String title) {
+        setTitle(title);
     }
 
 }
