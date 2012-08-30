@@ -1,0 +1,11 @@
+<div class="tab-section">
+    <div class="template-processing-error-header-1">Workflow cannot be started because some requirements were not met:</div>
+    <div class="clear"/>
+    <div class="template-processing-error-border">
+        <ul>
+            <% for (var message in error.compoundServiceErrors) { %>
+            <li><%= error.compoundServiceErrors[message] %></li>
+            <% } %>
+        </ul>
+    </div>
+</div>

@@ -237,7 +237,21 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
           });
 
           if (workflow) {
-            self.executeWorkflowDialog.showFor(self.details.get("projectId"), workflow, self.details.get("id"), self.details.get('templateName'), self.details.get('templateVersion'));
+            var wmodel = new gtemplates.WorkflowModel({
+                name: self.details.get('templateName'),
+                version: self.details.get('templateVersion')
+              },
+              {
+                projectId: self.details.get("projectId"),
+                workflow: workflowName
+              });
+
+            $.when(wmodel.fetch()).done(function(){
+              self.executeWorkflowDialog.showFor(self.details.get("projectId"), wmodel.get("result"), self.details.get("id"),
+                self.details.get('templateName'), self.details.get('templateVersion'));
+            }).fail(function(jqXHR){
+                status.StatusPanel.error(jqXHR);
+            });
           }
         }).fail(function(jqXHR) {
           status.StatusPanel.error(jqXHR);
