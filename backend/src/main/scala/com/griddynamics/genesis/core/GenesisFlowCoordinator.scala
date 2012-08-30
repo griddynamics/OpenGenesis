@@ -153,7 +153,8 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
                         workflow.id,
                         builder.phase,
                         WorkflowStepStatus.Requested,
-                        builder.getDetails.stepDescription
+                        builder.getDetails.stepDescription,
+                        title = Option(builder.getTitle)
                     )
                 )
             builder.id = workflowStep.id

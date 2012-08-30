@@ -79,11 +79,11 @@
                 <% if (step.status  !== 'Requested') { %>
                   <td class="first step-details-expander toggle" data-actions-rel="#step-<%= step.stepId %>-actions" data-step-id="<%= step.stepId %>" data-step-status="<%= step.status %>">
                     <img src="/assets/img/arrow-left.png" class="toggle">
-                    <a href="javascript: void(0)">Step <%= j + 1 %> </a>
+                    <a href="javascript: void(0)"><%= step.title ? step.title : "Step " + (j + 1) %> </a>
                   </td>
                 <% } else { %>
                   <td class="first" >
-                    <span style="padding-left: 15px">Step <%= j + 1 %></span>
+                    <span style="padding-left: 15px"><%= step.title ? step.title : "Step " + (j + 1) %></span>
                   </td>
                 <% } %>
                 <td class="phase"><%= step.phase %></td>

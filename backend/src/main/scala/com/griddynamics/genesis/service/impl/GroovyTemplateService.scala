@@ -206,6 +206,7 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
         stepBuilder.exportTo = this.exportTo
         stepBuilder.ignoreFail = this.ignoreFail
         stepBuilder.precedingPhases = this.precedingPhases
+        stepBuilder.title = this.title
         stepBuilder.newStep
     }
 
