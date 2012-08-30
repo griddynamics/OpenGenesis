@@ -1,4 +1,3 @@
-<% var now = new Date(); %>
 <div id="top-panel" >
   <div id="page-title"><h1>Project list</h1></div>
   <% if (currentUser.administrator) { %>
@@ -22,7 +21,7 @@
             <td class="first name" ><a href="#project/<%= project.id %>"><%- project.name %></a></td>
             <td class="name"><%- project.projectManager %> </td>
             <td class="multiline-description details-cell"><%- project.description %></td>
-            <td><span class="time"><%= $.formatDate.date(project.creationTime, utils.isSameDay(now, project.creationTime) ? "HH:mm:ss" : "HH:mm:ss dd/MM/yyyy") %></span> by <span class="username"><%- project.creator %></span></td>
+            <td><span class="time"><%= utils.formatDate(project.creationTime) %></span> by <span class="username"><%- project.creator %></span></td>
         </tr>
         <% } %>
 

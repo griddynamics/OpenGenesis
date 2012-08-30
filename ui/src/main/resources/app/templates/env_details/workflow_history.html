@@ -45,22 +45,17 @@
     <h3 class="toggle"><%= workflow.name %></h3>
 
     <div class="workflow-actions">
-      Started: <span class="date">
-      <% if (workflow.executionStartedTimestamp) { %>
-       <%= $.formatDate.date(workflow.executionStartedTimestamp , utils.isSameDay(today, workflow.executionStartedTimestamp) ? "HH:mm:ss" : "HH:mm:ss dd/MM/yyyy") %>
-      <% } else { %>
-        No information
-      <% } %>
+      Started:
+      <span class="date">
+        <%= workflow.executionStartedTimestamp ? utils.formatDate(workflow.executionStartedTimestamp) : "No information" %>
       </span>
       By: <span class="username"><%= workflow.startedBy %></span>
-      Finished: <span class="date">
-      <% if (workflow.executionFinishedTimestamp) { %>
-        <%= $.formatDate.date(workflow.executionFinishedTimestamp, utils.isSameDay(today, workflow.executionFinishedTimestamp) ? "HH:mm:ss" : "HH:mm:ss dd/MM/yyyy") %>
-      <% } else { %>
-        --
-      <% } %>
+      Finished:
+      <span class="date">
+       <%= workflow.executionFinishedTimestamp ? utils.formatDate(workflow.executionFinishedTimestamp) : "--" %>
       </span>
-      Duration: <span class="duration"><%= utils.timeDuration(workflow.executionStartedTimestamp, workflow.executionFinishedTimestamp) %></span>
+      Duration: <span class="duration"> <%= utils.timeDuration(workflow.executionStartedTimestamp, workflow.executionFinishedTimestamp) %></span>
+
       <span class="status-section">Status: <span class=<%= (failStatuses.indexOf(workflow.status) != -1 ? "bad" : "normal") %> > <%= workflow.status %></span></span>
     </div>
   </div>
@@ -82,10 +77,10 @@
             <% for(var j = 0, count = workflow.steps.length; j < count; j++) { var step = workflow.steps[j]; var details = splitDetails(step.details); %>
               <tr class="<%= stepStatusMap[step.status] %>" >
                 <% if (step.status  !== 'Requested') { %>
-                <td class="first step-details-expander toggle" data-actions-rel="#step-<%= step.stepId %>-actions" data-step-id="<%= step.stepId %>" data-step-status="<%= step.status %>">
-                  <img src="/assets/img/arrow-left.png" class="toggle">
-                  <a href="javascript: void(0)">Step <%= j + 1 %> </a>
-                </td>
+                  <td class="first step-details-expander toggle" data-actions-rel="#step-<%= step.stepId %>-actions" data-step-id="<%= step.stepId %>" data-step-status="<%= step.status %>">
+                    <img src="/assets/img/arrow-left.png" class="toggle">
+                    <a href="javascript: void(0)">Step <%= j + 1 %> </a>
+                  </td>
                 <% } else { %>
                   <td class="first" >
                     <span style="padding-left: 15px">Step <%= j + 1 %></span>
@@ -105,15 +100,14 @@
                    <% } %>
                 </td>
                 <td>
-                  <%= step.started ? $.formatDate.date(step.started, utils.isSameDay(today, step.started) ? "HH:mm:ss" : "HH:mm:ss dd/MM/yyyy") : "" %>
+                  <%= step.started ? utils.formatDate(step.started) : "" %>
                 </td>
                 <td>
-                  <%= step.finished? $.formatDate.date(step.finished, utils.isSameDay(today, step.finished) ? "HH:mm:ss" : "HH:mm:ss dd/MM/yyyy") : "" %>
+                  <%= step.finished ? utils.formatDate(step.finished) : "" %>
                 </td>
                 <td>
                   <% if ( step.status !== "Requested" ) { %>
                     <a href="/rest/projects/<%= workflows.projectId %>/envs/<%= workflows.envId %>/logs/<%= step.stepId %>" target="_blank" data-bypass>Step Log</a>
-                    <!--<a href="javascript:void(0)" class="step-details-expander" data-step-id="<%= step.stepId %>"> Actions </a>-->
                   <% } %>
                 </td>
               </tr>
