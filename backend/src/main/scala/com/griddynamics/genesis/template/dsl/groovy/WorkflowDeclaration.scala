@@ -1,10 +1,14 @@
 package com.griddynamics.genesis.template.dsl.groovy
 
-import groovy.lang.Closure
+import groovy.lang.{GroovyObjectSupport, Closure}
+import collection.mutable
+import java.util.Random
 
 class WorkflowDeclaration {
     var variablesBlock : Option[Closure[Unit]] = None
     var stepsBlock : Option[Closure[Unit]] = None
+    var beforeBlock: Option[Closure[Unit]] = None
+    var requirements: collection.mutable.Map[String, Closure[Boolean]] = new mutable.LinkedHashMap[String, Closure[Boolean]]
 
     def variables(variables : Closure[Unit]) {
         variablesBlock = Some(variables)
@@ -13,9 +17,31 @@ class WorkflowDeclaration {
     def steps(steps : Closure[Unit]) {
         stepsBlock = Some(steps)
     }
+
+    def require(conditions: Closure[(String, Closure[Boolean])]) {
+        val handler: RequirementsHandler = new RequirementsHandler
+        conditions.setDelegate(handler)
+        conditions.call()
+        requirements = handler.requirementsMap
+    }
+
+
+}
+
+class RequirementsHandler extends GroovyObjectSupport {
+    val requirementsMap: mutable.Map[String, Closure[Boolean]] = mutable.Map()
+
+    override def invokeMethod(name: String, args: AnyRef) : AnyRef = {
+       val arguments = args.asInstanceOf[Array[AnyRef]]
+       requirementsMap.put(name, arguments(0).asInstanceOf[Closure[Boolean]])
+       false.asInstanceOf[AnyRef]
+    }
 }
 
 class EnvWorkflow(val name : String,
                   val variables : List[VariableDetails],
-                  val stepsGenerator : Option[Closure[Unit]])
+                  val stepsGenerator : Option[Closure[Unit]],
+                  val preconditions: Map[String, Closure[Boolean]] = Map(),
+                  val complete: Option[Closure[Unit]] = None)
+
 

@@ -1,0 +1,43 @@
+package groovy
+
+template {
+    name("Precondidions")
+    version("0.1")
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+
+    workflow("create") {
+        require {
+            "First requirement not met" {
+                1 == 1
+            }
+
+            "Second requirement not met" {
+                0 == 1
+            }
+        }
+
+
+        steps {
+            teststep {
+                phase = "provision"
+                text = "1"
+            }
+            teststep {
+                phase = "install"
+                precedingPhases = ["provision"]
+                text = "erlang2"
+            }
+        }
+    }
+
+    workflow("destroy") {
+        steps {
+            teststep {
+                phase = "undeply"
+                text = "destroy"
+            }
+        }
+    }
+}

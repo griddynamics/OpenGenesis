@@ -23,6 +23,17 @@ function(genesis, Backbone) {
     }
   });
 
+  var WorkflowDesc = Backbone.Model.extend({
+     initialize: function(model, options) {
+       this.projectId = options.projectId;
+       this.workflow = options.workflow;
+     },
+
+     url : function() {
+       return "/rest/projects/" + this.projectId + "/templates/" + this.get("name") + "/v" + this.get("version") + "/" + this.workflow;
+     }
+  });
+
 
   Templates.TemplatesCollection = Backbone.Collection.extend({
     initialize: function (model, options) {
@@ -90,6 +101,7 @@ function(genesis, Backbone) {
   });
 
   Templates.TemplateModel = TemplateDesc;
+  Templates.WorkflowModel = WorkflowDesc;
 
   return Templates;
 });
