@@ -213,7 +213,7 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
   var EnvironmentParametersStep = Step.extend({
     template: "app/templates/createenv/environment_settings.html",
     errorTemplate: "app/templates/createenv/environment_settings_error.html",
-    preconditionErrorTemplate: "app/templates/createenv/environment_settings_error.html",
+    preconditionErrorTemplate: "app/templates/createenv/preconditions_error.html",
 
     initialize: function(options) {
       this.variables = [];
@@ -246,6 +246,7 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
             genesis.app.trigger("page-view-loading-completed");
             self.render();
           }).fail(function(jqXHR){
+              jqXHR.preconditionFailed = true;
               self.render(jqXHR);
           }).always(function(){
               genesis.app.trigger("page-view-loading-completed");
@@ -289,9 +290,12 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
           validation.bindValidation(view.model, view._settingsForm());
         });
       }  else {
+        console.log(error);
         $("#ready").hide();
-        $.when(genesis.fetchTemplate(error.status == 400 ? this.preconditionErrorTemplate : this.errorTemplate)).done(function(tmpl){
-          view.el.innerHTML = tmpl({error: JSON.parse(view.error.responseText)});
+        var template = error.preconditionFailed ? this.preconditionErrorTemplate : this.errorTemplate;
+        console.log(template);
+        $.when(genesis.fetchTemplate(template)).done(function(tmpl){
+          view.el.innerHTML = tmpl({error: JSON.parse(error.responseText)});
         });
       }
     }
