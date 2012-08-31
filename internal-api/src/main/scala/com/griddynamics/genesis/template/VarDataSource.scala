@@ -23,10 +23,12 @@
 
 package com.griddynamics.genesis.template
 
-trait VarDataSource{
+trait VarDataSource {
     def getData : Map[String,String]
     def config(map: Map[String, Any])
+    def hasValue(value: Any): Boolean = getData.exists { case (key, data) => data == value }
 }
+
 trait DependentDataSource extends VarDataSource {
     def getData(param: Any) : Map[String,String]
 }
