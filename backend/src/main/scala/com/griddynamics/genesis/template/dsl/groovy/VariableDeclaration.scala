@@ -1,9 +1,10 @@
 package com.griddynamics.genesis.template.dsl.groovy
 
-import com.griddynamics.genesis.template.{VarDataSource, DataSourceFactory}
+import com.griddynamics.genesis.template.DataSourceFactory
 import groovy.lang.{MissingPropertyException, Closure, GroovyObjectSupport}
 import collection.mutable.ListBuffer
 import reflect.BeanProperty
+import groovy.util.Expando
 
 class VariableDeclaration(val dsObjSupport: Option[DSObjectSupport], dataSourceFactories : Seq[DataSourceFactory], projectId: Int) extends GroovyObjectSupport {
     val builders = new ListBuffer[VariableBuilder]
@@ -120,41 +121,47 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
     }
 
     def inlineDataSource(ds: InlineDataSource) {
-      import collection.JavaConversions._
       val vars = ds.dependancyVars
-      if(!vars.isEmpty) {
+      if (!vars.isEmpty) {
         this.dependsOn(vars.toArray)
-        this.inlineDataSource = Some(ds)
-      } else {
-        this.oneOf( new Closure[java.util.Map[String, String]](this) {
-          override def call() = {
-            ds.getData
-          }
-        })
       }
+      this.inlineDataSource = Some(ds)
     }
 
     def valuesList: Option[(Map[String, Any] => Map[String,String])] = {
         if (useOneOf) {
             import collection.JavaConversions._
             dsObjSupport.foreach(oneOf.setDelegate(_))
-            val values = Option({ _: Any => oneOf.call().map(kv => (kv._1, kv._2)).toMap})
+
+            val getValues = { _: Any => oneOf.call().toMap }
+
             validator(new Closure[Boolean](this.oneOf) {
                 def doCall(args: Array[Any]): Boolean = {
-                    values.get.apply().exists(_._2.toString == args(0).toString)
+                    getValues().exists(_._2.toString == args(0).toString)
                 }
             })
-            values
+
+          Option(getValues)
         } else if (inlineDataSource.isDefined) {
           val inlineDS = inlineDataSource.get
+
+          validators.put("Invalid value", new Closure[Boolean](new Expando()) {
+            def doCall(args: Array[Any]): Boolean = {
+              val deps = inlineDS.dependancyVars
+              inlineDS.config(deps.map { it => (it, this.getProperty(it)) }.toMap)
+              inlineDS.hasValue( args(0) )
+            }
+          })
+
           val func = { params: Map[String, Any] =>
-              if (params.isEmpty) {
-                Map[String, String]()
-              } else {
-                inlineDS.config(parents.map(variable => (variable, params(variable))).toMap)
-                inlineDS.getData
-              }
+            if (params.nonEmpty || inlineDS.dependancyVars.isEmpty) {
+              inlineDS.config(parents.map(variable => (variable, params(variable))).toMap)
+              inlineDS.getData
+            } else {
+              Map[String, String]()
+            }
           }
+
           Option(func)
         } else {
            dataSourceRef.flatMap(ds => Option({params : Map[String, Any] => {

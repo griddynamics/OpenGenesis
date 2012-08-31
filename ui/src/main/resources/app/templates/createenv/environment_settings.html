@@ -1,3 +1,13 @@
+<%
+  function isRequired(variable) {
+    return !variable.optional ? "required" : "";
+  }
+
+  function isSelected(key, variable) {
+    return variable.defaultValue && variable.defaultValue === key ? 'selected="selected"' : '';
+  }
+%>
+
 <div class="tab-section">
   <form id="environment-settings" action="">
     <input type="text" name="ie_quirks" style="display: none"/>  <!-- https://connect.microsoft.com/IE/feedback/ViewFeedback.aspx?FeedbackID=389736 -->
@@ -15,26 +25,18 @@
             </td>
             <td>
                 <% if (typeof(variable.values) !== "undefined" && _.size(variable.values) || variable.dependsOn) { %>
-                <% if (! _.size(variable.values)) { %>
-                <select id="<%= variable.name %>" disabled="disabled" name="<%= variable.name %>" class="<%= (variable.optional ? "workflow-variable" : "workflow-variable required") %>">
-                <% } else { %>
-                <select id="<%= variable.name %>" name="<%= variable.name %>" class="<%= (variable.optional ? "workflow-variable" : "workflow-variable required") %>">
-                    <% if (! variable.defaultValue) { %>
-                        <option value="" disabled="disabled" selected="selected">Please select</option>
-                    <% } else { %>
+                  <% if (! _.size(variable.values)) { %>
+                    <select id="<%= variable.name %>" disabled="disabled" name="<%= variable.name %>" class="workflow-variable <%= isRequired(variable) %>">
+                  <% } else { %>
+                    <select id="<%= variable.name %>" name="<%= variable.name %>" class="workflow-variable <%= isRequired(variable) %>">
                         <option value="" disabled="disabled">Please select</option>
-                    <% } %>
-                    <% _.each(_.sortBy(_.keys(variable.values), function(x) {return x}), function(key) { %>
-                       <% if (variable.defaultValue == key) { %>
-                            <option value="<%= variable.values[key] %>" selected="selected"><%= key %></option>
-                       <% } else { %>
-                            <option value="<%= variable.values[key] %>"><%= key %></option>
-                       <% } %>
-                    <% }) %>
-                </select>
-                <% } %>
+                        <% _.each(_.sortBy(_.keys(variable.values), function(x) {return x}), function(key) { %>
+                            <option value="<%= variable.values[key] %>" <%= isSelected(key, variable) %> ><%= key %></option>
+                        <% }) %>
+                    </select>
+                  <% } %>
                 <% } else { %>
-                <input type="text" class="<%= (variable.optional ? "workflow-variable" : "workflow-variable required") %>" id="<%= variable.name %>" name="<%= variable.name %>" value="<%= variable.defaultValue %>" >
+                  <input type="text" class="workflow-variable <%= isRequired(variable) %>" id="<%= variable.name %>" name="<%= variable.name %>" value="<%= variable.defaultValue %>" >
                 <% } %>
             </td>
         </tr>
