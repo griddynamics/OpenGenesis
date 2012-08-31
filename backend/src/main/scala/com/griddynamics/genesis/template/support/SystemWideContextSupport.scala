@@ -34,7 +34,11 @@ class SystemContext(databagRepository: DatabagRepository, projectId: Option[Int]
 
   def getDatabag: GroovyObjectSupport = new GroovyObjectSupport {
     def getAt(property: String): Expando = {
-      new Expando(databag(property))
+      new Expando(databag(property)){
+          def isEmpty: Boolean = {
+             super.getProperties.isEmpty
+          }
+      }
     }
   }
 }

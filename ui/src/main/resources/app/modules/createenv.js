@@ -213,6 +213,7 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
   var EnvironmentParametersStep = Step.extend({
     template: "app/templates/createenv/environment_settings.html",
     errorTemplate: "app/templates/createenv/environment_settings_error.html",
+    preconditionErrorTemplate: "app/templates/createenv/preconditions_error.html",
 
     initialize: function(options) {
       this.variables = [];
@@ -230,21 +231,30 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
         var desc = new gtemplates.TemplateModel({name: newTemplate.get('name'), version:  newTemplate.get('version')}, {projectId: this.project.id});
         genesis.app.trigger("page-view-loading-started");
         var self = this;
+        self.$el.html("");
         $.when(desc.fetch()).done(function() {
-          self.variables = desc.get('createWorkflow').variables;
-          variables.processVars({
-            variables: desc.get('createWorkflow').variables,
-            projectId: self.project.id,
-            workflowName: desc.get('createWorkflow').name,
-            templateName: newTemplate.get('name'),
-            templateVersion: newTemplate.get('version')
+          var workflow = new gtemplates.WorkflowModel({name: newTemplate.get('name'), version:  newTemplate.get('version')},
+            {projectId: self.project.id, workflow: desc.get('createWorkflow').name});
+          $.when(workflow.fetch()).done(function() {
+            self.variables = workflow.get('result').variables;
+            variables.processVars({
+              variables: self.variables,
+              projectId: self.project.id,
+              workflowName: workflow.workflow,
+              templateName: newTemplate.get('name'),
+              templateVersion: newTemplate.get('version')
+            });
+            self.render();
+          }).fail(function(jqXHR){
+              jqXHR.preconditionFailed = true;
+              self.render(jqXHR);
+          }).always(function(){
+              genesis.app.trigger("page-view-loading-completed");
           });
-          self.render();
         })
         .fail(function(jqXHR) {
-          self.render(jqXHR);
-        }).always(function(){
-          genesis.app.trigger("page-view-loading-completed");
+            self.render(jqXHR);
+            genesis.app.trigger("page-view-loading-completed");
         });
       }
     },
@@ -277,9 +287,10 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
 
           validation.bindValidation(view.model, view._settingsForm());
         });
-      } else {
+      }  else {
         $("#ready").hide();
-        $.when(genesis.fetchTemplate(this.errorTemplate)).done(function(tmpl){
+        var template = error.preconditionFailed ? this.preconditionErrorTemplate : this.errorTemplate;
+        $.when(genesis.fetchTemplate(template)).done(function(tmpl){
           view.el.innerHTML = tmpl({error: JSON.parse(error.responseText)});
         });
       }

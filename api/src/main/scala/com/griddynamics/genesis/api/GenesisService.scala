@@ -61,4 +61,6 @@ trait GenesisService {
     def isEnvExists(envId: Int, projectId: Int): Boolean
 
     def getStepLog(stepId: Int): Seq[ActionTracking]
+
+    def getWorkflow(projectId: Int, templateName: String, templateVersion: String, workflowName: String) : ExtendedResult[Workflow]
 }

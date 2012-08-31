@@ -24,6 +24,7 @@ package com.griddynamics.genesis.template.dsl.groovy
 
 import groovy.lang.{GroovyObjectSupport, Closure}
 import scala._
+import collection.mutable
 import collection.mutable.ListBuffer
 import com.griddynamics.genesis.template._
 import java.lang.reflect.Method
@@ -71,14 +72,8 @@ class NameVersionDelegate {
     }
 
     def newTemplate(extName: Option[String], extVersion: Option[String], extProject: Option[String]) = {
-      val templateName = extName match {
-        case None => name
-        case Some(s) => s
-      }
-      val templateVersion = extVersion match {
-        case None => version
-        case Some(s) => s
-      }
+      val templateName = extName.getOrElse(name)
+      val templateVersion = extVersion.getOrElse(version)
       new EnvironmentTemplate(templateName, templateVersion, extProject, createWorkflowName, destroyWorkflowName,
           workflows.toList)
     }
@@ -119,7 +114,7 @@ class EnvTemplateBuilder(val projectId: Int,
 
         val variables = for(builder <- variableBuilders) yield builder.newVariable
 
-        workflows += new EnvWorkflow(name, variables.toList, delegate.stepsBlock)
+        workflows += new EnvWorkflow(name, variables.toList, delegate.stepsBlock, preconditions = delegate.requirements.toMap)
         this
     }
 
@@ -189,5 +184,7 @@ class BlockDeclaration {
         includes += path
     }
 }
+
+
 
 

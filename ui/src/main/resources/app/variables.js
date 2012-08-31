@@ -89,7 +89,8 @@ function(genesis, status, $, _) {
       type: "POST",
       url: url,
       data: JSON.stringify({variables: variables}),
-      dataType: "json"
+      dataType: "json",
+      contentType : 'application/json'
     })
   }
 

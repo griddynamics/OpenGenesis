@@ -23,6 +23,7 @@
 package com.griddynamics.genesis.service
 
 import com.griddynamics.genesis.plugin.StepBuilder
+import com.griddynamics.genesis.api.{Failure, Success, ExtendedResult}
 
 class VariableDescription(val name: String, val description: String, val isOptional: Boolean = false,
                           val defaultValue: String = null, val values: Map[String,String] = Map(), val dependsOn: Option[List[String]] = None)
@@ -37,7 +38,13 @@ trait TemplateDefinition {
 
     def listWorkflows: Seq[WorkflowDefinition]
 
+    @deprecated(since = "1.3.0", message = "Use getValidWorkflow")
     def getWorkflow(name: String): Option[WorkflowDefinition]
+
+    def getValidWorkflow(name: String): ExtendedResult[WorkflowDefinition] = getWorkflow(name) match {
+        case Some(s) => Success(s)
+        case _ => Failure(isNotFound = true)
+    }
 }
 
 trait WorkflowDefinition {
