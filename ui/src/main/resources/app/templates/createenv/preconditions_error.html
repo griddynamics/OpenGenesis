@@ -3,8 +3,8 @@
     <div class="clear"/>
     <div class="template-processing-error-border">
         <ul>
-            <% for (var message in error.compoundServiceErrors) { %>
-            <li><%= error.compoundServiceErrors[message] %></li>
+            <% for (var i = 0; i < error.compoundServiceErrors.length; i++) { %>
+            <li><%= error.compoundServiceErrors[i] %></li>
             <% } %>
         </ul>
     </div>
