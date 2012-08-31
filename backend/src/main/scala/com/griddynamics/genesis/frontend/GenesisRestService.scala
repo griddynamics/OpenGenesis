@@ -149,7 +149,7 @@ class GenesisRestService(storeService: StoreService,
     }
 
     def getWorkflow (projectId: Int, templateName: String, templateVersion: String, workflowName: String) : ExtendedResult[com.griddynamics.genesis.api.Workflow] =  {
-        templateService.findTemplate(projectId: Int, templateName: String, templateVersion).map(_.getValidWorkflow(workflowName)) match {
+        templateService.findTemplate(projectId, templateName, templateVersion).map(_.getValidWorkflow(workflowName)) match {
             case Some(x) => x.map(workflowDesc(_))
             case _ => Failure(isNotFound = true)
         }
