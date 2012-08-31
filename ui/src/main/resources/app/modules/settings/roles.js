@@ -153,8 +153,8 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
 
     saveChanges: function() {
       this.role.set({
-        "users": this.$("#groups-select").val() || [],
-        "groups": this.$("#users-select").val() || []
+        "users": this.$("#users-select").val() || [],
+        "groups":  this.$("#groups-select").val() || []
       });
       var self = this;
       this.role.save().done(function () {
