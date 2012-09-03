@@ -24,7 +24,7 @@ package com.griddynamics.genesis.util
 
 import collection.mutable
 
-class Describer(description: String) {
+class Describer(description: String = "") {
   val Unspecified: String = "unspecified"
 
   private val params = new mutable.LinkedHashMap[String, String]
