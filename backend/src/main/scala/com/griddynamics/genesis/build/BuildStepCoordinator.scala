@@ -100,5 +100,7 @@ class BuildActionExecutor(val action : BuildAction, provider : BuildProvider) ex
 }
 
 case class BuildAction(step : BuildStep) extends Action
-case class BuildSuccessful(action: Action, outResult : Map[String, String]) extends ActionResult
+case class BuildSuccessful(action: Action, outResult : Map[String, String]) extends ActionResult {
+    override val desc = ""
+}
 case class BuildFailed(action: Action) extends ActionResult with ActionFailed
