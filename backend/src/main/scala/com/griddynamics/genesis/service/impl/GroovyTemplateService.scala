@@ -250,22 +250,22 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
                                conversionService : ConversionService,
                                stepBuilderFactories : Seq[StepBuilderFactory]) extends WorkflowDefinition with Logging {
     def convertAndValidate(value: Any, variable: VariableDetails, context: Map[String,Any]): Seq[ValidationError] = {
+      def plainValue (value: Any) =  value match {
+        case f: Option[_] => f.getOrElse(null)
+        case a => a
+      }
+
       try {
         //all values stored as strings, so we need to use string repr. to convert here as well
         val typedVal = convert(String.valueOf(value), variable)
-        (for (validator <- variable.validators) yield {
-          context.foreach (
-            p =>
-              validator._2.setProperty(p._1, p._2 match {
-                case Some(f) => f
-                case None => null
-                case a => a
-              }))
-          if (!validator._2.call(typedVal))
-            Some(ValidationError(variable.name, validator._1))
+
+        variable.validators.view.map { case (errorMsg, validator) =>
+          context.foreach { case (varName, varValue) => validator.setProperty(varName, plainValue(varValue)) }
+          if (!validator.call(typedVal))
+            Some(ValidationError(variable.name, errorMsg))
           else
             None
-        }).flatten.toSeq
+        }.find(_.isDefined).flatten.toSeq
       } catch {
         case e: ConversionException => Seq(ValidationError(e.fieldId, e.message))
       }
