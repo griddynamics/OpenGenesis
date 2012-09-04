@@ -23,9 +23,9 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
     "ROLE_GENESIS_USER" : "Genesis User",
     "ROLE_GENESIS_USER.description" : "Can login into genesis application",
     "ROLE_GENESIS_PROJECT_ADMIN": "Project Administrator",
-    "ROLE_GENESIS_PROJECT_ADMIN.description": "Have full control over project",
+    "ROLE_GENESIS_PROJECT_ADMIN.description": "Have full control over project<br/><br/>If environment security enabled, only project admin can create new environments and grant access to them to project users",
     "ROLE_GENESIS_PROJECT_USER": "Project User",
-    "ROLE_GENESIS_PROJECT_USER.description": "Have access to project: can create, destroy environments and execute workflows"
+    "ROLE_GENESIS_PROJECT_USER.description": "Have access to project environments<br/> <br/>if environment security disabled, can create and execute actions against all project's environments, <br/>otherwise access is restricted to specific environments"
   };
 
   Roles.Model = Backbone.Model.extend({
