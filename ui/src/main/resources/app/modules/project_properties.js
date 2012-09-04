@@ -15,7 +15,6 @@ function(genesis, Backbone, backend, Projects, Credentials, OtherSettings, Serve
 
   ProjectProperties.Views.Main = Backbone.View.extend({
     template: "app/templates/project_properties.html",
-    projectId: null,
 
     events: {
       "click #main-settings-tab" : "showMainSettings",
@@ -24,8 +23,6 @@ function(genesis, Backbone, backend, Projects, Credentials, OtherSettings, Serve
       "click #project-servers-tab" : "showServers",
       "click #project-databags-tab" : "showProjectDatabags"
     },
-
-    tabs : null,
 
     initialize: function(options) {
       this.project = options.project;
