@@ -10,7 +10,6 @@ define([
 ],
 
 function(genesis, status, backend, Backbone, $, validation) {
-  var DEFAULT_TIMEOUT = 4000;
 
   var Projects = genesis.module();
 
@@ -108,7 +107,7 @@ function(genesis, status, backend, Backbone, $, validation) {
         title: 'Confirmation',
         buttons: {
           "Yes": function () {
-            $.when(self.project.destroy()).done(function () {
+            $.when(self.project.destroy({wait: true})).done(function () {   // 'wait: true' prevents backbone from propagating event before success result from server
               status.StatusPanel.success("Project \"" + self.project.get("name") + "\" was deleted");
               genesis.app.router.navigate("/", {trigger: true});
             }).fail(function (jqXHR) {
