@@ -37,7 +37,7 @@ class BuildStepBuilderFactory extends StepBuilderFactory {
 }
 
 case class BuildStep(values: Map[String, String], provider: String) extends Step {
-  override val stepDescription = new Describer("Build process execution")
+  override val stepDescription = new Describer(/*"Build process execution"*/)
     .param("build system", provider)
     .param("parameters", values.filterKeys(!_.contains("password")))
     .describe
