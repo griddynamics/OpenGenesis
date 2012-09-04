@@ -1,0 +1,31 @@
+package groovy
+template {
+    name("Rescue")
+    version("0.1")
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+
+    workflow("create") {
+        steps {
+            teststep {
+                phase = "phase1"
+                text =   "test input"
+            }
+        }
+        rescue {
+            teststep {
+                text = "rescue"
+            }
+        }
+    }
+
+    workflow("destroy") {
+        steps {
+            teststep {
+                phase = "undeply"
+                text = "destroy"
+            }
+        }
+    }
+}

@@ -65,14 +65,14 @@ class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar {
 
   @Test def contextVariableAccess() {
     val stepBuilders = templateService.findTemplate(0, "TestEnv", "0.1").get.createWorkflow.embody(Map())
-    stepBuilders.foreach { _.id = IdGen.generate }
+    stepBuilders.regular.foreach { _.id = IdGen.generate }
 
-    val flowCoordinator = new GenesisFlowCoordinator(0, 0, stepBuilders, storeService, stepCoordinatorFactory) with RegularWorkflow
+    val flowCoordinator = new GenesisFlowCoordinator(0, 0, stepBuilders.regular, storeService, stepCoordinatorFactory) with RegularWorkflow
 
     flowCoordinator.onFlowStart()
 
     val firstStepResult = {
-      val firstStep = stepBuilders(0).newStep
+      val firstStep = stepBuilders.regular(0).newStep
       new GenesisStepResult(firstStep, actualResult = Some(new ComplexStepResult(firstStep)))
     }
 
