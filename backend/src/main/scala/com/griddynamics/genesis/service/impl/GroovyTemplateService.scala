@@ -175,7 +175,7 @@ class StepBodiesCollector(variables: Map[String, AnyRef],
         variables.getOrElse(property, super.getProperty(property))
     }
 
-  def buildSteps = {
+    def buildSteps = {
         (for ((bodies, factory) <- closures.values) yield {
             for (body <- bodies) yield {
                 val stepBuilder = new StepBuilderProxy(factory.newStepBuilder)
@@ -348,11 +348,17 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
           }
           (variable.name, res)
         }).toMap
-        val delegate = new StepBodiesCollector(typedVariables, stepBuilderFactories)
-        workflow.stepsGenerator match {
-            case Some(generator) => {
-                generator.setDelegate(delegate)
-                generator.call()
+        val regularSteps = createSteps (workflow.stepsGenerator, typedVariables)
+        val rescueSteps = createSteps(workflow.rescues, typedVariables)
+        Builders(regularSteps, rescueSteps)
+    }
+
+    def createSteps(generator: Option[Closure[Unit]], variables: Map[String, AnyRef]): Seq[StepBuilderProxy] = {
+        val delegate = new StepBodiesCollector(variables, stepBuilderFactories)
+        generator match {
+            case Some(g) => {
+                g.setDelegate(delegate)
+                g.call()
                 delegate.buildSteps.toSeq
             }
             case None => Seq()

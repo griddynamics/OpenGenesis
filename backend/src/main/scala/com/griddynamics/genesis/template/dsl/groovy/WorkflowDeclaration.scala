@@ -7,7 +7,7 @@ import java.util.Random
 class WorkflowDeclaration {
     var variablesBlock : Option[Closure[Unit]] = None
     var stepsBlock : Option[Closure[Unit]] = None
-    var beforeBlock: Option[Closure[Unit]] = None
+    var rescueBlock: Option[Closure[Unit]] = None
     var requirements: collection.mutable.Map[String, Closure[Boolean]] = new mutable.LinkedHashMap[String, Closure[Boolean]]
 
     def variables(variables : Closure[Unit]) {
@@ -25,7 +25,9 @@ class WorkflowDeclaration {
         requirements = handler.requirementsMap
     }
 
-
+    def rescue(rescBlock: Closure[Unit]) {
+        rescueBlock = Some(rescBlock)
+    }
 }
 
 class RequirementsHandler extends GroovyObjectSupport {
@@ -42,6 +44,6 @@ class EnvWorkflow(val name : String,
                   val variables : List[VariableDetails],
                   val stepsGenerator : Option[Closure[Unit]],
                   val preconditions: Map[String, Closure[Boolean]] = Map(),
-                  val complete: Option[Closure[Unit]] = None)
+                  val rescues: Option[Closure[Unit]] = None)
 
 
