@@ -185,7 +185,7 @@ function(genesis, Backbone, status, property, validation, backend, $) {
       properties.remove(toBeRemoved, {silent: true});
 
       var bag = this.model.clone().set({
-        name: this.$("input[name='name']").val(),
+        name: this.$("input[name='name']").val().trim(),
         tags: this.$("textarea[name='tags']").val().split(" "),
         items: properties.toJSON()
       });
