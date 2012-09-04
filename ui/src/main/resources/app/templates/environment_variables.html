@@ -8,7 +8,7 @@
         <% _.each(variables, function(variable, i) { %>
         <div style="margin-top: 10px; <%= (i === variables.length - 1 ? 'margin-bottom: 10px' : '') %>">
             <label for="<%= variable.name %>" style="float:left; width:37%; margin-right:5px; margin-top: 7px;" class=<%= (variable.optional ? "label-plain" : "label-required") %>>
-            <% if (! variable.optional) { %>*&nbsp;<% } %><%= variable.description %>
+            <% if (! variable.optional) { %>*&nbsp;<% } %> <%= variable.description %>
             </label>
             <div style="width: 60%; float: right">
                 <% if (typeof(variable.values) !== "undefined" && _.size(variable.values) || variable.dependsOn) { %>
@@ -16,22 +16,18 @@
                         <select id="<%= variable.name %>" disabled="disabled" name="<%= variable.name %>" class="<%= (variable.optional ? "workflow-variable" : "workflow-variable required") %>"></select>
                     <% } else { %>
                         <select id="<%= variable.name %>" name="<%= variable.name %>" class="<%= (variable.optional ? "workflow-variable" : "workflow-variable required") %>">
-                        <% if (! variable.defaultValue) { %>
-                            <option value="" disabled="disabled" selected="selected">Please select</option>
-                        <% } else { %>
-                            <option value="" disabled="disabled">Please select</option>
-                        <% } %>
-                        <% for (var key in variable.values) { %>
-                            <% if (variable.defaultValue == key) { %>
-                                <option value="<%= variable.values[key] %>" selected="selected"><%= key %></option>
-                            <% } else { %>
-                                <option value="<%= variable.values[key] %>"><%= key %></option>
-                            <% } %>
-                        <% } %>
+                          <option value="">Please select</option>
+                          <% for (var key in variable.values) { %>
+                              <% if (variable.defaultValue == key) { %>
+                                  <option value="<%= variable.values[key] %>" selected="selected"><%= key %></option>
+                              <% } else { %>
+                                  <option value="<%= variable.values[key] %>"><%= key %></option>
+                              <% } %>
+                          <% } %>
                         </select>
                     <% } %>
                 <% } else { %>
-                <input type="text" class="<%= (variable.optional ? "workflow-variable" : "workflow-variable required") %>" id="<%= variable.name %>" name="<%= variable.name %>" value="<%= variable.defaultValue %>" >
+                  <input type="text" class="<%= (variable.optional ? "workflow-variable" : "workflow-variable required") %>" id="<%= variable.name %>" name="<%= variable.name %>" value="<%= variable.defaultValue %>" >
                 <% } %>
             </div>
             <div style="clear: both"></div>

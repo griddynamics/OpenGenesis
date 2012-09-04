@@ -23,8 +23,8 @@ function(genesis, Backbone) {
     pullCollection: function() {
       this.collection.each(function(item) {
         item.set({
-          "name": $("#name-input-" + item.cid).val(),
-          "value": $("#value-input-" + item.cid).val()
+          "name": $("#name-input-" + item.cid).val().trim(),
+          "value": $("#value-input-" + item.cid).val().trim()
         })
       });
       return this.collection;
