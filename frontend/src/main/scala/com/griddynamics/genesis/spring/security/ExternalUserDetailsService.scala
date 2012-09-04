@@ -42,11 +42,14 @@ class ExternalUserDetailsService(authorityService: AuthorityService, projectAuth
 
     def loadUserByUsername(username: String, groupNames : Iterable[String]) = {
         if (username != adminUsername) {
-            val authorities = (
+            var authorities = (
               authorityService.getUserAuthorities(username) ++
                 (if (projectAuthorityService.isUserProjectAdmin(username, groupNames)) List(GenesisRole.ProjectAdmin.toString) else List())
-              ).distinct
-            new User(username, username, RoleBasedAuthority(authorities))
+              )
+            if (authorities.contains(GenesisRole.SystemAdmin.toString)) {
+              authorities = GenesisRole.GenesisUser.toString :: authorities
+            }
+            new User(username, username, RoleBasedAuthority(authorities.distinct))
         } else {
             new User(adminUsername, "", Arrays.asList(RoleBasedAuthority(GenesisRole.GenesisUser), RoleBasedAuthority(GenesisRole.SystemAdmin)))
         }

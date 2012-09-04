@@ -52,16 +52,19 @@ class GenesisUserDetailsService( adminUsername: String,
           case None => List()
           case Some(gservice) => gservice.getUsersGroups(user.username)
         }
-        val authorities = (
+        var authorities = (
           authorityService.getAuthorities(groups) ++
             authorityService.getUserAuthorities(user.username) ++
             groups.map("GROUP_" + _.name) ++
             (if (projectAuthorityService.isUserProjectAdmin(user.username, groups.map(_.name))) List(GenesisRole.ProjectAdmin.toString) else List())
-          ).distinct
+          )
+        if(authorities.contains(GenesisRole.SystemAdmin.toString)) {
+          authorities = GenesisRole.GenesisUser.toString :: authorities
+        }
         if(!authorities.contains(GenesisRole.GenesisUser.toString)) {
           throw new UsernameNotFoundException("User doesn't have required role [%s]".format(GenesisRole.GenesisUser))
         }
-        new User(user.username, user.password.get, RoleBasedAuthority(authorities))
+        new User(user.username, user.password.get, RoleBasedAuthority(authorities.distinct))
       }
 
       user.getOrElse(throw new UsernameNotFoundException("Couldn't find user = [" + username + "]"))
