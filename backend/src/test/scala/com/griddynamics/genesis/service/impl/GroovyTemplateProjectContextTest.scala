@@ -100,7 +100,7 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
     }
 
     @Test def testApplyVariable() {
-        val builder: StepBuilder = createWorkflow.embody(Map()).head
+        val builder: StepBuilder = createWorkflow.embody(Map()).regular.head
         val newStep: GenesisStep = builder.newStep
         val actualStep: DoNothingStep = newStep.actualStep.asInstanceOf[DoNothingStep]
         assert(actualStep.name == "wilma")

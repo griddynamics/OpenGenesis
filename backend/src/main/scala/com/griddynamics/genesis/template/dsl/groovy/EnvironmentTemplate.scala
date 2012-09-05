@@ -114,7 +114,8 @@ class EnvTemplateBuilder(val projectId: Int,
 
         val variables = for(builder <- variableBuilders) yield builder.newVariable
 
-        workflows += new EnvWorkflow(name, variables.toList, delegate.stepsBlock, preconditions = delegate.requirements.toMap)
+        workflows += new EnvWorkflow(name, variables.toList, delegate.stepsBlock,
+            preconditions = delegate.requirements.toMap, rescues = delegate.rescueBlock)
         this
     }
 

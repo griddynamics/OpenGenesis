@@ -27,7 +27,7 @@ import java.util.concurrent.ExecutorService
 import akka.actor.TypedActor
 import com.griddynamics.genesis.workflow.actor.{TypedFlowCoordinatorImpl, TypedFlowCoordinator}
 import com.griddynamics.genesis.core._
-import com.griddynamics.genesis.service.{TemplateService, StoreService}
+import com.griddynamics.genesis.service.{Builders, TemplateService, StoreService}
 import collection.mutable.ArrayBuffer
 import com.griddynamics.genesis.plugin.{StepBuilder, Cancel, StepCoordinatorFactory}
 import com.griddynamics.genesis.model.{GenesisEntity, EnvStatus, Workflow, Environment}
@@ -68,14 +68,13 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
       try{
         val definition = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion)
         val rawSteps = definition.flatMap(_.getWorkflow(workflow.name)
-            .map(_.embody(workflow.variables, Option(env.id), Option(env.projectId))))
+            .map(_.embody(workflow.variables, Option(env.id), Option(env.projectId)))).getOrElse(Builders(Seq()))
 
-        rawSteps.map(sortByPhase).map(applyIds(_)).foreach(s => {
+        Some(applyIds(sortByPhase(rawSteps.regular))).foreach(s => {
             coordinators((env.id, env.projectId)) = if (Option(workflow.name) == definition.map(_.destroyWorkflow.name))
                 destroyingCoordinator(env.id, projectId, s)
             else regularCoordinator(env.id, projectId, s)
-
-            coordinators((env.id, env.projectId)).start
+            coordinators((env.id, env.projectId)).start()
         })
       } catch {
         case e => {
