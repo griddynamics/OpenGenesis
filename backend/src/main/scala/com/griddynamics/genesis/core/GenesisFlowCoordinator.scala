@@ -171,6 +171,8 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
             builder
         }
 
+    def hasRescue = ! rescueSteps.isEmpty
+
 }
 
 trait StepIgnore extends GenesisFlowCoordinatorBase {

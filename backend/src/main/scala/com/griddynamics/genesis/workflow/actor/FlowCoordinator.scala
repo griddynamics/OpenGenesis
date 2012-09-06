@@ -81,8 +81,10 @@ with FlowActor with Logging {
     def processFlowInstruction(instruction: Either[Signal, Seq[workflow.StepCoordinator]]) {
         instruction match {
             case Left(signal) => {
-                if (! rescue())
-                    interruptFlow(signal)
+                if (safeFlowCoordinator.hasRescue) {
+                    startRescueCoordinators()
+                }
+                interruptFlow(signal)
             }
             case Right(stepCoordinators) => {
                 startCoordinators(stepCoordinators)
@@ -91,14 +93,14 @@ with FlowActor with Logging {
         }
     }
 
-    def rescue() = {
+    def startRescueCoordinators() {
         val rescueCoordinators: Seq[workflow.StepCoordinator] = safeFlowCoordinator.rescueCoordinators
         log.debug("There are %d coordinators in rescue queue".format(rescueCoordinators.size))
         startCoordinators(rescueCoordinators, rescue = true)
-        finalCoordinators.isEmpty
     }
 
     def interruptFlow(signal: Signal) {
+        log.debug("Interrupting flow with signal %s", signal)
         finishSignal = signal
         beatCoordinators(Beat(signal))
         become(interrupted)
@@ -106,7 +108,7 @@ with FlowActor with Logging {
     }
 
     def attemptToFinish() {
-        if (stepCoordinators.isEmpty) {
+        if (stepCoordinators.isEmpty && finalCoordinators.isEmpty) {
             beatSource.unsubscribeOnce(self, {
                 beatSource.tryToFinish()
                 self ! PoisonPill
@@ -127,7 +129,7 @@ with FlowActor with Logging {
 
     def beatCoordinators(beat: Beat) {
         log.debug("Pinging coordinators with %s", beat)
-        for (coordinator <- stepCoordinators.diff(finalCoordinators))
+        for (coordinator <- stepCoordinators)
             // TODO exception was looked during sync executor exception
             coordinator ! beat
     }
@@ -144,7 +146,8 @@ with FlowActor with Logging {
         }
         if (rescue)
             finalCoordinators += stepCoordinatorActor
-        stepCoordinators += stepCoordinatorActor
+        else
+            stepCoordinators += stepCoordinatorActor
         stepCoordinatorActor.start()
         stepCoordinatorActor ! Start
     }
@@ -196,6 +199,8 @@ class SafeFlowCoordinator(unsafeFlowCoordinator: workflow.FlowCoordinator)
             }
         }
     def rescueCoordinators = unsafeFlowCoordinator.rescueCoordinators
+
+    def hasRescue = unsafeFlowCoordinator.hasRescue
 }
 
 //TODO think about proper flow return, results, callbacks

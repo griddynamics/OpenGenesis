@@ -45,4 +45,5 @@ trait FlowCoordinator {
 
     def rescueCoordinators: Seq[StepCoordinator]
 
+    def hasRescue: Boolean
 }

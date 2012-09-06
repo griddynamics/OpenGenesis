@@ -69,6 +69,8 @@ class TestCoordinator(flow: Set[FlowElement]) extends workflow.FlowCoordinator {
 
     def rescueCoordinators = Seq()
 
+    def hasRescue = false
+
     def onFlowStart() = Right(getReachableExecutors())
 
     def onStepFinish(result: StepResult) = {
