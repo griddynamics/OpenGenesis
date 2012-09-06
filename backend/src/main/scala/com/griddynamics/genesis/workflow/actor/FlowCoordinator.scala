@@ -27,7 +27,7 @@ import com.griddynamics.genesis.workflow
 import com.griddynamics.genesis.util.Logging
 import collection.mutable
 import workflow.message.{Beat, Start}
-import workflow.signal.{Fail, TimeOut, Success}
+import workflow.signal.{Rescue, Fail, TimeOut, Success}
 import workflow.{StepResult, Signal}
 import akka.actor.{TypedActor, PoisonPill, ActorRef, Actor}
 import com.griddynamics.genesis.common.Mistake
@@ -35,13 +35,13 @@ import com.griddynamics.genesis.common.Mistake
 class FlowCoordinator(unsafeFlowCoordinator: workflow.FlowCoordinator,
                       executorService: ExecutorService,
                       beatSource: BeatSource, flowTimeOutMs: Long) extends Actor
-with FlowActor
-with Logging {
+with FlowActor with Logging {
     val safeFlowCoordinator = new SafeFlowCoordinator(unsafeFlowCoordinator)
 
     var finishSignal: Signal = Success()
 
     val stepCoordinators = mutable.Set[ActorRef]()
+    val finalCoordinators = mutable.Set[ActorRef]()
 
     protected def receive = {
         case Start => {
@@ -55,18 +55,25 @@ with Logging {
             interruptFlow(signal)
         }
         case result: StepResult => {
+            log.debug("Result is %s (regular state)", result)
             removeCoordinator(self.sender.get)
             processFlowInstruction(safeFlowCoordinator.onStepFinish(result))
         }
     }
 
     val interrupted: Receive = {
-        case Beat(signal) if signal != Success() => {
+        case Beat(signal) if signal == Rescue() => {
+            log.debug("Rescue signal got")
+            attemptToFinish()
+        }
+        case Beat(signal) if signal != Success() && signal != Rescue() => {
             log.debug("Signal '%s' was ignored because flow '%s' was already interrupted by signal '%s'",
                 signal, safeFlowCoordinator.flowDescription, finishSignal)
         }
         case result: StepResult => {
+            log.debug("Result is %s (interrupted state)", result)
             removeCoordinator(self.sender.get)
+            safeFlowCoordinator.onStepFinish(result)
             attemptToFinish()
         }
     }
@@ -74,7 +81,8 @@ with Logging {
     def processFlowInstruction(instruction: Either[Signal, Seq[workflow.StepCoordinator]]) {
         instruction match {
             case Left(signal) => {
-                interruptFlow(signal)
+                if (! rescue())
+                    interruptFlow(signal)
             }
             case Right(stepCoordinators) => {
                 startCoordinators(stepCoordinators)
@@ -83,11 +91,17 @@ with Logging {
         }
     }
 
+    def rescue() = {
+        val rescueCoordinators: Seq[workflow.StepCoordinator] = safeFlowCoordinator.rescueCoordinators
+        log.debug("There are %d coordinators in rescue queue".format(rescueCoordinators.size))
+        startCoordinators(rescueCoordinators, rescue = true)
+        finalCoordinators.isEmpty
+    }
+
     def interruptFlow(signal: Signal) {
         finishSignal = signal
         beatCoordinators(Beat(signal))
         become(interrupted)
-
         attemptToFinish()
     }
 
@@ -102,33 +116,35 @@ with Logging {
                 safeFlowCoordinator.flowDescription, finishSignal)
 
             safeFlowCoordinator.onFlowFinish(finishSignal)
-
             becomeIgnoreBeat()
         }
     }
 
     def removeCoordinator(actorRef: ActorRef) {
         stepCoordinators.remove(actorRef)
+        finalCoordinators.remove(actorRef)
     }
 
     def beatCoordinators(beat: Beat) {
-        for (coordinator <- stepCoordinators)
+        log.debug("Pinging coordinators with %s", beat)
+        for (coordinator <- stepCoordinators.diff(finalCoordinators))
             // TODO exception was looked during sync executor exception
             coordinator ! beat
     }
 
-    def startCoordinators(coordinators: Seq[workflow.StepCoordinator]) {
+    def startCoordinators(coordinators: Seq[workflow.StepCoordinator], rescue: Boolean = false) {
         for (coordinator <- coordinators)
-            startCoordinator(coordinator)
+            startCoordinator(coordinator, rescue)
     }
 
-    def startCoordinator(coordinator: workflow.StepCoordinator) {
+    def startCoordinator(coordinator: workflow.StepCoordinator, rescue: Boolean = false) {
+        log.debug("Starting coordinator %s", coordinator.getClass.getName)
         val stepCoordinatorActor = Actor.actorOf {
-            new StepCoordinator(coordinator, self, executorService, beatSource)
+             new StepCoordinator(coordinator, self, executorService, beatSource, rescue)
         }
-
+        if (rescue)
+            finalCoordinators += stepCoordinatorActor
         stepCoordinators += stepCoordinatorActor
-
         stepCoordinatorActor.start()
         stepCoordinatorActor ! Start
     }
@@ -160,7 +176,7 @@ class SafeFlowCoordinator(unsafeFlowCoordinator: workflow.FlowCoordinator)
             }
         }
 
-    def onFlowFinish(signal: Signal) =
+    def onFlowFinish(signal: Signal) {
         try {
             unsafeFlowCoordinator.onFlowFinish(signal)
         }
@@ -168,6 +184,7 @@ class SafeFlowCoordinator(unsafeFlowCoordinator: workflow.FlowCoordinator)
             case t => log.warn(t, "Throwable while onFlowFinish for flow '%s' and signal '%s'",
                 flowDescription, signal)
         }
+    }
 
     def onFlowStart() =
         try {
@@ -178,6 +195,7 @@ class SafeFlowCoordinator(unsafeFlowCoordinator: workflow.FlowCoordinator)
                 Left(Fail(Mistake(t)))
             }
         }
+    def rescueCoordinators = unsafeFlowCoordinator.rescueCoordinators
 }
 
 //TODO think about proper flow return, results, callbacks

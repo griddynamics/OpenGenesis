@@ -250,7 +250,8 @@ object GenesisRestService {
                   step.details,
                   step.started.map(_.getTime),
                   step.finished.map(_.getTime),
-                  step.title
+                  step.title,
+                  step.regular
             )).toSeq)
 
     def wrap[A](seq : Traversable[_])(f : () => A): Option[A] = {

@@ -744,6 +744,14 @@ table.workflow-history td {
     padding: 10px;
 }
 
+table.workflow-history .additional {
+   font-style: italic;
+}
+
+table.workflow-history .additional a, table.workflow-history .additional .first {
+    color: #B94A48;
+}
+
 td.subtable  table.slide-subtable tr:first-child td{
     border-top: none;
 }

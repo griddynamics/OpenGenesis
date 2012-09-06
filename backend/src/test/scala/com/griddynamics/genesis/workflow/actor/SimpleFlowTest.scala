@@ -32,6 +32,7 @@ import com.griddynamics.genesis.workflow.step.{ActionStep, ActionStepResult}
 import workflow._
 import scala.collection.mutable
 import java.util.concurrent.atomic.AtomicReference
+import com.griddynamics.genesis.plugin.StepBuilder
 
 class FlowElement(val action: Action, val precursors: Set[FlowElement]) {
     override def toString = "FlowElement(%s, %s)".format(action, precursors)
@@ -51,16 +52,22 @@ case class TestAction(name: String) extends Action
 
 case class TestResult(action: TestAction) extends ActionResult
 
+case class TestStep() extends Step
+
+class TestStepBuilder extends StepBuilder {
+    override def getDetails = new TestStep
+}
+
 class TestCoordinator(flow: Set[FlowElement]) extends workflow.FlowCoordinator {
     val flowsToStart = mutable.Set[FlowElement](flow.view.toSeq: _*)
     val finishedFlows = mutable.Set[FlowElement]()
-
     var finishLatch = new CountDownLatch(1)
-
     var startFlow = new AtomicReference(Seq[String]())
-    var finishFlow = Seq[String]()
 
+    var finishFlow = Seq[String]()
     def flowDescription = "TestFlow"
+
+    def rescueCoordinators = Seq()
 
     def onFlowStart() = Right(getReachableExecutors())
 

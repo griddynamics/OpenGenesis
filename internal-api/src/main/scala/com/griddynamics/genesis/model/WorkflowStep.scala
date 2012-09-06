@@ -32,7 +32,8 @@ class WorkflowStep(val workflowId : GenesisEntity.Id,
                    val details    : String,
                    val started    : Option[java.sql.Timestamp],
                    val finished   : Option[java.sql.Timestamp],
-                   val title: Option[String] = None ) extends GenesisEntity {
+                   val title: Option[String] = None,
+                   val regular    : Boolean = true) extends GenesisEntity {
 
     def this() = this (0, "", Requested, "", Some(new Timestamp(1)), Some(new Timestamp(1)))
 }
@@ -45,7 +46,8 @@ object WorkflowStep{
               details    : String,
               started    : Option[java.sql.Timestamp] = None,
               finished   : Option[java.sql.Timestamp] = None,
-              title: Option[String] = None) = {
+              title: Option[String] = None,
+              regular    : Boolean = true) = {
 
         val workflowStep =
                 new WorkflowStep(
@@ -55,7 +57,8 @@ object WorkflowStep{
                     details,
                     started,
                     finished,
-                    title
+                    title,
+                    regular
                 )
 
         workflowStep.id = id

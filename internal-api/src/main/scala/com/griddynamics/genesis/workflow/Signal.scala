@@ -42,4 +42,6 @@ case class TimeOut() extends Signal
 
 /* Signal for interruption by some arbitrary fail */
 case class Fail(mistake: Mistake) extends Signal
+
+case class Rescue() extends Signal
 }

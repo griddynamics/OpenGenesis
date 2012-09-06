@@ -37,6 +37,7 @@ public abstract class AbstractStepBuilder implements StepBuilder {
     private int retryCount;
     private Map<String, String> exportTo;
     private String title;
+    private boolean regular = true;
 
     private int id = 0;
 
@@ -171,6 +172,16 @@ public abstract class AbstractStepBuilder implements StepBuilder {
         setId(id);
     }
 
+    @Override
+    public boolean regular() {
+        return isRegular();
+    }
+
+    @Override
+    public void regular_$eq(boolean regular) {
+        setRegular(regular);
+    }
+
     public String getPhase() {
         return phase;
     }
@@ -247,4 +258,11 @@ public abstract class AbstractStepBuilder implements StepBuilder {
         setTitle(title);
     }
 
+    public boolean isRegular() {
+        return regular;
+    }
+
+    public void setRegular(boolean regular) {
+        this.regular = regular;
+    }
 }
