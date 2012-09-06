@@ -138,7 +138,7 @@ class EnvTemplateBuilder(val projectId: Int,
         ds.setDelegate(dsDelegate)
         ds.call()
         val dsBuilders = dsDelegate.builders
-        val map = (for (builder <- dsBuilders) yield builder.newDS).toMap
+        val map = (for (builder <- dsBuilders) yield (builder.name, builder)).toMap
         dsObjSupport = Option(new DSObjectSupport(map))
     }
 
