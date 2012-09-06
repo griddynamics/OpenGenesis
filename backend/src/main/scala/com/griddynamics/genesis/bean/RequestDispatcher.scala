@@ -75,7 +75,6 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
                 f.regular = false
                 f}
             )))
-            log.debug("There is %d rescue builders", rescueBuilders.size)
             coordinators((env.id, env.projectId)) = if (Option(workflow.name) == definition.map(_.destroyWorkflow.name))
                 destroyingCoordinator(env.id, projectId, s, rescueBuilders)
             else regularCoordinator(env.id, projectId, s, rescueBuilders)
