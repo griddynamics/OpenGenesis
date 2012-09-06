@@ -30,7 +30,7 @@ import akka.actor.{PoisonPill, ActorRef, Actor}
 import com.griddynamics.genesis.workflow._
 import workflow.action.{DelayedExecutorInterrupt, ExecutorInterrupt}
 import scala.Some
-import workflow.signal.{Fail, Success}
+import workflow.signal.{Rescue, Fail, Success}
 import workflow.step.{CoordinatorThrowable, CoordinatorInterrupt}
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.common.Mistake
@@ -38,10 +38,14 @@ import com.griddynamics.genesis.common.Mistake
 class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
                       supervisor: ActorRef,
                       executorService: ExecutorService,
-                      beatSource: BeatSource) extends Actor with FlowActor with Logging {
+                      beatSource: BeatSource,
+                      isRescue: Boolean  = false) extends Actor with FlowActor with Logging {
     val safeStepCoordinator = new SafeStepCoordinator(unsafeStepCoordinator)
 
-    var interruptSignal: Signal = Success() // Success() signal only for log messages
+    var interruptSignal: Signal = if (isRescue)
+        Rescue()
+    else
+        Success() // Success() signal only for log messages
 
     private val regularExecutors = mutable.Set[ActorRef]()
     val signalExecutors = mutable.Set[ActorRef]()

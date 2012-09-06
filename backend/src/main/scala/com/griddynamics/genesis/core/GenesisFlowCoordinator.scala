@@ -44,15 +44,17 @@ abstract class GenesisFlowCoordinator(envId: Int,
                                       projectId: Int,
                                       flowSteps: Seq[StepBuilder],
                                       storeService: StoreService,
-                                      stepCoordinatorFactory: StepCoordinatorFactory)
-    extends GenesisFlowCoordinatorBase(envId, projectId, flowSteps, storeService, stepCoordinatorFactory)
+                                      stepCoordinatorFactory: StepCoordinatorFactory,
+                                      rescueSteps: Seq[StepBuilder] = Seq())
+    extends GenesisFlowCoordinatorBase(envId, projectId, flowSteps, storeService, stepCoordinatorFactory, rescueSteps)
     with StepIgnore with StepRestart with StepExecutionContextHolder
 
 abstract class GenesisFlowCoordinatorBase(val envId: Int,
                                           val projectId: Int,
                                           val flowSteps: Seq[StepBuilder],
                                           val storeService: StoreService,
-                                          val stepCoordinatorFactory: StepCoordinatorFactory)
+                                          val stepCoordinatorFactory: StepCoordinatorFactory,
+                                          val rescueSteps: Seq[StepBuilder] = Seq())
     extends FlowCoordinator with Logging {
 
     var env: Environment = _
@@ -83,6 +85,13 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
         stepsToStart = persistSteps(stepsToStart) //persist steps & generate step ids
 
         Right(createReachableStepCoordinators())
+    }
+
+    def rescueCoordinators = {
+        persistSteps(rescueSteps)
+        for (builder <- rescueSteps) yield {
+            createStepCoordinator(buildStep(builder))
+        }
     }
 
     def onFlowFinish(signal: Signal) {
@@ -154,12 +163,15 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
                         builder.phase,
                         WorkflowStepStatus.Requested,
                         builder.getDetails.stepDescription,
-                        title = Option(builder.getTitle)
+                        title = Option(builder.title),
+                        regular = builder.regular
                     )
                 )
             builder.id = workflowStep.id
             builder
         }
+
+    def hasRescue = ! rescueSteps.isEmpty
 
 }
 
@@ -185,7 +197,7 @@ trait StepRestart extends GenesisFlowCoordinatorBase {
     }
 
     abstract override def onStepFinish(result: GenesisStepResult) = {
-        val retriesRemain = retryMap(result.step.id)
+        val retriesRemain = retryMap.getOrElse(result.step.id, 0)
 
         if (result.isStepFailed && retriesRemain > 0) {
             retryMap(result.step.id) = retriesRemain - 1

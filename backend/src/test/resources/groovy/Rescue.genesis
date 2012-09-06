@@ -13,7 +13,7 @@ template {
                 text =   "test input"
             }
         }
-        rescue {
+        onError {
             teststep {
                 text = "rescue"
             }

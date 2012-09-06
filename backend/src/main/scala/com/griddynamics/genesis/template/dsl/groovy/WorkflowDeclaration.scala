@@ -25,7 +25,7 @@ class WorkflowDeclaration {
         requirements = handler.requirementsMap
     }
 
-    def rescue(rescBlock: Closure[Unit]) {
+    def onError(rescBlock: Closure[Unit]) {
         rescueBlock = Some(rescBlock)
     }
 }
