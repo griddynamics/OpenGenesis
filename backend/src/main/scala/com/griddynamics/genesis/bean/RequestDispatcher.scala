@@ -71,9 +71,13 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
             .map(_.embody(workflow.variables, Option(env.id), Option(env.projectId)))).getOrElse(Builders(Seq()))
 
         Some(applyIds(sortByPhase(rawSteps.regular))).foreach(s => {
+            val rescueBuilders: Seq[StepBuilder] = applyIds(sortByPhase(rawSteps.onError.map(f => {
+                f.regular = false
+                f}
+            )))
             coordinators((env.id, env.projectId)) = if (Option(workflow.name) == definition.map(_.destroyWorkflow.name))
-                destroyingCoordinator(env.id, projectId, s)
-            else regularCoordinator(env.id, projectId, s)
+                destroyingCoordinator(env.id, projectId, s, rescueBuilders)
+            else regularCoordinator(env.id, projectId, s, rescueBuilders)
             coordinators((env.id, env.projectId)).start()
         })
       } catch {
@@ -121,17 +125,17 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
         }
     }
 
-    def regularCoordinator(envId: Int, projectId: Int, flowSteps: Seq[StepBuilder]) =
+    def regularCoordinator(envId: Int, projectId: Int, flowSteps: Seq[StepBuilder], rescueSteps: Seq[StepBuilder]) =
         new TypedFlowCoordinatorImpl(
             new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService,
-                stepCoordinatorFactory) with RegularWorkflow,
+                stepCoordinatorFactory, rescueSteps) with RegularWorkflow,
             beatPeriodMs, flowTimeOutMs, executorService
         )
 
-    def destroyingCoordinator(envId: Int, projectId: Int, flowSteps: Seq[StepBuilder]) =
+    def destroyingCoordinator(envId: Int, projectId: Int, flowSteps: Seq[StepBuilder], rescueSteps: Seq[StepBuilder]) =
         new TypedFlowCoordinatorImpl(
             new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService,
-                stepCoordinatorFactory) with DestroyWorkflow,
+                stepCoordinatorFactory, rescueSteps) with DestroyWorkflow,
             beatPeriodMs, flowTimeOutMs, executorService
         )
 }

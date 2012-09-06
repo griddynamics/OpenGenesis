@@ -40,6 +40,7 @@ trait StepBuilder {
     @BeanProperty var retryCount: Int = 0
     @BeanProperty var exportTo: JMap[String, String] = Collections.emptyMap()
     @BeanProperty var title: String = _
+    var regular: Boolean = true
     var id: Int = 0
 
     def newStep = new GenesisStep(id, phase, JC.asScalaBuffer(precedingPhases).toSet, ignoreFail,
