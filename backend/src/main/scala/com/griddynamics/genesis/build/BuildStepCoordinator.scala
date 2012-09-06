@@ -25,6 +25,8 @@ package com.griddynamics.genesis.build
 import com.griddynamics.genesis.workflow._
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.plugin.{PartialStepCoordinatorFactory, GenesisStepResult, StepExecutionContext}
+import com.griddynamics.genesis.logging.LoggerWrapper
+import java.io.BufferedReader
 
 class BuildStepCoordinatorFactory(pluginContext : () => BuildContext) extends PartialStepCoordinatorFactory {
     def apply(step: Step, context: StepExecutionContext) = new BuildStepCoordinator(step, context, pluginContext())
@@ -42,11 +44,11 @@ class BuildStepCoordinator(val step : Step, context: StepExecutionContext, plugi
         pluginContext.buildProvider(buildStep.provider) match {
             case None => {
                 log.debug("No build provider found for name = [%s]", buildStep.provider)
-                stepFailed = true;
+                stepFailed = true
                 Seq()
             }
             case Some(provider) =>
-              Seq(new BuildActionExecutor(new BuildAction(buildStep), provider))
+              Seq(new BuildActionExecutor(new BuildAction(buildStep), provider, context.step.id))
         }
     }
 
@@ -74,28 +76,45 @@ class BuildStepCoordinator(val step : Step, context: StepExecutionContext, plugi
     }
 }
 
-class BuildActionExecutor(val action : BuildAction, provider : BuildProvider) extends SimpleAsyncActionExecutor with Logging {
+class BuildActionExecutor(val action : BuildAction, provider : BuildProvider, stepId: Int) extends SimpleAsyncActionExecutor with Logging {
   def startAsync() {
         log.debug("Starting build")
         provider.build(action.step.values)
     }
 
   def getResult() = {
-    val query: Option[BuildResult] = provider.query()
+    val query: Option[BuildResult] = provider.query
     log.debug("Intermediate result is: %s".format(query))
+    query.foreach( q => {
+      q.logSummary.foreach(LoggerWrapper.writeLog(stepId, _))
+      buildLog(q.log, LoggerWrapper.writeLog(action.uuid, _))
+    })
+
     query match {
       case None => None
-      case Some(x) => {
-        if (x.success) 
+      case Some(x) =>
+        if (x.success)
           Some(BuildSuccessful(action, x.results))
         else
           Some(BuildFailed(action))
-      }
+
     }
   }
 
   override def cleanUp(signal: Signal) {
-     provider.cancel()
+    provider.cancel()
+  }
+
+  private def buildLog(readerOpt: Option[BufferedReader], logger: String => Unit) = readerOpt match {
+    case Some(br) => try {
+      var line = br.readLine
+      while (line != null) {
+        log.debug(line)
+        logger(line)
+        line = br.readLine
+      }
+    } finally { br.close}
+    case _ =>
   }
 }
 

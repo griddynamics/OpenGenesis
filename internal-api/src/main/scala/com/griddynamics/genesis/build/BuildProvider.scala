@@ -37,6 +37,8 @@ trait BuildSpecification {
 trait BuildResult {
     def success: Boolean
     def results = Map[String, String]()
+    def logSummary: Seq[String] = Seq()
+    def log : Option[java.io.BufferedReader] = None
 }
 
 case class NullBuildProvider() extends BuildProvider {
