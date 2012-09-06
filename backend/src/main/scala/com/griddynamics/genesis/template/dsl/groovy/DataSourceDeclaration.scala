@@ -45,10 +45,13 @@ class DataSourceBuilder(val projectId: Int, val factory : DataSourceFactory, val
 }
 
 
-class DSObjectSupport(val dsMap: Map[String, VarDataSource]) extends GroovyObjectSupport {
+class DSObjectSupport(val dsMap: Map[String, DataSourceBuilder]) extends GroovyObjectSupport {
      override def getProperty(name: String)  = {
          dsMap.get(name) match {
-             case Some(src) => collection.JavaConversions.mapAsJavaMap(src.getData)
+             case Some(src) => {
+                 val s: (String, VarDataSource) = src.newDS
+                 collection.JavaConversions.mapAsJavaMap(s._2.getData)
+             }
              case _ => super.getProperty(name)
          }
      }
@@ -56,23 +59,24 @@ class DSObjectSupport(val dsMap: Map[String, VarDataSource]) extends GroovyObjec
      def getData(name: String, args: List[Any]): Map[String,String] = {
          dsMap.get(name) match {
              case Some(src) => args match {
-                 case Nil => src.getData
+                 case Nil => src.newDS._2.getData
                  case x :: Nil => {
-                     src.asInstanceOf[DependentDataSource].getData(x)
+                     src.newDS._2.asInstanceOf[DependentDataSource].getData(x)
                  }
                  case head :: tail => {
+                     val ds = src.newDS._2
                      val params: Array[AnyRef] = args.map(v => ScalaUtils.toAnyRef(v)).toArray
-                     val find: Option[Method] = src.getClass.getDeclaredMethods.find(m => m.getName == "getData"
+                     val find: Option[Method] = ds.getClass.getDeclaredMethods.find(m => m.getName == "getData"
                        && m.getParameterTypes.length == params.length
                      )
                      find match  {
                          case Some(m) => {
-                             m.invoke(src, params:_*).asInstanceOf[Map[String,String]]
+                             m.invoke(ds, params:_*).asInstanceOf[Map[String,String]]
                          }
                          case _ => throw new IllegalStateException("Cannot find method getData for args %s".format(args))
                      }
                  }
-                 case _ => throw new IllegalStateException("Cannot find any suitable method at datasource %s".format(src))
+                 case _ => throw new IllegalStateException("Cannot find any suitable method at datasource %s".format(src.newDS._2))
              }
              case _ => throw new IllegalStateException("Can't get datasource for argument %s".format(name))
          }
