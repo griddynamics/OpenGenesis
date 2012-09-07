@@ -45,6 +45,10 @@ class UpdateEnvAttributesActionExecutor(val action: UpdateEnvAttributesAction, c
   }
 }
 
-case class SuccessfullyUpdated(val action: Action) extends ActionResult
+case class SuccessfullyUpdated(val action: Action) extends ActionResult {
+  override def desc = ""
+}
 
-case class UpdateEnvAttributesAction(env: Environment, entries: Seq[DeploymentAttribute]) extends Action
+case class UpdateEnvAttributesAction(env: Environment, entries: Seq[DeploymentAttribute]) extends Action {
+  override def desc = "Update environment"
+}
