@@ -47,14 +47,12 @@ class EnvironmentTemplate(val name : String,
 class NameVersionDelegate {
     var name : String = _
     var version : String = _
-
-
     var createWorkflowName : String = _
     var destroyWorkflowName : String = _
     val workflows = ListBuffer[EnvWorkflow]()
 
     def workflow(name: String, details : Closure[Unit]) = {
-        workflows += new EnvWorkflow(name, List(), None)
+        workflows += new EnvWorkflow(name, None)
         this
     }
 
@@ -95,27 +93,18 @@ class EnvTemplateBuilder(val projectId: Int,
                          val databagRepository: DatabagRepository) extends NameVersionDelegate with SystemWideContextSupport with ProjectDatabagSupport {
 
     var dsObjSupport : Option[DSObjectSupport] = None
+    var dsClozures: Option[Closure[Unit]] = None
 
     override def workflow(name: String, details : Closure[Unit]) = {
         if (workflows.find(_.name == name).isDefined)
             throw new IllegalStateException("workflow with name '%s' is already defined".format(name))
-        val delegate = new WorkflowDeclaration
+        val delegate = new WorkflowDeclaration(dsClozures, dataSourceFactories, projectId)
         details.setDelegate(delegate)
         details.call()
-        val variableBuilders = delegate.variablesBlock match {
-            case Some(block) => {
-                val variablesDelegate = new VariableDeclaration(dsObjSupport, dataSourceFactories, projectId )
-                block.setDelegate(variablesDelegate)
-                block.setResolveStrategy(Closure.DELEGATE_FIRST)
-                block.call()
-                variablesDelegate.builders
-            } case None => Seq[VariableBuilder]()
+        workflows += new EnvWorkflow(name, delegate.stepsBlock,
+            preconditions = delegate.requirements.toMap, rescues = delegate.rescueBlock) {
+            override def variables() = delegate.variables
         }
-
-        val variables = for(builder <- variableBuilders) yield builder.newVariable
-
-        workflows += new EnvWorkflow(name, variables.toList, delegate.stepsBlock,
-            preconditions = delegate.requirements.toMap, rescues = delegate.rescueBlock)
         this
     }
 
@@ -136,10 +125,7 @@ class EnvTemplateBuilder(val projectId: Int,
     override def dataSources(ds : Closure[Unit]) {
         val dsDelegate = new DataSourceDeclaration(projectId, dataSourceFactories)
         ds.setDelegate(dsDelegate)
-        ds.call()
-        val dsBuilders = dsDelegate.builders
-        val map = (for (builder <- dsBuilders) yield (builder.name, builder)).toMap
-        dsObjSupport = Option(new DSObjectSupport(map))
+        dsClozures = Some(ds)
     }
 
     private def newTemplate = {

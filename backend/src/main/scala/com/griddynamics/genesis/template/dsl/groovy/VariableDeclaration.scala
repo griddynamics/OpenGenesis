@@ -6,7 +6,7 @@ import collection.mutable.ListBuffer
 import reflect.BeanProperty
 import groovy.util.Expando
 
-class VariableDeclaration(val dsObjSupport: Option[DSObjectSupport], dataSourceFactories : Seq[DataSourceFactory], projectId: Int) extends GroovyObjectSupport {
+class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFactories : Seq[DataSourceFactory], projectId: Int) extends GroovyObjectSupport {
     val builders = new ListBuffer[VariableBuilder]
 
 //  val declaration = new DataSourceDeclaration(projectId, dataSourceFactories)
@@ -35,7 +35,7 @@ class VariableDeclaration(val dsObjSupport: Option[DSObjectSupport], dataSourceF
   }
 
   def variable(name : String) = {
-        val builder = new VariableBuilder(name, dsObjSupport)
+        val builder = new VariableBuilder(name, dsObjSupport, dataSourceFactories, projectId)
         builders += builder
         builder
     }
@@ -46,7 +46,8 @@ class VariableDetails(val name : String, val clazz : Class[_ <: AnyRef], val des
                       val validators : Seq[(String, Closure[Boolean])], val isOptional: Boolean = false, val defaultValue: Option[Any],
                       val valuesList: Option[(Map[String,Any] => Map[String,String])] = None, val dependsOn: Seq[String])
 
-class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) extends GroovyObjectSupport {
+class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
+                      val dataSourceFactories: Seq[DataSourceFactory], val projectId: Int) extends GroovyObjectSupport {
     @BeanProperty var description : String = _
     @BeanProperty var clazz : Class[_ <: AnyRef] = classOf[String]
     @BeanProperty var defaultValue: Any = _
@@ -61,7 +62,15 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
 
     var inlineDataSource: Option[InlineDataSource] = None
 
-    var dataSourceFactories : Seq[DataSourceFactory] = Seq()
+    lazy val dsObj = {
+        val dsDelegate = new DataSourceDeclaration(projectId, dataSourceFactories)
+        val closure: Closure[Unit] = dsClosure.get
+        closure.setDelegate(dsDelegate)
+        closure.call()
+        val dsBuilders = dsDelegate.builders
+        val map = (for (builder <- dsBuilders) yield (builder.name, builder)).toMap
+        new DSObjectSupport(map)
+    }
 
     def as(value : Class[_ <: AnyRef]) = {
         this.clazz = value
@@ -131,7 +140,7 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
     def valuesList: Option[(Map[String, Any] => Map[String,String])] = {
         if (useOneOf) {
             import collection.JavaConversions._
-            dsObjSupport.foreach(oneOf.setDelegate(_))
+            oneOf.setDelegate(dsObj)
 
             val getValues = { _: Any => oneOf.call().toMap }
 
@@ -166,7 +175,7 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
         } else {
            dataSourceRef.flatMap(ds => Option({params : Map[String, Any] => {
                val p = parents.toList.map(params.get(_)).flatten
-               dsObjSupport.get.getData(ds, p)
+               dsObj.getData(ds, p)
            }}))
         }
     }
@@ -191,6 +200,17 @@ class VariableBuilder(val name : String, dsObjSupport: Option[DSObjectSupport]) 
             props.get(property).getOrElse(throw new MissingPropertyException(property, this.getClass))
        }
     }
+
+    override def invokeMethod(name: String, args: AnyRef) = {
+        val factory = dataSourceFactories.find(_.mode == name)
+
+        if (factory.isDefined) {
+            println("Found factory %s".format(name))
+            null
+        } else {
+            super.invokeMethod(name, args)
+        }
+    }
 }
 
 
@@ -198,7 +218,8 @@ class DSAwareVariableBuilder(knownVars: ListBuffer[VariableBuilder],
                              dSourceFactories : Seq[DataSourceFactory],
                              projectId: Int,
                              varName: String,
-                             dsObjSupport: Option[DSObjectSupport]) extends VariableBuilder(varName, dsObjSupport)  {
+                             dsObjSupport: Option[Closure[Unit]]) extends VariableBuilder(varName, dsObjSupport,
+    dSourceFactories, projectId)  {
 
   def setValidator(validator : Closure[Boolean]) {
     this.validator(validator)
