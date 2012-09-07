@@ -63,7 +63,7 @@ object ScalaReflectionUtils {
 
     val names = paranamer.lookupParameterNames(primary).map(clean)
     val loader = clazz.getClassLoader
-    val parsedSigTypes = ScalaCaseClassSigParser.parse(clazz, loader).toIndexedSeq
+    lazy val parsedSigTypes = ScalaCaseClassSigParser.parse(clazz, loader).toIndexedSeq
 
     val types = primary.getGenericParameterTypes.toList.zipWithIndex.map { case (constParam, constParamidx) =>
       constParam match {

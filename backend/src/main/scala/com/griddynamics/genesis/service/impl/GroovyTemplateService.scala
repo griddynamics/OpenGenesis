@@ -364,7 +364,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
         }
     }
 
-    val variableDescriptions = {
+    lazy val variableDescriptions = {
         for (variable <- workflow.variables) yield {
             val default  = variable.defaultValue.map(String.valueOf(_)).getOrElse(null)
             val dependsOn = if (variable.dependsOn.isEmpty) None else Some(variable.dependsOn.toList)
