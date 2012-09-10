@@ -200,17 +200,6 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
             props.get(property).getOrElse(throw new MissingPropertyException(property, this.getClass))
        }
     }
-
-    override def invokeMethod(name: String, args: AnyRef) = {
-        val factory = dataSourceFactories.find(_.mode == name)
-
-        if (factory.isDefined) {
-            println("Found factory %s".format(name))
-            null
-        } else {
-            super.invokeMethod(name, args)
-        }
-    }
 }
 
 
