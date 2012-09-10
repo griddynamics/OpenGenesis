@@ -1,0 +1,11 @@
+success_notification(message) ::= "
+Hello,
+
+Workflow execution successfully finished
+
+<message>
+
+--
+Sincerely yours,
+Genesis instance
+"
