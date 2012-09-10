@@ -22,25 +22,20 @@
  */
 package com.griddynamics.genesis.servers
 
-import com.griddynamics.genesis.api
 import com.griddynamics.genesis.workflow._
-import com.griddynamics.genesis.service.{ServersService, ServersLoanService, StoreService}
-import com.griddynamics.genesis.model._
-import com.griddynamics.genesis.plugin.StepExecutionContext
+import com.griddynamics.genesis.service.{ServersService, ServersLoanService}
+import com.griddynamics.genesis.plugin.{ServersUpdateResult, StepExecutionContext}
 import scala.Some
 import scala.util.Random._
+import com.griddynamics.genesis.util.Describer
 
-class BorrowServersActionExecutor(val action: BorrowServersAction,
-                                 context: StepExecutionContext,
-                                 serversService: ServersService,
-                                 loanService: ServersLoanService) extends SyncActionExecutor {
-  def cleanUp(signal: Signal) {}
+class BorrowServersExecutor(serversService: ServersService,loanService: ServersLoanService) extends TrivialStepExecutor[BorrowServersStep, StepResult] {
 
-  def startSync(): ActionResult = {
+  def execute(request: BorrowServersStep, context: StepExecutionContext) = {
     val serverArray = {
-      val opt = serversService.findArrayByName(context.env.projectId, action.serverArray)
+      val opt = serversService.findArrayByName(context.env.projectId, request.serverArray)
 
-      opt.getOrElse(return new ServerArrayNotFoundResult(action))
+      opt.getOrElse(throw new StepExecutionException("Server array %s not found".format(request.serverArray)))
     }
 
     val available = {
@@ -49,40 +44,40 @@ class BorrowServersActionExecutor(val action: BorrowServersAction,
       inArray.filter( server => !alreadyBorrowed.contains(server.id.get) )
     }
 
-    val (servers, expectedSize) = action.serverIds match {
+    val (servers, expectedSize) = request.serverIds match {
       case Some(list) => {
         ( available.filter(s => list.contains(s.instanceId) ), list.size)
       }
       case None => {
-        val quantity = action.quantity.getOrElse(0)
+        val quantity = request.quantity.getOrElse(0)
         (shuffle(available).take(quantity), quantity)
       }
     }
 
     if(expectedSize != servers.size) {
-      return new FailedToBorrowServersResult(action)
+      throw new StepExecutionException("Failed to borrow requrested machines")
     }
 
-    val borrowed = loanService.loanServersToEnvironment(servers, context.env, action.roleName, context.workflow.id, context.step.id)
+    val borrowed = loanService.loanServersToEnvironment(servers, context.env, request.roleName, context.workflow.id, context.step.id)
     borrowed.foreach { context.updateServer(_) }
 
-    new BorrowServerActionResult(borrowed, action)
+    new StepResult with ServersUpdateResult {
+      val step = request
+
+      val serversUpdate = borrowed
+    }
   }
-
 }
 
-case class BorrowServersAction(serverArray: String,
-                               roleName: String,
-                               serverIds: Option[Set[String]],
-                               quantity: Option[Int]) extends Action
 
-class BorrowServerActionResult(val servers: Seq[BorrowedMachine], val action: Action) extends ActionResult  with ServersUpdateActionResult
+case class BorrowServersStep( serverArray: String,
+                              roleName: String,
+                              serverIds: Option[Set[String]],
+                              quantity: Option[Int] ) extends Step {
 
-class ServerArrayNotFoundResult(val action: BorrowServersAction) extends ActionResult with ActionFailed {
-  override def desc = "Server array %s not found".format(action.serverArray)
+  override val stepDescription = new Describer("Acquiring servers from server array")
+    .param("array", serverArray)
+    .param("quantity", quantity)
+    .param("servers", serverIds)
+    .describe
 }
-
-class FailedToBorrowServersResult(val action: Action) extends ActionResult with ActionFailed {
-  override def desc = "Failed to borrow requrested machines"
-}
-

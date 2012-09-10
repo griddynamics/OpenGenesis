@@ -22,22 +22,19 @@
  */
 package com.griddynamics.genesis.servers
 
-import com.griddynamics.genesis.workflow.{ActionResult, Action, Signal, SyncActionExecutor}
-import com.griddynamics.genesis.model.{VmStatus, BorrowedMachine}
-import java.net.InetAddress
-import com.griddynamics.genesis.service.{ServersLoanService, StoreService}
-import com.griddynamics.genesis.plugin.StepExecutionContext
+import com.griddynamics.genesis.workflow._
+import com.griddynamics.genesis.model.BorrowedMachine
+import com.griddynamics.genesis.service.ServersLoanService
+import com.griddynamics.genesis.plugin.{ServersUpdateResult, StepExecutionContext}
+import scala.Some
+import org.springframework.beans.factory.annotation.Autowired
 
-class ReleaseServersActionExecutor(val action: ReleaseServersAction,
-                                   serversLoanService: ServersLoanService,
-                                   context: StepExecutionContext) extends SyncActionExecutor {
+class ReleaseServersExecutor(serversLoanService: ServersLoanService) extends TrivialStepExecutor[ReleaseServersStep, StepResult] {
 
-  def cleanUp(signal: Signal) {}
-
-  def startSync() = {
+  def execute(request: ReleaseServersStep, context: StepExecutionContext) = {
     val all = context.servers.collect { case bm: BorrowedMachine => bm }
 
-    val machines = (action.roleName, action.serverIds) match {
+    val machines = (request.roleName, request.serverIds) match {
       case (Some(role), None) => all.filter(_.roleName == role)
       case (_, Some(seq)) => {
         val ids = seq.toSet
@@ -48,12 +45,15 @@ class ReleaseServersActionExecutor(val action: ReleaseServersAction,
     val updates = serversLoanService.releaseServers(context.env, machines)
     updates.foreach { context.updateServer(_) }
 
-    new ReleaseServersResult(action, updates)
+    new StepResult with ServersUpdateResult {
+      val step = request
+
+      val serversUpdate = updates
+    }
   }
 }
 
-
-case class ReleaseServersAction( roleName: Option[String],
-                                 serverIds: Option[Seq[String]] ) extends Action
-
-class ReleaseServersResult (val action: Action, val servers: Seq[BorrowedMachine]) extends ActionResult with ServersUpdateActionResult
+case class ReleaseServersStep( roleName: Option[String],
+                               serverIds: Option[Seq[String]] ) extends Step {
+  override val stepDescription = "Releasing servers borrowed from server array"
+}
