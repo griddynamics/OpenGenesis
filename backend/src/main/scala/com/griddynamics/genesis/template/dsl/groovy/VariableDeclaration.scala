@@ -63,13 +63,14 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
     var inlineDataSource: Option[InlineDataSource] = None
 
     lazy val dsObj = {
-        val dsDelegate = new DataSourceDeclaration(projectId, dataSourceFactories)
-        val closure: Closure[Unit] = dsClosure.get
-        closure.setDelegate(dsDelegate)
-        closure.call()
-        val dsBuilders = dsDelegate.builders
-        val map = (for (builder <- dsBuilders) yield (builder.name, builder)).toMap
-        new DSObjectSupport(map)
+        dsClosure.map(closure => {
+            val dsDelegate = new DataSourceDeclaration(projectId, dataSourceFactories)
+            closure.setDelegate(dsDelegate)
+            closure.call()
+            val dsBuilders = dsDelegate.builders
+            val map = (for (builder <- dsBuilders) yield (builder.name, builder)).toMap
+            new DSObjectSupport(map)
+        })
     }
 
     def as(value : Class[_ <: AnyRef]) = {
@@ -175,7 +176,7 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
         } else {
            dataSourceRef.flatMap(ds => Option({params : Map[String, Any] => {
                val p = parents.toList.map(params.get(_)).flatten
-               dsObj.getData(ds, p)
+               dsObj.map(_.getData(ds, p)).getOrElse(throw new IllegalStateException("No datasource configuration found, though variable %s tries to read from datasource".format(name)))
            }}))
         }
     }
