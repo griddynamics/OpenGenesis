@@ -4,6 +4,7 @@ import com.griddynamics.genesis.repository.DatabagRepository
 import scala.collection.JavaConversions._
 import groovy.lang.GroovyObjectSupport
 import groovy.util.Expando
+import java.util
 
 trait SystemWideContextSupport {
 
@@ -12,7 +13,6 @@ trait SystemWideContextSupport {
   lazy val systemContext = new SystemContext(databagRepository)
 
   def get$system = systemContext
-
 }
 
 trait ProjectDatabagSupport extends SystemWideContextSupport {
@@ -21,10 +21,24 @@ trait ProjectDatabagSupport extends SystemWideContextSupport {
   def get$project = projectContext
 }
 
+trait UnifiedDatabagSupport {
+    def projectId: Int
+    def databagRepository: DatabagRepository
+    lazy val system = new SystemContext(databagRepository, None)
+    lazy val project = new SystemContext(databagRepository, Some(projectId))
+    def get$databags = new GroovyObjectSupport() {
+        def getAt(property: String) = {
+            import scala.collection.JavaConversions.mapAsScalaMap
+            new BagWrapper(system.databag(property) ++ project.databag(property))
+        }
+    }
+
+}
+
 class SystemContext(databagRepository: DatabagRepository, projectId: Option[Int] = None) {
   def databag(name: String): java.util.Map[String, String] = {
     val bag = databagRepository.findByName(name, projectId)
-    if (bag.isEmpty) {
+    if (bag == null || bag.isEmpty) {
       java.util.Collections.emptyMap()
     } else {
       val bagItems = bag.get.items.map { case item => (item.name, item.value) }
@@ -34,11 +48,13 @@ class SystemContext(databagRepository: DatabagRepository, projectId: Option[Int]
 
   def getDatabag: GroovyObjectSupport = new GroovyObjectSupport {
     def getAt(property: String): Expando = {
-      new Expando(databag(property)){
-          def isEmpty: Boolean = {
-             super.getProperties.isEmpty
-          }
-      }
+      new BagWrapper(databag(property))
     }
   }
+}
+
+class BagWrapper(items: java.util.Map[String, String]) extends Expando(items) {
+    def isEmpty: Boolean = {
+        super.getProperties.isEmpty
+    }
 }

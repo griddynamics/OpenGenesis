@@ -24,17 +24,13 @@ package com.griddynamics.genesis.template.dsl.groovy
 
 import groovy.lang.{GroovyObjectSupport, Closure}
 import scala._
-import collection.mutable
 import collection.mutable.ListBuffer
 import com.griddynamics.genesis.template._
-import java.lang.reflect.Method
-import java.lang.{Boolean, IllegalStateException}
-import com.griddynamics.genesis.util.ScalaUtils
-import reflect.BeanProperty
+import java.lang.IllegalStateException
 import scala.Some
 import com.griddynamics.genesis.repository.DatabagRepository
-import support.{ProjectDatabagSupport, SystemWideContextSupport}
-import org.codehaus.groovy.runtime.InvokerHelper
+import support.{UnifiedDatabagSupport, ProjectDatabagSupport, SystemWideContextSupport}
+import groovy.util.Expando
 
 class EnvironmentTemplate(val name : String,
                           val version : String,
@@ -90,7 +86,8 @@ class NameVersionDelegate {
 
 class EnvTemplateBuilder(val projectId: Int,
                          val dataSourceFactories : Seq[DataSourceFactory],
-                         val databagRepository: DatabagRepository) extends NameVersionDelegate with SystemWideContextSupport with ProjectDatabagSupport {
+                         val databagRepository: DatabagRepository) extends NameVersionDelegate with SystemWideContextSupport
+                         with ProjectDatabagSupport with UnifiedDatabagSupport {
 
     var dsObjSupport : Option[DSObjectSupport] = None
     var dsClozures: Option[Closure[Unit]] = None
