@@ -24,8 +24,9 @@ package com.griddynamics.genesis.configuration
 
 import org.springframework.context.annotation.{Bean, Configuration}
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.servers.{ReleaseServersStepCoordinatorFactory, ReleaseServersStepBuilderFactory, BorrowServerStepCoordinatorFactory, BorrowStepBuilderFactory}
+import com.griddynamics.genesis.servers._
 import com.griddynamics.genesis.service.{ServersService, ServersLoanService}
+import com.griddynamics.genesis.plugin.{StepDefinition}
 
 @Configuration
 class ServerArrayActionsContext {
@@ -33,11 +34,11 @@ class ServerArrayActionsContext {
   @Autowired var serversLoanService: ServersLoanService = _
   @Autowired var serversService: ServersService = _
 
-  @Bean def borrowServerStepFactory = new BorrowStepBuilderFactory
+  @Bean def borrowServerStepFactory = new StepDefinition("borrowServers", classOf[BorrowServersStep])
 
   @Bean def borrowServerStepCoordinatorFactory = new BorrowServerStepCoordinatorFactory(serversService, serversLoanService)
 
-  @Bean def releaseServerStepFactory = new ReleaseServersStepBuilderFactory
+  @Bean def releaseServerStepFactory = new StepDefinition("releaseServers", classOf[ReleaseServersStep])
 
   @Bean def releaseServerStepCoordinatorFactory = new ReleaseServersStepCoordinatorFactory(serversLoanService)
 }

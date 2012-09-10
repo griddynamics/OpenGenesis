@@ -23,28 +23,9 @@
 package com.griddynamics.genesis.servers
 
 import com.griddynamics.genesis.workflow.Step
-import com.griddynamics.genesis.plugin.{StepBuilderFactory, StepBuilder}
-import scala.collection.JavaConversions._
-import reflect.BeanProperty
 
 case class ReleaseServersStep( roleName: Option[String],
                                serverIds: Option[Seq[String]] ) extends Step {
   override val stepDescription = "Releasing servers borrowed from server array"
 }
 
-
-class ReleaseServersStepBuilder extends StepBuilder {
-  @BeanProperty var role: String = _
-  @BeanProperty var serverIds: java.util.List[String] = java.util.Collections.emptyList()
-
-  def getDetails = {
-    val servers:Option[Seq[String]] = if (!serverIds.isEmpty) Some(serverIds) else None
-    new ReleaseServersStep(Option(role), servers)
-  }
-}
-
-class ReleaseServersStepBuilderFactory extends StepBuilderFactory {
-  val stepName = "releaseServers"
-
-  def newStepBuilder = new ReleaseServersStepBuilder
-}

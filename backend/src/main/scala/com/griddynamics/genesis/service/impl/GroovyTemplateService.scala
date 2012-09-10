@@ -200,7 +200,6 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
 
     def newStep(context: scala.collection.Map[String, AnyRef]): GenesisStep = {
         contextDependentProperties.foreach { case (propertyName, contextAccess) =>
-//            ScalaUtils.setProperty(stepBuilder, propertyName, contextAccess(context))
           InvokerHelper.setProperty(stepBuilder, propertyName, contextAccess(context))
         }
         stepBuilder.id = this.id
@@ -228,11 +227,11 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
           case value: ContextAccess =>
             contextDependentProperties(property) = value
           case null => {
-            ScalaUtils.setProperty(stepBuilder, property, null)
+            InvokerHelper.setProperty(stepBuilder, property, null)
             TryingUtil.silently(ScalaUtils.setProperty(this, property, null))
           }
           case _ => {
-            ScalaUtils.setProperty(stepBuilder, property, value)
+            InvokerHelper.setProperty(stepBuilder, property, value)
             if (ScalaUtils.hasProperty(this, property, ScalaUtils.getType(value))) {
               ScalaUtils.setProperty(this, property, value)
             }
@@ -425,6 +424,4 @@ class GroovyTemplateDefinition(val envTemplate : EnvironmentTemplate,
     def workflowDefinition(workflow : EnvWorkflow) = {
         new GroovyWorkflowDefinition(envTemplate, workflow, conversionService, stepBuilderFactories)
     }
-
-
 }
