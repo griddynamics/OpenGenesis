@@ -66,14 +66,14 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     genesisService.createEnv(projectId, envName, user, templateName, templateVersion, variables)
   }
 
-  private def produceLogs(logs: Seq[String], response: HttpServletResponse) {
+  private def produceLogs(logs: Seq[String], response: HttpServletResponse, plainText: Boolean = false) {
     val text = if (logs.isEmpty)
       "No logs yet"
     else
       logs.reduceLeft(_ + "\n" + _)
 
-    response.setContentType("text/plain")
-    response.getWriter.write(text)
+    response.setContentType(if (plainText) "text/plain" else "text/html")
+    response.getWriter.write(if (plainText) text else "<pre>%s</pre>".format(text))
     response.getWriter.flush()
   }
 
@@ -82,21 +82,23 @@ class EnvironmentsController extends RestApiExceptionsHandler {
                @PathVariable("envId") envId: Int,
                @PathVariable stepId: Int,
                @RequestParam(value = "include_actions", required = false, defaultValue = "false") includeActions: Boolean,
+               @RequestParam(value = "plain_text", required = false, defaultValue = "false") plainText: Boolean,
                response: HttpServletResponse,
                request: HttpServletRequest) {
     assertEnvExist(projectId, envId)
 
-    produceLogs(genesisService.getLogs(envId, stepId, includeActions), response)
+    produceLogs(genesisService.getLogs(envId, stepId, includeActions), response, plainText)
   }
 
   @RequestMapping(value=Array("{envName}/action_logs/{actionUUID}"))
   def actionLogs(@PathVariable("projectId") projectId: Int,
                @PathVariable("envName") envId: Int,
                @PathVariable actionUUID: String,
-               response: HttpServletResponse) {
+               @RequestParam(value = "plain_text", required = false, defaultValue = "false") plainText: Boolean,
+                response: HttpServletResponse) {
     assertEnvExist(projectId, envId)
 
-    produceLogs(genesisService.getLogs(envId, actionUUID), response)
+    produceLogs(genesisService.getLogs(envId, actionUUID), response, plainText)
   }
 
   @RequestMapping(value = Array("{envName}"), method = Array(RequestMethod.DELETE))
