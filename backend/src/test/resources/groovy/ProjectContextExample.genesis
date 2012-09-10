@@ -33,6 +33,11 @@ template {
                 phase = "phase1"
                 text = $project.databag["foo"].key3
             }
+
+            teststep {
+                phase  = "phase2"
+                text = $databags["foo"].key4
+            }
         }
     }
 

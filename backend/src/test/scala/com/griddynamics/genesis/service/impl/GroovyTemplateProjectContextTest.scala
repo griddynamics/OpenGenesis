@@ -60,7 +60,8 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
         val db = DataBag(Some(0), "foo", Seq("foo"), Some(0), Seq(
             DataItem(Some(0), "key1", "fred", None),
             DataItem(Some(0), "key2", "barney", None),
-            DataItem(Some(0), "key3", "wilma", None)
+            DataItem(Some(0), "key3", "wilma", None),
+            DataItem(Some(0), "key4", "bar", None)
         ))
         db
     }
@@ -70,6 +71,16 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
             DataItem(Some(0), "key1", "barney", None),
             DataItem(Some(0), "key2", "wilma", None),
             DataItem(Some(0), "key3", "fred", None)
+        ))
+        db
+    }
+
+    def altDatabag : DataBag = {
+        val db = DataBag(Some(0), "foo", Seq("foo"), None, Seq(
+            DataItem(Some(0), "key1", "barney", None),
+            DataItem(Some(0), "key2", "wilma", None),
+            DataItem(Some(0), "key3", "fred", None),
+            DataItem(Some(0), "key4", "homer", None)
         ))
         db
     }
@@ -100,9 +111,12 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
     }
 
     @Test def testApplyVariable() {
-        val builder: StepBuilder = createWorkflow.embody(Map()).regular.head
+        val regular: Seq[StepBuilder] = createWorkflow.embody(Map()).regular
+        val builder: StepBuilder = regular.head
         val newStep: GenesisStep = builder.newStep
         val actualStep: DoNothingStep = newStep.actualStep.asInstanceOf[DoNothingStep]
         assert(actualStep.name == "wilma")
+        val step = regular.tail.head.newStep.actualStep.asInstanceOf[DoNothingStep]
+        expect("bar")(step.name)
     }
 }
