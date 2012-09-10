@@ -273,10 +273,10 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
     override def partial(variables: Map[String, Any]): Seq[VariableDescription] = {
         val appliedVars = variables.keys.toSet
 
-        val dependents = workflow.variables.filter(p => p.dependsOn.toSet.subsetOf(appliedVars))
+        val dependents = workflow.variables().filter(p => p.dependsOn.toSet.subsetOf(appliedVars))
 
         val resolvedVariables = variables.map { case (varName, varValue) =>
-          val variableDetails = workflow.variables.find(_.name == varName).getOrElse(throw new RuntimeException("No such variable: " + varName))
+          val variableDetails = workflow.variables().find(_.name == varName).getOrElse(throw new RuntimeException("No such variable: " + varName))
           val convertedValue = convert(String.valueOf(varValue), variableDetails)
           (varName, convertedValue)
         }
@@ -291,7 +291,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
 
 
     def validate(variables: Map[String, Any], envId: Option[Int] = None, projectId: Option[Int] = None) = {
-        val context = for (variable <- workflow.variables)
+        val context = for (variable <- workflow.variables())
             yield {
                 (variable.name, variables.get(variable.name).map(v => try {
                   convert(String.valueOf(v), variable)
@@ -299,7 +299,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
                   case e => null
                 }))
             }
-        val res = for (variable <- workflow.variables) yield {
+        val res = for (variable <- workflow.variables()) yield {
             variables.get(variable.name) match {
                 case None => {
                   variable.defaultValue match {
@@ -331,7 +331,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
     }
 
     def embody(variables: Map[String, String], envId: Option[Int] = None, projectId: Option[Int] = None) = {
-        val typedVariables = (for (variable <- workflow.variables) yield {
+        val typedVariables = (for (variable <- workflow.variables()) yield {
           val res = variables.get(variable.name) match {
             case Some(value) =>
               convert(value, variable)
@@ -365,7 +365,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
     }
 
     lazy val variableDescriptions = {
-        for (variable <- workflow.variables) yield {
+        for (variable <- workflow.variables()) yield {
             val default  = variable.defaultValue.map(String.valueOf(_)).getOrElse(null)
             val dependsOn = if (variable.dependsOn.isEmpty) None else Some(variable.dependsOn.toList)
 

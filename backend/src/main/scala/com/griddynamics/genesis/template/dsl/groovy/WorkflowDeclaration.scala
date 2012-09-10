@@ -3,8 +3,9 @@ package com.griddynamics.genesis.template.dsl.groovy
 import groovy.lang.{GroovyObjectSupport, Closure}
 import collection.mutable
 import java.util.Random
+import com.griddynamics.genesis.template.DataSourceFactory
 
-class WorkflowDeclaration {
+class WorkflowDeclaration(dsClozures: Option[Closure[Unit]], dataSourceFactories: Seq[DataSourceFactory], projectId: Int) {
     var variablesBlock : Option[Closure[Unit]] = None
     var stepsBlock : Option[Closure[Unit]] = None
     var rescueBlock: Option[Closure[Unit]] = None
@@ -28,6 +29,21 @@ class WorkflowDeclaration {
     def onError(rescBlock: Closure[Unit]) {
         rescueBlock = Some(rescBlock)
     }
+
+    def variables = {
+        val variableBuilders = variablesBlock match {
+            case Some(block) => {
+                val variablesDelegate = new VariableDeclaration(dsClozures, dataSourceFactories, projectId)
+                block.setDelegate(variablesDelegate)
+                block.setResolveStrategy(Closure.DELEGATE_FIRST)
+                block.call()
+                variablesDelegate.builders
+            } case None => Seq[VariableBuilder]()
+        }
+
+        val vars = for(builder <- variableBuilders) yield builder.newVariable
+        vars.toList
+    }
 }
 
 class RequirementsHandler extends GroovyObjectSupport {
@@ -41,9 +57,10 @@ class RequirementsHandler extends GroovyObjectSupport {
 }
 
 class EnvWorkflow(val name : String,
-                  val variables : List[VariableDetails],
                   val stepsGenerator : Option[Closure[Unit]],
                   val preconditions: Map[String, Closure[Boolean]] = Map(),
-                  val rescues: Option[Closure[Unit]] = None)
+                  val rescues: Option[Closure[Unit]] = None) {
+    def variables(): List[VariableDetails] = List()
+}
 
 
