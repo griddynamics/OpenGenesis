@@ -18,21 +18,13 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * Project:     Genesis
- * Description:  Continuous Delivery Platform
+ * Description: Continuous Delivery Platform
  */
-package com.griddynamics.genesis.servers
+package com.griddynamics.genesis.steps.builder
 
 import com.griddynamics.genesis.workflow.Step
-import com.griddynamics.genesis.util.Describer
+import com.griddynamics.genesis.plugin.StepBuilderFactory
 
-case class BorrowServersStep( serverArray: String,
-                              roleName: String,
-                              serverIds: Option[Set[String]],
-                              quantity: Option[Int] ) extends Step {
-
-  override val stepDescription = new Describer("Acquiring servers from server array")
-    .param("array", serverArray)
-    .param("quantity", quantity)
-    .param("servers", serverIds)
-    .describe
+class ReflectionBasedStepBuilderFactory(val stepName: String, clazz: Class[_ <: Step]) extends StepBuilderFactory {
+  def newStepBuilder = new ReflectionBasedStepBuilder(clazz)
 }
