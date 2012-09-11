@@ -55,7 +55,7 @@ class BorrowServersExecutor(serversService: ServersService,loanService: ServersL
     }
 
     if(expectedSize != servers.size) {
-      throw new StepExecutionException("Failed to borrow requrested machines")
+      throw new StepExecutionException("Failed to borrow requested machines")
     }
 
     val borrowed = loanService.loanServersToEnvironment(servers, context.env, request.roleName, context.workflow.id, context.step.id)
