@@ -28,6 +28,9 @@ import java.util.concurrent.Executors
 import com.griddynamics.genesis.bean._
 import org.springframework.context.annotation.{Configuration, Bean}
 import com.griddynamics.genesis.plugin.{PartialStepCoordinatorFactory, CompositeStepCoordinatorFactory}
+import com.griddynamics.genesis.workflow.TrivialStepExecutor
+import com.griddynamics.genesis.core.TrivialStepCoordinatorFactory
+import com.griddynamics.genesis.workflow.{StepResult, Step}
 
 trait WorkflowContext {
     def requestBroker: RequestBroker
@@ -63,7 +66,13 @@ class DefaultWorkflowContext extends WorkflowContext {
         templateServiceContext.templateService,
         requestDispatcher)
 
-    @Bean def stepCoordinatorFactory = new CompositeStepCoordinatorFactory(stepCoordinators)
+    @Bean def stepCoordinatorFactory = new CompositeStepCoordinatorFactory(
+      stepCoordinators
+      ++ executors.map(new TrivialStepCoordinatorFactory(_))
+    )
 
     @Autowired var stepCoordinators: Array[PartialStepCoordinatorFactory] = _
+
+    @Autowired(required = false) var executors: Array[TrivialStepExecutor[_ <: Step, _ <: StepResult]] = Array()
+
 }

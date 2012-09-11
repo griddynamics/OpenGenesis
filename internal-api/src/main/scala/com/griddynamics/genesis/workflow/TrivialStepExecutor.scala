@@ -20,19 +20,12 @@
  * Project:     Genesis
  * Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.servers
+package com.griddynamics.genesis.workflow
 
-import com.griddynamics.genesis.plugin.ServersUpdateResult
-import com.griddynamics.genesis.workflow.{ActionResult, ActionFailed}
-import com.griddynamics.genesis.workflow.step.{ActionStep, ActionStepResult}
+import com.griddynamics.genesis.plugin.StepExecutionContext
 
-class ServerActionStepResult(step: ActionStep, actionResult: ActionResult) extends ActionStepResult(step, actionResult) with ServersUpdateResult {
-  override def isStepFailed = actionResult.isInstanceOf[ActionFailed]
-
-  def serversUpdate = {
-    actionResult match {
-      case updateResult: ServersUpdateActionResult => updateResult.servers
-      case _ => Seq()
-    }
-  }
+trait TrivialStepExecutor[Req <: Step, Resp <: StepResult] {
+  def execute(request: Req, context: StepExecutionContext): Resp
 }
+
+class StepExecutionException(val msg: String) extends RuntimeException
