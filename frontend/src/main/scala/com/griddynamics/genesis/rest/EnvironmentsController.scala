@@ -37,6 +37,7 @@ import com.griddynamics.genesis.api.EnvironmentDetails
 import com.griddynamics.genesis.api.Failure
 import com.griddynamics.genesis.api.WorkflowHistory
 import org.springframework.security.access.prepost.PostFilter
+import org.springframework.http.{HttpHeaders, MediaType}
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
@@ -66,37 +67,40 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     genesisService.createEnv(projectId, envName, user, templateName, templateVersion, variables)
   }
 
-  private def produceLogs(logs: Seq[String], response: HttpServletResponse) {
+  import MediaType.{TEXT_PLAIN, TEXT_PLAIN_VALUE, TEXT_HTML_VALUE}
+  private def produceLogs(logs: Seq[String], response: HttpServletResponse, headers: HttpHeaders) {
     val text = if (logs.isEmpty)
       "No logs yet"
     else
       logs.reduceLeft(_ + "\n" + _)
 
-    response.setContentType("text/plain")
-    response.getWriter.write(text)
+    val plainText = headers.getAccept.contains(TEXT_PLAIN)
+    response.setContentType(if (plainText) TEXT_PLAIN_VALUE else TEXT_HTML_VALUE)
+    response.getWriter.write(if (plainText) text else "<pre>%s</pre>".format(text))
     response.getWriter.flush()
   }
 
-  @RequestMapping(value=Array("{envId}/logs/{stepId}"))
+  @RequestMapping(value=Array("{envId}/logs/{stepId}"), produces = Array(TEXT_PLAIN_VALUE, TEXT_HTML_VALUE))
   def stepLogs(@PathVariable("projectId") projectId: Int,
                @PathVariable("envId") envId: Int,
                @PathVariable stepId: Int,
                @RequestParam(value = "include_actions", required = false, defaultValue = "false") includeActions: Boolean,
-               response: HttpServletResponse,
-               request: HttpServletRequest) {
-    assertEnvExist(projectId, envId)
-
-    produceLogs(genesisService.getLogs(envId, stepId, includeActions), response)
-  }
-
-  @RequestMapping(value=Array("{envName}/action_logs/{actionUUID}"))
-  def actionLogs(@PathVariable("projectId") projectId: Int,
-               @PathVariable("envName") envId: Int,
-               @PathVariable actionUUID: String,
+               @RequestHeader headers: HttpHeaders,
                response: HttpServletResponse) {
     assertEnvExist(projectId, envId)
 
-    produceLogs(genesisService.getLogs(envId, actionUUID), response)
+    produceLogs(genesisService.getLogs(envId, stepId, includeActions), response, headers)
+  }
+
+  @RequestMapping(value=Array("{envName}/action_logs/{actionUUID}"), produces = Array(TEXT_PLAIN_VALUE, TEXT_HTML_VALUE))
+  def actionLogs(@PathVariable("projectId") projectId: Int,
+               @PathVariable("envName") envId: Int,
+               @PathVariable actionUUID: String,
+               @RequestHeader headers: HttpHeaders,
+               response: HttpServletResponse) {
+    assertEnvExist(projectId, envId)
+
+    produceLogs(genesisService.getLogs(envId, actionUUID), response, headers)
   }
 
   @RequestMapping(value = Array("{envName}"), method = Array(RequestMethod.DELETE))
