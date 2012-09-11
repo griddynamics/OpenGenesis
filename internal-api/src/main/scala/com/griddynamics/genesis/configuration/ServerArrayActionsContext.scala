@@ -34,11 +34,9 @@ class ServerArrayActionsContext {
   @Autowired var serversLoanService: ServersLoanService = _
   @Autowired var serversService: ServersService = _
 
-  @Bean def borrowServerStepFactory = new StepDefinition("borrowServers", classOf[BorrowServersStep])
+  @Bean def borrowServerStepDefinition = new StepDefinition("borrowServers", classOf[BorrowServersStep])
+  @Bean def borrowServersStepExecutor = new BorrowServersExecutor(serversService, serversLoanService)
 
-  @Bean def borrowServerStepCoordinatorFactory = new BorrowServerStepCoordinatorFactory(serversService, serversLoanService)
-
-  @Bean def releaseServerStepFactory = new StepDefinition("releaseServers", classOf[ReleaseServersStep])
-
-  @Bean def releaseServerStepCoordinatorFactory = new ReleaseServersStepCoordinatorFactory(serversLoanService)
+  @Bean def releaseServerStepDefinition = new StepDefinition("releaseServers", classOf[ReleaseServersStep])
+  @Bean def releaseServerStepExecutor = new ReleaseServersExecutor(serversLoanService)
 }
