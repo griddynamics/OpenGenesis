@@ -182,6 +182,8 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     on(genesisVersion)(v => declare(
         v.versionId is (dbType("varchar(64)"))
     ))
+
+  on(settings) (s => declare(s.name is (unique)))
 }
 
 trait GenesisSchemaCustom extends GenesisSchema {
