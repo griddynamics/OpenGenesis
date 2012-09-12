@@ -24,6 +24,7 @@
 package com.griddynamics.genesis.template
 
 import scala.collection.JavaConversions._
+import collection.immutable.ListMap
 
 class ListVarDataSource extends VarDataSource {
     val Key = "values"
@@ -33,8 +34,8 @@ class ListVarDataSource extends VarDataSource {
 
     def config(map: Map[String, Any])  { values = map.get(Key) match {
             case Some(s: java.lang.Iterable[AnyRef]) =>
-              collection.JavaConversions.iterableAsScalaIterable(s).toArray.map(v => (v.toString, v.toString)).toMap
-            case Some(s: java.util.Map[AnyRef, AnyRef]) => s.toMap.map(entry => (entry._1.toString, entry._2.toString))
+              ListMap(collection.JavaConversions.iterableAsScalaIterable(s).toArray.map(v => (v.toString, v.toString)) : _*)
+            case Some(s: java.util.Map[AnyRef, AnyRef]) => ListMap(s.toSeq.map(entry => (entry._1.toString, entry._2.toString)) : _*)
             case x => Map(x.toString -> x.toString)
         }
     }

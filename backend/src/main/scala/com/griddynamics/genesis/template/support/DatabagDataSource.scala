@@ -5,6 +5,7 @@ import java.util.{List => JList}
 import com.griddynamics.genesis.repository.DatabagRepository
 import scala.collection.JavaConversions._
 import java.util
+import collection.immutable.ListMap
 
 class DatabagDataSource(repository: DatabagRepository) extends VarDataSource {
   import DatabagDataSource._
@@ -14,7 +15,7 @@ class DatabagDataSource(repository: DatabagRepository) extends VarDataSource {
 
   def getData = {
     val bags = if (tags.isEmpty) repository.list(selector) else repository.findByTags(tags, selector)
-    bags.map(bag => (bag.name, bag.name)).toMap
+    ListMap(bags.sortBy(_.name).map(bag => (bag.name, bag.name)) : _*)
   }
 
   def config(map: Map[String, Any]) {

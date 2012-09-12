@@ -32,6 +32,7 @@ import net.liftweb.json._
 import net.sf.ehcache.CacheManager
 import com.griddynamics.genesis.service.CredentialsStoreService
 import com.griddynamics.genesis.jenkins.api.{JenkinsRemoteApi, JenkinsConnectSpecification}
+import collection.immutable.ListMap
 
 class JenkinsDataSource(val cacheManager: CacheManager, val credStore: CredentialsStoreService) extends VarDataSource with Logging with Cache {
 
@@ -72,9 +73,11 @@ class JenkinsDataSource(val cacheManager: CacheManager, val credStore: Credentia
     val arts = fromCache(CacheRegion, CacheKey(connectionSpec, jobName)) {
       loadFromJenkins
     }
-    arts.collect {
+    val sorted = arts.collect {
       case (url, artifact, title) if artifact.matches(artifactFilter) => (title, url)
-    }.toMap
+    }.sortBy(_._1)
+
+    ListMap(sorted : _*)
   }
 
   private[this] def loadFromJenkins: List[(String, String, String)] = { // (url, artifact, artifactTitle)

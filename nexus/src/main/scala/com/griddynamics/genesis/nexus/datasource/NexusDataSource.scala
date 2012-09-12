@@ -31,6 +31,7 @@ import org.apache.commons.io.FilenameUtils
 import com.griddynamics.genesis.util.{Logging, IoUtil}
 import com.griddynamics.genesis.service.CredentialsStoreService
 import com.griddynamics.genesis.api.Credentials
+import collection.immutable.ListMap
 
 class NexusDataSource(val credStore: CredentialsStoreService) extends VarDataSource with Logging {
     private var url: URL = _
@@ -83,7 +84,7 @@ class NexusDataSource(val credStore: CredentialsStoreService) extends VarDataSou
 
     }).flatten
 
-    def getData = getData(url).sortBy(FilenameUtils.getName(_)).map(v => (v.substring(v.lastIndexOf("/") + 1), v)).toMap
+    def getData = ListMap(getData(url).sortBy(FilenameUtils.getName(_)).map(v => (v.substring(v.lastIndexOf("/") + 1), v)): _*)
 
     def config(map: Map[String, Any]) {
         val projId = map.get("projectId").map(_.asInstanceOf[Int])
