@@ -1,5 +1,5 @@
 language: scala
-script: mvn install
+script: mvn install -DskipPack=true
 
 notifications:
   email: false
