@@ -30,7 +30,7 @@
                   <% } else { %>
                     <select id="<%= variable.name %>" name="<%= variable.name %>" class="workflow-variable <%= isRequired(variable) %>">
                         <option value="" >Please select</option>
-                        <% _.each(_.sortBy(_.keys(variable.values), function(x) {return x}), function(key) { %>
+                        <% _.each(_.keys(variable.values), function(key) { %>
                             <option value="<%= variable.values[key] %>" <%= isSelected(key, variable) %> ><%= key %></option>
                         <% }) %>
                     </select>
