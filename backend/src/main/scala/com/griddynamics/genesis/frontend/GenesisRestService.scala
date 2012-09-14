@@ -168,6 +168,9 @@ class GenesisRestService(storeService: StoreService,
         } ++
         mustMatchProjectEnvName(name, name, "Name")
     }
+
+  def stepExists(stepId: Int, envId: Int) = storeService.stepExists(stepId, envId)
+
 }
 
 object GenesisRestService {

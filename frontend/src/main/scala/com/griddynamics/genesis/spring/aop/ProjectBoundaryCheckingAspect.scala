@@ -28,30 +28,41 @@ import org.aspectj.lang.annotation.{Pointcut, Before, Aspect}
 import com.griddynamics.genesis.rest.ResourceNotFoundException
 import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.reflect.CodeSignature
+import com.griddynamics.genesis.api.GenesisService
 
 @Aspect
 class ProjectBoundaryCheckingAspect {
   @Autowired
   var projectService: ProjectService = _
 
+  @Autowired var genesisService: GenesisService = _
+
   @Pointcut("within(@org.springframework.web.bind.annotation.RequestMapping *)")
   def requestMapping() {}
 
-  @Before(value = "within(@org.springframework.web.bind.annotation.RequestMapping *) && execution(* com.griddynamics.genesis.rest.*Controller.*(..))")
-  def checkProjectExists(joinPoint: JoinPoint) {
-    val paramNames = joinPoint.getSignature match {
-      case sign: CodeSignature => sign.getParameterNames
-      case _ => null
-    }
+  private def getIntParam(name : String, params: Map[String, Any]) =
+  params.collect{case (k: String, v: Int) if (k == name || k.startsWith(name + "$")) => v}.headOption
 
-    if(paramNames != null) {
-      val index = paramNames.indexWhere { it => it.equals("projectId") || it.startsWith("projectId$") } //scala adjusts argument names  with _${int}
-      if(index != -1) {
-        val projectId = joinPoint.getArgs.apply(index).asInstanceOf[Int]
-        if (projectService.get(projectId).isEmpty) {
-          throw new ResourceNotFoundException("Project [%d] wasn't found".format(projectId))
-        }
-      }
+  private def checkProject(projectId: Int) {
+    if (projectService.get(projectId).isEmpty) {
+      throw new ResourceNotFoundException("Project [%d] wasn't found".format(projectId))
     }
+  }
+
+  private def checkEnv(projectId: Int, envId: Int) {
+    if(!genesisService.isEnvExists(envId, projectId))
+      throw new ResourceNotFoundException("Environment [id = %s] wasn't found in project [id = %s]".format(envId, projectId))
+  }
+
+  @Before(value = "within(@org.springframework.web.bind.annotation.RequestMapping *) && execution(* com.griddynamics.genesis.rest.*Controller.*(..))")
+  def checkEnvProjectExists(joinPoint: JoinPoint) {
+    val params = joinPoint.getSignature match {
+      case sign: CodeSignature => sign.getParameterNames.zip(joinPoint.getArgs).toMap
+      case _ => return
+    }
+    getIntParam("projectId", params).foreach ( projId => {
+      checkProject(projId)
+      getIntParam("envId", params).foreach(checkEnv(projId, _))
+    })
   }
 }
