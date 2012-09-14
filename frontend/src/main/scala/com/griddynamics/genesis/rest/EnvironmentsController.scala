@@ -87,8 +87,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
                @RequestParam(value = "include_actions", required = false, defaultValue = "false") includeActions: Boolean,
                @RequestHeader headers: HttpHeaders,
                response: HttpServletResponse) {
-    assertEnvExist(projectId, envId)
-
+    validateStepId(stepId, envId)
     produceLogs(genesisService.getLogs(envId, stepId, includeActions), response, headers)
   }
 
@@ -98,8 +97,6 @@ class EnvironmentsController extends RestApiExceptionsHandler {
                @PathVariable actionUUID: String,
                @RequestHeader headers: HttpHeaders,
                response: HttpServletResponse) {
-    assertEnvExist(projectId, envId)
-
     produceLogs(genesisService.getLogs(envId, actionUUID), response, headers)
   }
 
@@ -108,7 +105,6 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   def deleteEnv( @PathVariable("projectId") projectId: Int,
                  @PathVariable("envName") envId: Int,
                  request: HttpServletRequest) = {
-    assertEnvExist(projectId, envId)
     genesisService.destroyEnv(envId, projectId, Map[String, String](), getCurrentUser)
   }
 
@@ -118,7 +114,6 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   def describeEnv(@PathVariable("projectId") projectId: Int,
                   @PathVariable("envName") envId: Int,
                   response : HttpServletResponse) : EnvironmentDetails = {
-    assertEnvExist(projectId, envId)
     genesisService.describeEnv(envId, projectId).getOrElse(throw new ResourceNotFoundException("Environment [" + envId + "] was not found"))
   }
 
@@ -130,7 +125,6 @@ class EnvironmentsController extends RestApiExceptionsHandler {
                        @RequestParam("page_offset") pageOffset: Int,
                        @RequestParam("page_length") pageLength: Int,
                        response : HttpServletResponse): WorkflowHistory = {
-    assertEnvExist(projectId, envId)
     genesisService.workflowHistory(envId, projectId, pageOffset, pageLength).getOrElse(
         throw new ResourceNotFoundException("Environment [" + envId + "] was not found")
     )
@@ -163,25 +157,24 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @RequestMapping(value = Array("{envId}/actions"), method = Array(RequestMethod.POST))
   @ResponseBody
   def executeAction(@PathVariable("projectId") projectId: Int,
-                    @PathVariable("envId") env: Int,
+                    @PathVariable("envId") envId: Int,
                     request: HttpServletRequest) = {
-    assertEnvExist(projectId, env)
 
     val requestMap = extractParamsMap(request)
     extractNotEmptyValue("action", requestMap) match {
       case "cancel" => {
-        genesisService.cancelWorkflow(env, projectId)
+        genesisService.cancelWorkflow(envId, projectId)
         RequestResult(isSuccess = true)
       }
 
       case "execute" => {
         val parameters = extractMapValue("parameters", requestMap)
         val workflow = extractValue("workflow", parameters)
-        genesisService.requestWorkflow(env, projectId, workflow, extractVariables(parameters), getCurrentUser)
+        genesisService.requestWorkflow(envId, projectId, workflow, extractVariables(parameters), getCurrentUser)
       }
 
       case "resetEnvStatus" => {
-        genesisService.resetEnvStatus(env, projectId)
+        genesisService.resetEnvStatus(envId, projectId)
       }
 
       case _ => throw new InvalidInputException ()
@@ -191,10 +184,10 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @RequestMapping(value = Array("{envId}/steps/{stepId}/actions"), method = Array(RequestMethod.GET))
   @ResponseBody
   def getStepActions(@PathVariable("projectId") projectId: Int,
-                     @PathVariable("envId") env: Int,
+                     @PathVariable("envId") envId: Int,
                      @PathVariable("stepId") stepId: Int,
                      request: HttpServletRequest): Seq[ActionTracking] = {
-    assertEnvExist(projectId, env)
+    validateStepId(stepId, envId)
     genesisService.getStepLog(stepId)
   }
 
@@ -203,7 +196,6 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   def getEnvAccess(@PathVariable("projectId") projectId: Int,
                    @PathVariable("envId") envId: Int,
                    request: HttpServletRequest) = {
-    assertEnvExist(projectId, envId)
     val (users, groups) = envAuthService.getAccessGrantees(envId)
     Map("users" -> users, "groups" -> groups)
   }
@@ -211,10 +203,9 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @RequestMapping(value = Array("{envId}"), method = Array(RequestMethod.PUT))
   @ResponseBody
   def updateEnv(@PathVariable("projectId") projectId: Int, @PathVariable("envId") envId: Int, request: HttpServletRequest) = {
-      assertEnvExist(projectId, envId)
       val paramsMap = GenesisRestController.extractParamsMap(request)
       val env = GenesisRestController.extractMapValue("environment", paramsMap)
-      val envName = env.getOrElse("name", throw new MissingParameterException("envrironment.name"))
+      val envName = env.getOrElse("name", throw new MissingParameterException("environment.name"))
       genesisService.updateEnvironmentName(envId, projectId, envName.asInstanceOf[String].trim)
   }
 
@@ -223,7 +214,6 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   def updateEnvAccess(@PathVariable("projectId") projectId: Int,
                       @PathVariable("envId") envId: Int,
                      request: HttpServletRequest): ExtendedResult[_] = {
-    assertEnvExist(projectId, envId)
     val paramsMap = GenesisRestController.extractParamsMap(request)
 
     val users = GenesisRestController.extractListValue("users", paramsMap)
@@ -243,9 +233,8 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     Success(None)
   }
 
-  private def assertEnvExist(projectId: Int, envId: Int) {
-    if (!genesisService.isEnvExists(envId, projectId)) {
-      throw new ResourceNotFoundException("Environment [" + envId + "] wasn't found in project [id = "+ projectId + "]")
-    }
+  private def validateStepId(stepId: Int, envId: Int) {
+    if (!genesisService.stepExists(stepId, envId)) throw new ResourceNotFoundException("Step [id=%d] wasn't found in environment [id=%d]"
+      .format(stepId, envId))
   }
 }
