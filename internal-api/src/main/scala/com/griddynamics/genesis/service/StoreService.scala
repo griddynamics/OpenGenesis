@@ -108,6 +108,7 @@ trait StoreService {
     def endAction(uuid: String, message: Option[String], status: ActionTrackingStatus.ActionStatus)
     def cancelRunningActions(stepId: Int)
     def getActionLog(stepId: Int) : List[ActionTracking]
+    def stepExists(stepId: Int, envId: Int) : Boolean
     def findBorrowedMachinesByServerId(serverId: Int): Seq[BorrowedMachine]
 }
 

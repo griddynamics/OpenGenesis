@@ -475,6 +475,10 @@ class StoreService extends service.StoreService with Logging {
     from(GS.actionTracking)(at => where(at.workflowStepId === stepId) select (at) orderBy(at.started asc)).toList
   }
 
+  @Transactional(readOnly = true)
+  def stepExists(stepId : Int, envId: Int) = from(GS.steps, GS.workflows, GS.envs)((step, workflow, env) =>
+    where(step.id === stepId and step.workflowId === workflow.id and workflow.envId === envId) select (step.id) ).nonEmpty
+
   def findBorrowedMachinesByServerId(serverId: Int) = {
     from(GS.borrowedMachines)(bm => where(bm.serverId === serverId and bm.status <> MachineStatus.Released) select (bm)).toList
   }
