@@ -37,7 +37,11 @@ class CompositeStepCoordinatorFactory(factories: Array[PartialStepCoordinatorFac
 
     def apply(step: Step, context: StepExecutionContext) = {
         factories.find(_.isDefinedAt(step)) match {
-            case Some(factory) => factory.apply(step, context)
+            case Some(factory) => try {
+                factory.apply(step, context)
+            } catch {
+                case e: Throwable => throw new RuntimeException("Failed to create step coordinator for %s".format(step), e)
+            }
             case None => throw new RuntimeException("Failed to find coordinator for '%s'".
                 format(step))
         }

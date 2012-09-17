@@ -5,6 +5,10 @@ template {
     createWorkflow("create")
     destroyWorkflow("destroy")
 
+    def vl = {
+        ($project.databag('foo')['key5'] ?: $system.databag('foo')['key5'])?.replace("f", "z")
+    }
+
     dataSources {
         staticList("ds2"){
             values = [$project.databag["foo"].key1]
@@ -37,6 +41,11 @@ template {
             teststep {
                 phase  = "phase2"
                 text = $databags["foo"].key4
+            }
+
+            teststep {
+                phase  = "phase2"
+                text = vl
             }
         }
     }

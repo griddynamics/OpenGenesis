@@ -47,6 +47,7 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
     Mockito.when(bagRepository.findByName("foo", Some(0))).thenReturn(Some(testDatabag))
     Mockito.when(bagRepository.findByName("bar", None)).thenReturn(Some(systemDatabag))
+    Mockito.when(bagRepository.findByName("foo", None)).thenReturn(Some(altDatabag))
     Mockito.when(bagRepository.findByTags(Seq("bar"), None)).thenReturn(Seq(systemDatabag))
     Mockito.when(bagRepository.findByTags(Seq("foo"), Some(0))).thenReturn(Seq(testDatabag))
     val createWorkflow = templateService.findTemplate(0, "Projects", "0.1").get.createWorkflow
@@ -61,7 +62,8 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
             DataItem(Some(0), "key1", "fred", None),
             DataItem(Some(0), "key2", "barney", None),
             DataItem(Some(0), "key3", "wilma", None),
-            DataItem(Some(0), "key4", "bar", None)
+            DataItem(Some(0), "key4", "bar", None),
+            DataItem(Some(0), "key5", "foo", None)
         ))
         db
     }
@@ -80,7 +82,8 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
             DataItem(Some(0), "key1", "barney", None),
             DataItem(Some(0), "key2", "wilma", None),
             DataItem(Some(0), "key3", "fred", None),
-            DataItem(Some(0), "key4", "homer", None)
+            DataItem(Some(0), "key4", "homer", None),
+            DataItem(Some(0), "key5", "zzz", None)
         ))
         db
     }
@@ -118,5 +121,7 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
         assert(actualStep.name == "wilma")
         val step = regular.tail.head.newStep.actualStep.asInstanceOf[DoNothingStep]
         expect("bar")(step.name)
+        val lastStep = regular.tail.tail.head.newStep.actualStep.asInstanceOf[DoNothingStep]
+        expect("zoo")(lastStep.name)
     }
 }
