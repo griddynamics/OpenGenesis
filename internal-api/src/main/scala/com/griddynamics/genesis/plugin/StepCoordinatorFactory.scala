@@ -23,6 +23,7 @@
 package com.griddynamics.genesis.plugin
 
 import com.griddynamics.genesis.workflow.{StepCoordinator, Step}
+import com.griddynamics.genesis.util.Logging
 
 trait StepCoordinatorFactory {
     def apply(step: Step, context: StepExecutionContext): StepCoordinator
@@ -33,14 +34,17 @@ trait PartialStepCoordinatorFactory extends StepCoordinatorFactory {
 }
 
 class CompositeStepCoordinatorFactory(factories: Array[PartialStepCoordinatorFactory])
-    extends StepCoordinatorFactory {
+    extends StepCoordinatorFactory with Logging{
 
     def apply(step: Step, context: StepExecutionContext) = {
         factories.find(_.isDefinedAt(step)) match {
             case Some(factory) => try {
                 factory.apply(step, context)
             } catch {
-                case e: Throwable => throw new RuntimeException("Failed to create step coordinator for %s".format(step), e)
+                case e: Throwable => {
+                    log.error(e, "Failed to create step coordinator for %s".format(step))
+                    throw new RuntimeException("Failed to start step %s".format(step), e)
+                }
             }
             case None => throw new RuntimeException("Failed to find coordinator for '%s'".
                 format(step))

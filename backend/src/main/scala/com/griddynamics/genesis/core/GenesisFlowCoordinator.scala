@@ -96,7 +96,7 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
                     createStepCoordinator(step)
                 } catch {
                     case t: Throwable => {
-                        storeService.updateStepDetailsAndStatus(step.id, Option(t.toString), WorkflowStepStatus.Canceled)
+                        storeService.updateStepDetailsAndStatus(step.id, Option(t.getMessage), WorkflowStepStatus.Canceled)
                         throw t
                     }
                 }
