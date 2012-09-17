@@ -94,9 +94,7 @@ with FlowActor with Logging {
     }
 
     def startRescueCoordinators() {
-        val rescueCoordinators: Seq[workflow.StepCoordinator] = safeFlowCoordinator.rescueCoordinators
-        log.debug("There are %d coordinators in rescue queue".format(rescueCoordinators.size))
-        startCoordinators(rescueCoordinators, rescue = true)
+        safeFlowCoordinator.rescueCoordinators.right.foreach(startCoordinators(_, rescue = true))
     }
 
     def interruptFlow(signal: Signal) {

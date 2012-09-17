@@ -43,7 +43,7 @@ trait FlowCoordinator {
     /* Called on each step completion to retrieve following step coordinators */
     def onStepFinish(result: StepResult): Either[Signal, Seq[StepCoordinator]]
 
-    def rescueCoordinators: Seq[StepCoordinator]
+    def rescueCoordinators: Either[Signal, Seq[StepCoordinator]]
 
     def hasRescue: Boolean
 }

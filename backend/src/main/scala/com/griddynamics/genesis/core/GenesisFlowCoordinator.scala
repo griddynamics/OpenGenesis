@@ -87,11 +87,24 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
         Right(createReachableStepCoordinators())
     }
 
-    def rescueCoordinators = {
+    def rescueCoordinators: scala.Either[Signal, Seq[StepCoordinator]] = {
         persistSteps(rescueSteps)
-        for (builder <- rescueSteps) yield {
-            createStepCoordinator(buildStep(builder))
-        }
+        Mistake.throwableToLeft(
+            for (builder <- rescueSteps) yield {
+                val step: GenesisStep = buildStep(builder)
+                try {
+                    createStepCoordinator(step)
+                } catch {
+                    case t: Throwable => {
+                        storeService.updateStepDetailsAndStatus(step.id, Option(t.getMessage), WorkflowStepStatus.Canceled)
+                        throw t
+                    }
+                }
+            }
+        ).fold(mistake => {
+            rescueSteps.foreach(s => storeService.updateStepStatus(s.id, WorkflowStepStatus.Canceled))
+            Left(Fail(mistake))
+        }, sc => Right(sc))
     }
 
     def onFlowFinish(signal: Signal) {

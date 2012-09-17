@@ -67,7 +67,7 @@ class TestCoordinator(flow: Set[FlowElement]) extends workflow.FlowCoordinator {
     var finishFlow = Seq[String]()
     def flowDescription = "TestFlow"
 
-    def rescueCoordinators = Seq()
+    def rescueCoordinators = Right(Seq())
 
     def hasRescue = false
 
