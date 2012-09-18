@@ -70,8 +70,8 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
         val rawSteps = definition.flatMap(_.getWorkflow(workflow.name)
             .map(_.embody(workflow.variables, Option(env.id), Option(env.projectId)))).getOrElse(Builders(Seq()))
 
-        Some(applyIds(sortByPhase(rawSteps.regular))).foreach(s => {
-            val rescueBuilders: Seq[StepBuilder] = applyIds(sortByPhase(rawSteps.onError.map(f => {
+        Some(applyIds(sortByPhase(rawSteps.regular.filter(p => !p.skip)))).foreach(s => {
+            val rescueBuilders: Seq[StepBuilder] = applyIds(sortByPhase(rawSteps.onError.filter(s => !s.skip).map(f => {
                 f.regular = false
                 f}
             )))

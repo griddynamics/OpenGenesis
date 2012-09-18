@@ -38,6 +38,7 @@ public abstract class AbstractStepBuilder implements StepBuilder {
     private Map<String, String> exportTo;
     private String title;
     private boolean regular = true;
+    private boolean skip;
 
     private int id = 0;
 
@@ -236,6 +237,22 @@ public abstract class AbstractStepBuilder implements StepBuilder {
 
     public void setTitle(final String title) {
         this.title = title;
+    }
+
+    public boolean getSkip() {
+        return skip;
+    }
+
+    public void setSkip(boolean skip) {
+        this.skip = skip;
+    }
+
+    public boolean skip() {
+        return skip;
+    }
+
+    public void skip_$eq(boolean value) {
+        setSkip(value);
     }
 
     /**
