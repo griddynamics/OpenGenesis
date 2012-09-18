@@ -1,0 +1,35 @@
+package groovy
+template {
+    name("SkipExample")
+    version("0.1")
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+
+    workflow("create") {
+        variables {
+            variable("a").as(Integer).description("Test description")
+        }
+        steps {
+            teststep {
+                phase = "phase1"
+                text =   "test input"
+                skip = a > 1
+            }
+        }
+        onError {
+            teststep {
+                text = "rescue"
+            }
+        }
+    }
+
+    workflow("destroy") {
+        steps {
+            teststep {
+                phase = "undeply"
+                text = "destroy"
+            }
+        }
+    }
+}
