@@ -118,7 +118,7 @@
                 </td>
                 <td>
                   <% if ( step.status !== "Requested" ) { %>
-                    <a href="/rest/projects/<%= workflows.projectId %>/envs/<%= workflows.envId %>/logs/<%= step.stepId %>" target="_blank" data-bypass>Step Log</a>
+                    <a href="/rest/projects/<%= workflows.projectId %>/envs/<%= workflows.envId %>/logs/<%= step.stepId %>?timezone_offset=<%= utils.timezoneOffset() %>" target="_blank" data-bypass>Step Log</a>
                   <% } %>
                 </td>
               </tr>

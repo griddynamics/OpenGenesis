@@ -45,7 +45,7 @@ case class ActionBasedLog(actionUID: String, message: String, timestamp: Timesta
 trait InternalLogger {
    def stepId : Int
    def writeLog(message : String) {
-       LoggerWrapper.writeLog(stepId, message)
+       LoggerWrapper.writeStepLog(stepId, message)
    }
 }
 
@@ -61,15 +61,15 @@ object LoggerWrapper extends Logging {
     }
   }
 
-  private def timestamp = new Timestamp(System.currentTimeMillis())
+  private def now = new Timestamp(System.currentTimeMillis())
 
-  def writeLog(actionUUID: String, message: String) {
+  def writeActionLog(actionUUID: String, message: String, timestamp: Timestamp = now) {
     Actor.registry.actorsFor(classOf[LoggerActor]).foreach {
       _ ! ActionBasedLog(actionUUID, message, timestamp)
     }
   }
 
-  def writeLog(id: Int, message: String) {
+  def writeStepLog(id: Int, message: String, timestamp: Timestamp = now) {
     Actor.registry.actorsFor(classOf[LoggerActor]).foreach {
       _ ! Log(id, message, timestamp)
     }

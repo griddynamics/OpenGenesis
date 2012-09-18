@@ -38,6 +38,7 @@ import com.griddynamics.genesis.api.Failure
 import com.griddynamics.genesis.api.WorkflowHistory
 import org.springframework.security.access.prepost.PostFilter
 import org.springframework.http.{HttpHeaders, MediaType}
+import java.util.{TimeZone, Locale}
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
@@ -67,37 +68,56 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     genesisService.createEnv(projectId, envName, user, templateName, templateVersion, variables)
   }
 
-  import MediaType.{TEXT_PLAIN, TEXT_PLAIN_VALUE, TEXT_HTML_VALUE}
-  private def produceLogs(logs: Seq[String], response: HttpServletResponse, headers: HttpHeaders) {
-    val text = if (logs.isEmpty)
-      "No logs yet"
-    else
-      logs.reduceLeft(_ + "\n" + _)
+  import MediaType.{TEXT_PLAIN, TEXT_PLAIN_VALUE, TEXT_HTML, TEXT_HTML_VALUE}
+  private def produceLogs(logs: Seq[StepLogEntry], response: HttpServletResponse,
+                          headers: HttpHeaders, locale: Locale, timeZone: TimeZone) {
+    import scala.collection.JavaConversions._
+    val supportHtml =
+      headers.getAccept.toSet.exists(_.isCompatibleWith(TEXT_HTML))
 
-    val plainText = headers.getAccept.contains(TEXT_PLAIN)
-    response.setContentType(if (plainText) TEXT_PLAIN_VALUE else TEXT_HTML_VALUE)
-    response.getWriter.write(if (plainText) text else "<pre>%s</pre>".format(text))
+    response.setContentType(if (supportHtml) TEXT_HTML_VALUE else TEXT_PLAIN_VALUE)
+
+    val writer = response.getWriter
+
+    if (supportHtml) writer.print("<pre>")
+
+    if (logs.isEmpty)
+      writer.write("No logs yet")
+    else
+      logs.foreach(entry => writer.write(entry.toString(locale, timeZone) + "\n"))
+
+    if (supportHtml) writer.print("</pre>")
+
     response.getWriter.flush()
   }
+
+  private def getTimezoneByOffset(timezoneOffset: java.lang.Integer): TimeZone =
+    Option(timezoneOffset).map { offset =>
+      TimeZone.getTimeZone("GMT%0+3d:%02d".format(-offset / 60, java.lang.Math.abs(offset % 60)))
+    }.getOrElse(TimeZone.getDefault)
 
   @RequestMapping(value=Array("{envId}/logs/{stepId}"), produces = Array(TEXT_PLAIN_VALUE, TEXT_HTML_VALUE))
   def stepLogs(@PathVariable("projectId") projectId: Int,
                @PathVariable("envId") envId: Int,
                @PathVariable stepId: Int,
                @RequestParam(value = "include_actions", required = false, defaultValue = "false") includeActions: Boolean,
+               @RequestParam(value = "timezone_offset", required = false) timezoneOffset: java.lang.Integer,
                @RequestHeader headers: HttpHeaders,
-               response: HttpServletResponse) {
+               response: HttpServletResponse,
+               locale: Locale) {
     validateStepId(stepId, envId)
-    produceLogs(genesisService.getLogs(envId, stepId, includeActions), response, headers)
+    produceLogs(genesisService.getLogs(envId, stepId, includeActions), response, headers, locale, getTimezoneByOffset(timezoneOffset))
   }
 
   @RequestMapping(value=Array("{envName}/action_logs/{actionUUID}"), produces = Array(TEXT_PLAIN_VALUE, TEXT_HTML_VALUE))
   def actionLogs(@PathVariable("projectId") projectId: Int,
                @PathVariable("envName") envId: Int,
                @PathVariable actionUUID: String,
+               @RequestParam(value = "timezone_offset", required = false) timezoneOffset: java.lang.Integer,
                @RequestHeader headers: HttpHeaders,
-               response: HttpServletResponse) {
-    produceLogs(genesisService.getLogs(envId, actionUUID), response, headers)
+               response: HttpServletResponse,
+               locale: Locale) {
+    produceLogs(genesisService.getLogs(envId, actionUUID), response, headers, locale, getTimezoneByOffset(timezoneOffset))
   }
 
   @RequestMapping(value = Array("{envName}"), method = Array(RequestMethod.DELETE))

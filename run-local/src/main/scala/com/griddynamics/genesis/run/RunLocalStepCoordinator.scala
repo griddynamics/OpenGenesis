@@ -36,7 +36,7 @@ class RunLocalStepCoordinator(stepContext: StepExecutionContext, val step: RunLo
   def onStepStart(): Seq[Action] = {
     step.output.foreach { directory =>
       if(!directory.exists() && !directory.mkdirs()) {
-        LoggerWrapper.writeLog(stepContext.step.id, "Couldn't create directory [%s]".format(directory.getAbsolutePath))
+        LoggerWrapper.writeStepLog(stepContext.step.id, "Couldn't create directory [%s]".format(directory.getAbsolutePath))
         isStepFailed = true
         return Seq()
       }
@@ -64,7 +64,7 @@ class RunLocalStepCoordinator(stepContext: StepExecutionContext, val step: RunLo
     case a: RunLocalResult => {
       isStepFailed = a.response.exitCode != step.successExitCode
       if(isStepFailed) {
-        LoggerWrapper.writeLog(a.action.uuid, "FAILURE: Process finished with exit code %d, expected result = %d".format(a.response.exitCode, step.successExitCode))
+        LoggerWrapper.writeActionLog(a.action.uuid, "FAILURE: Process finished with exit code %d, expected result = %d".format(a.response.exitCode, step.successExitCode))
       }
       if (!isStepFailed && !toExecute.isEmpty) {
         Seq(toExecute.dequeue())

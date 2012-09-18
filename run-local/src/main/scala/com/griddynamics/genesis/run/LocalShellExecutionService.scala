@@ -37,7 +37,7 @@ class LocalShellExecutionService(executionStrategies: List[ShellExecutionStrateg
     Source.fromInputStream(is, "UTF-8").getLines().foreach { line =>
       log.debug(line)
       logWriter.foreach { _.println(line) }
-      actionUUID.foreach { LoggerWrapper.writeLog(_, line) }
+      actionUUID.foreach { LoggerWrapper.writeActionLog(_, line) }
       sb.append(line).append('\n')
     }
   }
@@ -49,7 +49,7 @@ class LocalShellExecutionService(executionStrategies: List[ShellExecutionStrateg
 
     outPath.foreach { path =>
       if(!path.exists && !path.mkdirs()) {
-        actionUUID.foreach(LoggerWrapper.writeLog(_, "Couldn't create directory [%s]".format(path.getAbsolutePath)))
+        actionUUID.foreach(LoggerWrapper.writeActionLog(_, "Couldn't create directory [%s]".format(path.getAbsolutePath)))
         throw new IllegalStateException("Failed to create %s".format(path))
       }
     }

@@ -86,8 +86,8 @@ class BuildActionExecutor(val action : BuildAction, provider : BuildProvider, st
     val query: Option[BuildResult] = provider.query
     log.debug("Intermediate result is: %s".format(query))
     query.foreach( q => {
-      q.logSummary.foreach(LoggerWrapper.writeLog(stepId, _))
-      buildLog(q.log, LoggerWrapper.writeLog(action.uuid, _))
+      q.logSummary.foreach(entry => LoggerWrapper.writeStepLog(stepId, entry.message, entry.timestamp))
+      buildLog(q.log, LoggerWrapper.writeActionLog(action.uuid, _))
     })
 
     query match {

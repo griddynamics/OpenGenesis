@@ -125,11 +125,11 @@ class GenesisRestService(storeService: StoreService,
         )
     }
 
-    def getLogs(envId: Int,  stepId: Int, includeActions: Boolean) : Seq[String] =
-      storeService.getLogs(stepId, includeActions).map(log => "%s: %s".format(log.timestamp, log.message))
+    def getLogs(envId: Int,  stepId: Int, includeActions: Boolean) : Seq[StepLogEntry] =
+      storeService.getLogs(stepId, includeActions).map { entry => StepLogEntry(entry.timestamp, entry.message) }
 
-    def getLogs(envId: Int, actionUUID: String) =
-      storeService.getLogs(actionUUID).map(log => "%s: %s".format(log.timestamp, log.message))
+    def getLogs(envId: Int, actionUUID: String): Seq[StepLogEntry] =
+      storeService.getLogs(actionUUID).map { entry => StepLogEntry(entry.timestamp, entry.message) }
 
     def queryVariables(projectId: Int, templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]) = {
         templateService.findTemplate(projectId, templateName, templateVersion).flatMap {t => {
