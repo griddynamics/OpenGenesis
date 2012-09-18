@@ -32,7 +32,8 @@ case class GenesisStep(id: GenesisEntity.Id,
                        retryCount: Int,
                        actualStep: Step,
                        exportTo: Map[String, String] = Map(),
-                       title: Option[String] = None ) extends Step
+                       title: Option[String] = None,
+                       skip: Boolean = false) extends Step
 
 
 case class GenesisStepResult(step: GenesisStep,
