@@ -138,6 +138,10 @@ function($, _, Backbone, formats) {
         if (duration < HOUR) return (duration / MINUTE).toFixed(1) + " min";
 
         return (duration / HOUR).toFixed(1) + " hour(s)";
+      },
+
+      timezoneOffset: function() {
+          return new Date().getTimezoneOffset();
       }
     }
   };

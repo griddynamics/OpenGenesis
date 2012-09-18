@@ -24,6 +24,9 @@ package com.griddynamics.genesis.api
 
 import java.util
 import com.griddynamics.genesis.validation.FieldConstraints._
+import java.sql.Timestamp
+import util.{Calendar, TimeZone, Locale}
+import java.text.DateFormat
 
 trait Identifiable[T] {
   def id: T
@@ -246,3 +249,15 @@ object RequestResult {
 
 case class VcsProject(name : String, id: String)
 case class Tag(p: VcsProject, name: String)
+
+case class StepLogEntry(timestamp: Timestamp, message: String) {
+  import java.text.DateFormat._
+
+  def toString(locale: Locale, timeZone: TimeZone) = {
+    val dateFormat: DateFormat = getDateTimeInstance(SHORT, MEDIUM, locale)
+    dateFormat.setTimeZone(timeZone)
+    "%s: %s".format(dateFormat.format(timestamp), message)
+  }
+
+  override def toString = toString(Locale.getDefault, TimeZone.getDefault)
+}

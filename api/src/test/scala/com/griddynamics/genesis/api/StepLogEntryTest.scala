@@ -17,46 +17,29 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *   Project:     Genesis
- *   Description:  Continuous Delivery Platform
+ * Project:     Genesis
+ * Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.build
+package com.griddynamics.genesis.api
 
+import org.junit.Test
 import java.sql.Timestamp
+import java.util.{TimeZone, Locale}
 
-trait BuildProvider  {
-    def mode : String
-    def build(values: Map[String, String])
-    def query() : Option[BuildResult]
-    def cancel()
+class StepLogEntryTest {
+
+  private val entry = StepLogEntry(new Timestamp(0), "test")
+
+  @Test def testUtcFormatting() {
+    assert(entry.toString(Locale.US, TimeZone.getTimeZone("UTC")) == "1/1/70 12:00:00 AM: test")
+  }
+
+  @Test def testFormattingByOffset() {
+    assert(entry.toString(Locale.US, TimeZone.getTimeZone("GMT+02:30")) == "1/1/70 2:30:00 AM: test")
+  }
+
+  @Test def testFormattingWithZeroOffset() {
+    assert(entry.toString(Locale.US, TimeZone.getTimeZone("GMT+00:00")) == "1/1/70 12:00:00 AM: test")
+  }
+
 }
-
-trait BuildSpecification {
-  def projectName : String
-  def tagName: Option[String] = None
-}
-
-case class BuildLogEntry(timestamp: Timestamp, message: String)
-
-trait BuildResult {
-    def success: Boolean
-    def results = Map[String, String]()
-    def logSummary: Seq[BuildLogEntry] = Seq()
-    def log : Option[java.io.BufferedReader] = None
-}
-
-case class NullBuildProvider() extends BuildProvider {
-  val mode = "null"
-
-  def build(values: Map[String, String]) {}
-
-  def query() = Some(new BuildResult {
-    def success = false
-  })
-  def cancel() {}
-}
-
-object BuildCommons {
-  val BUILD_LOCATION = "BUILD_LOCATION"
-}
-
