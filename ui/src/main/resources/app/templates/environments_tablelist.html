@@ -2,7 +2,6 @@
     <% for(var i = 0, count = environments.length; i < count; i++) { var environment = environments[i]; %>
         <tr>
             <td class="first"><a href="#project/<%= project.id %>/env/<%= environment.id %>"><%= environment.name %></a></td>
-            <td><%= environment.templateName %> <%= environment.templateVersion %></td>
             <td><span class="time"><%= utils.formatDate(environment.creationTime) %></span> by <span class="username"><%= environment.creator %></span></td>
             <td>
                 <% if (environment.modificationTime) { %>
@@ -10,6 +9,10 @@
                 <% } else { %>
                 N/A
                 <% } %>
+            </td>
+            <td><%= environment.templateName %> <%= environment.templateVersion %>
+                <% var keys = ['applicationBranch', 'applicationVersion'];
+                _.each(keys, function(key) { var attr = environment.attributes[key];%> <%- attr && attr.value ? attr.value : "" %> <% }); %>
             </td>
             <td id="<%= environment.id %>-status"> </td>
         </tr>
