@@ -33,11 +33,7 @@ trait GenesisService {
 
     def getLogs(envId: Int, actionUUID: String): Seq[StepLogEntry]
 
-    def listEnvs (projectId: Int) : Seq[Environment]
-
-    def listEnvs (projectId: Int, statuses: Seq[String]) : Seq[Environment]
-
-    def listEnvs(projectId: Int, start : Int, limit : Int) : Seq[Environment]
+    def listEnvs (projectId: Int, statusFilter: Option[Seq[String]] = None) : Seq[Environment]
 
     def countEnvs(projectId: Int) : Int
 

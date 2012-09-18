@@ -45,28 +45,30 @@ class StoreService extends service.StoreService with Logging {
   }
 
   @Transactional(readOnly = true)
-  def listEnvs(projectId: Int): Seq[Environment] = listEnvQuery(projectId).toList
-
-  @Transactional
-  def listEnvs(projectId: Int, start : Int, limit : Int) =
-    listEnvQuery(projectId).page(start, limit).toList
-
-  @Transactional(readOnly = true)
-  def listEnvs(projectId: Int, statuses: Seq[EnvStatus]): Seq[Environment] = {
-    from(GS.envs)(env =>
-      where(env.status.id in statuses.map(_.id) and env.projectId === projectId)
-      select (env)
-    ).toList
+  def listEnvs(projectId: Int, statusFilter: Option[Seq[EnvStatus]] = None): Seq[Environment] = {
+    val filterId = statusFilter.flatten(_.map(_.id))
+    val envsWithAttrs = from(GS.envs, GS.envAttrs)((env, attrs) =>
+      where((if (statusFilter.nonEmpty) env.status.id in filterId else 1===1) and
+        env.projectId === projectId and attrs.entityId === env.id
+      ) select (env, attrs)
+    ).toSeq
+    val envToEnvAttr = envsWithAttrs.groupBy{case (env, attr) => env}
+    (for {(env, envAttrs) <- envToEnvAttr
+          attrs = envAttrs.map { case (env, attr) => attr.name -> attr.value}
+    } yield {
+      env.importAttrs(attrs.toMap)
+      env
+    }).toSeq
   }
 
   @Transactional(readOnly = true)
   def countEnvs(projectId: Int) = listEnvQuery(projectId).size
 
   @Transactional(readOnly = true)
-  def countEnvs(projectId: Int, statuses: Seq[EnvStatus]) = listEnvs(projectId, statuses).size
+  def countEnvs(projectId: Int, statuses: Seq[EnvStatus]) = listEnvs(projectId, Option(statuses)).size
 
   private def listEnvQuery(projectId: Int): Query[Environment] = {
-    from(GS.envs)(env => where(env.projectId === projectId) select (env))
+    GS.envs.where(env => env.projectId === projectId)
   }
 
   @Transactional(readOnly = true)
@@ -162,34 +164,10 @@ class StoreService extends service.StoreService with Logging {
 
   //TODO switch to join query
   @Transactional(readOnly = true)
-  def listEnvsWithWorkflow(projectId: Int) = {
-    listEnvs(projectId).map(env => {
+  def listEnvsWithWorkflow(projectId: Int, statusFilter: Option[Seq[EnvStatus]] = None) = {
+    listEnvs(projectId, statusFilter).map(env => {
       (env, listWorkflows(env).find(w => w.status == WorkflowStatus.Executing))
     })
-    //join(envs, workflows.leftOuter)((env, w) => {
-    //    on(env.id === w.map(_.envId))
-    //    where(w.map(_.status) === WorkflowStatus.Executed)
-    //    select(env, w)
-    //}).toList
-  }
-
-  @Transactional(readOnly = true)
-  def listEnvsWithWorkflow(projectId: Int, statuses: Seq[EnvStatus]) = {
-    listEnvs(projectId, statuses).map(env => {
-      (env, listWorkflows(env).find(w => w.status == WorkflowStatus.Executing))
-    })
-  }
-
-  @Transactional(readOnly = true)
-  def listEnvsWithWorkflow(projectId: Int, start : Int, limit : Int) = {
-    listEnvs(projectId, start, limit).map(env => {
-      (env, listWorkflows(env).find(w => w.status == WorkflowStatus.Executing))
-    })
-    //join(envs, workflows.leftOuter)((env, w) => {
-    //    on(env.id === w.map(_.envId))
-    //    where(w.map(_.status) === WorkflowStatus.Executed)
-    //    select(env, w)
-    //}).toList
   }
 
   @Transactional(readOnly = true)
