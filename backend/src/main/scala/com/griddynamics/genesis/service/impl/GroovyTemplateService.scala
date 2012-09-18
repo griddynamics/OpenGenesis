@@ -208,6 +208,7 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
         stepBuilder.ignoreFail = this.ignoreFail
         stepBuilder.precedingPhases = this.precedingPhases
         stepBuilder.title = this.title
+        stepBuilder.skip = this.skip
         stepBuilder.newStep
     }
 
@@ -215,27 +216,28 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
 
 
     override def setProperty(property: String, value: Any) {
-        value match {
-          case value: Closure[_] =>
-            contextDependentProperties(property) = new ContextAccess {
-              def apply(v1: collection.Map[String, Any]) = {
-                import scala.collection.JavaConversions._
-                value.setDelegate(new Expando(v1))
-                value.call()
-              }
+        (property, value) match {
+            case ("skip", v: Closure[_]) => throw new RuntimeException("Skip cannot be a deferred object. Don't use syntax skip = {...}")
+            case (_, value: Closure[_]) =>
+                contextDependentProperties(property) = new ContextAccess {
+                    def apply(v1: collection.Map[String, Any]) = {
+                        import scala.collection.JavaConversions._
+                        value.setDelegate(new Expando(v1))
+                        value.call()
+                    }
+                }
+            case (_, value: ContextAccess) =>
+                contextDependentProperties(property) = value
+            case (_, null) => {
+                InvokerHelper.setProperty(stepBuilder, property, null)
+                TryingUtil.silently(ScalaUtils.setProperty(this, property, null))
             }
-          case value: ContextAccess =>
-            contextDependentProperties(property) = value
-          case null => {
-            InvokerHelper.setProperty(stepBuilder, property, null)
-            TryingUtil.silently(ScalaUtils.setProperty(this, property, null))
-          }
-          case _ => {
-            InvokerHelper.setProperty(stepBuilder, property, value)
-            if (ScalaUtils.hasProperty(this, property, ScalaUtils.getType(value))) {
-              ScalaUtils.setProperty(this, property, value)
+            case (_, _) => {
+                InvokerHelper.setProperty(stepBuilder, property, value)
+                if (ScalaUtils.hasProperty(this, property, ScalaUtils.getType(value))) {
+                    ScalaUtils.setProperty(this, property, value)
+                }
             }
-          }
 
         }
     }
