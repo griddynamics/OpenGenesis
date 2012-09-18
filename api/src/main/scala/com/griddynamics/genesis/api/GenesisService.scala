@@ -29,9 +29,9 @@ trait GenesisService {
 
     def getTemplate(projectId: Int, templateName: String, templateVersion: String) : Option[Template]
 
-    def getLogs(envId: Int, stepId: Int, includeActions: Boolean) : Seq[String]
+    def getLogs(envId: Int, stepId: Int, includeActions: Boolean): Seq[StepLogEntry]
 
-    def getLogs(envId: Int, actionUUID: String): Seq[String]
+    def getLogs(envId: Int, actionUUID: String): Seq[StepLogEntry]
 
     def listEnvs (projectId: Int) : Seq[Environment]
 

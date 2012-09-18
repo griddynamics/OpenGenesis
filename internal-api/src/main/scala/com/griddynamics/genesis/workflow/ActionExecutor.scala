@@ -151,7 +151,7 @@ trait DurationLimitedActionExecutor extends AsyncTimeoutAwareActionExecutor with
             case (Some(ar), _) => Some(ar)
             case (None, false) => None
             case (None, true) => {
-                LoggerWrapper.writeLog(action.uuid, timeoutDescription)
+                LoggerWrapper.writeActionLog(action.uuid, timeoutDescription)
                 log.debug("action '%s' is timed out, limit: %dmsec", action, timeoutMillis)
                 Some(getResultOnTimeout)
             }

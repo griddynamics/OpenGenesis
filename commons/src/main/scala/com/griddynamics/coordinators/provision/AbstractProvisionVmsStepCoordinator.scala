@@ -40,7 +40,7 @@ abstract class AbstractProvisionVmsStepCoordinator[A <: SpecificProvisionVmActio
   var stepFailed = false
 
   override def getActionExecutor(action: Action) : ActionExecutor = {
-    LoggerWrapper.writeLog(context.step.id, "Starting action '%s'".format(action.desc))
+    LoggerWrapper.writeStepLog(context.step.id, "Starting action '%s'".format(action.desc))
     action match {
       case a: A => pluginContext.provisionVmActionExecutor(a)
       case a: CheckPublicIpAction => pluginContext.publicIpCheckActionExecutor(a)
@@ -51,7 +51,7 @@ abstract class AbstractProvisionVmsStepCoordinator[A <: SpecificProvisionVmActio
   }
 
   override def getStepResult() = {
-    LoggerWrapper.writeLog(context.step.id, "Phase '%s' finished with result '%s'".format(context.step.phase, stepFailed match {
+    LoggerWrapper.writeStepLog(context.step.id, "Phase '%s' finished with result '%s'".format(context.step.phase, stepFailed match {
       case true => "Fail"
       case false => "Success"
     }))
@@ -65,7 +65,7 @@ abstract class AbstractProvisionVmsStepCoordinator[A <: SpecificProvisionVmActio
   }
 
   override def onActionFinish(result: ActionResult) : Seq[Action] = {
-    LoggerWrapper.writeLog(context.step.id, "Action '%s' finished with result '%s'".format(result.action.desc, result.desc))
+    LoggerWrapper.writeStepLog(context.step.id, "Action '%s' finished with result '%s'".format(result.action.desc, result.desc))
     result match {
       case ProvisionCompleted(a, vm) => {
         context.updateServer(vm)

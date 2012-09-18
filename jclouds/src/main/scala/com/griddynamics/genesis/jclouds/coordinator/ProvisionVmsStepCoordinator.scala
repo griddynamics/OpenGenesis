@@ -39,11 +39,11 @@ class ProvisionVmsStepCoordinator(override val step: ProvisionVmStep,
                                   credService: CredentialService) extends AbstractProvisionVmsStepCoordinator[JCloudsProvisionVm] {
 
   def onStepStart(): Seq[Action] = {
-    LoggerWrapper.writeLog(context.step.id, "Starting phase %s".format(context.step.phase))
+    LoggerWrapper.writeStepLog(context.step.id, "Starting phase %s".format(context.step.phase))
     val existingVms = context.virtualMachines.filter(vm => vm.stepId == context.step.id && vm.status == VmStatus.Ready)
 
     if(!step.account.isEmpty && !Account.isValid(step.account)) {
-      LoggerWrapper.writeLog(context.step.id,
+      LoggerWrapper.writeStepLog(context.step.id,
         "Invalid 'account' properties were supplied to provision step. Provisioning aborted.")
       this.stepFailed = true
       return Seq()
@@ -71,9 +71,9 @@ class ProvisionVmsStepCoordinator(override val step: ProvisionVmStep,
         )
       }
     } else {
-      LoggerWrapper.writeLog(context.step.id,
+      LoggerWrapper.writeStepLog(context.step.id,
         "Failed to find credentials '%s' for cloud provider '%s' in credentials store. No default credentials installed. ".format(step.keyPair.get, provider))
-      LoggerWrapper.writeLog(context.step.id, "Provisioning aborted.")
+      LoggerWrapper.writeStepLog(context.step.id, "Provisioning aborted.")
       this.stepFailed = true
       Seq()
     }

@@ -42,15 +42,15 @@ class ScriptUploader (val action: UploadScripts, sshService: SshService) extends
   private def getScriptContents(scriptName: String) = {
     try {
       val script = Source.fromInputStream(new java.net.URL(scriptName).getContent.asInstanceOf[BufferedInputStream]).getLines().mkString("\n")
-      LoggerWrapper.writeLog(action.uuid, "Successfully get content of '%s'".format(scriptName))
+      LoggerWrapper.writeActionLog(action.uuid, "Successfully get content of '%s'".format(scriptName))
       script
     } catch {
       case e: MalformedURLException  => {
-        LoggerWrapper.writeLog(action.uuid, "Using '%s' as inline shell command".format(scriptName))
+        LoggerWrapper.writeActionLog(action.uuid, "Using '%s' as inline shell command".format(scriptName))
         scriptName
       }
       case e: IOException => {
-        LoggerWrapper.writeLog(action.uuid, "Failed to access '%s' content: %s".format(scriptName, e.getMessage))
+        LoggerWrapper.writeActionLog(action.uuid, "Failed to access '%s' content: %s".format(scriptName, e.getMessage))
         throw e
       }
     }

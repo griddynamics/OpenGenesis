@@ -31,7 +31,7 @@ class ExecStepCoordinator(val step: ExecRunStep, stepContext: StepExecutionConte
   def onStepStart(): Seq[Action] = {
     val duplicates = step.commands.diff(step.commands.distinct)
     if(duplicates.nonEmpty) {
-      LoggerWrapper.writeLog(stepContext.step.id, "Duplicated commands are not allowed. Following commands have duplicates: [%s]".format(duplicates.mkString(", ")))
+      LoggerWrapper.writeStepLog(stepContext.step.id, "Duplicated commands are not allowed. Following commands have duplicates: [%s]".format(duplicates.mkString(", ")))
       isStepFailed = true
       return Seq()
     }
@@ -89,9 +89,9 @@ class ExecStepCoordinator(val step: ExecRunStep, stepContext: StepExecutionConte
 
   def logFailure(a: ExecFinished) {
     if (a.exitStatus.isEmpty) {
-      LoggerWrapper.writeLog(stepContext.step.id, "STEP FAILURE: Process finished without returning exit code")
+      LoggerWrapper.writeStepLog(stepContext.step.id, "STEP FAILURE: Process finished without returning exit code")
     } else {
-      LoggerWrapper.writeLog(stepContext.step.id, "STEP FAILURE: Process finished with exit code = %d, expected success code = %d".format(a.exitStatus.get, step.successExitCode))
+      LoggerWrapper.writeStepLog(stepContext.step.id, "STEP FAILURE: Process finished with exit code = %d, expected success code = %d".format(a.exitStatus.get, step.successExitCode))
     }
   }
 
