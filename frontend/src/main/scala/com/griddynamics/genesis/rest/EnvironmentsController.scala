@@ -130,26 +130,18 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     )
   }
 
-
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
   @ResponseBody
   @PostFilter("not(@environmentSecurity.restrictionsEnabled()) " +
     "or hasRole('ROLE_GENESIS_ADMIN')" +
     "or hasPermission( #projectId, 'com.griddynamics.genesis.api.Project', 'administration') " +
     "or hasPermission(filterObject, 'read')")
-  def listEnvs(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = genesisService.listEnvs(projectId)
-
-  @RequestMapping(value = Array(""), method = Array(RequestMethod.GET), params = Array("filter"))
-  @ResponseBody
-  @PostFilter("not(@environmentSecurity.restrictionsEnabled()) " +
-    "or hasRole('ROLE_GENESIS_ADMIN')" +
-    "or hasPermission( #projectId, 'com.griddynamics.genesis.api.Project', 'administration') " +
-    "or hasPermission(filterObject, 'read')")
   def listEnvsWithFilter(@PathVariable("projectId") projectId: Int,
-                         @RequestParam("filter") filter: String,
+                         @RequestParam(value="filter", required = false, defaultValue = "") filter: String,
                          request: HttpServletRequest) = {
     filter match {
-      case EnvFilter(statuses @ _*) => genesisService.listEnvs(projectId, statuses.map(_.toString))
+      case EnvFilter(statuses @ _*) => genesisService.listEnvs(projectId, Option(statuses.map(_.toString)))
+      case "" => genesisService.listEnvs(projectId)
       case _ => throw new InvalidInputException
     }
   }
