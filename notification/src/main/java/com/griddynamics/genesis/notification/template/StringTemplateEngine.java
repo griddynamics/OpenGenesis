@@ -31,8 +31,10 @@ import java.util.Map;
 public class StringTemplateEngine implements TemplateEngine {
 
   private STGroup group;
+  private String path;
 
   public StringTemplateEngine(String templateFolder) {
+    path = templateFolder;
     group = new STGroupDir(templateFolder);
   }
 
@@ -48,7 +50,7 @@ public class StringTemplateEngine implements TemplateEngine {
       }
       result = template.render();
     } else {
-      throw new IllegalArgumentException("Template is not found.");
+      throw new IllegalArgumentException(String.format("Template %s is not found at path %s", templateName, path));
     }
     return result;
   }

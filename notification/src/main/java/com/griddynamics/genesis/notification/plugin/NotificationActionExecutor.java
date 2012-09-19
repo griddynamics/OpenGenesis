@@ -26,6 +26,7 @@ import com.griddynamics.genesis.plugin.adapter.AbstractSimpleSyncActionExecutor;
 import com.griddynamics.genesis.workflow.ActionResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -90,10 +91,12 @@ public class NotificationActionExecutor extends AbstractSimpleSyncActionExecutor
             helper.setText(((NotificationAction) getAction()).getMessage());
             sender.send(mimeMessage);
             return new NotificationResult(getAction());
+        } catch (MailSendException e) {
+            log.error(e.getMessage(), e);
+            return new NotificationResultFailed(getAction(), (e.getMessageExceptions() != null && e.getMessageExceptions().length > 0) ? e.getMessageExceptions()[0] : e);
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
-            return new NotificationResultFailed(getAction());
-
+            return new NotificationResultFailed(getAction(), e.getCause() == null ? e : e.getCause());
         }
     }
 
