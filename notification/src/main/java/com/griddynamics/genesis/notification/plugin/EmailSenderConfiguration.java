@@ -22,7 +22,9 @@
  */
 package com.griddynamics.genesis.notification.plugin;
 
+import org.apache.commons.lang.builder.StandardToStringStyle;
 import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
 
 public class EmailSenderConfiguration {
 
@@ -122,6 +124,17 @@ public class EmailSenderConfiguration {
 
     @Override
     public String toString() {
-        return ToStringBuilder.reflectionToString(this);
+        return "EmailSenderConfiguration{" +
+                "senderName='" + senderName + '\'' +
+                ", senderEmail='" + senderEmail + '\'' +
+                ", smtpHost='" + smtpHost + '\'' +
+                ", smtpPort=" + smtpPort +
+                ", smtpUsername='" + smtpUsername + '\'' +
+                ", smtpPassword='*************'" +
+                ", useTls=" + useTls +
+                ", useSSL=" + useSSL +
+                ", connectTimeout=" + connectTimeout +
+                ", smtpTimeout=" + smtpTimeout +
+                '}';
     }
 }
