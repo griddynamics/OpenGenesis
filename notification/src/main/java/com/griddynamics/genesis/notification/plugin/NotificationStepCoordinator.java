@@ -32,17 +32,17 @@ import scala.collection.Seq;
 @SuppressWarnings("unchecked")
 public class NotificationStepCoordinator extends AbstractActionOrientedStepCoordinator implements StepCoordinator {
 
-  private EmailSenderConfiguration emailSenderConfiguration;
   private TemplateEngine templateEngine;
+  private EmailSenderConfiguration emailSenderConfiguration;
 
   private boolean failed = false;
 
   public NotificationStepCoordinator(StepExecutionContext context,
                                      NotificationStep step,
-                                     EmailSenderConfiguration emailSenderConfiguration,
+                                     EmailSenderConfiguration configuration,
                                      TemplateEngine templateEngine) {
     super(context, step);
-    this.emailSenderConfiguration = emailSenderConfiguration;
+    this.emailSenderConfiguration = configuration;
     this.templateEngine = templateEngine;
   }
 

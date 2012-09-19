@@ -28,50 +28,76 @@ import com.griddynamics.genesis.plugin.PluginConfigurationContext;
 import com.griddynamics.genesis.plugin.StepExecutionContext;
 import com.griddynamics.genesis.plugin.adapter.AbstractPartialStepCoordinatorFactory;
 import com.griddynamics.genesis.workflow.*;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.mail.MailSender;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import scala.collection.JavaConversions;
+
+import java.util.Properties;
 
 public class NotificationStepCoordinatorFactory extends AbstractPartialStepCoordinatorFactory {
 
-  private Logger log = LoggerFactory.getLogger(this.getClass());
+    private Logger log = LoggerFactory.getLogger(this.getClass());
 
-  public NotificationStepCoordinatorFactory(String pluginId, PluginConfigurationContext pluginConfiguration) {
-    super(pluginId, pluginConfiguration);
-  }
-
-  @Override
-  public boolean isDefinedAt(Step step) {
-    return step instanceof NotificationStep;
-  }
-
-  @Override
-  public StepCoordinator apply(Step step, StepExecutionContext context) {
-
-    return new NotificationStepCoordinator(context, (NotificationStep) step, getEmailSenderConfiguration(), getTemplateEngine());
-  }
-
-  private EmailSenderConfiguration getEmailSenderConfiguration() {
-    String senderName = getConfig().get(NotificationPluginConfig.senderName);
-    String senderEmail = getConfig().get(NotificationPluginConfig.senderEmail);
-    String smtpHost = getConfig().get(NotificationPluginConfig.smtpHost);
-    Integer smtpPort = Integer.parseInt(getConfig().get(NotificationPluginConfig.smtpPort));
-    String smtpUsername = getConfig().get(NotificationPluginConfig.smtpUsername);
-    String smtpPassword = getConfig().get(NotificationPluginConfig.smtpPassword);
-    Boolean useTls = Boolean.parseBoolean(getConfig().get(NotificationPluginConfig.useTls));
-    return new EmailSenderConfiguration(senderName, senderEmail, smtpHost, smtpPort,
-        smtpUsername, smtpPassword, useTls);
-  }
-
-  private TemplateEngine getTemplateEngine() {
-    String templateFolder = getConfig().get(NotificationPluginConfig.templateFolder);
-    TemplateEngine templateEngine;
-    try {
-      templateEngine = new StringTemplateEngine(templateFolder);
-    } catch (IllegalArgumentException e) {
-      log.error("Error creating templates group: " + e.getMessage(), e);
-      templateEngine = new StringTemplateEngine(System.getProperty("user.dir"));
+    public NotificationStepCoordinatorFactory(String pluginId, PluginConfigurationContext pluginConfiguration) {
+        super(pluginId, pluginConfiguration);
     }
-    return templateEngine;
-  }
+
+    @Override
+    public boolean isDefinedAt(Step step) {
+        return step instanceof NotificationStep;
+    }
+
+    @Override
+    public StepCoordinator apply(Step step, StepExecutionContext context) {
+        return new NotificationStepCoordinator(context, (NotificationStep) step, emailSenderConfiguration(), getTemplateEngine());
+    }
+
+    public EmailSenderConfiguration emailSenderConfiguration() {
+        java.util.Map<String,String> config = getConfig();
+        String senderName = config.get(NotificationPluginConfig.senderName);
+        String senderEmail = config.get(NotificationPluginConfig.senderEmail);
+        String smtpHost = config.get(NotificationPluginConfig.smtpHost);
+        Integer smtpPort = getIntParameter(config, NotificationPluginConfig.smtpPort);
+        String smtpUsername = config.get(NotificationPluginConfig.smtpUsername);
+        String smtpPassword = config.get(NotificationPluginConfig.smtpPassword);
+        Boolean useTls = Boolean.parseBoolean(config.get(NotificationPluginConfig.useTls));
+        Boolean useSSL = Boolean.parseBoolean(config.get(NotificationPluginConfig.useSSL));
+        Integer connectTimeout = getIntParameter(config, NotificationPluginConfig.connectTimeout);
+        Integer smtpTimeout = getIntParameter(config, NotificationPluginConfig.smtpTimeout);
+        return new EmailSenderConfiguration(senderName, senderEmail, smtpHost, smtpPort,
+                smtpUsername, smtpPassword, useTls, connectTimeout, smtpTimeout, useSSL);
+    }
+
+    private static Integer getIntParameter(java.util.Map<String, String> config, String paramName) {
+        Integer result;
+        String paramValue = config.get(paramName);
+        if (null != paramValue && StringUtils.isNumeric(paramValue)) {
+            try {
+                return Integer.parseInt(paramValue);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(paramName + " is out of scope of int: " + "%s");
+            }
+        } else {
+            throw new IllegalArgumentException(paramName + "must be a number, but it set to " + String.valueOf(paramValue));
+        }
+    }
+
+    private TemplateEngine getTemplateEngine() {
+        String templateFolder = getConfig().get(NotificationPluginConfig.templateFolder);
+        TemplateEngine templateEngine;
+        try {
+            templateEngine = new StringTemplateEngine(templateFolder);
+        } catch (IllegalArgumentException e) {
+            log.error("Error creating templates group: " + e.getMessage(), e);
+            templateEngine = new StringTemplateEngine(System.getProperty("user.dir"));
+        }
+        return templateEngine;
+    }
 
 }
