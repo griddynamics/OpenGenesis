@@ -65,7 +65,7 @@ public class RenderMessageActionExecutor extends AbstractSimpleSyncActionExecuto
     } catch (IllegalArgumentException e) {
 
       log.error(e.getMessage(), e);
-      return new RenderMessageResultFailed(getAction());
+      return new RenderMessageResultFailed(getAction(), e);
 
     }
   }

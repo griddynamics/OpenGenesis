@@ -43,7 +43,10 @@ class CompositeStepCoordinatorFactory(factories: Array[PartialStepCoordinatorFac
             } catch {
                 case e: Throwable => {
                     log.error(e, "Failed to create step coordinator for %s".format(step))
-                    throw new RuntimeException("Failed to start step %s".format(step), e)
+                    throw new RuntimeException("Failed to start step %s due to error: %s".format(step, e.getCause match {
+                        case null => e.getMessage
+                        case _ => e.getCause.getMessage
+                    }), e)
                 }
             }
             case None => throw new RuntimeException("Failed to find coordinator for '%s'".

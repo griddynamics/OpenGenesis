@@ -26,13 +26,15 @@ import com.griddynamics.genesis.plugin.adapter.AbstractActionFailed;
 import com.griddynamics.genesis.workflow.Action;
 
 public class NotificationResultFailed extends AbstractActionFailed {
+  private Throwable cause;
 
-  public NotificationResultFailed(Action action) {
+  public NotificationResultFailed(Action action, Throwable e) {
     super(action);
+    this.cause = e;
   }
 
   @Override
   public String desc() {
-    return "Notification action failed";
+    return cause == null ? "Notification action failed" : "Notification action failed due to error: " + cause.getMessage();
   }
 }

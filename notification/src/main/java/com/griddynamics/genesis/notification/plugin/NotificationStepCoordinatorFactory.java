@@ -61,42 +61,48 @@ public class NotificationStepCoordinatorFactory extends AbstractPartialStepCoord
     public EmailSenderConfiguration emailSenderConfiguration() {
         java.util.Map<String,String> config = getConfig();
         String senderName = config.get(NotificationPluginConfig.senderName);
-        String senderEmail = config.get(NotificationPluginConfig.senderEmail);
-        String smtpHost = config.get(NotificationPluginConfig.smtpHost);
-        Integer smtpPort = getIntParameter(config, NotificationPluginConfig.smtpPort);
+        String senderEmail = getRequiredParameter(config, NotificationPluginConfig.senderEmail);
+        String smtpHost = getRequiredParameter(config, NotificationPluginConfig.smtpHost);
+        Integer smtpPort = getIntParameter(config, NotificationPluginConfig.smtpPort, Short.MAX_VALUE * 2);
         String smtpUsername = config.get(NotificationPluginConfig.smtpUsername);
         String smtpPassword = config.get(NotificationPluginConfig.smtpPassword);
         Boolean useTls = Boolean.parseBoolean(config.get(NotificationPluginConfig.useTls));
         Boolean useSSL = Boolean.parseBoolean(config.get(NotificationPluginConfig.useSSL));
-        Integer connectTimeout = getIntParameter(config, NotificationPluginConfig.connectTimeout);
-        Integer smtpTimeout = getIntParameter(config, NotificationPluginConfig.smtpTimeout);
+        Integer connectTimeout = getIntParameter(config, NotificationPluginConfig.connectTimeout, Integer.MAX_VALUE);
+        Integer smtpTimeout = getIntParameter(config, NotificationPluginConfig.smtpTimeout, Integer.MAX_VALUE);
         return new EmailSenderConfiguration(senderName, senderEmail, smtpHost, smtpPort,
                 smtpUsername, smtpPassword, useTls, connectTimeout, smtpTimeout, useSSL);
     }
 
-    private static Integer getIntParameter(java.util.Map<String, String> config, String paramName) {
-        Integer result;
+    private String getRequiredParameter(java.util.Map<String, String> config, String parameterName) {
+        String value = config.get(parameterName);
+        if (StringUtils.isEmpty(value)) {
+            throw new IllegalArgumentException(String.format("'%s' cannot be empty", parameterName));
+        }
+        return value;
+    }
+
+    private static Integer getIntParameter(java.util.Map<String, String> config, String paramName, int maxValue) {
         String paramValue = config.get(paramName);
-        if (null != paramValue && StringUtils.isNumeric(paramValue)) {
+        if (StringUtils.isNotEmpty(paramValue) && StringUtils.isNumeric(paramValue)) {
             try {
-                return Integer.parseInt(paramValue);
+                int i = Integer.parseInt(paramValue);
+                if (i > maxValue) {
+                    throw new IllegalArgumentException(String.format("%s is too big: %s", paramName, paramValue));
+                }
+                return i;
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException(paramName + " is out of scope of int: " + "%s");
+                throw new IllegalArgumentException(String.format("%s is is too big: %s", paramName, paramValue));
             }
         } else {
-            throw new IllegalArgumentException(paramName + "must be a number, but it set to " + String.valueOf(paramValue));
+            throw new IllegalArgumentException(paramName + String.format("%s is not a number: '%s'", paramName, paramValue));
         }
     }
 
     private TemplateEngine getTemplateEngine() {
         String templateFolder = getConfig().get(NotificationPluginConfig.templateFolder);
         TemplateEngine templateEngine;
-        try {
-            templateEngine = new StringTemplateEngine(templateFolder);
-        } catch (IllegalArgumentException e) {
-            log.error("Error creating templates group: " + e.getMessage(), e);
-            templateEngine = new StringTemplateEngine(System.getProperty("user.dir"));
-        }
+        templateEngine = new StringTemplateEngine(templateFolder);
         return templateEngine;
     }
 
