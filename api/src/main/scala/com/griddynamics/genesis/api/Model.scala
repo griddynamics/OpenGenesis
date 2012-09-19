@@ -42,7 +42,8 @@ case class Environment(id: Int,
                        modifiedBy: Option[String],
                        templateName : String,
                        templateVersion : String,
-                       projectId: Int) extends Identifiable[Int]
+                       projectId: Int,
+                       attributes: Map[String, Attribute]) extends Identifiable[Int]
 
 case class Attribute(value: String, description: String)
 

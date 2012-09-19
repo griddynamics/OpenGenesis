@@ -636,6 +636,22 @@ table#env-settings-share-table td img{
 	cursor:pointer;
 }
 
+table#env-attributes {
+    table-layout: fixed
+}
+
+table#env-attributes td {
+	border:none;
+	white-space:nowrap;
+	overflow:hidden;
+	text-overflow:ellipsis;
+	padding: 2px !important;
+}
+
+table#env-attributes tr{
+    background-color: transparent;
+}
+
 img#addShare{
 	margin-left: 8px;
 	vertical-align:middle;

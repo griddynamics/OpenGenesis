@@ -31,9 +31,7 @@ import java.sql.Timestamp
 
 trait StoreService {
     def updateEnvName(i: Int, s: String): Int
-    def listEnvs(projectId: Int): Seq[Environment]
-    def listEnvs(projectId: Int, start : Int, limit : Int): Seq[Environment]
-    def listEnvs(projectId: Int, statuses: Seq[EnvStatus]): Seq[Environment]
+    def listEnvs(projectId: Int, statusFilter: Option[Seq[EnvStatus]] = None): Seq[Environment]
     def countEnvs(projectId: Int): Int
     def countEnvs(projectId: Int, statuses: Seq[EnvStatus]): Int
 
@@ -53,9 +51,7 @@ trait StoreService {
     def listWorkflows(env: Environment, pageOffset: Int, pageLength: Int): Seq[Workflow]
     def countWorkflows(env: Environment): Int
 
-    def listEnvsWithWorkflow(projectId: Int): Seq[(Environment, Option[Workflow])]
-    def listEnvsWithWorkflow(projectId: Int, statuses: Seq[EnvStatus]): Seq[(Environment, Option[Workflow])]
-    def listEnvsWithWorkflow(projectId: Int, start : Int, limit : Int): Seq[(Environment, Option[Workflow])]
+    def listEnvsWithWorkflow(projectId: Int, statusFilter: Option[Seq[EnvStatus]] = None): Seq[(Environment, Option[Workflow])]
 
     def workflowsHistory(env : Environment, pageOffset: Int, pageLength: Int): Seq[(Workflow, Seq[WorkflowStep])]
 
