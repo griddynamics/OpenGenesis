@@ -32,6 +32,9 @@ interface NotificationPluginConfig {
   public static final String smtpUsername = "genesis.plugin.notification.smtp.username";
   public static final String smtpPassword = "genesis.plugin.notification.smtp.password";
   public static final String useTls = "genesis.plugin.notification.smtp.useTls";
+  public static final String useSSL = "genesis.plugin.notification.smtp.useSSL";
   public static final String templateFolder = "genesis.plugin.notification.template.folder";
+  public static final String connectTimeout = "genesis.plugin.notification.connectTimeout";
+  public static final String smtpTimeout = "genesis.plugin.notification.smtpTimeout";
 
 }

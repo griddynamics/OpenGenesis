@@ -22,6 +22,10 @@
  */
 package com.griddynamics.genesis.notification.plugin;
 
+import org.apache.commons.lang.builder.StandardToStringStyle;
+import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
+
 public class EmailSenderConfiguration {
 
     private String senderName;
@@ -38,8 +42,14 @@ public class EmailSenderConfiguration {
 
     private Boolean useTls;
 
+    private Boolean useSSL;
+
+    private Integer connectTimeout;
+    private Integer smtpTimeout;
+
     public EmailSenderConfiguration(String senderName, String senderEmail, String smtpHost, Integer smtpPort,
-                                    String smtpUsername, String smtpPassword, Boolean useTls) {
+                                    String smtpUsername, String smtpPassword, Boolean useTls,
+                                    Integer connectTimeout, Integer smtpTimeout, Boolean useSSL) {
         this.senderName = senderName;
         this.senderEmail = senderEmail;
         this.smtpHost = smtpHost;
@@ -47,6 +57,9 @@ public class EmailSenderConfiguration {
         this.smtpUsername = smtpUsername;
         this.smtpPassword = smtpPassword;
         this.useTls = useTls;
+        this.connectTimeout = connectTimeout;
+        this.smtpTimeout = smtpTimeout;
+        this.useSSL = useSSL;
     }
 
     public String getSenderName() {
@@ -77,6 +90,38 @@ public class EmailSenderConfiguration {
         return useTls;
     }
 
+    public Boolean getUseTls() {
+        return useTls;
+    }
+
+    public void setUseTls(Boolean useTls) {
+        this.useTls = useTls;
+    }
+
+    public Integer getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public void setConnectTimeout(Integer connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public Integer getSmtpTimeout() {
+        return smtpTimeout;
+    }
+
+    public void setSmtpTimeout(Integer smtpTimeout) {
+        this.smtpTimeout = smtpTimeout;
+    }
+
+    public Boolean getUseSSL() {
+        return useSSL;
+    }
+
+    public void setUseSSL(Boolean useSSL) {
+        this.useSSL = useSSL;
+    }
+
     @Override
     public String toString() {
         return "EmailSenderConfiguration{" +
@@ -85,8 +130,11 @@ public class EmailSenderConfiguration {
                 ", smtpHost='" + smtpHost + '\'' +
                 ", smtpPort=" + smtpPort +
                 ", smtpUsername='" + smtpUsername + '\'' +
-                ", smtpPassword=**********" +
-                ", useTLS='" + useTls + '\'' +
+                ", smtpPassword='*************'" +
+                ", useTls=" + useTls +
+                ", useSSL=" + useSSL +
+                ", connectTimeout=" + connectTimeout +
+                ", smtpTimeout=" + smtpTimeout +
                 '}';
     }
 }
