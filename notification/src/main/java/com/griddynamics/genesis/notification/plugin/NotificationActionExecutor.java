@@ -23,56 +23,78 @@
 package com.griddynamics.genesis.notification.plugin;
 
 import com.griddynamics.genesis.plugin.adapter.AbstractSimpleSyncActionExecutor;
-import com.griddynamics.genesis.workflow.Action;
 import com.griddynamics.genesis.workflow.ActionResult;
-import org.codemonkey.simplejavamail.Email;
-import org.codemonkey.simplejavamail.Mailer;
-import org.codemonkey.simplejavamail.TransportStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.MimeMessageHelper;
 
-import javax.mail.Message;
+import javax.mail.internet.MimeMessage;
+import java.util.Properties;
 
 public class NotificationActionExecutor extends AbstractSimpleSyncActionExecutor {
 
-  private Logger log = LoggerFactory.getLogger(this.getClass());
+    private Logger log = LoggerFactory.getLogger(this.getClass());
 
-  private EmailSenderConfiguration configuration;
+    private EmailSenderConfiguration configuration;
 
-  public NotificationActionExecutor(NotificationAction action,
-                                    EmailSenderConfiguration configuration) {
-    super(action);
-    this.configuration = configuration;
-  }
 
-  @Override
-  public ActionResult startSync() {
-    NotificationStep notificationStep = ((NotificationAction) getAction()).getNotificationStep();
-
-    try {
-      final Email email = new Email();
-      email.setSubject(notificationStep.getSubject());
-      email.setText(((NotificationAction) getAction()).getMessage());
-
-      for (String emailAddress : notificationStep.getEmails()) {
-        email.addRecipient(null, emailAddress, Message.RecipientType.TO);
-      }
-
-      email.setFromAddress(configuration.getSenderName(), configuration.getSenderEmail());
-
-      Mailer mailer = new Mailer(configuration.getSmtpHost(), configuration.getSmtpPort(), configuration.getSmtpUsername(),
-          configuration.getSmtpPassword(), configuration.isUseTls() ? TransportStrategy.SMTP_TLS: TransportStrategy.SMTP_PLAIN);
-
-      mailer.sendMail(email);
-
-      return new NotificationResult(getAction());
-
-    } catch (RuntimeException e) {
-
-      log.error(e.getMessage(), e);
-      return new NotificationResultFailed(getAction());
-
+    public NotificationActionExecutor(NotificationAction action,
+                                      EmailSenderConfiguration configuration) {
+        super(action);
+        this.configuration = configuration;
     }
-  }
+
+    public JavaMailSender mailSender() {
+        JavaMailSenderImpl result = new JavaMailSenderImpl();
+        result.setHost(configuration.getSmtpHost());
+        result.setPort(configuration.getSmtpPort());
+        if (configuration.getSmtpUsername() != null) {
+            result.setUsername(configuration.getSmtpUsername());
+            result.setPassword(configuration.getSmtpPassword());
+        }
+        Properties javamailProperties = new Properties();
+        javamailProperties.setProperty("mail.smtp.timeout", configuration.getSmtpTimeout().toString());
+        javamailProperties.setProperty("mail.smtp.connectiontimeout", configuration.getSmtpTimeout().toString());
+        javamailProperties.setProperty("mail.smtps.timeout", configuration.getSmtpTimeout().toString());
+        javamailProperties.setProperty("mail.smtps.connectiontimeout", configuration.getSmtpTimeout().toString());
+        //javamailProperties.setProperty("mail.debug", "true");
+        if (configuration.getUseTls()) {
+            javamailProperties.setProperty("mail.smtp.starttls.enable", "true");
+            javamailProperties.setProperty("mail.smtp.debug", "true");
+        }
+        if (configuration.getUseSSL()) {
+            javamailProperties.setProperty("mail.smtps.starttls.enable", "true");
+            javamailProperties.setProperty("mail.smtps.auth", "true");
+            javamailProperties.setProperty("mail.smtps.debug", "true");
+            result.setProtocol("smtps");
+        }
+        result.setJavaMailProperties(javamailProperties);
+        return result;
+    }
+
+    @Override
+    public ActionResult startSync() {
+        final NotificationStep notificationStep = ((NotificationAction) getAction()).getNotificationStep();
+
+        try {
+            JavaMailSender sender = mailSender();
+            MimeMessage mimeMessage = sender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+            for (String s : notificationStep.getEmails()) {
+                helper.addTo(s);
+            }
+            helper.setFrom(configuration.getSenderEmail(), configuration.getSenderName());
+            helper.setSubject(notificationStep.getSubject());
+            helper.setText(((NotificationAction) getAction()).getMessage());
+            sender.send(mimeMessage);
+            return new NotificationResult(getAction());
+        } catch (Throwable e) {
+            log.error(e.getMessage(), e);
+            return new NotificationResultFailed(getAction());
+
+        }
+    }
 
 }

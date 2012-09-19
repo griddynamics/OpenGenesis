@@ -27,9 +27,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.codemonkey.simplejavamail</groupId>
-            <artifactId>simple-java-mail</artifactId>
-            <version>2.0</version>
+            <groupId>javax.mail</groupId>
+            <artifactId>mail</artifactId>
+            <version>1.4.5</version>
         </dependency>
 
         <dependency>
