@@ -5,7 +5,7 @@ import collection.mutable
 import java.util.Random
 import com.griddynamics.genesis.template.DataSourceFactory
 
-class WorkflowDeclaration(dsClozures: Option[Closure[Unit]], dataSourceFactories: Seq[DataSourceFactory], projectId: Int) {
+class WorkflowDeclaration(dsClozures: Option[Closure[Unit]], dataSourceFactories: Seq[DataSourceFactory], projectId: Int) extends Delegate {
     var variablesBlock : Option[Closure[Unit]] = None
     var stepsBlock : Option[Closure[Unit]] = None
     var rescueBlock: Option[Closure[Unit]] = None
@@ -20,10 +20,7 @@ class WorkflowDeclaration(dsClozures: Option[Closure[Unit]], dataSourceFactories
     }
 
     def require(conditions: Closure[(String, Closure[Boolean])]) {
-        val handler: RequirementsHandler = new RequirementsHandler
-        conditions.setDelegate(handler)
-        conditions.call()
-        requirements = handler.requirementsMap
+        requirements = Delegate(conditions).to(new RequirementsHandler()).requirementsMap
     }
 
     def onError(rescBlock: Closure[Unit]) {
@@ -32,13 +29,9 @@ class WorkflowDeclaration(dsClozures: Option[Closure[Unit]], dataSourceFactories
 
     def variables = {
         val variableBuilders = variablesBlock match {
-            case Some(block) => {
-                val variablesDelegate = new VariableDeclaration(dsClozures, dataSourceFactories, projectId)
-                block.setDelegate(variablesDelegate)
-                block.setResolveStrategy(Closure.DELEGATE_FIRST)
-                block.call()
-                variablesDelegate.builders
-            } case None => Seq[VariableBuilder]()
+            case Some(block) =>
+                  Delegate(block).to(new VariableDeclaration(dsClozures, dataSourceFactories, projectId)).builders
+            case None => Seq[VariableBuilder]()
         }
 
         val vars = for(builder <- variableBuilders) yield builder.newVariable
@@ -46,7 +39,7 @@ class WorkflowDeclaration(dsClozures: Option[Closure[Unit]], dataSourceFactories
     }
 }
 
-class RequirementsHandler extends GroovyObjectSupport {
+class RequirementsHandler extends GroovyObjectSupport with Delegate {
     val requirementsMap: mutable.Map[String, Closure[Boolean]] = mutable.Map()
 
     override def invokeMethod(name: String, args: AnyRef) : AnyRef = {

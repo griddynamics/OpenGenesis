@@ -45,6 +45,7 @@ import net.sf.ehcache.{CacheManager, Element}
 import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.api.{Failure, Success, ExtendedResult}
 import com.griddynamics.genesis.workflow.signal.Fail
+import com.griddynamics.genesis.template.dsl.groovy.{Delegate => DslDelegate}
 
 class GroovyTemplateService(val templateRepository : TemplateRepository,
                             val stepBuilderFactories : Seq[StepBuilderFactory],
@@ -126,13 +127,7 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
             case e: GroovyRuntimeException => throw new IllegalStateException("can't process template", e)
         }
         val templateBuilder = if (listOnly) new NameVersionDelegate else new EnvTemplateBuilder(projectId, dataSourceFactories, databagRepository)
-        templateDecl.bodies.headOption.map {
-            templateBody => {
-                templateBody.setDelegate(templateBuilder)
-                templateBody.call()
-                templateBuilder.newTemplate(extName, extVersion, extProject)
-            }
-        }
+        templateDecl.bodies.headOption.map { body => DslDelegate(body).to(templateBuilder).newTemplate(extName, extVersion, extProject) }
     }
 
     private def getBody(name: String) = templateRepository.listSources
@@ -154,7 +149,7 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
 
 class StepBodiesCollector(variables: Map[String, AnyRef],
                           stepBuilderFactories : Seq[StepBuilderFactory])
-    extends GroovyObjectSupport {
+    extends GroovyObjectSupport with DslDelegate {
 
     val closures = (for (factory <- stepBuilderFactories) yield {
         (factory.stepName, (ListBuffer[Closure[Unit]](), factory))
@@ -177,13 +172,7 @@ class StepBodiesCollector(variables: Map[String, AnyRef],
 
     def buildSteps = {
         (for ((bodies, factory) <- closures.values) yield {
-            for (body <- bodies) yield {
-                val stepBuilder = new StepBuilderProxy(factory.newStepBuilder)
-                body.setDelegate(stepBuilder)
-                body.setResolveStrategy(Closure.DELEGATE_FIRST)
-                body.call()
-                stepBuilder
-            }
+            bodies.map { body => DslDelegate(body).to(new StepBuilderProxy(factory.newStepBuilder)) }
         }).flatten
     }
 }
@@ -194,8 +183,11 @@ object UninitializedStepDetails extends Step {
     override def stepDescription = "..."
 }
 
-class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport with StepBuilder {
-    private val contextDependentProperties = mutable.Map[String, ContextAccess]()
+class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport with StepBuilder with DslDelegate {
+
+  override def delegationStrategy = Closure.DELEGATE_FIRST
+
+  private val contextDependentProperties = mutable.Map[String, ContextAccess]()
     def getDetails = if(contextDependentProperties.isEmpty) stepBuilder.getDetails else UninitializedStepDetails
 
     def newStep(context: scala.collection.Map[String, AnyRef]): GenesisStep = {
@@ -354,17 +346,10 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
         Builders(regularSteps, rescueSteps)
     }
 
-    def createSteps(generator: Option[Closure[Unit]], variables: Map[String, AnyRef]): Seq[StepBuilderProxy] = {
-        val delegate = new StepBodiesCollector(variables, stepBuilderFactories)
-        generator match {
-            case Some(g) => {
-                g.setDelegate(delegate)
-                g.call()
-                delegate.buildSteps.toSeq
-            }
-            case None => Seq()
-        }
-    }
+    def createSteps(generator: Option[Closure[Unit]], variables: Map[String, AnyRef]): Seq[StepBuilderProxy] =
+        generator.map { it =>
+          DslDelegate(it).to(new StepBodiesCollector(variables, stepBuilderFactories)).buildSteps.toSeq
+        }.getOrElse(Seq())
 
     lazy val variableDescriptions = {
         for (variable <- workflow.variables()) yield {

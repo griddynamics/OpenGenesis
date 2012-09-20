@@ -40,7 +40,7 @@ class EnvironmentTemplate(val name : String,
                           val workflows : List[EnvWorkflow]) {
 }
 
-class NameVersionDelegate {
+class NameVersionDelegate extends Delegate {
     var name : String = _
     var version : String = _
     var createWorkflowName : String = _
@@ -95,9 +95,9 @@ class EnvTemplateBuilder(val projectId: Int,
     override def workflow(name: String, details : Closure[Unit]) = {
         if (workflows.find(_.name == name).isDefined)
             throw new IllegalStateException("workflow with name '%s' is already defined".format(name))
-        val delegate = new WorkflowDeclaration(dsClozures, dataSourceFactories, projectId)
-        details.setDelegate(delegate)
-        details.call()
+
+        val delegate = Delegate(details).to(new WorkflowDeclaration(dsClozures, dataSourceFactories, projectId))
+
         workflows += new EnvWorkflow(name, delegate.stepsBlock,
             preconditions = delegate.requirements.toMap, rescues = delegate.rescueBlock) {
             override def variables() = delegate.variables
