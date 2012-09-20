@@ -6,7 +6,7 @@ import collection.mutable.ListBuffer
 import com.griddynamics.genesis.util.ScalaUtils
 import java.lang.reflect.Method
 
-class DataSourceDeclaration(val projectId: Int, dsFactories: Seq[DataSourceFactory]) extends GroovyObjectSupport {
+class DataSourceDeclaration(val projectId: Int, dsFactories: Seq[DataSourceFactory]) extends GroovyObjectSupport with Delegate {
     val builders = new ListBuffer[DataSourceBuilder]
 
     override def invokeMethod(name: String, args: AnyRef) = {
@@ -24,19 +24,18 @@ class DataSourceDeclaration(val projectId: Int, dsFactories: Seq[DataSourceFacto
         val dsName = argsIterator.next().asInstanceOf[String]
         val builder = new DataSourceBuilder(projectId, factory, dsName)
         if (argsIterator.hasNext) {
-            val closure = argsIterator.next().asInstanceOf[Closure[_]]
-            closure.setDelegate(builder)
-            closure.setResolveStrategy(Closure.DELEGATE_FIRST)
-            closure.call()
+            Delegate(argsIterator.next().asInstanceOf[Closure[_]]).to(builder)
         }
         builders += builder
     }
 }
 
-class DataSourceBuilder(val projectId: Int, val factory : DataSourceFactory, val name: String) extends GroovyObjectSupport {
+class DataSourceBuilder(val projectId: Int, val factory : DataSourceFactory, val name: String) extends GroovyObjectSupport with Delegate {
     var conf = new scala.collection.mutable.HashMap[String, Any]()
 
-    override def setProperty(name: String, args: AnyRef) {
+  override def delegationStrategy = Closure.DELEGATE_FIRST
+
+  override def setProperty(name: String, args: AnyRef) {
         conf.put(name, args)
         super.setProperty(name, args)
     }
@@ -104,14 +103,8 @@ class InlineDataSource( builder: DataSourceBuilder,
     datasource.hasValue(value)
   }
 
-  private[this] def configuredBuilder = {
-    for (config <- configDeclaration) {
-      config.setDelegate(builder)
-      config.setResolveStrategy(Closure.DELEGATE_FIRST)
-      config.call()
-    }
-    builder
-  }
+  private[this] def configuredBuilder =
+    configDeclaration.map { it => Delegate(it).to(builder) }.getOrElse(builder)
 
   def config(map: Map[String, Any]) {
     for (config <- configDeclaration) {
@@ -119,30 +112,14 @@ class InlineDataSource( builder: DataSourceBuilder,
     }
   }
 
-  lazy val dependancyVars: Seq[String] = {
-    if(configDeclaration.isEmpty) {
-      Seq()
-    } else {
-      val config = configDeclaration.get
+  lazy val dependancyVars: Seq[String] =
+    configDeclaration.map { closure => Delegate(closure).to(new DependencyRefCollector(knownVariables)).links }.getOrElse(Seq())
 
-      val collector = new DependencyRefCollector(knownVariables)
+  private[this] class DependencyRefCollector(knownVars: Seq[VariableBuilder]) extends GroovyObjectSupport with Delegate {
 
-      val oldDelegateValue = config.getDelegate
-      val oldStrategyValue = config.getResolveStrategy
+    override def delegationStrategy = Closure.DELEGATE_FIRST
 
-      config.setDelegate(collector)
-      config.setResolveStrategy(Closure.DELEGATE_FIRST)
-      config.call
-
-      config.setDelegate(oldDelegateValue)
-      config.setResolveStrategy(oldStrategyValue)
-
-      collector.links
-    }
-  }
-
-  private[this] class DependencyRefCollector(knownVars: Seq[VariableBuilder]) extends GroovyObjectSupport {
-      val links = new ListBuffer[String]
+    val links = new ListBuffer[String]
 
       private[this] def fakeValue(clazz: Class[_]): AnyRef = {
         if( clazz == classOf[String]) {

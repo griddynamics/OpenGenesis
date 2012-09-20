@@ -6,10 +6,12 @@ import collection.mutable.ListBuffer
 import reflect.BeanProperty
 import groovy.util.Expando
 
-class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFactories : Seq[DataSourceFactory], projectId: Int) extends GroovyObjectSupport {
+class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFactories : Seq[DataSourceFactory], projectId: Int) extends GroovyObjectSupport with Delegate {
     val builders = new ListBuffer[VariableBuilder]
 
 //  val declaration = new DataSourceDeclaration(projectId, dataSourceFactories)
+
+  override def delegationStrategy = Closure.DELEGATE_FIRST
 
   override def invokeMethod(name: String, args: AnyRef) = {
     if (dataSourceFactories.exists (_.mode == name)) {
@@ -23,13 +25,8 @@ class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFac
 
   override def setProperty(property: String, newValue: Any) {
     newValue match {
-      case cl: Closure[_] => {
-        val builder = new DSAwareVariableBuilder(builders, dataSourceFactories, projectId, property, dsObjSupport)
-        cl.setDelegate(builder)
-        cl.setResolveStrategy(Closure.DELEGATE_FIRST)
-        cl.call()
-        builders +=builder
-      }
+      case cl: Closure[_] =>
+        builders += Delegate(cl).to(new DSAwareVariableBuilder(builders, dataSourceFactories, projectId, property, dsObjSupport))
       case _ => super.setProperty(property, newValue)
     }
   }
@@ -64,10 +61,7 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
 
     lazy val dsObj = {
         dsClosure.map(closure => {
-            val dsDelegate = new DataSourceDeclaration(projectId, dataSourceFactories)
-            closure.setDelegate(dsDelegate)
-            closure.call()
-            val dsBuilders = dsDelegate.builders
+            val dsBuilders = Delegate(closure).to(new DataSourceDeclaration(projectId, dataSourceFactories)).builders
             val map = (for (builder <- dsBuilders) yield (builder.name, builder)).toMap
             new DSObjectSupport(map)
         })
@@ -209,7 +203,9 @@ class DSAwareVariableBuilder(knownVars: ListBuffer[VariableBuilder],
                              projectId: Int,
                              varName: String,
                              dsObjSupport: Option[Closure[Unit]]) extends VariableBuilder(varName, dsObjSupport,
-    dSourceFactories, projectId)  {
+    dSourceFactories, projectId) with Delegate {
+
+  override def delegationStrategy = Closure.DELEGATE_FIRST
 
   def setValidator(validator : Closure[Boolean]) {
     this.validator(validator)
