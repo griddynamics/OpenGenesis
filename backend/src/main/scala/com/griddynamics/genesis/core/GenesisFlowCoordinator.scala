@@ -83,28 +83,15 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
         storeService.updateWorkflow(workflow)
 
         stepsToStart = persistSteps(stepsToStart) //persist steps & generate step ids
-
-        Right(createReachableStepCoordinators())
+        createReachableStepCoordinators()
     }
 
     def rescueCoordinators: scala.Either[Signal, Seq[StepCoordinator]] = {
         persistSteps(rescueSteps)
-        Mistake.throwableToLeft(
-            for (builder <- rescueSteps) yield {
-                val step: GenesisStep = buildStep(builder)
-                try {
-                    createStepCoordinator(step)
-                } catch {
-                    case t: Throwable => {
-                        storeService.updateStepDetailsAndStatus(step.id, Option(t.getMessage), WorkflowStepStatus.Canceled)
-                        throw t
-                    }
-                }
-            }
-        ).fold(mistake => {
-            rescueSteps.foreach(s => storeService.updateStepStatus(s.id, WorkflowStepStatus.Canceled))
-            Left(Fail(mistake))
-        }, sc => Right(sc))
+        createCoordinators(rescueSteps).fold(err => {
+           rescueSteps.foreach(builder => {storeService.updateStepStatus(builder.id, WorkflowStepStatus.Canceled)})
+           Left(err)
+        }, success => Right(success))
     }
 
     def onFlowFinish(signal: Signal) {
@@ -129,23 +116,33 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
     def onStepFinish(result: GenesisStepResult): Either[Signal, Seq[StepCoordinator]] = {
         workflow.stepsFinished += 1
         storeService.updateWorkflow(workflow)
-
         finishedSteps = finishedSteps :+ result.step
-
-        Right(createReachableStepCoordinators())
+        createReachableStepCoordinators()
     }
 
-    def createReachableStepCoordinators() = {
-        for (builder <- detectReachableSteps())
-        yield createStepCoordinator(buildStep(builder))
+    def createCoordinators(builders: Seq[StepBuilder]): Either[Signal, Seq[StepCoordinator]] = {
+        Right((for (builder <- builders) yield {
+            createStepCoordinator(buildStep(builder))
+        }) flatten)
     }
 
-    def buildStep(builder: StepBuilder) = builder.newStep
+    def createReachableStepCoordinators() = createCoordinators(detectReachableSteps())
 
-    def createStepCoordinator(step: GenesisStep) = {
-        val context = createStepExecutionContext(step)
-        val stepCoordinator = stepCoordinatorFactory.apply(step.actualStep, context)
-        new GenesisStepCoordinator(step, workflow, stepCoordinator, storeService)
+    def buildStep(builder: StepBuilder): Either[Mistake, GenesisStep] = Right(builder.newStep)
+
+    def createStepCoordinator(step: Either[Mistake, GenesisStep]) : Option[StepCoordinator] = {
+        step.right.flatMap(s => {
+            val context = createStepExecutionContext(s)
+            try {
+                val stepCoordinator = stepCoordinatorFactory.apply(s.actualStep, context)
+                Right(new GenesisStepCoordinator(s, workflow, stepCoordinator, storeService))
+            } catch {
+                case e: Throwable => {
+                    storeService.updateStepDetailsAndStatus(s.id, Some(e.getMessage), WorkflowStepStatus.Canceled)
+                    Left(Mistake(e))
+                }
+            }
+        }).right.toOption
     }
 
     def detectReachableSteps() = {
@@ -159,7 +156,6 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
                 phase => !unfinishedPhases.contains(phase)
             }
         }
-
         stepsToStart = unreachableSteps
         reachableSteps
     }
@@ -211,10 +207,9 @@ trait StepRestart extends GenesisFlowCoordinatorBase {
 
     abstract override def onStepFinish(result: GenesisStepResult) = {
         val retriesRemain = retryMap.getOrElse(result.step.id, 0)
-
         if (result.isStepFailed && retriesRemain > 0) {
             retryMap(result.step.id) = retriesRemain - 1
-            Right(Seq(createStepCoordinator(result.step)))
+            Right(Seq(createStepCoordinator(Right(result.step))).flatten)
         } else
             super.onStepFinish(result)
     }
@@ -243,10 +238,16 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
         super.onStepFinish(result)
     }
 
-    override def buildStep(builder: StepBuilder) = builder match {
-      case proxy: StepBuilderProxy => proxy.newStep(globals)
-      case _ => builder.newStep
-    }
+    override def buildStep(builder: StepBuilder) = Mistake.throwableToLeft({
+        builder match {
+            case proxy: StepBuilderProxy =>  proxy.newStep(globals)
+            case _ => builder.newStep
+        }
+    }).fold(m => {
+        log.error(m.throwable.get, "Failed to build step")
+        storeService.updateStepDetailsAndStatus(builder.id, Option("Failed to prepare step"), WorkflowStepStatus.Failed)
+        Left(m)
+    }, st => Right(st))
 
     private def exportToContext(result: GenesisStepResult) {
       import scala.collection.JavaConversions._
