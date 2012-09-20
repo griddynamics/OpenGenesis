@@ -47,14 +47,15 @@ class StoreService extends service.StoreService with Logging {
   @Transactional(readOnly = true)
   def listEnvs(projectId: Int, statusFilter: Option[Seq[EnvStatus]] = None): Seq[Environment] = {
     val filterId = statusFilter.flatten(_.map(_.id))
-    val envsWithAttrs = from(GS.envs, GS.envAttrs)((env, attrs) =>
+    val envsWithAttrs = join(GS.envs, GS.envAttrs.leftOuter)((env, attrs) =>
       where((if (statusFilter.nonEmpty) env.status.id in filterId else 1===1) and
-        env.projectId === projectId and attrs.entityId === env.id
-      ) select (env, attrs)
+        env.projectId === projectId)
+        select(env, attrs)
+        on(env.id === attrs.map(_.entityId))
     ).toSeq
     val envToEnvAttr = envsWithAttrs.groupBy{case (env, attr) => env}
     (for {(env, envAttrs) <- envToEnvAttr
-          attrs = envAttrs.map { case (env, attr) => attr.name -> attr.value}
+          attrs = envAttrs.collect { case (env, Some(attr) ) => attr.name -> attr.value}
     } yield {
       env.importAttrs(attrs.toMap)
       env
