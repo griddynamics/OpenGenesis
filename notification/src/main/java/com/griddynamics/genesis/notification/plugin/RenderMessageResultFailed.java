@@ -26,13 +26,15 @@ import com.griddynamics.genesis.plugin.adapter.AbstractActionFailed;
 import com.griddynamics.genesis.workflow.Action;
 
 public class RenderMessageResultFailed extends AbstractActionFailed {
+  private Exception cause;
 
-  public RenderMessageResultFailed(Action action) {
+  public RenderMessageResultFailed(Action action, Exception e) {
     super(action);
+    cause = e;
   }
 
   @Override
   public String desc() {
-    return "Message rendering failed";
+    return cause == null ? "Message rendering failed" : "Message rendering failed: " + cause.getMessage();
   }
 }
