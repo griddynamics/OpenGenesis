@@ -59,7 +59,7 @@ class StoreService extends service.StoreService with Logging {
     } yield {
       env.importAttrs(attrs.toMap)
       env
-    }).toSeq
+    }).toSeq.sortBy(_.id)
   }
 
   @Transactional(readOnly = true)
