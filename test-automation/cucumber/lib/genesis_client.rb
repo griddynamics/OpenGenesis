@@ -75,7 +75,6 @@ class GenesisClient
     end
     
     def get(p, options = {})
-      puts auth
       options.merge!({:basic_auth => auth}) unless auth.nil?
       self.class.get(path(p), options)
     end
