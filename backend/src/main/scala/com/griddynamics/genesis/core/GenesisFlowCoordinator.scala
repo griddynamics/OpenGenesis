@@ -29,7 +29,7 @@ import com.griddynamics.genesis.service.StoreService
 import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.model.EnvStatus._
 import com.griddynamics.genesis.common.Mistake
-import com.griddynamics.genesis.util.{SafeOperation, Logging}
+import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.util.{SafeOperation => safe}
 import com.griddynamics.genesis.logging.LoggerWrapper
 import com.griddynamics.genesis.service.impl.StepBuilderProxy
