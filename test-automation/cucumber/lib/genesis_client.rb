@@ -14,7 +14,7 @@ class GenesisClient
 
 
   def ping
-    self.class.get(genesis_path + "/")
+    self.class.get(genesis_path + "/", {:basic_auth => auth})
   end
 
   def whoami
