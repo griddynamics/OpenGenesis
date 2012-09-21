@@ -186,7 +186,7 @@ case class Project( id: Option[Int],
                     removalTime: Option[Long] = None ) extends Identifiable[Option[Int]]
 
 
-case class ProjectAttributes (@Size(min = 1, max = 128) @NotBlank @Pattern(regexp = "[\\p{L}0-9.\\-_ ]*", message = "{validation.invalid.title}")
+case class ProjectAttributes (@Size(min = 1, max = 64) @NotBlank @Pattern(regexp = "[\\p{L}0-9.\\-_ ]*", message = "{validation.invalid.title}")
                              name: String,
                              @Size(min = 2, max = 128) @NotBlank @Pattern(regexp = "[\\p{L} ]*", message = "{validation.invalid.person.name}")
                              projectManager: String,
