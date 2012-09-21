@@ -14,7 +14,7 @@ class GenesisClient
 
 
   def ping
-    self.class.get(genesis_path + "/")
+    self.class.get(genesis_path + "/", {:basic_auth => auth})
   end
 
   def whoami
@@ -75,6 +75,7 @@ class GenesisClient
     end
     
     def get(p, options = {})
+      puts auth
       options.merge!({:basic_auth => auth}) unless auth.nil?
       self.class.get(path(p), options)
     end
