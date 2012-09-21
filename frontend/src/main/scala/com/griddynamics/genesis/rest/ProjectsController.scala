@@ -66,11 +66,11 @@ class ProjectsController extends RestApiExceptionsHandler {
   def createProject(@Valid @RequestBody attr: ProjectAttributes) = {
     val project = Project(
       id = None,
-      name = attr.name,
-      projectManager = attr.projectManager,
+      name = attr.name.trim,
+      projectManager = attr.projectManager.trim,
       creator = getCurrentUser,
       creationTime = System.currentTimeMillis(),
-      description = attr.description
+      description = attr.description.map(_.trim)
     )
 
     projectService.create(project)
@@ -85,7 +85,7 @@ class ProjectsController extends RestApiExceptionsHandler {
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.PUT))
   @ResponseBody
   def updateProject(@PathVariable("projectId") projectId: Int, @Valid @RequestBody attr: ProjectAttributes) = {
-    val project = findProject(projectId).copy(name = attr.name, projectManager =  attr.projectManager, description = attr.description)
+    val project = findProject(projectId).copy(name = attr.name.trim, projectManager =  attr.projectManager.trim, description = attr.description.map(_.trim))
     projectService.update(project)
   }
 
