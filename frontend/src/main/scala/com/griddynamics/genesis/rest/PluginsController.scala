@@ -59,7 +59,7 @@ class PluginsController extends RestApiExceptionsHandler {
     val updatedConfigs = for {
       property  <- propertiesList
       if (pluginConfig.isDefinedAt(property("name")))
-    } yield (property("name"), property("value"))
+    } yield (property("name"), property("value").trim)
 
     repository.updateConfiguration(plugin.id, updatedConfigs.toMap)
   }
