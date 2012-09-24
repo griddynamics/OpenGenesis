@@ -52,3 +52,5 @@ Expectations
 
 - Template Simple.genesis in subdir templates should be accessible for genesis instance
 - It's better to run tests in empty database to avoid possible interference
+
+File sample.properties contains minimal OpenGenesis config (but no plugin configuration).
