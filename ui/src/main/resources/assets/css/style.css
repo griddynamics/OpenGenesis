@@ -728,11 +728,11 @@ div.form-notice {
     background-color: #FFF3F3;
 }
 
-.workflow-history .failed-step .status {
+.workflow-history .failed-step .status, .workflow-history .failed-action .status {
     color: #B94A48;
 }
 
-.workflow-history .succeeded-step .status {
+.workflow-history .succeeded-step .status, .workflow-history .succeeded-action .status {
     color: #468847
 }
 
