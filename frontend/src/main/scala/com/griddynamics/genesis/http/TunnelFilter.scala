@@ -251,8 +251,8 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
         }
         connection.setDoInput(true)
         import collection.JavaConversions._
-        for (name <- request.getHeaderNames if (name.toString != TunnelFilter.SEC_HEADER_NAME && name.toString != TunnelFilter.SEC_HEADER_NAME
-            && name.toString != "Connection")) {
+        for (name <- request.getHeaderNames if (name.toString != TunnelFilter.SEC_HEADER_NAME && name.toString != TunnelFilter.AUTH_HEADER_NAME
+            && name.toString != "Connection" && name.toString != "Authorization")) {
             connection.setRequestProperty(name.toString, request.getHeader(name.toString))
         }
         connection.addRequestProperty(TunnelFilter.SEC_HEADER_NAME, TunnelFilter.currentUser)
