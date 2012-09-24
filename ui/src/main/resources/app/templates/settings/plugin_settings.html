@@ -38,7 +38,7 @@
           <% for (var i = 0, count = settings["properties"].length; i < count; i++ ) { var config = settings["properties"][i]; %>
               <tr>
                 <td ><label for="<%= config.name %>" ><%= config.name %></label></td>
-                <td ><input id="<%= config.name %>" name="<%= config.name %>" type="text" value="<%= config.value %>" class="property-value"></td>
+                <td ><input id="<%= config.name %>" name="<%= config.name %>" <% if ( config.propertyType.name !== "password" ) { %> type="text" <% } else { %> type="password" <% } %> value="<%= config.value %>" class="property-value"></td>
               </tr>
             <% } %>
           </tbody>
