@@ -4,7 +4,7 @@
     <td style="width: 80%">
         <p style="float:left; margin-top: 2px; margin-bottom: 2px"><%= environment.templateName %> <%= environment.templateVersion %></p>
 
-        <a title="Show template source code" class="ui-widget show-sources ui-state-default" data-template-name="<%= environment.templateName %>" data-template-version="<%= environment.templateVersion %>">
+        <a title="Show template source code" class="ui-widget show-sources ui-state-default" target="_blank" href="/template.html?templateName=<%= environment.templateName%>&templateVersion=<%= environment.templateVersion%>&projectId=<%= projectId%>" data-bypass>
          <span style="float:left; margin-left: 10px" class="ui-icon ui-icon-document" ></span>
         </a>
     </td>

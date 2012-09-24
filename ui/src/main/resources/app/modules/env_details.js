@@ -145,7 +145,6 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
       "click .action-button:not(.disabled)": "executeWorkflow",
       "click .cancel-button:not(.disabled)": "cancelWorkflow",
       "click .reset-button:not(.disabled)": "resetEnvStatus",
-      "click a.show-sources" : "showSources",
       "click a.envname": "showEditName",
       "click a#update-name": "updateName",
       "click a#cancel-name": "hideEditName"
@@ -186,23 +185,7 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
         this.resetEnvStatusDialog.dialog('destroy').remove();
       }
       genesis.utils.nullSafeClose(this.workflowHistory);
-      genesis.utils.nullSafeClose(this.sourcesView);
       genesis.utils.nullSafeClose(this.accessView);
-    },
-
-    showSources: function(event) {
-      var $currentTarget = $(event.currentTarget),
-          templateName = $currentTarget.attr("data-template-name"),
-          templateVersion = $currentTarget.attr("data-template-version");
-
-      if(!this.sourcesView) {
-        this.sourcesView = new gtemplates.SourcesView({
-          el: $("<pre class='prettyprint linenums' id='template-source-view'></pre>"),
-          projectId: this.details.get("projectId")
-        });
-      }
-
-      this.sourcesView.showTemplate(templateName, templateVersion);
     },
 
     cancelWorkflow: function () {
@@ -340,7 +323,8 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
         view.$("#panel-tab-1").html(tmpl({
           attributes: _.sortBy(view.details.get("attributes"), function(attr) { return attr.description; }),
           environment: view.details.toJSON(),
-          utils: genesis.utils
+          utils: genesis.utils,
+          projectId: view.details.get("projectId")
         }));
       });
     },
