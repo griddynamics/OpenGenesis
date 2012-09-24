@@ -20,21 +20,11 @@
  *   Project:     Genesis
  *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.configuration
 
-import org.springframework.context.annotation.{Bean, Configuration}
-import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.frontend.GenesisRestService
+package com.griddynamics.genesis.service
 
-@Configuration
-class RestServiceContext {
-    @Autowired var storeServiceContext : StoreServiceContext = _
-    @Autowired var templateServiceContext : TemplateServiceContext = _
-    @Autowired var computeServiceContext : ComputeServiceContext = _
-    @Autowired var workflowContext : WorkflowContext = _
+import com.griddynamics.genesis.template.TemplateRepository
 
-    @Bean def genesisRestService = new GenesisRestService(storeServiceContext.storeService,
-                                                          templateServiceContext.templateService,
-                                                          computeServiceContext.compService,
-                                                          workflowContext.requestBroker)
+trait TemplateRepoService {
+  def get(projectId: Int) : TemplateRepository
 }

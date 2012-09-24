@@ -20,21 +20,28 @@
  *   Project:     Genesis
  *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.configuration
 
-import org.springframework.context.annotation.{Bean, Configuration}
-import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.frontend.GenesisRestService
+package com.griddynamics.genesis.service.impl
 
-@Configuration
-class RestServiceContext {
-    @Autowired var storeServiceContext : StoreServiceContext = _
-    @Autowired var templateServiceContext : TemplateServiceContext = _
-    @Autowired var computeServiceContext : ComputeServiceContext = _
-    @Autowired var workflowContext : WorkflowContext = _
+import com.griddynamics.genesis.service.{TemplateRepoService, ConfigService}
+import com.griddynamics.genesis.cache.Cache
+import com.griddynamics.genesis.util.Logging
+import net.sf.ehcache.CacheManager
+import com.griddynamics.genesis.template.{Modes, TemplateRepositoryFactory}
 
-    @Bean def genesisRestService = new GenesisRestService(storeServiceContext.storeService,
-                                                          templateServiceContext.templateService,
-                                                          computeServiceContext.compService,
-                                                          workflowContext.requestBroker)
+class TemplateRepoServiceImpl(config: ConfigService, templateRepoFactories: Seq[TemplateRepositoryFactory],
+  val cacheManager: CacheManager) extends TemplateRepoService  with Logging with Cache {
+
+  private val PROPERTY_MODE = "genesis.template.repository.mode"
+
+  def get(projectId: Int) = fromCache("ProjectTemplateRepositories", Integer.valueOf(projectId)){
+    val mode = config.get(projectId, PROPERTY_MODE, "classpath")
+    log.debug("Project id=%d uses template repository mode = %s", projectId, mode)
+     templateRepoFactories.find(Modes.withName(mode)  == _.mode).map(_.newTemplateRepository(projectId))
+      .getOrElse(throw new IllegalArgumentException("%s template repository not found for project [id=%d]"
+      .format(mode, projectId)))
+  }
+
+  // never expire:
+  override val eternal = true
 }

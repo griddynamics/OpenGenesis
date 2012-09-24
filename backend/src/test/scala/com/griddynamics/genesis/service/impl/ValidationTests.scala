@@ -1,5 +1,6 @@
 package com.griddynamics.genesis.service.impl
 
+import com.griddynamics.genesis.service.TemplateRepoService
 import com.griddynamics.genesis.template.{VersionedTemplate, ListVarDSFactory, TemplateRepository}
 import org.springframework.core.convert.support.ConversionServiceFactory
 import org.junit.{Test, Before}
@@ -15,7 +16,9 @@ import com.griddynamics.genesis.service.ValidationError
 class ValidationTests extends AssertionsForJUnit with MockitoSugar {
     val templateRepository = mock[TemplateRepository]
     val bagRepository = mock[DatabagRepository]
-    val templateService = new GroovyTemplateService(templateRepository,
+    val templateRepoService = mock[TemplateRepoService]
+    Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
+    val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
         Seq(new ListVarDSFactory, new DependentListVarDSFactory, new DatabagDataSourceFactory(bagRepository)), bagRepository, CacheManager.getInstance())
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/Validations.genesis"))

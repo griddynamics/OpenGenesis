@@ -23,34 +23,25 @@
 package com.griddynamics.genesis.configuration
 
 import com.griddynamics.genesis.service.Credentials
-import java.lang.RuntimeException
 import java.io.File
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.spring.{ApplicationContextAware, BeanClassLoaderAware}
 import com.griddynamics.genesis.template._
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import net.sf.ehcache.CacheManager
-import org.springframework.context.annotation.{Lazy, Configuration, Bean}
+import org.springframework.context.annotation.{Configuration, Bean}
 import java.net.{URLClassLoader, URL}
 import com.griddynamics.genesis.plugin.PluginRegistry
+import com.griddynamics.genesis.service.impl.TemplateRepoServiceImpl
 
 @Configuration
 class TemplateRepositoryContextImpl extends TemplateRepositoryContext
                                        with BeanClassLoaderAware with ApplicationContextAware with Logging {
-    @Value("${genesis.template.repository.git.uri:NOT-SET!!!}") var gitUri: String = _
 
-    @Value("${genesis.template.repository.git.identity:NOT-SET!!!}") var gitIdentity: String = _
-    @Value("${genesis.template.repository.git.credential:NOT-SET!!!}") var gitCredential: String = _
-
-    @Value("${genesis.template.repository.git.branch:NOT-SET!!!}") var gitBranch: String = _
-    @Value("${genesis.template.repository.git.directory:NOT-SET!!!}") var gitDirectory: String = _
-
-    @Value("${genesis.template.repository.charset:UTF-8}") var charset: String = _
-    @Value("${genesis.template.repository.wildcard:*.genesis}") var wildcard: String = _
+    def charset(projectId: Int) = config.get(projectId, "genesis.template.repository.charset", "UTF-8")
+    def wildcard(projectId: Int) = config.get(projectId, "genesis.template.repository.wildcard", "*.genesis")
 
     @Value("${genesis.template.repository.mode:classpath}") var mode: String = _
-    @Value("${genesis.template.repository.fs.path:NOT-SET!!!}") var path: String = null
-    @Value("${genesis.template.repository.classpath.urls:NOT-SET!!!}") var urls: String = null
 
     @Value("${genesis.template.repository.pull.period.seconds:3600}") var pullPeriodSeconds: Long = _
     @Value("${genesis.template.repository.pull.on.start:true}") var pullOnStart: Boolean = _
@@ -59,40 +50,51 @@ class TemplateRepositoryContextImpl extends TemplateRepositoryContext
 
     @Autowired var pluginRegistry: PluginRegistry = _
 
+    @Autowired var configContext: ConfigServiceContext = _
+    lazy val config = configContext.configService
+  private val NOT_SET = "NOT-SET!!!"
+  private val PREFIX = "genesis.template.repository"
     @Bean
     def templateRepository = {
-        import collection.JavaConversions._
-        val m = Modes.withName(mode.toLowerCase)
-        val drivers = for ((name, bean) <- mapAsScalaMap(applicationContext.getBeansOfType(classOf[ModeAwareTemplateRepository])) if
-            bean.respondTo == m) yield bean
-        val result = drivers.headOption match {
-            case Some(driver) => {
-                if (driver.isInstanceOf[SelfCachingTemplateRepository])
-                    driver
-                else
-                    new PullingTemplateRepository(driver, pullPeriodSeconds, pullOnStart, cacheManager)
-            }
-            case None =>
-                val plugins = pluginRegistry.getPlugins(classOf[ModeAwareTemplateRepository])
-                plugins.values.find( _.respondTo == m).getOrElse(
-                throw new RuntimeException("Unknown repository mode %s".format(mode)))
-        }
-        result
+        import collection.JavaConversions.mapAsScalaMap
+        val drivers = mapAsScalaMap(applicationContext.getBeansOfType(classOf[TemplateRepositoryFactory])).values
+        val plugins = pluginRegistry.getPlugins(classOf[TemplateRepositoryFactory]).values
+        new TemplateRepoServiceImpl(configContext.configService, (drivers ++ plugins).toSeq, cacheManager)
     }
 
-    @Bean def classPathTemplateRepository = {
-        urls match {
-            case "NOT-SET!!!" => new ClassPathTemplateRepository(classLoader, wildcard, charset)
-            case _ => new ClassPathTemplateRepository(new URLClassLoader(urls.split(",").map(new URL(_)).toArray), wildcard, charset)
-        }
-    }
+  import Modes._
+    @Bean def classPathTemplateRepoFactory = new PullingTemplateRepoFactory(new BaseTemplateRepoFactory(Classpath) {
+      def newTemplateRepository(implicit projectId: Int) = new ClassPathTemplateRepository(
+        prop(".urls") match {
+            case NOT_SET => classLoader
+            case _ => new URLClassLoader(prop(".urls").split(",").map(new URL(_)).toArray)
+      }, wildcard(projectId), charset(projectId))
+    })
 
-    @Bean def gitTemplateRepository = {
-        val credentials = new Credentials(gitIdentity, gitCredential)
+  @Bean def gitTemplateRepoFactory = new PullingTemplateRepoFactory(new BaseTemplateRepoFactory(Git) {
+    def credentials(implicit projectId: Int) = new Credentials(prop("identity"), prop("credential"))
 
-        new GitTemplateRepository(gitUri, credentials, gitBranch,
-                                  new File(gitDirectory), wildcard, charset)
-    }
+    def newTemplateRepository(implicit projectId: Int) = new GitTemplateRepository(prop("uri"), credentials, prop("branch"),
+      new File(prop(".directory")), wildcard(projectId), charset(projectId))
+  })
     
-    @Bean @Lazy def filesystemRepository = new FilesystemTemplateRepository(path, wildcard) with SelfCachingTemplateRepository
+    @Bean def fsRepoFactory = new BaseTemplateRepoFactory(Local) {
+      def newTemplateRepository(implicit projectId: Int) = new FilesystemTemplateRepository(prop("path", "fs"), wildcard(projectId))
+        with SelfCachingTemplateRepository
+    }
+
+  class PullingTemplateRepoFactory(factory: TemplateRepositoryFactory) extends TemplateRepositoryFactory {
+    def newTemplateRepository(implicit projectId: Int) = factory.newTemplateRepository(projectId) match {
+      case s:TemplateRepository with SelfCachingTemplateRepository => s
+      case x => new PullingTemplateRepository(x, pullPeriodSeconds, pullOnStart, cacheManager)
+    }
+
+    val mode = factory.mode
+  }
+
+
+  abstract class BaseTemplateRepoFactory(val mode: Mode) extends TemplateRepositoryFactory {
+    def prop(suffix: String, modeStr: String = mode.toString)(implicit projectId: Int) = config.get(projectId, Seq(PREFIX, modeStr, suffix).mkString("."), NOT_SET)
+  }
 }
+

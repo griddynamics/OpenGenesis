@@ -37,6 +37,7 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
                            val descriptions: Map[String, String] = Map(),
                            val propertyTypes: Map[String, ConfigPropertyType] = Map()) extends service.ConfigService {
 
+  import service.GenesisSystemProperties._
     @Transactional(readOnly = true)
     def get[B](name: String, default: B): B = {
       (default match {
@@ -49,9 +50,14 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
     }
 
     @Transactional(readOnly = true)
+    def get[B](projectId: Int, name: String, default: B) = {
+      val projPropName = Seq(PROJECT_PREFIX, projectId, name.stripPrefix(PREFIX_GENESIS)).mkString(".")
+      get(projPropName).asInstanceOf[Option[B]] getOrElse get(name, default)
+    }
+
+    @Transactional(readOnly = true)
     def get(name: String) = Option(config.getProperty(name))
 
-    import service.GenesisSystemProperties.PREFIX_DB
     private def isReadOnly(key: String) = key.startsWith(PREFIX_DB) || configRO.containsKey(key)
     
     private def desc(key: String) = descriptions.get(key)

@@ -43,11 +43,10 @@ import com.griddynamics.genesis.cache.Cache
 import groovy.util.Expando
 import net.sf.ehcache.{CacheManager, Element}
 import java.util.concurrent.TimeUnit
-import com.griddynamics.genesis.api.{Failure, Success, ExtendedResult}
-import com.griddynamics.genesis.workflow.signal.Fail
 import com.griddynamics.genesis.template.dsl.groovy.{Delegate => DslDelegate}
+import com.griddynamics.genesis.api.{Failure, Success}
 
-class GroovyTemplateService(val templateRepository : TemplateRepository,
+class GroovyTemplateService(val templateRepoService : TemplateRepoService,
                             val stepBuilderFactories : Seq[StepBuilderFactory],
                             val conversionService : ConversionService,
                             val dataSourceFactories : Seq[DataSourceFactory] = Seq(),
@@ -57,6 +56,7 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
 
     val cache = addCacheIfAbsent("GroovyTemplateService")
 
+    private def templateRepo(projectId: Int) = templateRepoService.get(projectId)
 
     override def defaultTtl = TimeUnit.HOURS.toSeconds(24).toInt
 
@@ -82,7 +82,7 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
   def getTemplateBody(name: String, version: String, projectId: Int): Option[String] = {
     val ref = Option(cache.get(TmplCacheKey(name, version, projectId))).map(_.getObjectValue.asInstanceOf[VersionedTemplate])
     val bodyOpt = ref match {
-      case Some(verTmpl) => templateRepository.getContent(verTmpl)
+      case Some(verTmpl) => templateRepo(projectId).getContent(verTmpl)
       case None => templatesMap(projectId).get(name, version)
     }
     bodyOpt
@@ -91,7 +91,7 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
   def listTemplates(projectId: Int) = templatesMap(projectId).keys.toSeq
 
     private def templatesMap(projectId: Int) = {
-        val sources = templateRepository.listSources()
+        val sources = templateRepo(projectId).listSources()
         (for ((version, body) <- sources) yield try {
             val template = evaluateTemplate(projectId, body, None, None, None, true)
 
@@ -130,12 +130,12 @@ class GroovyTemplateService(val templateRepository : TemplateRepository,
         templateDecl.bodies.headOption.map { body => DslDelegate(body).to(templateBuilder).newTemplate(extName, extVersion, extProject) }
     }
 
-    private def getBody(name: String) = templateRepository.listSources
+    private def getBody(projectId: Int, name: String) = templateRepo(projectId).listSources
         .find(_._1.name.toUpperCase.endsWith(name.toUpperCase)).map(_._2)
 
     private def evaluateIncludes(projectId: Int, includes: Seq[String], groovyShell: GroovyShell) {
         includes.foreach(i => {
-            getBody(i).foreach(b => {
+            getBody(projectId, i).foreach(b => {
                 groovyShell.evaluate(b)
             })
         })

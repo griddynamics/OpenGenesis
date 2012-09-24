@@ -30,6 +30,7 @@ import org.springframework.core.convert.support.ConversionServiceFactory
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.template.dsl.groovy.WorkflowDeclaration
 import scala.Array
+import com.griddynamics.genesis.service.TemplateRepoService
 import com.griddynamics.genesis.template.{VersionedTemplate, TemplateRepository}
 import com.griddynamics.genesis.repository.DatabagRepository
 import net.sf.ehcache.CacheManager
@@ -175,11 +176,13 @@ class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with Mock
 
     def getTemplateDefinition(script: String) = {
         val templateRepository = mock[TemplateRepository]
+        val templateRepoService = mock[TemplateRepoService]
         val bagRepository = mock[DatabagRepository]
         Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> script))
         Mockito.when(templateRepository.getContent(VersionedTemplate("1") )).thenReturn(Some(script))
+        Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
 
-        val templateService = new GroovyTemplateService(templateRepository,
+        val templateService = new GroovyTemplateService(templateRepoService,
             List(
               new DoNothingStepBuilderFactory
             ),
