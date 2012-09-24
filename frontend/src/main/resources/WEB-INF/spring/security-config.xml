@@ -152,7 +152,7 @@
         <s:http-basic/>
         <s:logout logout-url="/logout" invalidate-session="true" logout-success-url="/login.html"/>
         <s:remember-me key="GenesisRememberMeKey" token-validity-seconds="604800" user-service-ref="genesisUserDetailsService"/>
-        <s:custom-filter ref="headerBasedAuthFilter" after="BASIC_AUTH_FILTER"/>
+        <s:custom-filter ref="headerBasedAuthFilter" before="BASIC_AUTH_FILTER"/>
 	</s:http>
 
 
