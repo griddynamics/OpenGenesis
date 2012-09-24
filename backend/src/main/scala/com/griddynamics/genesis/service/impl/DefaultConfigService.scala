@@ -25,13 +25,17 @@ package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.service
 import com.griddynamics.genesis.api
+import api.ConfigPropertyType
+import com.griddynamics.genesis.api.ConfigPropertyType.ConfigPropertyType
 import collection.JavaConversions.asScalaIterator
 import org.springframework.transaction.annotation.Transactional
 import org.apache.commons.configuration.Configuration
 
+
 // TODO: add synchronization?
 class DefaultConfigService(val config: Configuration, val writeConfig: Configuration, val configRO: Configuration,
-                           val descriptions: Map[String, String] = Map()) extends service.ConfigService {
+                           val descriptions: Map[String, String] = Map(),
+                           val propertyTypes: Map[String, ConfigPropertyType] = Map()) extends service.ConfigService {
 
     @Transactional(readOnly = true)
     def get[B](name: String, default: B): B = {
@@ -52,9 +56,11 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
     
     private def desc(key: String) = descriptions.get(key)
 
+    private def propertyType(key: String) = propertyTypes.getOrElse(key, ConfigPropertyType.TEXT)
+
     @Transactional(readOnly = true)
     def listSettings(prefix: Option[String]) = prefix.map(config.getKeys(_)).getOrElse(config.getKeys())
-         .map(k => api.ConfigProperty(k, config.getString(k), isReadOnly(k), desc(k))).toSeq.sortBy(_.name)
+         .map(k => api.ConfigProperty(k, config.getString(k), isReadOnly(k), desc(k), propertyType(k))).toSeq.sortBy(_.name)
 
     @Transactional
     def update(name: String, value: Any) = isReadOnly(name) match {
