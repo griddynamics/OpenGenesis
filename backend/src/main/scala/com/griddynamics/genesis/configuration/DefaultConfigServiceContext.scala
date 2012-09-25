@@ -29,7 +29,9 @@ import org.springframework.beans.factory.config.PropertiesFactoryBean
 import org.apache.commons.configuration._
 import com.griddynamics.genesis.service.{GenesisSystemProperties, impl}
 import collection.JavaConversions.{propertiesAsScalaMap, mapAsJavaMap} 
-import GenesisSystemProperties.SUFFIX_DESC
+import GenesisSystemProperties.{SUFFIX_DESC, SUFFIX_TYPE}
+import com.griddynamics.genesis.api.ConfigPropertyType
+import com.griddynamics.genesis.util.TryingUtil
 
 @Configuration
 class DefaultConfigServiceContext extends ConfigServiceContext {
@@ -38,9 +40,16 @@ class DefaultConfigServiceContext extends ConfigServiceContext {
     @Autowired @Qualifier("override") private var filePropsOverride: PropertiesFactoryBean = _
 
     lazy val overrideConfig = ConfigurationConverter.getConfiguration(filePropsOverride.getObject)
-    lazy val (descs, fileProps) = filePropsAll.getObject.partition(_._1.endsWith(SUFFIX_DESC))
+    private  lazy val props = filePropsAll.getObject.toMap.groupBy {
+        case (key, value) if key.endsWith(SUFFIX_DESC) => "DESC"
+        case (key, value) if key.endsWith(SUFFIX_TYPE) => "TYPE"
+        case _ => "VALUE"
+      }
+    private lazy val descs = props.getOrElse("DESC", Map[String, String]())
+    private lazy val types = props.getOrElse("TYPE", Map[String, String]())
+    private lazy val fileProps = props.getOrElse("VALUE", Map[String, String]())
 
-    private lazy val config = {
+    private  lazy val config = {
         ConfigurationUtils.enableRuntimeExceptions(dbConfig)
         val compConfig = new CompositeConfiguration
         // read file properties overrides first
@@ -53,7 +62,11 @@ class DefaultConfigServiceContext extends ConfigServiceContext {
         compConfig
     }
 
-    @Bean def configService = new impl.DefaultConfigService(config, dbConfig, overrideConfig,
-    (descs map { case (k,v) => (k.stripSuffix(SUFFIX_DESC), v)}).toMap)
+    @Bean def configService = new impl.DefaultConfigService(config,
+      dbConfig,
+      overrideConfig,
+      (descs map { case (k,v) => (k.stripSuffix(SUFFIX_DESC), v)}).toMap,
+      (types map { case (k,v) => (k.stripSuffix(SUFFIX_TYPE), TryingUtil.attempt(ConfigPropertyType.withName(v)).getOrElse(ConfigPropertyType.TEXT)) } ).toMap
+    )
 
 }

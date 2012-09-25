@@ -192,7 +192,13 @@ case class ProjectAttributes (@Size(min = 1, max = 64) @NotBlank @Pattern(regexp
                              projectManager: String,
                              description: Option[String] )
 
-case class ConfigProperty(name: String, value: String, readOnly: Boolean, description: Option[String] = None)
+case class ConfigProperty(name: String, value: String, readOnly: Boolean, description: Option[String] = None, propertyType: ConfigPropertyType.ConfigPropertyType = ConfigPropertyType.TEXT  )
+
+object ConfigPropertyType extends Enumeration {
+  type ConfigPropertyType = Value
+  val TEXT = Value(0, "text")
+  val PASSWORD = Value(1, "password")
+}
 
 case class DataItem( id: Option[Int],
                      @Size(min = 1, max = 256) @NotBlank
