@@ -23,6 +23,7 @@
 package com.griddynamics.genesis.template
 
 import com.griddynamics.genesis.api
+import api.ConfigProperty
 
 trait ModeAwareTemplateRepository extends TemplateRepository {
     import Modes._
@@ -41,4 +42,5 @@ trait TemplateRepositoryFactory {
   import Modes._
   def newTemplateRepository(implicit projectId: Int) : TemplateRepository
   val mode: Mode
+  def settings : Seq[ConfigProperty]
 }

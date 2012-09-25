@@ -54,7 +54,7 @@ trait Cache {
       cache
   }
 
-  def fromCache[B](region : String, key : AnyRef)(callback: => B) : B = {
+  def fromCache[B](region : String, key : Any)(callback: => B) : B = {
     val cache: Ehcache = addCacheIfAbsent(region)
     val element: Element = cache.get(key)
     (element == null) match {

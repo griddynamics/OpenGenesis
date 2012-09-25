@@ -24,7 +24,13 @@
 package com.griddynamics.genesis.service
 
 import com.griddynamics.genesis.template.TemplateRepository
+import com.griddynamics.genesis.api.TemplateRepo
 
 trait TemplateRepoService {
+  import com.griddynamics.genesis.template.Modes._
   def get(projectId: Int) : TemplateRepository
+  def listModes : Seq[Mode]
+  def listSettings(mode: Mode) : TemplateRepo
+  def getConfig(projectId: Int) : TemplateRepo
+  def updateConfig(projectId: Int, settings: Map[String, Any])
 }

@@ -28,20 +28,44 @@ import com.griddynamics.genesis.cache.Cache
 import com.griddynamics.genesis.util.Logging
 import net.sf.ehcache.CacheManager
 import com.griddynamics.genesis.template.{Modes, TemplateRepositoryFactory}
+import com.griddynamics.genesis.api.TemplateRepo
 
-class TemplateRepoServiceImpl(config: ConfigService, templateRepoFactories: Seq[TemplateRepositoryFactory],
+class TemplateRepoServiceImpl(config: ConfigService, factories: Seq[TemplateRepositoryFactory],
   val cacheManager: CacheManager) extends TemplateRepoService  with Logging with Cache {
 
-  private val PROPERTY_MODE = "genesis.template.repository.mode"
+  private val PREFIX = "genesis.template.repository"
+  private val PROPERTY_MODE = PREFIX + ".mode"
+  private val CACHE_REGION = "ProjectTemplateRepositories"
 
-  def get(projectId: Int) = fromCache("ProjectTemplateRepositories", Integer.valueOf(projectId)){
-    val mode = config.get(projectId, PROPERTY_MODE, "classpath")
-    log.debug("Project id=%d uses template repository mode = %s", projectId, mode)
-     templateRepoFactories.find(Modes.withName(mode)  == _.mode).map(_.newTemplateRepository(projectId))
-      .getOrElse(throw new IllegalArgumentException("%s template repository not found for project [id=%d]"
-      .format(mode, projectId)))
-  }
+  private def getMode(projectId: Int) = config.get(projectId, PROPERTY_MODE, "classpath")
 
   // never expire:
   override val eternal = true
+  override val defaultTtl = 0
+
+  def get(projectId: Int) = {
+    fromCache(CACHE_REGION, projectId) {
+      val mode = getMode(projectId)
+      log.debug("Project id=%d uses template repository mode = %s", projectId, mode)
+      factories.find(Modes.withName(mode) == _.mode).map(_.newTemplateRepository(projectId))
+        .getOrElse(throw new IllegalArgumentException("%s template repository not found for project [id=%d]"
+        .format(mode, projectId)))
+    }
+  }
+
+  def listModes = factories.map(_.mode)
+
+  def listSettings(mode: Modes.Mode) = TemplateRepo(mode.toString, factories.find(mode == _.mode)
+    .map(_.settings).getOrElse(Seq())) // TODO: is factory a right place for a list of possible settings?
+
+  def getConfig(projectId: Int) = {
+    val tr = listSettings(Modes.withName(getMode(projectId)))
+    TemplateRepo(tr.mode, tr.configuration.map(cp => cp.copy(value = config.get(projectId, cp.name, cp.value), readOnly = true)))
+  }
+
+  def updateConfig(projectId: Int, settings: Map[String, Any]) {
+    // config property names should NOT already contain project prefix
+    settings.foreach { case (name, value) => config.update(projectId, name, value) }
+    cacheManager.getCache(CACHE_REGION).remove(projectId)
+  }
 }

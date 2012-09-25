@@ -51,7 +51,7 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
 
     @Transactional(readOnly = true)
     def get[B](projectId: Int, name: String, default: B) = {
-      val projPropName = Seq(PROJECT_PREFIX, projectId, name.stripPrefix(PREFIX_GENESIS)).mkString(".")
+      val projPropName = mkProjectPrefix(projectId, name)
       get(projPropName).asInstanceOf[Option[B]] getOrElse get(name, default)
     }
 
@@ -68,6 +68,8 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
     def listSettings(prefix: Option[String]) = prefix.map(config.getKeys(_)).getOrElse(config.getKeys())
          .map(k => api.ConfigProperty(k, config.getString(k), isReadOnly(k), desc(k), propertyType(k))).toSeq.sortBy(_.name)
 
+  private def mkProjectPrefix(projectId: Int, prefix:String) = Seq(PROJECT_PREFIX, projectId, prefix.stripPrefix(PREFIX_GENESIS)).filter("" != _).mkString(".")
+
     @Transactional
     def update(name: String, value: Any) = isReadOnly(name) match {
         case true => throw new IllegalArgumentException("Could not modify read-only property")
@@ -82,4 +84,8 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
 
     @Transactional
     def clear(prefix: Option[String]) {prefix.map(writeConfig.subset(_)).getOrElse(writeConfig).clear}
+
+  def update(projectId: Int, name: String, value: Any) {
+    update(mkProjectPrefix(projectId, name), value)
+  }
 }

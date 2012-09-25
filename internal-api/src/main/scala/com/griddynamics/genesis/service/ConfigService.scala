@@ -33,6 +33,7 @@ trait ConfigService {
     def delete(name:String)
     def clear(prefix:Option[String])
     def get[B](projectId: Int, name: String, default: B): B
+    def update(projectId: Int, name:String, value:Any)
 }
 
 object GenesisSystemProperties {
