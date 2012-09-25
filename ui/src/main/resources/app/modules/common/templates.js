@@ -91,7 +91,19 @@ function(genesis, Backbone) {
           }
           genesis.app.trigger("page-view-loading-completed");
           prettyPrint();
-          self.sourceCodeDialog.dialog("option", "title", "Template: " + templateName + " / v" + templateVersion).dialog("open");
+          var title = _.template(
+              'Template: <%= templateName%> / v<%= templateVersion%> ' +
+              '<a target="_blank" title="Open template in a new blank window" data-bypass ' +
+              '   href="/template.html?templateName=<%= templateName%>&templateVersion=<%= templateVersion%>&projectId=<%= projectId%>">' +
+              '     <span class="ui-icon ui-icon-newwin" style="display:inline-block;"></span>' +
+              '</a>',
+              {
+                  templateName: templateName,
+                  templateVersion: templateVersion,
+                  projectId: self.projectId
+              }
+          );
+          self.sourceCodeDialog.dialog("option", "title", title).dialog("open");
         })
         .fail(function(jqXHR) {
           genesis.app.trigger("page-view-loading-completed");
