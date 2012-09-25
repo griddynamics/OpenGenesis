@@ -31,7 +31,13 @@
                         </a>
                         <div class="toggle-content" id="constNames<%=i%>"> <%= c.name %></div>
                     </td>
-                    <td><%- c.value %></td>
+                    <td>
+                      <% if (c.propertyType.name !== "password") { %>
+                        <%- c.value %>
+                      <% } else { %>
+                        <%- c.value.replace(/./g, "*") %>
+                      <% } %>
+                    </td>
                 </tr>
                 <% } %>
                 </tbody>
@@ -56,7 +62,7 @@
                         </a>
                         <div class="toggle-content" id="propNames<%=i%>"> <%= property.name %></div>
                     </td>
-                    <td><input type="text" value="<%- property.value %>"
+                    <td><input <% if ( property.propertyType.name !== "password" ) { %> type="text" <% } else { %> type="password" <% } %> value="<%- property.value %>"
                                class="property-value" name="<%= property.name %>"/>
                     </td>
                 </tr>
