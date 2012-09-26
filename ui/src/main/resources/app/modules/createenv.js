@@ -161,31 +161,6 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
 
   var SelectTemplateStep = Step.extend({
     template: "app/templates/createenv/select_template.html",
-    sourceCodeDialog: null,
-
-    events: {
-      "click a.show-sources": "showSources"
-    },
-
-    onClose: function() {
-      if(this.sourcesView) {
-        this.sourcesView.close();
-      }
-    },
-
-    showSources: function(event) {
-      var $currentTarget = $(event.currentTarget);
-      var templateName = $currentTarget.attr("data-template-name");
-      var templateVersion = $currentTarget.attr("data-template-version");
-
-      if(_.isUndefined(this.sourcesView)) {
-        this.sourcesView = new gtemplates.SourcesView({
-          el: this.$("#template-source-view"),
-          projectId: this.collection.projectId
-        });
-      }
-      this.sourcesView.showTemplate(templateName, templateVersion);
-    },
 
     modelValues: function() {
       var input = this.$("input[name='select_template']:checked");
@@ -199,7 +174,10 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
     render: function(){
       var view = this;
       $.when(genesis.fetchTemplate(this.template)).done(function(tmpl){
-        view.el.innerHTML = tmpl({templates: view.collection.toJSON()});
+        view.el.innerHTML = tmpl({
+            templates: view.collection.toJSON(),
+            projectId: view.collection.projectId
+        });
         view.$("input[name='select_template']:first").click();
         if(view.collection.length == 0) {
           view.trigger("no-templates");
