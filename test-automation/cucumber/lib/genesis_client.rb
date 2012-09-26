@@ -64,6 +64,19 @@ class GenesisClient
     JSON.parse(resp.body).map { |p| delete_project(p["id"]) }
   end
 
+  def create_credentials(project_id, pair, provider, identity, credential)
+    creds = {:projectId => project_id, :cloudProvider => provider, :pairName => pair, :identity => identity, :credential => credential}
+    post("/projects/#{project_id}/credentials", :body => creds.to_json)
+  end
+
+  def list_credentials(project_id)
+    get("/projects/#{project_id}/credentials")
+  end
+
+  def delete_credential(project_id, credential_id)
+    delete("/projects/#{project_id}/credentials/#{credential_id}")
+  end
+
   def rename_env(id, env_id, newname)
     resp = {:environment => {:name => newname}}
     put("/projects/#{id}/envs/#{env_id}", :body => resp.to_json)
