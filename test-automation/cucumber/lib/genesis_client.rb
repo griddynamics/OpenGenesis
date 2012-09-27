@@ -145,6 +145,23 @@ module Genesis
       @auth = {:username => config["genesis"]["user"], :password => config["genesis"]["password"]}
     end
 
+    #todo: complex conditions like 'find_by_name_and_description'
+    def method_missing(name, *arguments, &block)
+      if name =~ /find_by_(.+)/
+         names = $1
+         attributes = names && names.split("_and_")
+         self.class.class_eval <<-EOS, __FILE__, __LINE__ + 1
+            def #{name}(attribute, args)
+              criterion = args.shift
+              find { |e| e[attribute] == criterion }
+            end
+         EOS
+         send(name, attributes[0], arguments)
+      else
+        super
+      end
+    end
+
     [:get, :post, :put, :delete].each do |verb|
        send :define_method, verb do |*args|
          path = @path
