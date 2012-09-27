@@ -84,18 +84,15 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
         storeService.updateWorkflow(workflow)
 
         stepsToStart = persistSteps(stepsToStart) //persist steps & generate step ids
-        Right(createReachableStepCoordinators())
+        createReachableStepCoordinators()
     }
 
     def rescueCoordinators: scala.Either[Signal, Seq[StepCoordinator]] = {
         persistSteps(rescueSteps)
-        val coordinators: Seq[StepCoordinator] = createCoordinators(rescueSteps)
-        if (coordinators.size < rescueSteps.size) {
+        val coordinators = createCoordinators(rescueSteps)
+        if (coordinators.isLeft)
             rescueSteps.foreach(builder => {storeService.updateStepStatus(builder.id, WorkflowStepStatus.Canceled)})
-            Left(Fail(Mistake()))
-        } else {
-            Right(coordinators)
-        }
+        coordinators
     }
 
     def onFlowFinish(signal: Signal) {
@@ -121,13 +118,16 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
         workflow.stepsFinished += 1
         storeService.updateWorkflow(workflow)
         finishedSteps = finishedSteps :+ result.step
-        Right(createReachableStepCoordinators())
+        createReachableStepCoordinators()
     }
 
-    def createCoordinators(builders: Seq[StepBuilder]): Seq[StepCoordinator] = {
+    def createCoordinators(builders: Seq[StepBuilder]): Either[Fail, Seq[StepCoordinator]] = {
         (for (builder <- builders) yield {
             buildStep(builder).flatMap(createStepCoordinator(_))
-        }).flatten
+        }).partition(_.isEmpty) match {
+            case (Nil, coordinators) => Right(coordinators.flatten)
+            case _ => Left(Fail(Mistake("Some steps are failed to be prepared")))
+        }
     }
 
     def createReachableStepCoordinators() = createCoordinators(detectReachableSteps())
