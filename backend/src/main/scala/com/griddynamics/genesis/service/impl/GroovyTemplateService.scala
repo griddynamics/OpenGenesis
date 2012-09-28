@@ -145,6 +145,13 @@ class GroovyTemplateService(val templateRepoService : TemplateRepoService,
         val map = templatesMap(projectId)
         map.get(name, version)
     }
+
+  import scala.collection.JavaConversions.{asScalaBuffer, asJavaCollection}
+  def clearCache(projectId: Int) {
+    cache.removeAll(cache.getKeys.filter{
+      case TmplCacheKey(_, _, pId) => pId == projectId
+      case _ => false
+    })}
 }
 
 class StepBodiesCollector(variables: Map[String, AnyRef],

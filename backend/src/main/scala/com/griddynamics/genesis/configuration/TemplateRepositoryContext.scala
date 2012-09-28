@@ -33,7 +33,7 @@ import org.springframework.context.annotation.{Configuration, Bean}
 import java.net.{URLClassLoader, URL}
 import com.griddynamics.genesis.plugin.PluginRegistry
 import com.griddynamics.genesis.service.impl.TemplateRepoServiceImpl
-import com.griddynamics.genesis.api.{ConfigPropertyType, ConfigProperty}
+import com.griddynamics.genesis.api.{GenesisService, ConfigPropertyType, ConfigProperty}
 import ConfigPropertyType._
 
 @Configuration
@@ -62,12 +62,15 @@ with BeanClassLoaderAware with ApplicationContextAware with Logging {
   @Autowired var configContext: ConfigServiceContext = _
   lazy val config = configContext.configService
 
+  @Autowired var storeServiceContext: StoreServiceContext = _
+
   @Bean
   def templateRepository = {
     import collection.JavaConversions.mapAsScalaMap
     val drivers = mapAsScalaMap(applicationContext.getBeansOfType(classOf[TemplateRepositoryFactory])).values
     val plugins = pluginRegistry.getPlugins(classOf[TemplateRepositoryFactory]).values
-    new TemplateRepoServiceImpl(configContext.configService, (drivers ++ plugins).toSeq, cacheManager)
+    new TemplateRepoServiceImpl(configContext.configService, storeServiceContext.storeService,
+      (drivers ++ plugins).toSeq, cacheManager)
   }
 
   import Modes._

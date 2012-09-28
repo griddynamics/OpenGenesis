@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation._
 import javax.servlet.http.HttpServletRequest
 import scala.Array
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.service.TemplateRepoService
+import com.griddynamics.genesis.service.{TemplateService, TemplateRepoService}
 import com.griddynamics.genesis.template.Modes
 
 @Controller
@@ -35,6 +35,7 @@ import com.griddynamics.genesis.template.Modes
 class TemplateRepoController extends RestApiExceptionsHandler {
 
   @Autowired var service: TemplateRepoService = _
+  @Autowired var templateService : TemplateService = _
 
   @RequestMapping(value = Array("template/repository/modes"),method = Array(RequestMethod.GET))
   @ResponseBody
@@ -54,8 +55,9 @@ class TemplateRepoController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("projects/{projectId}/template/repository"), method = Array(RequestMethod.PUT))
   @ResponseBody
-  def update(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) =
+  def update(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) {
     service.updateConfig(projectId, GenesisRestController.extractParamsMap(request))
-    //TODO: use RequestBody annotation when containers are supported in input case classes
+    templateService.clearCache(projectId) // TODO: think of better way to notify template service of changes
+  }
 
 }

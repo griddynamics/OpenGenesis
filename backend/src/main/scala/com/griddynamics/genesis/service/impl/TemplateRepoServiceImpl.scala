@@ -23,14 +23,15 @@
 
 package com.griddynamics.genesis.service.impl
 
-import com.griddynamics.genesis.service.{TemplateRepoService, ConfigService}
+import com.griddynamics.genesis.service.{TemplateRepoService, ConfigService, StoreService => SS}
 import com.griddynamics.genesis.cache.Cache
 import com.griddynamics.genesis.util.Logging
 import net.sf.ehcache.CacheManager
 import com.griddynamics.genesis.template.{Modes, TemplateRepositoryFactory}
 import com.griddynamics.genesis.api.TemplateRepo
 
-class TemplateRepoServiceImpl(config: ConfigService, factories: Seq[TemplateRepositoryFactory],
+class TemplateRepoServiceImpl(config: ConfigService, storeService: SS,
+                              factories: Seq[TemplateRepositoryFactory],
   val cacheManager: CacheManager) extends TemplateRepoService  with Logging with Cache {
 
   private val PREFIX = "genesis.template.repository"
@@ -60,12 +61,15 @@ class TemplateRepoServiceImpl(config: ConfigService, factories: Seq[TemplateRepo
 
   def getConfig(projectId: Int) = {
     val tr = listSettings(Modes.withName(getMode(projectId)))
-    TemplateRepo(tr.mode, tr.configuration.map(cp => cp.copy(value = config.get(projectId, cp.name, cp.value), readOnly = true)))
+    val ro = storeService.listEnvs(projectId).nonEmpty
+    TemplateRepo(tr.mode, tr.configuration.map(cp => cp.copy(value = config.get(projectId, cp.name, cp.value), readOnly = ro)))
   }
 
   def updateConfig(projectId: Int, settings: Map[String, Any]) {
     // config property names should NOT already contain project prefix
     settings.foreach { case (name, value) => config.update(projectId, name, value) }
-    cacheManager.getCache(CACHE_REGION).remove(projectId)
+    if (cacheManager.cacheExists(CACHE_REGION)) {
+      cacheManager.getCache(CACHE_REGION).remove(projectId)
+    }
   }
 }

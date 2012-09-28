@@ -71,6 +71,7 @@ trait TemplateService {
 
     def descTemplate(projectId: Int, templateName: String, templateVersion: String): Option[TemplateDescription]
     def templateRawContent(projectId: Int, name: String, version: String): Option[String]
+    def clearCache(projectId: Int) //TODO: remove this
 }
 
 
