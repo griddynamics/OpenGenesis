@@ -150,13 +150,21 @@ module Genesis
       if name =~ /find_by_(.+)/
          names = $1
          attributes = names && names.split("_and_")
-         self.class.class_eval <<-EOS, __FILE__, __LINE__ + 1
-            def #{name}(attribute, args)
-              criterion = args.shift
-              find { |e| e[attribute] == criterion }
+         return super unless (attributes.size == arguments.size)
+         criteria = Hash[attributes.zip(arguments)]
+         instance_eval <<-EOS, __FILE__, __LINE__ + 1
+            def #{name}(*criteria)
+              response = get
+              arr = JSON.parse(response.body)
+              criteria.each do |k,v|
+                arr.reject! {|g| g[k] != v} unless v.nil?
+              end
+              if (arr.size > 0)
+                arr[0]
+              end
             end
          EOS
-         send(name, attributes[0], arguments)
+         send(name, criteria)
       else
         super
       end
