@@ -249,6 +249,8 @@ case class LeaseDescription(envId: Int, envName: String, sinceDate: Long)
 
 case class ServerDescription(id: Option[Int], arrayId: Int, instanceId: String, address: String, usage: Seq[LeaseDescription] )
 
+case class TemplateRepo(mode: String, configuration: Seq[ConfigProperty], desc: Option[String] = None)
+
 object RequestResult {
     val envName = "envName"
     val template = "template"

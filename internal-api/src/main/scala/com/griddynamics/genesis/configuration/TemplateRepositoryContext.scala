@@ -22,8 +22,8 @@
  */
 package com.griddynamics.genesis.configuration
 
-import com.griddynamics.genesis.template._
+import com.griddynamics.genesis.service.TemplateRepoService
 
 trait TemplateRepositoryContext {
-    def templateRepository : TemplateRepository
+    def templateRepository : TemplateRepoService
 }

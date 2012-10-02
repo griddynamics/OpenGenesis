@@ -32,15 +32,19 @@ trait ConfigService {
     def update(name:String, value:Any)
     def delete(name:String)
     def clear(prefix:Option[String])
+    def get[B](projectId: Int, name: String, default: B): B
+    def update(projectId: Int, name:String, value:Any)
 }
 
 object GenesisSystemProperties {
     val BACKEND = "backend.properties"
+    val PREFIX_GENESIS = "genesis."
     val PREFIX = "genesis.system"
     val PREFIX_DB = PREFIX + ".jdbc."
     val PLUGIN_PREFIX = "genesis.plugin"
     val SUFFIX_DESC = ".desc"
     val SUFFIX_TYPE = ".type"
+    val PROJECT_PREFIX = "genesis.project"
 
     val SHUTDOWN_TIMEOUT = "genesis.system.shutdown.timeout.sec"
     val SERVICE_BACKEND_URL = "genesis.system.service.backendUrl"

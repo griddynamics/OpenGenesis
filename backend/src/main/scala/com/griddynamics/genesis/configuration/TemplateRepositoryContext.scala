@@ -23,76 +23,108 @@
 package com.griddynamics.genesis.configuration
 
 import com.griddynamics.genesis.service.Credentials
-import java.lang.RuntimeException
 import java.io.File
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.spring.{ApplicationContextAware, BeanClassLoaderAware}
 import com.griddynamics.genesis.template._
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import net.sf.ehcache.CacheManager
-import org.springframework.context.annotation.{Lazy, Configuration, Bean}
+import org.springframework.context.annotation.{Configuration, Bean}
 import java.net.{URLClassLoader, URL}
 import com.griddynamics.genesis.plugin.PluginRegistry
+import com.griddynamics.genesis.service.impl.TemplateRepoServiceImpl
+import com.griddynamics.genesis.api.{GenesisService, ConfigPropertyType, ConfigProperty}
+import ConfigPropertyType._
 
 @Configuration
 class TemplateRepositoryContextImpl extends TemplateRepositoryContext
-                                       with BeanClassLoaderAware with ApplicationContextAware with Logging {
-    @Value("${genesis.template.repository.git.uri:NOT-SET!!!}") var gitUri: String = _
+with BeanClassLoaderAware with ApplicationContextAware with Logging {
 
-    @Value("${genesis.template.repository.git.identity:NOT-SET!!!}") var gitIdentity: String = _
-    @Value("${genesis.template.repository.git.credential:NOT-SET!!!}") var gitCredential: String = _
+  private val NOT_SET = "NOT-SET!!!"
+  private val PREFIX = "genesis.template.repository"
+  private val CHARSET  = ConfigProperty(PREFIX + ".charset", "UTF-8", false, Option("Template content Character set"))
+  private val WILDCARD = ConfigProperty(PREFIX + ".wildcard", "*.genesis", false, Option("Template name wildcard"))
 
-    @Value("${genesis.template.repository.git.branch:NOT-SET!!!}") var gitBranch: String = _
-    @Value("${genesis.template.repository.git.directory:NOT-SET!!!}") var gitDirectory: String = _
+  def charset(projectId: Int) = config.get(projectId, CHARSET.name, CHARSET.value)
+  def wildcard(projectId: Int) = config.get(projectId, WILDCARD.name, WILDCARD.value)
 
-    @Value("${genesis.template.repository.charset:UTF-8}") var charset: String = _
-    @Value("${genesis.template.repository.wildcard:*.genesis}") var wildcard: String = _
+  val commonPropDesc = Seq(CHARSET, WILDCARD)
 
-    @Value("${genesis.template.repository.mode:classpath}") var mode: String = _
-    @Value("${genesis.template.repository.fs.path:NOT-SET!!!}") var path: String = null
-    @Value("${genesis.template.repository.classpath.urls:NOT-SET!!!}") var urls: String = null
+  @Value("${genesis.template.repository.mode:classpath}") var mode: String = _
 
-    @Value("${genesis.template.repository.pull.period.seconds:3600}") var pullPeriodSeconds: Long = _
-    @Value("${genesis.template.repository.pull.on.start:true}") var pullOnStart: Boolean = _
+  @Value("${genesis.template.repository.pull.period.seconds:3600}") var pullPeriodSeconds: Long = _
+  @Value("${genesis.template.repository.pull.on.start:true}") var pullOnStart: Boolean = _
 
-    @Autowired var cacheManager : CacheManager = _
+  @Autowired var cacheManager : CacheManager = _
 
-    @Autowired var pluginRegistry: PluginRegistry = _
+  @Autowired var pluginRegistry: PluginRegistry = _
 
-    @Bean
-    def templateRepository = {
-        import collection.JavaConversions._
-        val m = Modes.withName(mode.toLowerCase)
-        val drivers = for ((name, bean) <- mapAsScalaMap(applicationContext.getBeansOfType(classOf[ModeAwareTemplateRepository])) if
-            bean.respondTo == m) yield bean
-        val result = drivers.headOption match {
-            case Some(driver) => {
-                if (driver.isInstanceOf[SelfCachingTemplateRepository])
-                    driver
-                else
-                    new PullingTemplateRepository(driver, pullPeriodSeconds, pullOnStart, cacheManager)
-            }
-            case None =>
-                val plugins = pluginRegistry.getPlugins(classOf[ModeAwareTemplateRepository])
-                plugins.values.find( _.respondTo == m).getOrElse(
-                throw new RuntimeException("Unknown repository mode %s".format(mode)))
-        }
-        result
-    }
+  @Autowired var configContext: ConfigServiceContext = _
+  lazy val config = configContext.configService
 
-    @Bean def classPathTemplateRepository = {
-        urls match {
-            case "NOT-SET!!!" => new ClassPathTemplateRepository(classLoader, wildcard, charset)
-            case _ => new ClassPathTemplateRepository(new URLClassLoader(urls.split(",").map(new URL(_)).toArray), wildcard, charset)
-        }
-    }
+  @Autowired var storeServiceContext: StoreServiceContext = _
 
-    @Bean def gitTemplateRepository = {
-        val credentials = new Credentials(gitIdentity, gitCredential)
+  @Bean
+  def templateRepository = {
+    import collection.JavaConversions.mapAsScalaMap
+    val drivers = mapAsScalaMap(applicationContext.getBeansOfType(classOf[TemplateRepositoryFactory])).values
+    val plugins = pluginRegistry.getPlugins(classOf[TemplateRepositoryFactory]).values
+    new TemplateRepoServiceImpl(configContext.configService, storeServiceContext.storeService,
+      (drivers ++ plugins).toSeq, cacheManager)
+  }
 
-        new GitTemplateRepository(gitUri, credentials, gitBranch,
-                                  new File(gitDirectory), wildcard, charset)
-    }
+  import Modes._
+    @Bean def classPathTemplateRepoFactory = new PullingTemplateRepoFactory(new BaseTemplateRepoFactory(Classpath) {
+      private val URLS = propDesc("urls", desc="Comma-separated list of Classloader URLs")
+
+      def newTemplateRepository(implicit projectId: Int) = new ClassPathTemplateRepository(
+        prop(URLS) match {
+            case NOT_SET => classLoader
+            case _ => new URLClassLoader(prop(URLS).split(",").map(new URL(_)).toArray)
+      }, wildcard(projectId), charset(projectId))
+      val settings = URLS +: commonPropDesc
+    })
+
+  @Bean def gitTemplateRepoFactory = new PullingTemplateRepoFactory(new BaseTemplateRepoFactory(Git) {
+    private val URI = propDesc("uri", desc="Git repository URI")
+    private val BRANCH = propDesc("branch", desc="Git repository branch to take templates from")
+    private val DIR = propDesc("directory", desc="Local directory to clone Git repository into")
+    private val ID = propDesc("identity", desc="Git repository user identity")
+    private val PASS = propDesc("credential", desc="Git repository user credential", propType = PASSWORD)
+
+    private def credentials(implicit projectId: Int) = new Credentials(prop(ID), prop(PASS))
+
+    def newTemplateRepository(implicit projectId: Int) = new GitTemplateRepository(prop(URI), credentials, prop(BRANCH),
+      new File(prop(DIR)), wildcard(projectId), charset(projectId))
+
+    val settings = Seq(URI, BRANCH, DIR, ID, PASS) ++ commonPropDesc
+  })
     
-    @Bean @Lazy def filesystemRepository = new FilesystemTemplateRepository(path, wildcard) with SelfCachingTemplateRepository
+    @Bean def fsRepoFactory = new BaseTemplateRepoFactory(Local) {
+      private val PATH = propDesc("path", modeStr = "fs", desc="Local Filesystem path to take templates from")
+
+      def newTemplateRepository(implicit projectId: Int) = new FilesystemTemplateRepository(prop(PATH), wildcard(projectId))
+        with SelfCachingTemplateRepository
+      def settings = Seq(PATH, WILDCARD)
+    }
+
+  class PullingTemplateRepoFactory(factory: TemplateRepositoryFactory) extends TemplateRepositoryFactory {
+    def newTemplateRepository(implicit projectId: Int) = factory.newTemplateRepository(projectId) match {
+      case s:TemplateRepository with SelfCachingTemplateRepository => s
+      case x => new PullingTemplateRepository(x, pullPeriodSeconds, pullOnStart, cacheManager)
+    }
+
+    val mode = factory.mode
+    val settings = factory.settings
+  }
+
+
+  abstract class BaseTemplateRepoFactory(val mode: Mode) extends TemplateRepositoryFactory {
+    private def propName(suffix: String, modeStr: String = mode.toString) = Seq(PREFIX, modeStr, suffix).mkString(".")
+    def prop(p: ConfigProperty)(implicit projectId: Int) = config.get(projectId, p.name, p.value)
+    def propDesc(suffix: String, defVal: Any = NOT_SET, desc: String = null,
+                 propType: ConfigPropertyType = TEXT, modeStr: String = mode.toString) =
+      ConfigProperty(propName(suffix, modeStr), String.valueOf(defVal), false, Option(desc), propType)
+  }
 }
+
