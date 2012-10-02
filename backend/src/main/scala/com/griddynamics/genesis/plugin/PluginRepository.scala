@@ -52,7 +52,7 @@ class PluginRepositoryImpl(pluginLoader: PluginLoader,
 
   @Transactional
   def updateConfiguration(pluginId: String, configuration: Map[String, Any]) {
-    configuration.foreach { case (name, value) => configService.update(name, value) }
+    configService.update(configuration)
   }
 
   def configuration(pluginId: String): Map[String, String] = {

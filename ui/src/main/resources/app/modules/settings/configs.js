@@ -16,7 +16,7 @@ function(genesis, status, Backbone, $) {
 
   Settings.Model = Backbone.Model.extend({
     idAttribute: "name",
-    url: function () { return URL + "/" + this.id; }
+    url: URL
   });
 
   Settings.Collection = Backbone.Collection.extend({
@@ -59,18 +59,21 @@ function(genesis, status, Backbone, $) {
       });
 
       var changedSettings = _(this.collection.filter(function(item) { return item.hasChanged(); }));
+      var map = new Settings.Model;
+      map.isNew = function(){return false;};
 
       changedSettings.each(function(item) {
-        item.save(null, { wait: true, //todo: {wait: true} is ACHTUNG
+        map.set(item.get('name'), item.get('value'));
+      });
+
+      if (!changedSettings.isEmpty()) {
+        map.save(null, {
+          success: function (model, response) {status.StatusPanel.success("Settings changes saved.")},
           error: function (model, response) {
             var errorMessage = response.status == 400 ? JSON.parse(response.responseText).compoundServiceErrors : "Failed to process request";
             status.StatusPanel.error(errorMessage);
           }
         });
-      });
-
-      if (!changedSettings.isEmpty()) {
-        status.StatusPanel.success("Settings changes saved.")
       }
     },
 

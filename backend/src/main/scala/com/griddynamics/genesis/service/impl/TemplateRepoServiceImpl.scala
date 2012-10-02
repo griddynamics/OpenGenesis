@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -67,7 +67,7 @@ class TemplateRepoServiceImpl(config: ConfigService, storeService: SS,
 
   def updateConfig(projectId: Int, settings: Map[String, Any]) {
     // config property names should NOT already contain project prefix
-    settings.foreach { case (name, value) => config.update(projectId, name, value) }
+    config.update(projectId, settings)
     if (cacheManager.cacheExists(CACHE_REGION)) {
       cacheManager.getCache(CACHE_REGION).remove(projectId)
     }
