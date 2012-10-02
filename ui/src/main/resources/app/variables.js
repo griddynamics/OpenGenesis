@@ -124,7 +124,7 @@ function(genesis, status, $, _) {
                     .append("<option value=''> Please select </option>")
                     .removeAttr("disabled");
 
-                  _(variable.values).each(function(description, key) {
+                  _(variable.values).each(function(key, description) {
                     $select.append(
                       $("<option/>").attr("value", key).text(description)
                     );
