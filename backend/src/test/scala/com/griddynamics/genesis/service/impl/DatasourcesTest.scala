@@ -5,7 +5,7 @@ import org.springframework.core.convert.support.ConversionServiceFactory
 import com.griddynamics.genesis.util.IoUtil
 import org.mockito.Mockito
 import org.junit.{Before, Test}
-import com.griddynamics.genesis.service.VariableDescription
+import com.griddynamics.genesis.service.{TemplateRepoService, VariableDescription}
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.template.VersionedTemplate
@@ -16,7 +16,9 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
 
     val templateRepository = mock[TemplateRepository]
     val databagRepository = mock[DatabagRepository]
-    val templateService = new GroovyTemplateService(templateRepository,
+    val templateRepoService = mock[TemplateRepoService]
+  Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
+  val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
         Seq(new ListVarDSFactory, new DependentListVarDSFactory, new NoArgsDSFactory), databagRepository, CacheManager.getInstance())
 

@@ -27,7 +27,6 @@ import com.griddynamics.genesis.{model, service}
 import com.griddynamics.genesis.bean.RequestBroker
 import GenesisRestService._
 import model.{Workflow, EnvStatus}
-import com.griddynamics.genesis.template.TemplateRepository
 import service.{ComputeService, TemplateService, StoreService}
 import com.griddynamics.genesis.validation.Validation._
 import com.griddynamics.genesis.api.ActionTracking
@@ -46,7 +45,6 @@ import com.griddynamics.genesis.api.WorkflowDetails
 class GenesisRestService(storeService: StoreService,
                          templateService: TemplateService,
                          computeService: ComputeService,
-                         templateRepository : TemplateRepository,
                          broker: RequestBroker) extends GenesisService {
 
 

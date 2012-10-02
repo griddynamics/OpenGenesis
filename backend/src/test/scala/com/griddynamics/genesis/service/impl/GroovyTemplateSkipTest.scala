@@ -23,6 +23,7 @@
 
 package com.griddynamics.genesis.service.impl
 
+import com.griddynamics.genesis.service.{TemplateRepoService, WorkflowDefinition, TemplateDefinition}
 import com.griddynamics.genesis.template.{VersionedTemplate, ListVarDSFactory, TemplateRepository}
 import com.griddynamics.genesis.repository.DatabagRepository
 import org.springframework.core.convert.support.ConversionServiceFactory
@@ -39,7 +40,9 @@ import com.griddynamics.genesis.api.{Failure, ExtendedResult}
 class GroovyTemplateSkipTest  extends AssertionsForJUnit with MockitoSugar {
     val templateRepository = mock[TemplateRepository]
     val bagRepository = mock[DatabagRepository]
-    val templateService = new GroovyTemplateService(templateRepository,
+    val templateRepoService = mock[TemplateRepoService]
+    Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
+    val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
         Seq(new ListVarDSFactory, new DependentListVarDSFactory, new DatabagDataSourceFactory(bagRepository)), bagRepository, CacheManager.getInstance())
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/SkipExample.genesis"))

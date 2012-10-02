@@ -70,4 +70,6 @@
     <bean class="com.griddynamics.genesis.rest.DatabagController"/>
 
     <bean class="com.griddynamics.genesis.rest.WhoamiController"/>
+
+    <bean class="com.griddynamics.genesis.rest.TemplateRepoController"/>
 </beans>

@@ -26,6 +26,7 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.util.IoUtil
 import org.springframework.core.convert.support.ConversionServiceFactory
+import com.griddynamics.genesis.service.TemplateRepoService
 import com.griddynamics.genesis.template.{ListVarDSFactory, VersionedTemplate, TemplateRepository}
 import org.junit.{Before, Test}
 import com.griddynamics.genesis.core.{RegularWorkflow, GenesisFlowCoordinator}
@@ -40,7 +41,7 @@ import com.griddynamics.genesis.repository.DatabagRepository
 
 class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar {
   val templateRepository = mock[TemplateRepository]
-
+  val templateRepoService = mock[TemplateRepoService]
   val storeService = {
     val storeService = mock[StoreService]
     when(storeService.startWorkflow(Matchers.any(), Matchers.any())).thenReturn((mock[Environment], mock[Workflow], List()))
@@ -58,8 +59,8 @@ class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar {
   val databagRepository = mock[DatabagRepository]
   val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/ContextExample.genesis"))
   Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
-
-  val templateService = new GroovyTemplateService(templateRepository,
+  Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
+  val templateService = new GroovyTemplateService(templateRepoService,
     List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
     Seq(new ListVarDSFactory, new DependentListVarDSFactory), databagRepository, CacheManager.getInstance())
 

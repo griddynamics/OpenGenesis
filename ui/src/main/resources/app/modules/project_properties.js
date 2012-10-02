@@ -7,10 +7,11 @@ define([
   "modules/project_properties/other_settings",
   "modules/project_properties/servers",
   "modules/settings/roles",
-  "modules/settings/databags"
+  "modules/settings/databags",
+  "modules/project_properties/template_repo"
 ],
 
-function(genesis, Backbone, backend, Projects, Credentials, OtherSettings, Servers, Roles, Databags) {
+function(genesis, Backbone, backend, Projects, Credentials, OtherSettings, Servers, Roles, Databags, TemplateRepo) {
   var ProjectProperties = genesis.module();
 
   ProjectProperties.Views.Main = Backbone.View.extend({
@@ -21,7 +22,8 @@ function(genesis, Backbone, backend, Projects, Credentials, OtherSettings, Serve
       "click #credentials-settings-tab" : "showCredentialsSettings",
       "click #project-roles-tab" : "showProjectRoles",
       "click #project-servers-tab" : "showServers",
-      "click #project-databags-tab" : "showProjectDatabags"
+      "click #project-databags-tab" : "showProjectDatabags",
+      "click #project-templaterepo-tab" : "showProjectTemplateRepo"
     },
 
     initialize: function(options) {
@@ -32,7 +34,8 @@ function(genesis, Backbone, backend, Projects, Credentials, OtherSettings, Serve
         credentialsView: null,
         otherSettings: null,
         projectRolesView: null,
-        serversView: null
+        serversView: null,
+        templateRepoView: null
       }
     },
 
@@ -67,6 +70,12 @@ function(genesis, Backbone, backend, Projects, Credentials, OtherSettings, Serve
     showServers: function() {
       if(this.tabs.serversView == null) {
         this.tabs.serversView = new Servers.Views.Main({el: this.$("#project-servers-panel"), projectId: this.project.id});
+      }
+    },
+
+    showProjectTemplateRepo: function() {
+      if(this.tabs.templateRepoView == null) {
+        this.tabs.templateRepoView = new TemplateRepo.Views.Main({el: this.$("#project-templaterepo-panel"), projectId: this.project.id});
       }
     },
 

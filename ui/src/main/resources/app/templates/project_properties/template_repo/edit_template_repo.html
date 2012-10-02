@@ -1,0 +1,70 @@
+<!--
+  ~ Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
+  ~   http://www.griddynamics.com
+  ~
+  ~   This library is free software; you can redistribute it and/or modify it under the terms of
+  ~   the GNU Lesser General Public License as published by the Free Software Foundation; either
+  ~   version 2.1 of the License, or any later version.
+  ~
+  ~   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+  ~   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  ~   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+  ~   DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+  ~   FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+  ~   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+  ~   SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+  ~   CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+  ~   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  ~   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  ~
+  ~   Project:     Genesis
+  ~   Description:  Continuous Delivery Platform
+  -->
+<div class="top-panel">
+    <div class="page-title"><h2>Select Template Repository</h2></div>
+</div>
+
+<div id="template-repo-settings" class="panel">
+    <form id="edit-templaterepo">
+        <label for="select-mode" class="label-required">Select Template Repository Type</label>
+        <select id="select-mode" >
+            <% for (var i in modes) { var mode = modes[i]; %>
+            <%if(mode == templateRepo.mode) {%>
+            <option  selected="selected"><%=mode%></option>
+            <% } else { %>
+            <option><%=mode%></option>
+            <% }%>
+            <% } %>
+        </select>
+
+
+        <table class="main-table key-value-table">
+            <thead>
+            <tr id="table-title-ro">
+                <th class="first">Description</th>
+                <th>Value</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% var props = templateRepo.configuration; for (var i = 0, count = props.length; i < count; i++) { var p = props[i]; %>
+            <tr>
+                <td class="first">
+                    <%= p.description ? p.description : p.name %>
+                    <a href="javascript:void(0)" rel="#key<%=i%>" class="show-keys" title="Show Key">
+                        <span class="ui-icon ui-icon-carat-1-s" style="float:right"/>
+                    </a>
+                    <div class="toggle-content" id="key<%=i%>"> <%= p.name %></div>
+                </td>
+                    <td><input <% if ( p.propertyType.name !== "password" ) { %> type="text" <% } else { %> type="password" <% } %> value="<%- p.value %>"
+                               class="property-value" name="<%= p.name %>"/>
+                    </td>
+            </tr>
+            <% } %>
+            </tbody>
+        </table>
+        <div class="stepbutton" >
+            <a href="javascript:void(0);" class="button" id="save-templaterepo"> <span> Save </span> </a>
+            <a href="<%= '#project/' + projectId %>" class="button cancel" > <span> Cancel </span> </a>
+        </div>
+    </form>
+</div>
