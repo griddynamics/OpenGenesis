@@ -22,7 +22,7 @@
  */
 package com.griddynamics.genesis.configuration
 
-import com.griddynamics.genesis.service.Credentials
+import com.griddynamics.genesis.service.{TemplateRepoService, Credentials}
 import java.io.File
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.spring.{ApplicationContextAware, BeanClassLoaderAware}
@@ -64,8 +64,7 @@ with BeanClassLoaderAware with ApplicationContextAware with Logging {
 
   @Autowired var storeServiceContext: StoreServiceContext = _
 
-  @Bean
-  def templateRepository = {
+  @Bean def templateRepository: TemplateRepoService = {
     import collection.JavaConversions.mapAsScalaMap
     val drivers = mapAsScalaMap(applicationContext.getBeansOfType(classOf[TemplateRepositoryFactory])).values
     val plugins = pluginRegistry.getPlugins(classOf[TemplateRepositoryFactory]).values
@@ -74,18 +73,18 @@ with BeanClassLoaderAware with ApplicationContextAware with Logging {
   }
 
   import Modes._
-    @Bean def classPathTemplateRepoFactory = new PullingTemplateRepoFactory(new BaseTemplateRepoFactory(Classpath) {
-      private val URLS = propDesc("urls", desc="Comma-separated list of Classloader URLs")
+  @Bean def classPathTemplateRepoFactory: TemplateRepositoryFactory = new PullingTemplateRepoFactory(new BaseTemplateRepoFactory(Classpath) {
+    private val URLS = propDesc("urls", desc="Comma-separated list of Classloader URLs")
 
-      def newTemplateRepository(implicit projectId: Int) = new ClassPathTemplateRepository(
-        prop(URLS) match {
-            case NOT_SET => classLoader
-            case _ => new URLClassLoader(prop(URLS).split(",").map(new URL(_)).toArray)
-      }, wildcard(projectId), charset(projectId))
-      val settings = URLS +: commonPropDesc
-    })
+    def newTemplateRepository(implicit projectId: Int) = new ClassPathTemplateRepository(
+      prop(URLS) match {
+          case NOT_SET => classLoader
+          case _ => new URLClassLoader(prop(URLS).split(",").map(new URL(_)).toArray)
+    }, wildcard(projectId), charset(projectId))
+    val settings = URLS +: commonPropDesc
+  })
 
-  @Bean def gitTemplateRepoFactory = new PullingTemplateRepoFactory(new BaseTemplateRepoFactory(Git) {
+  @Bean def gitTemplateRepoFactory: TemplateRepositoryFactory = new PullingTemplateRepoFactory(new BaseTemplateRepoFactory(Git) {
     private val URI = propDesc("uri", desc="Git repository URI")
     private val BRANCH = propDesc("branch", desc="Git repository branch to take templates from")
     private val DIR = propDesc("directory", desc="Local directory to clone Git repository into")
@@ -100,13 +99,13 @@ with BeanClassLoaderAware with ApplicationContextAware with Logging {
     val settings = Seq(URI, BRANCH, DIR, ID, PASS) ++ commonPropDesc
   })
     
-    @Bean def fsRepoFactory = new BaseTemplateRepoFactory(Local) {
-      private val PATH = propDesc("path", modeStr = "fs", desc="Local Filesystem path to take templates from")
+  @Bean def fsRepoFactory: TemplateRepositoryFactory = new BaseTemplateRepoFactory(Local) {
+    private val PATH = propDesc("path", modeStr = "fs", desc="Local Filesystem path to take templates from")
 
-      def newTemplateRepository(implicit projectId: Int) = new FilesystemTemplateRepository(prop(PATH), wildcard(projectId))
-        with SelfCachingTemplateRepository
-      def settings = Seq(PATH, WILDCARD)
-    }
+    def newTemplateRepository(implicit projectId: Int) = new FilesystemTemplateRepository(prop(PATH), wildcard(projectId))
+      with SelfCachingTemplateRepository
+    def settings = Seq(PATH, WILDCARD)
+  }
 
   class PullingTemplateRepoFactory(factory: TemplateRepositoryFactory) extends TemplateRepositoryFactory {
     def newTemplateRepository(implicit projectId: Int) = factory.newTemplateRepository(projectId) match {
