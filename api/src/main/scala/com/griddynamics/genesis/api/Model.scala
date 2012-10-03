@@ -163,7 +163,7 @@ case class User( @Size(min = 2, max = 32) @Pattern(regexp = "[a-z0-9.\\-_]*", me
                  lastName: String,
                  @OptString(max = 128, notBlank = true)
                  jobTitle: Option[String],
-                 @OptString(notBlank = true)
+                 @OptString(notBlank = true, min=3, max=64)
                  password: Option[String],
                  groups: Option[Seq[String]] = None)
 

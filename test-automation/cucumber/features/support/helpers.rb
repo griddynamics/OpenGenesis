@@ -19,6 +19,11 @@ module ModelHelpers
     {:envName => name, :templateName => template, :templateVersion => version, :variables => variables}
   end
 
+  def create_user(username, email, first_name, last_name, job_title, password, groups)
+    {:username => username, :email => email, :firstName => first_name, :lastName => last_name,
+     :jobTitle => job_title, :password => password, :groups => groups.split(",")}
+  end
+
   def in_project(name, &block)
     resource :projects do |projects|
       project = projects.find_by_name(name)
@@ -47,6 +52,16 @@ module ModelHelpers
 
   def environments_resource(project, &block)
     project_resource project, :envs, &block
+  end
+
+  def errors(response, code, &block)
+    response.code.should eq(code.to_i), "Expected to get code #{code}, but really it's #{response.code}"
+    r = Genesis::Hashed.new(JSON.parse(response.body))
+    if block_given?
+      block.call(r)
+    else
+      r
+    end
   end
 end
 World(Genesis, ModelHelpers)

@@ -17,8 +17,7 @@ Feature: Unified name rules for projects and environment. Environment part
   Scenario: I can't create two environments with the same name in the same project
     Given there must be an environment 'environment1' in project 'Environments'
     When I create an environment 'environment1' in project 'Environments' with template 'Simple' version '0.1'
-    Then I should get response with code '400'
-    And error like 'Environment with the same name already exists in project'
+    Then Service error with code 400 and error 'envName': 'Environment with the same name already exists in project' should be returned
   
   Scenario: I can create environments with the same names in different projects
     Given there is no environment 'environment1' in project 'Environments2'
