@@ -8,7 +8,7 @@ When /^I create a project with (\d+) characters in the name managed by '(.+)'$/ 
 end
 
 Then /^I should get response with code '(\d+)'$/ do |code|
-  @last_response.code.should == code.to_i
+  @last_response.code.should eq(code.to_i), "Expected to get response with code #{code}, but got #{@last_response.code}: #{@last_response.body}"
 end
 
 Then /^Project '(.+)' must exist$/ do |name|
