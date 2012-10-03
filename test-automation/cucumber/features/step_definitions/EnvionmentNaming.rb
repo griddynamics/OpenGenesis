@@ -18,12 +18,7 @@ When /^I create an environment '(.+)' in project '(.+)' with template '(.+)' ver
   end
 end
 
-Then /^error like '(.+)'$/ do |message|
-  error = JSON.parse(@last_response.body)
-  service_errors = error["serviceErrors"]
-  service_errors.should have_key("envName")
-  service_errors["envName"].should =~ /^#{message}/
-end
+
 
 Then /^there must be an environment '(.+)' in project '(.+)'$/ do |env, project|
   environments_resource project do |resource, id|

@@ -27,12 +27,16 @@ module Genesis
     include HTTParty
     attr_accessor :auth
 
-    def initialize(path)
+    def initialize(path, auth = {})
       @path = path
       config = YAML::load(File.open(File.dirname(__FILE__) + "/../config.yml"))
       @host = config["genesis"]["host"]
       @port = config["genesis"]["port"]
-      @auth = {:username => config["genesis"]["user"], :password => config["genesis"]["password"]}
+      if auth.empty?
+        @auth = {:username => config["genesis"]["user"], :password => config["genesis"]["password"]}
+      else
+        @auth = auth
+      end
     end
 
     def method_missing(name, *arguments, &block)
@@ -117,6 +121,19 @@ module Genesis
         "#{gp}/rest/#{p}"
       else
         gp
+      end
+    end
+  end
+
+  class Hashed
+    def initialize(hash)
+      hash.each do |k,v|
+        if v.class == Hash
+          self.instance_variable_set("@#{k}", Hashed.new(v))
+        else
+          self.instance_variable_set("@#{k}", v)
+        end
+        self.class.send :define_method, k, proc { self.instance_variable_get("@#{k}") }
       end
     end
   end
