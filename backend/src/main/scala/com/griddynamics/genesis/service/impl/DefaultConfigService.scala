@@ -71,9 +71,9 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
   private def mkProjectPrefix(projectId: Int, prefix:String) = Seq(PROJECT_PREFIX, projectId, prefix.stripPrefix(PREFIX_GENESIS)).filter("" != _).mkString(".")
 
     @Transactional
-    def update(name: String, value: Any) = isReadOnly(name) match {
-        case true => throw new IllegalArgumentException("Could not modify read-only property")
-        case _ => writeConfig.setProperty(name, value)
+    def update(configuration: Map[String, Any]) = configuration.foreach {
+        case (name, _) if isReadOnly(name) => throw new IllegalArgumentException("Could not modify read-only property: " + name)
+        case (name, value) => writeConfig.setProperty(name, value)
     }
 
     @Transactional
@@ -85,7 +85,7 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
     @Transactional
     def clear(prefix: Option[String]) {prefix.map(writeConfig.subset(_)).getOrElse(writeConfig).clear}
 
-  def update(projectId: Int, name: String, value: Any) {
-    update(mkProjectPrefix(projectId, name), value)
+  def update(projectId: Int, config: Map[String, Any]) {
+    update(config.map{case (name, value) => mkProjectPrefix(projectId, name) -> value})
   }
 }
