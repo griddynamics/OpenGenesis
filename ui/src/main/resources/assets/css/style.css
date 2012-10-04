@@ -277,6 +277,10 @@ table th{
     max-width: 465px;
 }
 
+.details-cell span {
+    max-width: 465px;
+}
+
 .multiline-description {
     white-space: pre-wrap;
     word-wrap: break-word;
