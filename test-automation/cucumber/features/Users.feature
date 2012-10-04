@@ -55,7 +55,7 @@ Feature: Users tests
   Examples:
     | userName | email				    | firstName	| lastName | title   | password| groups| field     | message                                                                                              |
     | username | user@mailinator.com	| name 		| 123name  | title   | u1	   | 	   | lastName  | Invalid format. Only letters and spaces are allowed.|
-    | username | user@mailinator.com	| name 		|          | title   | u1	   | 	   | lastName  | size must be between 1 and 256 |
+    | username | user@mailinator.com	| name 		|          | title   | u1	   | 	   | lastName  | may not be empty |
     | username | user@mailinator.com	| name 		| &lt;     | title   | u1	   | 	   | lastName  | Invalid format. Only letters and spaces are allowed. |
     | username | user@mailinator.com	| name 		| <script>alert('bug!')</script>  | title   | u1	   | 	   | lastName  | Invalid format. Only letters and spaces are allowed. |
 
@@ -79,6 +79,20 @@ Feature: Users tests
     | username | just mail        	            | name 		| surname  | title   | u1	   | 	   | email  | not a well-formed email address |
     | username | <script>alert('bug!')</script>	| name 		| surname  | title   | u1	   | 	   | email  | not a well-formed email address |
 
-  Scenario: Password is mandatory in email
-    When I'm creating user "username" with email "mail@example.com", firstName "John" lastName "Dow" jobTitle "User" password "" and groups ""
+  Scenario: Password is mandatory
+    When I'm creating user "username" with email "mail@example.com", firstName "John" lastName "Doe" jobTitle "User" password "" and groups ""
     Then Variable error with code 400 and error "password": "size must be between 3 and 64" should be returned
+
+  Scenario Outline: Update user
+    Given I successfully created user "user" with email "mail@example.com", firstName "John" lastName "Doe" jobTitle "User" password "passw0wd" and groups ""
+    When I'm updating user "user" with "<field>" set to "<value>"
+    Then I should get response with code '<code>'
+    And I can delete user "user"
+    Examples:
+      |field     |value                         |code|
+      |email     |                              |400 |
+      |email     |email                         |400 |
+      |firstName |                              |400 |
+      |firstName |<script>alert('bug!')</script>|400 |
+      |lastName  |                              |400 |
+      |lastName  |<script>alert('bug!')</script>|400 |
