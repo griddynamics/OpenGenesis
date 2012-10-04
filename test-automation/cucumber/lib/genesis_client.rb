@@ -40,26 +40,27 @@ module Genesis
     end
 
     def method_missing(name, *arguments, &block)
-      if name =~ /find_by_(.+)/
-         names = $1
-         attributes = names && names.split("_and_")
-         return super unless (attributes.size == arguments.size)
-         instance_eval <<-EOS, __FILE__, __LINE__ + 1
-            def #{name}(*arguments)
-              criteria = Hash[#{attributes}.zip(arguments)]
+      if match = /find_by_(.+)/.match(name.to_s)
+        names = match.captures.first
+        attributes = names && names.split("_and_")
+        return super unless (attributes.size == arguments.size)
+        method_body = <<-EOS
+        def #{name}(*arguments)
+              criteria = concat_arguments('#{attributes.join(",")}', arguments)
               response = get
               arr = JSON.parse(response.body)
               criteria.each do |k,v|
-                arr.reject! {|g| g[k] != v}
+                arr = arr.reject {|g| g[k.to_s] != v}
               end
               if (arr.size > 0)
                 arr[0]
               end
             end
-         EOS
-         send(name, *arguments)
+        EOS
+        instance_eval method_body, __FILE__, __LINE__ + 1
+        send(name, *arguments)
       else
-        super
+        return super
       end
     end
 
@@ -95,6 +96,10 @@ module Genesis
     end
 
     private
+    def concat_arguments(fields, arguments)
+      Hash[fields.split(",").zip(arguments)]
+    end
+
     def _genesis_path
       "http://#{@host}:#{@port}"
     end
@@ -117,7 +122,7 @@ module Genesis
 
     def _path(p)
       gp = _genesis_path()
-      if p.length > 0
+      if p.to_s.size > 0
         "#{gp}/rest/#{p}"
       else
         gp

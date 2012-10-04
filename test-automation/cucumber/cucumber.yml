@@ -1,1 +1,1 @@
-ci:  --no-source --format html --tags ~@not_ready -o cucumber.html
+ci:  --no-source --format html --tags ~@not_ready -o reports/index.html

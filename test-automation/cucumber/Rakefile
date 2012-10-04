@@ -1,8 +1,25 @@
 require 'cucumber'
 require 'cucumber/rake/task'
+Rake.application.options.trace = true
+
+task :report_dir => :config do 
+  Dir.mkdir('reports') unless Dir.exists?('reports')
+end
+
+task :config, :host, :port, :user, :password do |t, args|
+  config = {'genesis' => {'host' => args[:host], 'port' => args[:port].to_i, 'user' => args[:user], 'password' => args[:password] }}
+  File.open('config.yml', 'w') do |f|
+    f.puts("#Generated file")
+    f.write(config.to_yaml)
+  end
+end
+
+task :genesis_get do
+
+end
 
 Cucumber::Rake::Task.new(:features) do |t|
   t.profile = 'ci'
 end
 
-task :default => :features
+task :default => [:report_dir, :features]
