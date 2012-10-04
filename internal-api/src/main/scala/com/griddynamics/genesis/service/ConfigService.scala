@@ -29,11 +29,11 @@ trait ConfigService {
     def get[B](name: String, default: B): B
     def get(name: String) : Option[Any]
     def listSettings(prefix: Option[String]) : Seq[ConfigProperty]
-    def update(name:String, value:Any)
+    def update(config: Map[String, Any])
     def delete(name:String)
     def clear(prefix:Option[String])
     def get[B](projectId: Int, name: String, default: B): B
-    def update(projectId: Int, name:String, value:Any)
+    def update(projectId: Int, config: Map[String, Any])
 }
 
 object GenesisSystemProperties {

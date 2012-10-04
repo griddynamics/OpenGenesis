@@ -46,12 +46,12 @@ class SettingsController extends RestApiExceptionsHandler {
     def listSettings(@RequestParam(value = "prefix", required = false) prefix: String) =
         configService.listSettings(paramToOption(prefix)).filter(p => isVisible(p.name))
 
-    @RequestMapping(value = Array("{key:.+}"), method = Array(RequestMethod.PUT))
+    @RequestMapping(value = Array(""), method = Array(RequestMethod.PUT))
     @ResponseBody
-    def update(@PathVariable("key") key: String, request: HttpServletRequest) = using { _ =>
-        validKey(key) { k =>
-          configService.update(k, extractParamsMap(request)("value"))
-        }
+    def update(request: HttpServletRequest) = using { _ =>
+      val map = extractParamsMap(request)
+      map.foreach{case (key,_) => validKey(key){s =>}}
+      configService.update(map)
     }
 
     @RequestMapping(value = Array("{key:.+}"), method = Array(RequestMethod.DELETE))
