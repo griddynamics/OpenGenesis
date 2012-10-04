@@ -44,9 +44,9 @@ module Genesis
          names = $1
          attributes = names && names.split("_and_")
          return super unless (attributes.size == arguments.size)
-         criteria = Hash[attributes.zip(arguments)]
          instance_eval <<-EOS, __FILE__, __LINE__ + 1
-            def #{name}(criteria)
+            def #{name}(*arguments)
+              criteria = Hash[#{attributes}.zip(arguments)]
               response = get
               arr = JSON.parse(response.body)
               criteria.each do |k,v|
@@ -57,7 +57,7 @@ module Genesis
               end
             end
          EOS
-         send(name, criteria)
+         send(name, *arguments)
       else
         super
       end

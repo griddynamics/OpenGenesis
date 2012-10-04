@@ -1,3 +1,4 @@
+include Genesis
 Given /^There is a template '(.+)' version '(.+)' for project '(.+)'$/ do |template, version, project|
   templates_resource project do |resource, id|
     t = resource.find_by_name_and_version(template, version)
@@ -32,5 +33,20 @@ When /^I'm renaming environment '(.+)' to '(.+)' in project '(.+)'$/ do |old_nam
      env = resource.find_by_name(old_name)
      env.should_not be_nil, "Expected that environment #{env} exists, but it's not found"
      resource.put(env["id"], {:environment => {:name => new_name}})
+  end
+end
+
+
+
+When /^I can remove environment '(.*)' in project '(.+)'$/ do |env_name, project|
+  environments_resource project do |resource, id|
+    env = Hashed.new(resource.find_by_name(env_name))
+    wait_for(10) do
+      Hashed.new(resource.find_by_name(env_name)).status != 'Busy'
+    end
+    resource.delete(env.id)
+    wait_for(10) do
+      Hashed.new(resource.find_by_name(env_name)).status == 'Destroyed'
+    end
   end
 end
