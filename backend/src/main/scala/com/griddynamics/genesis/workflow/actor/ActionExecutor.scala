@@ -28,6 +28,8 @@ import com.griddynamics.genesis.workflow.message._
 import com.griddynamics.genesis.workflow.{ActionResult, AsyncActionExecutor, Signal}
 import akka.actor.{ActorRef, PoisonPill, Actor}
 import com.griddynamics.genesis.workflow.signal.Success
+import com.griddynamics.genesis.logging.LoggerWrapper
+import org.apache.commons.lang.exception.ExceptionUtils
 
 class ActionExecutor(unsafeExecutor: AsyncActionExecutor,
                      supervisor: ActorRef,
@@ -73,44 +75,41 @@ class ActionExecutor(unsafeExecutor: AsyncActionExecutor,
 
 class SafeAsyncActionExecutor(unsafeExecutor: AsyncActionExecutor) extends AsyncActionExecutor
 with Logging {
-    val action = unsafeExecutor.action
+  val action = unsafeExecutor.action
 
-    var result: Option[ActionResult] = None
+  var result: Option[ActionResult] = None
 
-    override def canRespond(signal : Signal) = unsafeExecutor.canRespond(signal)
+  override def canRespond(signal : Signal) = unsafeExecutor.canRespond(signal)
 
-    def startAsync() =
-        try {
-            unsafeExecutor.startAsync
-        } catch {
-            case t => {
-                log.warn(t, "Throwable while startAsync for action '%s'", action)
-                result = Some(ExecutorThrowable(unsafeExecutor.action, t))
-            }
-        }
+  def startAsync() = try {
+    unsafeExecutor.startAsync
+  } catch {
+    case t => logThrowable(t, "startAsync")
+    result = Some(ExecutorThrowable(unsafeExecutor.action, t))
+  }
 
-    def getResult = result match {
-        case Some(_) => result
-        case None => {
-            try {
-                result = unsafeExecutor.getResult
-            } catch {
-                case t => {
-                    log.warn(t, "Throwable while getResult for action '%s'", action)
-                    result = Some(ExecutorThrowable(unsafeExecutor.action, t))
-                }
-            }
-            result
-        }
+  def getResult = result orElse {
+    try {
+      result  = unsafeExecutor.getResult
+    } catch {
+      case t => logThrowable(t, "getResult")
+      result = Some(ExecutorThrowable(unsafeExecutor.action, t))
     }
+    result
+  }
 
-    def cleanUp(signal: Signal) {
-        try {
-            unsafeExecutor.cleanUp(signal)
-        }
-        catch {
-            case t => log.warn(t, "Throwable while cleanUp for action '%s' and signal '%s'",
-                action, signal)
-        }
+  def cleanUp(signal: Signal) {
+    try {
+      unsafeExecutor.cleanUp(signal)
+    } catch {
+      case t => logThrowable(t, "cleanUp", signal)
     }
+  }
+
+  private def logThrowable(t: Throwable, method: String, signal: Signal = null) {
+    val signalMsg = if(signal != null) " and signal '%s'".format(signal) else ""
+    log.warn(t, "Throwable while %s for action '%s'%s", method, action, signalMsg)
+    LoggerWrapper.writeActionLog(action.uuid, "Throwable while %s%s: %s".format(method, signalMsg, t.getMessage))
+    LoggerWrapper.writeActionLog(action.uuid, "Stack trace:\n %s".format(ExceptionUtils.getStackTrace(t)))
+  }
 }
