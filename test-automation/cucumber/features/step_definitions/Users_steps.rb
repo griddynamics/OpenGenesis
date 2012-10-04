@@ -19,3 +19,12 @@ Given /^I successfully created user "([^"]*)" with email "([^"]*)", firstName "(
     resource.find_by_username(username).should_not be_nil, "Expected to find user #{username}"
   end
 end
+
+When /^I'm updating user "([^"]*)" with "([^"]*)" set to "([^"]*)"$/ do |username, f, v|
+  @last_response = resource :users do |resource|
+    user = resource.find_by_username(username)
+    user.should_not be_nil, "Expected to find user #{username}, but got none"
+    user.merge! Hash[f => v]
+    resource.put username, user
+  end
+end

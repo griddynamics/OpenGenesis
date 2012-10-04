@@ -63,5 +63,16 @@ module ModelHelpers
       r
     end
   end
+
+  def wait_for(count, &block)
+    cond = block.call
+    cur_count = count
+    until cond
+      raise "Too many tryouts #{count}" if cur_count > count
+      sleep 1
+      cond = block.call
+      cur_count = count + 1
+    end
+  end
 end
 World(Genesis, ModelHelpers)
