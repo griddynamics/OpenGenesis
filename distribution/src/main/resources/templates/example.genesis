@@ -1,0 +1,28 @@
+package templates
+template {
+    name("ExampleTemplate")
+    version("0.1")
+
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+    workflow("create") {
+        steps {
+            execLocal {
+                phase = "init"
+                shell = "sh"
+                commands = ['echo "Creation of new environment..."']
+            }
+        }
+    }
+
+    workflow("destroy") {
+        steps {
+            execLocal {
+                phase = "init"
+                shell = "sh"
+                commands = ['echo "Destroying environment..."']
+            }
+        }
+    }
+}

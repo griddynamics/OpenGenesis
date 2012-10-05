@@ -27,24 +27,38 @@
           xsi:schemaLocation="http://maven.apache.org/xsd/assembly-1.1.0.xsd
                               http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0">
     <id>distribution</id>
-    <includeBaseDirectory>false</includeBaseDirectory>
     <formats>
         <format>dir</format>
         <format>tar.gz</format>
+        <format>zip</format>
     </formats>
     <dependencySets>
         <dependencySet>
-            <useProjectAttachments>true</useProjectAttachments>
+            <outputDirectory>lib</outputDirectory>
+            <useTransitiveDependencies>true</useTransitiveDependencies>
+            <fileMode>644</fileMode>
             <scope>runtime</scope>
         </dependencySet>
     </dependencySets>
-     <fileSets>
-        <fileSet>           
-      <directory>${basedir}/src/main/resources/environments</directory>
-      <outputDirectory>environments</outputDirectory>
-      <includes>
-        <include>*.properties</include>
-      </includes>
+    <fileSets>
+        <fileSet>
+            <directory>${project.basedir}</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>README*</include>
+                <include>LICENSE*</include>
+                <include>NOTICE*</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.build.scriptSourceDirectory}</directory>
+            <outputDirectory>bin</outputDirectory>
+            <fileMode>744</fileMode>
+        </fileSet>
+        <fileSet>
+            <directory>${basedir}/src/main/resources</directory>
+            <outputDirectory>.</outputDirectory>
+            <fileMode>644</fileMode>
         </fileSet>
     </fileSets>
 </assembly>
