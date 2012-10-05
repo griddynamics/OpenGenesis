@@ -20,7 +20,6 @@ end
 
 Then /^Service error with code (\d+) and error '(.+)': '(.+)' should be returned$/ do |code, field, message|
   error = errors(@last_response, code)
-  puts @last_response
   error.serviceErrors.respond_to?(field).should eq(true)
   actual = error.serviceErrors.send(field)
   actual.should =~ /^#{message}/
