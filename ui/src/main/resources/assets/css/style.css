@@ -1529,6 +1529,7 @@ label.error {
     background-repeat: no-repeat !important;
     font-size: 13px;
     width: 99.8%;
+    word-wrap: break-word;
 
 }
 
