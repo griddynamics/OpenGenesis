@@ -1,0 +1,27 @@
+
+package groovy
+template {
+    name("ContextWithEnv")
+    version("0.1")
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+
+    workflow("create") {
+        steps {
+            teststep {
+                phase = "phase"
+                text =  {$env.name}
+            }
+        }
+    }
+
+    workflow("destroy") {
+        steps {
+            teststep {
+                phase = "phase2"
+                text =  {$env['test_attr']}
+            }
+        }
+    }
+}

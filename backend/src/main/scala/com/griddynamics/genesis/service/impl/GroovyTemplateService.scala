@@ -45,6 +45,7 @@ import net.sf.ehcache.{CacheManager, Element}
 import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.template.dsl.groovy.{Delegate => DslDelegate}
 import com.griddynamics.genesis.api.{Failure, Success}
+import com.griddynamics.genesis.model.{EntityAttr, Environment}
 
 class GroovyTemplateService(val templateRepoService : TemplateRepoService,
                             val stepBuilderFactories : Seq[StepBuilderFactory],
@@ -190,6 +191,11 @@ object UninitializedStepDetails extends Step {
     override def stepDescription = "..."
 }
 
+class GroovyEnvWrapper(env: Environment) extends GroovyObjectSupport {
+  override def getProperty(property: String) = env.get(EntityAttr(property))
+    .getOrElse(InvokerHelper.getProperty(env, property))
+}
+
 class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport with StepBuilder with DslDelegate {
 
   override def delegationStrategy = Closure.DELEGATE_FIRST
@@ -197,9 +203,10 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
   private val contextDependentProperties = mutable.Map[String, ContextAccess]()
     def getDetails = if(contextDependentProperties.isEmpty) stepBuilder.getDetails else UninitializedStepDetails
 
-    def newStep(context: scala.collection.Map[String, AnyRef]): GenesisStep = {
+    def newStep(context: scala.collection.Map[String, AnyRef], env: Environment = null): GenesisStep = {
+      val contextWithEnv = if (env != null) context + ("$env" -> new GroovyEnvWrapper(env)) else context
         contextDependentProperties.foreach { case (propertyName, contextAccess) =>
-          InvokerHelper.setProperty(stepBuilder, propertyName, contextAccess(context))
+          InvokerHelper.setProperty(stepBuilder, propertyName, contextAccess(contextWithEnv))
         }
         stepBuilder.id = this.id
         stepBuilder.phase = this.phase
