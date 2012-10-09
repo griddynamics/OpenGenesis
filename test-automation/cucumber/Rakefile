@@ -4,7 +4,16 @@ require 'fileutils'
 require 'digest/sha2'
 require 'erb'
 require 'net/http'
+require 'rexml/document'
 Rake.application.options.trace = true
+
+def genesis_properties
+  pom = REXML::Document.new(File.new("../../pom.xml").read)
+  project = pom.elements["project"]
+  {:version => project.elements["version"].text, :group => project.elements["groupId"].text}
+end
+
+genesis_version = ENV['GENESIS_VERSION'] || genesis_properties[:version]
 
 task :report_dir do
   Dir.mkdir('reports') unless File.exist?('reports') && File.directory?('reports')
@@ -26,9 +35,9 @@ end
 
 task :unpack_genesis do
   repository = "#{ENV['HOME']}/.m2/repository"
-  group = ENV['GENESIS_GROUP'] || 'com.griddynamics.genesis'
+  group = genesis_properties[:group]
   artifact = ENV['GENESIS_ARTIFACT'] || 'distribution'
-  version = ENV['GENESIS_VERSION'] || '1.4.0-SNAPSHOT'
+  version = genesis_version
   packaging = ENV['GENESIS_PACKAGING'] || 'tar.gz'
   fulldir = "#{repository}/#{group.gsub(/\./, '/')}/#{artifact}/#{version}"
   raise "Local directory #{fulldir} does not exists or is not directory!" unless File.directory?(fulldir)
@@ -40,7 +49,7 @@ task :unpack_genesis do
 end
 
 file "genesis.properties" => ["config.yml", :unpack_genesis] do
-  genesis_dir = "distrib/genesis-#{ENV['GENESIS_VERSION'] || '1.4.0-SNAPSHOT'}"
+  genesis_dir = "distrib/genesis-#{genesis_version}"
   raise "Cannot find genesis directory #{genesis_dir}" unless File.directory?(genesis_dir)
   port = (ENV["GENESIS_PORT"] || '8082').to_i
   user = ENV["GENESIS_USER"] || 'genesis'
@@ -48,7 +57,7 @@ file "genesis.properties" => ["config.yml", :unpack_genesis] do
   host = ENV["GENESIS_HOST"] || 'localhost'
   hash = Digest::SHA2.hexdigest(password)
   template = ERB.new File.new("sample.properties.erb").read
-  File.open("distrib/genesis-#{ENV['GENESIS_VERSION'] || '1.4.0-SNAPSHOT'}/conf/genesis.properties", 'w') do |f|
+  File.open("distrib/genesis-#{genesis_version}/conf/genesis.properties", 'w') do |f|
     f.puts(template.result({:host => host, :port => port, :hash => hash, :user => user}.send(:binding)))
   end
 end
@@ -56,7 +65,7 @@ end
 task :genesis_start => ["genesis.properties"] do
   port = (ENV["GENESIS_PORT"] || '8082').to_i
   host = ENV["GENESIS_HOST"] || 'localhost'
-  cmd = "distrib/genesis-#{ENV['GENESIS_VERSION'] || '1.4.0-SNAPSHOT'}/bin/genesis.sh start"
+  cmd = "distrib/genesis-#{genesis_version}/bin/genesis.sh start"
   `#{cmd}`
   url = "http://#{host}:#{port}/"
   10.times do
@@ -70,7 +79,7 @@ task :genesis_start => ["genesis.properties"] do
 end
 
 task :genesis_stop do
-  cmd = "distrib/genesis-#{ENV['GENESIS_VERSION'] || '1.4.0-SNAPSHOT'}/bin/genesis.sh stop"
+  cmd = "distrib/genesis-#{genesis_version}/bin/genesis.sh stop"
   `#{cmd}`
 end
 
