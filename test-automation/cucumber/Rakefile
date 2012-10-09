@@ -1,25 +1,90 @@
 require 'cucumber'
 require 'cucumber/rake/task'
+require 'fileutils'
+require 'digest/sha2'
+require 'erb'
+require 'net/http'
+require 'rexml/document'
 Rake.application.options.trace = true
 
-task :report_dir => :config do 
-  Dir.mkdir('reports') unless Dir.exists?('reports')
+def genesis_properties
+  pom = REXML::Document.new(File.new("../../pom.xml").read)
+  project = pom.elements["project"]
+  {:version => project.elements["version"].text, :group => project.elements["groupId"].text}
 end
 
-task :config, :host, :port, :user, :password do |t, args|
-  config = {'genesis' => {'host' => args[:host], 'port' => args[:port].to_i, 'user' => args[:user], 'password' => args[:password] }}
+genesis_version = ENV['GENESIS_VERSION'] || genesis_properties[:version]
+
+task :report_dir do
+  Dir.mkdir('reports') unless File.exist?('reports') && File.directory?('reports')
+end
+
+file "config.yml" do |t|
+  config = {'genesis' => {'host' => ENV["GENESIS_HOST"] || 'localhost', 'port' => (ENV["GENESIS_PORT"] || '8082').to_i, 'user' => ENV["GENESIS_USER"] || 'genesis', 'password' => ENV["GENESIS_PASSWORD"] || 'genesis' }}
   File.open('config.yml', 'w') do |f|
     f.puts("#Generated file")
     f.write(config.to_yaml)
   end
 end
 
-task :genesis_get do
 
+task :clean do
+   FileUtils.rm_rf "distrib"
+   File.unlink "config.yml" if File.exists? "config.yml"
+end
+
+task :unpack_genesis do
+  repository = "#{ENV['HOME']}/.m2/repository"
+  group = genesis_properties[:group]
+  artifact = ENV['GENESIS_ARTIFACT'] || 'distribution'
+  version = genesis_version
+  packaging = ENV['GENESIS_PACKAGING'] || 'tar.gz'
+  fulldir = "#{repository}/#{group.gsub(/\./, '/')}/#{artifact}/#{version}"
+  raise "Local directory #{fulldir} does not exists or is not directory!" unless File.directory?(fulldir)
+  file_path = "#{fulldir}/#{artifact}-#{version}.#{packaging}"
+  raise "Cannot find artifact #{file_path}" unless File.exist?(file_path)
+  Dir.mkdir('distrib') unless File.exist?('distrib') && File.directory?('distrib')
+  cmd = "tar xvf #{file_path} -C distrib"
+  `#{cmd}`
+end
+
+file "genesis.properties" => ["config.yml", :unpack_genesis] do
+  genesis_dir = "distrib/genesis-#{genesis_version}"
+  raise "Cannot find genesis directory #{genesis_dir}" unless File.directory?(genesis_dir)
+  port = (ENV["GENESIS_PORT"] || '8082').to_i
+  user = ENV["GENESIS_USER"] || 'genesis'
+  password =  ENV["GENESIS_PASSWORD"] || 'genesis'
+  host = ENV["GENESIS_HOST"] || 'localhost'
+  hash = Digest::SHA2.hexdigest(password)
+  template = ERB.new File.new("sample.properties.erb").read
+  File.open("distrib/genesis-#{genesis_version}/conf/genesis.properties", 'w') do |f|
+    f.puts(template.result({:host => host, :port => port, :hash => hash, :user => user}.send(:binding)))
+  end
+end
+
+task :genesis_start => ["genesis.properties"] do
+  port = (ENV["GENESIS_PORT"] || '8082').to_i
+  host = ENV["GENESIS_HOST"] || 'localhost'
+  cmd = "distrib/genesis-#{genesis_version}/bin/genesis.sh start"
+  `#{cmd}`
+  url = "http://#{host}:#{port}/"
+  10.times do
+    begin
+      res = Net::HTTP.get_response(URI.parse(url.to_s))
+    rescue
+      puts "No answer. Waiting for start"
+      sleep 5
+    end
+  end
+end
+
+task :genesis_stop do
+  cmd = "distrib/genesis-#{genesis_version}/bin/genesis.sh stop"
+  `#{cmd}`
 end
 
 Cucumber::Rake::Task.new(:features) do |t|
   t.profile = 'ci'
 end
 
-task :default => [:report_dir, :features]
+task :default => [:genesis_start, :report_dir, :features]
