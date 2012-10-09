@@ -1,0 +1,11 @@
+genesis.system.jdbc.driver = org.h2.Driver
+genesis.system.jdbc.url = jdbc:h2:mem:.
+genesis.system.jdbc.username = genesis
+genesis.system.jdbc.password = genesis
+genesis.system.bind.port=<%= port %>
+
+genesis.template.repository.mode = filesystem
+genesis.template.repository.fs.path=<%= Dir.pwd %>/templates
+
+genesis.web.admin.sha.password=<%= hash %>
+genesis.web.admin.username=<%= user %>
