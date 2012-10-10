@@ -1,4 +1,4 @@
-Feature: Unified name rules for projects and environment. Environment part
+Feature: Workflow preconditons
   In order to use preconditions in templates
   I must be sure that preconditions are being checked before workflow description request
   and before workflow request as well
