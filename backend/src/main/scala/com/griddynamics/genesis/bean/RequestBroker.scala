@@ -23,27 +23,30 @@
 package com.griddynamics.genesis.bean
 
 import com.griddynamics.genesis.model._
-import com.griddynamics.genesis.api.{RequestResult => RR}
+import com.griddynamics.genesis.api.{RequestResult => RR, ExtendedResult}
 import com.griddynamics.genesis.service
-import service.{ValidationError, TemplateService, StoreService}
-import scala.Left
-import scala.Some
-import scala.Right
+import service._
 import com.griddynamics.genesis.validation.Validation
 import java.sql.Timestamp
+import scala.Left
+import com.griddynamics.genesis.api.Failure
+import scala.Some
+import scala.Right
+import service.ValidationError
+import com.griddynamics.genesis.api.Success
 
 trait RequestBroker {
     def createEnv(projectId: Int, envName: String, envCreator : String,
                   templateName: String, templateVersion: String,
-                  variables: Map[String, String]) : RR
+                  variables: Map[String, String]) : ExtendedResult[Int]
 
-    def requestWorkflow(envId: Int, projectId: Int, workflowName: String, variables: Map[String, String], startedBy: String) : RR
+    def requestWorkflow(envId: Int, projectId: Int, workflowName: String, variables: Map[String, String], startedBy: String) : ExtendedResult[Int]
 
-    def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String], startedBy: String) : RR
+    def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String], startedBy: String) : ExtendedResult[Int]
 
     def cancelWorkflow(envId : Int, projectId: Int)
 
-    def resetEnvStatus(envId: Int, projectId: Int) : RR
+    def resetEnvStatus(envId: Int, projectId: Int) : ExtendedResult[Int]
 }
 
 class RequestBrokerImpl(storeService: StoreService,
@@ -53,26 +56,24 @@ class RequestBrokerImpl(storeService: StoreService,
 
     def createEnv(projectId: Int, envName: String, envCreator : String,
                   templateName: String, templateVersion: String,
-                  variables: Map[String, String]) : RR = {
-        validateEnvName(envName, projectId) match {
-            case Some(rr) => return rr
-            case None =>
-        }
-
-        validateCreator(envCreator) match {
-            case Some(rr) => return rr
+                  variables: Map[String, String]) : ExtendedResult[Int] = {
+        validateEnvName(envName, projectId) ++ validateCreator(envCreator) match {
+            case f: Failure => return f
             case _ =>
         }
 
         val twf = templateService.findTemplate(projectId, templateName, templateVersion) match  {
-            case None => return RR(compoundVariablesErrors = Seq("Template %s with version %s not found".format(templateName, templateVersion)),
+            case None => return Failure(compoundVariablesErrors = Seq("Template %s with version %s not found".format(templateName, templateVersion)),
                 isSuccess = false, isNotFound = true)
-            case Some(template) => template.createWorkflow
+            case Some(template) => template.getValidWorkflow(template.createWorkflow.name) match {
+                case Success(w, _) => w
+                case f: Failure => return f
+            }
         }
 
         validateWorkflow(twf, variables, None, projectId) match {
-            case Some(rr) => return rr
-            case None =>
+            case f: Failure => return f
+            case Success(w, _) =>
         }
 
         val env = new Environment(envName, EnvStatus.Busy, envCreator,
@@ -81,70 +82,52 @@ class RequestBrokerImpl(storeService: StoreService,
                                     WorkflowStatus.Requested, 0, 0, variables, None, None)
 
         storeService.createEnv(env, workflow) match {
-            case Left(m) => RR(compoundVariablesErrors = Seq(m.toString))
+            case Left(m) => Failure(compoundVariablesErrors = Seq(m.toString))
             case Right(_) => {
                 dispatcher.createEnv(env.id, env.projectId)
-                RR(isSuccess = true)
+                Success(env.id)
             }
         }
     }
 
-    def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String], startedBy: String) : RR = {
-        val env = findEnv(envId, projectId) match {
-            case Right(e) => e
-            case Left(rr) => return rr
-        }
-
-        val twf = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion).get.destroyWorkflow
-
-        validateWorkflow(twf, variables, Some(envId), projectId) match {
-            case Some(rr) => return rr
-            case None =>
-        }
-
-        val workflow = new Workflow(env.id, twf.name, startedBy,
-                                    WorkflowStatus.Requested, 0, 0, variables, None, None)
-
-        storeService.requestWorkflow(env, workflow) match {
-            case Left(m) => RR(compoundVariablesErrors =  Seq(m.toString))
-            case Right(_) => {
-                dispatcher.destroyEnv(env.id, env.projectId)
-                RR(isSuccess = true)
-            }
-        }
-    }
+    def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String], startedBy: String) : ExtendedResult[Int] =
+        findEnv(envId, projectId).flatMap(env =>  {
+            getTemplate(env).flatMap(t => {
+                validStart(t, t.destroyWorkflow.name, env, variables, projectId, startedBy)
+            })
+        })
 
     def requestWorkflow(envId: Int, projectId: Int, workflowName: String,
-                        variables: Map[String, String], startedBy: String) : RR = {
-        val env = findEnv(envId, projectId) match {
-            case Right(e) => e
-            case Left(rr) => return rr
-        }
+                        variables: Map[String, String], startedBy: String) : ExtendedResult[Int] =
+        findEnv(envId, projectId).flatMap({env => {
+            getTemplate(env).flatMap(t => {
+                if (t.createWorkflow.name == workflowName)
+                    Failure(serviceErrors = Map(RR.envName ->
+                      "It's not allowed to execute create workflow['%s'] in existing environment '%s'"
+                        .format(workflowName, env.name)))
+                else
+                    validStart(t, workflowName, env, variables, projectId, startedBy)
+            })
+        }})
 
-        val template = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion)
-        if (template.filter(workflowName == _.createWorkflow.name).isDefined) {
-            return RR(serviceErrors = Map(RR.envName ->
-                "It's not allowed to execute create workflow['%s'] in existing environment '%d'"
-                    .format(workflowName, envId)))
-        }
-        val twf = template.get.getWorkflow(workflowName)
+    private def getTemplate(env: Environment) = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion) match {
+        case Some(t) => Success(t)
+        case None => Failure(compoundVariablesErrors = Seq("Template used to create environment %s is not found".format(env.name)))
+    }
 
-        if (twf.isEmpty) {
-            return RR(serviceErrors = Map(RR.envName ->
-                "Failed to find workflow with name '%s' in environment '%s'".format(workflowName, envId)))
-        }
-        validateWorkflow(twf.get, variables, Some(envId), projectId) match {
-            case Some(rr) => return rr
-            case None =>
-        }
+    private def validStart(template: TemplateDefinition, workflowName: String, env: Environment, variables: Map[String, String], projectId: Int, startedBy: String): ExtendedResult[Int] = {
+        template.getValidWorkflow(workflowName)
+          .flatMap(validateWorkflow(_, variables, Some(env.id), projectId))
+          .flatMap(startWorkflow(env, startedBy, variables, _))
+    }
 
-        val workflow = new Workflow(env.id, workflowName, startedBy, WorkflowStatus.Requested, 0, 0, variables, None, None)
-
-        storeService.requestWorkflow(env, workflow)  match {
-            case Left(m) => RR(compoundVariablesErrors = Seq(m.toString))
-            case Right(_) => {
-                dispatcher.startWorkflow(env.id, env.projectId)
-                RR(isSuccess = true)
+    def startWorkflow(env: Environment, startedBy: String, variables: Map[String, String], w: WorkflowDefinition): ExtendedResult[Int] = {
+        val workflow = new Workflow(env.id, w.name, startedBy, WorkflowStatus.Requested, 0, 0, variables, None, None)
+        storeService.requestWorkflow(env, workflow) match {
+            case Left(m) => Failure(compoundVariablesErrors = Seq(m.toString))
+            case Right((e, wf)) => {
+                dispatcher.startWorkflow(e.id, env.projectId)
+                Success(e.id)
             }
         }
     }
@@ -153,37 +136,32 @@ class RequestBrokerImpl(storeService: StoreService,
         dispatcher.cancelWorkflow(envId, projectId)
     }
 
-    def resetEnvStatus(envId: Int, projectId: Int) : RR = {
-        val env = findEnv(envId, projectId) match {
-            case Right(e) => e
-            case Left(rr) => return rr
-        }
+    def resetEnvStatus(envId: Int, projectId: Int) : ExtendedResult[Int] = findEnv(envId, projectId).flatMap(env => {
         env.status match {
             case EnvStatus.Broken => {
                 storeService.resetEnvStatus(env) match {
-                    case Some(m) => RR(compoundServiceErrors = Seq(m.toString))
-                    case _ => RR(isSuccess = true)
+                    case Some(m) => Failure(compoundServiceErrors = Seq(m.toString))
+                    case _ => Success(envId, isSuccess = true)
                 }
             }
-            case _ => RR(compoundServiceErrors = Seq("Environment is not in 'Broken' state"))
+            case _ => Failure(compoundServiceErrors = Seq("Environment is not in 'Broken' state"))
         }
-    }
+    })
 
-    def findEnv(envId : Int, projectId: Int) : Either[RR, Environment] = {
+    def findEnv(envId : Int, projectId: Int) : ExtendedResult[Environment] = {
         val env = storeService.findEnv(envId, projectId)
-
         if (env.isDefined)
-            Right(env.get)
+            Success(env.get)
         else
-            Left(RR(isNotFound = true, serviceErrors = Map(RR.envName -> "Failed to find environment with id '%s'".format(envId))))
+            Failure(isNotFound = true, serviceErrors = Map(RR.envName -> "Failed to find environment with id '%s'".format(envId)))
     }
 
     def validateEnvName(envName: String, projectId: Int) = envName match {
         case Validation.projectEnvNamePattern(name) => storeService.findEnv(name, projectId) match {
-            case Some(_) => Some(RR(serviceErrors = Map(RR.envName -> "Environment with the same name already exists in project [id = %s]".format(projectId))))
-            case None => None
+            case Some(_) => Failure(serviceErrors = Map(RR.envName -> "Environment with the same name already exists in project [id = %s]".format(projectId)))
+            case None => Success((envName, projectId))
         }
-        case _ => Some(RR(serviceErrors = Map(RR.envName -> Validation.projectEnvNameErrorMessage)))
+        case _ => Failure(serviceErrors = Map(RR.envName -> Validation.projectEnvNameErrorMessage))
     }
 }
 
@@ -192,21 +170,21 @@ object RequestBrokerImpl {
         val validationResults = workflow.validate(variables, envId, Option(projectId))
 
         if (!validationResults.isEmpty)
-            Some(toRequestResult(validationResults))
+            toFailure(validationResults)
         else
-            None
+            Success(workflow)
     }
 
     def validateCreator(creator: String) = {
         if (creator != null && creator.trim.length > 0)
-            None
+            Success(creator)
         else
-            Some(RR(isSuccess = false, compoundServiceErrors = Seq("Creator not found")))
+            Failure(isSuccess = false, compoundServiceErrors = Seq("Creator not found"))
     }
 
-    def toRequestResult(errors : Seq[ValidationError]) = {
+    def toFailure(errors : Seq[ValidationError]) = {
         val (varErrors, servErrors) = errors.partition(e => Option(e.variableName).isDefined)
         val variablesErrors = varErrors.map(e => (e.variableName, e.description))
-        RR(variablesErrors = variablesErrors.toMap, serviceErrors = servErrors.map((RR.template -> _.description)).toMap)
+        Failure(variablesErrors = variablesErrors.toMap, serviceErrors = servErrors.map((RR.template -> _.description)).toMap)
     }
 }

@@ -44,13 +44,13 @@ trait GenesisService {
     def listTemplates(projectId: Int) : Seq[Template]
 
     def createEnv(projectId: Int, envName : String, creator : String, templateName : String,
-                  templateVersion : String, variables : Map[String, String]) : RequestResult
+                  templateVersion : String, variables : Map[String, String]) : ExtendedResult[Int]
 
-    def destroyEnv(envId : Int, projectId: Int, variables : Map[String, String], startedBy: String) : RequestResult
+    def destroyEnv(envId : Int, projectId: Int, variables : Map[String, String], startedBy: String) : ExtendedResult[Int]
 
-    def requestWorkflow(envId : Int, projectId: Int, workflowName : String, variables : Map[String, String], startedBy: String) : RequestResult
+    def requestWorkflow(envId : Int, projectId: Int, workflowName : String, variables : Map[String, String], startedBy: String) : ExtendedResult[Int]
 
-    def resetEnvStatus(envId: Int, projectId: Int) : RequestResult
+    def resetEnvStatus(envId: Int, projectId: Int) : ExtendedResult[Int]
 
     def cancelWorkflow(envId : Int, projectId: Int)
 

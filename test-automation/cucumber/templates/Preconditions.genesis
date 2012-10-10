@@ -1,0 +1,34 @@
+package templates
+template {
+    name("Preconditions")
+    version("0.1")
+
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+    workflow("create") {
+        steps {
+        }
+    }
+
+    workflow("wont_run") {
+        require {
+            "One must be less than zero" { 1 < 0 }
+        }
+
+        steps {}
+    }
+
+    workflow("should_run") {
+        require {
+            "One must be equal to one" { 1 == 1 }
+        }
+
+        steps {}
+    }
+
+    workflow("destroy") {
+        steps {
+        }
+    }
+}

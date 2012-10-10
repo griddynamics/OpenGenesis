@@ -26,6 +26,7 @@ module Genesis
   class Resource
     include HTTParty
     attr_accessor :auth
+    attr_reader :path
 
     def initialize(path, auth = {})
       @path = path

@@ -1,0 +1,21 @@
+package templates
+template {
+    name("FailedCreate")
+    version("0.1")
+
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+    workflow("create") {
+        require {
+            "One must be less than zero" { 1 < 0 }
+        }
+        steps {
+        }
+    }
+
+    workflow("destroy") {
+        steps {
+        }
+    }
+}

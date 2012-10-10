@@ -129,6 +129,11 @@ sealed abstract class ExtendedResult[+S]() extends Product with Serializable {
     case (Success(a, _)) => Success(f(a))
   }
 
+  def flatMap[B](f: S => ExtendedResult[B]): ExtendedResult[B] = this match {
+      case x: Failure => x
+      case Success(a, _) => f(a)
+  }
+
   def ++[B >: S](r: ExtendedResult[B]) : ExtendedResult[B] = (this, r) match {
         case (Success(a, _), Success(b, _)) => Success(a)
         case (a@Failure(s, v, cs, cw, nf, _, _), b@Failure(s1, v1, cs1, cw1, nf1, _, _)) => Failure(s ++ s1, v ++ v1, cs ++ cs1, cw ++ cw1, nf || nf1)
