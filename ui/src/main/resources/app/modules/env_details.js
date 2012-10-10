@@ -480,7 +480,7 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
         }
 
         $('.workflow-variable').each(function () {
-          if ($(this).val()) vals[$(this).attr('name')] = $(this).val();
+          if ($(this).val()) vals[$(this).attr('name')] = $(this).is("input[type='checkbox']") ? $(this).is(':checked') : $(this).val();
         });
       }
       var execution = backend.WorkflowManager.executeWorkflow(this.projectId, this.envId, this.workflow.name, vals);
