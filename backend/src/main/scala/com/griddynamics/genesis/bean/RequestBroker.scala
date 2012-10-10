@@ -92,21 +92,28 @@ class RequestBrokerImpl(storeService: StoreService,
 
     def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String], startedBy: String) : ExtendedResult[Int] =
         findEnv(envId, projectId).flatMap(env =>  {
-            val template: TemplateDefinition = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion).get
-            validStart(template, template.destroyWorkflow.name, env, variables, projectId, startedBy)
+            getTemplate(env).flatMap(t => {
+                validStart(t, t.destroyWorkflow.name, env, variables, projectId, startedBy)
+            })
         })
 
     def requestWorkflow(envId: Int, projectId: Int, workflowName: String,
                         variables: Map[String, String], startedBy: String) : ExtendedResult[Int] =
         findEnv(envId, projectId).flatMap({env => {
-            val template = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion)
-            if (template.filter(workflowName == _.createWorkflow.name).isDefined) {
-                return Failure(serviceErrors = Map(RR.envName ->
-                  "It's not allowed to execute create workflow['%s'] in existing environment '%d'"
-                    .format(workflowName, envId)))
-            }
-            validStart(template.get, workflowName, env, variables, projectId, startedBy)
+            getTemplate(env).flatMap(t => {
+                if (t.createWorkflow.name == workflowName)
+                    Failure(serviceErrors = Map(RR.envName ->
+                      "It's not allowed to execute create workflow['%s'] in existing environment '%s'"
+                        .format(workflowName, env.name)))
+                else
+                    validStart(t, workflowName, env, variables, projectId, startedBy)
+            })
         }})
+
+    private def getTemplate(env: Environment) = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion) match {
+        case Some(t) => Success(t)
+        case None => Failure(compoundVariablesErrors = Seq("Template used to create environment %s is not found".format(env.name)))
+    }
 
     private def validStart(template: TemplateDefinition, workflowName: String, env: Environment, variables: Map[String, String], projectId: Int, startedBy: String): ExtendedResult[Int] = {
         template.getValidWorkflow(workflowName)

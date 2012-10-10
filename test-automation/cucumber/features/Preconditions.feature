@@ -32,10 +32,16 @@ Feature: Workflow preconditons
     Then Compound service error with code 400 and error "One must be less than zero" should be present in answer
     And I can delete environment 'wilma' in project 'Preconditions'
 
+  Scenario: Request workflow: can't run create workflow on existing project
+    Given I create an environment 'pebbles' in project 'Preconditions' with template 'Preconditions' version '0.1'
+    When I'm starting workflow 'create' on environment 'pebbles' in project 'Preconditions'
+    Then Service error with code 400 and error 'envName': 'It's not allowed to execute create workflow['create'] in existing environment 'pebbles'' should be returned
+    And I can delete environment 'pebbles' in project 'Preconditions'
 
   Scenario: Preconditions on request workflow: satisfied precondition
     Given I create an environment 'betty' in project 'Preconditions' with template 'Preconditions' version '0.1'
     When I'm starting workflow 'should_run' on environment 'betty' in project 'Preconditions'
     Then I should get response with code '200'
     And I can delete environment 'betty' in project 'Preconditions'
+    And I can delete project 'Preconditions'
 
