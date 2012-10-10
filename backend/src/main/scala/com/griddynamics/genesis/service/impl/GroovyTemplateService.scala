@@ -278,6 +278,10 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
       }
     }
 
+    private def varDesc(v: VariableDetails, varPossibleValues: Map[String, String], dependsOn: Option[List[String]]) =
+      new VariableDescription(v.name, v.clazz, v.description, v.isOptional, v.defaultValue.map(String.valueOf(_)).getOrElse(null),
+        varPossibleValues, dependsOn)
+
     override def partial(variables: Map[String, Any]): Seq[VariableDescription] = {
         val appliedVars = variables.keys.toSet
 
@@ -293,7 +297,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
           val varPossibleValues: Map[String, String] = v.valuesList.map { lambda => lambda.apply(resolvedVariables) }.getOrElse(Map())
           val dependsOn = if (v.dependsOn.isEmpty) None else Some(v.dependsOn.toList)
 
-          new VariableDescription(v.name, v.description, v.isOptional, v.defaultValue.map(_.toString).getOrElse(null), varPossibleValues, dependsOn)
+          varDesc(v, varPossibleValues, dependsOn)
         }
     }
 
@@ -367,12 +371,11 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
 
     lazy val variableDescriptions = {
         for (variable <- workflow.variables()) yield {
-            val default  = variable.defaultValue.map(String.valueOf(_)).getOrElse(null)
             val dependsOn = if (variable.dependsOn.isEmpty) None else Some(variable.dependsOn.toList)
 
             val valueList: Map[String, String] = variable.valuesList.map(_.apply(Map())).getOrElse(Map())
 
-            new VariableDescription(variable.name, variable.description, variable.isOptional, default, valueList, dependsOn)
+            varDesc(variable, valueList, dependsOn)
         }
     }
 
