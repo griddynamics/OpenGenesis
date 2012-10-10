@@ -32,7 +32,8 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
       "templateName": "",
       "templateVersion": "",
       "projectId": "",
-      "historyCount": 0
+      "historyCount": 0,
+      "finishedActionsCount": 0
     },
 
     urlRoot: function () {
@@ -580,7 +581,7 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
       this.actionVews = {};
       this.collection.fetch();
       this.collection.bind("reset", this.render, this);
-      this.model.bind("change:historyCount change:status change:workflowCompleted", this.collection.refresh, this.collection);
+      this.model.bind("change:historyCount change:status change:workflowCompleted change:finishedActionsCount", this.collection.refresh, this.collection);
     },
 
     toggleStepActionsView: function(event) {

@@ -57,6 +57,8 @@ trait StoreService {
 
     def listWorkflowSteps(workflow : Workflow): Seq[WorkflowStep]
 
+    def countFinishedActions(env: Environment): Int
+
     // TODO @throws(classOf[WorkflowRequestFailed])
     def createEnv(env: Environment, workflow: Workflow): Either[Mistake, (Environment, Workflow)]
 
