@@ -248,16 +248,16 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
 
             $.when(wmodel.fetch()).done(function(){
               self.executeWorkflowDialog.showFor(self.details.get("projectId"), wmodel.get("result"), self.details.get("id"),
-                self.details.get('templateName'), self.details.get('templateVersion'));
+              self.details.get('templateName'), self.details.get('templateVersion'));
             }).fail(function(jqXHR){
-                status.StatusPanel.error(jqXHR);
+              genesis.app.trigger("page-view-loading-completed");
+              status.StatusPanel.error(jqXHR);
             });
           }
         }).fail(function(jqXHR) {
           status.StatusPanel.error(jqXHR);
-        }).always(function(){
           genesis.app.trigger("page-view-loading-completed");
-        });
+        })
     },
 
     updateControlButtons: function () {
@@ -290,18 +290,14 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
       var view = this;
       genesis.app.trigger("page-view-loading-started");
       var name = $("#new-name").val();
-      $.when(backend.EnvironmentManager.updateEnvName(view.details.get("projectId"), view.details.get('id'), name)).done(
-        function() {
-          $('a.envname').html(name);
-          view.hideEditName();
-          genesis.app.trigger("page-view-loading-completed");
-        }
-      ).fail(
-        function(jqxhr) {
-          genesis.app.trigger("page-view-loading-completed");
-          status.StatusPanel.error(jqxhr);
-        }
-      );
+      $.when(backend.EnvironmentManager.updateEnvName(view.details.get("projectId"), view.details.get('id'), name)).done(function() {
+        $('a.envname').html(name);
+        view.hideEditName();
+      }).fail(function(jqxhr) {
+        status.StatusPanel.error(jqxhr);
+      }).always(function() {
+        genesis.app.trigger("page-view-loading-completed");
+      });
     },
 
     renderVirtualMachines: function() {
