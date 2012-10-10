@@ -27,7 +27,7 @@ import com.griddynamics.genesis.{model, service}
 import com.griddynamics.genesis.bean.RequestBroker
 import GenesisRestService._
 import model.{Workflow, EnvStatus}
-import service.{ComputeService, TemplateService, StoreService}
+import service.{VariableDescription, ComputeService, TemplateService, StoreService}
 import com.griddynamics.genesis.validation.Validation._
 import com.griddynamics.genesis.api.ActionTracking
 import com.griddynamics.genesis.api.EnvironmentDetails
@@ -117,8 +117,7 @@ class GenesisRestService(storeService: StoreService,
     def queryVariables(projectId: Int, templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]) = {
         templateService.findTemplate(projectId, templateName, templateVersion).flatMap {t => {
                 t.getWorkflow(workflow).map(workflow => {
-                    workflow.partial(variables).map(v => Variable(v.name, v.description, v.isOptional,
-                        v.defaultValue, v.values, v.dependsOn))
+                    workflow.partial(variables).map(varDesc(_))
                 })
             }
         }
@@ -177,8 +176,7 @@ object GenesisRestService {
     }
 
     def workflowDesc(workflow: service.WorkflowDefinition) = {
-        val vars = for (variable <- workflow.variableDescriptions) yield Variable(variable.name, variable.description, variable.isOptional,
-            variable.defaultValue, variable.values.toMap, variable.dependsOn)
+        val vars = for (variable <- workflow.variableDescriptions) yield varDesc(variable)
         Workflow(workflow.name, vars)
     }
 
@@ -270,7 +268,7 @@ object GenesisRestService {
         )
     }
 
-    private def attrDesc(attrs: Seq[model.DeploymentAttribute]) = attrs.map( attr => attr.key -> Attribute(attr.value, attr.desc)).toMap
+  private def attrDesc(attrs: Seq[model.DeploymentAttribute]) = attrs.map( attr => attr.key -> Attribute(attr.value, attr.desc)).toMap
 
   private def envs(envs: Seq[(model.Environment, Option[Workflow])]) = for ((env, workflowOption) <- envs) yield
     Environment(env.id, env.name, env.status.toString, stepsCompleted(workflowOption), env.creator,
@@ -278,5 +276,6 @@ object GenesisRestService {
       env.templateName, env.templateVersion, env.projectId,
       attrDesc(env.deploymentAttrs))
 
-
+  private def varDesc(v : VariableDescription) = Variable(v.name, v.clazz.getSimpleName, v.description, v.isOptional,
+    v.defaultValue, v.values.toMap, v.dependsOn)
 }

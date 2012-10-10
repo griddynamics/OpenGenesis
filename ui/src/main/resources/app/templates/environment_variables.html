@@ -26,7 +26,10 @@
                           <% } %>
                         </select>
                     <% } %>
-                <% } else { %>
+                <% } else if (variable.type == "Boolean"){ %>
+                  <input type="checkbox" class="<%= (variable.optional ? "workflow-variable" : "workflow-variable required") %>" id="<%= variable.name %>"
+                name="<%= variable.name %>" <% if (variable.defaultValue) { %> checked = "checked" <% } %> >
+                 <% } else { %>
                   <input type="text" class="<%= (variable.optional ? "workflow-variable" : "workflow-variable required") %>" id="<%= variable.name %>" name="<%= variable.name %>" value="<%= variable.defaultValue %>" >
                 <% } %>
             </div>
