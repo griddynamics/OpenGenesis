@@ -29,117 +29,103 @@
       return detailsObject;
     }
 %>
-<div class="pagination" style="float:right" >
-  <a href="javascript:void(0)" class="button previous-page" > <span> &lt; </span> </a>
-  <span class="pagination-state" > <%= page %> / <%= pagesCount %> </span>
-  <a href="javascript:void(0)" class="button next-page" > <span> &gt; </span> </a>
-  <div class="clear"></div>
+<div class="workflow" data-timestamp="<%= workflow.executionStartedTimestamp %>">
+<img src="/assets/img/arrow-left.png" class="toggle">
+
+<h3 class="toggle"><%= workflow.name %></h3>
+
+<div class="workflow-actions">
+  Started:
+  <span class="date">
+    <%= workflow.executionStartedTimestamp ? utils.formatDate(workflow.executionStartedTimestamp) : "No information" %>
+  </span>
+  By: <span class="username"><%= workflow.startedBy %></span>
+  Finished:
+  <span class="date">
+   <%= workflow.executionFinishedTimestamp ? utils.formatDate(workflow.executionFinishedTimestamp) : "--" %>
+  </span>
+  Duration: <span class="duration"> <%= utils.timeDuration(workflow.executionStartedTimestamp, workflow.executionFinishedTimestamp) %></span>
+
+  <span class="status-section">Status: <span class=<%= (failStatuses.indexOf(workflow.status) != -1 ? "bad" : "normal") %> > <%= workflow.status %></span></span>
 </div>
-<div class="clear" style="padding-bottom: 5px;"></div>
-
-<% for (var i = 0, workflowsCount  = workflows.length; i < workflowsCount; i++) { var workflow = workflows.at(i).attributes; %>
-<div class="workflow-section" >
-  <div class="workflow" data-timestamp="<%= workflow.executionStartedTimestamp %>">
-    <img src="/assets/img/arrow-left.png" class="toggle">
-
-    <h3 class="toggle"><%= workflow.name %></h3>
-
-    <div class="workflow-actions">
-      Started:
-      <span class="date">
-        <%= workflow.executionStartedTimestamp ? utils.formatDate(workflow.executionStartedTimestamp) : "No information" %>
-      </span>
-      By: <span class="username"><%= workflow.startedBy %></span>
-      Finished:
-      <span class="date">
-       <%= workflow.executionFinishedTimestamp ? utils.formatDate(workflow.executionFinishedTimestamp) : "--" %>
-      </span>
-      Duration: <span class="duration"> <%= utils.timeDuration(workflow.executionStartedTimestamp, workflow.executionFinishedTimestamp) %></span>
-
-      <span class="status-section">Status: <span class=<%= (failStatuses.indexOf(workflow.status) != -1 ? "bad" : "normal") %> > <%= workflow.status %></span></span>
-    </div>
-  </div>
-  <div class="history-details <%= expandedSections[workflow.executionStartedTimestamp] ? 'visible' : '' %>" >
-    <table class="intab workflow-history" style="table-layout: fixed">
-      <% if (!_.isUndefined(workflow.steps)) { %>
-      <% var prev = true; %>
-          <thead>
-            <tr id="table-title">
-              <th class="first name" >Steps / Actions</th>
-              <th class="phase">Phase</th>
-              <th class="status">Status</th>
-              <th class="details">Details</th>
-              <th class="started">Started</th>
-              <th class="stopped">Finished</th>
-              <th class="logs">Logs</th>
-            </tr>
-            </thead>
-          <tbody>
-            <% for(var j = 0, count = workflow.steps.length; j < count; j++) { var step = workflow.steps[j]; var details = splitDetails(step.details); %>
-              <% if (prev != step.regular) { %>
-                <tr class="flow-separator workflow" >
-                    <td colspan="7">
-                        Errors processing:
-                    </td>
-                </tr>
-              <% } %>
-              <% prev = step.regular %>
-              <tr class="<%= stepStatusMap[step.status] %> <%= step.regular ? 'regular' : 'additional' %>" >
-                <% if (step.status  !== 'Requested') { %>
-                  <td class="first step-details-expander toggle" data-actions-rel="#step-<%= step.stepId %>-actions" data-step-id="<%= step.stepId %>" data-step-status="<%= step.status %>">
-                    <img src="/assets/img/arrow-left.png" class="toggle">
-                    <a href="javascript: void(0)">
-                        <%= step.title ? step.title : "Step " + (j + 1) %>
-                    </a>
-                  </td>
-                <% } else { %>
-                  <td class="first" >
-                    <span style="padding-left: 15px"><%= step.title ? step.title : "Step " + (j + 1) %></span>
-                  </td>
-                <% } %>
-                <td class="phase"><%= step.phase %></td>
-                <td class="status"><%= step.status %></td>
-                <td class="details-cell">
-                  <span style="float:left;"><%= details.short %></span>&nbsp;
-                  <% if (details.params.length > 100) { %>
-                    <a href="javascript:void(0)" rel="#details<%= step.stepId %>" class="show-details" title="Show details">
-                      <span class="ui-icon ui-icon-carat-1-s" ></span>
-                    </a>
-                    <div class="toggle-content" id="details<%= step.stepId %>"> <%- details.params %></div>
-                  <% } else { %>
-                     <%- details.params %>
-                   <% } %>
-                </td>
-                <td>
-                  <%= step.started ? utils.formatDate(step.started) : "" %>
-                </td>
-                <td>
-                  <%= step.finished ? utils.formatDate(step.finished) : "" %>
-                </td>
-                <td>
-                  <% if ( step.status !== "Requested" ) { %>
-                    <a href="/rest/projects/<%= workflows.projectId %>/envs/<%= workflows.envId %>/logs/<%= step.stepId %>?timezone_offset=<%= utils.timezoneOffset() %>" target="_blank" data-bypass>Step Log</a>
-                  <% } %>
-                </td>
-              </tr>
-              <tr id="step-<%= step.stepId %>-actions" <% if (!expandedStepsHtml[step.stepId]) { %> style="display:none" <% } %>
-                  class="step-action <%= stepStatusMap[step.status] %> <%= step.regular ? 'regular' : 'additional' %>" data-step-id="<%= step.stepId %>">
-                <td colspan="7" class="subtable">
-                  <% if (expandedStepsHtml[step.stepId]) { %>
-                    <%= expandedStepsHtml[step.stepId] %>
-                  <% } %>
-                </td>
-              </tr>
-            <% } %>
-          </tbody>
-      <% } else { %>
-        <tr>
-          <td>No information available</td>
+</div>
+<div class="history-details <%= expand ? 'visible' : '' %>" >
+<table class="intab workflow-history" style="table-layout: fixed">
+  <% if (!_.isUndefined(workflow.steps)) { %>
+  <% var prev = true; %>
+      <thead>
+        <tr id="table-title">
+          <th class="first name" >Steps / Actions</th>
+          <th class="phase">Phase</th>
+          <th class="status">Status</th>
+          <th class="details">Details</th>
+          <th class="started">Started</th>
+          <th class="stopped">Finished</th>
+          <th class="logs">Logs</th>
         </tr>
-      <% } %>
-    </table>
-  </div>
+        </thead>
+      <tbody>
+        <% for(var j = 0, count = workflow.steps.length; j < count; j++) { var step = workflow.steps[j]; var details = splitDetails(step.details); %>
+          <% if (prev != step.regular) { %>
+            <tr class="flow-separator workflow" >
+                <td colspan="7">
+                    Errors processing:
+                </td>
+            </tr>
+          <% } %>
+          <% prev = step.regular %>
+          <tr class="<%= stepStatusMap[step.status] %> <%= step.regular ? 'regular' : 'additional' %>" >
+            <% if (step.status  !== 'Requested') { %>
+              <td class="first step-details-expander toggle" data-actions-rel="#step-<%= step.stepId %>-actions" data-step-id="<%= step.stepId %>" data-step-status="<%= step.status %>">
+                <img src="/assets/img/arrow-left.png" class="toggle">
+                <a href="javascript: void(0)">
+                    <%= step.title ? step.title : "Step " + (j + 1) %>
+                </a>
+              </td>
+            <% } else { %>
+              <td class="first" >
+                <span style="padding-left: 15px"><%= step.title ? step.title : "Step " + (j + 1) %></span>
+              </td>
+            <% } %>
+            <td class="phase"><%= step.phase %></td>
+            <td class="status"><%= step.status %></td>
+            <td class="details-cell">
+              <span style="float:left;"><%= details.short %></span>&nbsp;
+              <% if (details.params.length > 100) { %>
+                <a href="javascript:void(0)" rel="#details<%= step.stepId %>" class="show-details" title="Show details">
+                  <span class="ui-icon ui-icon-carat-1-s" ></span>
+                </a>
+                <div class="toggle-content" id="details<%= step.stepId %>"> <%- details.params %></div>
+              <% } else { %>
+                 <%- details.params %>
+               <% } %>
+            </td>
+            <td>
+              <%= step.started ? utils.formatDate(step.started) : "" %>
+            </td>
+            <td>
+              <%= step.finished ? utils.formatDate(step.finished) : "" %>
+            </td>
+            <td>
+              <% if ( step.status !== "Requested" ) { %>
+                <a href="/rest/projects/<%= projectId %>/envs/<%= envId %>/logs/<%= step.stepId %>?timezone_offset=<%= utils.timezoneOffset() %>" target="_blank" data-bypass>Step Log</a>
+              <% } %>
+            </td>
+          </tr>
+          <tr id="step-<%= step.stepId %>-actions" <% if (!expandedStepsHtml[step.stepId]) { %> style="display:none" <% } %>
+            class="step-action <%= stepStatusMap[step.status] %> <%= step.regular ? 'regular' : 'additional' %>" data-step-id="<%= step.stepId %>">
+            <td colspan="7" class="subtable">
+                <% if (expandedStepsHtml[step.stepId]) { %>
+                    <%= expandedStepsHtml[step.stepId] %>
+                <% } %>
+            </td>
+          </tr>
+        <% } %>
+      </tbody>
+  <% } else { %>
+    <tr>
+      <td>No information available</td>
+    </tr>
+  <% } %>
+</table>
 </div>
-
-
-<% } %>

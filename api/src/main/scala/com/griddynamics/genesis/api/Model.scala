@@ -63,6 +63,7 @@ case class EnvironmentDetails(envId: Int,
                               servers : Seq[BorrowedMachine],
                               projectId: Int,
                               historyCount: Int,
+                              currentWorkflowFinishedActionsCount: Int,
                               workflowCompleted: Option[Double],
                               attributes: Map[String, Attribute] = Map())
 
