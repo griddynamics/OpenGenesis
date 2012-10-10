@@ -92,6 +92,7 @@ class GenesisRestService(storeService: StoreService,
                         _,
                         computeService,
                         storeService.countWorkflows(env),
+                        storeService.countFinishedActions(env),
                         stepsCompleted(flow)
                     )
                 }
@@ -188,6 +189,7 @@ object GenesisRestService {
                 template: service.TemplateDescription,
                 computeService: ComputeService,
                 historyCount: Int,
+                finishedActionsCount: Int,
                 workflowCompleted: Option[Double]) = {
 
         val workflows = template.workflows.map (Workflow(_, Seq()))
@@ -213,6 +215,7 @@ object GenesisRestService {
             bmDescs.toSeq,
             env.projectId,
             historyCount,
+            finishedActionsCount,
             workflowCompleted,
             attrDesc(env.deploymentAttrs)
         )
