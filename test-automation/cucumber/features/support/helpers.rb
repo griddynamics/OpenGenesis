@@ -54,6 +54,12 @@ module ModelHelpers
     project_resource project, :envs, &block
   end
 
+  def workflow_resource(project, template, version, workflow, &block)
+    templates_resource project do |r, id|
+      nested_resource r.path, "#{template}/v#{version}", "#{workflow}", &block
+    end
+  end
+
   def errors(response, code, &block)
     response.code.should eq(code.to_i), "Expected to get code #{code}, but really it's #{response.code}"
     r = Genesis::Hashed.new(JSON.parse(response.body))
