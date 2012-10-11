@@ -22,7 +22,7 @@ Then /^Service error with code (\d+) and error '(.+)': '(.+)' should be returned
   error = errors(@last_response, code)
   error.serviceErrors.respond_to?(field).should eq(true)
   actual = error.serviceErrors.send(field)
-  actual.should eq(message)
+  actual.should match(message)
 end
 
 Then /^Compound service error with code (\d+) and error "([^"]*)" should be present in answer$/ do |code, message|
