@@ -184,6 +184,17 @@ class StoreService extends service.StoreService with Logging {
           orderBy(step.id asc)
     ).toList
 
+  @Transactional(readOnly = true)
+  def countFinishedActionsForCurrentWorkflow(env: Environment): Int =
+    from(GS.workflows, GS.steps, GS.actionTracking)((wf, step, action) =>
+      where(wf.envId === env.id and
+        wf.status === WorkflowStatus.Executing and
+        step.workflowId === wf.id and
+        action.workflowStepId === step.id and
+        action.status <> ActionTrackingStatus.Executing)
+        compute(count)
+    ).single.measures.toInt
+
   @Transactional
   def createEnv(env: Environment, workflow: Workflow) = {
     throwableToLeft {

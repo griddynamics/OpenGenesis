@@ -10,7 +10,7 @@ require([
   "modules/status",
   "modules/projects",
   "modules/environments",
-  "modules/env_details",
+  "modules/env_details/env_details",
   "modules/createenv",
   "modules/breadcrumbs",
   "modules/project_properties",
