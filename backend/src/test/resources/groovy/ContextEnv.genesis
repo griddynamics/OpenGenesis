@@ -16,6 +16,15 @@ template {
         }
     }
 
+    workflow("test") {
+        steps {
+            teststep {
+                phase = "phase"
+                text =  {$env.noSuchProperty}
+            }
+        }
+    }
+
     workflow("destroy") {
         steps {
             teststep {
