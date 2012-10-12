@@ -101,4 +101,16 @@ class ContextEnvTest extends AssertionsForJUnit with MockitoSugar {
 
    }
 
+  @Test def contextEnvPropMissing() {
+
+    flowCoordinator(template.getValidWorkflow("test").get.embody(Map())).onFlowStart match {
+      case Right(head :: _) => {
+        assert (head.step.asInstanceOf[GenesisStep].actualStep.asInstanceOf[DoNothingStep].name === null)
+      }
+      case _ => fail ("test flow coordinator expected to return first step execution coordinator")
+
+    }
+
+   }
+
 }
