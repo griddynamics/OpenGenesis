@@ -10,9 +10,9 @@ class ActionTracking(val workflowStepId: GenesisEntity.Id, val actionName: Strin
 }
 object ActionTrackingStatus extends Enumeration {
     type ActionStatus = Value
-    val Executing = Value(0, "Executing")
+    val Executing = Value(0, "Running")
     val Failed = Value(1, "Failed")
-    val Succeed = Value(2, "Succeed")
+    val Succeed = Value(2, "Successful")
     val Canceled = Value(3, "Canceled")
     val Interrupted = Value(4, "Interrupted")
 

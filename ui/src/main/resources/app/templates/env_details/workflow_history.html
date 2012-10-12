@@ -1,13 +1,13 @@
 <%
 
     var failStatuses = _(["Failed", "Canceled", "Suspended"]);
-    var runningStatuses = _(["Requested", "Executing"]);
+    var runningStatuses = _(["Requested", "Running"]);
 
     var stepStatusMap = {
         'Requested': 'not-executed-step',
         'Failed': 'failed-step',
-        'Executing': 'active-step',
-        'Succeed': 'succeeded-step'
+        'Running': 'active-step',
+        'Successful': 'succeeded-step'
     };
 
     var today = new Date();

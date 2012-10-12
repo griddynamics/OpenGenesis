@@ -165,7 +165,7 @@ function (genesis, Backbone, $) {
         this.actionViews[stepId] = new StepLogView({
           el: $details.children(".subtable"),
           collection: logsCollection,
-          isStepFinished: !(stepStatus === "Requested" || stepStatus === "Executing")
+          isStepFinished: !(stepStatus === "Requested" || stepStatus === "Running")
         });
       } else {
         delete this.actionViews[stepId];
