@@ -25,7 +25,7 @@
         <% } %>
       </td>
       <td class="logs">
-          <a href="/rest/projects/<%= projectId %>/envs/<%= envId %>/action_logs/<%= action.uuid %>?timezone_offset=<%= utils.timezoneOffset() %>" target="_blank" data-bypass>View Log</a>
+          <a class="show-logs" href="/rest/projects/<%= projectId %>/envs/<%= envId %>/action_logs/<%= action.uuid %>?timezone_offset=<%= utils.timezoneOffset() %>" target="_blank" data-bypass>View Log</a>
       </td>
     </tr>
     <% } %>

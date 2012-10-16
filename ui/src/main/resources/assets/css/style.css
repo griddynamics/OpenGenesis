@@ -140,7 +140,7 @@ a.brcr, .brcr-devider{
 	height:27px;
 	margin-top:-1px;
     font-size: 14px;
-    padding: 7px 15px;
+    padding: 7px 5px;
     outline: none;
 }
 
@@ -153,7 +153,7 @@ a.brcr:first-child {
     display: inline-block;
 }
 
-a.brcr:hover {
+a.brcr {
     text-decoration: underline;
 }
 
@@ -161,7 +161,7 @@ a.brcr:hover {
 	display: inline-block;
 	color: rgb(0,0,0);
 	height:27px;
-    padding: 5px 15px;
+    padding: 5px 5px;
     font-size: 14px;
 }
 
@@ -224,6 +224,10 @@ table td.actions {
     white-space: nowrap;
     table-layout: fixed;
     text-align: center;
+}
+
+table td.actions a, a.show-array {
+    text-decoration: underline;
 }
 
 table td img.status{
@@ -298,6 +302,21 @@ table th{
 
 #prj-list td.actions {
     width: 7%;
+}
+
+#prj-list-icon, #project-icon, #env-icon {
+    width: 32px;
+    height: 32px;
+    vertical-align: middle;
+    margin-right: 10px;
+    margin-top: -5px;
+}
+
+.project-icon, .env-icon {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+    margin-right: 10px;
 }
 
 #page-view-loading {
@@ -524,11 +543,11 @@ div.system-settings {
     color: black;
     padding: 3px 7px 3px 25px;
     opacity: 0.7;
+    text-decoration: underline;
 }
 
 #tools-panel .tools-button:hover {
     opacity: 1 !important;
-    text-decoration: underline;
 }
 
 #tools-panel #project-settings {
@@ -593,7 +612,7 @@ div.system-settings {
 }
 
 
-table td p#manifest-creator{
+table td p#template-creator{
 	color: rgb(172,172,172);
 	line-height:16px;
 }
@@ -616,6 +635,10 @@ table#env-settings-share td.first{
 
 table#env-main-settings input#EnvName{
 	width:500px;
+}
+
+.envname {
+    text-decoration: underline;
 }
 
 /* todo: why create env inputs have padding 3 instead of 5 ?*/
@@ -749,19 +772,16 @@ div.form-notice {
     text-shadow: 0 0 10px #C09853;
 }
 
-.workflow-history .refresh-link {
-    display: none;
-}
-.workflow-history .active-step .refresh-link {
-    display: table-row !important;
-}
-
 .workflow-history .ui-icon {
     float:left;
 }
 
 table.workflow-history td {
     padding: 10px;
+}
+
+table.workflow-history tbody a.show-logs {
+    text-decoration: underline;
 }
 
 table.workflow-history .additional {
@@ -904,7 +924,7 @@ td.subtable{
 }
 
 
-table.main-table.attempts td.first a:hover {
+table.main-table.attempts td.first a {
     text-decoration: underline;
 }
 table.main-table.attempts td.first {
@@ -1334,7 +1354,7 @@ table .pre {
     margin: 8px 0 0 0;
 }
 
-.manifest-description p {
+.template-description p {
     margin-top: 0;
     margin-bottom: 0;
 }
