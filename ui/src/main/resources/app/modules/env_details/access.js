@@ -4,7 +4,7 @@ define([
   "modules/settings/roles",
   "use!backbone",
   "jquery",
-  "underscore",
+  "use!underscore",
   "use!jqueryui",
   "use!jvalidate"
 ],
