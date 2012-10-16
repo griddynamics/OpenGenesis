@@ -6,14 +6,14 @@
             <td class="first" style="width: 35px;" align="center">
                 <input id="template-select-<%= i %>" type="radio" name="select_template" value="<%= template.name %>" data-template-version="<%= template.version %>">
             </td>
-            <td class="manifest-description">
+            <td class="template-description">
                 <p>
                   <a title="Show template source code" class="ui-widget show-sources ui-state-default" data-template-name="<%= template.name %>" data-template-version="<%= template.version %>">
                     <span style="float:left; margin-right: 10px" class="ui-icon ui-icon-document" ></span>
                   </a>
                   <a style="float:left" class="template" rel="#template-select-<%= i %>"><%= template.name %> <%= template.version %></a>
                 </p>
-                <!--<p id="manifest-creator">Creator: <%= template.creator %></p>-->
+                <!--<p id="template-creator">Creator: <%= template.creator %></p>-->
                 <p><%= template.description %></p>
             </td>
         </tr>
