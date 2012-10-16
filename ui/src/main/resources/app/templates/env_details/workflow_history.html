@@ -60,6 +60,17 @@
     </div>
   </div>
   <div class="history-details <%= expandedSections[workflow.executionStartedTimestamp] ? 'visible' : '' %>" >
+      <% if ( _.size(workflow.variables) > 0) { %>
+      <div class="workflow-variables">
+          <h4>Workflow variables</h4>
+          <dl>
+              <% for (var key in workflow.variables) { %>
+              <dt><%= key %></dt>
+              <dd><%= workflow.variables[key] %></dd>
+              <% } %>
+          </dl>
+      </div>
+      <% } %>
     <table class="intab workflow-history" style="table-layout: fixed">
       <% if (!_.isUndefined(workflow.steps)) { %>
       <% var prev = true; %>
