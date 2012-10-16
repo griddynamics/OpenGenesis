@@ -23,8 +23,17 @@ template {
         require {
             "One must be equal to one" { 1 == 1 }
         }
+        variables {
+            variable("a").description("Test variable").optional(defaultValue = "foo")
+        }
 
-        steps {}
+        steps {
+            execLocal {
+                phase = "init"
+                shell = "sh"
+                commands = ['echo "Creation of new environment..."']
+            }
+        }
     }
 
     workflow("destroy") {

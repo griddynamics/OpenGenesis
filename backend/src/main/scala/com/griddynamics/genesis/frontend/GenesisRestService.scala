@@ -26,8 +26,8 @@ import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.{model, service}
 import com.griddynamics.genesis.bean.RequestBroker
 import GenesisRestService._
-import model.{Workflow, EnvStatus}
-import service.{VariableDescription, ComputeService, TemplateService, StoreService}
+import model.{VariablesField, Workflow, EnvStatus}
+import service._
 import com.griddynamics.genesis.validation.Validation._
 import com.griddynamics.genesis.api.ActionTracking
 import com.griddynamics.genesis.api.EnvironmentDetails
@@ -38,6 +38,20 @@ import com.griddynamics.genesis.api.WorkflowStep
 import com.griddynamics.genesis.api.Variable
 import com.griddynamics.genesis.api.Environment
 import com.griddynamics.genesis.api.Template
+import com.griddynamics.genesis.api.VirtualMachine
+import com.griddynamics.genesis.api.BorrowedMachine
+import com.griddynamics.genesis.api.WorkflowDetails
+import com.griddynamics.genesis.api.ActionTracking
+import com.griddynamics.genesis.api.EnvironmentDetails
+import com.griddynamics.genesis.api.Failure
+import com.griddynamics.genesis.api.Attribute
+import com.griddynamics.genesis.api.WorkflowHistory
+import scala.Some
+import com.griddynamics.genesis.api.WorkflowStep
+import com.griddynamics.genesis.api.Variable
+import com.griddynamics.genesis.api.Environment
+import com.griddynamics.genesis.api.Template
+import com.griddynamics.genesis.api.StepLogEntry
 import com.griddynamics.genesis.api.VirtualMachine
 import com.griddynamics.genesis.api.BorrowedMachine
 import com.griddynamics.genesis.api.WorkflowDetails
@@ -104,7 +118,8 @@ class GenesisRestService(storeService: StoreService,
         storeService.findEnv(envId, projectId).map(env =>
             workflowHistoryDesc(
                 storeService.workflowsHistory(env, pageOffset, pageLength),
-                storeService.countWorkflows(env)
+                storeService.countWorkflows(env),
+            templateService.findTemplate(projectId, env.templateName, env.templateVersion)
             )
         )
     }
@@ -219,13 +234,28 @@ object GenesisRestService {
         )
     }
 
-    def workflowHistoryDesc(history: Seq[(Workflow, Seq[model.WorkflowStep])], workflowsTotalCount: Int) = {
+    def workflowHistoryDesc(history: Seq[(Workflow, Seq[model.WorkflowStep])], workflowsTotalCount: Int, template: Option[TemplateDefinition]) = {
         val h = wrap(history)(() =>
             (for ((flow, steps) <- history) yield
-                new WorkflowDetails(flow.name, flow.status.toString, flow.startedBy, stepsCompleted(Some(flow)),
+                new WorkflowDetails(flow.name, flow.status.toString, flow.startedBy, varsDesc(flow.variables, flow.name, template), stepsCompleted(Some(flow)),
                   stepDesc(steps), flow.executionStarted.map (_.getTime), flow.executionFinished.map (_.getTime))).toSeq)
 
         WorkflowHistory(h, workflowsTotalCount)
+    }
+
+    def varsDesc(variables: Map[String, String], name: String, template: Option[TemplateDefinition]) : Map[String, String] = {
+        template.flatMap(t => {
+          t.getWorkflow(name).map(w => {
+            val result: Map[String, String] = for ((k, v) <- variables) yield {
+              val desc: Option[VariableDescription] = w.variableDescriptions.find(_.name == k)
+              val value: String = desc.flatMap(d => {
+                d.values.find(_._2 == v)
+              }).getOrElse((v,v))._1
+              (desc.map(_.description).getOrElse(k), value)
+            }
+            result
+          })
+        }).getOrElse(variables)
     }
 
     def stepDesc(steps : Seq[model.WorkflowStep]) =
