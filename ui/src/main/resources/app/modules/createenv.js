@@ -263,7 +263,7 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
       var vals = {};
       this.$('.workflow-variable').each(function () {
         var value = $(this).is("input[type='checkbox']") ? $(this).is(':checked') : $(this).val();
-        if (value) { vals[$(this).attr('name')] = value; }
+        if ($(this).val()) { vals[$(this).attr('name')] = value; }
       });
       return {
         envName: this.$("input[name='envName']").val(),
