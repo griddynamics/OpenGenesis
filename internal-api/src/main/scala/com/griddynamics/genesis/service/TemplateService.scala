@@ -26,7 +26,8 @@ import com.griddynamics.genesis.plugin.StepBuilder
 import com.griddynamics.genesis.api.{Failure, Success, ExtendedResult}
 
 class VariableDescription(val name: String, val clazz : Class[_ <: Any], val description: String, val isOptional: Boolean = false,
-                          val defaultValue: String = null, val values: Map[String,String] = Map(), val dependsOn: Option[List[String]] = None)
+                          val defaultValue: String = null, val values: Map[String,String] = Map(), val dependsOn: Option[List[String]] = None,
+                          val group: Option[String] = None)
 
 case class ValidationError(variableName: String, description: String)
 class ConversionException(val fieldId: String, val message: String) extends Exception
