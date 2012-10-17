@@ -6,8 +6,9 @@ import collection.mutable.ListBuffer
 import reflect.BeanProperty
 import groovy.util.Expando
 
-class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFactories : Seq[DataSourceFactory], projectId: Int) extends GroovyObjectSupport with Delegate {
-    val builders = new ListBuffer[VariableBuilder]
+class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFactories : Seq[DataSourceFactory],
+                          projectId: Int, groupOpt: Option[GroupDetails] = None) extends GroovyObjectSupport with Delegate {
+    private val builders = new ListBuffer[VariableBuilder]
 
 //  val declaration = new DataSourceDeclaration(projectId, dataSourceFactories)
 
@@ -32,19 +33,39 @@ class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFac
   }
 
   def variable(name : String) = {
-        val builder = new VariableBuilder(name, dsObjSupport, dataSourceFactories, projectId)
+        val builder = new VariableBuilder(name, dsObjSupport, dataSourceFactories, projectId, groupOpt)
         builders += builder
         builder
     }
+
+  def group(name: String, variables : Closure[Unit]) = groupOpt match {
+    case None =>
+     builders ++= Delegate(variables).to(new VariableDeclaration(dsObjSupport, dataSourceFactories, projectId,
+       Option(GroupDetails(name)))).getBuilders
+    case _ => throw new IllegalArgumentException("Nested groups are not supported!")
+  }
+
+  def required() = groupOpt match {
+    case Some(g) => g.required = true
+      this
+    case _ => this
+  }
+
+  def getBuilders = {
+    if(groupOpt.isDefined) builders.foreach(_.setIsOptional(true))
+    builders
+  }
 }
 
+case class GroupDetails(name: String, var required: Boolean = false)
 
 class VariableDetails(val name : String, val clazz : Class[_ <: AnyRef], val description : String,
                       val validators : Seq[(String, Closure[Boolean])], val isOptional: Boolean = false, val defaultValue: Option[Any],
-                      val valuesList: Option[(Map[String,Any] => Map[String,String])] = None, val dependsOn: Seq[String])
+                      val valuesList: Option[(Map[String,Any] => Map[String,String])] = None, val dependsOn: Seq[String],
+                      val group: Option[GroupDetails] = None)
 
 class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
-                      val dataSourceFactories: Seq[DataSourceFactory], val projectId: Int) extends GroovyObjectSupport {
+                      val dataSourceFactories: Seq[DataSourceFactory], val projectId: Int, val group: Option[GroupDetails] = None) extends GroovyObjectSupport {
     @BeanProperty var description : String = _
     @BeanProperty var clazz : Class[_ <: AnyRef] = classOf[String]
     @BeanProperty var defaultValue: Any = _
@@ -177,7 +198,7 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
 
     def newVariable = {
       val values = valuesList
-      new VariableDetails(name, clazz, description, validators.toSeq, isOptional, Option(defaultValue), values, parents.toList)
+      new VariableDetails(name, clazz, description, validators.toSeq, isOptional, Option(defaultValue), values, parents.toList, group)
     }
 
     override def setProperty(property: String, arg: AnyRef) {

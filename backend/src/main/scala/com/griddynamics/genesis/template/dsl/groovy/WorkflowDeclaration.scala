@@ -30,7 +30,7 @@ class WorkflowDeclaration(dsClozures: Option[Closure[Unit]], dataSourceFactories
     def variables = {
         val variableBuilders = variablesBlock match {
             case Some(block) =>
-                  Delegate(block).to(new VariableDeclaration(dsClozures, dataSourceFactories, projectId)).builders
+                  Delegate(block).to(new VariableDeclaration(dsClozures, dataSourceFactories, projectId)).getBuilders
             case None => Seq[VariableBuilder]()
         }
 
