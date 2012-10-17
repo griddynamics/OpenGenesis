@@ -15,7 +15,7 @@
       <% if ( i + 1 < count || count == 1) { %>
         <a href="<%= (item.url.indexOf('#') == 0? item.url : '#' + item.url)  %>" class="brcr"> <%= item.title %> </a>
         <% if (count != 1) { %>
-          <span class='brcr-devider'>/</span>
+          <span class='brcr-devider'><img src="assets/img/brcr-divider.png"></span>
         <% } %>
       <% } else { %>
         <div class="brcr-last-item"><span > <%= item.title %> </span></div>
