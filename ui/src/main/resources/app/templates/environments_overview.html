@@ -1,41 +1,44 @@
 <div id="top-panel">
     <div id="page-title"><img id="project-icon" src="/assets/img/project32.png" alt="Project"><h1><%= project.name %></h1></div>
     <span id="tools-panel" >
-      <a id="project-settings" href="#project/<%= project.id %>/properties" class="tools-button settings-button" style="display: none">
+      <a id="project-settings" href="#project/<%= project.id %>/properties" class="button" style="display: none">
         <span style=""> Project settings </span>
       </a>
     </span>
 </div>
-<div id="management-panel">
-    <div id="buttons">
-        <a href="/project/<%= project.id %>/createEnv" id="create-env-button" class="button" style="display: none"> <span> Create environment </span> </a>
+<div id="content-wrapper">
+<div id="content">
+    <div id="management-panel">
+        <div id="buttons">
+            <a href="/project/<%= project.id %>/createEnv" id="create-env-button" class="button" style="display: none"> <span> Create environment </span> </a>
+        </div>
+        <div id="right">
+          <label for="filter-statuses">Filter <input id="filter-name" type="text" value="<%= filter.namePart %>"></label>
+            <!--<label>Statuses&nbsp;</label>-->
+            <select id="filter-statuses" name="filter-statuses" multiple="multiple">
+              <% for (var i = 0, keys = _.keys(filter.statuses), count = keys.length; i < count; i++) {
+              var status = filter.statuses[keys[i]],
+              selected = status.visible ? "selected" : "";
+              %>
+              <option <%= selected %> ><%= status.name %></option>
+              <% } %>
+            </select>
+        </div>
     </div>
-    <div id="right">
-      <label for="filter-statuses">Filter <input id="filter-name" type="text" value="<%= filter.namePart %>"></label>
-        <!--<label>Statuses&nbsp;</label>-->
-        <select id="filter-statuses" name="filter-statuses" multiple="multiple">
-          <% for (var i = 0, keys = _.keys(filter.statuses), count = keys.length; i < count; i++) {
-          var status = filter.statuses[keys[i]],
-          selected = status.visible ? "selected" : "";
-          %>
-          <option <%= selected %> ><%= status.name %></option>
-          <% } %>
-        </select>
-    </div>
+
+    <table class="main-table attempts">
+      <thead>
+        <tr id="table-title">
+            <th class="first" style="width:25%">Environment name</th>
+            <th >Created</th>
+            <th >Modified</th>
+            <th style="width:25%">Attributes</th>
+            <th style="width: 15%">Status</th>
+        </tr>
+      </thead>
+      <tbody id="envs-table-body">
+
+      </tbody>
+    </table>
 </div>
-
-<table class="main-table attempts">
-  <thead>
-    <tr id="table-title">
-        <th class="first" style="width:25%">Environment name</th>
-        <th >Created</th>
-        <th >Modified</th>
-        <th style="width:25%">Attributes</th>
-        <th style="width: 15%">Status</th>
-    </tr>
-  </thead>
-  <tbody id="envs-table-body">
-
-  </tbody>
-</table>
-
+</div>

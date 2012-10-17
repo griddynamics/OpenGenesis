@@ -49,6 +49,7 @@ a.dangerous.button {
 a.button.disabled {
     background: url(../img/btn-disabled-right.png) top right no-repeat !important;
     cursor: default;
+    color: #999999;
     outline: none;
 }
 
@@ -95,7 +96,6 @@ a.button.action-button span {
 
 a.button.reset-button {
     float: right;
-    margin-right: 20px !important
 }
 
 a.tab {
@@ -129,6 +129,7 @@ a.tab-selected {
 }
 
 a.tab-selected span{
+    height: 15px;
 	display: block;
   	line-height: 13px;
  	background: url(../img/selected-tab-left.png) no-repeat;
@@ -368,6 +369,7 @@ table th{
 
 #header #header-content{
 	width:80%;
+    max-width: 1200px;
 	height: 42px;
 	margin: 0 auto;
     background: url(../img/logo.png) no-repeat left 40%;
@@ -430,17 +432,19 @@ div.system-settings {
 	margin:0 auto;
 	background-color: rgb(248,248,248);
     width: 80%;
+    max-width: 1200px;
+}
+
+#wrapper #top-panel a.button,
+.top-panel a.button{
+    float: right;
+    margin-top: 17px;
 }
 
 .bubble {
     padding: 3px;
     background:#EEE;
     border-radius: 3px;
-}
-#wrapper #top-panel a.button,
-.top-panel a.button{
-    float: right;
-    margin-top: 17px;
 }
 
 #wrapper #breadcrumbs{
@@ -472,7 +476,7 @@ div.system-settings {
 #wrapper #top-panel,
 .top-panel{
 	height: 60px;
-	padding: 0 25px;
+	padding: 0 15px;
 }
 
 #wrapper #top-panel #page-title,
@@ -490,6 +494,36 @@ div.system-settings {
 
 #wrapper #top-panel #title-right span{
 	color: rgb(48,128,48);
+}
+
+#wrapper #top-panel #workflow-triggers, #wrapper #top-panel #misc-operations, #wrapper #top-panel #env-status-section {
+    float: right;
+    margin-left: 20px;
+    padding-top: 17px;
+}
+
+#wrapper #top-panel #workflow-triggers a.button, #wrapper #top-panel #misc-operations a.button, #wrapper #top-panel #env-status-section a.button {
+    margin-top: 10px !important;
+}
+
+#wrapper #top-panel #workflow-triggers a {
+    margin-right:5px;
+}
+
+#wrapper #top-panel .env-status {
+    float: right;
+    margin: 13px 10px 2px 5px;
+}
+
+#wrapper #content-wrapper {
+    background-color: white;
+    padding: 15px;
+    border-top: 1px solid #cccccc;
+}
+
+#wrapper #content {
+    border: 1px solid #cccccc;
+    border-top: none;
 }
 
 #wrapper #management-panel{
@@ -535,23 +569,11 @@ div.system-settings {
 
 #tools-panel {
     float: right;
-    padding-top: 24px;
     font-size: 14px;
 }
 
-#tools-panel .tools-button {
-    color: black;
-    padding: 3px 7px 3px 25px;
-    opacity: 0.7;
-    text-decoration: underline;
-}
-
-#tools-panel .tools-button:hover {
-    opacity: 1 !important;
-}
-
 #tools-panel #project-settings {
-    background: no-repeat url('/assets/img/settings-wb.png');
+    display: block;
 }
 
 #wrapper #wrapper-content #tab-panel{
@@ -563,7 +585,6 @@ div.system-settings {
 	display: inline-block;
 	height:24px;
 	margin-left:20px;
-	overflow:hidden;
 	margin-bottom:-4px;
 }
 
@@ -571,7 +592,7 @@ div.system-settings {
 #wrapper-content #tab-panel .panel{
 	background: rgb(255,255,255);
 	border-top: 1px solid rgb(200,200,200);
-	padding: 20px 20px;
+	padding: 15px;
 }
 
 .tab-inner-content > div {
@@ -635,10 +656,6 @@ table#env-settings-share td.first{
 
 table#env-main-settings input#EnvName{
 	width:500px;
-}
-
-.envname {
-    text-decoration: underline;
 }
 
 /* todo: why create env inputs have padding 3 instead of 5 ?*/
@@ -1625,6 +1642,7 @@ label.error {
 	margin:0 auto;
 	/*width:70%;*/
 	width:80%;
+    max-width: 1200px;
 	position:relative;
 	margin-top:-25px;
 	height:25px;
@@ -1649,5 +1667,14 @@ label.error {
 /* Template style */
 #template-content {
     background-color: white;
+}
+
+#env-rename form input {
+    float: right;
+}
+
+#env-rename form label {
+    float: left;
+    margin: 3px 0;
 }
 

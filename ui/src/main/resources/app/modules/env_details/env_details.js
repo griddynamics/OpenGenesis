@@ -51,6 +51,7 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
     confirmationDialog: null,
     executeWorkflowDialog: null,
     resetEnvStatusDialog: null,
+    envRenameDialog: null,
 
     events: {
       "click #tab3": "renderWorkflowList",
@@ -58,9 +59,7 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
       "click .cancel-button:not(.disabled)": "cancelWorkflow",
       "click .reset-button:not(.disabled)": "resetEnvStatus",
       "click a.show-sources" : "showSources",
-      "click a.envname": "showEditName",
-      "click a#update-name": "updateName",
-      "click a#cancel-name": "hideEditName"
+      "click a.rename-button": "renameEnv"
     },
 
     initialize: function (options) {
@@ -73,6 +72,7 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
       this.details.bind("change:servers", this.renderServers, this);
       this.details.bind("change:servers change:vms", this.checkServersAndVms, this);
       this.details.bind("change:attributes change:modificationTime", this.renderAttributes, this);
+      this.details.bind("change:name", this.onRename, this);
 
       this.executeWorkflowDialog = new ExecuteWorkflowDialog().
         bind('workflow-started', function(workflow) {
@@ -96,6 +96,9 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
       }
       if(this.resetEnvStatusDialog) {
         this.resetEnvStatusDialog.dialog('destroy').remove();
+      }
+      if (this.envRenameDialog) {
+        this.envRenameDialog.dialog('destroy').remove();
       }
       genesis.utils.nullSafeClose(this.workflowHistory);
       genesis.utils.nullSafeClose(this.sourcesView);
@@ -123,6 +126,16 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
 
     resetEnvStatus: function () {
       this.resetEnvStatusDialog.dialog('open');
+    },
+
+    renameEnv: function() {
+      this.envRenameDialog.dialog('open');
+    },
+
+    onRename: function() {
+      if (this.details.previous("name") === "") return;
+      this.$('.envname').html(this.details.get('name'));
+      status.StatusPanel.success("Environment has been renamed")
     },
 
     executeWorkflow: function (e) {
@@ -186,30 +199,6 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
 
       this.$("#resetBtn")
         .toggle(status === "Broken");
-    },
-
-    showEditName: function() {
-      $('h1 > a.envname').hide();
-      $('#nameedit').show();
-    },
-
-    hideEditName: function() {
-      $('#nameedit').hide();
-      $('h1 > a.envname').show();
-    },
-
-    updateName: function() {
-      var view = this;
-      genesis.app.trigger("page-view-loading-started");
-      var name = $("#new-name").val();
-      $.when(backend.EnvironmentManager.updateEnvName(view.details.get("projectId"), view.details.get('id'), name)).done(function() {
-        $('a.envname').html(name);
-        view.hideEditName();
-      }).fail(function(jqxhr) {
-        status.StatusPanel.error(jqxhr);
-      }).always(function() {
-        genesis.app.trigger("page-view-loading-completed");
-      });
     },
 
     renderVirtualMachines: function() {
@@ -304,6 +293,7 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
 
           view.confirmationDialog = view.createConfirmationDialog(view.$("#dialog-confirm"));
           view.resetEnvStatusDialog = view.createResetEnvStatusDialog(view.$("#dialog-reset"));
+          view.envRenameDialog = view.createRenameDialog(view.$("#env-rename"));
       }).fail(function() {
           genesis.app.trigger("server-communication-error",
             "Failed to get environment details<br/><br/> Please contact administrator.",
@@ -356,6 +346,35 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
           "No": function () {
             $(this).dialog("close");
           }
+        }
+      });
+    },
+
+    createRenameDialog: function($element) {
+      var view = this;
+      return $element.dialog({
+        title: 'Rename environment',
+        modal: false,
+        buttons: {
+          "Save": function () {
+            var dialog = this;
+            genesis.app.trigger("page-view-loading-started");
+            var name = $('input:text:first', this).val();
+            $.when(backend.EnvironmentManager.updateEnvName(view.details.get("projectId"), view.details.get('id'), name)).done(function() {
+              view.details.set('name', name);
+              $(dialog).dialog("close");
+            }).fail(function(jqxhr) {
+                status.StatusPanel.error(jqxhr);
+            }).always(function() {
+              genesis.app.trigger("page-view-loading-completed");
+            });
+          },
+          "Cancel": function () {
+            $(this).dialog("close");
+          }
+        },
+        open: function() {
+          $('input:text:first', this).val(view.details.get("name")).select().focus();
         }
       });
     }
