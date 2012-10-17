@@ -6,13 +6,6 @@ template {
     createWorkflow("create")
     destroyWorkflow("destroy")
 
-    dataSources {
-        nexus("jboss") {
-          query = "https://repository.jboss.org/nexus/content/groups/public-jboss/org/jboss/jbossas/jboss-as-distribution/"
-          filter = "*.zip"
-        }
-    }
-
     workflow("create") {
         steps {
         }
@@ -32,7 +25,6 @@ template {
         }
         variables {
             variable("a").description("Test variable").optional(defaultValue = "foo")
-            variable("b").description("JBoss artifact").dataSource("jboss")
         }
 
         steps {
