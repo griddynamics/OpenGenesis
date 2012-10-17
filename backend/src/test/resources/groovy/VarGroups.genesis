@@ -35,14 +35,17 @@ template {
                     "A must be > 0" : { it > 0 }
             ])
             group(description: "testGroup") {
-                variable("b").description("B variable").as(Boolean)
+                b = {
+                    description = "B variable"
+                    clazz = Boolean
+                }
                 variable("c").description("C variable").as(Integer)
             }
             group(description: "testGroup") {
                 variable("x").description("string var")
             }
             group(description: "requiredGroup", required: true) {
-                variable("y").as(Integer)
+                y = {clazz = Integer}
             }
        }
         steps {
