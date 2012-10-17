@@ -28,7 +28,7 @@ class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFac
   override def setProperty(property: String, newValue: Any) {
     newValue match {
       case cl: Closure[_] =>
-        builders += Delegate(cl).to(new DSAwareVariableBuilder(builders, dataSourceFactories, projectId, property, dsObjSupport))
+        builders += Delegate(cl).to(new DSAwareVariableBuilder(builders, dataSourceFactories, projectId, groupOpt, property, dsObjSupport))
       case _ => super.setProperty(property, newValue)
     }
   }
@@ -223,9 +223,10 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
 class DSAwareVariableBuilder(knownVars: ListBuffer[VariableBuilder],
                              dSourceFactories : Seq[DataSourceFactory],
                              projectId: Int,
+                             group: Option[GroupDetails] = None,
                              varName: String,
                              dsObjSupport: Option[Closure[Unit]]) extends VariableBuilder(varName, dsObjSupport,
-    dSourceFactories, projectId) with Delegate {
+    dSourceFactories, projectId, group) with Delegate {
 
   override def delegationStrategy = Closure.DELEGATE_FIRST
 
