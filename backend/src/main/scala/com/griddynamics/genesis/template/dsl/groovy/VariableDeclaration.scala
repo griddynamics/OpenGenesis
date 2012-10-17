@@ -5,6 +5,7 @@ import groovy.lang.{MissingPropertyException, Closure, GroovyObjectSupport}
 import collection.mutable.ListBuffer
 import reflect.BeanProperty
 import groovy.util.Expando
+import org.apache.commons.lang.{ObjectUtils, BooleanUtils}
 
 class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFactories : Seq[DataSourceFactory],
                           projectId: Int, groupOpt: Option[GroupDetails] = None) extends GroovyObjectSupport with Delegate {
@@ -38,17 +39,17 @@ class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFac
         builder
     }
 
-  def group(name: String, variables : Closure[Unit]) = groupOpt match {
+  import collection.JavaConversions.mapAsScalaMap
+  def group(params: java.util.Map[String, Any], variables : Closure[Unit]) = groupOpt match {
     case None =>
      builders ++= Delegate(variables).to(new VariableDeclaration(dsObjSupport, dataSourceFactories, projectId,
-       Option(GroupDetails(name)))).getBuilders
+       groupDetails(params.toMap, variables.hashCode))).getBuilders
     case _ => throw new IllegalArgumentException("Nested groups are not supported!")
   }
 
-  def required() = groupOpt match {
-    case Some(g) => g.required = true
-      this
-    case _ => this
+  private def groupDetails(params: Map[String, Any], id: Int) = (params.get("description"), params.getOrElse("required", false)) match {
+    case (Some(desc: String), req: Boolean) => Option(GroupDetails(id, desc, req))
+    case _ => throw new IllegalArgumentException("String parameter 'description' is mandatory, boolean parameter 'required' is optional")
   }
 
   def getBuilders = {
@@ -57,7 +58,7 @@ class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFac
   }
 }
 
-case class GroupDetails(name: String, var required: Boolean = false)
+case class GroupDetails(id: Int, description: String, required: Boolean = false)
 
 class VariableDetails(val name : String, val clazz : Class[_ <: AnyRef], val description : String,
                       val validators : Seq[(String, Closure[Boolean])], val isOptional: Boolean = false, val defaultValue: Option[Any],

@@ -34,16 +34,21 @@ template {
             variable("a").description("A variable").as(Integer).validator([
                     "A must be > 0" : { it > 0 }
             ])
-            group("testGroup") {
+            group(description: "testGroup") {
                 variable("b").description("B variable").as(Boolean)
                 variable("c").description("C variable").as(Integer)
-                required()
             }
-        }
+            group(description: "testGroup") {
+                variable("x").description("string var")
+            }
+            group(description: "requiredGroup", required: true) {
+                variable("y").as(Integer)
+            }
+       }
         steps {
             teststep {
                 phase = "phase1"
-                text =   "test input"
+                text =   "test input: " + b
             }
         }
     }

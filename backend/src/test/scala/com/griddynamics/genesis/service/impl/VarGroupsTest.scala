@@ -62,12 +62,12 @@ class VarGroupsTest extends AssertionsForJUnit with MockitoSugar {
 
     @Test
     def testValidateSuccess() {
-      expect(Seq())(createWorkflow.validate(Map("a" -> 1, "c" -> 3)))
+      expect(Seq())(createWorkflow.validate(Map("a" -> 1, "b" -> true, "y" -> 3, "x" -> "s")))
     }
 
     @Test
     def testValidateFail() {
-      val errors = createWorkflow.validate(Map("a" -> 1, "b" -> false, "c" -> 3))
+      val errors = createWorkflow.validate(Map("a" -> 1, "b" -> false, "c" -> 3, "y" -> 0))
       expect(2)(errors.size)
       expect("b")(errors.head.variableName)
       expect("No more than one variable in group 'testGroup' could have value")(errors.head.description)
@@ -78,6 +78,6 @@ class VarGroupsTest extends AssertionsForJUnit with MockitoSugar {
     def testValidateRequiredFail() {
       val errors = createWorkflow.validate(Map("a" -> 1))
       expect(1)(errors.size)
-      expect("testGroup")(errors.head.variableName)
+      expect("requiredGroup")(errors.head.variableName)
      }
 }
