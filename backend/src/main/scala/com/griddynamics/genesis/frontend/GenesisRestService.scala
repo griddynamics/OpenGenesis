@@ -280,5 +280,5 @@ object GenesisRestService {
       attrDesc(env.deploymentAttrs))
 
   private def varDesc(v : VariableDescription) = Variable(v.name, v.clazz.getSimpleName, v.description, v.isOptional,
-    v.defaultValue, v.values.toMap, v.dependsOn)
+    v.defaultValue, v.values.toMap, v.dependsOn, v.group)
 }

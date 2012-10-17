@@ -286,7 +286,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
 
     private def varDesc(v: VariableDetails, varPossibleValues: Map[String, String], dependsOn: Option[List[String]]) =
       new VariableDescription(v.name, v.clazz, v.description, v.isOptional, v.defaultValue.map(String.valueOf(_)).getOrElse(null),
-        varPossibleValues, dependsOn)
+        varPossibleValues, dependsOn, v.group.map(_.description))
 
     override def partial(variables: Map[String, Any]): Seq[VariableDescription] = {
         val appliedVars = variables.keys.toSet
@@ -317,6 +317,17 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
                   case e => null
                 }))
             }
+        val groupErrors = workflow.variables.groupBy(_.group).map{
+          case (Some(group), vars) => vars.count(v => variables.contains(v.name)) match {
+            case 0 if group.required => Seq(ValidationError(group.description, "Group is required"))
+            case 1 => Seq()
+            case _ =>  vars.collect {
+              case v if variables.get(v.name).isDefined => ValidationError(v.name,
+                "No more than one variable in group '%s' could have value".format(group.description))
+            }
+          }
+          case _ => Seq()
+        }.flatten
         val res = for (variable <- workflow.variables()) yield {
             variables.get(variable.name) match {
                 case None => {
@@ -334,7 +345,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
             }
         }
 
-        res.flatten.toSeq
+        (groupErrors ++ res.flatten).toSeq
     }
 
     def convert(value: String, variable: VariableDetails): AnyRef = {
