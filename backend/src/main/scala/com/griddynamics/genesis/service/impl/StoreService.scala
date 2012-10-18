@@ -204,7 +204,7 @@ class StoreService extends service.StoreService with Logging {
 
       var cworkflow = new Workflow(cenv.id, workflow.name, workflow.startedBy,
         WorkflowStatus.Requested, 0, 0,
-        workflow.variables, None, None)
+        workflow.variables, workflow.displayVariables, None, None)
       cworkflow = GS.workflows.insert(cworkflow)
 
       (cenv, cworkflow)

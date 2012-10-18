@@ -34,12 +34,13 @@ class Workflow(val envId: Int,
                var stepsCount: Int,
                var stepsFinished: Int,
                val variables: VariablesField,
+               val displayVariables: VariablesField,
                var executionStarted: Option[Timestamp],
                var executionFinished: Option[Timestamp]) extends GenesisEntity {
-    def this() = this (0, "", "", Requested, 0, 0, Map[String, String](), None, None)
+    def this() = this (0, "", "", Requested, 0, 0, Map[String, String](), Map[String,String](), None, None)
 
     def copy() = {
-        val w = new Workflow(envId, name, startedBy, status, stepsCount, stepsFinished, variables, executionStarted, executionFinished)
+        val w = new Workflow(envId, name, startedBy, status, stepsCount, stepsFinished, variables, displayVariables, executionStarted, executionFinished)
         w.id = this.id
         w
     }

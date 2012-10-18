@@ -27,17 +27,18 @@ import com.griddynamics.genesis.{model, service}
 import com.griddynamics.genesis.bean.RequestBroker
 import GenesisRestService._
 import model.{Workflow, EnvStatus}
-import service.{VariableDescription, ComputeService, TemplateService, StoreService}
+import service._
 import com.griddynamics.genesis.validation.Validation._
 import com.griddynamics.genesis.api.ActionTracking
 import com.griddynamics.genesis.api.EnvironmentDetails
+import com.griddynamics.genesis.api.Failure
 import com.griddynamics.genesis.api.Attribute
 import com.griddynamics.genesis.api.WorkflowHistory
-import scala.Some
 import com.griddynamics.genesis.api.WorkflowStep
 import com.griddynamics.genesis.api.Variable
 import com.griddynamics.genesis.api.Environment
 import com.griddynamics.genesis.api.Template
+import com.griddynamics.genesis.api.StepLogEntry
 import com.griddynamics.genesis.api.VirtualMachine
 import com.griddynamics.genesis.api.BorrowedMachine
 import com.griddynamics.genesis.api.WorkflowDetails
@@ -222,11 +223,13 @@ object GenesisRestService {
     def workflowHistoryDesc(history: Seq[(Workflow, Seq[model.WorkflowStep])], workflowsTotalCount: Int) = {
         val h = wrap(history)(() =>
             (for ((flow, steps) <- history) yield
-                new WorkflowDetails(flow.name, flow.status.toString, flow.startedBy, stepsCompleted(Some(flow)),
+                new WorkflowDetails(flow.name, flow.status.toString, flow.startedBy, flow.displayVariables, stepsCompleted(Some(flow)),
                   stepDesc(steps), flow.executionStarted.map (_.getTime), flow.executionFinished.map (_.getTime))).toSeq)
 
         WorkflowHistory(h, workflowsTotalCount)
     }
+
+
 
     def stepDesc(steps : Seq[model.WorkflowStep]) =
         wrap(steps)(() =>
