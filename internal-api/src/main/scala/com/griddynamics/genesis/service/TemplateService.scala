@@ -39,7 +39,6 @@ trait TemplateDefinition {
 
     def listWorkflows: Seq[WorkflowDefinition]
 
-    @deprecated(since = "1.3.0", message = "Use getValidWorkflow")
     def getWorkflow(name: String): Option[WorkflowDefinition]
 
     def getValidWorkflow(name: String): ExtendedResult[WorkflowDefinition] = getWorkflow(name) match {

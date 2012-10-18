@@ -79,7 +79,7 @@ class RequestBrokerImpl(storeService: StoreService,
         val env = new Environment(envName, EnvStatus.Busy, envCreator,
                             new Timestamp(System.currentTimeMillis()), None, None, templateName, templateVersion, projectId)
         val workflow = new Workflow(env.id, twf.name, envCreator,
-                                    WorkflowStatus.Requested, 0, 0, variables, None, None)
+                                    WorkflowStatus.Requested, 0, 0, variables, varsDesc(variables, twf), None, None)
 
         storeService.createEnv(env, workflow) match {
             case Left(m) => Failure(compoundVariablesErrors = Seq(m.toString))
@@ -122,13 +122,23 @@ class RequestBrokerImpl(storeService: StoreService,
     }
 
     def startWorkflow(env: Environment, startedBy: String, variables: Map[String, String], w: WorkflowDefinition): ExtendedResult[Int] = {
-        val workflow = new Workflow(env.id, w.name, startedBy, WorkflowStatus.Requested, 0, 0, variables, None, None)
+        val workflow = new Workflow(env.id, w.name, startedBy, WorkflowStatus.Requested, 0, 0, variables, varsDesc(variables, w), None, None)
         storeService.requestWorkflow(env, workflow) match {
             case Left(m) => Failure(compoundVariablesErrors = Seq(m.toString))
             case Right((e, wf)) => {
                 dispatcher.startWorkflow(e.id, env.projectId)
                 Success(e.id)
             }
+        }
+    }
+
+    def varsDesc(variables: Map[String, String], workflow: WorkflowDefinition) : Map[String, String] = {
+        for ((k, v) <- variables) yield {
+            val desc: Option[VariableDescription] = workflow.variableDescriptions.find(_.name == k)
+            val value: String = desc.flatMap(d => {
+                d.values.find(_._2 == v)
+            }).getOrElse((v,v))._1
+            (desc.map(_.description).getOrElse(k), value)
         }
     }
 

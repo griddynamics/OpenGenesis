@@ -49,7 +49,18 @@
   <span class="status-section">Status: <span class=<%= (failStatuses.indexOf(workflow.status) != -1 ? "bad" : "normal") %> > <%= workflow.status %></span></span>
 </div>
 </div>
+<% if ( _.size(workflow.variables) > 0) { %>
+<div class="workflow-variables">
+    <dl>
+        <% for (var key in workflow.variables) { %>
+        <dt><%= key %></dt>
+        <dd><%= workflow.variables[key] %></dd>
+        <% } %>
+    </dl>
+</div>
+<% } %>
 <div class="history-details <%= expand ? 'visible' : '' %>" >
+
 <table class="intab workflow-history" style="table-layout: fixed">
   <% if (!_.isUndefined(workflow.steps)) { %>
   <% var prev = true; %>

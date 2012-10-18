@@ -97,7 +97,7 @@ class StoreServiceTest extends MustMatchersForJUnit {
 
         env = new Environment("env", EnvStatus.Busy, "owner", new Timestamp(System.currentTimeMillis()), None, None, "template", "0.1", project.id)
         env(EnvAttr1) = EnvAttrVal1
-        workflow = new Workflow(env.id, "workflow", "owner", WorkflowStatus.Requested, 0, 0, Map[String, String](), None, None)
+        workflow = new Workflow(env.id, "workflow", "owner", WorkflowStatus.Requested, 0, 0, Map[String, String](), Map[String, String](), None, None)
 
         val (e, w) = storeService.createEnv(env, workflow).right.get
         env = e
