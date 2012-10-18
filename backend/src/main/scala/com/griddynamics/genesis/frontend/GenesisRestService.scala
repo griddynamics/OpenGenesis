@@ -105,8 +105,7 @@ class GenesisRestService(storeService: StoreService,
         storeService.findEnv(envId, projectId).map(env =>
             workflowHistoryDesc(
                 storeService.workflowsHistory(env, pageOffset, pageLength),
-                storeService.countWorkflows(env),
-            templateService.findTemplate(projectId, env.templateName, env.templateVersion)
+                storeService.countWorkflows(env)
             )
         )
     }
@@ -221,7 +220,7 @@ object GenesisRestService {
         )
     }
 
-    def workflowHistoryDesc(history: Seq[(Workflow, Seq[model.WorkflowStep])], workflowsTotalCount: Int, template: Option[TemplateDefinition]) = {
+    def workflowHistoryDesc(history: Seq[(Workflow, Seq[model.WorkflowStep])], workflowsTotalCount: Int) = {
         val h = wrap(history)(() =>
             (for ((flow, steps) <- history) yield
                 new WorkflowDetails(flow.name, flow.status.toString, flow.startedBy, flow.displayVariables, stepsCompleted(Some(flow)),
