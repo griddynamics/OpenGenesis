@@ -1,7 +1,7 @@
 <% if (environment.status !== "Busy") { %>
   <img src="<%= statusImages[environment.status] %>" class="status"> <%= environment.status %>
 <% } else { %>
-<div class="genesis-progressbar" style="max-width: 119px">
+<div class="genesis-progressbar" style="min-width: 80px; max-width: 119px">
   <div class="progress"></div>
   <div class="text" ><%= environment.status %></div>
 </div>

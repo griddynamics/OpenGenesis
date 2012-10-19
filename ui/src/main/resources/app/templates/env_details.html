@@ -4,28 +4,34 @@
 <div id="dialog-reset" style="display: none; ">
     Are you sure that environment is not broken?
 </div>
+<div id="env-rename" style="display: none; ">
+    <form>
+        <input id="new-env-name" name="new-env-name" type="text">
+        <label for="new-env-name">Enter new name: </label>
+    </form>
+</div>
 <div id="top-panel">
-    <div id="page-title"><img id="env-icon" src="/assets/img/env32.png" alt="Env"><h1><a class="envname" href="javascript:void(0)"><%= environment.name %></a></h1><form id="nameedit" style="display: none" class="inplace">
-        <span>
-            <input type="text" name="new-name" id="new-name" value="<%= environment.name %>"/>
-            <a href="javascript:void(0);" class="button inline" id="update-name" style="float: none;"> <span> Save </span> </a>
-            <a href="javascript:void(0);" class="button inline" id="cancel-name" style="float: none;"> <span> Cancel </span> </a>
-        </span>
-    </form></div>
+    <div id="page-title">
+        <img id="env-icon" src="/assets/img/env32.png" alt="Env">
+        <h1 class="envname"><%= environment.name %></h1>
+    </div>
     <div id="title-right">
     </div>
-</div>
-<div id="management-panel">
-	<div id="buttons">
-    <% if (environment.status !== "Destroyed") { %>
+    <div id="env-status-section">
+        <a href="javascript:void(0)" class="button reset-button" id="resetBtn" style="display: none;"> <span> Change status to 'Ready' </span> </a>
+        <div class="env-status">...</div>
+    </div>
+    <div id="workflow-triggers">
+        <% if (environment.status !== "Destroyed") { %>
         <a href="javascript:void(0)" class="button cancel-button" rel="Cancel"> <span> Cancel </span> </a>
         <% for(var i = 0, count = actions.length; i < count; i++) { var action = actions[i]; %>
-            <a href="javascript:void(0)" class="button action-button" rel="<%= action.name %>"> <span> <%= action.name %> </span> </a>
+        <a href="javascript:void(0)" class="button action-button" rel="<%= action.name %>"> <span> <%= action.name %> </span> </a>
         <% } %>
-    <% } %>
-        <a href="javascript:void(0)" class="button reset-button" id="resetBtn" style="display: none;"> <span> Change status to 'Ready' </span> </a>
+        <% } %>
     </div>
-    <div id="right" class="env-status"> ... </div>
+    <div id="misc-operations">
+        <a href="javascript:void(0)" class="button rename-button" rel="Rename"> <span> Rename... </span> </a>
+    </div>
 </div>
 <div id="tab-panel">
   <div id="tabs" data-tabpanel="header">
