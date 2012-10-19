@@ -41,7 +41,7 @@ end
 When /^I can (?:remove|delete) environment '(.*)' in project '(.+)'$/ do |env_name, project|
   environments_resource project do |resource, id|
     env = Hashed.new(resource.find_by_name(env_name))
-    wait_for(10) do
+    wait_for(20) do
       Hashed.new(resource.find_by_name(env_name)).status != 'Busy'
     end
     resource.delete(env.id)
