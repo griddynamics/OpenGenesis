@@ -54,7 +54,7 @@ class VariablesField(value: String) extends StringField(value) {
 object VariablesField {
     private val sep = "#"
 
-    implicit def variablesFieldToMap(v: VariablesField): Map[String, String] = v.variables
+    implicit def variablesFieldToMap(v: VariablesField): Map[String, String] = if (v == null) Map() else v.variables
 
     implicit def mapToVariablesField(v: Map[String, String]): VariablesField = new VariablesField(marshal(v))
 
