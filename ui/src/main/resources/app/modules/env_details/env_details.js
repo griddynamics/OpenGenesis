@@ -392,7 +392,7 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
         }
 
         $('.workflow-variable').each(function () {
-            if ($(this).val()) vals[$(this).attr('name')] = $(this).is("input[type='checkbox']") ? $(this).is(':checked') : $(this).val();
+            if ($(this).val()) vals[$(this).attr('name')] = $(this).is("input[type='checkbox']") ? $(this).is(':checked').toString() : $(this).val();
         });
       }
       var execution = backend.WorkflowManager.executeWorkflow(this.projectId, this.envId, this.workflow.name, vals);
