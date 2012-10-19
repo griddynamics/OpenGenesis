@@ -284,8 +284,8 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
       }
     }
 
-    private def varDesc(v: VariableDetails, varPossibleValues: Map[String, String], dependsOn: Option[List[String]]) =
-      new VariableDescription(v.name, v.clazz, v.description, v.isOptional, v.defaultValue.map(String.valueOf(_)).getOrElse(null),
+    private def varDesc(v: VariableDetails, varDsDefault: Option[Any], varPossibleValues: Map[String, String], dependsOn: Option[List[String]]) =
+      new VariableDescription(v.name, v.clazz, v.description, v.isOptional, v.defaultValue().map(String.valueOf(_)).getOrElse(varDsDefault.map(String.valueOf(_)).getOrElse(null)),
         varPossibleValues, dependsOn, v.group.map(_.description))
 
     override def partial(variables: Map[String, Any]): Seq[VariableDescription] = {
@@ -300,10 +300,10 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
         }
 
         for(v <- dependents) yield {
-          val varPossibleValues: Map[String, String] = v.valuesList.map { lambda => lambda.apply(resolvedVariables) }.getOrElse(Map())
+          val defaultAndValues: (Option[Any], Map[String, String]) = v.valuesList.map { lambda => lambda.apply(resolvedVariables) }.getOrElse((v.defaultValue(), Map()))
           val dependsOn = if (v.dependsOn.isEmpty) None else Some(v.dependsOn.toList)
 
-          varDesc(v, varPossibleValues, dependsOn)
+          varDesc(v, defaultAndValues._1, defaultAndValues._2, dependsOn)
         }
     }
 
@@ -331,7 +331,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
         val res = for (variable <- workflow.variables()) yield {
             variables.get(variable.name) match {
                 case None => {
-                  variable.defaultValue match {
+                  variable.defaultValue() match {
                     case Some(s) => convertAndValidate(String.valueOf(s), variable, context.toMap)
                     case None =>  if (variable.isOptional)
                         Seq()
@@ -365,7 +365,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
             case Some(value) =>
               convert(value, variable)
             case None => {
-              variable.defaultValue match {
+              variable.defaultValue() match {
                 case Some(s) => convert(String.valueOf(s), variable)
                 case _ => if (variable.isOptional)
                     null
@@ -389,10 +389,8 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
     lazy val variableDescriptions = {
         for (variable <- workflow.variables()) yield {
             val dependsOn = if (variable.dependsOn.isEmpty) None else Some(variable.dependsOn.toList)
-
-            val valueList: Map[String, String] = variable.valuesList.map(_.apply(Map())).getOrElse(Map())
-
-            varDesc(variable, valueList, dependsOn)
+            val defaultAndValues: (Option[Any], Map[String, String]) = variable.valuesList.map(_.apply(Map())).getOrElse((variable.defaultValue(), Map()))
+            varDesc(variable, defaultAndValues._1, defaultAndValues._2, dependsOn)
         }
     }
 
