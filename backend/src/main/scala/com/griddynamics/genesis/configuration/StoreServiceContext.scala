@@ -31,12 +31,13 @@ import org.springframework.jdbc.datasource.{DataSourceUtils, DataSourceTransacti
 import org.squeryl.adapters.{PostgreSqlAdapter, MySQLAdapter, H2Adapter}
 import com.griddynamics.genesis.repository
 import com.griddynamics.genesis.service
-import repository.SchemaCreator
+import repository.{GenesisVersionRepository, SchemaCreator}
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import com.griddynamics.genesis.adapters.MSSQLServerWithPagination
 import service.impl
 import service.impl._
+import org.springframework.beans.factory.InitializingBean
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
@@ -71,6 +72,29 @@ class GenesisSchemaCreator(override val dataSource : DataSource, override val tr
         super.afterPropertiesSet
         if (drop || !isSchemaExists) GenesisVersion.fromBuildProps(buildInfoProps).foreach(schema.genesisVersion.insert(_))
     }
+}
+
+class GenesisSchemaValidator(val repo: GenesisVersionRepository, val buildInfoProps: java.util.Properties) extends InitializingBean {
+
+  def afterPropertiesSet() {
+    validate()
+  }
+
+  def validate() {
+    val schemaVersion = try {
+      Some(repo.get)
+    } catch {
+      case _: Exception => None
+    }
+
+    val genesisVersion = GenesisVersion.fromBuildProps(buildInfoProps)
+
+    if (genesisVersion.isEmpty || schemaVersion.isEmpty)
+      throw new RuntimeException("Invalid application or DB schema version")
+
+    if (genesisVersion != schemaVersion)
+      throw new RuntimeException("Application and schema versions mismatch")
+  }
 }
 
 object SquerylConfigurator {

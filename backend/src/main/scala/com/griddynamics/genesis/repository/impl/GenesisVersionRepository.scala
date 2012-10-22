@@ -20,22 +20,21 @@
  * Project:     Genesis
  * Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.model
+package com.griddynamics.genesis.repository.impl
 
-import org.squeryl.annotations.Column
-import collection.JavaConversions
+import com.griddynamics.genesis.{model, repository}
+import org.springframework.transaction.annotation.Transactional
+import model.{GenesisSchema => GS, GenesisVersion}
+import org.squeryl.PrimitiveTypeMode._
 
-case class GenesisVersion(@Column("version_id") versionId: String)
+class GenesisVersionRepository extends repository.GenesisVersionRepository {
+  @Transactional(readOnly = true)
+  def get = from(GS.genesisVersion)(v => select(v)).single
 
-object GenesisVersion {
-    val VersionRegex = """(\d+)\.(\d+)\.(\d+).*""".r
-    val VersionBuildProp = "genesis.build.opengenesis.version"
-
-    def fromBuildProps(props: java.util.Properties) = JavaConversions.propertiesAsScalaMap(props).get(VersionBuildProp)
-        .flatMap(fromString(_))
-
-    private def fromString(s: String) = s match {
-        case VersionRegex(maj, min, bld) => Option(new GenesisVersion(Seq(maj, min, bld).mkString(".")))
-        case _ => None
-    }
+  @Transactional
+  def set(version: GenesisVersion) {
+    GS.genesisVersion.deleteWhere(v => true)
+    GS.genesisVersion.insert(version)
+  }
 }
+

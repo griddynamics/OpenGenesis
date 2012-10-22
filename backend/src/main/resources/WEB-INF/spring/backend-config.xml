@@ -95,7 +95,7 @@
         <property name="password" value="#{fileProps['genesis.system.jdbc.password']}"/>
     </bean>
 
-    <bean id="dbConfig" class="org.apache.commons.configuration.DatabaseConfiguration" depends-on="genesisSchemaCreator">
+    <bean id="dbConfig" class="org.apache.commons.configuration.DatabaseConfiguration" depends-on="genesisSchemaValidator">
         <constructor-arg>
             <bean class="org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy">
                 <constructor-arg ref="ds" />
@@ -127,6 +127,14 @@
         <constructor-arg value="#{fileProps['genesis.system.jdbc.drop.db'] ?: false}" />
         <constructor-arg ref="buildInformation" />
     </bean>
+
+    <bean id="genesisSchemaValidator" class="com.griddynamics.genesis.configuration.GenesisSchemaValidator"
+          depends-on="genesisSchemaCreator">
+        <constructor-arg ref="genesisVersionRepository"/>
+        <constructor-arg ref="buildInformation" />
+    </bean>
+
+    <bean id="genesisVersionRepository" class="com.griddynamics.genesis.repository.impl.GenesisVersionRepository" />
 
     <tx:annotation-driven transaction-manager="squerylTransactionManager"/>
 
