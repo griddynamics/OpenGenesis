@@ -77,8 +77,6 @@ module ModelHelpers
       raise "Too many tryouts #{count}" if cur_count > count
       sleep 1
       cond = block.call
-      puts cond
-      puts cur_count
       cur_count = count + 1
     end
   end
