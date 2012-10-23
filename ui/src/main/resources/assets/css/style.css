@@ -512,7 +512,13 @@ div.system-settings {
 
 #wrapper #top-panel .env-status {
     float: right;
-    margin: 13px 10px 2px 5px;
+    margin: 13px 0 2px 5px;
+    min-width: 90px;
+    text-align: right;
+}
+
+#wrapper #top-panel #resetBtn {
+    margin-left: 10px;
 }
 
 #wrapper #content-wrapper {
