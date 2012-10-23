@@ -38,6 +38,7 @@ import com.griddynamics.genesis.adapters.MSSQLServerWithPagination
 import service.impl
 import service.impl._
 import org.springframework.beans.factory.InitializingBean
+import com.griddynamics.genesis.util.Logging
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
@@ -75,7 +76,8 @@ class GenesisSchemaCreator(override val dataSource : DataSource, override val tr
     }
 }
 
-class GenesisSchemaValidator(val repo: GenesisVersionRepository, val buildInfoProps: java.util.Properties) extends InitializingBean {
+class GenesisSchemaValidator(val repo: GenesisVersionRepository, val buildInfoProps: java.util.Properties)
+  extends InitializingBean with Logging {
 
   def afterPropertiesSet() {
     validate()
@@ -85,7 +87,7 @@ class GenesisSchemaValidator(val repo: GenesisVersionRepository, val buildInfoPr
     val schemaVersion = try {
       Some(repo.get)
     } catch {
-      case _: Exception => None
+      case e: Exception => log.error(e, "Couldn't retrieve schema version"); None
     }
 
     val genesisVersion = GenesisVersion.fromBuildProps(buildInfoProps)
