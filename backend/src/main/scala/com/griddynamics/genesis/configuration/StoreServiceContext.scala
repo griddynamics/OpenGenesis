@@ -31,12 +31,14 @@ import org.springframework.jdbc.datasource.{DataSourceUtils, DataSourceTransacti
 import org.squeryl.adapters.{PostgreSqlAdapter, MySQLAdapter, H2Adapter}
 import com.griddynamics.genesis.repository
 import com.griddynamics.genesis.service
-import repository.SchemaCreator
+import repository.{GenesisVersionRepository, SchemaCreator}
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import com.griddynamics.genesis.adapters.MSSQLServerWithPagination
 import service.impl
 import service.impl._
+import org.springframework.beans.factory.InitializingBean
+import com.griddynamics.genesis.util.Logging
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
@@ -63,14 +65,39 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 }
 
 class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager,
-                           override val drop: Boolean, val buildInfoProps: java.util.Properties) extends SchemaCreator[GenesisSchema](GenesisSchema.envs.name) {
+                           override val drop: Boolean, val buildInfoProps: java.util.Properties, val repo: GenesisVersionRepository) extends SchemaCreator[GenesisSchema](GenesisSchema.envs.name) {
     override val transactionTemplate = new TransactionTemplate(transactionManager)
     override val schema = GenesisSchema
 
     override def afterPropertiesSet() {
+        val setNeeded = drop || !isSchemaExists
         super.afterPropertiesSet
-        if (drop || !isSchemaExists) GenesisVersion.fromBuildProps(buildInfoProps).foreach(schema.genesisVersion.insert(_))
+        if (setNeeded) GenesisVersion.fromBuildProps(buildInfoProps).foreach(repo.set(_))
     }
+}
+
+class GenesisSchemaValidator(val repo: GenesisVersionRepository, val buildInfoProps: java.util.Properties)
+  extends InitializingBean with Logging {
+
+  def afterPropertiesSet() {
+    validate()
+  }
+
+  def validate() {
+    val schemaVersion = try {
+      Some(repo.get)
+    } catch {
+      case e: Exception => log.error(e, "Couldn't retrieve schema version"); None
+    }
+
+    val genesisVersion = GenesisVersion.fromBuildProps(buildInfoProps)
+
+    if (genesisVersion.isEmpty || schemaVersion.isEmpty)
+      throw new RuntimeException("Invalid application or DB schema version")
+
+    if (genesisVersion != schemaVersion)
+      throw new RuntimeException("Application and schema versions mismatch")
+  }
 }
 
 object SquerylConfigurator {
