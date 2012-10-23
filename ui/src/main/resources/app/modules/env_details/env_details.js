@@ -380,6 +380,11 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
 
   var ExecuteWorkflowDialog = Backbone.View.extend({
     template: "app/templates/environment_variables.html",
+    templateVars: "app/templates/common/variables.html",
+
+    events: {
+      "click .group-radio": function(e) {variables.groupVarSelected(e, this, this.workflow.variables);}
+    },
 
     initialize: function() {
       this.$el.id = "#workflowParametersDialog";
@@ -409,7 +414,7 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
         }
 
         $('.workflow-variable').each(function () {
-            if ($(this).val()) vals[$(this).attr('name')] = $(this).is("input[type='checkbox']") ? $(this).is(':checked').toString() : $(this).val();
+            if ($(this).val() && $(this).is(':visible')) vals[$(this).attr('name')] = $(this).is("input[type='checkbox']") ? $(this).is(':checked').toString() : $(this).val();
         });
       }
       var execution = backend.WorkflowManager.executeWorkflow(this.projectId, this.envId, this.workflow.name, vals);
@@ -451,7 +456,7 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
 
     render: function() {
       var view = this;
-      $.when(genesis.fetchTemplate(this.template)).done(function (tmpl) {
+      $.when(genesis.fetchTemplate(this.template), genesis.fetchTemplate(this.templateVars)).done(function (tmpl, tmplVars) {
         variables.processVars({
           variables: view.workflow.variables,
           projectId: view.projectId,
@@ -461,7 +466,9 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
         });
 
         genesis.app.trigger("page-view-loading-completed");
-        view.$el.html(tmpl({variables: view.workflow.variables, workflowName: view.workflow.name}));
+        view.$el.html(tmpl({noVariables: view.workflow.variables.length == 0, workflowName: view.workflow.name}));
+        view.$('#workflow_vars').html(tmplVars({variables: view.workflow.variables}));
+
 
         view.$el.dialog({
           title: 'Execute ' + view.workflow.name,

@@ -1384,8 +1384,11 @@ table .pre {
 
 #workflow-parameters-form label {
     text-align: right;
-    width: 88%;
-}
+    width: 35%;
+    float: left;
+    margin-right:5px;
+    margin-top: 7px
+ }
 #workflow-parameters-form label.error {
     background: url('../img/cross_circle.png');
     text-align: left;
@@ -1393,7 +1396,7 @@ table .pre {
 }
 
 #workflow-parameters-form input, #workflow-parameters-form select {
-    width: 96%;
+    width: 88%;
 }
 
 .information-panel {

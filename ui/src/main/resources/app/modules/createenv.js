@@ -111,7 +111,7 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
     },
 
     createEnvironment: function() {
-      if($('#environment-settings').valid()) {
+      if($('#workflow-parameters-form').valid()) {
         this.$el.showLoading();
         var model = this.mergeModelValues();
         var self = this;
@@ -212,8 +212,13 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
 
   var EnvironmentParametersStep = Step.extend({
     template: "app/templates/createenv/environment_settings.html",
+    varTemplate: "app/templates/common/variables.html",
     errorTemplate: "app/templates/createenv/environment_settings_error.html",
     preconditionErrorTemplate: "app/templates/createenv/preconditions_error.html",
+
+    events: {
+      "click .group-radio": function(e) {variables.groupVarSelected(e, this, this.variables);}
+    },
 
     initialize: function(options) {
       this.variables = [];
@@ -263,7 +268,7 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
       var vals = {};
       this.$('.workflow-variable').each(function () {
         var value = $(this).is("input[type='checkbox']") ? $(this).is(':checked').toString() : $(this).val();
-        if ($(this).val()) { vals[$(this).attr('name')] = value; }
+        if ($(this).val() && $(this).is(':visible')) { vals[$(this).attr('name')] = value; }
       });
       return {
         envName: this.$("input[name='envName']").val(),
@@ -272,7 +277,7 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
     },
 
     _settingsForm: function() {
-      return this.$('#environment-settings');
+      return this.$('#workflow-parameters-form');
     },
 
     render: function(error){
@@ -281,8 +286,9 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
 
       if (!error) {
         $("#ready").show();
-        $.when(genesis.fetchTemplate(this.template)).done(function(tmpl){
-          view.$el.html(tmpl({variables: view.variables}));
+        $.when(genesis.fetchTemplate(this.template), genesis.fetchTemplate(this.varTemplate)).done(function(tmpl, varTmpl){
+          view.$el.html(tmpl({/*variables: view.variables*/}));
+          view.$('#workflow_vars').html(varTmpl({variables: view.variables}));
           view.$('input:not(:hidden):first').focus();
 
           validation.bindValidation(view.model, view._settingsForm());
