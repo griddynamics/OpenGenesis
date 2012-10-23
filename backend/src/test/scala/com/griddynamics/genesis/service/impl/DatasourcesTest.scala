@@ -5,7 +5,7 @@ import org.springframework.core.convert.support.ConversionServiceFactory
 import com.griddynamics.genesis.util.IoUtil
 import org.mockito.Mockito
 import org.junit.{Before, Test}
-import com.griddynamics.genesis.service.{TemplateRepoService, VariableDescription}
+import com.griddynamics.genesis.service.{Builders, TemplateRepoService, VariableDescription}
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.template.VersionedTemplate
@@ -63,6 +63,16 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
         val listDS12 = varDesc.find(_.name == "noArgs")
         assert(listDS12.isDefined)
         expect(Seq("a", "b", "c").zip(Seq("a", "b", "c")).toMap)(listDS12.get.values)
+    }
+
+    @Test def testNoArgsDefault() {
+        val template = testTemplate
+        val varDesc =  template.createWorkflow.variableDescriptions
+        assert(varDesc.nonEmpty)
+        val listDS12 = varDesc.find(_.name == "noArgs")
+        assert(listDS12.isDefined)
+        expect(Seq("a", "b", "c").zip(Seq("a", "b", "c")).toMap)(listDS12.get.values)
+        template.createWorkflow.embody(Map("nodesCount" -> "1"))
     }
 
     @Test def testIndependentDataSource() {
@@ -186,6 +196,7 @@ class NoArgsDSFactory extends DataSourceFactory {
     def newDataSource = {
         val source = new ListVarDataSource {
             override def config(map: Map[String, Any]){}
+            override def default = Some("c")
         }
         source.values = Seq("a", "b", "c").map(e => (e, e)).toMap
         source

@@ -61,8 +61,8 @@ class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFac
 case class GroupDetails(id: Int, description: String, required: Boolean = false)
 
 class VariableDetails(val name : String, val clazz : Class[_ <: AnyRef], val description : String,
-                      val validators : Seq[(String, Closure[Boolean])], val isOptional: Boolean = false, val defaultValue: Option[Any],
-                      val valuesList: Option[(Map[String,Any] => Map[String,String])] = None, val dependsOn: Seq[String],
+                      val validators : Seq[(String, Closure[Boolean])], val isOptional: Boolean = false, val defaultValue: () => Option[Any],
+                      val valuesList: Option[(Map[String,Any] => (Option[Any], Map[String,String]))] = None, val dependsOn: Seq[String],
                       val group: Option[GroupDetails] = None)
 
 class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
@@ -154,16 +154,16 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
       this.inlineDataSource = Some(ds)
     }
 
-    def valuesList: Option[(Map[String, Any] => Map[String,String])] = {
+    def valuesList: Option[(Map[String, Any] => (Option[Any], Map[String,String]))] = {
         if (useOneOf) {
             import collection.JavaConversions._
             oneOf.setDelegate(dsObj)
 
-            val getValues = { _: Any => oneOf.call().toMap }
+            val getValues = { _: Any => (Option(defaultValue), oneOf.call().toMap) }
 
             validator(new Closure[Boolean](this.oneOf) {
                 def doCall(args: Array[Any]): Boolean = {
-                    getValues().exists(_._2.toString == args(0).toString)
+                    getValues()._2.exists(_._2.toString == args(0).toString)
                 }
             })
 
@@ -182,9 +182,9 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
           val func = { params: Map[String, Any] =>
             if (params.nonEmpty || inlineDS.dependancyVars.isEmpty) {
               inlineDS.config(parents.map(variable => (variable, params(variable))).toMap)
-              inlineDS.getData
+              (inlineDS.default, inlineDS.getData)
             } else {
-              Map[String, String]()
+              (Option(defaultValue), Map[String, String]())
             }
           }
 
@@ -192,14 +192,24 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
         } else {
            dataSourceRef.flatMap(ds => Option({params : Map[String, Any] => {
                val p = parents.toList.map(params.get(_)).flatten
-               dsObj.map(_.getData(ds, p)).getOrElse(throw new IllegalStateException("No datasource configuration found, though variable %s tries to read from datasource".format(name)))
+               dsObj.map(dso => {(dso.default(ds), dso.getData(ds, p))}).getOrElse(throw new IllegalStateException("No datasource configuration found, though variable %s tries to read from datasource".format(name)))
            }}))
         }
     }
 
     def newVariable = {
       val values = valuesList
-      new VariableDetails(name, clazz, description, validators.toSeq, isOptional, Option(defaultValue), values, parents.toList, group)
+      val default = () => {
+         if (defaultValue != null) {
+             Option(defaultValue)
+         } else if (inlineDataSource.isDefined){
+             val inlineDS = inlineDataSource.get
+             inlineDS.default
+         } else {
+             dataSourceRef.flatMap(ds => {dsObj.flatMap(_.default(ds))})
+         }
+      }
+      new VariableDetails(name, clazz, description, validators.toSeq, isOptional, default, values, parents.toList, group)
     }
 
     override def setProperty(property: String, arg: AnyRef) {
@@ -213,7 +223,7 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
     override def getProperty(property: String): AnyRef = {
         if (super.getMetaClass.hasProperty(this, property) != null) {
             super.getProperty(property)
-        } else{
+        } else {
             props.get(property).getOrElse(throw new MissingPropertyException(property, this.getClass))
        }
     }

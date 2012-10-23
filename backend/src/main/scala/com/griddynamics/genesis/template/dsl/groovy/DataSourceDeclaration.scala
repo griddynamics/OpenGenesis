@@ -45,25 +45,27 @@ class DataSourceBuilder(val projectId: Int, val factory : DataSourceFactory, val
 
 
 class DSObjectSupport(val dsMap: Map[String, DataSourceBuilder]) extends GroovyObjectSupport {
+
      override def getProperty(name: String)  = {
-         dsMap.get(name) match {
-             case Some(src) => {
-                 val s: (String, VarDataSource) = src.newDS
+         dataSource(name) match {
+             case Some(s) => {
                  collection.JavaConversions.mapAsJavaMap(s._2.getData)
              }
              case _ => super.getProperty(name)
          }
      }
 
+     def default(name: String): Option[Any] = dataSource(name).flatMap(_._2.default)
+
      def getData(name: String, args: List[Any]): Map[String,String] = {
-         dsMap.get(name) match {
+         dataSource(name) match {
              case Some(src) => args match {
-                 case Nil => src.newDS._2.getData
+                 case Nil => src._2.getData
                  case x :: Nil => {
-                     src.newDS._2.asInstanceOf[DependentDataSource].getData(x)
+                     src._2.asInstanceOf[DependentDataSource].getData(x)
                  }
                  case head :: tail => {
-                     val ds = src.newDS._2
+                     val ds = src._2
                      val params: Array[AnyRef] = args.map(v => ScalaUtils.toAnyRef(v)).toArray
                      val find: Option[Method] = ds.getClass.getDeclaredMethods.find(m => m.getName == "getData"
                        && m.getParameterTypes.length == params.length
@@ -75,11 +77,13 @@ class DSObjectSupport(val dsMap: Map[String, DataSourceBuilder]) extends GroovyO
                          case _ => throw new IllegalStateException("Cannot find method getData for args %s".format(args))
                      }
                  }
-                 case _ => throw new IllegalStateException("Cannot find any suitable method at datasource %s".format(src.newDS._2))
+                 case _ => throw new IllegalStateException("Cannot find any suitable method at datasource %s".format(src._2))
              }
              case _ => throw new IllegalStateException("Can't get datasource for argument %s".format(name))
          }
      }
+
+     def dataSource(name: String) : Option[(String, VarDataSource)] = dsMap.get(name).map(_.newDS)
  }
 
 
