@@ -28,7 +28,7 @@ function (genesis, backend, roles, Backbone, $, _) {
   });
 
   EnvironmentAccess.View = Backbone.View.extend({
-    template: "app/templates/environment/access_list.html",
+    template: "app/templates/env_details/access_list.html",
 
     events: {
       "click a.modify-access" : "modifyAccess"
