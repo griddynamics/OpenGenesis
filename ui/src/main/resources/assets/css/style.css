@@ -512,7 +512,17 @@ div.system-settings {
 
 #wrapper #top-panel .env-status {
     float: right;
-    margin: 13px 10px 2px 5px;
+    margin: 13px 0 2px 5px;
+    min-width: 90px;
+    text-align: right;
+}
+
+#wrapper #top-panel .env-status img.status {
+    vertical-align: bottom;
+}
+
+#wrapper #top-panel #resetBtn {
+    margin-left: 10px;
 }
 
 #wrapper #content-wrapper {
@@ -569,7 +579,6 @@ div.system-settings {
 
 #tools-panel {
     float: right;
-    font-size: 14px;
 }
 
 #tools-panel #project-settings {
@@ -584,7 +593,7 @@ div.system-settings {
 #wrapper #wrapper-content #tab-panel #tabs{
 	display: inline-block;
 	height:24px;
-	margin-left:20px;
+	margin-left:15px;
 	margin-bottom:-4px;
 }
 
@@ -1165,6 +1174,14 @@ table .pre {
     margin-right:15px;
 }
 
+#env-access-panel .header {
+    padding: 20px 0;
+}
+
+#env-access-panel a.modify-access {
+    float: right;
+    margin-top: 0 !important;
+}
 
 #panel .section {
     margin-bottom: 30px;

@@ -135,7 +135,6 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
     onRename: function() {
       if (this.details.previous("name") === "") return;
       this.$('.envname').html(this.details.get('name'));
-      status.StatusPanel.success("Environment has been renamed")
     },
 
     executeWorkflow: function (e) {
@@ -354,7 +353,6 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
       var view = this;
       return $element.dialog({
         title: 'Rename environment',
-        modal: false,
         buttons: {
           "Save": function () {
             var dialog = this;
