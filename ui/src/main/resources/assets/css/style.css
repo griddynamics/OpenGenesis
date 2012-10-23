@@ -1165,6 +1165,14 @@ table .pre {
     margin-right:15px;
 }
 
+#env-access-panel .header {
+    padding: 20px 0;
+}
+
+#env-access-panel a.modify-access {
+    float: right;
+    margin-top: 0 !important;
+}
 
 #panel .section {
     margin-bottom: 30px;
