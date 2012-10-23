@@ -64,13 +64,14 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 }
 
 class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager,
-                           override val drop: Boolean, val buildInfoProps: java.util.Properties) extends SchemaCreator[GenesisSchema](GenesisSchema.envs.name) {
+                           override val drop: Boolean, val buildInfoProps: java.util.Properties, val repo: GenesisVersionRepository) extends SchemaCreator[GenesisSchema](GenesisSchema.envs.name) {
     override val transactionTemplate = new TransactionTemplate(transactionManager)
     override val schema = GenesisSchema
 
     override def afterPropertiesSet() {
+        val setNeeded = drop || !isSchemaExists
         super.afterPropertiesSet
-        if (drop || !isSchemaExists) GenesisVersion.fromBuildProps(buildInfoProps).foreach(schema.genesisVersion.insert(_))
+        if (setNeeded) GenesisVersion.fromBuildProps(buildInfoProps).foreach(repo.set(_))
     }
 }
 

@@ -126,6 +126,7 @@
         <constructor-arg ref="squerylTransactionManager" />
         <constructor-arg value="#{fileProps['genesis.system.jdbc.drop.db'] ?: false}" />
         <constructor-arg ref="buildInformation" />
+        <constructor-arg ref="genesisVersionRepository" />
     </bean>
 
     <bean id="genesisSchemaValidator" class="com.griddynamics.genesis.configuration.GenesisSchemaValidator"
