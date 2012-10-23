@@ -41,7 +41,7 @@ class ExternalUserDetailsService(authorityService: AuthorityService, projectAuth
     def loadUserByUsername(username: String) = loadUserByUsername(username, Seq())
 
     def loadUserByUsername(username: String, groupNames : Iterable[String]) = {
-        if (username != adminUsername) {
+        if (username.toUpperCase != adminUsername.toUpperCase) {
             var authorities = (
               authorityService.getUserAuthorities(username) ++
                 (if (projectAuthorityService.isUserProjectAdmin(username, groupNames)) List(GenesisRole.ProjectAdmin.toString) else List())
