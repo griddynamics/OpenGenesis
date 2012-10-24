@@ -866,7 +866,7 @@ td.subtable{
 }
 
 .workflow-history .status {
-    width: 7%;
+    width: 60px;
 }
 
 .workflow-history .details {
@@ -878,11 +878,11 @@ td.subtable{
 }
 
 .workflow-history .stopped {
-    width: 10%;
+    width: 8%;
 }
 
 .workflow-history .logs {
-    width: 9%;
+    width: 55px;
 }
 .toggle-content {
     display:none;
