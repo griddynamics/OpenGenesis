@@ -1,7 +1,7 @@
 package com.griddynamics.genesis.template.dsl.groovy
 
 import com.griddynamics.genesis.template.{DependentDataSource, VarDataSource, DataSourceFactory}
-import groovy.lang.{Closure, GroovyObjectSupport}
+import groovy.lang.{MissingPropertyException, Closure, GroovyObjectSupport}
 import collection.mutable.ListBuffer
 import com.griddynamics.genesis.util.ScalaUtils
 import java.lang.reflect.Method
@@ -100,6 +100,16 @@ class InlineDataSource( builder: DataSourceBuilder,
     } else {
       Map()
     }
+  }
+
+
+  override def default = {
+      try {
+         val (_, datasource) = configuredBuilder.newDS
+         datasource.default
+      } catch {
+          case mpe: MissingPropertyException => None
+      }
   }
 
   override def hasValue(value: Any) = {
