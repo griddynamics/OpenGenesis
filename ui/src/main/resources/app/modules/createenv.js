@@ -111,7 +111,7 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
     },
 
     createEnvironment: function() {
-      if($('#workflow-parameters-form').valid()) {
+      if(this.$('#workflow-parameters-form').valid()) {
         this.$el.showLoading();
         var model = this.mergeModelValues();
         var self = this;
@@ -217,7 +217,7 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
     preconditionErrorTemplate: "app/templates/createenv/preconditions_error.html",
 
     events: {
-      "click .group-radio": function(e) {variables.groupVarSelected(e, this, this.variables);}
+      "click .group-radio": "groupVarSelected"
     },
 
     initialize: function(options) {
@@ -268,7 +268,7 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
       var vals = {};
       this.$('.workflow-variable').each(function () {
         var value = $(this).is("input[type='checkbox']") ? $(this).is(':checked').toString() : $(this).val();
-        if ($(this).val() && $(this).is(':visible')) { vals[$(this).attr('name')] = value; }
+        if ($(this).val() && $(this).is(':enabled')) { vals[$(this).attr('name')] = value; }
       });
       return {
         envName: this.$("input[name='envName']").val(),
@@ -300,6 +300,10 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
           view.el.innerHTML = tmpl({error: JSON.parse(error.responseText)});
         });
       }
+    },
+
+    groupVarSelected: function(e) {
+       variables.groupVarSelected(e, this, this.variables);
     }
   });
 

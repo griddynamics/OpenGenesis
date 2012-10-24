@@ -149,11 +149,9 @@ function(genesis, status, $, _) {
        var $currentTarget = view.$(event.currentTarget);
        var group = $currentTarget.attr('name');
        var name = $currentTarget.attr('data-var-name');
-       view.$("[id=" + name + "]").show();
-       _.each(variables.filter(function(v){return group == v.group;}), function (x) {
-         if (x.name !== name) {
-           view.$("[id=" + x.name + "]").hide();
-         }
+       view.$("#" + name).removeAttr('disabled');
+       _.each(variables.filter(function(v){return group == v.group && name !== v.name;}), function (x) {
+           view.$("#" + x.name).attr('disabled', '');
        });
     }
   }

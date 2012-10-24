@@ -1,6 +1,6 @@
 <%
   function varClass(variable) {
-    return "workflow-variable " + (!variable.optional ? "required" : "") + (variable.group ? "toggle-content" : "");
+    return "workflow-variable " + (!variable.optional ? "required" : "") + (variable.group ? "group" : "");
   }
 
   function isSelected(key, variable) {
@@ -8,7 +8,8 @@
   }
 
   function disabled(variable) {
-    return _.size(variable.values) ? '' : 'disabled="disabled"';
+    var grp = variable.group;
+    return !_.size(variable.values) && !grp || grp && !variable.defaultValue ? 'disabled="disabled"' : '';
   }
 
   function isSelected(key, variable) {
@@ -36,16 +37,15 @@
     var required = !variable.optional;
     var group = variable.group;
     var select = typeof(values) !== "undefined" && _.size(values) || variable.dependsOn; %>
-     <% if (group && (i == 0 || group !== variables[i-1].group)) { %>
-     <label for="<%= group %>" style="width: 70%"><%= variable.group %>:</label>
-    <% } %>
 <div style="margin-top: 10px; <%= (i === variables.length - 1 ? 'margin-bottom: 10px' : '') %>">
-    <label for="<%= name %>" class="<%= (required ? 'label-required' : '') %>">
-    <% if (required) { %>*&nbsp;<% } %> <%= variable.description %>
+    <label for="<%= group ? group : name %>" class="<%= (required ? 'label-required' : '') %>">
+    <% if (required) { %>*&nbsp;<% } %> <%= group ? (i == 0 || group !== variables[i-1].group ? group : "") : variable.description %>
     </label>
     <div style="width: 60%; float: right">
         <% if (group) { %>
-            <input type="radio" name="<%= group %>" class="group-radio" data-var-name="<%= name %>" style="float:left;"/>
+            <input type="radio" name="<%= group %>" class="group-radio" data-var-name="<%= name %>"
+                   <% if (variable.defaultValue) { %> checked <% } %> />
+            <label for="<%= name %>" class="group"> <%= variable.description %></label>
         <% } %>
         <% if (select) { %>
             <select id="<%= name %>" <%= disabled(variable) %> name="<%= name %>" class="<%= varClass(variable) %>">
@@ -55,7 +55,7 @@
               <% }) %>
             </select>
         <% } else { %>
-          <input type="<%= inputType(variable) %>" class="<%= varClass(variable) %>" id="<%= name %>" name="<%= name %>" <%= defVal(variable) %> />
+          <input type="<%= inputType(variable) %>"  <%= disabled(variable) %> class="<%= varClass(variable) %>" id="<%= name %>" name="<%= name %>" <%= defVal(variable) %> />
          <% } %>
     </div>
     <div style="clear: both"></div>

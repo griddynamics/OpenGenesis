@@ -383,7 +383,7 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
     templateVars: "app/templates/common/variables.html",
 
     events: {
-      "click .group-radio": function(e) {variables.groupVarSelected(e, this, this.workflow.variables);}
+      "click .group-radio": "groupVarSelected"
     },
 
     initialize: function() {
@@ -414,7 +414,7 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
         }
 
         $('.workflow-variable').each(function () {
-            if ($(this).val() && $(this).is(':visible')) vals[$(this).attr('name')] = $(this).is("input[type='checkbox']") ? $(this).is(':checked').toString() : $(this).val();
+            if ($(this).val() && $(this).is(':enabled')) vals[$(this).attr('name')] = $(this).is("input[type='checkbox']") ? $(this).is(':checked').toString() : $(this).val();
         });
       }
       var execution = backend.WorkflowManager.executeWorkflow(this.projectId, this.envId, this.workflow.name, vals);
@@ -496,7 +496,12 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
           }
         });
       });
+    },
+
+    groupVarSelected: function(e) {
+       variables.groupVarSelected(e, this, this.workflow.variables);
     }
+
   });
 
   return EnvironmentDetails;
