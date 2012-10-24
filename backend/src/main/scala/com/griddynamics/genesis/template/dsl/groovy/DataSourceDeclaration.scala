@@ -3,7 +3,7 @@ package com.griddynamics.genesis.template.dsl.groovy
 import com.griddynamics.genesis.template.{DependentDataSource, VarDataSource, DataSourceFactory}
 import groovy.lang.{MissingPropertyException, Closure, GroovyObjectSupport}
 import collection.mutable.ListBuffer
-import com.griddynamics.genesis.util.{Logging, ScalaUtils}
+import com.griddynamics.genesis.util.ScalaUtils
 import java.lang.reflect.Method
 
 class DataSourceDeclaration(val projectId: Int, dsFactories: Seq[DataSourceFactory]) extends GroovyObjectSupport with Delegate {
@@ -89,7 +89,7 @@ class DSObjectSupport(val dsMap: Map[String, DataSourceBuilder]) extends GroovyO
 
 class InlineDataSource( builder: DataSourceBuilder,
                         configDeclaration: Option[Closure[_]],
-                        knownVariables: Seq[VariableBuilder] ) extends VarDataSource with Logging {
+                        knownVariables: Seq[VariableBuilder] ) extends VarDataSource {
 
   def getData = {
     val cbuilder = configuredBuilder
@@ -108,10 +108,7 @@ class InlineDataSource( builder: DataSourceBuilder,
          val (_, datasource) = configuredBuilder.newDS
          datasource.default
       } catch {
-          case mpe: MissingPropertyException => {
-              log.debug("Not all variables collected to initialize DS")
-              None
-          }
+          case mpe: MissingPropertyException => None
       }
   }
 
