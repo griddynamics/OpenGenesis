@@ -121,8 +121,14 @@ function(genesis, status, $, _) {
                 if (descendants.contains(variable.name) && _.has(variable, "values") && _.size(variable.values) > 0) {
 
                   var $select = $("#" + variable.name)
-                    .append("<option value=''> Please select </option>")
-                    .removeAttr("disabled");
+                    .append("<option value=''> Please select </option>");
+                  if (!variable.group) {
+                    $select.removeAttr("disabled");
+                  } else {
+                   var checked = $("input[type=radio][name=" + variable.group + "][data-var-name="
+                    + variable.name + "]").is(':checked');
+                   if (checked) $select.removeAttr("disabled");
+                  }
 
                   _(variable.values).each(function(key, description) {
                     $select.append(
