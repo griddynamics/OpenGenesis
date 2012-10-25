@@ -5,11 +5,10 @@ import groovy.lang.{MissingPropertyException, Closure, GroovyObjectSupport}
 import collection.mutable.ListBuffer
 import reflect.BeanProperty
 import groovy.util.Expando
-import org.apache.commons.lang.{ObjectUtils, BooleanUtils}
 
 class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFactories : Seq[DataSourceFactory],
-                          projectId: Int, groupOpt: Option[GroupDetails] = None) extends GroovyObjectSupport with Delegate {
-    private val builders = new ListBuffer[VariableBuilder]
+                          projectId: Int) extends GroovyObjectSupport with Delegate {
+    protected val builders = new ListBuffer[VariableBuilder]
 
 //  val declaration = new DataSourceDeclaration(projectId, dataSourceFactories)
 
@@ -28,34 +27,61 @@ class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFac
   override def setProperty(property: String, newValue: Any) {
     newValue match {
       case cl: Closure[_] =>
-        builders += Delegate(cl).to(new DSAwareVariableBuilder(builders, dataSourceFactories, projectId, groupOpt, property, dsObjSupport))
+        builders += Delegate(cl).to(new DSAwareVariableBuilder(builders, dataSourceFactories, projectId, None, property, dsObjSupport))
       case _ => super.setProperty(property, newValue)
     }
   }
 
   def variable(name : String) = {
-        val builder = new VariableBuilder(name, dsObjSupport, dataSourceFactories, projectId, groupOpt)
+        val builder = new VariableBuilder(name, dsObjSupport, dataSourceFactories, projectId)
         builders += builder
         builder
     }
 
   import collection.JavaConversions.mapAsScalaMap
-  def group(params: java.util.Map[String, Any], variables : Closure[Unit]) = groupOpt match {
-    case None =>
-     builders ++= Delegate(variables).to(new VariableDeclaration(dsObjSupport, dataSourceFactories, projectId,
+  def group(params: java.util.Map[String, Any], variables : Closure[Unit]) =
+     builders ++= Delegate(variables).to(new GroupDeclaration(builders, dsObjSupport, dataSourceFactories, projectId,
        groupDetails(params.toMap, variables.hashCode))).getBuilders
-    case _ => throw new IllegalArgumentException("Nested groups are not supported!")
-  }
+
 
   private def groupDetails(params: Map[String, Any], id: Int) = (params.get("description"), params.getOrElse("required", false)) match {
-    case (Some(desc: String), req: Boolean) => Option(GroupDetails(id, desc, req))
+    case (Some(desc: String), req: Boolean) => GroupDetails(id, desc, req)
     case _ => throw new IllegalArgumentException("String parameter 'description' is mandatory, boolean parameter 'required' is optional")
   }
 
   def getBuilders = {
-    if(groupOpt.isDefined) builders.foreach(_.setIsOptional(true))
     builders
   }
+}
+
+class GroupDeclaration(val parentBuilders: ListBuffer[VariableBuilder],
+                       dsObjSupport: Option[Closure[Unit]],
+                       dataSourceFactories : Seq[DataSourceFactory],
+                       projectId: Int, group: GroupDetails) extends VariableDeclaration(dsObjSupport, dataSourceFactories, projectId) {
+
+  override def group(params: java.util.Map[String, Any], variables: Closure[Unit]): ListBuffer[VariableBuilder] = {
+      throw new IllegalArgumentException("Nested groups are not supported!")
+  }
+
+  override def setProperty(property: String, newValue: Any) {
+    newValue match {
+      case cl: Closure[_] =>
+        builders += Delegate(cl).to(new DSAwareVariableBuilder(parentBuilders ++ builders, dataSourceFactories, projectId, Option(group), property, dsObjSupport))
+      case _ => super.setProperty(property, newValue)
+    }
+  }
+
+  override def variable(name : String) = {
+        val builder = new VariableBuilder(name, dsObjSupport, dataSourceFactories, projectId, Option(group))
+        builders += builder
+        builder
+   }
+
+  override def getBuilders = {
+    builders.foreach(_.setIsOptional(true))
+    builders
+  }
+
 }
 
 case class GroupDetails(id: Int, description: String, required: Boolean = false)
