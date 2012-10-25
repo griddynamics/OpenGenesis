@@ -1,41 +1,11 @@
 <!--todo: move to css-->
-    <% if(variables.length == 0) { %>
+    <% if(noVariables) { %>
         <div style="padding-top:5px">
             Are you sure you want to run <em class="workflow-name"><%= workflowName %></em> workflow?
         </div>
     <% } else { %>
     <form id="workflow-parameters-form" action="">
-        <% _.each(variables, function(variable, i) { %>
-        <div style="margin-top: 10px; <%= (i === variables.length - 1 ? 'margin-bottom: 10px' : '') %>">
-            <label for="<%= variable.name %>" style="float:left; width:37%; margin-right:5px; margin-top: 7px;" class=<%= (variable.optional ? "label-plain" : "label-required") %>>
-            <% if (! variable.optional) { %>*&nbsp;<% } %> <%= variable.description %>
-            </label>
-            <div style="width: 60%; float: right">
-                <% if (typeof(variable.values) !== "undefined" && _.size(variable.values) || variable.dependsOn) { %>
-                    <% if (! _.size(variable.values)) { %>
-                        <select id="<%= variable.name %>" disabled="disabled" name="<%= variable.name %>" class="<%= (variable.optional ? "workflow-variable" : "workflow-variable required") %>"></select>
-                    <% } else { %>
-                        <select id="<%= variable.name %>" name="<%= variable.name %>" class="<%= (variable.optional ? "workflow-variable" : "workflow-variable required") %>">
-                          <option value="">Please select</option>
-                          <% for (var key in variable.values) { %>
-                              <% if (variable.defaultValue == key) { %>
-                                  <option value="<%= variable.values[key] %>" selected="selected"><%= key %></option>
-                              <% } else { %>
-                                  <option value="<%= variable.values[key] %>"><%= key %></option>
-                              <% } %>
-                          <% } %>
-                        </select>
-                    <% } %>
-                <% } else if (variable.type == "Boolean"){ %>
-                  <input type="checkbox" class="<%= (variable.optional ? "workflow-variable" : "workflow-variable required") %>" id="<%= variable.name %>"
-                name="<%= variable.name %>" <% if (variable.defaultValue) { %> checked = "checked" <% } %> >
-                 <% } else { %>
-                  <input type="text" class="<%= (variable.optional ? "workflow-variable" : "workflow-variable required") %>" id="<%= variable.name %>" name="<%= variable.name %>" value="<%= variable.defaultValue %>" >
-                <% } %>
-            </div>
-            <div style="clear: both"></div>
-        </div>
-        <% }); %>
+        <div id="workflow_vars" />
     </form>
 
     <% } %>

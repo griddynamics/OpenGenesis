@@ -1,0 +1,63 @@
+<%
+  function varClass(variable) {
+    return "workflow-variable " + (!variable.optional ? "required" : "") + (variable.group ? "group" : "");
+  }
+
+  function isSelected(key, variable) {
+    return variable.defaultValue && variable.defaultValue === key ? 'selected="selected"' : '';
+  }
+
+  function disabled(variable) {
+    var grp = variable.group;
+    return !_.size(variable.values) && !grp || grp && !variable.defaultValue ? 'disabled="disabled"' : '';
+  }
+
+  function isSelected(key, variable) {
+    return variable.defaultValue && variable.defaultValue === key ? 'selected="selected"' : '';
+  }
+
+  function inputType(variable) {
+    switch(variable.type) {
+        case 'Boolean' : return 'checkbox';
+        default : return 'text';
+    }
+  }
+
+  function defVal(variable) {
+    switch(variable.type) {
+        case 'Boolean' : return variable.defaultValue ? 'checked = "checked"' : '';
+        default : return variable.defaultValue ? 'value="' + variable.defaultValue + '"' : '';
+    }
+  }
+%>
+
+<% _.each(variables, function(variable, i) {
+    var name = variable.name;
+    var values = variable.values;
+    var required = !variable.optional;
+    var group = variable.group;
+    var select = typeof(values) !== "undefined" && _.size(values) || variable.dependsOn; %>
+<div style="margin-top: 10px; <%= (i === variables.length - 1 ? 'margin-bottom: 10px' : '') %>">
+    <label for="<%= group ? group : name %>" class="<%= (required ? 'label-required' : '') %>">
+    <% if (required) { %>*&nbsp;<% } %> <%= group ? (i == 0 || group !== variables[i-1].group ? group : "") : variable.description %>
+    </label>
+    <div style="width: 60%; float: right">
+        <% if (group) { %>
+            <input type="radio" name="<%= group %>" class="group-radio" data-var-name="<%= name %>"
+                   <% if (variable.defaultValue) { %> checked <% } %> />
+            <label for="<%= name %>" class="group"> <%= variable.description %></label>
+        <% } %>
+        <% if (select) { %>
+            <select id="<%= name %>" <%= disabled(variable) %> name="<%= name %>" class="<%= varClass(variable) %>">
+              <% if (_.size(values)) {%> <option value="">Please select</option> <% } %>
+              <% _.each(_.keys(values), function(key) { %>
+                   <option value="<%= values[key] %>" <%= isSelected(key, variable) %> ><%= key %></option>
+              <% }) %>
+            </select>
+        <% } else { %>
+          <input type="<%= inputType(variable) %>"  <%= disabled(variable) %> class="<%= varClass(variable) %>" id="<%= name %>" name="<%= name %>" <%= defVal(variable) %> />
+         <% } %>
+    </div>
+    <div style="clear: both"></div>
+</div>
+<% }); %>

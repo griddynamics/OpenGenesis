@@ -143,6 +143,16 @@ function(genesis, status, $, _) {
             });
         });
       });
+    },
+
+    groupVarSelected: function(event, view, variables) {
+       var $currentTarget = view.$(event.currentTarget);
+       var group = $currentTarget.attr('name');
+       var name = $currentTarget.attr('data-var-name');
+       view.$("#" + name).removeAttr('disabled');
+       _.each(variables.filter(function(v){return group == v.group && name !== v.name;}), function (x) {
+           view.$("#" + x.name).attr('disabled', '');
+       });
     }
   }
 });
