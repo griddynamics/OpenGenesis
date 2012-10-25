@@ -133,11 +133,15 @@ class RequestBrokerImpl(storeService: StoreService,
     }
 
     def varsDesc(variables: Map[String, String], workflow: WorkflowDefinition) : Map[String, String] = {
+        def findDataLabel(k: String, v: String, descriptions: Seq[VariableDescription]): Option[(String, String)] = {
+            descriptions.find(_.name == k).flatMap(dsc => {
+                dsc.values.find(_._2 == v)
+            })
+        }
         for ((k, v) <- variables) yield {
-            val desc: Option[VariableDescription] = workflow.variableDescriptions.find(_.name == k)
-            val value: String = desc.flatMap(d => {
-                d.values.find(_._2 == v)
-            }).getOrElse((v,v))._1
+            val descriptions: Seq[VariableDescription] = workflow.variableDescriptions
+            val value = findDataLabel(k,v,descriptions).getOrElse(findDataLabel(k,v,workflow.partial(variables)).getOrElse((v,v)))._1
+            val desc: Option[VariableDescription] = descriptions.find(_.name == k)
             (desc.map(_.description).getOrElse(k), value)
         }
     }
