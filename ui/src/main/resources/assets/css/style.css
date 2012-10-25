@@ -1183,6 +1183,10 @@ table .pre {
     margin-top: 0 !important;
 }
 
+#env-access-panel table tr td {
+    padding: 10px !important;
+}
+
 #edit-templaterepo label {
     margin-right: 10px;
 }
