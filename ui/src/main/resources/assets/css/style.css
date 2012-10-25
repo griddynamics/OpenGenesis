@@ -309,7 +309,7 @@ table th{
     width: 32px;
     height: 32px;
     vertical-align: middle;
-    margin-right: 10px;
+    margin-right: 5px;
     margin-top: -5px;
 }
 
@@ -317,7 +317,7 @@ table th{
     width: 24px;
     height: 24px;
     vertical-align: middle;
-    margin-right: 10px;
+    margin-right: 5px;
 }
 
 #page-view-loading {
