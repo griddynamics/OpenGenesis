@@ -1183,6 +1183,14 @@ table .pre {
     margin-top: 0 !important;
 }
 
+#edit-templaterepo label {
+    margin-right: 10px;
+}
+
+#edit-templaterepo select {
+    margin-bottom: 15px;
+}
+
 #panel .section {
     margin-bottom: 30px;
 }
