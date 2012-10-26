@@ -360,6 +360,7 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
             var name = $('input:text:first', this).val();
             $.when(backend.EnvironmentManager.updateEnvName(view.details.get("projectId"), view.details.get('id'), name)).done(function() {
               view.details.set('name', name);
+              genesis.app.trigger("breadcrumb:changed", {projectId: view.details.get("projectId"), name: name});
               $(dialog).dialog("close");
             }).fail(function(jqxhr) {
                 status.StatusPanel.error(jqxhr);
