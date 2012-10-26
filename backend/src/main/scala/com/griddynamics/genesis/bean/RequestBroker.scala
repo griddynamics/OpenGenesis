@@ -28,17 +28,15 @@ import com.griddynamics.genesis.service
 import service._
 import com.griddynamics.genesis.validation.Validation
 import java.sql.Timestamp
-import scala.Left
 import com.griddynamics.genesis.api.Failure
-import scala.Some
-import scala.Right
 import service.ValidationError
 import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.api
 
 trait RequestBroker {
     def createEnv(projectId: Int, envName: String, envCreator : String,
                   templateName: String, templateVersion: String,
-                  variables: Map[String, String]) : ExtendedResult[Int]
+                  variables: Map[String, String], config: api.Configuration) : ExtendedResult[Int]
 
     def requestWorkflow(envId: Int, projectId: Int, workflowName: String, variables: Map[String, String], startedBy: String) : ExtendedResult[Int]
 
@@ -56,7 +54,8 @@ class RequestBrokerImpl(storeService: StoreService,
 
     def createEnv(projectId: Int, envName: String, envCreator : String,
                   templateName: String, templateVersion: String,
-                  variables: Map[String, String]) : ExtendedResult[Int] = {
+                  variables: Map[String, String], config: api.Configuration) : ExtendedResult[Int] = {
+
         validateEnvName(envName, projectId) ++ validateCreator(envCreator) match {
             case f: Failure => return f
             case _ =>
@@ -77,7 +76,7 @@ class RequestBrokerImpl(storeService: StoreService,
         }
 
         val env = new Environment(envName, EnvStatus.Busy, envCreator,
-                            new Timestamp(System.currentTimeMillis()), None, None, templateName, templateVersion, projectId)
+                            new Timestamp(System.currentTimeMillis()), None, None, templateName, templateVersion, projectId, config.id.get)  //todo: id.get?
         val workflow = new Workflow(env.id, twf.name, envCreator,
                                     WorkflowStatus.Requested, 0, 0, variables, varsDesc(variables, twf), None, None)
 
@@ -103,7 +102,7 @@ class RequestBrokerImpl(storeService: StoreService,
             getTemplate(env).flatMap(t => {
                 if (t.createWorkflow.name == workflowName)
                     Failure(serviceErrors = Map(RR.envName ->
-                      "It's not allowed to execute create workflow['%s'] in existing environment '%s'"
+                      "It's not allowed to execute create workflow['%s'] in existing instance '%s'"
                         .format(workflowName, env.name)))
                 else
                     validStart(t, workflowName, env, variables, projectId, startedBy)
@@ -112,7 +111,7 @@ class RequestBrokerImpl(storeService: StoreService,
 
     private def getTemplate(env: Environment) = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion) match {
         case Some(t) => Success(t)
-        case None => Failure(compoundVariablesErrors = Seq("Template used to create environment %s is not found".format(env.name)))
+        case None => Failure(compoundVariablesErrors = Seq("Template used to create instance %s is not found".format(env.name)))
     }
 
     private def validStart(template: TemplateDefinition, workflowName: String, env: Environment, variables: Map[String, String], projectId: Int, startedBy: String): ExtendedResult[Int] = {
@@ -158,7 +157,7 @@ class RequestBrokerImpl(storeService: StoreService,
                     case _ => Success(envId, isSuccess = true)
                 }
             }
-            case _ => Failure(compoundServiceErrors = Seq("Environment is not in 'Broken' state"))
+            case _ => Failure(compoundServiceErrors = Seq("Instance is not in 'Broken' state"))
         }
     })
 
@@ -167,12 +166,12 @@ class RequestBrokerImpl(storeService: StoreService,
         if (env.isDefined)
             Success(env.get)
         else
-            Failure(isNotFound = true, serviceErrors = Map(RR.envName -> "Failed to find environment with id '%s'".format(envId)))
+            Failure(isNotFound = true, serviceErrors = Map(RR.envName -> "Failed to find instance with id '%s'".format(envId)))
     }
 
     def validateEnvName(envName: String, projectId: Int) = envName match {
         case Validation.projectEnvNamePattern(name) => storeService.findEnv(name, projectId) match {
-            case Some(_) => Failure(serviceErrors = Map(RR.envName -> "Environment with the same name already exists in project [id = %s]".format(projectId)))
+            case Some(_) => Failure(serviceErrors = Map(RR.envName -> "Instance with the same name already exists in project [id = %s]".format(projectId)))
             case None => Success((envName, projectId))
         }
         case _ => Failure(serviceErrors = Map(RR.envName -> Validation.projectEnvNameErrorMessage))

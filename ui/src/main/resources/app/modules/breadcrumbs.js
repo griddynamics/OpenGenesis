@@ -10,7 +10,7 @@ function(genesis, Backbone, Environments) {
    * @const
    */
   var LANG = {
-    "create_new_env": "Create new environment",
+    "create_new_env": "Create new instance",
     "project_list": "Project list",
     "system_settings": "System settings",
     "project_properties": "Properties",

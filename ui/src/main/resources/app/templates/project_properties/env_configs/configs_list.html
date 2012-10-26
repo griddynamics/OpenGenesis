@@ -1,0 +1,42 @@
+<div id="dialog-confirm-config-delete" style="display: none; ">
+    Are you sure you want to delete this environment configuration?
+</div>
+<div  style="display: block; ">
+  <div class="top-panel">
+      <div class="page-title"><h2>Environment configurations</h2></div>
+      <a href="javascript:void(0)" class="button add-config"> <span> Add... </span> </a>
+  </div>
+
+  <div class="panel">
+    <div>
+      <% if (configs.length > 0) { %>
+        <table class="main-table">
+          <thead>
+          <tr id="table-title">
+            <th class="first" style="width: 25%">Environment</th>
+            <th>Description</th>
+            <th class="actions">Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% for (var i = 0, count = configs.length; i < count; i++) { var config = configs[i]; %>
+          <tr>
+            <td class="first"><%- config.name %></td>
+            <td ><%- config.description %></td>
+            <td class="actions">
+              <a href="javascript:void(0)" class="edit-config" data-config-id="<%= config.id %>">Edit</a>
+              <a href="javascript:void(0)" class="delete-config" data-config-id="<%= config.id %>">Delete</a>
+            </td>
+          </tr>
+          <% } %>
+
+          </tbody>
+        </table>
+      <% } else { %>
+        <div class="information-panel"><p> No environments available </p></div>
+      <% } %>
+
+
+    </div>
+  </div>
+</div>

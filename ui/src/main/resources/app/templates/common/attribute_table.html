@@ -10,9 +10,15 @@
     </td>
   </tr>
   <tr>
+    <td class="first">Environment</td>
+    <td style="width: 80%"><%- environment.configuration %></td>
+  </tr>
+
+  <tr>
     <td class="first">Created</td>
     <td style="width: 80%"><span class="time"><%= utils.formatDate(environment.creationTime) %></span> by <span class="username"><%= environment.creator %></span></td>
   </tr>
+
   <tr>
      <td class="first">Modified</td>
      <td>

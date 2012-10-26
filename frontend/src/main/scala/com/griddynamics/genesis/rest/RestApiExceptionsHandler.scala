@@ -35,8 +35,12 @@ trait RestApiExceptionsHandler {
 
     @ExceptionHandler(value = Array(classOf[InvalidInputException]))
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    def handleInvalidParams(response : HttpServletResponse) {
-        response.getWriter.write("{\"error\": \"Invalid input\"}")
+    def handleInvalidParams(response : HttpServletResponse,e :InvalidInputException) {
+      e.msg match {
+        case Some(msg) => response.getWriter.write("{\"error\": \"%s\"}".format(msg))
+        case None => response.getWriter.write("{\"error\": \"Invalid input\"}")
+      }
+
     }
 
     @ExceptionHandler(value = Array(classOf[MissingParameterException]))

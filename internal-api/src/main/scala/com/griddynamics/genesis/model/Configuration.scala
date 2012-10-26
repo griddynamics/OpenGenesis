@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
+ *   Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
  *   This library is free software; you can redistribute it and/or modify it under the terms of
@@ -18,19 +18,8 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *   Project:     Genesis
- *   Description:  Continuous Delivery Platform
+ *   Description: Continuous Delivery Platform
  */
-package com.griddynamics.genesis.configuration
+package com.griddynamics.genesis.model
 
-import com.griddynamics.genesis.service.{CredentialsStoreService, StoreService}
-import com.griddynamics.genesis.repository.{DatabagRepository, ProjectRepository}
-import com.griddynamics.genesis.repository
-
-trait StoreServiceContext {
-    def storeService : StoreService
-    def projectRepository : ProjectRepository
-    def databagRepository: DatabagRepository
-    def credentialsStoreService: CredentialsStoreService
-    def configurationRepository: repository.ConfigurationRepository
-}
-
+case class Configuration(name: String, projectId: GenesisEntity.Id, description: Option[String]) extends GenesisEntity with ProjectBoundEntity

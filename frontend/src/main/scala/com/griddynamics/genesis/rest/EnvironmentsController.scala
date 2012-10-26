@@ -39,6 +39,8 @@ import com.griddynamics.genesis.api.WorkflowHistory
 import org.springframework.security.access.prepost.PostFilter
 import org.springframework.http.{HttpHeaders, MediaType}
 import java.util.{TimeZone, Locale}
+import org.springframework.security.access.AccessDeniedException
+import com.griddynamics.genesis.repository.ConfigurationRepository
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
@@ -48,24 +50,42 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @Autowired var genesisService: GenesisService = _
 
   @Autowired var envAuthService: EnvironmentAccessService = _
+  @Autowired var configRepository: ConfigurationRepository = _
+
 
   @Value("${genesis.system.server.mode:frontend}")
   var mode = ""
 
   @RequestMapping(value=Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
-  def createEnv(@PathVariable projectId: Int, request: HttpServletRequest, response : HttpServletResponse) = {
+  def createEnv(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response : HttpServletResponse) = {
     val paramsMap = extractParamsMap(request)
     val envName = extractValue("envName", paramsMap).trim
     val templateName = extractValue("templateName", paramsMap)
     val templateVersion = extractValue("templateVersion", paramsMap)
     val variables = extractVariables(paramsMap)
+    val config =  extractOption("configId", paramsMap).map { cid =>
+      configRepository.get(projectId, cid.toInt).getOrElse(throw new ResourceNotFoundException("Failed to find config with id = %s in project %d".format(cid, projectId)))
+    }.getOrElse(getDefaultConfigId(projectId))
+
+    if(!envAuthService.hasAccessToConfig(projectId, config.id.get, getCurrentUser, getCurrentUserAuthorities)) {
+      throw new AccessDeniedException("User doesn't have access to configuration id=%s".format(config))
+    }
 
     val user = mode match {
       case "backend" => request.getHeader(TunnelFilter.SEC_HEADER_NAME)
       case _ => getCurrentUser
     }
-    genesisService.createEnv(projectId, envName, user, templateName, templateVersion, variables)
+    genesisService.createEnv(projectId, envName, user, templateName, templateVersion, variables, config)
+  }
+
+  private[this] def getDefaultConfigId(projectId: Int): Configuration = {
+    val configs = configRepository.list(projectId)
+    if(configs.size == 1) {
+      configs.head
+    } else {
+      throw new InvalidInputException(msg = Some("%d environment configurations found in project. configId parameter should be provided".format(configs.size)))
+    }
   }
 
   import MediaType.{TEXT_PLAIN, TEXT_PLAIN_VALUE, TEXT_HTML, TEXT_HTML_VALUE}
@@ -99,7 +119,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @RequestMapping(value=Array("{envId}/logs/{stepId}"), produces = Array(TEXT_PLAIN_VALUE, TEXT_HTML_VALUE))
   def stepLogs(@PathVariable("projectId") projectId: Int,
                @PathVariable("envId") envId: Int,
-               @PathVariable stepId: Int,
+               @PathVariable("stepId") stepId: Int,
                @RequestParam(value = "include_actions", required = false, defaultValue = "false") includeActions: Boolean,
                @RequestParam(value = "timezone_offset", required = false) timezoneOffset: java.lang.Integer,
                @RequestHeader headers: HttpHeaders,
@@ -112,7 +132,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @RequestMapping(value=Array("{envName}/action_logs/{actionUUID}"), produces = Array(TEXT_PLAIN_VALUE, TEXT_HTML_VALUE))
   def actionLogs(@PathVariable("projectId") projectId: Int,
                @PathVariable("envName") envId: Int,
-               @PathVariable actionUUID: String,
+               @PathVariable("actionUUID") actionUUID: String,
                @RequestParam(value = "timezone_offset", required = false) timezoneOffset: java.lang.Integer,
                @RequestHeader headers: HttpHeaders,
                response: HttpServletResponse,
@@ -203,15 +223,6 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     genesisService.getStepLog(stepId)
   }
 
-  @RequestMapping(value = Array("{envId}/access"), method = Array(RequestMethod.GET))
-  @ResponseBody
-  def getEnvAccess(@PathVariable("projectId") projectId: Int,
-                   @PathVariable("envId") envId: Int,
-                   request: HttpServletRequest) = {
-    val (users, groups) = envAuthService.getAccessGrantees(envId)
-    Map("users" -> users, "groups" -> groups)
-  }
-
   @RequestMapping(value = Array("{envId}"), method = Array(RequestMethod.PUT))
   @ResponseBody
   def updateEnv(@PathVariable("projectId") projectId: Int, @PathVariable("envId") envId: Int, request: HttpServletRequest) = {
@@ -219,30 +230,6 @@ class EnvironmentsController extends RestApiExceptionsHandler {
       val env = GenesisRestController.extractMapValue("environment", paramsMap)
       val envName = env.getOrElse("name", throw new MissingParameterException("environment.name"))
       genesisService.updateEnvironmentName(envId, projectId, envName.asInstanceOf[String].trim)
-  }
-
-  @RequestMapping(value = Array("{envId}/access"), method = Array(RequestMethod.PUT))
-  @ResponseBody
-  def updateEnvAccess(@PathVariable("projectId") projectId: Int,
-                      @PathVariable("envId") envId: Int,
-                     request: HttpServletRequest): ExtendedResult[_] = {
-    val paramsMap = GenesisRestController.extractParamsMap(request)
-
-    val users = GenesisRestController.extractListValue("users", paramsMap)
-    val groups = GenesisRestController.extractListValue("groups", paramsMap)
-
-    import Validation._
-    val invalidUsers = users.filterNot(_.matches(validADUserName))
-    val invalidGroups = groups.filterNot(_.matches(validADGroupName))
-
-    if(invalidGroups.nonEmpty || invalidUsers.nonEmpty) {
-      return Failure(
-        compoundServiceErrors = invalidUsers.map(ADUserNameErrorMessage.format(_)) ++ invalidGroups.map(ADGroupNameErrorMessage.format(_))
-      )
-    }
-
-    envAuthService.grantAccess(envId, users.distinct, groups.distinct )
-    Success(None)
   }
 
   private def validateStepId(stepId: Int, envId: Int) {

@@ -152,6 +152,8 @@
 
     <bean id="housekeeping" class="com.griddynamics.genesis.service.impl.DefaultHousekeepingService"/>
 
+    <bean id="attributeRepository" class="com.griddynamics.genesis.repository.impl.AttributeRepositoryImpl"/>
+
     <bean id="authorityService" class="com.griddynamics.genesis.service.impl.DefaultAuthorityService">
         <constructor-arg name="permissionService" ref="permissionService"/>
     </bean>
@@ -166,6 +168,7 @@
 
     <bean id="environmentSecurity" class="com.griddynamics.genesis.service.impl.EnvironmentAccessService">
         <constructor-arg name="permissionService" ref="permissionService"/>
+        <constructor-arg name="storeService" ref="storeService"/>
     </bean>
 
     <context:component-scan base-package="com.griddynamics.genesis.configuration" />

@@ -20,6 +20,16 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
     }
   });
 
+  var Configurations = Backbone.Collection.extend({
+    initialize: function(items, options) {
+      this.projectId = options.projectId;
+    },
+
+    url: function() {
+      return "/rest/projects/" + this.projectId + "/configs";
+    }
+  });
+
   createenv.Views.Main = Backbone.View.extend({
     template: "app/templates/create_environments.html",
 
@@ -262,7 +272,8 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
     modelValues: function() {
     return {
         envName: this.$("input[name='envName']").val(),
-        variables: this.workflowParams()
+        variables: this.workflowParams(),
+        configId: this.$("select[name='configId']").val()
       }
     },
 
@@ -276,12 +287,19 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
 
       if (!error) {
         $("#ready").show();
-        $.when(genesis.fetchTemplate(this.template), genesis.fetchTemplate(this.varTemplate)).done(function(tmpl, varTmpl){
-          view.$el.html(tmpl({/*variables: view.variables*/}));
-          view.$('#workflow_vars').html(varTmpl({variables: view.variables}));
-          view.$('input:not(:hidden):first').focus();
+        var configs = new Configurations([], {projectId: this.project.id});
+        $.when(genesis.fetchTemplate(this.template), genesis.fetchTemplate(this.varTemplate), configs.fetch()).done(function(tmpl, varTmpl){
+          if(configs.size() > 0) {
+            view.$el.html(tmpl({configs: configs.toJSON()/*variables: view.variables*/}));
+            view.$('#workflow_vars').html(varTmpl({variables: view.variables}));
+            view.$('input:not(:hidden):first').focus();
 
-          validation.bindValidation(view.model, view._settingsForm());
+            validation.bindValidation(view.model, view._settingsForm());
+          } else {
+            $.when(genesis.fetchTemplate(view.preconditionErrorTemplate)).done(function(tmpl){
+              view.el.innerHTML = tmpl({error: {compoundServiceErrors: ["You don't have permission to create instance in any of environment configurations"]}});
+            });
+          }
         });
       }  else {
         $("#ready").hide();

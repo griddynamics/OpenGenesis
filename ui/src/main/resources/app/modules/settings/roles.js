@@ -144,11 +144,19 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
     initialize: function(options){
       this.role = options.role;
       this.title = options.title || LANG[this.role.get("name")];
+      this.showButtons = options.showButtons != undefined ? options.showButtons : true;
       this.render();
     },
 
     backToList: function() {
       this.trigger("back");
+    },
+
+    pullGranties: function() {
+      return {
+        "users": this.$("#users-select").val() || [],
+        "groups":  this.$("#groups-select").val() || []
+      };
     },
 
     saveChanges: function() {
@@ -197,7 +205,12 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
 
       var self = this;
       $.when(backend.UserManager.hasUsers(), backend.UserManager.hasGroups(), genesis.fetchTemplate(this.template)).done(function(hasUsers, hasGroups, tmpl) {
-        self.$el.html(tmpl({role: self.role.toJSON(), LANG: LANG, title: self.title}));
+        self.$el.html(tmpl({
+          role: self.role.toJSON(),
+          LANG: LANG,
+          title: self.title,
+          showButtons: self.showButtons
+        }));
         self.initCompletion(hasGroups[0], hasUsers[0]);
         self.status = new status.LocalStatus({el: self.$(".notification")});
         validation.bindValidation(self.role, self.$("form"), self.status);

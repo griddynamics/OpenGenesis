@@ -3,6 +3,7 @@ define([
   "use!backbone",
   "services/backend",
   "modules/projects",
+  "modules/project_properties/env_configurations",
   "modules/project_properties/credentials",
   "modules/project_properties/other_settings",
   "modules/project_properties/servers",
@@ -11,7 +12,7 @@ define([
   "modules/project_properties/template_repo"
 ],
 
-function(genesis, Backbone, backend, Projects, Credentials, OtherSettings, Servers, Roles, Databags, TemplateRepo) {
+function(genesis, Backbone, backend, Projects, EnvConfigs, Credentials, OtherSettings, Servers, Roles, Databags, TemplateRepo) {
   var ProjectProperties = genesis.module();
 
   ProjectProperties.Views.Main = Backbone.View.extend({
@@ -23,7 +24,8 @@ function(genesis, Backbone, backend, Projects, Credentials, OtherSettings, Serve
       "click #project-roles-tab" : "showProjectRoles",
       "click #project-servers-tab" : "showServers",
       "click #project-databags-tab" : "showProjectDatabags",
-      "click #project-templaterepo-tab" : "showProjectTemplateRepo"
+      "click #project-templaterepo-tab" : "showProjectTemplateRepo",
+      "click #environments-configurations-tab" : "showEnvironmentConfigurations"
     },
 
     initialize: function(options) {
@@ -76,6 +78,12 @@ function(genesis, Backbone, backend, Projects, Credentials, OtherSettings, Serve
     showProjectTemplateRepo: function() {
       if(this.tabs.templateRepoView == null) {
         this.tabs.templateRepoView = new TemplateRepo.Views.Main({el: this.$("#project-templaterepo-panel"), projectId: this.project.id});
+      }
+    },
+
+    showEnvironmentConfigurations: function() {
+      if(this.tabs.envConfigView == null) {
+        this.tabs.envConfigView = new EnvConfigs.Views.Main({el: this.$("#environments-config-panel"), projectId: this.project.id});
       }
     },
 

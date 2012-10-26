@@ -24,4 +24,4 @@ package com.griddynamics.genesis.model
 
 class ServerArray(var name: String,
                   var description: Option[String],
-                  val projectId: GenesisEntity.Id) extends GenesisEntity
+                  val projectId: GenesisEntity.Id) extends GenesisEntity with ProjectBoundEntity

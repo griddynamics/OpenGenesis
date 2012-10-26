@@ -22,12 +22,16 @@
  */
 package com.griddynamics.genesis.service.impl
 
-import com.griddynamics.genesis.api.Environment
+import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.service
-import org.springframework.security.acls.domain.{BasePermission, ObjectIdentityImpl}
+import org.springframework.security.acls.domain.{GrantedAuthoritySid, PrincipalSid, BasePermission, ObjectIdentityImpl}
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.security.acls.model.Sid
+import com.griddynamics.genesis.api.Configuration
+import com.griddynamics.genesis.api.Environment
+import com.griddynamics.genesis.users.GenesisRole
 
-class EnvironmentAccessService(permissionService: PermissionService) extends service.EnvironmentAccessService {
+class EnvironmentAccessService(storeService: service.StoreService, permissionService: PermissionService) extends service.EnvironmentAccessService {
 
   @Value("${genesis.system.security.environment.restriction.enabled:false}")
   var securityEnabled: Boolean = _
@@ -37,9 +41,42 @@ class EnvironmentAccessService(permissionService: PermissionService) extends ser
     permissionService.getPermissionAssignees(oi, BasePermission.READ)
   }
 
-  def grantAccess(envId: Int, users: List[String], groups: List[String]) {
+  def grantAccess(envId: Int, users: Iterable[String], groups: Iterable[String]) {
     val oi = new ObjectIdentityImpl(classOf[Environment], envId)
-    permissionService.grantObjectPermission(oi, BasePermission.READ, users, groups)
+    permissionService.grantObjectPermission(oi, BasePermission.READ, users.toList, groups.toList)
+  }
+
+  def getConfigAccessGrantees(id: Int): (Iterable[String], Iterable[String]) = {   //(usernames, groupnames)
+  val oi = new ObjectIdentityImpl(classOf[Configuration], id)
+    permissionService.getPermissionAssignees(oi, BasePermission.READ)
+  }
+
+  def grantConfigAccess(configId: Int, users: Iterable[String], groups: Iterable[String]) {
+    val oi = new ObjectIdentityImpl(classOf[Configuration], configId)
+
+    permissionService.grantObjectPermission(oi, BasePermission.READ, users.toList, groups.toList)
+
+    val ids = storeService.findEnvsByConfigurationId(configId)
+    ids.foreach( grantAccess(_, users, groups) )
+  }
+
+  def hasAccessToConfig(projectId: Int, configId: Int, username: String, authorities: Iterable[String]): Boolean = {
+    if(!restrictionsEnabled) {
+      return true
+    }
+
+    if (authorities.exists(_ == GenesisRole.SystemAdmin.toString)) {
+      return true
+    }
+    val sids: Seq[Sid] = new PrincipalSid(username) +: (authorities.filter(_.startsWith("GROUP_")).map { g => new GrantedAuthoritySid(g) }.toSeq)
+
+    if(permissionService.getPermissions(new ObjectIdentityImpl(classOf[Project], projectId), sids).exists(_ == BasePermission.ADMINISTRATION)) {
+      return true
+    }
+
+    val perms = permissionService.getPermissions(new ObjectIdentityImpl(classOf[Configuration], configId), sids)
+
+    perms.exists(_ == BasePermission.READ )
   }
 
   def restrictionsEnabled = securityEnabled

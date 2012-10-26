@@ -57,6 +57,9 @@ trait GenesisSchema extends Schema {
     val dataBags = table[DataBag]("databag")
     val dataBagItems = table[DataBagItem]("databag_item")
 
+    val configuration = table[Configuration]("env_config")
+    val configAttrs = table[SquerylEntityAttr]("env_config_attr")
+
     val genesisVersion = table[GenesisVersion]("genesis_version")
 }
 
@@ -82,6 +85,8 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     val envsToProject = oneToManyRelation(projects, envs).via((project, environment) => project.id === environment.projectId)
     envsToProject.foreignKeyDeclaration.constrainReference(onDelete cascade)
 
+    val envToConfig = oneToManyRelation(configuration, envs).via((conf, env) => conf.id === env.configurationId)
+
     val serverArrayToProject = oneToManyRelation(projects, serverArrays).via((project, array) => project.id === array.projectId)
     serverArrayToProject.foreignKeyDeclaration.constrainReference(onDelete cascade)
 
@@ -91,12 +96,21 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     val itemToDatabag = oneToManyRelation(dataBags, dataBagItems).via((bag, item) => bag.id === item.dataBagId)
     itemToDatabag.foreignKeyDeclaration.constrainReference(onDelete cascade)
 
+    val configToAttrs = oneToManyRelation(configuration, configAttrs).via((config, attr) => config.id === attr.entityId)
+    configToAttrs.foreignKeyDeclaration.constrainReference(onDelete cascade)
+
     on(vmAttrs)(attr => declare(
         attr.value is (dbType("text"))
     ))
 
     on(envAttrs)(attr => declare(
         attr.value is (dbType("text"))
+    ))
+
+    on(configAttrs)(attr => declare(
+        attr.name is (dbType("varchar(256)")),
+        attr.value is (dbType("varchar(256)")),
+        columns(attr.name, attr.entityId) are (unique)
     ))
 
     on(steps)(step => declare(
@@ -183,7 +197,12 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
         v.versionId is (dbType("varchar(64)"))
     ))
 
-  on(settings) (s => declare(s.name is (unique)))
+    on(configuration)(v => declare (
+      v.name is (dbType("varchar(256)")),
+      v.description is (dbType("text")),
+      columns(v.name, v.projectId) are (unique)
+    ))
+    on(settings) (s => declare(s.name is (unique)))
 }
 
 trait GenesisSchemaCustom extends GenesisSchema {
