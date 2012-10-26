@@ -89,14 +89,13 @@ class GenesisSchemaValidator(val repo: GenesisVersionRepository, val buildInfoPr
     } catch {
       case e: Exception => log.error(e, "Couldn't retrieve schema version"); None
     }
-
     val genesisVersion = GenesisVersion.fromBuildProps(buildInfoProps)
-
-    if (genesisVersion.isEmpty || schemaVersion.isEmpty)
-      throw new RuntimeException("Invalid application or DB schema version")
-
+    if (genesisVersion.isEmpty)
+        throw new RuntimeException("Invalid application or DB schema version: No genesis version found at build info properties")
+    if (schemaVersion.isEmpty)
+        throw new RuntimeException("Invalid application or DB schema version: No genesis version found in database")
     if (genesisVersion != schemaVersion)
-      throw new RuntimeException("Application and schema versions mismatch")
+        throw new RuntimeException("Application and schema versions mismatch. Expected: %s, found: %s".format(genesisVersion.map(_.versionId).get, schemaVersion.get.versionId))
   }
 }
 
