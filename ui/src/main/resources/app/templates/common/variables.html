@@ -51,7 +51,7 @@
             <select id="<%= name %>" <%= disabled(variable) %> name="<%= name %>" class="<%= varClass(variable) %>">
               <% if (_.size(values)) {%> <option value="">Please select</option> <% } %>
               <% _.each(_.keys(values), function(key) { %>
-                   <option value="<%= values[key] %>" <%= isSelected(key, variable) %> ><%= key %></option>
+                   <option value="<%= key %>" <%= isSelected(key, variable) %> ><%= values[key] %></option>
               <% }) %>
             </select>
         <% } else { %>

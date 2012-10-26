@@ -130,9 +130,9 @@ function(genesis, status, $, _) {
                    if (checked) $select.removeAttr("disabled");
                   }
 
-                  _(variable.values).each(function(key, description) {
+                  _(variable.values).each(function(label, value) {
                     $select.append(
-                      $("<option/>").attr("value", key).text(description)
+                      $("<option/>").attr("value", value).text(label)
                     );
                   });
 
