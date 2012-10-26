@@ -360,18 +360,22 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
     }
 
     def embody(variables: Map[String, String], envId: Option[Int] = None, projectId: Option[Int] = None) = {
-        val typedVariables = (for (variable <- workflow.variables()) yield {
+      val varDetails = workflow.variables()
+      val groupVars = varDetails.groupBy(_.group).collect{case (Some(g), v) => (g,v)}
+        val typedVariables = (for (variable <- varDetails) yield {
           val res = variables.get(variable.name) match {
             case Some(value) =>
               convert(value, variable)
-            case None => {
-              variable.defaultValue() match {
-                case Some(s) => convert(String.valueOf(s), variable)
-                case _ => if (variable.isOptional)
+            case None => variable.group.map(groupVars(_).map(_.name).intersect(variables.keys.toSeq)) match {
+                // if some other variable from the same group has value, then don't use default
+                case Some(x) if x.nonEmpty => null
+                case _ => variable.defaultValue() match {
+                  case Some(s) => convert(String.valueOf(s), variable)
+                  case _ => if (variable.isOptional)
                     null
                   else
                     throw new IllegalArgumentException("Variable '%s' is not defined".format(variable.name))
-              }
+                }
             }
           }
           (variable.name, res)
