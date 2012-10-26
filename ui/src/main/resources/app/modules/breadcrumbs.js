@@ -53,6 +53,7 @@ function(genesis, Backbone, Environments) {
       router.bind("route:createEnvironment", this.createEnvironment);
       router.bind("route:listSettings", this.settings);
       router.bind("route:createProject", this.createProject);
+      genesis.app.bind("breadcrumb:changed", this.updateLastLocation)
     },
 
     createEnvironment: function(projectId) {
@@ -100,6 +101,11 @@ function(genesis, Backbone, Environments) {
 
     settings: function() {
       this.render([_settingsLocation]);
+    },
+
+    updateLastLocation: function(changed) {
+      var locationList = [_homeLocation, this._project(changed.projectId), _locationItem(Backbone.history.fragment, changed.name)];
+      this.render(locationList);
     },
 
     render: function(locationList) {

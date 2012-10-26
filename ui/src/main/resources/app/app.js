@@ -238,11 +238,6 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Env
     genesis.app.bind("page-view-loading-completed", function() {
       $loadingSpinner.hide();
     });
-    genesis.app.bind("last-bc-changed", function(param){
-      if (param) {
-        $('.brcr-last-item span').html(param[0]);
-      }
-    })
   });
 
   // All navigation that is relative should be passed through the navigate
