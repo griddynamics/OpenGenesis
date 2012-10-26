@@ -866,7 +866,8 @@ td.subtable{
 }
 
 .workflow-history .status {
-    width: 60px;
+    width: 65px;
+    text-align: center;
 }
 
 .workflow-history .details {
