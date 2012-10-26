@@ -95,7 +95,7 @@ class GenesisSchemaValidator(val repo: GenesisVersionRepository, val buildInfoPr
     if (schemaVersion.isEmpty)
         throw new RuntimeException("Invalid application or DB schema version: No genesis version found in database")
     if (genesisVersion != schemaVersion)
-        throw new RuntimeException("Application and schema versions mismatch. Expected: %s, found: %s".format(genesisVersion.map(_.versionId).get, schemaVersion.get.versionId))
+        throw new RuntimeException("Application and schema versions mismatch. Application version: %s, schema version: %s".format(genesisVersion.map(_.versionId).get, schemaVersion.get.versionId))
   }
 }
 
