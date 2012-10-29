@@ -74,8 +74,8 @@ class JenkinsDataSource(val cacheManager: CacheManager, val credStore: Credentia
       loadFromJenkins
     }
     val sorted = arts.collect {
-      case (url, artifact, title) if artifact.matches(artifactFilter) => (title, url)
-    }.sortBy(_._1)
+      case (url, artifact, title) if artifact.matches(artifactFilter) => (url, title)
+    }.sortBy(_._2)
 
     ListMap(sorted : _*)
   }
