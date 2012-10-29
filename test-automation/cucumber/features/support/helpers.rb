@@ -1,5 +1,6 @@
-require "genesis_client"
-
+require 'rubygems'
+require 'genesis_client'
+include Genesis
 module ModelHelpers
   def project(name, manager, description = nil)
     {:name => name, :projectManager => manager, :description => description}
@@ -81,4 +82,16 @@ module ModelHelpers
     end
   end
 end
-World(Genesis, ModelHelpers)
+
+class GenesisWorld
+  include ModelHelpers
+  include Genesis
+  def initialize
+    yaml = YAML::load(File.open(File.dirname(__FILE__) + "/../../config.yml"))
+    @config = yaml["genesis"]
+  end
+end
+
+World do
+  GenesisWorld.new
+end
