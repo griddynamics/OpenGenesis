@@ -37,17 +37,17 @@ class HardwareDataSource(provider: JCloudsComputeContextProvider, val cacheManag
   override def loadData(computeService: ComputeService) = {
     val hardwares = computeService.listHardwareProfiles()
 
-    val nameToId = hardwares.map { hardware =>
+    val idToName = hardwares.map { hardware =>
       val name = if (hardware.getName != null && !hardware.getName.trim.isEmpty) {
         if(hardware.getId.length < 10) hardware.getId + ": " + hardware.getName else hardware.getName
       } else {
         hardware.getId
       }
 
-      (name, hardware.getId)
+      (hardware.getId, name)
     }.toSeq
 
-    val sorted: Seq[(String, String)] = nameToId.sortBy (_._1)
+    val sorted: Seq[(String, String)] = idToName.sortBy (_._2)
     ListMap(sorted : _*)
   }
 }

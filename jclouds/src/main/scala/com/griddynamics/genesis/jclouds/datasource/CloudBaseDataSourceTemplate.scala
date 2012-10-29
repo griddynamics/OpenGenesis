@@ -46,7 +46,7 @@ abstract private[datasource] class CloudBaseDataSourceTemplate(provider: JClouds
 
       loadData (provider.computeContext(computeSettings, Option(overrides)).getComputeService)
     }
-    filter.map ( f => result.filter(_._2.matches(f)) ).getOrElse(result)
+    filter.map ( f => result.filterKeys(_.matches(f)) ).getOrElse(result)
   }
 
   def config(map: Map[String, Any]) {

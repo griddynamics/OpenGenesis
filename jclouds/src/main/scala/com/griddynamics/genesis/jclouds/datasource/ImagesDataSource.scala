@@ -38,16 +38,16 @@ class ImagesDataSource(provider: JCloudsComputeContextProvider, val cacheManager
   override def loadData(computeService: ComputeService) = {
     val images: util.Set[_ <: Image] = computeService.listImages()
 
-    val nameToId = images.map { img =>
+    val idToName = images.map { img =>
       val name: String = if (img.getName != null && !img.getName.trim.isEmpty) {
         if(img.getId.length < 10) img.getId + ": " + img.getName else img.getName
       } else {
         img.getId
       }
-      (name, img.getId)
+      (img.getId, name)
     }.toSeq
 
-    val sorted: Seq[(String, String)] = nameToId.sortBy (_._1)
+    val sorted: Seq[(String, String)] = idToName.sortBy (_._2)
     ListMap(sorted : _*)
   }
 }
