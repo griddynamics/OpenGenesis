@@ -131,9 +131,11 @@ function(genesis, status, $, _) {
                   }
 
                   _(variable.values).each(function(label, value) {
-                    $select.append(
-                      $("<option/>").attr("value", value).text(label)
-                    );
+                    if (label && value) {
+                      $select.append(
+                        $("<option/>").attr("value", value).text(label)
+                      );
+                    }
                   });
 
                   if(variable.defaultValue) {
