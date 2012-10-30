@@ -41,7 +41,7 @@
     <label for="<%= group ? group : name %>" class="<%= (required ? 'label-required' : '') %>">
     <% if (required) { %>*&nbsp;<% } %> <%= group ? (i == 0 || group !== variables[i-1].group ? group : "") : variable.description %>
     </label>
-    <div style="width: 60%; float: right">
+    <div class="value">
         <% if (group) { %>
             <input type="radio" name="<%= group %>" class="group-radio" data-var-name="<%= name %>"
                    <% if (variable.defaultValue) { %> checked <% } %> />
