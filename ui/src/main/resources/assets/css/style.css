@@ -1397,14 +1397,20 @@ table .pre {
 
 #workflow-parameters-form label {
     text-align: right;
-    width: 35%;
+    width: 20%;
     float: left;
     margin-right:5px;
     margin-top: 5px
 }
 
+#workflow-parameters-form .value {
+    width: 79%;
+    float:right
+}
+
 #workflow-parameters-form label.group {
     text-align: left;
+    max-width:25%;
     width: auto;
 }
 
@@ -1423,11 +1429,10 @@ table .pre {
 }
 
 #workflow-parameters-form input, #workflow-parameters-form select {
-    width: 88%;
+    width: auto;
 }
 
 #workflow-parameters-form input[type=text].group, #workflow-parameters-form select.group {
-    width: 55%;
     margin-top: 0px;
 }
 
