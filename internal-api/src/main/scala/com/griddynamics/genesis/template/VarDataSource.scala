@@ -26,7 +26,7 @@ package com.griddynamics.genesis.template
 trait VarDataSource {
     def getData : Map[String,String]
     def config(map: Map[String, Any])
-    def hasValue(value: Any): Boolean = getData.exists { case (key, data) => data == value }
+    def hasValue(value: Any): Boolean = getData.exists { case (key, data) => key == value }
     def default: Option[Any] = None
 }
 
