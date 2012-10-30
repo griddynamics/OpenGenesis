@@ -111,8 +111,8 @@ class GenesisRestController extends RestApiExceptionsHandler with Logging {
                 throw new ResourceNotFoundException("No variables were found for [template = %s (v%s), workflow = %s]".format(templateName, templateVersion, workflow))
             )
         } catch {
-            case e: ConversionException => Failure(variablesErrors = Map(e.fieldId -> e.message))
-            case x: Exception => Failure(compoundServiceErrors = Seq(x.getMessage))
+            case e: ConversionException => log.error(e, "Conversion error"); Failure(variablesErrors = Map(e.fieldId -> e.message))
+            case x: Exception => log.error(x, "Unknown error"); Failure(compoundServiceErrors = Seq(x.getMessage))
         }
     }
 }
