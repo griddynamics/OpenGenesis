@@ -1315,6 +1315,8 @@ table .pre {
 
 #workflow-parameters-form input, #workflow-parameters-form select {
     width: 96%;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
 }
 
 .information-panel {
