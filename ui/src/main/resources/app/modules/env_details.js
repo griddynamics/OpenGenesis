@@ -536,7 +536,7 @@ function (genesis, backend, poller, status, roles, variables, gtemplates, EnvSta
 
         view.$el.dialog({
           title: 'Execute ' + view.workflow.name,
-          width: _.size(view.workflow.variables) > 0 ? 600 : 400,
+          width: _.size(view.workflow.variables) > 0 ? 925 : 400,
           autoOpen: true,
           buttons: {
             "Run": function(e) {
