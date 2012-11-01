@@ -210,15 +210,33 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
     }
   });
 
-  var EnvironmentParametersStep = Step.extend({
-    template: "app/templates/createenv/environment_settings.html",
+  var WorkflowParamsView = Step.extend({
     varTemplate: "app/templates/common/variables.html",
-    errorTemplate: "app/templates/createenv/environment_settings_error.html",
-    preconditionErrorTemplate: "app/templates/createenv/preconditions_error.html",
 
     events: {
       "click .group-radio": "groupVarSelected"
     },
+
+    workflowParams: function() {
+      var vals = {};
+      this.$('.workflow-variable').each(function () {
+        var value = $(this).is("input[type='checkbox']") ? $(this).is(':checked').toString() : $(this).val();
+        var group = $($(this).parent()).children("input[type='radio'].group-radio");
+        var groupChecked = group && $(group).is(':checked');
+        if ($(this).val() && $(this).is(':enabled') || groupChecked) { vals[$(this).attr('name')] = value; }
+      });
+      return vals;
+    },
+
+    groupVarSelected: function(e) {
+    //to be overriden
+    }
+  });
+
+  var EnvironmentParametersStep = WorkflowParamsView.extend({
+    template: "app/templates/createenv/environment_settings.html",
+    errorTemplate: "app/templates/createenv/environment_settings_error.html",
+    preconditionErrorTemplate: "app/templates/createenv/preconditions_error.html",
 
     initialize: function(options) {
       this.variables = [];
@@ -265,14 +283,9 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
     },
 
     modelValues: function() {
-      var vals = {};
-      this.$('.workflow-variable').each(function () {
-        var value = $(this).is("input[type='checkbox']") ? $(this).is(':checked').toString() : $(this).val();
-        if ($(this).val() && $(this).is(':enabled')) { vals[$(this).attr('name')] = value; }
-      });
-      return {
+    return {
         envName: this.$("input[name='envName']").val(),
-        variables: vals
+        variables: this.workflowParams()
       }
     },
 
@@ -306,6 +319,6 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
        variables.groupVarSelected(e, this, this.variables);
     }
   });
-
+  createenv.WorkflowParamsView = WorkflowParamsView;
   return createenv;
 });

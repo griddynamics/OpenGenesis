@@ -8,13 +8,14 @@ define([
   "variables",
   "modules/common/templates",
   "modules/common/env_status",
+  "modules/createenv",
   "use!backbone",
   "jquery",
   "use!jqueryui",
   "use!jvalidate"
 ],
 
-function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gtemplates, EnvStatus, Backbone, $) {
+function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gtemplates, EnvStatus, CreateEnv, Backbone, $) {
   var EnvironmentDetails = genesis.module();
 
   EnvironmentDetails.Model = Backbone.Model.extend({
@@ -379,13 +380,8 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
     }
   });
 
-  var ExecuteWorkflowDialog = Backbone.View.extend({
+  var ExecuteWorkflowDialog = CreateEnv.WorkflowParamsView.extend({
     template: "app/templates/environment_variables.html",
-    templateVars: "app/templates/common/variables.html",
-
-    events: {
-      "click .group-radio": "groupVarSelected"
-    },
 
     initialize: function() {
       this.$el.id = "#workflowParametersDialog";
@@ -414,11 +410,8 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
           return;
         }
 
-        $('.workflow-variable').each(function () {
-            if ($(this).val() && $(this).is(':enabled')) vals[$(this).attr('name')] = $(this).is("input[type='checkbox']") ? $(this).is(':checked').toString() : $(this).val();
-        });
       }
-      var execution = backend.WorkflowManager.executeWorkflow(this.projectId, this.envId, this.workflow.name, vals);
+      var execution = backend.WorkflowManager.executeWorkflow(this.projectId, this.envId, this.workflow.name, this.workflowParams());
 
       var view = this;
       $.when(execution).then(
@@ -457,7 +450,7 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
 
     render: function() {
       var view = this;
-      $.when(genesis.fetchTemplate(this.template), genesis.fetchTemplate(this.templateVars)).done(function (tmpl, tmplVars) {
+      $.when(genesis.fetchTemplate(this.template), genesis.fetchTemplate(this.varTemplate)).done(function (tmpl, tmplVars) {
         variables.processVars({
           variables: view.workflow.variables,
           projectId: view.projectId,
