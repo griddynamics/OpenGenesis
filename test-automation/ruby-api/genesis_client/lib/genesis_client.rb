@@ -3,21 +3,22 @@ require 'httparty'
 require 'yaml'
 
 module Genesis
-
-  def nested_resource(parent, parent_id, path, &block)
+  # Generate nested resource under root parent/:parent_id
+  def nested_resource(parent, parent_id, path, auth = {}, &block)
     full_path = "#{parent}/#{parent_id}/#{path}"
-    r = Genesis::Resource.new(full_path)
+    r = Genesis::Resource.new(full_path, @config, auth)
     if block_given?
-      block.call(r)
+       yield r
     else
       r
     end
   end
-
-  def resource(path, &block)
-    r = Genesis::Resource.new(path)
+  # Generate top-level resource under /rest prefix.
+  # However, if path == "", /rest prefix is skipped
+  def resource(path, auth = {},  &block)
+    r = Genesis::Resource.new(path, @config, auth)
     if block_given?
-       block.call(r)
+       yield r
     else
       r
     end
@@ -25,18 +26,21 @@ module Genesis
 
   class Resource
     include HTTParty
-    attr_accessor :auth
+    attr_reader :auth
     attr_reader :path
 
-    def initialize(path, auth = {})
+    def initialize(path, config = {}, auth = {})
       @path = path
-      config = YAML::load(File.open(File.dirname(__FILE__) + "/../config.yml"))
-      @host = config["genesis"]["host"]
-      @port = config["genesis"]["port"]
-      if auth.empty?
-        @auth = {:username => config["genesis"]["user"], :password => config["genesis"]["password"]}
-      else
-        @auth = auth
+      begin
+        @host = config["host"]
+        @port = config["port"]
+        if auth.empty?
+          @auth = {:username => config["user"], :password => config["password"]}
+        else
+          @auth = auth
+        end
+      rescue
+        raise "You must provide a config hash with keys host, port, user, password"
       end
     end
 

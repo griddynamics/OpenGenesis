@@ -1,6 +1,8 @@
 source "http://rubygems.org"
+source "http://osg-ci.vm.griddynamics.net:9292"
 gem "json"
 gem "rspec"
 gem "cucumber"
 gem "httparty"
 gem "rake"
+gem "genesis_client", "~> 0.1"
