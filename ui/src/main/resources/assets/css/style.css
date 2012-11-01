@@ -1425,6 +1425,7 @@ table .pre {
 #workflow-parameters-form label.error {
     background: url('../img/cross_circle.png');
     text-align: left;
+    float: none
     /*padding-top: 0;*/
 }
 

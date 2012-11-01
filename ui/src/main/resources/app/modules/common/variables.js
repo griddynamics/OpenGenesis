@@ -3,10 +3,11 @@ define([
     "genesis",
     "modules/status",
     "jquery",
-    "use!underscore"
+    "use!underscore",
+    "use!backbone"
 ],
 
-function(genesis, status, $, _) {
+function(genesis, status, $, _, Backbone) {
 
   var DependencyGraph = function(variables) {
     this.parentsOf = {}; // [name -> list of parents ] map
@@ -153,14 +154,40 @@ function(genesis, status, $, _) {
       });
     },
 
-    groupVarSelected: function(event, view, variables) {
-       var $currentTarget = view.$(event.currentTarget);
-       var group = $currentTarget.attr('name');
-       var name = $currentTarget.attr('data-var-name');
-       view.$("#" + name).removeAttr('disabled');
-       _.each(variables.filter(function(v){return group == v.group && name !== v.name;}), function (x) {
-           view.$("#" + x.name).attr('disabled', '');
-       });
-    }
+    WorkflowParamsView : Backbone.View.extend({
+      varTemplate: "app/templates/common/variables.html",
+
+      events: {
+        "click .group-radio": "groupVarSelected"
+      },
+
+      workflowParams: function() {
+        var vals = {};
+        this.$('.workflow-variable').each(function () {
+          var value = $(this).is("input[type='checkbox']") ? $(this).is(':checked').toString() : $(this).val();
+          var group = $($(this).parent()).children("input[type='radio'].group-radio");
+          var groupChecked = group && $(group).is(':checked');
+          if ($(this).val() && $(this).is(':enabled') || groupChecked) { vals[$(this).attr('name')] = value; }
+        });
+        return vals;
+      },
+
+      variablesModel: function() {
+        //to be overridden
+        return {};
+      },
+
+      groupVarSelected: function(event) {
+        var view = this;
+        var $currentTarget = view.$(event.currentTarget);
+        var group = $currentTarget.attr('name');
+        var name = $currentTarget.attr('data-var-name');
+        view.$("#" + name).removeAttr('disabled');
+        _.each(this.variablesModel().filter(function(v){return group == v.group && name !== v.name;}), function (x) {
+          view.$("#" + x.name).attr('disabled', '');
+        });
+      }
+    })
+
   }
 });
