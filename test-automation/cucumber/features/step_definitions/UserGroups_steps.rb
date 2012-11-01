@@ -1,9 +1,8 @@
-Before do
-  @groups = Genesis::Resource.new("groups")
-end
 
 When /^I'm creating user group "(.*)" described as "(.*)" with mailing list "(.*)" and users "(.*)"$/ do |name, description, mail, users |
-  @last_response = @groups.post(group(name, description, mail, users))
+  @last_response = resource :groups do |r|
+    r.post(group(name, description, mail, users))
+  end
 end
 
 Given /^I successfully created user group "(.*)" described as "(.*)" with mailing list "(.*)" and users "(.*)"$/ do |name, description, mail, users |

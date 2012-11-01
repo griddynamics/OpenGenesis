@@ -1,0 +1,19 @@
+require 'rake/testtask'
+require 'rake/version'
+require 'rspec/core/rake_task'
+
+$LOAD_PATH.unshift("lib")
+
+Rake::TestTask.new do |t|
+  t.libs << 'lib' << 'test'
+  t.pattern = 'test/*_test.rb'
+  t.verbose = true
+end
+
+task :build do
+  system "gem build genesis_client.gemspec"
+end
+
+RSpec::Core::RakeTask.new(:spec)
+desc 'Default: run tests'
+task :default => [:spec, :build]

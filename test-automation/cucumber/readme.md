@@ -18,6 +18,12 @@ gem install bundler
 bundle install
 ```
 
+### Update dependencies (optional)
+
+```
+bundle update
+```
+
 ### Copy config.yml.sample to config.yml and edit it to reflect your settings:
 
 ```yaml
