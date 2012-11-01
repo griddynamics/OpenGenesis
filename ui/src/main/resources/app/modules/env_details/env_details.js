@@ -5,17 +5,16 @@ define([
   "modules/status",
   "modules/env_details/history",
   "modules/env_details/access",
-  "variables",
+  "modules/common/variables",
   "modules/common/templates",
   "modules/common/env_status",
-  "modules/createenv",
   "use!backbone",
   "jquery",
   "use!jqueryui",
   "use!jvalidate"
 ],
 
-function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gtemplates, EnvStatus, CreateEnv, Backbone, $) {
+function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gtemplates, EnvStatus, Backbone, $) {
   var EnvironmentDetails = genesis.module();
 
   EnvironmentDetails.Model = Backbone.Model.extend({
@@ -380,7 +379,7 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
     }
   });
 
-  var ExecuteWorkflowDialog = CreateEnv.WorkflowParamsView.extend({
+  var ExecuteWorkflowDialog = variables.WorkflowParamsView.extend({
     template: "app/templates/environment_variables.html",
 
     initialize: function() {
@@ -492,8 +491,8 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
       });
     },
 
-    groupVarSelected: function(e) {
-       variables.groupVarSelected(e, this, this.workflow.variables);
+    variablesModel: function(e) {
+       return this.workflow.variables;
     }
 
   });

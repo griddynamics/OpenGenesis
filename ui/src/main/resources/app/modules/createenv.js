@@ -2,7 +2,7 @@ define([
   "genesis",
   "services/backend",
   "modules/status",
-  "variables",
+  "modules/common/variables",
   "modules/common/templates",
   "modules/validation",
   "use!backbone",
@@ -210,30 +210,7 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
     }
   });
 
-  var WorkflowParamsView = Step.extend({
-    varTemplate: "app/templates/common/variables.html",
-
-    events: {
-      "click .group-radio": "groupVarSelected"
-    },
-
-    workflowParams: function() {
-      var vals = {};
-      this.$('.workflow-variable').each(function () {
-        var value = $(this).is("input[type='checkbox']") ? $(this).is(':checked').toString() : $(this).val();
-        var group = $($(this).parent()).children("input[type='radio'].group-radio");
-        var groupChecked = group && $(group).is(':checked');
-        if ($(this).val() && $(this).is(':enabled') || groupChecked) { vals[$(this).attr('name')] = value; }
-      });
-      return vals;
-    },
-
-    groupVarSelected: function(e) {
-    //to be overriden
-    }
-  });
-
-  var EnvironmentParametersStep = WorkflowParamsView.extend({
+  var EnvironmentParametersStep = variables.WorkflowParamsView.extend({
     template: "app/templates/createenv/environment_settings.html",
     errorTemplate: "app/templates/createenv/environment_settings_error.html",
     preconditionErrorTemplate: "app/templates/createenv/preconditions_error.html",
@@ -315,10 +292,10 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
       }
     },
 
-    groupVarSelected: function(e) {
-       variables.groupVarSelected(e, this, this.variables);
+    variablesModel: function(e) {
+       return this.variables;
     }
   });
-  createenv.WorkflowParamsView = WorkflowParamsView;
+
   return createenv;
 });
