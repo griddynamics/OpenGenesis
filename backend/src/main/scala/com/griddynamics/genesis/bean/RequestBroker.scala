@@ -142,7 +142,7 @@ class RequestBrokerImpl(storeService: StoreService,
             val descriptions: Seq[VariableDescription] = workflow.variableDescriptions
             val value = findDataLabel(k,v,descriptions).getOrElse(findDataLabel(k,v,workflow.partial(variables)).getOrElse((v,v)))._2
             val desc: Option[VariableDescription] = descriptions.find(_.name == k)
-            (desc.map(_.description).getOrElse(k), value)
+            (desc.map(d => d.group.map(_ + ": ").getOrElse("") + d.description).getOrElse(k), value)
         }
     }
 
