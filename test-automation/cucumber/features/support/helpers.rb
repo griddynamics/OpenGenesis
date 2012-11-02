@@ -73,7 +73,7 @@ module ModelHelpers
   end
 
   def find_config(config_name, project, username)
-    r = Genesis::Resource.new("projects/#{project_id(project)}/configs", {:username => username, :password => username})
+    r = resource("projects/#{project_id(project)}/configs", :username => username, :password => username)
     r.find_by_name(config_name)
   end
 
@@ -109,7 +109,7 @@ module ModelHelpers
     env_id = environment_id(env_name, project)
     project_id = project_id(project)
 
-    r = Genesis::Resource.new("projects/#{project_id}/envs/#{env_id}", {:username => username, :password => username})
+    r = resource("projects/#{project_id}/envs/#{env_id}", :username => username, :password => username)
     r.get
   end
 
