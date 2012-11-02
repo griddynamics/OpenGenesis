@@ -20,9 +20,9 @@ module ModelHelpers
     {:envName => name, :templateName => template, :templateVersion => version, :variables => variables}
   end
 
-  def create_user(username, email, first_name, last_name, job_title, password, groups)
+  def create_user(username, email, first_name, last_name, job_title, password, groups = "", roles = "")
     {:username => username, :email => email, :firstName => first_name, :lastName => last_name,
-     :jobTitle => job_title, :password => password, :groups => groups.split(",")}
+     :jobTitle => job_title, :password => password, :groups => groups.split(","), :roles => roles.split(",")}
   end
 
   def in_project(name, &block)

@@ -74,19 +74,18 @@ module Genesis
     [:get, :post, :put, :delete].each do |verb|
        send :define_method, verb do |*args|
          path = @path
+         body = Hash.new
          if args
            first = args.shift
-           if first.class == Hash
-             body = first
+           if first.class == String || first.class == Fixnum
+             path = "#{@path}/#{first}"
+             body = args.shift
            else
-             path = "#{@path}/#{first}" if first
-             body = args.shift || Hash.new
+             body = first
            end
-         else
-           body = Hash.new
          end
          options = {:headers => {'Content-Type' => 'application/json'}}
-         options.merge!({:body => body.to_json}) unless body.empty?
+         options.merge!({:body => body.to_json}) unless body.nil?
          options.merge!({:basic_auth => auth}) unless auth.nil?
          send "_#{verb}", path, options
        end

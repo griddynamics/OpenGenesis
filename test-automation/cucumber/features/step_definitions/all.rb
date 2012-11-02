@@ -32,3 +32,9 @@ Then /^Compound service error with code (\d+) and error "([^"]*)" should be pres
     error.compoundServiceErrors.should include(message), "Expected to have message #{message}, but actually it's not here: #{messages}"
   end
 end
+Then /^User "([^"]*)" must be able to authenticate itself with password "([^"]*)"$/ do |user, password|
+  resource "whoami", :username => user, :password => password do |resource|
+    r = resource.get
+    r.code.should eq(200)
+  end
+end

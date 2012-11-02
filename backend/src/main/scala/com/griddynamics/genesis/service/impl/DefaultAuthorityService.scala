@@ -32,7 +32,7 @@ import com.griddynamics.genesis.users.GenesisRole._
 
 class DefaultAuthorityService(permissionService: PermissionService) extends AuthorityService {
 
-  val listAuthorities = List(SystemAdmin.toString, GenesisUser.toString)
+  val listAuthorities = List(SystemAdmin.toString, ReadonlySystemAdmin.toString, GenesisUser.toString)
 
   @Transactional
   def grantAuthoritiesToUser(username: String, auths: List[String]) = withValidRoles(auths) {
