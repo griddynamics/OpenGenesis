@@ -94,7 +94,7 @@ end
 
 Then /^User '(.+)' should see environment '(.+)' in environments list in project '(.+)'$/ do |username, env_name, project|
   project_id = project_id(project)
-  r = Genesis::Resource.new("projects/#{project_id}/envs", {:username => username, :password => username})
+  r = resource("projects/#{project_id}/envs", :username => username, :password => username)
   result = r.get
   result.code.should eq(200), "User should be able to read environment info, but got following error instead: #{result}"
 
@@ -118,7 +118,7 @@ end
 
 Then /^User '(.+)' should not see environment '(.+)' in environments list in the project '(.+)'$/ do |username, env_name, project|
   project_id = project_id(project)
-  r = Genesis::Resource.new("projects/#{project_id}/envs", {:username => username, :password => username}).get
+  r = resource("projects/#{project_id}/envs", :username => username, :password => username).get
   r.code.should eq(200), "Failed to get envs for project #{project_id} via user account #{username}"
   env = JSON.parse(r.body).find {|e| e["name"] == env_name }
   env.should be_nil, "User can see account he doesn't have access to"
@@ -129,7 +129,7 @@ When /^User '(.+)' creates simple environment '(.+)' in the project '(.+)' with 
   conf = find_config_in_project(configuration, project)
   project_id = project_id(project)
 
-  r = Genesis::Resource.new("projects/#{project_id}/envs", {:username => username, :password => username})
+  r = resource("projects/#{project_id}/envs", :username => username, :password => username)
   @last_response = r.post(create_environment(env_name, "Simple", "0.1").merge({:configId => conf["id"]}))
 end
 
