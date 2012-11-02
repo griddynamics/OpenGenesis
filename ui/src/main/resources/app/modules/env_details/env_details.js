@@ -4,7 +4,6 @@ define([
   "utils/poller",
   "modules/status",
   "modules/env_details/history",
-  "modules/env_details/access",
   "modules/common/variables",
   "modules/common/templates",
   "modules/common/env_status",
