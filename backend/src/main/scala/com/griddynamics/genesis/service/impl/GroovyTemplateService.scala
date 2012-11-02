@@ -319,7 +319,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
             }
         val groupErrors = workflow.variables.groupBy(_.group).map{
           case (Some(group), vars) => vars.count(v => variables.contains(v.name)) match {
-            case 0 if group.required => Seq(ValidationError(group.description, "Group is required"))
+            case 0 if group.required => Seq(ValidationError(vars.head.name, "%s is required: please select non-empty value".format(group.description)))
             case 1 => Seq()
             case _ =>  vars.collect {
               case v if variables.get(v.name).isDefined => ValidationError(v.name,

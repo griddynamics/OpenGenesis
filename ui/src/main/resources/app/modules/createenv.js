@@ -2,7 +2,7 @@ define([
   "genesis",
   "services/backend",
   "modules/status",
-  "variables",
+  "modules/common/variables",
   "modules/common/templates",
   "modules/validation",
   "use!backbone",
@@ -210,15 +210,10 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
     }
   });
 
-  var EnvironmentParametersStep = Step.extend({
+  var EnvironmentParametersStep = variables.WorkflowParamsView.extend({
     template: "app/templates/createenv/environment_settings.html",
-    varTemplate: "app/templates/common/variables.html",
     errorTemplate: "app/templates/createenv/environment_settings_error.html",
     preconditionErrorTemplate: "app/templates/createenv/preconditions_error.html",
-
-    events: {
-      "click .group-radio": "groupVarSelected"
-    },
 
     initialize: function(options) {
       this.variables = [];
@@ -265,14 +260,9 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
     },
 
     modelValues: function() {
-      var vals = {};
-      this.$('.workflow-variable').each(function () {
-        var value = $(this).is("input[type='checkbox']") ? $(this).is(':checked').toString() : $(this).val();
-        if ($(this).val() && $(this).is(':enabled')) { vals[$(this).attr('name')] = value; }
-      });
-      return {
+    return {
         envName: this.$("input[name='envName']").val(),
-        variables: vals
+        variables: this.workflowParams()
       }
     },
 
@@ -302,8 +292,8 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
       }
     },
 
-    groupVarSelected: function(e) {
-       variables.groupVarSelected(e, this, this.variables);
+    variablesModel: function(e) {
+       return this.variables;
     }
   });
 
