@@ -23,7 +23,6 @@
 package com.griddynamics.genesis.rest
 
 import org.springframework.stereotype.Controller
-import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation._
 import java.io.InputStreamReader
@@ -40,8 +39,9 @@ import com.griddynamics.genesis.util.Logging
 @RequestMapping(Array("/rest"))
 class GenesisRestController extends RestApiExceptionsHandler with Logging {
 
-    @Autowired
-    var genesisService: GenesisService = _
+    import com.griddynamics.genesis.rest.GenesisRestController._
+
+    @Autowired var genesisService: GenesisService = _
     @Autowired var templateService: TemplateService = _
 
     @Autowired
@@ -54,7 +54,7 @@ class GenesisRestController extends RestApiExceptionsHandler with Logging {
 
     @RequestMapping(value = Array("projects/{projectId}/templates"), method = Array(RequestMethod.GET))
     @ResponseBody
-    def listTemplates(@PathVariable  projectId: Int,
+    def listTemplates(@PathVariable("projectId")  projectId: Int,
                       @RequestParam(required = false) project: String, @RequestParam(required = false) tag: String) =
       paramToOption(project) match {
         case _ => genesisService.listTemplates(projectId).map(template =>  Map("name" -> template.name, "version" -> template.version))
@@ -72,10 +72,9 @@ class GenesisRestController extends RestApiExceptionsHandler with Logging {
               case "src" => val contentOpt = templateService.templateRawContent(projectId, templateName, templateVersion)
                   contentOpt.map { src => Map("name" -> templateName, "version" -> templateVersion, "content" -> src)}
               case "desc" => genesisService.getTemplate(projectId, templateName, templateVersion)
-
           }
       } catch {
-          case e =>
+          case e: Exception =>
               log.error(e, "Failed to get template %s version %s", templateName, templateVersion)
               Option(Failure(compoundServiceErrors = List(e.getMessage), stackTrace = Option(e.getStackTraceString)))
       }
@@ -91,7 +90,7 @@ class GenesisRestController extends RestApiExceptionsHandler with Logging {
         try {
             genesisService.getWorkflow(projectId, templateName, templateVersion, name)
         } catch {
-            case e =>
+            case e: Exception =>
                 log.error(e, "Failed to get template %s version %s", templateName, templateVersion)
                 Failure(compoundServiceErrors = List(e.getMessage), stackTrace = Option(e.getStackTraceString))
         }
@@ -99,7 +98,7 @@ class GenesisRestController extends RestApiExceptionsHandler with Logging {
 
     @RequestMapping(value = Array("projects/{projectId}/templates/{templateName}/v{templateVersion:.+}/{workflow}"), method = Array(RequestMethod.POST))
     @ResponseBody
-    def partialApply(@PathVariable projectId: Int,
+    def partialApply(@PathVariable("projectId") projectId: Int,
                      @PathVariable("templateName") templateName: String,
                      @PathVariable("templateVersion") templateVersion: String,
                      @PathVariable("workflow") workflow: String,
@@ -117,7 +116,7 @@ class GenesisRestController extends RestApiExceptionsHandler with Logging {
     }
 }
 
-object GenesisRestController {
+object GenesisRestController extends Logging {
     import net.liftweb.json._
 
     def extract[B <: AnyRef : Manifest](request: HttpServletRequest): B = {
@@ -126,28 +125,23 @@ object GenesisRestController {
       json.extract[B]
     }
 
-    def extractParamsMap(request: HttpServletRequest): Map[String, Any] = {
-        try {
-            JsonParser.parse(new InputStreamReader(request.getInputStream), false).values.asInstanceOf[Map[String, Any]]
-        } catch {
-            case _ => throw new InvalidInputException
-        }
+    private[this] def safeInput[T](body: => T): T = try { body } catch {
+      case e: Exception => {
+        log.warn("Failed to parse input stream", e)
+        throw new InvalidInputException
+      }
     }
 
-    def extractParamsMapList(request: HttpServletRequest): List[Map[String, Any]] = {
-        try {
-            JsonParser.parse(new InputStreamReader(request.getInputStream), false).values.asInstanceOf[List[Map[String, Any]]]
-        } catch {
-            case _ => throw new InvalidInputException
-        }
+    def extractParamsMap(request: HttpServletRequest): Map[String, Any] = safeInput {
+        JsonParser.parse(s = new InputStreamReader(request.getInputStream), closeAutomatically = false).values.asInstanceOf[Map[String, Any]]
     }
 
-    def extractParamsList(request: HttpServletRequest): List[String] = {
-        try {
-            JsonParser.parse(new InputStreamReader(request.getInputStream), false).values.asInstanceOf[List[String]]
-        } catch {
-            case _ => throw new InvalidInputException
-        }
+    def extractParamsMapList(request: HttpServletRequest): List[Map[String, Any]] = safeInput {
+        JsonParser.parse(s = new InputStreamReader(request.getInputStream), closeAutomatically = false).values.asInstanceOf[List[Map[String, Any]]]
+    }
+
+    def extractParamsList(request: HttpServletRequest): List[String] = safeInput {
+        JsonParser.parse(s = new InputStreamReader(request.getInputStream), closeAutomatically = false).values.asInstanceOf[List[String]]
     }
 
     def extractVariables(paramsMap: Map[String, Any]): Map[String, String] = {
@@ -157,6 +151,12 @@ object GenesisRestController {
 
     def getCurrentUser =  {
       SecurityContextHolder.getContext.getAuthentication.asInstanceOf[Principal].getName
+    }
+
+    def getCurrentUserAuthorities = {
+      import scala.collection.JavaConversions._
+      val auth = SecurityContextHolder.getContext.getAuthentication
+      auth.getAuthorities.map (_.getAuthority)
     }
 
     def extractListValue(valueName: String, values: Map[String, Any]): List[String] = {
@@ -191,10 +191,7 @@ object GenesisRestController {
     }
 
     def extractOption(valueName: String,  values: Map[String, Any]) : Option[String] = {
-       values.get(valueName) match {
-         case Some(s) => Some(String.valueOf(s))
-         case None => None
-       }
+       values.get(valueName).map(String.valueOf(_))
     }
   
     def paramToOption(param: String) = {
@@ -203,6 +200,5 @@ object GenesisRestController {
       else
         Option(param)
     }
-
 }
 

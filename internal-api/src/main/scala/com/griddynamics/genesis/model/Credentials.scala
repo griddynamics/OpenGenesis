@@ -5,6 +5,4 @@ class Credentials( val projectId: GenesisEntity.Id,
                    val pairName: String,
                    val crIdentity: String, //note: some databases have 'identity' as reserved word
                    val credential: Option[String],
-                   val fingerPrint: Option[String]) extends GenesisEntity {
-
-}
+                   val fingerPrint: Option[String] ) extends GenesisEntity with ProjectBoundEntity

@@ -34,6 +34,7 @@ import org.squeryl.{StaleUpdateException, Query, Table}
 import java.sql.Timestamp
 import com.griddynamics.genesis.model.WorkflowStepStatus._
 import com.griddynamics.genesis.util.Logging
+import com.griddynamics.genesis.repository.ConfigurationRepository
 
 //TODO think about ids as vars
 class StoreService extends service.StoreService with Logging {
@@ -219,7 +220,7 @@ class StoreService extends service.StoreService with Logging {
 
   @Transactional
   def resetEnvStatus(env: Environment) : Option[Mistake] = {
-    lazy val mistake = Some(Mistake("Can't reset status of environment [%s] because it's not in 'Broken' state".format(env.name)))
+    lazy val mistake = Some(Mistake("Can't reset status of instance [%s] because it's not in 'Broken' state".format(env.name)))
 
     env.status match {
       case EnvStatus.Broken => {
@@ -263,7 +264,7 @@ class StoreService extends service.StoreService with Logging {
   }
 
   @Transactional(propagation = Propagation.MANDATORY)
-  private def updateAttrs(entity: EntityWithAttrs, table: Table[SquerylEntityAttr]) = {
+  def updateAttrs(entity: EntityWithAttrs, table: Table[SquerylEntityAttr]) {
     val (changedAttrs, removedAttrs) = entity.exportAttrs()
 
     if (!removedAttrs.isEmpty)
@@ -298,12 +299,11 @@ class StoreService extends service.StoreService with Logging {
   }
 
   @Transactional(propagation = Propagation.MANDATORY)
-  private def loadAttrs(entity: EntityWithAttrs, table: Table[SquerylEntityAttr]) = {
+  def loadAttrs(entity: EntityWithAttrs, table: Table[SquerylEntityAttr]) = {
     val attrs = from(table)(a => where(a.entityId === entity.id) select (a)).toList
-
-    entity.importAttrs(
-      attrs.map(a => (a.name, a.value)).toMap
-    )
+    val asMap = attrs.map(a => (a.name, a.value)).toMap
+    entity.importAttrs(asMap)
+    asMap
   }
 
   @Transactional
@@ -311,7 +311,7 @@ class StoreService extends service.StoreService with Logging {
     val actualEnv = findEnv(env.name, env.projectId).get
 
     if (!isReadyForWorkflow(actualEnv.status))
-      return Left(Mistake("Environment with status %s isn't ready for workflow request".format(actualEnv.status: EnvStatus)))
+      return Left(Mistake("Instance with status %s isn't ready for workflow request".format(actualEnv.status: EnvStatus)))
 
     actualEnv.status = EnvStatus.Busy
     workflow.status = WorkflowStatus.Requested
@@ -320,8 +320,8 @@ class StoreService extends service.StoreService with Logging {
       Right((actualEnv, GS.workflows.insert(workflow)))
     } catch {
       case e: StaleUpdateException => {
-        log.warn("Optimistic lock: environment's status has been updated", e)
-        Left(Mistake("Optimistic lock: environment's status has been updated"))
+        log.warn("Optimistic lock: instance's status has been updated", e)
+        Left(Mistake("Optimistic lock: instance's status has been updated"))
       }
     }
   }
@@ -478,6 +478,15 @@ class StoreService extends service.StoreService with Logging {
       update(GS.envs)(e => where(e.id === i) set (e.name := s))
   }
 
+  @Transactional(readOnly = true)
+  def findEnvsByConfigurationId(configId: Int): Seq[Int] = from(GS.envs) ( env =>
+    where(env.configurationId === configId ) select(env.id)
+  ).toList
+
+  @Transactional(readOnly = true)
+  def findLiveEnvsByConfigurationId(configId: Int): Seq[Int] = from(GS.envs) ( env =>
+    where((env.configurationId === configId) and (env.status <> EnvStatus.Destroyed)) select(env.id)
+  ).toList
 }
 
 

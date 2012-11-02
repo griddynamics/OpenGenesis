@@ -14,6 +14,7 @@ import com.griddynamics.genesis.service.ProjectAuthorityService
 import com.griddynamics.genesis.validation.Validation
 import com.griddynamics.genesis.api.Project
 import javax.validation.Valid
+import com.griddynamics.genesis.repository.ConfigurationRepository
 
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
@@ -43,6 +44,7 @@ class ProjectsController extends RestApiExceptionsHandler {
 
   @Autowired var projectService: ProjectService = _
   @Autowired var authorityService: ProjectAuthorityService = _
+  @Autowired var configurationRepository: ConfigurationRepository = _
 
   @Value("${genesis.system.server.mode:frontend}")
   var mode = ""
@@ -50,12 +52,10 @@ class ProjectsController extends RestApiExceptionsHandler {
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
   def listProjects(request: HttpServletRequest): Iterable[Project] = {
-    import scala.collection.JavaConversions._
     if (request.isUserInRole(GenesisRole.SystemAdmin.toString)) {
       projectService.list
     } else {
-      val auth = SecurityContextHolder.getContext.getAuthentication
-      val authorities = auth.getAuthorities.map (_.getAuthority)
+      val authorities = GenesisRestController.getCurrentUserAuthorities
       val ids = authorityService.getAllowedProjectIds(request.getUserPrincipal.getName, authorities)
       projectService.getProjects(ids)
     }
@@ -73,7 +73,14 @@ class ProjectsController extends RestApiExceptionsHandler {
       description = attr.description.map(_.trim)
     )
 
-    projectService.create(project)
+    val result = projectService.create(project)
+    result match {
+      case r@Success(pr, true) => {
+        configurationRepository.save(new Configuration(None, "Default", pr.id.get, None))
+        r
+      }
+      case r => r
+    }
   }
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.GET))

@@ -34,12 +34,13 @@ class Environment(val name: String,
                   var modifiedBy: Option[String],
                   val templateName: String,
                   var templateVersion: String,
-                  val projectId: GenesisEntity.Id) extends EntityWithAttrs with Optimistic {
-    def this() = this ("", Busy, "", new Timestamp(System.currentTimeMillis()), None, None, "", "", 0)
+                  val projectId: GenesisEntity.Id,
+                  val configurationId: Int) extends EntityWithAttrs with Optimistic {
+    def this() = this ("", Busy, "", new Timestamp(System.currentTimeMillis()), None, None, "", "", 0, 0)
 
     def copy() = {
         val env = new Environment(name, status, creator, creationTime, modificationTime, modifiedBy, templateName,
-            templateVersion, projectId).importAttrs(this)
+            templateVersion, projectId, configurationId).importAttrs(this)
         env.id = this.id
         env
     }

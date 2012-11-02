@@ -46,7 +46,7 @@ import com.griddynamics.genesis.plugin.GenesisStep
 class ContextEnvTest extends AssertionsForJUnit with MockitoSugar {
   val templateRepository = mock[TemplateRepository]
   val templateRepoService = mock[TemplateRepoService]
-  val env = new Environment("test_env", EnvStatus.Ready, "creator", new Timestamp(new Date().getTime), None, None, "", "", 0)
+  val env = new Environment("test_env", EnvStatus.Ready, "creator", new Timestamp(new Date().getTime), None, None, "", "", 0, 0)
   val storeService = {
     val storeService = mock[StoreService]
     when(storeService.startWorkflow(Matchers.any(), Matchers.any())).thenReturn((env, mock[Workflow], List()))

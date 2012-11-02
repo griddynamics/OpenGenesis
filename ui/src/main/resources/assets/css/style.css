@@ -479,6 +479,17 @@ div.system-settings {
 	padding: 0 15px;
 }
 
+#wrapper  #wrapper-content .panel .top-panel, .panel .panel {
+	padding: 0 0 !important;
+}
+#panel #tab-panel .panel {
+   border-top: none !important;
+}
+
+#wrapper  #wrapper-content .panel .top-panel h2 {
+    font-size: 18px;
+}
+
 #wrapper #top-panel #page-title,
 .top-panel .page-title {
 	font-size:14px;
@@ -1441,6 +1452,12 @@ table .pre {
     background: #CCC;
     cursor: default;
     color: #999999;
+    outline: none;
+}
+
+#workflow-parameters-form [disabled].predefined {
+    background: #fff;
+    cursor: default;
     outline: none;
 }
 

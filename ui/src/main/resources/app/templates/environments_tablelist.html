@@ -2,6 +2,7 @@
     <% for(var i = 0, count = environments.length; i < count; i++) { var environment = environments[i]; %>
         <tr>
             <td class="first"><a href="#project/<%= project.id %>/env/<%= environment.id %>"><img src="/assets/img/env24.png" alt="Env" class="env-icon"><%= environment.name %></a></td>
+            <td ><%- environment.configuration %></td>
             <td><span class="time"><%= utils.formatDate(environment.creationTime) %></span> by <span class="username"><%= environment.creator %></span></td>
             <td>
                 <% if (environment.modificationTime) { %>
@@ -30,5 +31,5 @@
     <% } %>
 
 <% } else { %>
-    <tr ><td colspan="5" style="padding: 0" ><div class="information-panel wide" style="margin: -11px; "><p>No environments available</p></div></td></tr>
+    <tr ><td colspan="6" style="padding: 0" ><div class="information-panel wide" style="margin: -11px; "><p>No instances available</p></div></td></tr>
 <% } %>

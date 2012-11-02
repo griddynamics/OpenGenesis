@@ -72,4 +72,6 @@
     <bean class="com.griddynamics.genesis.rest.WhoamiController"/>
 
     <bean class="com.griddynamics.genesis.rest.TemplateRepoController"/>
+
+    <bean class="com.griddynamics.genesis.rest.ConfigurationController"/>
 </beans>

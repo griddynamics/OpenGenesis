@@ -5,7 +5,7 @@ Given /^Genesis is running$/ do
   end
 end
 
-Given /^I am valid admin user$/ do
+  Given /^I am valid admin user$/ do
   resource :whoami do |r|
     JSON.parse(r.get.body)["administrator"].should eq(true), "It should run as admin user"
   end

@@ -10,6 +10,15 @@ define([
 
 function($, _, Backbone, formats) {
 
+  var _template = _.template;
+
+  _.template = function (str, data) {
+    return _template (
+      str.replace(/<!--%[\s\S]*%-->/g, ""),
+      data
+    );
+  };
+
   Backbone.View.prototype.close = function() {
     this.unbind();
     this.remove();

@@ -61,6 +61,58 @@ module ModelHelpers
     end
   end
 
+  def configuration_resource(project, &block)
+    project_resource project, :configs, &block
+  end
+
+  def genesis_settings_value(name)
+    config = resource "/settings?prefix=#{name}" do |r|
+      r.get
+    end
+    JSON.parse(config.body)[0]["value"]
+  end
+
+  def find_config(config_name, project, username)
+    r = Genesis::Resource.new("projects/#{project_id(project)}/configs", {:username => username, :password => username})
+    r.find_by_name(config_name)
+  end
+
+
+  def update_config_access(project, config_id, users)
+    project_resource project, "/configs/#{config_id}/access" do |r|
+      resp = r.put({:users => users, :groups => []})
+      resp.code.should eq(200), "Failed to update access to env configuration. Response: #{resp}"
+    end
+  end
+
+  def find_config_in_project(name, project)
+    configuration_resource project do |r|
+      r.find_by_name(name)
+    end
+  end
+
+  def project_id(project)
+    resource :projects do |projects|
+      projects.find_by_name(project)["id"]
+    end
+  end
+
+  def environment_id(env_name, project)
+    environments_resource project do |resource, id|
+      env = resource.find_by_name(env_name)
+      env.should_not be_nil, "Expected that environment #{env_name} exists, but it's not found"
+      env["id"]
+    end
+  end
+
+  def get_env_as_user(env_name, project, username)
+    env_id = environment_id(env_name, project)
+    project_id = project_id(project)
+
+    r = Genesis::Resource.new("projects/#{project_id}/envs/#{env_id}", {:username => username, :password => username})
+    r.get
+  end
+
   def errors(response, code, &block)
     response.code.should eq(code.to_i), "Expected to get code #{code}, but really it's #{response.code}"
     r = Genesis::Hashed.new(JSON.parse(response.body))
@@ -81,6 +133,8 @@ module ModelHelpers
       cur_count = count + 1
     end
   end
+
+
 end
 
 class GenesisWorld

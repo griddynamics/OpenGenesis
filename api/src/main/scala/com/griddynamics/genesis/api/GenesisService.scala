@@ -44,7 +44,7 @@ trait GenesisService {
     def listTemplates(projectId: Int) : Seq[Template]
 
     def createEnv(projectId: Int, envName : String, creator : String, templateName : String,
-                  templateVersion : String, variables : Map[String, String]) : ExtendedResult[Int]
+                  templateVersion : String, variables : Map[String, String], config: Configuration) : ExtendedResult[Int]
 
     def destroyEnv(envId : Int, projectId: Int, variables : Map[String, String], startedBy: String) : ExtendedResult[Int]
 

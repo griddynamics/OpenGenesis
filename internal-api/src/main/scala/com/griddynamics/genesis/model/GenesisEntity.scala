@@ -34,4 +34,8 @@ object GenesisEntity {
     type Id = Int
 }
 
+trait ProjectBoundEntity {
+  def projectId: Id
+}
+
 class ConfigProperty (val name: String, val value: String)

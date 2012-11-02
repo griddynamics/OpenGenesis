@@ -61,7 +61,7 @@ class TemplateRepoServiceImpl(config: ConfigService, storeService: SS,
 
   def getConfig(projectId: Int) = {
     val tr = listSettings(Modes.withName(getMode(projectId)))
-    val ro = storeService.listEnvs(projectId).nonEmpty
+    val ro = storeService.listEnvs(projectId).nonEmpty //todo real hard way to check if no envs exist
     TemplateRepo(tr.mode, tr.configuration.map(cp => cp.copy(value = config.get(projectId, cp.name, cp.value), readOnly = ro)))
   }
 
