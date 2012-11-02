@@ -11,7 +11,7 @@
             <% if (configs.length) { %>
             <div style="margin-top: 10px; margin-bottom: 10px;">
               <label for="configuration" class="label-required" >Environment</label>
-              <div style="width: 60%; float: right">
+              <div class="value">
                   <select id="configuration" name="configId"  <%= (configs.length == 1 ? "disabled = 'disabled' class='predefined' " : "") %> >
                     <% for (var i = 0, count = configs.length; i < count; i++) { var config = configs[i]; %>
                       <option value="<%- config.id %>"><%- config.name %></option>
