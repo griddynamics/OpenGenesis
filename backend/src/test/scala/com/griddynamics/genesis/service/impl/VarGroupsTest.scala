@@ -78,6 +78,5 @@ class VarGroupsTest extends AssertionsForJUnit with MockitoSugar {
     def testValidateRequiredFail() {
       val errors = createWorkflow.validate(Map("a" -> 1))
       expect(1)(errors.size)
-      expect("requiredGroup")(errors.head.variableName)
-     }
+    }
 }
