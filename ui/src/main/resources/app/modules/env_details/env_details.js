@@ -14,7 +14,7 @@ define([
   "use!jvalidate"
 ],
 
-function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gtemplates, EnvStatus, Backbone, $) {
+function (genesis, backend, poller, status, EnvHistory, variables, gtemplates, EnvStatus, Backbone, $) {
   var EnvironmentDetails = genesis.module();
 
   EnvironmentDetails.Model = Backbone.Model.extend({
@@ -248,16 +248,6 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
       }
     },
 
-    renderAccess: function() {
-      var access = new EnvAccess.Model({}, { projectId: this.details.get("projectId"), envId: this.details.id });
-      this.accessView = new EnvAccess.View({
-        el: "#panel-tab-4",
-        accessConfiguration: access,
-        projectId: this.details.get("projectId"),
-        tabHeader: this.$("#permissions-tab-header")
-      });
-    },
-
     _renderAllSubViews: function() {
       var statusView = new EnvStatus.View({el: this.$(".env-status"), model: this.details});
       statusView.render();
@@ -267,7 +257,6 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
       this.checkServersAndVms();
       this.renderWorkflowList();
       this.renderAttributes();
-      this.renderAccess();
     },
 
     render: function () {
@@ -295,7 +284,7 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
           view.envRenameDialog = view.createRenameDialog(view.$("#env-rename"));
       }).fail(function() {
           genesis.app.trigger("server-communication-error",
-            "Failed to get environment details<br/><br/> Please contact administrator.",
+            "Failed to get instance details<br/><br/> Please contact administrator.",
             "/project/" + view.details.get("projectId")
           );
       }).always(function(){
@@ -335,7 +324,7 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
           "Yes": function () {
             $.when(backend.EnvironmentManager.resetEnvStatus(self.details.get("projectId"), self.details.get('id')))
               .done(function() {
-                status.StatusPanel.information("Environment status was changed to 'Ready'");
+                status.StatusPanel.information("Instance status was changed to 'Ready'");
               })
               .fail(function(jqXHR) {
                 status.StatusPanel.error(jqXHR);
@@ -352,7 +341,7 @@ function (genesis, backend, poller, status, EnvHistory, EnvAccess, variables, gt
     createRenameDialog: function($element) {
       var view = this;
       return $element.dialog({
-        title: 'Rename environment',
+        title: 'Rename instance',
         buttons: {
           "Save": function () {
             var dialog = this;

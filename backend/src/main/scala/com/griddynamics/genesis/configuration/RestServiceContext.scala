@@ -25,6 +25,8 @@ package com.griddynamics.genesis.configuration
 import org.springframework.context.annotation.{Bean, Configuration}
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.frontend.GenesisRestService
+import com.griddynamics.genesis.service.EnvironmentAccessService
+import com.griddynamics.genesis.repository.ConfigurationRepository
 
 @Configuration
 class RestServiceContext {
@@ -32,9 +34,13 @@ class RestServiceContext {
     @Autowired var templateServiceContext : TemplateServiceContext = _
     @Autowired var computeServiceContext : ComputeServiceContext = _
     @Autowired var workflowContext : WorkflowContext = _
+    @Autowired var envAccessService: EnvironmentAccessService = _
+    @Autowired var configurationRepository: ConfigurationRepository = _
 
     @Bean def genesisRestService = new GenesisRestService(storeServiceContext.storeService,
                                                           templateServiceContext.templateService,
                                                           computeServiceContext.compService,
-                                                          workflowContext.requestBroker)
+                                                          workflowContext.requestBroker,
+                                                          envAccessService,
+                                                          configurationRepository)
 }

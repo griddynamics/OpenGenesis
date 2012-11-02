@@ -35,7 +35,7 @@ Feature: Workflow preconditons
   Scenario: Request workflow: can't run create workflow on existing project
     Given I create an environment 'pebbles' in project 'Preconditions' with template 'Preconditions' version '0.1'
     When I'm starting workflow 'create' on environment 'pebbles' in project 'Preconditions'
-    Then Service error with code 400 and error 'envName': 'It's not allowed to execute create workflow\['create'\] in existing environment 'pebbles'' should be returned
+    Then Service error with code 400 and error 'envName': 'It's not allowed to execute create workflow\['create'\] in existing instance 'pebbles'' should be returned
     And I can delete environment 'pebbles' in project 'Preconditions'
 
   Scenario: Preconditions on request workflow: satisfied precondition

@@ -25,12 +25,25 @@ package com.griddynamics.genesis.api
 import java.util
 import com.griddynamics.genesis.validation.FieldConstraints._
 import java.sql.Timestamp
-import util.{Calendar, TimeZone, Locale}
+import util.{TimeZone, Locale}
 import java.text.DateFormat
+
 
 trait Identifiable[T] {
   def id: T
 }
+
+trait ProjectBound {
+  def projectId: Int
+}
+
+case class Configuration( id: Option[Int],
+                          @Size(min = 1, max = 256)
+                          name: String,
+                          projectId: Int,
+                          description: Option[String],
+                          @ValidStringMap(key_min = 1, key_max = 256, value_min = 0, value_max = 256)
+                          items: Map[String, String] = Map() ) extends Identifiable[Option[Int]] with ProjectBound
 
 case class Environment(id: Int,
                        name : String,
@@ -43,7 +56,8 @@ case class Environment(id: Int,
                        templateName : String,
                        templateVersion : String,
                        projectId: Int,
-                       attributes: Map[String, Attribute]) extends Identifiable[Int]
+                       attributes: Map[String, Attribute],
+                       configuration: String) extends Identifiable[Int]
 
 case class Attribute(value: String, description: String)
 
@@ -65,7 +79,8 @@ case class EnvironmentDetails(envId: Int,
                               historyCount: Int,
                               currentWorkflowFinishedActionsCount: Int,
                               workflowCompleted: Option[Double],
-                              attributes: Map[String, Attribute] = Map())
+                              attributes: Map[String, Attribute] = Map(),
+                              configuration: String)
 
 case class Variable(name : String, `type`: String, description : String, optional: Boolean = false, defaultValue: String = null,
                     values:Map[String,String] = Map(), dependsOn: Option[List[String]] = None, group : Option[String] = None)
@@ -199,7 +214,11 @@ case class ProjectAttributes (@Size(min = 1, max = 64) @NotBlank @Pattern(regexp
                              projectManager: String,
                              description: Option[String] )
 
-case class ConfigProperty(name: String, value: String, readOnly: Boolean, description: Option[String] = None, propertyType: ConfigPropertyType.ConfigPropertyType = ConfigPropertyType.TEXT  )
+case class ConfigProperty(name: String,
+                          value: String,
+                          readOnly: Boolean,
+                          description: Option[String] = None,
+                          propertyType: ConfigPropertyType.ConfigPropertyType = ConfigPropertyType.TEXT  )
 
 object ConfigPropertyType extends Enumeration {
   type ConfigPropertyType = Value
@@ -230,7 +249,7 @@ case class Credentials( id: Option[Int],
                         @Size(min = 1, max = 128) @NotBlank pairName: String,
                         @Size(min = 1, max = 128) @NotBlank identity: String,
                         credential: Option[String],
-                        fingerPrint: Option[String] = None)
+                        fingerPrint: Option[String] = None) extends ProjectBound
 
 case class AuthorityDescription(name: String, users: List[String], groups: List[String])
 

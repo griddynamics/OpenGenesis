@@ -1,0 +1,65 @@
+<div>
+  <a href="javascript:void(0)" class="back" style="margin-left: 15px"><img src="/assets/img/back.png" alt="Back link"/>Back to environments list</a>
+
+  <div class="top-panel">
+    <div class="page-title"><h2><%= (config.id ? 'Edit' : 'Create') %> environment configuration</h2></div>
+  </div>
+
+  <% if (config.id && access_security) { %>
+  <div id="tab-panel">
+    <div id="tabs" data-tabpanel="header">
+      <a href="javascript:void(0);" class="tab tab-selected" id="tab1" rel="#panel-tab-details"> <span> Details </span> </a>
+      <a href="javascript:void(0);" class="tab" id="access-tab-header" rel="#panel-tab-access" > <span> Permissions </span> </a>
+    </div>
+
+    <div id="panel">
+      <div id="panel-tab-details" class="tab-content opened">
+<% } %>
+        <div class="panel">
+          <div class="notification" style="display:none"></div>
+          <form id="edit-config">
+            <table class="forform-table wide" >
+              <tr>
+                <td class="label-required label-column" style="width: 12%"><label for="name">* Name</label></td>
+                <td><input id="name" name="name" type="text" class="required name" value="<%- config.name %>"></td>
+              </tr>
+              <tr>
+                <td><label for="description">Description</label></td>
+                <td><textarea rows="" cols="" name="description" id="description"><%- config.description %></textarea></td>
+              </tr>
+            </table>
+
+            <div class="form-notice">All fields marked with * are required</div>
+            <br class="clear"/>
+
+            <div id="properties" >
+            </div>
+          </form>
+<% if (!config.id && access_security) {%>
+            <div id="access-panel" style="padding: 5px 0 10px 0;">
+              <a href="javascript:void(0)" style=" display: inline-block; font-weight: bold; text-decoration: underline" class="add-access">Provide Access restrictions </a>
+            </div>
+<% } %>
+
+            <div class="stepbutton" >
+              <a href="javascript:void(0);" class="button" id="save-config"> <span> Save </span> </a>
+              <a href="javascript:void(0);" class="button cancel" > <span> Cancel </span> </a>
+            </div>
+
+        </div>
+
+
+<% if (config.id) { %>
+
+      </div>
+
+      <div id="panel-tab-access" class="tab-content">
+        Loading...
+      </div>
+    </div>
+  </div>
+
+<% } %>
+
+
+</div>

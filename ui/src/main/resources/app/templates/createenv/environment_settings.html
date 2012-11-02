@@ -7,6 +7,22 @@
                 <input type="text" id="envName" name="envName" class="required" >
             </div>
             <div style="clear: both"></div>
+
+            <% if (configs.length) { %>
+            <div style="margin-top: 10px; margin-bottom: 10px;">
+              <label for="configuration" class="label-required" >Environment</label>
+              <div style="width: 60%; float: right">
+                  <select id="configuration" name="configId"  <%= (configs.length == 1 ? "disabled = 'disabled' class='predefined' " : "") %> >
+                    <% for (var i = 0, count = configs.length; i < count; i++) { var config = configs[i]; %>
+                      <option value="<%- config.id %>"><%- config.name %></option>
+                    <% } %>
+
+                  </select>
+              </div>
+            </div>
+              <div style="clear: both"></div>
+            <% } %>
+
             <div id="workflow_vars"/>
         </div>
         <div class="form-notice">All fields marked with * are required</div>

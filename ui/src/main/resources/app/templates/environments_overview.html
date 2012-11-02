@@ -10,7 +10,7 @@
 <div id="content">
     <div id="management-panel">
         <div id="buttons">
-            <a href="/project/<%= project.id %>/createEnv" id="create-env-button" class="button" style="display: none"> <span> Create environment... </span> </a>
+            <a href="/project/<%= project.id %>/createEnv" id="create-env-button" class="button" > <span> Create new instance... </span> </a>
         </div>
         <div id="right">
           <label for="filter-statuses">Filter <input id="filter-name" type="text" value="<%= filter.namePart %>"></label>
@@ -29,7 +29,8 @@
     <table class="main-table attempts">
       <thead>
         <tr id="table-title">
-            <th class="first" style="width:25%">Environment name</th>
+            <th class="first" style="width:20%">Instance Name</th>
+            <th style="width:12%">Environment</th>
             <th >Created</th>
             <th >Modified</th>
             <th style="width:25%">Attributes</th>

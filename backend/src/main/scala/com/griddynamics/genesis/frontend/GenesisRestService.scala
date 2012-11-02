@@ -22,35 +22,30 @@
  */
 package com.griddynamics.genesis.frontend
 
-import com.griddynamics.genesis.api._
-import com.griddynamics.genesis.{model, service}
-import com.griddynamics.genesis.bean.RequestBroker
 import GenesisRestService._
-import model.{Workflow, EnvStatus}
-import service._
+import com.griddynamics.genesis.api._
+import com.griddynamics.genesis.bean.RequestBroker
+import com.griddynamics.genesis.{model, service}
+import com.griddynamics.genesis.model.{Workflow, EnvStatus}
+import com.griddynamics.genesis.repository.ConfigurationRepository
+import com.griddynamics.genesis.service._
 import com.griddynamics.genesis.validation.Validation._
-import com.griddynamics.genesis.api.ActionTracking
-import com.griddynamics.genesis.api.EnvironmentDetails
-import com.griddynamics.genesis.api.Failure
-import com.griddynamics.genesis.api.Attribute
-import com.griddynamics.genesis.api.WorkflowHistory
-import com.griddynamics.genesis.api.WorkflowStep
-import com.griddynamics.genesis.api.Variable
-import com.griddynamics.genesis.api.Environment
-import com.griddynamics.genesis.api.Template
-import com.griddynamics.genesis.api.StepLogEntry
-import com.griddynamics.genesis.api.VirtualMachine
-import com.griddynamics.genesis.api.BorrowedMachine
-import com.griddynamics.genesis.api.WorkflowDetails
 
 class GenesisRestService(storeService: StoreService,
                          templateService: TemplateService,
                          computeService: ComputeService,
-                         broker: RequestBroker) extends GenesisService {
+                         broker: RequestBroker,
+                         envAccessService: EnvironmentAccessService,
+                         configurationRepository: ConfigurationRepository) extends GenesisService {
 
 
-  def listEnvs(projectId: Int, statusFilter: Option[Seq[String]] = None) = envs(storeService
-    .listEnvsWithWorkflow(projectId, statusFilter.map(_.map(EnvStatus.withName(_)))))
+    def listEnvs(projectId: Int, statusFilter: Option[Seq[String]] = None) = {
+      val filterOpt = statusFilter.map(_.map(EnvStatus.withName(_)))
+      envs (
+        storeService.listEnvsWithWorkflow(projectId, filterOpt),
+        configurationRepository.lookupNames(projectId)
+      )
+    }
 
     def countEnvs(projectId: Int) : Int = storeService.countEnvs(projectId)
 
@@ -58,8 +53,19 @@ class GenesisRestService(storeService: StoreService,
         for {(name, version) <- templateService.listTemplates(projectId)} yield Template(name, version, null, Seq())
 
     def createEnv(projectId: Int, envName: String, creator: String, templateName: String,
-                  templateVersion: String, variables: Map[String, String]) = {
-        broker.createEnv(projectId, envName, creator, templateName, templateVersion, variables)
+                  templateVersion: String, variables: Map[String, String], config: Configuration) = {
+        val result = broker.createEnv(projectId, envName, creator, templateName, templateVersion, variables, config)
+
+        result match {
+          case Success(envId, true) => {
+            config.id.foreach { cId =>
+              val (users, groups) = envAccessService.getConfigAccessGrantees(cId)
+              envAccessService.grantAccess(envId, users, groups)
+            }
+            Success(envId)
+          }
+          case other => other
+        }
     }
 
     def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String], startedBy: String) = {
@@ -94,7 +100,8 @@ class GenesisRestService(storeService: StoreService,
                         computeService,
                         storeService.countWorkflows(env),
                         storeService.countFinishedActionsForCurrentWorkflow(env),
-                        stepsCompleted(flow)
+                        stepsCompleted(flow),
+                        configurationRepository.get(projectId, env.configurationId)
                     )
                 }
             case None => None
@@ -189,7 +196,8 @@ object GenesisRestService {
                 computeService: ComputeService,
                 historyCount: Int,
                 currentWorkflowFinishedActionsCount: Int,
-                workflowCompleted: Option[Double]) = {
+                workflowCompleted: Option[Double],
+                config: Option[Configuration]) = {
 
         val workflows = template.workflows.map (Workflow(_, Seq()))
 
@@ -216,7 +224,8 @@ object GenesisRestService {
             historyCount,
             currentWorkflowFinishedActionsCount,
             workflowCompleted,
-            attrDesc(env.deploymentAttrs)
+            attrDesc(env.deploymentAttrs),
+            config.map(_.name).getOrElse("*deleted*")
         )
     }
 
@@ -276,11 +285,11 @@ object GenesisRestService {
 
   private def attrDesc(attrs: Seq[model.DeploymentAttribute]) = attrs.map( attr => attr.key -> Attribute(attr.value, attr.desc)).toMap
 
-  private def envs(envs: Seq[(model.Environment, Option[Workflow])]) = for ((env, workflowOption) <- envs) yield
+  private def envs(envs: Seq[(model.Environment, Option[Workflow])], configNames: Map[Int, String]) = for ((env, workflowOption) <- envs) yield
     Environment(env.id, env.name, env.status.toString, stepsCompleted(workflowOption), env.creator,
       env.creationTime.getTime, env.modificationTime.map(_.getTime), env.modifiedBy,
       env.templateName, env.templateVersion, env.projectId,
-      attrDesc(env.deploymentAttrs))
+      attrDesc(env.deploymentAttrs), configNames.getOrElse(env.configurationId, "*deleted*"))
 
   private def varDesc(v : VariableDescription) = Variable(v.name, v.clazz.getSimpleName, v.description, v.isOptional,
     v.defaultValue, v.values.toMap, v.dependsOn, v.group)

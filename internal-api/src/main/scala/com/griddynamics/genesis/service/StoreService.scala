@@ -30,6 +30,9 @@ import com.griddynamics.genesis.model.WorkflowStepStatus._
 import java.sql.Timestamp
 
 trait StoreService {
+    def findEnvsByConfigurationId(configId: Int): Seq[Int]
+    def findLiveEnvsByConfigurationId(configId: Int): Seq[Int]
+
     def updateEnvName(i: Int, s: String): Int
     def listEnvs(projectId: Int, statusFilter: Option[Seq[EnvStatus]] = None): Seq[Environment]
     def countEnvs(projectId: Int): Int

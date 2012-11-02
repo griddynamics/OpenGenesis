@@ -28,11 +28,7 @@ function (genesis, backend, poller, status, EnvStatus, Backbone, $) {
     }
   };
 
-  /**
-   * Environment statuses are different for 1.0.x and 1.1.x versions of Genesis
-   * so we need to check stored filter and fix it if required.
-   */
-  Environments.fixFilter = function() {
+   Environments.fixFilter = function() {
     var initialFilter = $.jStorage.get(genesis.app.currentUser.user + "_envFilter", FILTER_DEFAULTS);
     if (!_.isEqual(_.keys(initialFilter.statuses), _.keys(FILTER_DEFAULTS.statuses)))
       $.jStorage.set(genesis.app.currentUser.user + "_envFilter", FILTER_DEFAULTS);
@@ -163,10 +159,6 @@ function (genesis, backend, poller, status, EnvStatus, Backbone, $) {
         view.$el.html(tmpl({ "project": view.project.toJSON(), "filter": view.collection.getFilter() }));
         if(isAdmin) {
           view.$("#project-settings").show();
-        }
-
-        if(!genesis.app.currentConfiguration['environment_security_enabled'] || isAdmin ) {
-          view.$("#create-env-button").show();
         }
 
         view.$("#filter-statuses").multiselect({

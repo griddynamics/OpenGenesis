@@ -50,6 +50,7 @@ class JdbcStoreServiceContext extends StoreServiceContext {
     @Bean def projectService: ProjectService = new ProjectServiceImpl(projectRepository, storeService)
 
     @Bean def credentialsRepository: repository.CredentialsRepository = new repository.impl.CredentialsRepository
+    @Bean def configurationRepository: repository.ConfigurationRepository = new repository.impl.ConfigurationRepositoryImpl
 
     @Bean def credentialsStoreService: service.CredentialsStoreService = new impl.CredentialsStoreService(credentialsRepository, projectRepository)
 

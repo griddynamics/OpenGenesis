@@ -65,7 +65,7 @@ class UsersController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{username:.+}"), method = Array(RequestMethod.PUT))
   @ResponseBody
-  def update(@PathVariable username: String, @RequestBody @Valid request: User) = {
+  def update(@PathVariable("username") username: String, @RequestBody @Valid request: User) = {
     val user = get(username).copy(
       email = request.email,
       firstName = request.firstName,

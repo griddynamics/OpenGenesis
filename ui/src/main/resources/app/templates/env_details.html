@@ -1,8 +1,8 @@
 <div id="dialog-confirm" style="display: none; ">
-    Are you sure you want to cancel environment workflow?
+    Are you sure you want to cancel instance workflow?
 </div>
 <div id="dialog-reset" style="display: none; ">
-    Are you sure that environment is not broken?
+    Are you sure that current instance is not broken?
 </div>
 <div id="env-rename" style="display: none; ">
     <form>
@@ -35,10 +35,9 @@
 </div>
 <div id="tab-panel">
   <div id="tabs" data-tabpanel="header">
-    <a href="javascript:void(0);" class="tab tab-selected" id="tab1" rel="#panel-tab-1"> <span> Environment details </span> </a>
+    <a href="javascript:void(0);" class="tab tab-selected" id="tab1" rel="#panel-tab-1"> <span> Instance details </span> </a>
     <a href="javascript:void(0);" class="tab" id="tab3" rel="#panel-tab-3"> <span> Action history </span> </a>
     <a href="javascript:void(0);" class="tab" id="tab2" rel="#panel-tab-2"> <span> Servers </span> </a>
-    <a href="javascript:void(0);" class="tab" id="permissions-tab-header" rel="#panel-tab-4" style="display: none"> <span> Permissions </span> </a>
   </div>
 
   <div id="panel">
@@ -47,14 +46,11 @@
     <div id="panel-tab-3" class="tab-content"></div>
 
     <div id="panel-tab-2" class="tab-content active-servers">
-      <div id="no-servers-message" class="information-panel" style="display: none"><p> No active servers in this environment </p></div>
+      <div id="no-servers-message" class="information-panel" style="display: none"><p> No active servers in this instance </p></div>
 
       <div id="vm-list"></div>
 
       <div id="servers-list"></div>
     </div>
-
-    <div id="panel-tab-4" class="tab-content"></div>
-
   </div>
 </div>

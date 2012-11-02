@@ -67,7 +67,6 @@
           whiteSpace: 'nowrap'
         }),
         check = function() {
-          console.log("a");
           if (val === (val = input.val())) {
             return;
           }

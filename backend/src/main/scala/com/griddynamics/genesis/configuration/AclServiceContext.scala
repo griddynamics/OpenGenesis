@@ -77,12 +77,14 @@ class AclServiceContext {
   }
 
   @Bean def objectRetrievalStategy: ObjectIdentityRetrievalStrategy = new ObjectIdentityRetrievalStrategy {
-    def getObjectIdentity(domainObject: Any) = {
-      domainObject match {
-        case env: Identifiable[Int] => new ObjectIdentityImpl(env.getClass, env.id)
-        case env: Identifiable[Option[Int]] => new ObjectIdentityImpl(env.getClass, env.id.getOrElse(0))
-        case obj => new ObjectIdentityImpl(obj)
+    def getObjectIdentity(domainObject: Any) = domainObject match {
+      case env: Identifiable[_] => env.id match {
+        case Some(id: Int) => new ObjectIdentityImpl(env.getClass, id)
+        case id: Int => new ObjectIdentityImpl(env.getClass, id)
+        case _ => throw new RuntimeException("Unsupported Identifiable type")
       }
+
+      case obj => new ObjectIdentityImpl(obj)
     }
   }
 
