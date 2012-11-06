@@ -34,10 +34,9 @@ import com.griddynamics.genesis.util.{SafeOperation => safe}
 import com.griddynamics.genesis.logging.LoggerWrapper
 import com.griddynamics.genesis.service.impl.StepBuilderProxy
 import com.griddynamics.genesis.plugin.Cancel
-import com.griddynamics.genesis.workflow.step.ActionStepResult
+import com.griddynamics.genesis.workflow.step.{CoordinatorInterrupt, ActionStepResult, CoordinatorThrowable}
 import com.griddynamics.genesis.plugin.GenesisStepResult
 import com.griddynamics.genesis.workflow.signal.Success
-import com.griddynamics.genesis.workflow.step.CoordinatorThrowable
 import com.griddynamics.genesis.plugin.GenesisStep
 import com.griddynamics.genesis.workflow.signal.Fail
 
@@ -110,6 +109,7 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
 
     def onStepFinish(result: StepResult) = result match {
         case coordinatorThrowable: CoordinatorThrowable => Left(Fail(Mistake(coordinatorThrowable.throwable)))
+        case interrupt: CoordinatorInterrupt  => Left(Fail(Mistake("Interrupted")))
         case genesisStep  => onStepFinish(genesisStep.asInstanceOf[GenesisStepResult]) //todo ClassCastException is still possible
     }
 
