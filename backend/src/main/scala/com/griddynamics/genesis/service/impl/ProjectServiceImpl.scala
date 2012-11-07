@@ -47,7 +47,7 @@ class ProjectServiceImpl(repository: ProjectRepository, storeService: service.St
       must(project, "Project with name '" + project.name + "' already exists") {
         project => repository.findByName(project.name).forall { _.id == project.id}
       } ++
-      must(project, "Deleted project can not have active environments") { project =>
+      must(project, "Deleted project can not have active instances") { project =>
         project.isDeleted != true || storeService.countEnvs(project.id.get, EnvStatus.active) == 0
       }
 
