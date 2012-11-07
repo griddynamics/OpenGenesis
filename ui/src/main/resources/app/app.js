@@ -197,7 +197,7 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Env
       app.currentUser = user;
       app.currentConfiguration = user.configuration || {};
       $('.user-name').text(user.user);
-      if (user.administrator) {
+      if (user.administrator || user.readonly) {
         $(".system-settings").show();
       }
       if (user.logout_disabled) {
