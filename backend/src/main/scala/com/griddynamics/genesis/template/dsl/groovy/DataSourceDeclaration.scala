@@ -91,31 +91,22 @@ class InlineDataSource( builder: DataSourceBuilder,
                         configDeclaration: Option[Closure[_]],
                         knownVariables: Seq[VariableBuilder] ) extends VarDataSource {
 
-  def getData = {
-    val cbuilder = configuredBuilder
-    val isLazy = cbuilder.conf.get("lazy").collect { case b: Boolean => b }.getOrElse(false)
-    if (!isLazy) {
-      val (_, datasource) = cbuilder.newDS
-      datasource.getData
-    } else {
-      Map()
-    }
-  }
+  private lazy val datasource = configuredBuilder.newDS._2
 
+  def getData = configuredBuilder.conf.get("lazy") match {
+    case Some(true) => Map()
+    case _ => datasource.getData
+  }
 
   override def default = {
       try {
-         val (_, datasource) = configuredBuilder.newDS
          datasource.default
       } catch {
           case mpe: MissingPropertyException => None
       }
   }
 
-  override def hasValue(value: Any) = {
-    val (_, datasource) = configuredBuilder.newDS
-    datasource.hasValue(value)
-  }
+  override def hasValue(value: Any) = datasource.hasValue(value)
 
   private[this] def configuredBuilder =
     configDeclaration.map { it => Delegate(it).to(builder) }.getOrElse(builder)
