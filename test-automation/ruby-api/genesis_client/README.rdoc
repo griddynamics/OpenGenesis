@@ -57,6 +57,20 @@ resource and nested_resource method can accept additional arguments to override 
     ...
  end
 
+There is also a wrapper run_as for exactly same purpose. It's useful when you need to wrap a series of different resource
+usages:
+
+ run_as :username => 'user', :password => 'password' do
+    resource :path do |r|
+        r.get
+    end
+    nested_resource :path, id, :items do |nr|
+        ...
+    end
+ end
+
+In this case internal resource and nested resource calls will get credentials from wrapping invocation.
+
 === Using in Cucumber helper
 
 (Copied from OpenGenesis tests)

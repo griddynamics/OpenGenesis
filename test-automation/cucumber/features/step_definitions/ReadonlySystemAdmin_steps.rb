@@ -72,34 +72,34 @@ Then /^User "([^"]*)" with credential "([^"]*)" can read, but not update or dele
 end
 
 Then /^User "([^"]*)" with credential "([^"]*)" can read environment "([^"]*)" in project "([^"]*)", but can't run workflow "([^"]*)" neither delete it$/ do |user, password, env_name, project_name, workflow_name|
-  resource :projects, :username => user, :password => password do |resource|
-    p = resource.find_by_name project_name
-    p.should_not be_nil
-    nested_resource :projects, p["id"], :envs, :username => user, :password => password do |r|
-       env = r.find_by_name env_name
-       env.should_not be_nil
-       #todo: support for query string in client
-       nested_resource r.path, env['id'], "history?page_offset=0&page_length=10", :username => user, :password => password do |nr|
-         response = nr.get
-         response.code.should eq(200)
-       end
-       nested_resource r.path, env['id'], "actions", :username => user, :password => password do |nr|
-         response = nr.post({:action=>'execute', :parameters => {:workflow => workflow_name}})
-         response.code.should eq(403)
-       end
-       response = r.delete env["id"]
-       response.code.should eq(403)
+  run_as :username => user, :password => password do
+    resource :projects do |resource|
+      p = resource.find_by_name project_name
+      p.should_not be_nil
+      nested_resource :projects, p["id"], :envs do |r|
+        env = r.find_by_name env_name
+        env.should_not be_nil
+        #todo: support for query string in client
+        nested_resource r.path, env['id'], "history?page_offset=0&page_length=10" do |nr|
+          response = nr.get
+          response.code.should eq(200)
+        end
+        nested_resource r.path, env['id'], "actions" do |nr|
+          response = nr.post({:action=>'execute', :parameters => {:workflow => workflow_name}})
+          response.code.should eq(403)
+        end
+        response = r.delete env["id"]
+        response.code.should eq(403)
+      end
     end
   end
 end
 
 Then /^User "([^"]*)" with credential "([^"]*)" can't create an environment "([^"]*)" in project "([^"]*)" with template "([^"]*)" version "([^"]*)"$/ do
   |user, password, env_name, project_name, template, version|
-  resource :projects, :username => user, :password => password do |resource|
-    p = resource.find_by_name project_name
-    p.should_not be_nil
-    nested_resource :projects, p["id"], :envs, :username => user, :password => password do |r|
-      response = r.post(create_environment(env_name, template, version))
+  run_as :username => user, :password => password do
+    project_resource project_name, :envs do |resource|
+      response = resource.post(create_environment(env_name, template, version))
       response.code.should eq(403)
     end
   end
