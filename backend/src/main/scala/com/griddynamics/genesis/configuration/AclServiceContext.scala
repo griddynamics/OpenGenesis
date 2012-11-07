@@ -27,13 +27,16 @@ import org.springframework.context.annotation.{Bean, Configuration}
 import org.springframework.security.acls.domain._
 import org.springframework.beans.factory.annotation.Autowired
 import net.sf.ehcache.CacheManager
-import org.springframework.security.acls.model.{ObjectIdentityRetrievalStrategy, MutableAclService, AclCache, PermissionGrantingStrategy}
+import org.springframework.security.acls.model._
 import org.springframework.security.acls.jdbc.{JdbcMutableAclService, LookupStrategy, BasicLookupStrategy}
 import org.apache.commons.dbcp.BasicDataSource
 import org.springframework.security.acls.AclPermissionEvaluator
 import org.springframework.security.access.PermissionEvaluator
 import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.api.Identifiable
+import scala.Some
+import java.util
+import com.griddynamics.genesis.users.GenesisRole
 
 @Configuration
 class AclServiceContext {
@@ -46,7 +49,16 @@ class AclServiceContext {
   }
 
   @Bean def permissionGrantingStrategy: PermissionGrantingStrategy = {
-    new DefaultPermissionGrantingStrategy(new ConsoleAuditLogger)
+    import scala.collection.JavaConversions._
+    new DefaultPermissionGrantingStrategy(new ConsoleAuditLogger) {
+      override def isGranted(acl: Acl, permission: util.List[Permission], sids: util.List[Sid], administrativeMode: Boolean) = {
+        if (sids.find(_ == new GrantedAuthoritySid(GenesisRole.SystemAdmin.toString)).isDefined)
+          true
+        else
+          super.isGranted(acl, permission, sids, administrativeMode)
+      }
+    }
+
   }
 
   @Bean def aclCache: AclCache = new EhCacheBasedAclCache(
