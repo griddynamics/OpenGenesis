@@ -52,7 +52,8 @@ class ProjectsController extends RestApiExceptionsHandler {
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
   def listProjects(request: HttpServletRequest): Iterable[Project] = {
-    if (request.isUserInRole(GenesisRole.SystemAdmin.toString)) {
+    import scala.collection.JavaConversions._
+    if (request.isUserInRole(GenesisRole.SystemAdmin.toString) || request.isUserInRole(GenesisRole.ReadonlySystemAdmin.toString)) {
       projectService.list
     } else {
       val authorities = GenesisRestController.getCurrentUserAuthorities

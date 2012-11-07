@@ -6,6 +6,7 @@ module Genesis
   # Generate nested resource under root parent/:parent_id
   def nested_resource(parent, parent_id, path, auth = {}, &block)
     full_path = "#{parent}/#{parent_id}/#{path}"
+    auth = @auth if auth.empty?
     r = Genesis::Resource.new(full_path, @config, auth)
     if block_given?
        yield r
@@ -16,12 +17,19 @@ module Genesis
   # Generate top-level resource under /rest prefix.
   # However, if path == "", /rest prefix is skipped
   def resource(path, auth = {},  &block)
+    auth = @auth if auth.empty?
     r = Genesis::Resource.new(path, @config, auth)
     if block_given?
        yield r
     else
       r
     end
+  end
+
+  def run_as(auth = {}, &block)
+     @auth = auth
+     yield
+     @auth = {}
   end
 
   class Resource
@@ -34,7 +42,7 @@ module Genesis
       begin
         @host = config["host"]
         @port = config["port"]
-        if auth.empty?
+        if auth.nil? || auth.empty?
           @auth = {:username => config["user"], :password => config["password"]}
         else
           @auth = auth
@@ -74,19 +82,18 @@ module Genesis
     [:get, :post, :put, :delete].each do |verb|
        send :define_method, verb do |*args|
          path = @path
+         body = Hash.new
          if args
            first = args.shift
-           if first.class == Hash
-             body = first
+           if first.class == String || first.class == Fixnum
+             path = "#{@path}/#{first}"
+             body = args.shift
            else
-             path = "#{@path}/#{first}" if first
-             body = args.shift || Hash.new
+             body = first
            end
-         else
-           body = Hash.new
          end
          options = {:headers => {'Content-Type' => 'application/json'}}
-         options.merge!({:body => body.to_json}) unless body.empty?
+         options.merge!({:body => body.to_json}) unless body.nil?
          options.merge!({:basic_auth => auth}) unless auth.nil?
          send "_#{verb}", path, options
        end

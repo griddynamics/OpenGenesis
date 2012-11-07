@@ -48,7 +48,7 @@ class ConfigurationController extends RestApiExceptionsHandler{
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
   @ResponseBody
   @PostFilter("not(@environmentSecurity.restrictionsEnabled()) " +
-    "or hasRole('ROLE_GENESIS_ADMIN')" +
+    "or hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')" +
     "or hasPermission( #projectId, 'com.griddynamics.genesis.api.Project', 'administration') " +
     "or hasPermission(filterObject, 'read')")
   def list(@PathVariable("projectId") projectId: Int) = configRepository.list(projectId)

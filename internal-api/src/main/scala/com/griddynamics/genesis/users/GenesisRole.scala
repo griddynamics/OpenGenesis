@@ -28,6 +28,7 @@ object GenesisRole extends Enumeration {
   val GenesisUser = Value("ROLE_GENESIS_USER")
   val ProjectAdmin = Value("ROLE_GENESIS_PROJECT_ADMIN")
   val ProjectUser = Value("ROLE_GENESIS_PROJECT_USER")
+  val ReadonlySystemAdmin = Value("ROLE_GENESIS_READONLY")
 }
 
 
