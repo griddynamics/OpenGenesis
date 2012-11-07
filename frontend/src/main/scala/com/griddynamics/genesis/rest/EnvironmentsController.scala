@@ -173,7 +173,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
   @ResponseBody
   @PostFilter("not(@environmentSecurity.restrictionsEnabled()) " +
-    "or hasRole('ROLE_GENESIS_ADMIN')" +
+    "or hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')" +
     "or hasPermission( #projectId, 'com.griddynamics.genesis.api.Project', 'administration') " +
     "or hasPermission(filterObject, 'read')")
   def listEnvsWithFilter(@PathVariable("projectId") projectId: Int,

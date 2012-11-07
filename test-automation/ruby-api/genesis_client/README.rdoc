@@ -1,0 +1,131 @@
+= Simple OpenGenesis client
+== Usage
+
+Root resource is created with method Genesis.resource (see below). You should pass
+a symbol to identify resource under root /rest. Also classes or modules including module
+Genesis must have an instance variable @config to operate correctly. This variable is a hash
+with elements:
+
+- host - Host running Genesis
+- port - Port Genesis listen on
+- user - User to authenticate
+- password - Password to use
+
+Last two elements can be overriden with additional parameter to resource method:
+
+  resource :project, :username => 'foo', :password => 'bar'
+
+=== Direct use of Genesis::Resource
+
+  resource = Genesis::Resource.new("projects", {"host" => "localhost", "port" => 8080, "user" => "genesis", "password"=> genesis})
+
+or
+
+  resource = Genesis::Resource.new("projects", {"host" => "localhost", "port" => 8080}, :username => genesis, :password => genesis})
+
+
+=== Dynamic finders
+
+Genesis::Resource may search items based on criteria. For example, Project items contains a field 'name'. To search by this field you may
+use following syntax:
+
+  project = resource :projects do |resource| 
+    resource.find_by_name('name')
+  end
+
+=== Nested resources
+
+Nested resources can be created with nested_resource method of module Genesis. For example, to get resources for environments under project
+with id = 1, use:
+
+  env_resource = nested_resource :projects, 1, :environments
+
+This can be combined with finders too. For example, if you have project named 'test':
+
+  test_envs = resource :projects do |resource|
+    resource.find_by_name('test') do |project|
+      nested resource :projects, project["id"], :environments
+    end
+  end
+
+=== Overriding default credentials
+
+resource and nested_resource method can accept additional arguments to override credentials in default @config variable:
+
+ resource :path, :username => 'user', :password => 'password' do |r|
+    r.get
+    ...
+ end
+
+There is also a wrapper run_as for exactly same purpose. It's useful when you need to wrap a series of different resource
+usages:
+
+ run_as :username => 'user', :password => 'password' do
+    resource :path do |r|
+        r.get
+    end
+    nested_resource :path, id, :items do |nr|
+        ...
+    end
+ end
+
+In this case internal resource and nested resource calls will get credentials from wrapping invocation.
+
+=== Using in Cucumber helper
+
+(Copied from OpenGenesis tests)
+
+  require 'rubygems'
+  require 'genesis_client'
+
+  include Genesis
+  module ModelHelpers
+    ...
+  end
+
+  class GenesisWorld
+    include Genesis
+    include ModelHelpers
+    def initialize
+      yaml = YAML::load(File.open(File.dirname(__FILE__) + "/../../config.yml"))
+      @config = yaml["genesis"]
+    end
+  end
+
+  World do
+    GenesisWorld.new
+  end
+
+=== Almost full example
+
+  require 'genesis_client'
+
+  class GenesisHelper include Genesis
+    def initialize(...)
+      @config = ....
+    end
+
+    def create_project
+      resource :projects do |resource|
+        resource.post { :name => "project", :projectManager => "manager" }
+      end
+    end
+
+    def update_project
+      resource :projects do |resource|
+        resource.put 1, { :name => "renamed", :projectManager => "manager" }
+      end
+    end
+
+    def delete_project
+      resource :projects do |resource|
+        resource.delete 1
+      end
+    end
+
+    def find_by_name(name)
+      resource :projects do |resource|
+        project = resource.find_by_name("renamed")
+      end
+    end
+  end

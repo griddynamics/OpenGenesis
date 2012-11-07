@@ -20,6 +20,8 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
   var LANG = {
     "ROLE_GENESIS_ADMIN": "System Administrator",
     "ROLE_GENESIS_ADMIN.description": "Have full control over genesis application",
+    "ROLE_GENESIS_READONLY": "System Read-only",
+    "ROLE_GENESIS_READONLY.description": "Have read-only access over all genesis application",
     "ROLE_GENESIS_USER" : "Genesis User",
     "ROLE_GENESIS_USER.description" : "Can login into genesis application",
     "ROLE_GENESIS_PROJECT_ADMIN": "Project Administrator",

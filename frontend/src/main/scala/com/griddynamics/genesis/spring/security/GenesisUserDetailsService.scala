@@ -58,7 +58,7 @@ class GenesisUserDetailsService( adminUsername: String,
             groups.map("GROUP_" + _.name) ++
             (if (projectAuthorityService.isUserProjectAdmin(user.username, groups.map(_.name))) List(GenesisRole.ProjectAdmin.toString) else List())
           )
-        if(authorities.contains(GenesisRole.SystemAdmin.toString)) {
+        if(authorities.contains(GenesisRole.SystemAdmin.toString) || authorities.contains(GenesisRole.ReadonlySystemAdmin.toString)) {
           authorities = GenesisRole.GenesisUser.toString :: authorities
         }
         if(!authorities.contains(GenesisRole.GenesisUser.toString)) {
