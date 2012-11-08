@@ -23,7 +23,7 @@
 package com.griddynamics.genesis.service
 
 import com.griddynamics.genesis.plugin.StepBuilder
-import com.griddynamics.genesis.api.{Failure, Success, ExtendedResult}
+import com.griddynamics.genesis.api.{Configuration, Failure, Success, ExtendedResult}
 
 class VariableDescription(val name: String, val clazz : Class[_ <: Any], val description: String, val isOptional: Boolean = false,
                           val defaultValue: String = null, val values: Map[String,String] = Map(), val dependsOn: Option[List[String]] = None,
@@ -54,7 +54,9 @@ trait WorkflowDefinition {
 
     def embody(variables: Map[String, String], envId: Option[Int] = None, projectId: Option[Int] = None): Builders
 
-    def validate(variables: Map[String, Any], envId: Option[Int] = None, projectId: Option[Int] = None): Seq[ValidationError]
+    def validate(variables: Map[String, Any]): Seq[ValidationError]
+
+    def validatePreconditions(variables: Map[String, Any], config: Configuration): ExtendedResult[_]
 
     def partial(variables: Map[String, Any]): Seq[VariableDescription] = Seq()
 }

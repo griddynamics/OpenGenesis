@@ -22,10 +22,11 @@
  */
 package com.griddynamics.genesis.core
 
-import scala.collection.mutable
+import scala.collection.{JavaConversions, mutable}
 import com.griddynamics.genesis.plugin._
 import com.griddynamics.genesis.workflow._
 import com.griddynamics.genesis.service.StoreService
+import com.griddynamics.genesis.api
 import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.model.EnvStatus._
 import com.griddynamics.genesis.common.Mistake
@@ -39,24 +40,29 @@ import com.griddynamics.genesis.plugin.GenesisStepResult
 import com.griddynamics.genesis.workflow.signal.Success
 import com.griddynamics.genesis.plugin.GenesisStep
 import com.griddynamics.genesis.workflow.signal.Fail
+import com.griddynamics.genesis.repository.ConfigurationRepository
+import com.griddynamics.genesis.template.dsl.groovy.Reserved
 
 abstract class GenesisFlowCoordinator(envId: Int,
                                       projectId: Int,
                                       flowSteps: Seq[StepBuilder],
                                       storeService: StoreService,
+                                      configRepo: ConfigurationRepository,
                                       stepCoordinatorFactory: StepCoordinatorFactory,
                                       rescueSteps: Seq[StepBuilder] = Seq())
-    extends GenesisFlowCoordinatorBase(envId, projectId, flowSteps, storeService, stepCoordinatorFactory, rescueSteps)
+    extends GenesisFlowCoordinatorBase(envId, projectId, flowSteps, storeService, configRepo, stepCoordinatorFactory, rescueSteps)
     with StepIgnore with StepRestart with StepExecutionContextHolder
 
 abstract class GenesisFlowCoordinatorBase(val envId: Int,
                                           val projectId: Int,
                                           val flowSteps: Seq[StepBuilder],
                                           val storeService: StoreService,
+                                          val configurationRepository: ConfigurationRepository,
                                           val stepCoordinatorFactory: StepCoordinatorFactory,
                                           val rescueSteps: Seq[StepBuilder] = Seq())
     extends FlowCoordinator with Logging {
 
+    var config: api.Configuration = _
     var env: Environment = _
     var servers: Seq[EnvResource] = _
 
@@ -78,7 +84,7 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
         env = iEnv
         servers = iServers
         workflow = iWorkflow
-
+        config = configurationRepository.get(projectId, env.configurationId).get
         workflow.stepsCount = stepsToStart.size
         storeService.updateWorkflow(workflow)
 
@@ -242,7 +248,7 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
 
     override def buildStep(builder: StepBuilder) = safe {
         builder match {
-            case proxy: StepBuilderProxy =>  proxy.newStep(globals, "$env" -> env.copy)
+            case proxy: StepBuilderProxy =>  proxy.newStep(globals, Reserved.instanceRef -> env.copy, Reserved.configRef -> JavaConversions.mapAsJavaMap(config.items))
             case _ => builder.newStep
         }
     }

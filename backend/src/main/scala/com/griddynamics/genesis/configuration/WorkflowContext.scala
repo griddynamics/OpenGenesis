@@ -53,6 +53,7 @@ class DefaultWorkflowContext extends WorkflowContext {
         new RequestDispatcherImpl(beatPeriodMs = beatPeriodMs,
             flowTimeOutMs = flowTimeOutMs,
             storeService = storeServiceContext.storeService,
+            configRepo = storeServiceContext.configurationRepository,
             templateService = templateServiceContext.templateService,
             executorService = executorService,
             stepCoordinatorFactory = stepCoordinatorFactory)
@@ -62,9 +63,12 @@ class DefaultWorkflowContext extends WorkflowContext {
     // @see com.griddynamics.genesis.workflow.actor.SyncActionExecutorAdapter
     @Bean def executorService = Executors.newFixedThreadPool(syncExecThreadPoolSize)
 
-    @Bean def requestBroker = new RequestBrokerImpl(storeServiceContext.storeService,
-        templateServiceContext.templateService,
-        requestDispatcher)
+    @Bean def requestBroker = new RequestBrokerImpl(
+      storeServiceContext.storeService,
+      storeServiceContext.configurationRepository,
+      templateServiceContext.templateService,
+      requestDispatcher
+    )
 
     @Bean def stepCoordinatorFactory = new CompositeStepCoordinatorFactory(
       stepCoordinators

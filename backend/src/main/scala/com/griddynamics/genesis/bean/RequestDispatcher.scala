@@ -30,9 +30,10 @@ import com.griddynamics.genesis.core._
 import com.griddynamics.genesis.service.{Builders, TemplateService, StoreService}
 import collection.mutable.ArrayBuffer
 import com.griddynamics.genesis.plugin.{StepBuilder, Cancel, StepCoordinatorFactory}
-import com.griddynamics.genesis.model.{GenesisEntity, EnvStatus, Workflow, Environment}
+import com.griddynamics.genesis.model.EnvStatus
 import com.griddynamics.genesis.model.WorkflowStatus._
 import com.griddynamics.genesis.util.Logging
+import com.griddynamics.genesis.repository.ConfigurationRepository
 
 trait RequestDispatcher {
     def createEnv(envName: Int, projectId: Int)
@@ -47,6 +48,7 @@ trait RequestDispatcher {
 class RequestDispatcherImpl(beatPeriodMs: Long,
                             flowTimeOutMs: Long,
                             storeService: StoreService,
+                            configRepo: ConfigurationRepository,
                             templateService: TemplateService,
                             executorService: ExecutorService,
                             stepCoordinatorFactory: StepCoordinatorFactory)
@@ -127,14 +129,14 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
 
     def regularCoordinator(envId: Int, projectId: Int, flowSteps: Seq[StepBuilder], rescueSteps: Seq[StepBuilder]) =
         new TypedFlowCoordinatorImpl(
-            new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService,
+            new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService, configRepo,
                 stepCoordinatorFactory, rescueSteps) with RegularWorkflow,
             beatPeriodMs, flowTimeOutMs, executorService
         )
 
     def destroyingCoordinator(envId: Int, projectId: Int, flowSteps: Seq[StepBuilder], rescueSteps: Seq[StepBuilder]) =
         new TypedFlowCoordinatorImpl(
-            new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService,
+            new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService, configRepo,
                 stepCoordinatorFactory, rescueSteps) with DestroyWorkflow,
             beatPeriodMs, flowTimeOutMs, executorService
         )
