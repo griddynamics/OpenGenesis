@@ -18,19 +18,19 @@
     <div id="title-right">
     </div>
     <div id="env-status-section">
-        <a href="javascript:void(0)" class="button reset-button" id="resetBtn" style="display: none;"> <span> Change status to 'Ready' </span> </a>
+        <a href="javascript:void(0)" class="button reset-button action" id="resetBtn" style="display: none;"> <span> Change status to 'Ready' </span> </a>
         <div class="env-status">...</div>
     </div>
     <div id="workflow-triggers">
         <% if (environment.status !== "Destroyed") { %>
-        <a href="javascript:void(0)" class="button cancel-button" rel="Cancel"> <span> Cancel </span> </a>
+        <a href="javascript:void(0)" class="button cancel-button action" rel="Cancel"> <span> Cancel </span> </a>
         <% for(var i = 0, count = actions.length; i < count; i++) { var action = actions[i]; %>
-        <a href="javascript:void(0)" class="button action-button" rel="<%= action.name %>"> <span> <%= action.name %> </span> </a>
+        <a href="javascript:void(0)" class="button action-button action" rel="<%= action.name %>"> <span> <%= action.name %> </span> </a>
         <% } %>
         <% } %>
     </div>
     <div id="misc-operations">
-        <a href="javascript:void(0)" class="button rename-button" rel="Rename"> <span> Rename... </span> </a>
+        <a href="javascript:void(0)" class="button rename-button action" rel="Rename"> <span> Rename... </span> </a>
     </div>
 </div>
 <div id="tab-panel">

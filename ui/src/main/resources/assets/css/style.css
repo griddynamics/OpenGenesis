@@ -98,6 +98,14 @@ a.button.reset-button {
     float: right;
 }
 
+.readonly .action, .readonly .action span, .readonly .dangerous{
+    display: none;
+}
+
+.readonly input, .readonly textarea {
+    cursor: default;
+}
+
 a.tab {
 	margin-right: 5px;
 	display: block;
