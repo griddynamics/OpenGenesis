@@ -146,7 +146,7 @@ class ProjectsController extends RestApiExceptionsHandler {
                        request: HttpServletRequest,
                        response: HttpServletResponse): Seq[String] = {
     import scala.collection.JavaConversions._
-    if (request.isUserInRole(GenesisRole.SystemAdmin.toString)) {
+    if (request.isUserInRole(GenesisRole.SystemAdmin.toString) || request.isUserInRole(GenesisRole.ReadonlySystemAdmin.toString)) {
       List(GenesisRole.ProjectAdmin.toString, GenesisRole.ProjectUser.toString)
     } else {
       val auth: Authentication = SecurityContextHolder.getContext.getAuthentication

@@ -197,8 +197,20 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Env
       app.currentUser = user;
       app.currentConfiguration = user.configuration || {};
       $('.user-name').text(user.user);
-      if (user.administrator) {
+      if (user.administrator || user.readonly) {
         $(".system-settings").show();
+      }
+      if (user.readonly && !user.administrator) {
+        $("#page").addClass("readonly");
+        $(document).on("focus", ".readonly input", function(){
+          $(this).attr('disabled', 'disabled');
+        });
+        $(document).on("focus", ".readonly textarea", function(){
+          $(this).attr('disabled', 'disabled');
+        });
+        $(document).on("mouseenter focus", ".readonly select", function(){
+          $(this).attr('disabled', 'disabled');
+        });
       }
       if (user.logout_disabled) {
         $("#logout_elt a").css("cursor", "default");
