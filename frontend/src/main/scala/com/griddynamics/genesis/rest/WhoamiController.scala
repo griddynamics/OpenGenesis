@@ -47,6 +47,7 @@ class WhoamiController {
     "user" -> GenesisRestController.getCurrentUser,
     "logout_disabled" -> "false".equalsIgnoreCase(servletContext.getInitParameter(GenesisSystemProperties.LOGOUT_ENABLED)),
     "administrator" -> (request.isUserInRole(GenesisRole.SystemAdmin.toString)),
+    "readonly" -> (request.isUserInRole(GenesisRole.ReadonlySystemAdmin.toString)),
     "configuration" -> Map(
       "environment_security_enabled" -> envSecurityService.restrictionsEnabled,
       "locale" -> (request.getLocale.getLanguage + "-" + request.getLocale.getCountry)
