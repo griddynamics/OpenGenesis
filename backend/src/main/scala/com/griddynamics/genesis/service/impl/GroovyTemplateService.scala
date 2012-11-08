@@ -308,45 +308,45 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
     }
 
 
-    def validate(variables: Map[String, Any], envId: Option[Int] = None, projectId: Option[Int] = None) = {
-        val context = for (variable <- workflow.variables())
-            yield {
-                (variable.name, variables.get(variable.name).map(v => try {
-                  convert(String.valueOf(v), variable)
-                }catch{
-                  case e => null
-                }))
-            }
-        val groupErrors = workflow.variables.groupBy(_.group).map{
-          case (Some(group), vars) => vars.count(v => variables.contains(v.name)) match {
-            case 0 if group.required => Seq(ValidationError(vars.head.name, "%s is required: please select non-empty value".format(group.description)))
-            case 1 => Seq()
-            case _ =>  vars.collect {
-              case v if variables.get(v.name).isDefined => ValidationError(v.name,
-                "No more than one variable in group '%s' could have value".format(group.description))
-            }
-          }
-          case _ => Seq()
-        }.flatten
-        val res = for (variable <- workflow.variables()) yield {
-            variables.get(variable.name) match {
-                case None => {
-                  variable.defaultValue() match {
-                    case Some(s) => convertAndValidate(String.valueOf(s), variable, context.toMap)
-                    case None =>  if (variable.isOptional)
-                        Seq()
-                      else
-                        Seq(ValidationError(variable.name, "This field is required"))
-                  }
-                }
-                case Some(value) => {
-                    convertAndValidate(value, variable, context.toMap)
-                }
-            }
+  def validate(variables: Map[String, Any], envId: Option[Int] = None, projectId: Option[Int] = None) = {
+    val varDetails = workflow.variables()
+    val context = for (variable <- varDetails) yield {
+      (variable.name, variables.get(variable.name).map(v =>
+        try {
+          convert(String.valueOf(v), variable)
+        } catch {
+          case e => null
         }
-
-        (groupErrors ++ res.flatten).toSeq
+      ))
     }
+    val groupVars = varDetails.groupBy(_.group).collect{case (Some(g), v) => (g,v)}
+    val groupErrors = groupVars.map {
+      case (group, vars) => vars.count(v => variables.contains(v.name)) match {
+        case 0 if group.required => Seq(ValidationError(vars.head.name, "%s is required: please select non-empty value".format(group.description)))
+        case 1 => Seq()
+        case _ => vars.collect {
+          case v if variables.get(v.name).isDefined => ValidationError(v.name,
+            "No more than one variable in group '%s' could have value".format(group.description))
+        }
+      }
+    }.flatten
+    val res = for (variable <- varDetails) yield variables.get(variable.name) match {
+      case None => variable.group.map(groupVars(_).map(_.name).intersect(variables.keys.toSeq)) match {
+        // if some other variable from the same group has value, then don't validate this default
+        case Some(x) if x.nonEmpty => Seq()
+        case _ => variable.defaultValue() match {
+          case Some(s) => convertAndValidate(String.valueOf(s), variable, context.toMap)
+          case None =>  if (variable.isOptional)
+            Seq()
+          else
+            Seq(ValidationError(variable.name, "This field is required"))
+        }
+      }
+      case Some(value) => convertAndValidate(value, variable, context.toMap)
+    }
+
+    (groupErrors ++ res.flatten).toSeq
+  }
 
     def convert(value: String, variable: VariableDetails): AnyRef = {
       try {
