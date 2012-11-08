@@ -127,6 +127,8 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
         var self = this;
         $.when(model.save()).always(function() { self.$el.hideLoading(); }).done(function (){
           self.trigger("finished");
+        }).fail(function(e){
+          new status.LocalStatus({el: self.$(".notification")}).error(e);
         });
       }
     },

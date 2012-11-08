@@ -37,7 +37,8 @@ import com.griddynamics.genesis.model.WorkflowStepStatus._
 import com.griddynamics.genesis.workflow.{Step, StepResult}
 import com.griddynamics.genesis.plugin.{GenesisStep, GenesisStepResult, StepCoordinatorFactory}
 import net.sf.ehcache.CacheManager
-import com.griddynamics.genesis.repository.DatabagRepository
+import com.griddynamics.genesis.repository.{ConfigurationRepository, DatabagRepository}
+import com.griddynamics.genesis.api
 
 class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar {
   val templateRepository = mock[TemplateRepository]
@@ -49,6 +50,12 @@ class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar {
       new WorkflowStep(workflowId = IdGen.generate, phase = "", status = Requested, details = "", started = None, finished = None )
     )
     storeService
+  }
+
+  val configRepo = {
+    val repo = mock [ConfigurationRepository]
+    when(repo.get(Matchers.any(), Matchers.any())).thenReturn(Some(new api.Configuration(Some(0), "", 0, None, Map())))
+    repo
   }
 
   @Before def setUp() {
@@ -68,7 +75,7 @@ class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar {
     val stepBuilders = templateService.findTemplate(0, "TestEnv", "0.1").get.createWorkflow.embody(Map())
     stepBuilders.regular.foreach { _.id = IdGen.generate }
 
-    val flowCoordinator = new GenesisFlowCoordinator(0, 0, stepBuilders.regular, storeService, stepCoordinatorFactory, stepBuilders.onError) with RegularWorkflow
+    val flowCoordinator = new GenesisFlowCoordinator(0, 0, stepBuilders.regular, storeService, configRepo, stepCoordinatorFactory, stepBuilders.onError) with RegularWorkflow
 
     flowCoordinator.onFlowStart()
 

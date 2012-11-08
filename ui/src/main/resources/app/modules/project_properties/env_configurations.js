@@ -87,8 +87,13 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
     },
 
     editConfig: function(e) {
-      var id = $(e.currentTarget).attr("data-config-id");
-      this.showEditView(this.collection.get(id));
+      var id = $(e.currentTarget).attr("data-config-id"),
+          entity = this.collection.get(id),
+          self = this;
+      $.when(entity.fetch()).done(function() {
+         self.showEditView(entity);
+      })
+
     },
 
     showEditView: function(model) {
@@ -255,7 +260,7 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
 
     render: function() {
       var self = this;
-      $.when(genesis.fetchTemplate(this.template), this.model.fetch()).done(function(tmpl) {
+      $.when(genesis.fetchTemplate(this.template)).done(function(tmpl) {
         var attributes = self.model.get("items") || [];
         var items = _.chain(attributes).keys().map(function(key) { return new Item({name: key, value: attributes[key]}) }).value();
         var itemsCollection = new ItemsCollection(items);
