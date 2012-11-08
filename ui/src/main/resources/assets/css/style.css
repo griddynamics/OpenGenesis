@@ -98,7 +98,7 @@ a.button.reset-button {
     float: right;
 }
 
-.readonly .action, .readonly .action span, .readonly .dangerous{
+.readonly .executable, .readonly .executable span, .readonly .dangerous{
     display: none;
 }
 

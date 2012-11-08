@@ -5,7 +5,7 @@
 <div>
   <div class="top-panel">
     <div class="page-title"><h2>Server arrays</h2></div>
-    <a href="javascript:void(0);" class="button action" id="add-array"> <span> Add... </span> </a>
+    <a href="javascript:void(0);" class="button executable" id="add-array"> <span> Add... </span> </a>
   </div>
 
   <div id="arrays-list" class="panel" style="display: block; ">
@@ -25,8 +25,8 @@
           <td class="first"><a href="javascript:void(0)" class="show-array" data-array-id="<%= array.id %>"><%- array.name %></a></td>
           <td><%- array.description || '' %> </td>
           <td class="actions">
-            <a href="javascript:void(0)" class="edit-array action" data-array-id="<%= array.id %>">Edit</a>
-            <a href="javascript:void(0)" class="delete-array action" data-array-id="<%= array.id %>">Delete</a>
+            <a href="javascript:void(0)" class="edit-array executable" data-array-id="<%= array.id %>">Edit</a>
+            <a href="javascript:void(0)" class="delete-array executable" data-array-id="<%= array.id %>">Delete</a>
           </td>
         </tr>
         <% } %>

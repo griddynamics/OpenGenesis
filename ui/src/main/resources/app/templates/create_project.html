@@ -25,7 +25,7 @@
                 <br class="clear"/>
             </form>
             <div class="stepbutton">
-                <a href="javascript:void(0)" class="save button action"> <span> Save </span> </a>
+                <a href="javascript:void(0)" class="save button executable"> <span> Save </span> </a>
                 <% var cancelUrl = project.id ? ('#project/' + project.id) : '#'; %>
                 <a href="<%= cancelUrl %>" class="button" id="ready">
                   <span> Cancel </span>
@@ -43,7 +43,7 @@
         <br>The project can be removed if all the environments of the project are in a "destroyed" state.
       </p>
       <div class="stepbutton">
-        <a href="javascript:void(0)" class="delete button dangerous action">
+        <a href="javascript:void(0)" class="delete button dangerous executable">
           <span style=""> Delete project </span>
         </a>
       </div>

@@ -1,5 +1,5 @@
 <div>
-  <div class="key-value-button action" id="add-pair-link">
+  <div class="key-value-button executable" id="add-pair-link">
     <img src="assets/img/add-small.png" class="icon" alt="Add new property"/>
     <a href="javascript:void(0)">Add new key-value</a>
   </div>
@@ -16,7 +16,7 @@
           <input name="items.[<%= i %>].value" id="value-input-<%= cid %>" type="text" class="value-input" value="<%- property.value %>" data-cid="<%= cid %>"/>
         </td>
         <td class="actions">
-          <a href="javascript: void(0)" class="delete-action action" data-cid="<%= cid %>"><img src="assets/img/delete.png" class="icon" /></a>
+          <a href="javascript: void(0)" class="delete-action executable" data-cid="<%= cid %>"><img src="assets/img/delete.png" class="icon" /></a>
         </td>
       </tr>
     <% } %>
