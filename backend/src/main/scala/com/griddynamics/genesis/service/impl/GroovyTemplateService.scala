@@ -22,7 +22,7 @@
  */
 package com.griddynamics.genesis.service.impl
 
-import collection.mutable
+import scala.collection.{JavaConversions, mutable}
 import com.griddynamics.genesis.service
 import groovy.lang._
 import collection.mutable.ListBuffer
@@ -35,7 +35,6 @@ import com.griddynamics.genesis.workflow.Step
 import com.griddynamics.genesis.plugin.{StepBuilder, StepBuilderFactory}
 import com.griddynamics.genesis.util.{TryingUtil, ScalaUtils, Logging}
 import org.codehaus.groovy.runtime.{InvokerHelper, MethodClosure}
-import scala.Some
 import service.ValidationError
 import com.griddynamics.genesis.plugin.GenesisStep
 import com.griddynamics.genesis.repository.DatabagRepository
@@ -44,7 +43,7 @@ import groovy.util.Expando
 import net.sf.ehcache.{CacheManager, Element}
 import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.template.dsl.groovy.{Delegate => DslDelegate}
-import com.griddynamics.genesis.api.{Failure, Success}
+import com.griddynamics.genesis.api.{ExtendedResult, Configuration, Failure, Success}
 import com.griddynamics.genesis.model.{EntityAttr, EntityWithAttrs}
 
 class GroovyTemplateService(val templateRepoService : TemplateRepoService,
@@ -307,8 +306,20 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
         }
     }
 
+  def validatePreconditions(variables: Map[String, Any], config: Configuration): ExtendedResult[_] = {
+    val errors = workflow.preconditions.map { case (validationFailureMessage, checkClosure) =>
+      checkClosure.setProperty(Reserved.configRef, JavaConversions.mapAsJavaMap(config.items))
+      variables.map{ case(key,value) => checkClosure.setProperty(key, value) }
+      if (!checkClosure.call()) Some(validationFailureMessage) else None
+    }.flatten.toSeq
 
-  def validate(variables: Map[String, Any], envId: Option[Int] = None, projectId: Option[Int] = None) = {
+    if (!errors.isEmpty)
+      Failure(compoundServiceErrors = errors)
+    else
+      Success(None)
+  }
+  
+  def validate(variables: Map[String, Any]) = {
     val varDetails = workflow.variables()
     val context = for (variable <- varDetails) yield {
       (variable.name, variables.get(variable.name).map(v =>
@@ -414,13 +425,16 @@ class GroovyTemplateDefinition(val envTemplate : EnvironmentTemplate,
     override def getValidWorkflow(name: String) =  {
         envTemplate.workflows.find(_.name == name).map(w =>
             {
-                val errors = w.preconditions.map(entry => {
-                    if (! entry._2.call()) {
-                        Some(entry._1)
-                    } else {
+                val errors = w.preconditions.map { case (errorMessage, checkClosure) =>
+                  try {
+                    if (! checkClosure.call())
+                        Some(errorMessage)
+                    else
                         None
-                    }
-                }).filter(_.isDefined).map(_.get).toSeq
+                  } catch {
+                    case e: MissingPropertyException => None
+                  }
+                }.flatten.toSeq
                 if (! errors.isEmpty)
                     Failure(compoundServiceErrors = errors)
                 else

@@ -25,13 +25,13 @@ package com.griddynamics.genesis.bean
 import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.api.{RequestResult => RR, ExtendedResult}
 import com.griddynamics.genesis.service
-import service._
+import com.griddynamics.genesis.service._
 import com.griddynamics.genesis.validation.Validation
 import java.sql.Timestamp
-import com.griddynamics.genesis.api.Failure
-import service.ValidationError
-import com.griddynamics.genesis.api.Success
 import com.griddynamics.genesis.api
+import com.griddynamics.genesis.api.Failure
+import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.repository.ConfigurationRepository
 
 trait RequestBroker {
     def createEnv(projectId: Int, envName: String, envCreator : String,
@@ -48,6 +48,7 @@ trait RequestBroker {
 }
 
 class RequestBrokerImpl(storeService: StoreService,
+                        configRepository: ConfigurationRepository,
                         templateService: TemplateService,
                         dispatcher: RequestDispatcher) extends RequestBroker {
     import RequestBrokerImpl._
@@ -64,13 +65,13 @@ class RequestBrokerImpl(storeService: StoreService,
         val twf = templateService.findTemplate(projectId, templateName, templateVersion) match  {
             case None => return Failure(compoundVariablesErrors = Seq("Template %s with version %s not found".format(templateName, templateVersion)),
                 isSuccess = false, isNotFound = true)
-            case Some(template) => template.getValidWorkflow(template.createWorkflow.name) match {
-                case Success(w, _) => w
-                case f: Failure => return f
+            case Some(template) => template.getWorkflow(template.createWorkflow.name) match {
+                case Some(w) => w
+                case None => return Failure(isNotFound = true)
             }
         }
 
-        validateWorkflow(twf, variables, None, projectId) match {
+        validateWorkflow(twf, variables, config) match {
             case f: Failure => return f
             case Success(w, _) =>
         }
@@ -115,8 +116,11 @@ class RequestBrokerImpl(storeService: StoreService,
     }
 
     private def validStart(template: TemplateDefinition, workflowName: String, env: Environment, variables: Map[String, String], projectId: Int, startedBy: String): ExtendedResult[Int] = {
-        template.getValidWorkflow(workflowName)
-          .flatMap(validateWorkflow(_, variables, Some(env.id), projectId))
+        val wf = template.getWorkflow(workflowName) match {
+          case Some(w) => Success(w)
+          case None => Failure(isNotFound = true)
+        }
+        wf.flatMap(validateWorkflow(_, variables, configRepository.get(projectId, env.configurationId).get)) //todo: get??
           .flatMap(startWorkflow(env, startedBy, variables, _))
     }
 
@@ -179,13 +183,16 @@ class RequestBrokerImpl(storeService: StoreService,
 }
 
 object RequestBrokerImpl {
-    def validateWorkflow(workflow : service.WorkflowDefinition, variables: Map[String, Any], envId: Option[Int], projectId: Int) = {
-        val validationResults = workflow.validate(variables, envId, Option(projectId))
+    def validateWorkflow(workflow : service.WorkflowDefinition, variables: Map[String, Any], config: api.Configuration) = {
+        val validationResults = workflow.validate(variables)
+        val preconditionsResult = workflow.validatePreconditions(variables, config).map(_ => workflow)
 
-        if (!validationResults.isEmpty)
+        val varResult =  if (!validationResults.isEmpty)
             toFailure(validationResults)
-        else
+          else
             Success(workflow)
+
+        varResult ++ preconditionsResult
     }
 
     def validateCreator(creator: String) = {
