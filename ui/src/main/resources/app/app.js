@@ -200,7 +200,7 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Env
       if (user.administrator || user.readonly) {
         $(".system-settings").show();
       }
-      if (user.readonly) {
+      if (user.readonly && !user.administrator) {
         $("#page").addClass("readonly");
         $(document).on("focus", ".readonly input", function(){
           $(this).attr('disabled', 'disabled');
