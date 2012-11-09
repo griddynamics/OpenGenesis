@@ -197,7 +197,7 @@ function(genesis, Backbone, status, validation, backend, $) {
       var groups = $("input[name='groups']:checked").map(function () { return this.value; }).get();
 
       this.user.set({
-        username:  $("input[name='name']").val(),
+        username:  $("input[name='username']").val(),
         firstName: $("input[name='firstName']").val(),
         lastName:  $("input[name='lastName']").val(),
         email:     $("input[name='email']").val(),
