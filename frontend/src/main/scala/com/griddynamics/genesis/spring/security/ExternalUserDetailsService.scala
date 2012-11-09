@@ -46,7 +46,7 @@ class ExternalUserDetailsService(authorityService: AuthorityService, projectAuth
               authorityService.getUserAuthorities(username) ++
                 (if (projectAuthorityService.isUserProjectAdmin(username, groupNames)) List(GenesisRole.ProjectAdmin.toString) else List())
               )
-            if (authorities.contains(GenesisRole.SystemAdmin.toString)) {
+            if (authorities.contains(GenesisRole.SystemAdmin.toString) || authorities.contains(GenesisRole.ReadonlySystemAdmin)) {
               authorities = GenesisRole.GenesisUser.toString :: authorities
             }
             new User(username, username, RoleBasedAuthority(authorities.distinct))
