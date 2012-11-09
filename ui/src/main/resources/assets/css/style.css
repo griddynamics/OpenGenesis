@@ -927,7 +927,8 @@ td.subtable{
 }
 
 .workflow-variables dl {
-    margin: 0 .5em 0 0;
+    margin: 0;
+    padding: 10px 0 5px 20px;
 }
 
 .workflow-variables dt {
