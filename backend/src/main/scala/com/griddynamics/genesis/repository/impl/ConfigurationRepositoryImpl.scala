@@ -24,7 +24,7 @@ package com.griddynamics.genesis.repository.impl
 
 import com.griddynamics.genesis.repository.{AbstractGenericRepository, ConfigurationRepository}
 import com.griddynamics.genesis.{model, api}
-import api.Configuration
+import api.{Success, Failure, ExtendedResult, Configuration}
 import model.GenesisSchema
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
@@ -42,10 +42,12 @@ class ConfigurationRepositoryImpl extends AbstractGenericRepository[model.Config
     m
   }
 
-  @Transactional(readOnly = true)
-  def list(projectId: Int) =  from(table) (
+  private[this] def listModels(projectId: Int): Iterable[model.Configuration] = from(table) (
     item => where( projectId === item.projectId ) select (item) orderBy(item.name)
-  ).toList.map(convert(_))
+  ).toList
+
+  @Transactional(readOnly = true)
+  def list(projectId: Int) = listModels(projectId).map(convert(_))
 
   @Transactional(readOnly = true)
   def get(projectId: Int, id: Int) =  {
@@ -82,5 +84,16 @@ class ConfigurationRepositoryImpl extends AbstractGenericRepository[model.Config
   @Transactional
   def lookupNames(projectId: Int): Map[Int, String] = {
     from(table)(c => where(c.projectId === projectId) select(c.id, c.name)).toMap
+  }
+
+  @Transactional(readOnly = true)
+  def getDefaultConfig(projectId: Int): ExtendedResult[api.Configuration] = {
+    val configs = listModels(projectId)
+    if(configs.size == 1) {
+      val config = configs.head
+      Success(convert(config).copy(items = store.loadAttrs(config, GenesisSchema.configAttrs)))
+    } else {
+      Failure(compoundServiceErrors = Seq("%d environment configurations found in project id = %d. configId parameter should be provided".format(configs.size, projectId)))
+    }
   }
 }
