@@ -58,7 +58,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
 
   @RequestMapping(value=Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
-  def createEnv(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response : HttpServletResponse) = {
+  def createEnv(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response : HttpServletResponse): ExtendedResult[Int] = {
     val paramsMap = extractParamsMap(request)
     val envName = extractValue("envName", paramsMap).trim
     val templateName = extractValue("templateName", paramsMap)
@@ -66,7 +66,12 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     val variables = extractVariables(paramsMap)
     val config =  extractOption("configId", paramsMap).map { cid =>
       configRepository.get(projectId, cid.toInt).getOrElse(throw new ResourceNotFoundException("Failed to find config with id = %s in project %d".format(cid, projectId)))
-    }.getOrElse(getDefaultConfigId(projectId))
+    }.getOrElse {
+      configRepository.getDefaultConfig(projectId) match {
+        case Success(s, true) => s
+        case f: Failure => return f
+      }
+    }
 
     if(!envAuthService.hasAccessToConfig(projectId, config.id.get, getCurrentUser, getCurrentUserAuthorities)) {
       throw new AccessDeniedException("User doesn't have access to configuration id=%s".format(config))
@@ -77,15 +82,6 @@ class EnvironmentsController extends RestApiExceptionsHandler {
       case _ => getCurrentUser
     }
     genesisService.createEnv(projectId, envName, user, templateName, templateVersion, variables, config)
-  }
-
-  private[this] def getDefaultConfigId(projectId: Int): Configuration = {
-    val configs = configRepository.list(projectId)
-    if(configs.size == 1) {
-      configs.head
-    } else {
-      throw new InvalidInputException(msg = Some("%d environment configurations found in project. configId parameter should be provided".format(configs.size)))
-    }
   }
 
   import MediaType.{TEXT_PLAIN, TEXT_PLAIN_VALUE, TEXT_HTML, TEXT_HTML_VALUE}

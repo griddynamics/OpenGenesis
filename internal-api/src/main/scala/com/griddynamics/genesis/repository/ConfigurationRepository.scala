@@ -22,9 +22,11 @@
  */
 package com.griddynamics.genesis.repository
 
-import com.griddynamics.genesis.api.Configuration
+import com.griddynamics.genesis.api.{ExtendedResult, Configuration}
+import com.griddynamics.genesis.api
 
 trait ConfigurationRepository extends ProjectBoundRepository[Configuration] {
   def findByName(projectId: Int, name: String): Option[Configuration]
   def lookupNames(projectId: Int): Map[Int, String]
+  def getDefaultConfig(projectId: Int): ExtendedResult[api.Configuration]
 }
