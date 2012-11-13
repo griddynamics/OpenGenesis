@@ -15,23 +15,26 @@
         <img id="env-icon" src="/assets/img/env32.png" alt="Env">
         <h1 class="envname"><%= environment.name %></h1>
     </div>
-    <div id="title-right">
+    <div id="env-ops" style="float: right;">
+        <div id="title-right">
+        </div>
+        <div id="env-status-section">
+            <a href="javascript:void(0)" class="button reset-button executable" id="resetBtn" style="display: none;"> <span> Change status to 'Ready' </span> </a>
+            <div class="env-status">...</div>
+        </div>
+        <div id="workflow-triggers">
+            <% if (environment.status !== "Destroyed") { %>
+                <a href="javascript:void(0)" class="button cancel-button executable" rel="Cancel"> <span> Cancel </span> </a>
+                <% for(var i = 0, count = actions.length; i < count; i++) { var action = actions[i]; %>
+                    <a href="javascript:void(0)" class="button action-button executable" rel="<%= action.name %>"> <span> <%= action.name %> </span> </a>
+                <% } %>
+            <% } %>
+        </div>
+        <div id="misc-operations">
+            <a href="javascript:void(0)" class="button rename-button executable" rel="Rename"> <span> Rename... </span> </a>
+        </div>
     </div>
-    <div id="env-status-section">
-        <a href="javascript:void(0)" class="button reset-button executable" id="resetBtn" style="display: none;"> <span> Change status to 'Ready' </span> </a>
-        <div class="env-status">...</div>
-    </div>
-    <div id="workflow-triggers">
-        <% if (environment.status !== "Destroyed") { %>
-        <a href="javascript:void(0)" class="button cancel-button executable" rel="Cancel"> <span> Cancel </span> </a>
-        <% for(var i = 0, count = actions.length; i < count; i++) { var action = actions[i]; %>
-        <a href="javascript:void(0)" class="button action-button executable" rel="<%= action.name %>"> <span> <%= action.name %> </span> </a>
-        <% } %>
-        <% } %>
-    </div>
-    <div id="misc-operations">
-        <a href="javascript:void(0)" class="button rename-button executable" rel="Rename"> <span> Rename... </span> </a>
-    </div>
+    <div class="clear"></div>
 </div>
 <div id="tab-panel">
   <div id="tabs" data-tabpanel="header">

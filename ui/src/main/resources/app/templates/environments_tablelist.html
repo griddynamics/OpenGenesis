@@ -1,12 +1,25 @@
+<% var now = new Date(); %>
 <% if (environments.length > 0) { %>
     <% for(var i = 0, count = environments.length; i < count; i++) { var environment = environments[i]; %>
         <tr>
             <td class="first"><a href="#project/<%= project.id %>/env/<%= environment.id %>"><img src="/assets/img/env24.png" alt="Env" class="env-icon"><%= environment.name %></a></td>
             <td ><%- environment.configuration %></td>
-            <td><span class="time"><%= utils.formatDate(environment.creationTime) %></span> by <span class="username"><%= environment.creator %></span></td>
+            <td>
+                <% var time = utils.formatTime(environment.creationTime); %>
+                <span class="time ellipsis" title="<%= time %>"><%= time %></span>
+                <% if (!utils.isSameDay(environment.creationTime, now)) { var date = utils.formatDate(environment.creationTime); %>
+                    <span class="date ellipsis" title="<%= date %>"><%= date %></span>
+                <% } %>
+                <span class="username ellipsis" title="<%= environment.creator %>">by <%= environment.creator %></span>
+            </td>
             <td>
                 <% if (environment.modificationTime) { %>
-                <span class="time"><%= utils.formatDate(environment.modificationTime) %></span> by <span class="username"><%= environment.creator %></span>
+                    <% var time = utils.formatTime(environment.modificationTime); %>
+                    <span class="time ellipsis" title="<%= time %>"><%= time %></span>
+                    <% if (!utils.isSameDay(environment.modificationTime, now)) { var date = utils.formatDate(environment.modificationTime); %>
+                    <span class="date ellipsis" title="<%= date %>"><%= date %></span>
+                    <% } %>
+                    <span class="username ellipsis" title="<%= environment.modifiedBy %>">by <%= environment.modifiedBy %></span>
                 <% } else { %>
                 N/A
                 <% } %>
@@ -16,7 +29,7 @@
                 <tr>   <td><%= environment.templateName %></td><td> <%= environment.templateVersion %></td></tr>
                 <% _.each(environment.attributes, function(attr, key) { if (attr && attr.value) {%>
                     <tr>
-                     <td >
+                     <td title="<%- attr.description %>" >
                         <%- attr.description %>
                      </td>
                     <td title="<%- attr.value %>" >

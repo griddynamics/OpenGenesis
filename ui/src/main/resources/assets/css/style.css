@@ -106,6 +106,14 @@ a.button.reset-button {
     cursor: default;
 }
 
+.ellipsis {
+    white-space: nowrap;
+    word-wrap: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
 a.tab {
 	margin-right: 5px;
 	display: block;
@@ -283,6 +291,8 @@ table th{
 	border-right: none;
 	height:20px;
 	border-bottom: 1px solid rgb(200,200,200);
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .details-cell {
@@ -291,7 +301,7 @@ table th{
 }
 
 .details-cell span {
-    max-width: 465px;
+    word-break: break-all;
 }
 
 .multiline-description {
@@ -378,6 +388,7 @@ table th{
 #header #header-content{
 	width:80%;
     max-width: 1200px;
+    min-width: 780px;
 	height: 42px;
 	margin: 0 auto;
     background: url(../img/logo.png) no-repeat left 40%;
@@ -441,6 +452,7 @@ div.system-settings {
 	background-color: rgb(248,248,248);
     width: 80%;
     max-width: 1200px;
+    min-width: 780px;
 }
 
 #wrapper #top-panel a.button,
@@ -483,7 +495,7 @@ div.system-settings {
 
 #wrapper #top-panel,
 .top-panel{
-	height: 60px;
+	min-height: 60px;
 	padding: 0 15px;
 }
 
@@ -518,7 +530,7 @@ div.system-settings {
 #wrapper #top-panel #workflow-triggers, #wrapper #top-panel #misc-operations, #wrapper #top-panel #env-status-section {
     float: right;
     margin-left: 20px;
-    padding-top: 17px;
+    padding-top: 12px;
 }
 
 #wrapper #top-panel #workflow-triggers a.button, #wrapper #top-panel #misc-operations a.button, #wrapper #top-panel #env-status-section a.button {
@@ -731,7 +743,7 @@ img#addShare{
 
 #wrapper #wrapper-content #tab-panel #panel #panel-tab-3 .workflow{
     width: 100%;
-    height: 23px;
+    min-height: 23px;
     padding-top: 2px;
     background-color: #E8E8E8;
     text-transform: capitalize;
@@ -881,7 +893,9 @@ td.subtable{
 
 .workflow-history .phase {
     width: 9%;
-    word-wrap: break-word;
+    word-wrap: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .workflow-history .status {
@@ -928,7 +942,7 @@ td.subtable{
 
 .workflow-variables dl {
     margin: 0;
-    padding: 10px 0 5px 20px;
+    padding: 10px;
 }
 
 .workflow-variables dt {
@@ -937,11 +951,15 @@ td.subtable{
     padding-right: .5em;
     width: 20%;
     font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .workflow-variables dd {
     margin: 0 0 0 110px;
     padding: 0 0 0.5em 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .workflow-actions .status-section {
@@ -1765,6 +1783,7 @@ label.error {
 	/*width:70%;*/
 	width:80%;
     max-width: 1200px;
+    min-width: 780px;
 	position:relative;
 	margin-top:-25px;
 	height:25px;
