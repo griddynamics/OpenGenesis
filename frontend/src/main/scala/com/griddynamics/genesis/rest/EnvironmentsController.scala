@@ -41,6 +41,7 @@ import org.springframework.http.{HttpHeaders, MediaType}
 import java.util.{TimeZone, Locale}
 import org.springframework.security.access.AccessDeniedException
 import com.griddynamics.genesis.repository.ConfigurationRepository
+import org.apache.commons.lang3.StringEscapeUtils
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
@@ -84,6 +85,8 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     genesisService.createEnv(projectId, envName, user, templateName, templateVersion, variables, config)
   }
 
+  private val LINK_REGEX = """(?i)\[link:(.*?)(?:\|([^\[\]]+))?\]""".r
+
   import MediaType.{TEXT_PLAIN, TEXT_PLAIN_VALUE, TEXT_HTML, TEXT_HTML_VALUE}
   private def produceLogs(logs: Seq[StepLogEntry], response: HttpServletResponse,
                           headers: HttpHeaders, locale: Locale, timeZone: TimeZone) {
@@ -97,10 +100,19 @@ class EnvironmentsController extends RestApiExceptionsHandler {
 
     if (supportHtml) writer.print("<pre>")
 
+    def escape(str: String) = str.replace("\\", "\\\\").replace("$", "\\$")
+
     if (logs.isEmpty)
       writer.write("No logs yet")
     else
-      logs.foreach(entry => writer.write(entry.toString(locale, timeZone) + "\n"))
+      logs.foreach { entry =>
+        var record = entry.toString(locale, timeZone) + "\n"
+        if (supportHtml) record =
+          LINK_REGEX.replaceAllIn(StringEscapeUtils.escapeHtml4(record), m =>
+            <a target="_blank" href={ escape(m.group(1)) }>{ escape(if (m.group(2) == null) m.group(1) else m.group(2)) }</a>.toString())
+            .replaceAll("""(?i)\[(link)\\:(.*?)\]""", "[$1:$2]")
+        writer.write(record)
+      }
 
     if (supportHtml) writer.print("</pre>")
 
