@@ -41,7 +41,7 @@
         <property name="permissionEvaluator" ref="aclPermissionEvaluator"/>
     </bean>
 
-    <s:http use-expressions="true" disable-url-rewriting="true" realm="Genesis" entry-point-ref="genesisAuthenticationEntryPoint">
+    <s:http use-expressions="true" disable-url-rewriting="true" realm="Genesis" entry-point-ref="genesisAuthenticationEntryPoint" create-session="never">
         <s:expression-handler ref="webExprHandler"/>
 		<s:intercept-url pattern="/" access="isAuthenticated()" />
 		<s:intercept-url pattern="/index.html" access="isAuthenticated()" />
