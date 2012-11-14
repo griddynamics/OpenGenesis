@@ -4,7 +4,9 @@
             'Failed': 'failed-action',
             'Successful': 'succeeded-action'
         }[status] || ''
-    }
+    };
+
+    var now = new Date();
 %>
 <% if (actions.length > 0) { %>
 <table class="slide-subtable intab" style="table-layout: fixed; width: 100.1%; margin-left: -1px">
@@ -16,10 +18,19 @@
       <td class="phase"></td>
       <td class="status" ><%- action.status || "" %></td>
       <td class="details details-cell"><%- action.description || "" %></td>
-      <td class="started"> <%= utils.formatDate(action.started) %> </td>
+      <td class="started">
+          <% var time = utils.formatTime(action.started); %>
+          <span class="time ellipsis" title="<%= time %>"><%= time %></span>
+          <% if (!utils.isSameDay(action.started, now)) { var date = utils.formatDate(action.started); %>
+            <span class="date ellipsis" title="<%= date %>"><%= date %></span>
+          <% } %>
+      </td>
       <td  class="stopped">
-        <% if (action.finished) { %>
-          <%= utils.formatDate(action.finished) %>
+        <% if (action.finished) { var time = utils.formatTime(action.finished); %>
+          <span class="time ellipsis" title="<%= time %>"><%= time %></span>
+          <% if (!utils.isSameDay(action.finished, now)) { var date = utils.formatDate(action.finished); %>
+          <span class="date ellipsis" title="<%= date %>"><%= date %></span>
+          <% } %>
         <% } else { %>
           <em> ... </em>
         <% } %>

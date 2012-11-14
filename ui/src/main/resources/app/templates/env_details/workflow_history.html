@@ -37,17 +37,18 @@
 <div class="workflow-actions">
   Started:
   <span class="date">
-    <%= workflow.executionStartedTimestamp ? utils.formatDate(workflow.executionStartedTimestamp) : "No information" %>
+    <%= workflow.executionStartedTimestamp ? utils.formatDateTime(workflow.executionStartedTimestamp) : "No information" %>
   </span>
   By: <span class="username"><%= workflow.startedBy %></span>
   Finished:
   <span class="date">
-   <%= workflow.executionFinishedTimestamp ? utils.formatDate(workflow.executionFinishedTimestamp) : "--" %>
+   <%= workflow.executionFinishedTimestamp ? utils.formatDateTime(workflow.executionFinishedTimestamp) : "--" %>
   </span>
   Duration: <span class="duration"> <%= utils.timeDuration(workflow.executionStartedTimestamp, workflow.executionFinishedTimestamp) %></span>
 
   <span class="status-section">Status: <span class=<%= (failStatuses.indexOf(workflow.status) != -1 ? "bad" : "normal") %> > <%= workflow.status %></span></span>
 </div>
+<div class="clear"></div>
 </div>
 <% if ( _.size(workflow.variables) > 0) { %>
 <div class="workflow-variables">
@@ -98,7 +99,7 @@
                 <span style="padding-left: 15px"><%= step.title ? step.title : "Step " + (j + 1) %></span>
               </td>
             <% } %>
-            <td class="phase"><%= step.phase %></td>
+            <td class="phase"><span title="<%= step.phase %>"><%= step.phase %></span></td>
             <td class="status"><%= step.status %></td>
             <td class="details-cell">
               <span style="float:left;"><%= details.short %></span>&nbsp;
@@ -111,11 +112,21 @@
                  <%- details.params %>
                <% } %>
             </td>
-            <td>
-              <%= step.started ? utils.formatDate(step.started) : "" %>
+            <td class="started">
+              <% if (step.started) { var time = utils.formatTime(step.started); %>
+                <span class="time ellipsis" title="<%= time %>"><%= time %></span>
+                <% if (!utils.isSameDay(step.started, today)) { var date = utils.formatDate(step.started); %>
+                  <span class="date ellipsis" title="<%= date %>"><%= date %></span>
+                <% } %>
+              <% } %>
             </td>
-            <td>
-              <%= step.finished ? utils.formatDate(step.finished) : "" %>
+            <td class="stopped">
+              <% if (step.finished) { var time = utils.formatTime(step.finished); %>
+                <span class="time ellipsis" title="<%= time %>"><%= time %></span>
+                <% if (!utils.isSameDay(step.finished, today)) { var date = utils.formatDate(step.finished); %>
+                  <span class="date ellipsis" title="<%= date %>"><%= date %></span>
+                <% } %>
+              <% } %>
             </td>
             <td>
               <% if ( step.status !== "Requested" ) { %>

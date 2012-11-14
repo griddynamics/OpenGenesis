@@ -16,14 +16,14 @@
 
   <tr>
     <td class="first">Created</td>
-    <td style="width: 80%"><span class="time"><%= utils.formatDate(environment.creationTime) %></span> by <span class="username"><%= environment.creator %></span></td>
+    <td style="width: 80%"><span class="time"><%= utils.formatDateTime(environment.creationTime) %></span> by <span class="username"><%= environment.creator %></span></td>
   </tr>
 
   <tr>
      <td class="first">Modified</td>
      <td>
      <% if (environment.modificationTime) { %>
-     <span class="time"><%= utils.formatDate(environment.modificationTime) %></span> by <span class="username"><%= environment.modifiedBy %></span>
+     <span class="time"><%= utils.formatDateTime(environment.modificationTime) %></span> by <span class="username"><%= environment.modifiedBy %></span>
      <% } else { %>
      N/A
      <% } %>
