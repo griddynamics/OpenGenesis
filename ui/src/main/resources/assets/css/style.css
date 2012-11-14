@@ -1086,7 +1086,7 @@ table.main-table td {
 }
 
 table.main-table li.name {
-    max-width: 150px;
+    max-width: 100%;
     word-wrap: break-word;
 }
 
