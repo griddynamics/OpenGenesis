@@ -85,7 +85,8 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     val envsToProject = oneToManyRelation(projects, envs).via((project, environment) => project.id === environment.projectId)
     envsToProject.foreignKeyDeclaration.constrainReference(onDelete cascade)
 
-    val envToConfig = oneToManyRelation(configuration, envs).via((conf, env) => conf.id === env.configurationId)
+    //TODO: envConfig cannot be deleted when there is deleted environments. We should discuss where we need to delete environments at all. May be logical delete is better.
+    //val envToConfig = oneToManyRelation(configuration, envs).via((conf, env) => conf.id === env.configurationId)
 
     val serverArrayToProject = oneToManyRelation(projects, serverArrays).via((project, array) => project.id === array.projectId)
     serverArrayToProject.foreignKeyDeclaration.constrainReference(onDelete cascade)
