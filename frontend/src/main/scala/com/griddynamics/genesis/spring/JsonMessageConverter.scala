@@ -67,7 +67,7 @@ class JsonMessageConverter
     }
 
     def read(clazz: Class[_ <: AnyRef], inputMessage: HttpInputMessage) = { //TODO: (RB) containers(list,maps,etc) are not supported yet
-      val json = parse(scala.io.Source.fromInputStream(inputMessage.getBody).getLines().mkString(" "))
+      val json = parse(scala.io.Source.fromInputStream(inputMessage.getBody, DEFAULT_CHARSET.name).getLines().mkString(" "))
       clazz.cast(Extraction.extract(json, TypeInfo(clazz, None)))
     }
 
