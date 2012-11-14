@@ -39,7 +39,7 @@
         <% for(var i = 0, count = server.usage.length; i < count; i++) { var lease = server.usage[i]; %>
         <tr>
           <td class="first"><%- lease.envName %></td>
-          <td ><%- $.formatDate.date(new Date(lease.sinceDate), "dd/MM/yyyy") %></td>
+          <td ><%- utils.formatDate(new Date(lease.sinceDate)) %></td>
         </tr>
         <% } %>
         </tbody>

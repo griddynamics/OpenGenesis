@@ -398,7 +398,11 @@ function(genesis, status, validation, Backbone, $) {
     render: function(){
       var self = this;
       $.when(genesis.fetchTemplate(this.template)).done(function(tmpl){
-        self.$el.html(tmpl({server: self.model.toJSON(), serverArray: self.array.toJSON()}));
+        self.$el.html(tmpl({
+          server: self.model.toJSON(),
+          serverArray: self.array.toJSON(),
+          utils: genesis.utils
+        }));
       });
     }
   });

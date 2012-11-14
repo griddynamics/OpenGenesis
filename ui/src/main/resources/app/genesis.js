@@ -114,17 +114,30 @@ function($, _, Backbone, formats) {
         }, {});
       },
 
-      formatDate: function(date, alwaysShowDate){
+      formatDate: function(date) {
         date = _.isNumber(date) ? new Date(date) : date;
 
         var locale = genesis.app.currentConfiguration['locale'] || "en-US", //todo: get rid of global object dependency
             currentFormat = formats.ShortDate[locale] || formats.ShortDate["en-US"];
 
-        if (!alwaysShowDate && this.isSameDay(new Date(), date)) {
-          return date.toLocaleTimeString();
-        } else {
-          return date.toLocaleTimeString() + " " + $.formatDate.date(date, currentFormat);
+        return $.formatDate.date(date, currentFormat);
+      },
+
+      formatTime: function(date) {
+        date = _.isNumber(date) ? new Date(date) : date;
+        return date.toLocaleTimeString();
+      },
+
+      formatDateTime: function(date) {
+        date = _.isNumber(date) ? new Date(date) : date;
+
+        var result = this.formatTime(date);
+
+        if (!this.isSameDay(new Date(), date)) {
+          result += " " + this.formatDate(date);
         }
+
+        return result;
       },
 
       timeDuration: function(start, end) {
