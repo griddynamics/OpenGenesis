@@ -27,7 +27,7 @@ import org.springframework.context.annotation.{Configuration, Bean}
 import org.springframework.beans.factory.annotation._
 import org.springframework.beans.factory.config.PropertiesFactoryBean
 import org.apache.commons.configuration._
-import com.griddynamics.genesis.service.{GenesisSystemProperties, impl}
+import com.griddynamics.genesis.service.{ConfigService, GenesisSystemProperties, impl}
 import collection.JavaConversions.{propertiesAsScalaMap, mapAsJavaMap} 
 import GenesisSystemProperties.{SUFFIX_DESC, SUFFIX_TYPE}
 import com.griddynamics.genesis.api.ConfigPropertyType
@@ -62,7 +62,7 @@ class DefaultConfigServiceContext extends ConfigServiceContext {
         compConfig
     }
 
-    @Bean def configService = new impl.DefaultConfigService(config,
+    @Bean def configService: ConfigService = new impl.DefaultConfigService(config,
       dbConfig,
       overrideConfig,
       (descs map { case (k,v) => (k.stripSuffix(SUFFIX_DESC), v)}).toMap,
