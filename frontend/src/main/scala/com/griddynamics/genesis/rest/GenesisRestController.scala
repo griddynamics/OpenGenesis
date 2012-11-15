@@ -25,7 +25,6 @@ package com.griddynamics.genesis.rest
 import org.springframework.stereotype.Controller
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation._
-import java.io.InputStreamReader
 import javax.servlet.http.HttpServletRequest
 import java.security.Principal
 import java.util.Properties
@@ -119,9 +118,11 @@ class GenesisRestController extends RestApiExceptionsHandler with Logging {
 object GenesisRestController extends Logging {
     import net.liftweb.json._
 
+    val DEFAULT_CHARSET = "UTF-8"
+
     def extract[B <: AnyRef : Manifest](request: HttpServletRequest): B = {
       implicit val formats = DefaultFormats
-      val json = parse(scala.io.Source.fromInputStream(request.getInputStream).getLines().mkString(" "))
+      val json = parse(scala.io.Source.fromInputStream(request.getInputStream, DEFAULT_CHARSET).getLines().mkString(" "))
       json.extract[B]
     }
 
@@ -132,16 +133,20 @@ object GenesisRestController extends Logging {
       }
     }
 
+  private def parseJson(request: HttpServletRequest) = {
+    request.setCharacterEncoding(DEFAULT_CHARSET)
+    JsonParser.parse(s = request.getReader, closeAutomatically = false).values
+  }
     def extractParamsMap(request: HttpServletRequest): Map[String, Any] = safeInput {
-        JsonParser.parse(s = new InputStreamReader(request.getInputStream), closeAutomatically = false).values.asInstanceOf[Map[String, Any]]
+        parseJson(request).asInstanceOf[Map[String, Any]]
     }
 
     def extractParamsMapList(request: HttpServletRequest): List[Map[String, Any]] = safeInput {
-        JsonParser.parse(s = new InputStreamReader(request.getInputStream), closeAutomatically = false).values.asInstanceOf[List[Map[String, Any]]]
+        parseJson(request).asInstanceOf[List[Map[String, Any]]]
     }
 
     def extractParamsList(request: HttpServletRequest): List[String] = safeInput {
-        JsonParser.parse(s = new InputStreamReader(request.getInputStream), closeAutomatically = false).values.asInstanceOf[List[String]]
+        parseJson(request).asInstanceOf[List[String]]
     }
 
     def extractVariables(paramsMap: Map[String, Any]): Map[String, String] = {

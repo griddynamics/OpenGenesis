@@ -28,16 +28,16 @@ import java.nio.charset.Charset
 import java.util.Collections
 import org.springframework.http.server.ServerHttpResponse
 import org.springframework.http.{HttpStatus, HttpOutputMessage, HttpInputMessage, MediaType}
-import com.griddynamics.genesis.api.{Failure, Success, RequestResult}
-import java.io.InputStreamReader
+import com.griddynamics.genesis.api.RequestResult
 import com.griddynamics.genesis.api.Success
 import com.griddynamics.genesis.api.Failure
+import com.griddynamics.genesis.rest.GenesisRestController.{DEFAULT_CHARSET => DC}
 
 class JsonMessageConverter
         extends HttpMessageConverter[AnyRef]{
 
     implicit val formats = net.liftweb.json.DefaultFormats
-    val DEFAULT_CHARSET: Charset = Charset.forName("UTF-8")
+    val DEFAULT_CHARSET: Charset = Charset.forName(DC)
     val supportedMediaTypes = Collections.singletonList(new MediaType("application", "json", DEFAULT_CHARSET))
 
     val ApiPackage = Package.getPackage("com.griddynamics.genesis.api")
