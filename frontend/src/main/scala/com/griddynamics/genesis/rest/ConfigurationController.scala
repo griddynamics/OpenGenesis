@@ -56,7 +56,7 @@ class ConfigurationController extends RestApiExceptionsHandler{
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.GET))
   @ResponseBody
   def get(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int) =
-    configRepository.get(projectId, id).getOrElse(throw new ResourceNotFoundException("Can not find configuration id = %d".format(id)))
+    configRepository.get(projectId, id).getOrElse(throw new ResourceNotFoundException("Can not find environment configuration id = %d".format(id)))
 
   @ResponseBody
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
@@ -79,7 +79,7 @@ class ConfigurationController extends RestApiExceptionsHandler{
     }
 
     if (configRepository.list(projectId).filter(_.id != Some(id)).isEmpty) {
-      return Failure(compoundServiceErrors = Seq("At least one configuration must be defined in project"))
+      return Failure(compoundServiceErrors = Seq("At least one environment must be defined in project"))
     }
 
     if (configRepository.delete(projectId, id) == 1) {
@@ -95,7 +95,7 @@ class ConfigurationController extends RestApiExceptionsHandler{
     exist match {
       case None => Success(config)
       case Some(c) if c.id.isDefined && config.id == c.id => Success(config)
-      case _ => Failure(compoundServiceErrors = Seq("Configuration with name %s already exists in project".format(config.name)))
+      case _ => Failure(compoundServiceErrors = Seq("Environment configuration with name %s already exists in project".format(config.name)))
     }
   }
 
