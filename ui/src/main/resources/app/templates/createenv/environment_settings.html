@@ -13,7 +13,7 @@
             <div style="margin-top: 10px; margin-bottom: 10px;">
               <label for="configuration" class="label-required" >*&nbsp; Environment</label>
               <div class="value">
-                  <select id="configuration" name="configId"  <%= (configs.length == 1 ? "disabled = 'disabled' class='predefined' " : "") %> >
+                  <select id="configuration" name="configId" >
                     <% for (var i = 0, count = configs.length; i < count; i++) { var config = configs[i]; %>
                       <option value="<%- config.id %>"><%- config.name %></option>
                     <% } %>
