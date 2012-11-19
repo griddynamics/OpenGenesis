@@ -22,7 +22,7 @@
  */
 package com.griddynamics.genesis.core
 
-import scala.collection.{JavaConversions, mutable}
+import scala.collection.mutable
 import com.griddynamics.genesis.plugin._
 import com.griddynamics.genesis.workflow._
 import com.griddynamics.genesis.service.StoreService
@@ -42,6 +42,7 @@ import com.griddynamics.genesis.plugin.GenesisStep
 import com.griddynamics.genesis.workflow.signal.Fail
 import com.griddynamics.genesis.repository.ConfigurationRepository
 import com.griddynamics.genesis.template.dsl.groovy.Reserved
+import com.griddynamics.genesis.template.support.EnvConfigSupport
 
 abstract class GenesisFlowCoordinator(envId: Int,
                                       projectId: Int,
@@ -248,7 +249,8 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
 
     override def buildStep(builder: StepBuilder) = safe {
         builder match {
-            case proxy: StepBuilderProxy =>  proxy.newStep(globals, Reserved.instanceRef -> env.copy, Reserved.configRef -> JavaConversions.mapAsJavaMap(config.items))
+            case proxy: StepBuilderProxy =>  proxy.newStep(globals, Reserved.instanceRef -> env.copy,
+              Reserved.configRef -> EnvConfigSupport.asGroovyMap(config))
             case _ => builder.newStep
         }
     }

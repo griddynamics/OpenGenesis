@@ -43,7 +43,8 @@ case class Configuration( id: Option[Int],
                           projectId: Int,
                           description: Option[String],
                           @ValidStringMap(key_min = 1, key_max = 256, value_min = 0, value_max = 256)
-                          items: Map[String, String] = Map() ) extends Identifiable[Option[Int]] with ProjectBound
+                          items: Map[String, String] = Map(),
+                          instanceCount: Option[Int] = None) extends Identifiable[Option[Int]] with ProjectBound
 
 case class Environment(id: Int,
                        name : String,

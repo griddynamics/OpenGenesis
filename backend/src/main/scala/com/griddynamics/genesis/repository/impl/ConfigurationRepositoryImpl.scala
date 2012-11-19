@@ -25,7 +25,7 @@ package com.griddynamics.genesis.repository.impl
 import com.griddynamics.genesis.repository.{AbstractGenericRepository, ConfigurationRepository}
 import com.griddynamics.genesis.{model, api}
 import api.{Success, Failure, ExtendedResult, Configuration}
-import model.GenesisSchema
+import model.{EnvStatus, GenesisSchema}
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.beans.factory.annotation.Autowired
@@ -53,9 +53,7 @@ class ConfigurationRepositoryImpl extends AbstractGenericRepository[model.Config
   def get(projectId: Int, id: Int) =  {
     from(table) (
       item => where(item.id === id and item.projectId === projectId) select (item)
-    ).headOption.map { c =>
-      convert(c).copy(items = store.loadAttrs(c, GenesisSchema.configAttrs))
-    }
+    ).headOption.map {convertWithAttrs(_)}
   }
 
   @Transactional
@@ -91,9 +89,16 @@ class ConfigurationRepositoryImpl extends AbstractGenericRepository[model.Config
     val configs = listModels(projectId)
     if(configs.size == 1) {
       val config = configs.head
-      Success(convert(config).copy(items = store.loadAttrs(config, GenesisSchema.configAttrs)))
+      Success(convertWithAttrs(config))
     } else {
       Failure(compoundServiceErrors = Seq("%d environment configurations found in project id = %d. configId parameter should be provided".format(configs.size, projectId)))
     }
   }
+
+  private[this] def convertWithAttrs(m: model.Configuration) =
+      convert(m).copy(items = store.loadAttrs(m, GenesisSchema.configAttrs), instanceCount = Option(instanceCount(m)))
+
+  private[this] def instanceCount(c: model.Configuration): Int = from(GenesisSchema.envs) (
+    env => where( c.id === env.configurationId and c.projectId === env.projectId and not(env.status === EnvStatus.Destroyed)) compute(count())
+  ).toInt
 }
