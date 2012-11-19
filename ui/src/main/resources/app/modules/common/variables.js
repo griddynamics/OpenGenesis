@@ -101,6 +101,15 @@ function(genesis, status, $, _, Backbone) {
 
       var graph = new DependencyGraph(options.variables);
 
+      var enableChecked = function(variable) {
+        var enable = true;
+        if (variable.group) {
+          enable = $("input[type=radio][name=" + variable.group + "][data-var-name="
+          + variable.name + "]").is(':checked');
+        }
+        if (enable) $('#' + variable.name).removeAttr("disabled");
+      };
+
       _(graph.allButLeafs()).each(function(node) {
         var selector = "#" + node;
         $(document).off("change", selector).on("change", selector, function() {
@@ -119,17 +128,11 @@ function(genesis, status, $, _, Backbone) {
           $.when(partialApply(templateUrl, variables))
             .done(function(data) {
               _(data).each(function(variable) {
+                enableChecked(variable);
                 if (descendants.contains(variable.name) && _.has(variable, "values") && _.size(variable.values) > 0) {
 
                   var $select = $("#" + variable.name)
                     .append("<option value=''> Please select </option>");
-                  if (!variable.group) {
-                    $select.removeAttr("disabled");
-                  } else {
-                   var checked = $("input[type=radio][name=" + variable.group + "][data-var-name="
-                    + variable.name + "]").is(':checked');
-                   if (checked) $select.removeAttr("disabled");
-                  }
 
                   _(variable.values).each(function(label, value) {
                     if (label && value) {
@@ -148,6 +151,10 @@ function(genesis, status, $, _, Backbone) {
             }).fail(function(jqXHR) {
               status.StatusPanel.error(jqXHR);
             }).always(function() {
+              descendants.each(function(name) {
+                var dv = _.find(options.variables, function(v){ return v.name == name; });
+                enableChecked(dv);
+              });
               genesis.app.trigger("page-view-loading-completed");
             });
         });
