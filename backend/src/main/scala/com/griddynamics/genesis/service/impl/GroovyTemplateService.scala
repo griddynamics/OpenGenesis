@@ -22,7 +22,7 @@
  */
 package com.griddynamics.genesis.service.impl
 
-import scala.collection.{JavaConversions, mutable}
+import scala.collection.mutable
 import com.griddynamics.genesis.service
 import groovy.lang._
 import collection.mutable.ListBuffer
@@ -45,6 +45,7 @@ import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.template.dsl.groovy.{Delegate => DslDelegate}
 import com.griddynamics.genesis.api.{ExtendedResult, Configuration, Failure, Success}
 import com.griddynamics.genesis.model.{EntityAttr, EntityWithAttrs}
+import support.EnvConfigSupport
 
 class GroovyTemplateService(val templateRepoService : TemplateRepoService,
                             val stepBuilderFactories : Seq[StepBuilderFactory],
@@ -308,7 +309,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
 
   def validatePreconditions(variables: Map[String, Any], config: Configuration): ExtendedResult[_] = {
     val errors = workflow.preconditions.map { case (validationFailureMessage, checkClosure) =>
-      checkClosure.setProperty(Reserved.configRef, JavaConversions.mapAsJavaMap(config.items))
+      checkClosure.setProperty(Reserved.configRef, EnvConfigSupport.asGroovyMap(config))
       variables.map{ case(key,value) => checkClosure.setProperty(key, value) }
       if (!checkClosure.call()) Some(validationFailureMessage) else None
     }.flatten.toSeq
