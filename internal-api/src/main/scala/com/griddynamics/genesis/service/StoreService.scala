@@ -28,13 +28,14 @@ import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.model.EnvStatus._
 import com.griddynamics.genesis.model.WorkflowStepStatus._
 import java.sql.Timestamp
+import com.griddynamics.genesis.repository.Direction
 
 trait StoreService {
     def findEnvsByConfigurationId(configId: Int): Seq[Int]
     def findLiveEnvsByConfigurationId(configId: Int): Seq[Int]
 
     def updateEnvName(i: Int, s: String): Int
-    def listEnvs(projectId: Int, statusFilter: Option[Seq[EnvStatus]] = None): Seq[Environment]
+    def listEnvs(projectId: Int, statusFilter: Option[Seq[EnvStatus]] = None, ordering: Option[EnvOrdering] = None): Seq[Environment]
     def countEnvs(projectId: Int): Int
     def countEnvs(projectId: Int, statuses: Seq[EnvStatus]): Int
 
@@ -54,7 +55,7 @@ trait StoreService {
     def listWorkflows(env: Environment, pageOffset: Int, pageLength: Int): Seq[Workflow]
     def countWorkflows(env: Environment): Int
 
-    def listEnvsWithWorkflow(projectId: Int, statusFilter: Option[Seq[EnvStatus]] = None): Seq[(Environment, Option[Workflow])]
+    def listEnvsWithWorkflow(projectId: Int, statusFilter: Option[Seq[EnvStatus]] = None, ordering: Option[EnvOrdering] = None): Seq[(Environment, Option[Workflow])]
 
     def workflowsHistory(env : Environment, pageOffset: Int, pageLength: Int): Seq[(Workflow, Seq[WorkflowStep])]
 
@@ -117,3 +118,12 @@ class StoreServiceException extends RuntimeException
 
 class WorkflowRequestFailed(val env: Environment,
                             val workflow: Workflow) extends StoreServiceException
+
+
+case class EnvOrdering private(field: String, direction: Direction.Value) extends com.griddynamics.genesis.repository.Ordering
+
+object EnvOrdering {
+  val NAME = "name"
+
+  def byName(direction: Direction.Value) = new EnvOrdering(NAME, direction)
+}
