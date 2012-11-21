@@ -22,7 +22,7 @@
  */
 package com.griddynamics.genesis.repository.impl
 
-import com.griddynamics.genesis.repository.{AbstractGenericRepository, ConfigurationRepository}
+import com.griddynamics.genesis.repository._
 import com.griddynamics.genesis.{model, api}
 import api.{Success, Failure, ExtendedResult, Configuration}
 import model.{EnvStatus, GenesisSchema}
@@ -42,12 +42,27 @@ class ConfigurationRepositoryImpl extends AbstractGenericRepository[model.Config
     m
   }
 
-  private[this] def listModels(projectId: Int): Iterable[model.Configuration] = from(table) (
-    item => where( projectId === item.projectId ) select (item) orderBy(item.name)
-  ).toList
+  def mapFieldsAstField(o: model.Configuration) = Map(
+    ConfigurationOrdering.NAME -> o.name.~
+  )
+
+  def order(m: model.Configuration, ordering: ConfigurationOrdering) = {
+    val field = mapFieldsAstField(m)(ordering.field)
+    if (ordering.direction == Direction.ASC) field.asc else field.desc
+  }
+
+  private[this] def listModels(projectId: Int, ordering: Option[ConfigurationOrdering] = None): Iterable[model.Configuration] =
+    from(table) { item =>
+      val orderBy = ordering.map(o => order(item, o)).getOrElse(item.name asc)
+      where( projectId === item.projectId ) select (item) orderBy(orderBy)
+    }.toList
 
   @Transactional(readOnly = true)
   def list(projectId: Int) = listModels(projectId).map(convert(_))
+
+  @Transactional(readOnly = true)
+  def list(projectId: Int, ordering: ConfigurationOrdering) =
+    listModels(projectId, Option(ordering)).map(convert(_))
 
   @Transactional(readOnly = true)
   def get(projectId: Int, id: Int) =  {
