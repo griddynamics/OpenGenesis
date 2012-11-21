@@ -25,17 +25,33 @@ package com.griddynamics.genesis.repository.impl
 import com.griddynamics.genesis.model
 import model.GenesisSchema
 import com.griddynamics.genesis.api
-import com.griddynamics.genesis.repository.AbstractGenericRepository
 import com.griddynamics.genesis.repository
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
 import java.sql.Timestamp
+import repository.{Direction, AbstractGenericRepository, ProjectOrdering}
 
 class ProjectRepository extends AbstractGenericRepository[model.Project, api.Project](GenesisSchema.projects)
   with repository.ProjectRepository {
 
   val activeProjects = from(table) { project =>
     where(project.isDeleted === false) select(project)
+  }
+
+  def mapFieldsAstField(o: model.Project) = Map(
+    ProjectOrdering.NAME -> o.name.~
+  )
+
+  def order(m: model.Project, ordering: ProjectOrdering) = {
+    val field = mapFieldsAstField(m)(ordering.field)
+    if (ordering.direction == Direction.ASC) field.asc else field.desc
+  }
+
+  @Transactional(readOnly = true)
+  def list(ordering: ProjectOrdering) = {
+    from(activeProjects)(p => {
+      select(p) orderBy( order(p, ordering) )
+    }).toList.map(convert(_))
   }
 
   @Transactional(readOnly = true)
@@ -49,8 +65,9 @@ class ProjectRepository extends AbstractGenericRepository[model.Project, api.Pro
   }.headOption.map(convert(_))
 
   @Transactional(readOnly = true)
-  def getProjects(ids: Iterable[Int]) = from(activeProjects) {
-    item => where(item.id in ids) select (item) orderBy(item.id)
+  def getProjects(ids: Iterable[Int], ordering: Option[ProjectOrdering] = None) = from(activeProjects) { item =>
+    val orderBy = ordering.map(o => order(item, o)).getOrElse(item.id asc)
+    where(item.id in ids) select (item) orderBy( orderBy )
   }.toList.map(convert _)
 
   @Transactional(readOnly = true)
