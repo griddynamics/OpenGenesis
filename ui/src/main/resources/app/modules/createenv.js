@@ -299,7 +299,7 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
             validation.bindValidation(view.model, view._settingsForm());
           } else {
             $.when(genesis.fetchTemplate(view.preconditionErrorTemplate)).done(function(tmpl){
-              view.el.innerHTML = tmpl({error: {compoundServiceErrors: ["You don't have permission to create instance in any of environment configurations"]}});
+              view.el.innerHTML = tmpl({error: {compoundServiceErrors: ["You don't have permissions to create instances in any of environments configurations"]}});
             });
           }
         });
