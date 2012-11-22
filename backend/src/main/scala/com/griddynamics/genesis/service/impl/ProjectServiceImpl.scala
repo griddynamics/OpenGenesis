@@ -42,7 +42,7 @@ case class ProjectOrdering(sorting: String) {
 
 trait ProjectService extends CRUDService[Project, Int] {
 
-  def list(ordering: ProjectOrdering): Seq[Project]
+  def orderedList(ordering: ProjectOrdering): Seq[Project]
 
   def getProjects(ids: Iterable[Int], ordering: Option[ProjectOrdering] = None): Iterable[Project]
 }
@@ -69,7 +69,7 @@ class ProjectServiceImpl(repository: ProjectRepository, storeService: service.St
   def list: Seq[Project] =  repository.list
 
   @Transactional(readOnly = true)
-  def list(ordering: ProjectOrdering) = repository.list(ordering.toRepositoryOrdering)
+  def orderedList(ordering: ProjectOrdering) = repository.list(ordering.toRepositoryOrdering)
 
   @Transactional
   override def create(project: Project) = {
