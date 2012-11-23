@@ -27,7 +27,7 @@ import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.bean.RequestBroker
 import com.griddynamics.genesis.{model, service}
 import com.griddynamics.genesis.model.{Workflow, EnvStatus}
-import com.griddynamics.genesis.repository.ConfigurationRepository
+import com.griddynamics.genesis.repository.{Direction, ConfigurationRepository}
 import com.griddynamics.genesis.service._
 import com.griddynamics.genesis.validation.Validation._
 
@@ -39,10 +39,14 @@ class GenesisRestService(storeService: StoreService,
                          configurationRepository: ConfigurationRepository) extends GenesisService {
 
 
-    def listEnvs(projectId: Int, statusFilter: Option[Seq[String]] = None) = {
+    def listEnvs(projectId: Int, statusFilter: Option[Seq[String]] = None, ordering: Option[String] = None) = {
       val filterOpt = statusFilter.map(_.map(EnvStatus.withName(_)))
       envs (
-        storeService.listEnvsWithWorkflow(projectId, filterOpt),
+        storeService.listEnvsWithWorkflow(projectId, filterOpt, ordering.map ( _ match {
+          case "name" => EnvOrdering.byName(Direction.ASC)
+          case "~name" => EnvOrdering.byName(Direction.DESC)
+          case a => throw new IllegalArgumentException("Unsupport ordering value '%s'".format(a))
+        })),
         configurationRepository.lookupNames(projectId)
       )
     }

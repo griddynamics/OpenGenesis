@@ -23,7 +23,7 @@
 package com.griddynamics.genesis.service.impl
 
 import org.squeryl.PrimitiveTypeMode._
-import com.griddynamics.genesis.service
+import com.griddynamics.genesis.{model, service}
 import com.griddynamics.genesis.model.{GenesisSchema => GS}
 import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.model.EnvStatus._
@@ -34,7 +34,8 @@ import org.squeryl.{StaleUpdateException, Query, Table}
 import java.sql.Timestamp
 import com.griddynamics.genesis.model.WorkflowStepStatus._
 import com.griddynamics.genesis.util.Logging
-import com.griddynamics.genesis.repository.ConfigurationRepository
+import com.griddynamics.genesis.repository.{Direction, ConfigurationRepository}
+import service.EnvOrdering
 
 //TODO think about ids as vars
 class StoreService extends service.StoreService with Logging {
@@ -45,8 +46,14 @@ class StoreService extends service.StoreService with Logging {
     where(env.projectId === project.id and project.isDeleted === false) select(env)
   }
 
+  private def getEnvComparator(ordering: Option[EnvOrdering]) = ordering match {
+    case Some(EnvOrdering(field, Direction.ASC)) => (e1: Environment, e2: Environment) => e1.name < e2.name
+    case Some(EnvOrdering(field, Direction.DESC)) => (e1: Environment, e2: Environment) => e1.name > e2.name
+    case None => (e1: Environment, e2: Environment) => e1.id < e2.id
+  }
+
   @Transactional(readOnly = true)
-  def listEnvs(projectId: Int, statusFilter: Option[Seq[EnvStatus]] = None): Seq[Environment] = {
+  def listEnvs(projectId: Int, statusFilter: Option[Seq[EnvStatus]] = None, ordering: Option[EnvOrdering] = None): Seq[Environment] = {
     val filterId = statusFilter.flatten(_.map(_.id))
     val envsWithAttrs = join(GS.envs, GS.envAttrs.leftOuter)((env, attrs) =>
       where((if (statusFilter.nonEmpty) env.status.id in filterId else 1===1) and
@@ -60,7 +67,7 @@ class StoreService extends service.StoreService with Logging {
     } yield {
       env.importAttrs(attrs.toMap)
       env
-    }).toSeq.sortBy(_.id)
+    }).toSeq.sortWith(getEnvComparator(ordering))
   }
 
   @Transactional(readOnly = true)
@@ -166,8 +173,8 @@ class StoreService extends service.StoreService with Logging {
 
   //TODO switch to join query
   @Transactional(readOnly = true)
-  def listEnvsWithWorkflow(projectId: Int, statusFilter: Option[Seq[EnvStatus]] = None) = {
-    listEnvs(projectId, statusFilter).map(env => {
+  def listEnvsWithWorkflow(projectId: Int, statusFilter: Option[Seq[EnvStatus]] = None, ordering: Option[EnvOrdering] = None) = {
+    listEnvs(projectId, statusFilter, ordering).map(env => {
       (env, listWorkflows(env).find(w => w.status == WorkflowStatus.Executing))
     })
   }
