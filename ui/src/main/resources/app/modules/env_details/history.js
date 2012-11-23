@@ -175,9 +175,10 @@ function (genesis, Backbone, $) {
     },
 
     toggle: function(event) {
-      var $element = $(event.currentTarget).parent(),
+      var $target = $(event.currentTarget);
+      var $element = $target.parent(),
         $details = $element.siblings("div.history-details");
-
+      $target.toggleClass('expanded');
       if ($.browser.webkit) {
         $details.toggle();
       } else {
