@@ -192,10 +192,33 @@ function (genesis, backend, poller, status, EnvStatus, Backbone, $) {
       this.poll.bind('reset', this.checkForUpdates, this);
 
       poller.PollingManager.start(this.poll);
+      this.expanded = [];
     },
 
     onClose: function () {
       poller.PollingManager.stop(this.poll);
+    },
+
+    events: {
+      "click .toggle": "toggle"
+    },
+
+    toggle: function(event) {
+      var $element = $(event.currentTarget).parent();
+      $(event.currentTarget).toggleClass('expanded');
+      var config = $element.attr('data-config');
+      var $rows = $('tr[data-config="' + config + '"]');
+      var pos = _.indexOf(this.expanded, config);
+      if (pos > -1) {
+        this.expanded = this.expanded.splice(pos, 1);
+      } else {
+        this.expanded.push(config);
+      }
+      if ($.browser.webkit) {
+        $rows.toggle();
+      } else {
+        $rows.slideToggle("fast");
+      }
     },
 
     checkForUpdates: function(poll) {
@@ -217,10 +240,14 @@ function (genesis, backend, poller, status, EnvStatus, Backbone, $) {
 
     render: function () {
       var view = this;
+      var elements = _(view.collection.filterToJSON()).groupBy("configuration");
+      var configs = _.sortBy(_.keys(elements), function(s){ return s; });
       $.when(genesis.fetchTemplate(this.template)).done(function (tmpl) {
         view.$el.html(tmpl({
-          environments: view.collection.filterToJSON(),
+          environments: elements,
+          configurations: configs,
           project: view.project,
+          expanded: view.expanded,
           utils: genesis.utils
         }));
 

@@ -1,9 +1,20 @@
 <% var now = new Date(); %>
-<% if (environments.length > 0) { %>
-    <% for(var i = 0, count = environments.length; i < count; i++) { var environment = environments[i]; %>
+<% var hide = _.size(environments) > 1; %>
+<% if (configurations.length > 0) { %>
+<% for (var c = 0, cnt = configurations.length; c < cnt; c++) { var k = configurations[c]; %>
+<% var show = !hide || expanded.indexOf(k) > -1  %>
         <tr>
+            <td colspan="5" class="config_group">
+                <div data-config="<%= k %>">
+                    <h3 class="toggle <%= show ? 'expanded' : '' %>"><%= k %></h3>
+                </div>
+            </td>
+        </tr>
+<% var envs = _.sortBy(environments[k], function(env) {return env.name;}); %>
+<% if (envs.length > 0) { %>
+    <% for(var i = 0, count = envs.length; i < count; i++) { var environment = envs[i]; %>
+        <tr data-config="<%= k %>" class="<%= show ? '' : 'under_configuration' %>">
             <td class="first"><a href="#project/<%= project.id %>/env/<%= environment.id %>"><img src="/assets/img/env24.png" alt="Env" class="env-icon"><%= environment.name %></a></td>
-            <td ><%- environment.configuration %></td>
             <td>
                 <% var time = utils.formatTime(environment.creationTime); %>
                 <span class="time ellipsis" title="<%= time %>"><%= time %></span>
@@ -45,4 +56,6 @@
 
 <% } else { %>
     <tr ><td colspan="6" style="padding: 0" ><div class="information-panel wide" style="margin: -11px; "><p>No instances available</p></div></td></tr>
+<% } %>
+<% } %>
 <% } %>
