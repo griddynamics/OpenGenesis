@@ -39,10 +39,10 @@ class GenesisRestService(storeService: StoreService,
                          configurationRepository: ConfigurationRepository) extends GenesisService {
 
 
-    def listEnvs(projectId: Int, statusFilter: Option[Seq[String]] = None) = {
+    def listEnvs(projectId: Int, statusFilter: Option[Seq[String]] = None, ordering: Option[Ordering] = None) = {
       val filterOpt = statusFilter.map(_.map(EnvStatus.withName(_)))
       envs (
-        storeService.listEnvsWithWorkflow(projectId, filterOpt),
+        storeService.listEnvsWithWorkflow(projectId, filterOpt, ordering),
         configurationRepository.lookupNames(projectId)
       )
     }
