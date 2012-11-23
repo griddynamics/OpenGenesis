@@ -24,7 +24,7 @@
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.repository.ConfigurationRepository
+import com.griddynamics.genesis.repository.{Direction, ConfigurationOrdering, ConfigurationRepository}
 import scala.Array
 import javax.validation.Valid
 import com.griddynamics.genesis.api.ExtendedResult
@@ -51,7 +51,13 @@ class ConfigurationController extends RestApiExceptionsHandler{
     "or hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')" +
     "or hasPermission( #projectId, 'com.griddynamics.genesis.api.Project', 'administration') " +
     "or hasPermission(filterObject, 'read')")
-  def list(@PathVariable("projectId") projectId: Int) = configRepository.list(projectId)
+  def list(@PathVariable("projectId") projectId: Int,
+           @RequestParam(value = "sorting", required = false, defaultValue = "name") sorting: String) =
+    configRepository.list(projectId, sorting match {
+      case "name" => ConfigurationOrdering.byName(Direction.ASC)
+      case "~name" => ConfigurationOrdering.byName(Direction.DESC)
+      case o => throw new IllegalArgumentException("Unknwon sorting value '%s'".format(o))
+    })
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.GET))
   @ResponseBody
