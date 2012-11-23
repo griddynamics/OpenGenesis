@@ -30,10 +30,7 @@
     }
 %>
 <div class="workflow" data-timestamp="<%= workflow.executionStartedTimestamp %>">
-<img src="/assets/img/arrow-left.png" class="toggle">
-
-<h3 class="toggle"><%= workflow.name %></h3>
-
+<h3 class="toggle <%= expand ? 'expanded' : '' %>"><%= workflow.name %></h3>
 <div class="workflow-actions">
   Started:
   <span class="date">
