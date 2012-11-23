@@ -774,6 +774,18 @@ img.toggle {
     margin-top: 3px;
 }
 
+.config_group h3.toggle {
+    margin-top: 3px;
+    padding-left: 12px;
+    background: url(../img/arrow-left.png) no-repeat left;
+}
+
+.config_group h3.expanded {
+    margin-top: 3px;
+    padding-left: 15px;
+    background: url(../img/arrow-down.png) no-repeat left;
+}
+
 .workflow .date, .workflow .username, .workflow .duration {
     margin-right: 15px;
     font-style: italic;
@@ -1024,6 +1036,14 @@ table.main-table.attempts td.first {
 table.main-table.attempts td {
     padding: 10px !important;
     border-top: none;
+}
+
+table.main-table.attempts td.config_group {
+    background-color: #E8E8E8;
+}
+
+table.main-table.attempts tr.under_configuration {
+    display: none;
 }
 
 table.main-table.attempts th {
