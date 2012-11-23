@@ -29,4 +29,5 @@ trait ConfigurationRepository extends ProjectBoundRepository[Configuration] {
   def findByName(projectId: Int, name: String): Option[Configuration]
   def lookupNames(projectId: Int): Map[Int, String]
   def getDefaultConfig(projectId: Int): ExtendedResult[api.Configuration]
+  def list(projectId: Int, ordering: api.Ordering): Iterable[Configuration]
 }

@@ -27,7 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.repository.ConfigurationRepository
 import scala.Array
 import javax.validation.Valid
-import com.griddynamics.genesis.api.ExtendedResult
+import com.griddynamics.genesis.api.{ExtendedResult, Ordering}
 import org.springframework.security.access.prepost.PostFilter
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.validation.Validation
@@ -51,7 +51,9 @@ class ConfigurationController extends RestApiExceptionsHandler{
     "or hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')" +
     "or hasPermission( #projectId, 'com.griddynamics.genesis.api.Project', 'administration') " +
     "or hasPermission(filterObject, 'read')")
-  def list(@PathVariable("projectId") projectId: Int) = configRepository.list(projectId)
+  def list(@PathVariable("projectId") projectId: Int,
+           @RequestParam(value = "sorting", required = false, defaultValue = "name") ordering: Ordering) =
+    configRepository.list(projectId, ordering)
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.GET))
   @ResponseBody
