@@ -204,13 +204,14 @@ function (genesis, backend, poller, status, EnvStatus, Backbone, $) {
     },
 
     toggle: function(event) {
+      var view = this;
       var $element = $(event.currentTarget).parent();
       $(event.currentTarget).toggleClass('expanded');
       var config = $element.attr('data-config');
-      var $rows = $('tr[data-config="' + config + '"]');
+      var $rows = this.$el.children('tr[data-config="' + config + '"]');
       var pos = _.indexOf(this.expanded, config);
       if (pos > -1) {
-        this.expanded = this.expanded.splice(pos, 1);
+        this.expanded.splice(pos, 1);
       } else {
         this.expanded.push(config);
       }
