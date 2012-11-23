@@ -770,13 +770,13 @@ img.toggle {
     margin: 2px 5px 2px 5px;
 }
 
-.workflow h3.toggle, .config_group h3.toggle {
+.workflow h3.toggle, .step-details-expander a.toggle, .config_group h3.toggle {
     margin-top: 3px;
     padding-left: 12px;
     background: url(../img/arrow-left.png) no-repeat left;
 }
 
-.workflow h3.expanded, .config_group h3.expanded {
+.workflow h3.expanded, .step-details-expander a.expanded, .config_group h3.expanded {
     margin-top: 3px;
     padding-left: 15px;
     background: url(../img/arrow-down.png) no-repeat left;
