@@ -32,11 +32,9 @@ import com.griddynamics.genesis.util.InputUtil
 class ClassPathTemplateRepository(classLoader : ClassLoader,
                                   wildcard : String,
                                   charset : String)
-    extends ModeAwareTemplateRepository {
+    extends TemplateRepository {
 
     import ClassPathTemplateRepository._
-
-    def respondTo = Modes.Classpath
 
     def this() = this(ClassLoader.getSystemClassLoader, "*.genesis", "UTF-8")
 

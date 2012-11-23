@@ -25,16 +25,10 @@ package com.griddynamics.genesis.template
 import com.griddynamics.genesis.api
 import api.ConfigProperty
 
-trait ModeAwareTemplateRepository extends TemplateRepository {
-    import Modes._
-    def respondTo : Mode
-}
-
 object Modes extends Enumeration {
     type Mode = Value
     val Git = Value("git")
     val Classpath = Value("classpath")
-    val Tfs = Value("tfs")
     val Local = Value("filesystem")
 }
 
