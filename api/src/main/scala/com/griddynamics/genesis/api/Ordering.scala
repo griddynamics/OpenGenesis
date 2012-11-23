@@ -1,5 +1,5 @@
 /**
- *   Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
+ * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
  *   This library is free software; you can redistribute it and/or modify it under the terms of
@@ -18,16 +18,23 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *   Project:     Genesis
- *   Description: Continuous Delivery Platform
+ *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.repository
+package com.griddynamics.genesis.api
 
-import com.griddynamics.genesis.api.{ExtendedResult, Configuration}
-import com.griddynamics.genesis.api
+case class Ordering(field: String, direction: Directions.Value)
 
-trait ConfigurationRepository extends ProjectBoundRepository[Configuration] {
-  def findByName(projectId: Int, name: String): Option[Configuration]
-  def lookupNames(projectId: Int): Map[Int, String]
-  def getDefaultConfig(projectId: Int): ExtendedResult[api.Configuration]
-  def list(projectId: Int, ordering: api.Ordering): Iterable[Configuration]
+object Ordering {
+  import Directions._
+
+  def asc(field: String) = Ordering(field, ASC)
+
+  def desc(field: String) = Ordering(field, DESC)
+
+}
+
+object Directions extends Enumeration {
+  type Direction = Value
+  val ASC = Value("Ascending")
+  val DESC = Value("Descending")
 }

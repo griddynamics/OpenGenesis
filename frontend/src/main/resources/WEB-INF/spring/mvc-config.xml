@@ -33,7 +33,7 @@
                            http://www.springframework.org/schema/mvc/spring-mvc-3.1.xsd
                            http://www.springframework.org/schema/context
                            http://www.springframework.org/schema/context/spring-context-3.1.xsd">
-    <mvc:annotation-driven>
+    <mvc:annotation-driven conversion-service="conversionService">
         <mvc:message-converters>
             <bean class="com.griddynamics.genesis.spring.JsonMessageConverter"></bean>
         </mvc:message-converters>
@@ -41,4 +41,13 @@
     </mvc:annotation-driven>
     <context:annotation-config/>
     <context:property-placeholder location="${backend.properties}" system-properties-mode="OVERRIDE"/>
+
+    <bean id="conversionService"
+          class="org.springframework.context.support.ConversionServiceFactoryBean">
+        <property name="converters">
+            <set>
+                <bean class="com.griddynamics.genesis.spring.OrderingConverter"/>
+            </set>
+        </property>
+    </bean>
 </beans>

@@ -4,7 +4,7 @@ import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import com.griddynamics.genesis.rest.GenesisRestController._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
-import com.griddynamics.genesis.service.impl.{ProjectOrdering, ProjectService}
+import com.griddynamics.genesis.service.impl.ProjectService
 import com.griddynamics.genesis.api._
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.Authentication
@@ -51,15 +51,15 @@ class ProjectsController extends RestApiExceptionsHandler {
 
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
-  def listProjects(@RequestParam(value = "sorting", required = false, defaultValue = "name") sorting: String,
+  def listProjects(@RequestParam(value = "sorting", required = false, defaultValue = "name") sorting: Ordering,
                    request: HttpServletRequest): Iterable[Project] = {
     import scala.collection.JavaConversions._
     if (request.isUserInRole(GenesisRole.SystemAdmin.toString) || request.isUserInRole(GenesisRole.ReadonlySystemAdmin.toString)) {
-      projectService.orderedList(ProjectOrdering(sorting))
+      projectService.orderedList(sorting)
     } else {
       val authorities = GenesisRestController.getCurrentUserAuthorities
       val ids = authorityService.getAllowedProjectIds(request.getUserPrincipal.getName, authorities)
-      projectService.getProjects(ids, Option(ProjectOrdering(sorting)))
+      projectService.getProjects(ids, Option(sorting))
     }
   }
 
