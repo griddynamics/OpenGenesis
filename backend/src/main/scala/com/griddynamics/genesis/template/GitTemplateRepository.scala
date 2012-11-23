@@ -40,7 +40,7 @@ class GitTemplateRepository(uri : String,
                             branch : String,
                             directory : File,
                             wildcard : String,
-                            charset : String) extends ModeAwareTemplateRepository with Logging {
+                            charset : String) extends TemplateRepository with Logging {
     import GitTemplateRepository._
 
     lazy val repo = initRepository
@@ -50,8 +50,6 @@ class GitTemplateRepository(uri : String,
     var sources = Map[VersionedTemplate, String]()
 
     val treeFilter = new WildcardTreeFilter(wildcard)
-
-    def respondTo = Modes.Git
 
     def initRepository = {
         log.info("Starting git-init for repository '%s' in directory '%s'", uri, directory.getAbsolutePath)
