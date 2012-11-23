@@ -11,7 +11,7 @@ define([
   "use!jvalidate"
 ],
 
-function(genesis, backend,  status, variables, gtemplates, validation, Backbone, $) {
+function(genesis, backend,  status, variablesmodule, gtemplates, validation, Backbone, $) {
   var createenv = genesis.module();
 
   var EnvCreate = Backbone.Model.extend({
@@ -159,7 +159,7 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
     },
 
     render: function() {
-      _(this.stepViews).forEach(function(view){ view.render() });
+      this.currentView().render();
     }
 
   });
@@ -222,7 +222,7 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
     }
   });
 
-  var EnvironmentParametersStep = variables.WorkflowParamsView.extend({
+  var EnvironmentParametersStep = variablesmodule.Views.AbstractWorkflowParamsView.extend({
     template: "app/templates/createenv/environment_settings.html",
     errorTemplate: "app/templates/createenv/environment_settings_error.html",
     preconditionErrorTemplate: "app/templates/createenv/preconditions_error.html",
@@ -243,36 +243,32 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
         var desc = new gtemplates.TemplateModel({name: newTemplate.get('name'), version:  newTemplate.get('version')}, {projectId: this.project.id});
         genesis.app.trigger("page-view-loading-started");
         var self = this;
+
         self.$el.html("");
         $.when(desc.fetch()).done(function() {
-          var workflow = new gtemplates.WorkflowModel({name: newTemplate.get('name'), version:  newTemplate.get('version')},
-            {projectId: self.project.id, workflow: desc.get('createWorkflow').name});
+          var workflow = new gtemplates.WorkflowModel(
+            {name: newTemplate.get('name'), version: newTemplate.get('version')},
+            {projectId: self.project.id, workflow: desc.get('createWorkflow').name}
+          );
+
           $.when(workflow.fetch()).done(function() {
             self.variables = workflow.get('result').variables;
-            variables.processVars({
-              variables: self.variables,
-              projectId: self.project.id,
-              workflowName: workflow.workflow,
-              templateName: newTemplate.get('name'),
-              templateVersion: newTemplate.get('version')
-            });
-            self.render();
-          }).fail(function(jqXHR){
-              jqXHR.preconditionFailed = true;
-              self.render(jqXHR);
-          }).always(function(){
+            self.render(newTemplate, workflow.workflow);
+          }).fail(function (jqXHR) {
+              self.renderError(jqXHR, self.preconditionErrorTemplate);
+          }).always(function () {
               genesis.app.trigger("page-view-loading-completed");
           });
         })
         .fail(function(jqXHR) {
-            self.render(jqXHR);
-            genesis.app.trigger("page-view-loading-completed");
+          self.renderError(jqXHR);
+          genesis.app.trigger("page-view-loading-completed");
         });
       }
     },
 
     modelValues: function() {
-    return {
+      return {
         envName: this.$("input[name='envName']").val(),
         variables: this.workflowParams(),
         configId: this.$("select[name='configId']").val()
@@ -283,36 +279,48 @@ function(genesis, backend,  status, variables, gtemplates, validation, Backbone,
       return this.$('#workflow-parameters-form');
     },
 
-    render: function(error){
+    renderError: function(error, htmltemplate) {
       var view = this;
-      validation.unbindValidation(this.model, this._settingsForm());
-
-      if (!error) {
-        $("#ready").show();
-        var configs = new Configurations([], {projectId: this.project.id});
-        $.when(genesis.fetchTemplate(this.template), genesis.fetchTemplate(this.varTemplate), configs.fetch()).done(function(tmpl, varTmpl){
-          if(configs.size() > 0) {
-            view.$el.html(tmpl({configs: configs.toJSON()/*variables: view.variables*/}));
-            view.$('#workflow_vars').html(varTmpl({variables: view.variables}));
-            view.$('input:not(:hidden):first').focus();
-
-            validation.bindValidation(view.model, view._settingsForm());
-          } else {
-            $.when(genesis.fetchTemplate(view.preconditionErrorTemplate)).done(function(tmpl){
-              view.el.innerHTML = tmpl({error: {compoundServiceErrors: ["You don't have permissions to create instances in any of environments configurations"]}});
-            });
-          }
-        });
-      }  else {
-        $("#ready").hide();
-        var template = error.preconditionFailed ? this.preconditionErrorTemplate : this.errorTemplate;
-        $.when(genesis.fetchTemplate(template)).done(function(tmpl){
-          view.el.innerHTML = tmpl({error: JSON.parse(error.responseText)});
-        });
-      }
+      $("#ready").hide();
+      var errorMsg = _.has(error, "responseText") ? JSON.parse(error.responseText) : error;
+      $.when(genesis.fetchTemplate(htmltemplate || this.errorTemplate)).done(function(tmpl){
+        view.$el.html(tmpl({error: errorMsg}));
+      });
     },
 
-    variablesModel: function(e) {
+    render: function (template, workflow) {
+      var view = this;
+      validation.unbindValidation(this.model, this._settingsForm());
+      $("#ready").show();
+      var configs = new Configurations([], {projectId: this.project.id});
+      $.when(genesis.fetchTemplate(this.template), configs.fetch()).done(function (tmpl) {
+        if (configs.size() == 0) {
+          view.renderError(
+            { compoundServiceErrors: ["You don't have permissions to create instances in any of environments configurations"] },
+            view.preconditionErrorTemplate
+          );
+          return;
+        }
+        view.$el.html(tmpl({configs: configs.toJSON()}));
+
+        if (template && workflow) {
+          var inputsView = new variablesmodule.Views.InputControlsView({
+            el: view.$('#workflow_vars'),
+            variables: view.variables,
+            projectId: view.project.id,
+            workflow: workflow,
+            template: template
+          });
+
+          inputsView.render(function() {
+            view.$('input:not(:hidden):first').focus();
+            validation.bindValidation(view.model, view._settingsForm());
+          });
+        }
+      });
+    },
+
+    /* override */ variablesModel: function() {
        return this.variables;
     }
   });

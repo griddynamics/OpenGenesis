@@ -9,6 +9,8 @@ define([
 
 function(genesis, status, $, _, Backbone) {
 
+  var variables = genesis.module();
+
   var DependencyGraph = function(variables) {
     this.parentsOf = {}; // [name -> list of parents ] map
     this.childrenOf = {}; // [name -> list of dependents] map
@@ -75,16 +77,6 @@ function(genesis, status, $, _, Backbone) {
     }
   };
 
-  function collectValueObject(variables) {
-    return _(variables).inject(function(vars, elem) {
-      var val = $('#' + elem).val();
-      if (val) {
-        vars[elem] = val;
-      }
-      return vars;
-    }, {});
-  }
-
   function partialApply(url, variables) {
     return $.ajax({
       type: "POST",
@@ -95,106 +87,162 @@ function(genesis, status, $, _, Backbone) {
     })
   }
 
-  return {
-    processVars: function(options) {
-      var templateUrl = "/rest/projects/" + options.projectId + "/templates/" +  options.templateName + "/v" +  options.templateVersion + "/" + options.workflowName;
+  variables.Views.AbstractWorkflowParamsView = Backbone.View.extend({
+    events: {
+      "click .group-radio": "groupVarSelected"
+    },
 
-      var graph = new DependencyGraph(options.variables);
+    initialize: function() {
+      throw new Error("AbstractWorkflowParamsView should be used for extensions only")
+    },
 
-      var enableChecked = function(variable) {
-        var enable = true;
-        if (variable.group) {
-          enable = $("input[type=radio][name=" + variable.group + "][data-var-name="
-          + variable.name + "]").is(':checked');
+    workflowParams: function () {
+      var vals = {};
+      this.$('.workflow-variable').each(function () {
+        var value = $(this).is("input[type='checkbox']") ? $(this).is(':checked').toString() : $(this).val();
+        var group = $($(this).parent()).children("input[type='radio'].group-radio");
+        var groupChecked = group && $(group).is(':checked');
+        if ($(this).val() && $(this).is(':enabled') || groupChecked) {
+          vals[$(this).attr('name')] = value;
         }
-        if (enable) $('#' + variable.name).removeAttr("disabled");
-      };
+      });
+      return vals;
+    },
 
-      _(graph.allButLeafs()).each(function(node) {
-        var selector = "#" + node;
-        $(document).off("change", selector).on("change", selector, function() {
-          var source = $(this).attr("name");
-          var descendants = _(graph.allDescendants(source));
+    variablesModel: function () {
+      //to be overridden
+      return {};
+    },
 
-          descendants.each(function(name) {
-            $('#' + name).attr('disabled', 'disabled').find("option").remove();
-          });
+    groupVarSelected: function (event) {
+      var view = this;
+      var $currentTarget = view.$(event.currentTarget);
+      var group = $currentTarget.attr('name');
+      var name = $currentTarget.attr('data-var-name');
 
-          var resolvedVariables = _.difference(graph.all(), descendants);
-          var variables = collectValueObject(resolvedVariables);
+      view.$("#" + name).removeAttr('disabled');
 
-          genesis.app.trigger("page-view-loading-started");
+      _.each(this.variablesModel().filter(function (v) { return group === v.group && name !== v.name}), function (x) {
+        view.$("#" + x.name).attr('disabled', '');
+      });
+    }
+  });
 
-          $.when(partialApply(templateUrl, variables))
-            .done(function(data) {
-              _(data).each(function(variable) {
-                enableChecked(variable);
-                if (descendants.contains(variable.name) && _.has(variable, "values") && _.size(variable.values) > 0) {
+  variables.Views.InputControlsView = Backbone.View.extend ({
+    htmltemplate: "app/templates/common/variables.html",
 
-                  var $select = $("#" + variable.name)
-                    .append("<option value=''> Please select </option>");
+    initialize: function (options) {
+      this.variables = options.variables;
+      this.graph = new DependencyGraph(this.variables);
 
-                  _(variable.values).each(function(label, value) {
-                    if (label && value) {
-                      $select.append(
-                        $("<option/>").attr("value", value).text(label)
-                      );
-                    }
-                  });
+      var templateUrl = "/rest/projects/" +
+        options.projectId + "/templates/" +
+        options.template.get("name") + "/v" +
+        options.template.get("version") + "/" + options.workflow;
 
-                  if(variable.defaultValue) {
-                    $select.val(variable.defaultValue);
-                    $select.change();
-                  }
-                }
-              });
-            }).fail(function(jqXHR) {
-              status.StatusPanel.error(jqXHR);
-            }).always(function() {
-              descendants.each(function(name) {
-                var dv = _.find(options.variables, function(v){ return v.name == name; });
-                enableChecked(dv);
-              });
-              genesis.app.trigger("page-view-loading-completed");
-            });
-        });
+      this.applyVariables = function(variables) {
+        return partialApply(templateUrl, variables)
+      }
+    },
+
+    $groupVariableRadio: function (variable) {
+      return this.$("input[type=radio][name=" + variable.group + "][data-var-name=" + variable.name + "]");
+    },
+
+    _enableChecked: function (variable) {
+      var enable = true;
+      if (variable.group) {
+        enable = this.$groupVariableRadio(variable).is(':checked');
+      }
+      if (enable) this.$('#' + variable.name).removeAttr("disabled");
+    },
+
+    _isMultiValue: function (variable) {
+      return _.has(variable, "values") && _.size(variable.values) > 0
+    },
+
+    _buildOptions: function ($element, valueMap, defaultValue) {
+      $element.append("<option value=''> Please select </option>");
+      _(valueMap).each(function (label, value) {
+        if (label && value) {
+          $element.append($("<option/>").attr("value", value).text(label));
+        }
+      });
+      if (defaultValue) {
+        $element.val(defaultValue).change();
+      }
+    },
+
+    _disable: function (select) {
+      var $select = select instanceof jQuery ? select : $(select);
+      $select.attr('disabled', 'disabled').find("option").remove();
+    },
+
+    _collectValueObject: function (variables) {
+      var self = this;
+      return _(variables).inject(function (nameValueMap, variableName) {
+        var val = self.$('#' + variableName).val();
+        if (val) {
+          nameValueMap[variableName] = val;
+        }
+        return nameValueMap;
+      }, {});
+    },
+
+    render: function (callback) {
+      var self = this;
+      $.when(genesis.fetchTemplate(this.htmltemplate)).done(function (varTmpl) {
+        self.$el.html(varTmpl({variables: self.variables}));
+        self._linkDependencies();
+
+        if (callback) callback();
       });
     },
 
-    WorkflowParamsView : Backbone.View.extend({
-      varTemplate: "app/templates/common/variables.html",
+    _linkDependencies: function () {
+      this.undelegateEvents();
 
-      events: {
-        "click .group-radio": "groupVarSelected"
-      },
+      var self = this,
+          graph = this.graph,
+          events = {};
 
-      workflowParams: function() {
-        var vals = {};
-        this.$('.workflow-variable').each(function () {
-          var value = $(this).is("input[type='checkbox']") ? $(this).is(':checked').toString() : $(this).val();
-          var group = $($(this).parent()).children("input[type='radio'].group-radio");
-          var groupChecked = group && $(group).is(':checked');
-          if ($(this).val() && $(this).is(':enabled') || groupChecked) { vals[$(this).attr('name')] = value; }
-        });
-        return vals;
-      },
+      _(this.graph.allButLeafs()).each(function (node) {
+        events["change #" + node] = function () {
+          genesis.app.trigger("page-view-loading-started");
 
-      variablesModel: function() {
-        //to be overridden
-        return {};
-      },
+          var descendants = _(graph.allDescendants(node));
+          descendants.each(function (name) { self._disable("#" + name) });
 
-      groupVarSelected: function(event) {
-        var view = this;
-        var $currentTarget = view.$(event.currentTarget);
-        var group = $currentTarget.attr('name');
-        var name = $currentTarget.attr('data-var-name');
-        view.$("#" + name).removeAttr('disabled');
-        _.each(this.variablesModel().filter(function(v){return group == v.group && name !== v.name;}), function (x) {
-          view.$("#" + x.name).attr('disabled', '');
-        });
-      }
-    })
+          var resolvedVariables = _.difference(graph.all(), descendants);
+          var nameValueMap = self._collectValueObject(resolvedVariables);
 
-  }
+          self.applyVariables(nameValueMap).done(function (data) {
+            _(data).each(function (variable) {
+              self._enableChecked(variable);
+              if (descendants.contains(variable.name) && self._isMultiValue(variable)) {
+                self._buildOptions(self.$("#" + variable.name), variable.values, variable.defaultValue || null);
+              }
+            });
+
+            var unresolvedVarNames = _(descendants.difference(_(data).pluck("name")));
+            _(self.variables).each(function (v) {
+              if (v.group && unresolvedVarNames.contains(v.name) && self.$groupVariableRadio(v).is(':checked')) {
+                self.$('#' + v.name).removeAttr("disabled");
+              }
+            });
+
+          }).fail(function (jqXHR) {
+            status.StatusPanel.error(jqXHR);
+          }).always(function () {
+            genesis.app.trigger("page-view-loading-completed");
+          });
+
+        };
+      });
+
+      this.delegateEvents(events);
+    }
+  });
+
+  return variables;
 });

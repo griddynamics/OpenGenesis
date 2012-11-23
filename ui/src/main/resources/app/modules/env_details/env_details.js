@@ -13,7 +13,7 @@ define([
   "use!jvalidate"
 ],
 
-function (genesis, backend, poller, status, EnvHistory, variables, gtemplates, EnvStatus, Backbone, $) {
+function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtemplates, EnvStatus, Backbone, $) {
   var EnvironmentDetails = genesis.module();
 
   EnvironmentDetails.Model = Backbone.Model.extend({
@@ -367,7 +367,7 @@ function (genesis, backend, poller, status, EnvHistory, variables, gtemplates, E
     }
   });
 
-  var ExecuteWorkflowDialog = variables.WorkflowParamsView.extend({
+  var ExecuteWorkflowDialog = variablesmodule.Views.AbstractWorkflowParamsView.extend({
     template: "app/templates/environment_variables.html",
 
     initialize: function() {
@@ -437,49 +437,50 @@ function (genesis, backend, poller, status, EnvHistory, variables, gtemplates, E
 
     render: function() {
       var view = this;
-      $.when(genesis.fetchTemplate(this.template), genesis.fetchTemplate(this.varTemplate)).done(function (tmpl, tmplVars) {
-        variables.processVars({
-          variables: view.workflow.variables,
-          projectId: view.projectId,
-          workflowName: view.workflow.name,
-          templateName: view.templateName,
-          templateVersion: view.templateVersion
-        });
+      $.when(genesis.fetchTemplate(this.template)).done(function (tmpl) {
 
         genesis.app.trigger("page-view-loading-completed");
         view.$el.html(tmpl({noVariables: view.workflow.variables.length == 0, workflowName: view.workflow.name}));
-        view.$('#workflow_vars').html(tmplVars({variables: view.workflow.variables}));
 
+        var inputsView = new variablesmodule.Views.InputControlsView({
+          el: view.$('#workflow_vars'),
+          variables: view.workflow.variables,
+          projectId: view.projectId,
+          workflow: view.workflow.name,
+          template: new Backbone.Model({name: view.templateName, version: view.templateVersion})
+        });
 
-        view.$el.dialog({
-          title: 'Execute ' + view.workflow.name,
-          width: _.size(view.workflow.variables) > 0 ? 1052 : 400,
-          autoOpen: true,
-          buttons: {
-            "Run": function(e) {
-              var $thisButton = $(this).parent().find("button:contains('Run')"),
+        inputsView.render(function() {
+          view.$el.dialog({
+            title: 'Execute ' + view.workflow.name,
+            width: _.size(view.workflow.variables) > 0 ? 1052 : 400,
+            autoOpen: true,
+            buttons: {
+              "Run": function(e) {
+                var $thisButton = $(this).parent().find("button:contains('Run')"),
                   disabled = $thisButton.button( "option", "disabled" );
-              if(!disabled) {
-                $thisButton.button("disable");
+                if(!disabled) {
+                  $thisButton.button("disable");
 
-                view.unbind("workflow-validation-errors");
-                view.bind("workflow-validation-errors", function() {
-                  $thisButton.button("enable");
-                });
+                  view.unbind("workflow-validation-errors");
+                  view.bind("workflow-validation-errors", function() {
+                    $thisButton.button("enable");
+                  });
 
-                view.runWorkflow();
+                  view.runWorkflow();
+                }
+              },
+
+              "Cancel": function () {
+                $(this).dialog( "close" );
               }
-            },
-
-            "Cancel": function () {
-              $(this).dialog( "close" );
             }
-          }
+          });
         });
       });
     },
 
-    variablesModel: function(e) {
+    /* override */ variablesModel: function() {
        return this.workflow.variables;
     }
 
