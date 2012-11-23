@@ -26,25 +26,17 @@ import com.griddynamics.genesis.common.CRUDService
 import com.griddynamics.genesis.validation.Validation
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.validation.Validation._
-import com.griddynamics.genesis.api.Project
+import com.griddynamics.genesis.api.{Project, Ordering}
 import com.griddynamics.genesis.service
 import com.griddynamics.genesis.model.EnvStatus
 import com.griddynamics.genesis.repository
-import repository.{ProjectRepository, Direction}
-
-case class ProjectOrdering(sorting: String) {
-  private[impl] def toRepositoryOrdering: repository.ProjectOrdering = sorting match {
-    case "name" => repository.ProjectOrdering.byName(Direction.ASC)
-    case "~name" => repository.ProjectOrdering.byName(Direction.DESC)
-    case a => throw new IllegalArgumentException("Unsupported ordering value '%s'".format(a))
-  }
-}
+import repository.ProjectRepository
 
 trait ProjectService extends CRUDService[Project, Int] {
 
-  def orderedList(ordering: ProjectOrdering): Seq[Project]
+  def orderedList(ordering: Ordering): Seq[Project]
 
-  def getProjects(ids: Iterable[Int], ordering: Option[ProjectOrdering] = None): Iterable[Project]
+  def getProjects(ids: Iterable[Int], ordering: Option[Ordering] = None): Iterable[Project]
 }
 
 class ProjectServiceImpl(repository: ProjectRepository, storeService: service.StoreService) extends ProjectService with Validation[Project] {
@@ -69,7 +61,7 @@ class ProjectServiceImpl(repository: ProjectRepository, storeService: service.St
   def list: Seq[Project] =  repository.list
 
   @Transactional(readOnly = true)
-  def orderedList(ordering: ProjectOrdering) = repository.list(ordering.toRepositoryOrdering)
+  def orderedList(ordering: Ordering) = repository.list(ordering)
 
   @Transactional
   override def create(project: Project) = {
@@ -96,7 +88,7 @@ class ProjectServiceImpl(repository: ProjectRepository, storeService: service.St
   }
 
   @Transactional(readOnly = true)
-  def getProjects(ids: Iterable[Int], ordering: Option[ProjectOrdering] = None): Iterable[Project] = {
-    repository.getProjects(ids, ordering.map(_.toRepositoryOrdering))
+  def getProjects(ids: Iterable[Int], ordering: Option[Ordering] = None): Iterable[Project] = {
+    repository.getProjects(ids, ordering)
   }
 }

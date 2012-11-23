@@ -17,29 +17,15 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Project:     Genesis
- * Description:  Continuous Delivery Platform
+ *   Project:     Genesis
+ *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.repository
+package com.griddynamics.genesis.spring
 
-import com.griddynamics.genesis.api
-import api.Project
-import api.Ordering
+import org.springframework.core.convert.converter.Converter
+import com.griddynamics.genesis.api.Ordering
 
-trait ProjectRepository {
-  def list(ordering: Ordering): List[api.Project]
-
-  def getProjects(ids: Iterable[Int], ordering: Option[Ordering] = None): Iterable[Project]
-
-  def load(id: Int): api.Project
-
-  def list: List[api.Project]
-
-  def delete(id: Int): Int
-
-  def save(entity: api.Project): api.Project
-
-  def get(id: Int): Option[api.Project]
-
-  def findByName(name: String): Option[api.Project]
+class OrderingConverter extends Converter[String, Ordering] {
+  def convert(source: String) =
+    if (source.startsWith("~")) Ordering.desc(source.substring(1)) else Ordering.asc(source)
 }

@@ -17,29 +17,24 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Project:     Genesis
- * Description:  Continuous Delivery Platform
+ *   Project:     Genesis
+ *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.repository
+package com.griddynamics.genesis.api
 
-import com.griddynamics.genesis.api
-import api.Project
-import api.Ordering
+case class Ordering(field: String, direction: Directions.Value)
 
-trait ProjectRepository {
-  def list(ordering: Ordering): List[api.Project]
+object Ordering {
+  import Directions._
 
-  def getProjects(ids: Iterable[Int], ordering: Option[Ordering] = None): Iterable[Project]
+  def asc(field: String) = Ordering(field, ASC)
 
-  def load(id: Int): api.Project
+  def desc(field: String) = Ordering(field, DESC)
 
-  def list: List[api.Project]
+}
 
-  def delete(id: Int): Int
-
-  def save(entity: api.Project): api.Project
-
-  def get(id: Int): Option[api.Project]
-
-  def findByName(name: String): Option[api.Project]
+object Directions extends Enumeration {
+  type Direction = Value
+  val ASC = Value("Ascending")
+  val DESC = Value("Descending")
 }
