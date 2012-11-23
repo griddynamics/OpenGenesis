@@ -40,18 +40,6 @@ trait TemplateRepository {
     }
 }
 
-trait SourceControl {
-    type ChangesetType <: Any;
-    def listProjects : Seq[VcsProject] = Seq[VcsProject]()
-    def listTags(id : String) : Seq[Tag] = Seq[Tag]()
-    def getContent(projectId: String,  tagId: String, fileName: String) : Option[String] = None
-    /** Content for specific version */
-    def getContentForVersion(projectId: String,  ver: ChangesetType, fileName: String) : Option[String] = None
-    /** Content for latest version */
-    def getContent(projectId: String,  fileName: String) : Option[(VersionedTemplate, String)] = None
-    def resolve[A <: AnyRef](downloadable: A) : Option[String] = None
-}
-
 case class VersionedTemplate(name: String,  version: String = "LATEST")
 
 object TemplateRepository {

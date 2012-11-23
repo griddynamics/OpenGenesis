@@ -30,7 +30,7 @@ import com.griddynamics.genesis.util.Logging
 import org.apache.commons.codec.digest.DigestUtils
 
 
-class FilesystemTemplateRepository(filesystemFolder: String, wildcard: String) extends ModeAwareTemplateRepository with Logging {
+class FilesystemTemplateRepository(filesystemFolder: String, wildcard: String) extends TemplateRepository with Logging {
     
     var sources: Map[VersionedTemplate, String] = Map()
     var lastModifiedHash = "0"
@@ -54,6 +54,4 @@ class FilesystemTemplateRepository(filesystemFolder: String, wildcard: String) e
     }
 
     private def lastModification: String = DigestUtils.sha256Hex(files.map(_.lastModified()).mkString(""))
-
-    def respondTo = Modes.Local
 }
