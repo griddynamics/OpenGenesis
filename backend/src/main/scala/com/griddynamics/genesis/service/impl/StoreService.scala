@@ -23,7 +23,7 @@
 package com.griddynamics.genesis.service.impl
 
 import org.squeryl.PrimitiveTypeMode._
-import com.griddynamics.genesis.service
+import com.griddynamics.genesis.{model, service}
 import com.griddynamics.genesis.model.{GenesisSchema => GS}
 import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.model.EnvStatus._
@@ -34,10 +34,12 @@ import org.squeryl.{StaleUpdateException, Query, Table}
 import java.sql.Timestamp
 import com.griddynamics.genesis.model.WorkflowStepStatus._
 import com.griddynamics.genesis.util.Logging
-import com.griddynamics.genesis.repository.ConfigurationRepository
+import com.griddynamics.genesis.repository.{AbstractOrderingMapper, ConfigurationRepository}
 import com.griddynamics.genesis.api.{Directions, Ordering}
+import collection.mutable
 
 object EnvOrdering {
+  val ID = "id"
   val NAME = "name"
 }
 
@@ -46,15 +48,17 @@ class StoreService extends service.StoreService with Logging {
 
   import StoreService._
 
-  val availableEnvs = from(GS.envs, GS.projects) { (env, project) =>
-    where(env.projectId === project.id and project.isDeleted === false) select(env)
+  object EnvOrderingMapper extends AbstractOrderingMapper[model.Environment] {
+    import EnvOrdering._
+
+    protected def mapFieldsAstField(model: Environment) = Map(
+      ID -> model.id.~,
+      NAME -> model.name.~
+    )
   }
 
-  private def envComparator(ordering: Option[Ordering]) = ordering match {
-    case Some(Ordering(EnvOrdering.NAME, Directions.ASC)) => (e1: Environment, e2: Environment) => e1.name < e2.name
-    case Some(Ordering(EnvOrdering.NAME, Directions.DESC)) => (e1: Environment, e2: Environment) => e1.name > e2.name
-    case Some(Ordering(field, _)) => throw new IllegalArgumentException("Unsupported ordering field '%s'".format(field))
-    case _ => (e1: Environment, e2: Environment) => e1.id < e2.id
+  val availableEnvs = from(GS.envs, GS.projects) { (env, project) =>
+    where(env.projectId === project.id and project.isDeleted === false) select(env)
   }
 
   @Transactional(readOnly = true)
@@ -64,15 +68,21 @@ class StoreService extends service.StoreService with Logging {
       where((if (statusFilter.nonEmpty) env.status.id in filterId else 1===1) and
         env.projectId === projectId)
         select(env, attrs)
+        orderBy ( EnvOrderingMapper.order(env, ordering.getOrElse(Ordering.asc(EnvOrdering.ID))) )
         on(env.id === attrs.map(_.entityId))
     ).toSeq
-    val envToEnvAttr = envsWithAttrs.groupBy{case (env, attr) => env}
+
+    val envToEnvAttr = new mutable.LinkedHashMap[Environment, Seq[(Environment, Option[SquerylEntityAttr])]]()
+    envsWithAttrs foreach { case (env, attr) =>
+      envToEnvAttr.put( env, envToEnvAttr.getOrElse(env, Seq()) ++ Seq((env, attr)) )
+    }
+
     (for {(env, envAttrs) <- envToEnvAttr
           attrs = envAttrs.collect { case (env, Some(attr) ) => attr.name -> attr.value}
     } yield {
       env.importAttrs(attrs.toMap)
       env
-    }).toSeq.sortWith(envComparator(ordering))
+    }).toSeq
   }
 
   @Transactional(readOnly = true)

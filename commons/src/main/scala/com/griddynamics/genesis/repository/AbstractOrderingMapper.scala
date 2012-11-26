@@ -32,7 +32,7 @@ import org.squeryl.KeyedEntity
 trait AbstractOrderingMapper[Model <: KeyedEntity[GenesisEntity.Id]] {
   protected def mapFieldsAstField(model: Model): Map[String, TypedExpressionNode[_]]
 
-  private[repository] def order(model: Model, ordering: api.Ordering) = {
+  private[genesis] def order(model: Model, ordering: api.Ordering) = {
     val mapping = mapFieldsAstField(model)
 
     if (!mapping.contains(ordering.field))
