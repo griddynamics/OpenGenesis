@@ -44,7 +44,7 @@
             </table>
         </div>
 
-        <div id="rw-settings-panel" class="tab-content opened">
+        <div id="rw-settings-panel" class="tab-content opened rw-settings-panel">
             <table class="main-table key-value-table">
                 <thead>
                 <tr id="table-title">
@@ -56,7 +56,7 @@
                 <% for (var i = 0, count = properties.length; i < count; i++) { var property = properties[i]; %>
                 <tr>
                     <td class="first" >
-                        <%= property.description ? property.description : property.name %>
+                        <div><%= property.description ? property.description : property.name %>
                         <a href="javascript:void(0)" rel="#propNames<%=i%>" class="show-keys" title="Show Key">
                           <span class="ui-icon ui-icon-carat-1-s" style="float:right"/>
                         </a>
@@ -72,7 +72,6 @@
             <div class="stepbutton">
                 <a href="javascript:void(0)" class="save button executable"> <span> Save </span> </a>
                 <a href="javascript:void(0)" class="reset button executable"> <span> Reset </span> </a>
-                <a href="/" class="button executable" id="ready"><span> Cancel </span></a>
             </div>
         </div>
     </div>
