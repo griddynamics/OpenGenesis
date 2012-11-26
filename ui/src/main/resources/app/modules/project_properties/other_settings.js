@@ -4,9 +4,7 @@ define([
   "modules/common/properties",
   "use!backbone",
   "jquery",
-  "use!showLoading",
   "use!jvalidate"
-
 ],
 
 function(genesis, status, properties, Backbone, $) {

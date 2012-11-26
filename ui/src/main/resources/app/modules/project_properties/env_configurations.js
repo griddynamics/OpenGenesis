@@ -8,7 +8,6 @@ define([
     "modules/validation",
     "services/backend",
     "jquery",
-    "use!showLoading",
     "use!jvalidate"
 ],
 

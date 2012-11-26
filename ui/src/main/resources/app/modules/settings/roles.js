@@ -8,7 +8,6 @@ define([
 
   "use!backbone",
   "jquery",
-  "use!showLoading",
   "use!jvalidate",
   "use!fcbcomplete"
 

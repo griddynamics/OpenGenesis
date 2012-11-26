@@ -7,7 +7,6 @@ define([
   "modules/validation",
   "use!backbone",
   "jquery",
-  "use!showLoading",
   "use!jvalidate"
 ],
 
@@ -99,8 +98,8 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
       this.stepViews.push(envParams);
 
       var self = this;
-      this.$el.showLoading();
-      $.when(templates.fetch({timeout: 10000})).always(function() { self.$el.hideLoading(); }).then(
+      genesis.app.trigger("page-view-loading-started");
+      $.when(templates.fetch({timeout: 10000})).always(function() { genesis.app.trigger("page-view-loading-completed"); }).then(
         function success() {
           selectTemplateStep.bind("no-templates", self.handleNoTemplates, self);
           selectTemplateStep.bind("only-template", self.nextStep, self);
@@ -122,10 +121,10 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
 
     createEnvironment: function() {
       if(this.$('#workflow-parameters-form').valid()) {
-        this.$el.showLoading();
+        genesis.app.trigger("page-view-loading-started");
         var model = this.mergeModelValues();
         var self = this;
-        $.when(model.save()).always(function() { self.$el.hideLoading(); }).done(function (resp){
+        $.when(model.save()).always(function() { genesis.app.trigger("page-view-loading-completed"); }).done(function (resp){
           self.trigger("finished", {envId: resp.result});
         }).fail(function(e){
           new status.LocalStatus({el: self.$(".notification")}).error(e);
