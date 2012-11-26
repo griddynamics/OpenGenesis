@@ -5,7 +5,6 @@ define([
   "use!backbone",
   "jquery",
   "modules/validation",
-  "use!showLoading",
   "use!jvalidate"
 ],
 

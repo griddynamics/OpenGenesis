@@ -31,8 +31,8 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Env
     routes: {
       "": "index",
       "project/:projectId" : "environments",
-      "project/:projectId/env/:envId": "environmentDetails",
-      "project/:projectId/createEnv": "createEnvironment",
+      "project/:projectId/inst/:envId": "environmentDetails",
+      "project/:projectId/createEnvInst": "createEnvironment",
       "project/:projectId/properties": "projectProperties",
       "admin/create/project": "createProject",
       "settings": "listSettings",

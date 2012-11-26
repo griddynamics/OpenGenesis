@@ -10,7 +10,7 @@ function(genesis, Backbone, Environments) {
    * @const
    */
   var LANG = {
-    "create_new_env": "Create new instance",
+    "create_new_inst": "Create new instance",
     "project_list": "Project list",
     "system_settings": "System settings",
     "project_properties": "Properties",
@@ -60,7 +60,7 @@ function(genesis, Backbone, Environments) {
       var locationList = [
         _homeLocation,
         this._project(projectId),
-        _locationItem("project/" + projectId + "/createEnv", LANG["create_new_env"])
+        _locationItem("project/" + projectId + "/createEnvInst", LANG["create_new_inst"])
       ];
       this.render(locationList)
     },

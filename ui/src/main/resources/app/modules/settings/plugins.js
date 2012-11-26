@@ -3,7 +3,6 @@ define([
   "modules/status",
   "use!backbone",
   "jquery",
-  "use!showLoading",
   "use!jvalidate"
 
 ],
