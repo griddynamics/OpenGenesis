@@ -412,7 +412,7 @@ table th{
 	float: right;
 	color: rgb(255,255,255);
 	margin-top:14px;
-    margin-right:5px;
+  margin-right: 10px;
 }
 
 #userinfo a.dropdown-toggle {
@@ -443,6 +443,12 @@ div.system-settings {
 	width:100%;
 	line-height:20px;
 }
+
+#header #header-content #userinfo .user-section {
+    border-left: 1px solid #eee;
+    margin-left: 30px;
+}
+
 #wrapper{
 	margin:0 auto;
 	background-color: rgb(248,248,248);
@@ -500,6 +506,26 @@ div.system-settings {
 }
 #panel #tab-panel .panel {
    border-top: none !important;
+}
+
+#tab-panel.wizard a.tab, #tab-panel.wizard a.tab span, #tab-panel.wizard a.tab-selected span {
+    background: none !important;
+}
+
+#tab-panel.wizard a.tab span {
+    color: #aaa !important;
+}
+
+#tab-panel.wizard a.tab-selected span {
+    color: black !important
+}
+
+#tab-panel.wizard a.tab-selected {
+    background: url('../img/brcr-divider.png') 5px 6px no-repeat !important;
+}
+
+#tab-panel .interrupt-button {
+    margin-right: 100px !important;
 }
 
 #wrapper  #wrapper-content .panel .top-panel h2 {
@@ -925,7 +951,7 @@ td.subtable{
 .toggle-content {
     display:none;
     clear:left;
-    color: #666
+    color: #666;
 }
 /*.active-step .glow {*/
     /*text-shadow: 0 0 10px #C09853;*/
@@ -1095,6 +1121,8 @@ table.main-table .actions a:first-child {
 
 table.main-table td {
     word-wrap: break-word;
+    border-bottom: none;
+    border-top: none;
 }
 
 table.main-table li.name {
@@ -1256,7 +1284,21 @@ table .pre {
 }
 
 .key-value-table thead th.first{
-    width: 50%;
+    width: 70%;
+}
+
+.rw-settings-panel td.first {
+    vertical-align: top;
+    padding-bottom: 0 !important;
+    padding-top: 10px !important;
+}
+
+.rw-settings-panel td {
+    vertical-align: top;
+}
+
+.rw-settings-panel td .toggle-content {
+    padding-bottom: 10px !important;
 }
 
 .key-value-table tbody td.first {
