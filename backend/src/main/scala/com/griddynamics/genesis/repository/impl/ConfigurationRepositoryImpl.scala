@@ -22,9 +22,9 @@
  */
 package com.griddynamics.genesis.repository.impl
 
-import com.griddynamics.genesis.repository.{AbstractGenericRepository, ConfigurationRepository}
+import com.griddynamics.genesis.repository.{AbstractOrderingMapper, AbstractGenericRepository, ConfigurationRepository}
 import com.griddynamics.genesis.{model, api}
-import api.{Success, Failure, ExtendedResult, Configuration}
+import api.{Success, Failure, ExtendedResult, Configuration, Ordering}
 import model.{EnvStatus, GenesisSchema}
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
@@ -42,12 +42,18 @@ class ConfigurationRepositoryImpl extends AbstractGenericRepository[model.Config
     m
   }
 
-  private[this] def listModels(projectId: Int): Iterable[model.Configuration] = from(table) (
-    item => where( projectId === item.projectId ) select (item) orderBy(item.name)
-  ).toList
+  private[this] def listModels(projectId: Int, ordering: Option[Ordering] = None): Iterable[model.Configuration] =
+    from(table) { item =>
+      val orderBy = ordering.map(o => ConfigurationOrderingMapper.order(item, o)).getOrElse(item.name asc)
+      where( projectId === item.projectId ) select (item) orderBy(orderBy)
+    }.toList
 
   @Transactional(readOnly = true)
   def list(projectId: Int) = listModels(projectId).map(convert(_))
+
+  @Transactional(readOnly = true)
+  def list(projectId: Int, ordering: Ordering) =
+    listModels(projectId, Option(ordering)).map(convert(_))
 
   @Transactional(readOnly = true)
   def get(projectId: Int, id: Int) =  {
@@ -101,4 +107,16 @@ class ConfigurationRepositoryImpl extends AbstractGenericRepository[model.Config
   private[this] def instanceCount(c: model.Configuration): Int = from(GenesisSchema.envs) (
     env => where( c.id === env.configurationId and c.projectId === env.projectId and not(env.status === EnvStatus.Destroyed)) compute(count())
   ).toInt
+
+  object ConfigurationOrderingMapper extends AbstractOrderingMapper[model.Configuration] {
+    import ConfigurationOrdering._
+
+    protected def mapFieldsAstField(m: model.Configuration) = Map(
+      NAME -> m.name.~
+    )
+  }
+}
+
+object ConfigurationOrdering {
+  val NAME = "name"
 }

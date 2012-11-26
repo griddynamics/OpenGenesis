@@ -1,5 +1,5 @@
 /**
- *   Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
+ * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
  *   This library is free software; you can redistribute it and/or modify it under the terms of
@@ -18,16 +18,14 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *   Project:     Genesis
- *   Description: Continuous Delivery Platform
+ *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.repository
+package com.griddynamics.genesis.spring
 
-import com.griddynamics.genesis.api.{ExtendedResult, Configuration}
-import com.griddynamics.genesis.api
+import org.springframework.core.convert.converter.Converter
+import com.griddynamics.genesis.api.Ordering
 
-trait ConfigurationRepository extends ProjectBoundRepository[Configuration] {
-  def findByName(projectId: Int, name: String): Option[Configuration]
-  def lookupNames(projectId: Int): Map[Int, String]
-  def getDefaultConfig(projectId: Int): ExtendedResult[api.Configuration]
-  def list(projectId: Int, ordering: api.Ordering): Iterable[Configuration]
+class OrderingConverter extends Converter[String, Ordering] {
+  def convert(source: String) =
+    if (source.startsWith("~")) Ordering.desc(source.substring(1)) else Ordering.asc(source)
 }

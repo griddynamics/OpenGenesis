@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  * http://www.griddynamics.com
  *
@@ -22,6 +22,23 @@
  */
 package com.griddynamics.genesis.repository
 
-trait OrderingSupport[O <: Ordering, E] {
-  def list(ordering: O): Seq[E]
+import com.griddynamics.genesis.{api, model}
+import api.Directions
+import model.GenesisEntity
+import org.squeryl.PrimitiveTypeMode._
+import org.squeryl.dsl.ast.TypedExpressionNode
+import org.squeryl.KeyedEntity
+
+trait AbstractOrderingMapper[Model <: KeyedEntity[GenesisEntity.Id]] {
+  protected def mapFieldsAstField(model: Model): Map[String, TypedExpressionNode[_]]
+
+  private[repository] def order(model: Model, ordering: api.Ordering) = {
+    val mapping = mapFieldsAstField(model)
+
+    if (!mapping.contains(ordering.field))
+      throw new IllegalArgumentException("Unsupported ordering field '%s'".format(ordering.field))
+
+    val field = mapping(ordering.field)
+    if (ordering.direction == Directions.ASC) field.asc else field.desc
+  }
 }

@@ -186,10 +186,11 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     "or hasPermission(filterObject, 'read')")
   def listEnvsWithFilter(@PathVariable("projectId") projectId: Int,
                          @RequestParam(value="filter", required = false, defaultValue = "") filter: String,
+                         @RequestParam(value="sorting", required = false, defaultValue = "name") ordering: Ordering,
                          request: HttpServletRequest) = {
     filter match {
-      case EnvFilter(statuses @ _*) => genesisService.listEnvs(projectId, Option(statuses.map(_.toString)))
-      case "" => genesisService.listEnvs(projectId)
+      case EnvFilter(statuses @ _*) => genesisService.listEnvs(projectId, Option(statuses.map(_.toString)), Option(ordering))
+      case "" => genesisService.listEnvs(projectId, ordering = Option(ordering))
       case _ => throw new InvalidInputException
     }
   }

@@ -23,13 +23,14 @@
 package com.griddynamics.genesis.repository.impl
 
 import com.griddynamics.genesis.model
-import model.GenesisSchema
+import model.{Project, GenesisSchema}
 import com.griddynamics.genesis.api
+import api.Directions
 import com.griddynamics.genesis.repository
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
 import java.sql.Timestamp
-import repository.{Direction, AbstractGenericRepository, ProjectOrdering}
+import repository.{AbstractOrderingMapper, AbstractGenericRepository}
 
 class ProjectRepository extends AbstractGenericRepository[model.Project, api.Project](GenesisSchema.projects)
   with repository.ProjectRepository {
@@ -38,19 +39,10 @@ class ProjectRepository extends AbstractGenericRepository[model.Project, api.Pro
     where(project.isDeleted === false) select(project)
   }
 
-  def mapFieldsAstField(o: model.Project) = Map(
-    ProjectOrdering.NAME -> o.name.~
-  )
-
-  def order(m: model.Project, ordering: ProjectOrdering) = {
-    val field = mapFieldsAstField(m)(ordering.field)
-    if (ordering.direction == Direction.ASC) field.asc else field.desc
-  }
-
   @Transactional(readOnly = true)
-  def list(ordering: ProjectOrdering) = {
+  def list(ordering: api.Ordering) = {
     from(activeProjects)(p => {
-      select(p) orderBy( order(p, ordering) )
+      select(p) orderBy( ProjectOrderingMapper.order(p, ordering) )
     }).toList.map(convert(_))
   }
 
@@ -65,8 +57,8 @@ class ProjectRepository extends AbstractGenericRepository[model.Project, api.Pro
   }.headOption.map(convert(_))
 
   @Transactional(readOnly = true)
-  def getProjects(ids: Iterable[Int], ordering: Option[ProjectOrdering] = None) = from(activeProjects) { item =>
-    val orderBy = ordering.map(o => order(item, o)).getOrElse(item.id asc)
+  def getProjects(ids: Iterable[Int], ordering: Option[api.Ordering] = None) = from(activeProjects) { item =>
+    val orderBy = ordering.map(o => ProjectOrderingMapper.order(item, o)).getOrElse(item.id asc)
     where(item.id in ids) select (item) orderBy( orderBy )
   }.toList.map(convert _)
 
@@ -90,6 +82,17 @@ class ProjectRepository extends AbstractGenericRepository[model.Project, api.Pro
     project.id = dto.id.getOrElse(0)
     project
   }
+
+  object ProjectOrderingMapper extends AbstractOrderingMapper[model.Project] {
+    import ProjectOrdering._
+
+    protected def mapFieldsAstField(model: Project) = Map(
+      NAME -> model.name.~
+    )
+  }
+
 }
 
-
+object ProjectOrdering {
+  val NAME = "name"
+}

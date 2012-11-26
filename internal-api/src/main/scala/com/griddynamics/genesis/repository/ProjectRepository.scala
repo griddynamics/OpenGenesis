@@ -24,9 +24,12 @@ package com.griddynamics.genesis.repository
 
 import com.griddynamics.genesis.api
 import api.Project
+import api.Ordering
 
-trait ProjectRepository extends OrderingSupport[ProjectOrdering, Project] {
-  def getProjects(ids: Iterable[Int], ordering: Option[ProjectOrdering] = None): Iterable[Project]
+trait ProjectRepository {
+  def list(ordering: Ordering): List[api.Project]
+
+  def getProjects(ids: Iterable[Int], ordering: Option[Ordering] = None): Iterable[Project]
 
   def load(id: Int): api.Project
 
@@ -39,12 +42,4 @@ trait ProjectRepository extends OrderingSupport[ProjectOrdering, Project] {
   def get(id: Int): Option[api.Project]
 
   def findByName(name: String): Option[api.Project]
-}
-
-case class ProjectOrdering private(field: String, direction: Direction.Value) extends Ordering
-
-object ProjectOrdering {
-  val NAME = "name"
-
-  def byName(direction: Direction.Value) = new ProjectOrdering(NAME, direction)
 }
