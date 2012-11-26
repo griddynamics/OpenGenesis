@@ -51,8 +51,8 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
           model: new EnvCreate({"projectId": view.project.id}),
           el: view.$('#tab-panel')
         });
-        view.wizard.bind('finished', function(){
-          genesis.app.router.navigate("project/" + view.project.id, {trigger: true});
+        view.wizard.bind('finished', function(env){
+          genesis.app.router.navigate("project/" + view.project.id + "/inst/" + env.envId, {trigger: true});
         });
         view.wizard.render();
       });
@@ -125,8 +125,8 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
         this.$el.showLoading();
         var model = this.mergeModelValues();
         var self = this;
-        $.when(model.save()).always(function() { self.$el.hideLoading(); }).done(function (){
-          self.trigger("finished");
+        $.when(model.save()).always(function() { self.$el.hideLoading(); }).done(function (resp){
+          self.trigger("finished", {envId: resp.result});
         }).fail(function(e){
           new status.LocalStatus({el: self.$(".notification")}).error(e);
         });

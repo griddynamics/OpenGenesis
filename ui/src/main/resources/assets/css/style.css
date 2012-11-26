@@ -161,10 +161,6 @@ a.brcr, .brcr-devider{
     outline: none;
 }
 
-a.brcr:first-child {
-    font-weight: bold;
-}
-
 .brcr-devider {
     padding: 7px 0;
     display: inline-block;

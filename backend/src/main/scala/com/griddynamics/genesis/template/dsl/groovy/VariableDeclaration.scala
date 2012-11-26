@@ -189,7 +189,8 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
 
             validator(new Closure[Boolean](this.oneOf) {
                 def doCall(args: Array[Any]): Boolean = {
-                    getValues()._2.exists(_._2.toString == args(0).toString)
+                    val (_, oneOfValues) = getValues()
+                    oneOfValues.exists { case (key, value)=> key.toString == args(0).toString }
                 }
             })
 
