@@ -10,7 +10,7 @@
                 </div>
             </td>
         </tr>
-<% var envs = _.sortBy(environments[k], function(env) {return env.name;}); %>
+<% var envs = _.sortBy(environments[k], function(env) {return env.name.toUpperCase();}); %>
 <% if (envs.length > 0) { %>
     <% for(var i = 0, count = envs.length; i < count; i++) { var environment = envs[i]; %>
         <tr data-config="<%= k %>" class="<%= show ? '' : 'under_configuration' %>">
