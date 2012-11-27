@@ -242,7 +242,7 @@ function (genesis, backend, poller, status, EnvStatus, Backbone, $) {
     render: function () {
       var view = this;
       var elements = _(view.collection.filterToJSON()).groupBy("configuration");
-      var configs = _.sortBy(_.keys(elements), function(s){ return s.toUpperCase(); });
+      var configs = _.sortBy(_.keys(elements), function(s){ return s.toLowerCase(); });
       $.when(genesis.fetchTemplate(this.template)).done(function (tmpl) {
         view.$el.html(tmpl({
           environments: elements,
