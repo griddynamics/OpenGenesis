@@ -102,7 +102,9 @@
         <module>nexus</module>
         <module>run-local</module>
         <module>ui</module>
-        <module>distribution</module>
+        <module>all-dependencies</module>
+        <module>distribution-standalone</module>
+        <module>distribution-war</module>
     </modules>
 
       <dependencyManagement>
@@ -241,6 +243,12 @@
                 <groupId>com.griddynamics.genesis</groupId>
                 <artifactId>jenkins-ci-integration</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.griddynamics.genesis</groupId>
+                <artifactId>all-dependencies</artifactId>
+                <version>${project.version}</version>
+                <type>pom</type>
             </dependency>
 
             <dependency>
