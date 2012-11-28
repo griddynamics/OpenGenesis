@@ -1,6 +1,6 @@
 define([
     "genesis",
-    "use!backbone",
+    "backbone",
     "modules/status",
     "modules/common/properties",
     "modules/project_properties/env_configurations/access",
@@ -8,7 +8,7 @@ define([
     "modules/validation",
     "services/backend",
     "jquery",
-    "use!jvalidate"
+    "jvalidate"
 ],
 
 function(genesis, Backbone, status, property, access, roles, validation, backend, $) {

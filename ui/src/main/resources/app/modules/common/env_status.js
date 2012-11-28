@@ -1,8 +1,8 @@
 define([
   "genesis",
-  "use!backbone",
+  "backbone",
   "jquery",
-  "use!jqueryui"
+  "jqueryui"
 ],
 
 function (genesis, Backbone, $) {

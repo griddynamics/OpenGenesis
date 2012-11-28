@@ -3,8 +3,8 @@ define([
     "genesis",
     "modules/status",
     "jquery",
-    "use!underscore",
-    "use!backbone"
+    "underscore",
+    "backbone"
 ],
 
 function(genesis, status, $, _, Backbone) {

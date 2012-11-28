@@ -5,9 +5,9 @@ define([
   "modules/common/variables",
   "modules/common/templates",
   "modules/validation",
-  "use!backbone",
+  "backbone",
   "jquery",
-  "use!jvalidate"
+  "jvalidate"
 ],
 
 function(genesis, backend,  status, variablesmodule, gtemplates, validation, Backbone, $) {
