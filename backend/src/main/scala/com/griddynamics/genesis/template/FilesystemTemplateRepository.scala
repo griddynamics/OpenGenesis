@@ -48,6 +48,10 @@ class FilesystemTemplateRepository(filesystemFolder: String, wildcard: String) e
 
     def files: Array[File] = {
         val topDir = new File(filesystemFolder)
+
+        if (!topDir.exists || !topDir.isDirectory)
+          throw new IllegalArgumentException("Given template directory doesn't exist (%s)".format(topDir.getPath))
+
         topDir.listFiles(new FilenameFilter {
             def accept(dir: File, name: String) = FilenameUtils.wildcardMatch(name, wildcard, TemplateRepository.wildCardIOCase)
         })
