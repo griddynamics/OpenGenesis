@@ -49,21 +49,9 @@
     <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
         <property name="propertiesArray">
             <list>
-                <ref bean="filePropsDefault"/>
                 <ref bean="dbProps"/>
                 <ref bean="fileProps"/>
             </list>
-        </property>
-    </bean>
-
-    <bean id="filePropsDefault" class="org.springframework.beans.factory.config.PropertiesFactoryBean"  >
-        <qualifier value="main" />
-        <property name="singleton" value="true"/>
-        <property name="locations">
-            <array>
-                <value>classpath*:defaults-system.properties</value>
-                <value>classpath*:genesis-plugin.properties</value>
-            </array>
         </property>
     </bean>
 
@@ -86,7 +74,6 @@
             </list>
         </property>
     </bean>
-
 
     <bean id="ds" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
         <property name="driverClassName" value="#{fileProps['genesis.system.jdbc.driver']}"/>

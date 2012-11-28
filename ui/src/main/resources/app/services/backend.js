@@ -217,5 +217,21 @@ function(genesis, $) {
     }
   };
 
+  backend.SettingsManager = {
+    /**
+     * @param {boolean} if true plugins settings are queried, system otherwise
+    */
+    restartRequired: function() {
+     return  $.ajax({
+        url:  "/rest/settings/restart",
+        dataType: "json",
+        type: "GET",
+        timeout: DEFAULT_TIMEOUT,
+        processData: false
+      });
+    }
+
+  };
+
   return backend;
 });

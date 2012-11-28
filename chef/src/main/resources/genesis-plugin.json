@@ -1,0 +1,8 @@
+{
+ "genesis.plugin.chef.id" : {"default":"dev"},
+ "genesis.plugin.chef.identity" : {"default":""},
+ "genesis.plugin.chef.credential" : {"default":"","type":"password"},
+ "genesis.plugin.chef.validator.identity" : {"default":""},
+ "genesis.plugin.chef.validator.credential" : {"default":"","type":"password"},
+ "genesis.plugin.chef.endpoint" : {"default": ""}
+}

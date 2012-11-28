@@ -1,0 +1,5 @@
+{
+    "genesis.plugin.build-jenkins.password": { "default": "", "type": "password",  "restartRequired": true},
+    "genesis.plugin.build-jenkins.username": { "default": "",  "restartRequired": true},
+    "genesis.plugin.build-jenkins.baseUrl": { "default": "", "restartRequired": true}
+}
