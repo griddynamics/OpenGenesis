@@ -29,8 +29,10 @@ import collection.mutable
 import workflow.message.{Beat, Start}
 import workflow.signal.{Rescue, Fail, TimeOut, Success}
 import workflow.{StepResult, Signal}
-import akka.actor.{TypedActor, PoisonPill, ActorRef, Actor}
+import akka.actor._
 import com.griddynamics.genesis.common.Mistake
+import scala.Left
+import scala.Right
 
 class FlowCoordinator(unsafeFlowCoordinator: workflow.FlowCoordinator,
                       executorService: ExecutorService,
@@ -56,7 +58,7 @@ with FlowActor with Logging {
         }
         case result: StepResult => {
             log.debug("Result is %s (regular state)", result)
-            removeCoordinator(self.sender.get)
+            removeCoordinator(sender)
             processFlowInstruction(safeFlowCoordinator.onStepFinish(result))
         }
     }
@@ -72,7 +74,7 @@ with FlowActor with Logging {
         }
         case result: StepResult => {
             log.debug("Result is %s (interrupted state)", result)
-            removeCoordinator(self.sender.get)
+            removeCoordinator(sender)
             safeFlowCoordinator.onStepFinish(result)
             attemptToFinish()
         }
@@ -86,8 +88,8 @@ with FlowActor with Logging {
                 }
                 interruptFlow(signal)
             }
-            case Right(stepCoordinators) => {
-                startCoordinators(stepCoordinators)
+            case Right(coordinators) => {
+                startCoordinators(coordinators)
                 attemptToFinish()
             }
         }
@@ -101,7 +103,7 @@ with FlowActor with Logging {
         log.debug("Interrupting flow with signal %s", signal)
         finishSignal = signal
         beatCoordinators(Beat(signal))
-        become(interrupted)
+        context.become(interrupted)
         attemptToFinish()
     }
 
@@ -139,14 +141,11 @@ with FlowActor with Logging {
 
     def startCoordinator(coordinator: workflow.StepCoordinator, rescue: Boolean = false) {
         log.debug("Starting coordinator %s", coordinator.getClass.getName)
-        val stepCoordinatorActor = Actor.actorOf {
-             new StepCoordinator(coordinator, self, executorService, beatSource, rescue)
-        }
+        val stepCoordinatorActor = context.actorOf(Props(new StepCoordinator(coordinator, self, executorService, beatSource, rescue)))
         if (rescue)
             finalCoordinators += stepCoordinatorActor
         else
             stepCoordinators += stepCoordinatorActor
-        stepCoordinatorActor.start()
         stepCoordinatorActor ! Start
     }
 }
@@ -212,15 +211,15 @@ class TypedFlowCoordinatorImpl(flowCoordinator: workflow.FlowCoordinator,
                                beatPeriodMs: Long, flowTimeOutMs: Long,
                                executorService: ExecutorService) extends TypedFlowCoordinator
 with Logging {
-    val beatSource = TypedActor.newInstance(classOf[BeatSource], new BeatSourceImpl(beatPeriodMs))
-
-    val flowCoordinatorActor = Actor.actorOf {
-        new FlowCoordinator(flowCoordinator, executorService, beatSource, flowTimeOutMs)
+    val beatSource : BeatSource = {
+      val system = ActorSystem()
+      val props: TypedProps[BeatSource] = TypedProps(classOf[BeatSource], {new BeatSourceImpl(beatPeriodMs)})
+      TypedActor(system).typedActorOf(props)
     }
 
+    val flowCoordinatorActor = ActorSystem().actorOf(Props(new FlowCoordinator(flowCoordinator, executorService, beatSource, flowTimeOutMs)))
     def start() {
         beatSource.start()
-        flowCoordinatorActor.start()
         flowCoordinatorActor ! Start
     }
 

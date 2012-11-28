@@ -103,13 +103,13 @@
             <artifactId>netty</artifactId>
         </dependency>
         <dependency>
-            <groupId>se.scalablesolutions.akka</groupId>
+            <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-actor</artifactId>
         </dependency>
-        <dependency>
-            <groupId>se.scalablesolutions.akka</groupId>
+       <!-- <dependency>
+            <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-typed-actor</artifactId>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>com.jcraft</groupId>
             <artifactId>jsch</artifactId>

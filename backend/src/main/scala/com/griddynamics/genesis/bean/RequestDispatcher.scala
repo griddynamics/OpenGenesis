@@ -51,8 +51,7 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
                             configRepo: ConfigurationRepository,
                             templateService: TemplateService,
                             executorService: ExecutorService,
-                            stepCoordinatorFactory: StepCoordinatorFactory)
-    extends TypedActor with RequestDispatcher with Logging {
+                            stepCoordinatorFactory: StepCoordinatorFactory) extends RequestDispatcher with Logging {
 
     val coordinators = mutable.Map[(Int, Int), TypedFlowCoordinator]()
 
