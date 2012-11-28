@@ -19,7 +19,7 @@ function (genesis, backend, roles, Backbone, $, _) {
     },
 
     url: function() {
-      return "/rest/projects/" + this.projectId + "/envs/" + this.envId + "/access"
+      return "rest/projects/" + this.projectId + "/envs/" + this.envId + "/access"
     },
 
     isNew: function() {

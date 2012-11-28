@@ -15,7 +15,7 @@ function(genesis, $) {
 
     cancelWorkflow: function(projectId, environmentId) {
       return $.ajax({
-        url: "/rest/projects/" + projectId +  "/envs/" + environmentId + "/actions",
+        url: "rest/projects/" + projectId +  "/envs/" + environmentId + "/actions",
         contentType : 'application/json',
         type: "POST",
         dataType: "json",
@@ -32,7 +32,7 @@ function(genesis, $) {
      */
     executeWorkflow: function(projectId, environmentId, workflow, variables) {
       return $.ajax({
-        url: '/rest/projects/' + projectId + '/envs/' + environmentId + '/actions',
+        url: 'rest/projects/' + projectId + '/envs/' + environmentId + '/actions',
         dataType: "json",
         contentType : 'application/json',
         type: "POST",
@@ -52,7 +52,7 @@ function(genesis, $) {
   backend.EnvironmentManager = {
     resetEnvStatus: function(projectId, environmentId) {
       return $.ajax({
-        url: "/rest/projects/" + projectId + "/envs/" + environmentId + "/actions",
+        url: "rest/projects/" + projectId + "/envs/" + environmentId + "/actions",
         dataType: "json",
         contentType : 'application/json',
         type: "POST",
@@ -63,7 +63,7 @@ function(genesis, $) {
     },
     updateEnvName: function(projectId, environmentId, envName) {
       return $.ajax({
-        url: "/rest/projects/" + projectId + "/envs/" + environmentId,
+        url: "rest/projects/" + projectId + "/envs/" + environmentId,
         contentType : 'application/json',
         dataType: "json",
         type: "PUT",
@@ -76,7 +76,7 @@ function(genesis, $) {
   backend.UserManager = {
     hasUsers: function() {
       return $.ajax({
-        url: "/rest/users?available",
+        url: "rest/users?available",
         dataType: "json",
         type: "GET",
         timeout: DEFAULT_TIMEOUT
@@ -84,7 +84,7 @@ function(genesis, $) {
     },
     hasGroups: function() {
       return $.ajax({
-        url: "/rest/groups?available",
+        url: "rest/groups?available",
         dataType: "json",
         type: "GET",
         timeout: DEFAULT_TIMEOUT
@@ -93,7 +93,7 @@ function(genesis, $) {
 
     whoami: function() {
       return $.ajax({
-        url: "/rest/whoami",
+        url: "rest/whoami",
         dataType: "json",
         type: "GET",
         timeout: DEFAULT_TIMEOUT
@@ -102,7 +102,7 @@ function(genesis, $) {
 
     getUserGroups: function(username) {
       return $.ajax({
-        url: "/rest/users/" + username + "/groups",
+        url: "rest/users/" + username + "/groups",
         dataType: "json",
         type: "GET",
         timeout: DEFAULT_TIMEOUT,
@@ -120,7 +120,7 @@ function(genesis, $) {
 
       var self = this;
       $.ajax({
-        url: "/rest/roles",
+        url: "rest/roles",
         dataType: "json",
         type: "GET",
         timeout: DEFAULT_TIMEOUT,
@@ -143,7 +143,7 @@ function(genesis, $) {
 
       var self = this;
       $.ajax({
-        url: "/rest/projectRoles",
+        url: "rest/projectRoles",
         dataType: "json",
         type: "GET",
         timeout: DEFAULT_TIMEOUT,
@@ -160,7 +160,7 @@ function(genesis, $) {
 
     saveUserRoles: function(username, roles) {
       return $.ajax({
-        url: "/rest/users/" + username +  "/roles",
+        url: "rest/users/" + username +  "/roles",
         contentType : 'application/json',
         dataType: "json",
         type: "PUT",
@@ -171,7 +171,7 @@ function(genesis, $) {
 
     saveGroupRoles: function(groupName, roles) {
       return $.ajax({
-        url: "/rest/groups/" + groupName +  "/roles",
+        url: "rest/groups/" + groupName +  "/roles",
         contentType : 'application/json',
         dataType: "json",
         type: "PUT",
@@ -182,7 +182,7 @@ function(genesis, $) {
 
     getGroupRoles: function(groupName) {
       return $.ajax({
-        url: "/rest/groups/" + groupName + "/roles",
+        url: "rest/groups/" + groupName + "/roles",
         dataType: "json",
         type: "GET",
         timeout: DEFAULT_TIMEOUT,
@@ -193,7 +193,7 @@ function(genesis, $) {
     haveAdministratorRights: function(projectId) {
       var def = new $.Deferred();
       $.ajax({
-        url: "/rest/projects/" + projectId + "/permissions",
+        url: "rest/projects/" + projectId + "/permissions",
         dataType: "json",
         type: "GET",
         timeout: DEFAULT_TIMEOUT,
@@ -208,7 +208,7 @@ function(genesis, $) {
 
     getUserRoles: function(username) {
       return $.ajax({
-        url: "/rest/users/" + username + "/roles",
+        url: "rest/users/" + username + "/roles",
         dataType: "json",
         type: "GET",
         timeout: DEFAULT_TIMEOUT,

@@ -11,7 +11,7 @@ function(genesis, status, Backbone, $) {
 
   var Settings = genesis.module();
 
-  var URL = "/rest/settings";
+  var URL = "rest/settings";
   var TIMEOUT_AJAX = 4000;
 
   Settings.Model = Backbone.Model.extend({

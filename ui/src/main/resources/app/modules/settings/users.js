@@ -11,7 +11,7 @@ define([
 function(genesis, Backbone, status, validation, backend, $) {
   var Users = genesis.module({Collections: {}});
 
-  var URL = "/rest/users";
+  var URL = "rest/users";
 
   Users.Model = Backbone.Model.extend({
     urlRoot: URL,
@@ -24,7 +24,7 @@ function(genesis, Backbone, status, validation, backend, $) {
   });
 
   Users.Collections.Groups = Backbone.Collection.extend({
-    url: "/rest/groups"
+    url: "rest/groups"
   });
 
   var EMPTY_USER = new Users.Model({

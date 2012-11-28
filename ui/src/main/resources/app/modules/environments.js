@@ -55,7 +55,7 @@ function (genesis, backend, poller, status, EnvStatus, Backbone, $) {
           _(filter.statuses).reduce(function(memo, status) { return status.visible ? memo + status.name + "," : memo }, filterParam) +
           "]";
       }
-      return "/rest/projects/" + this.project.id + "/envs" + filterParam;
+      return "rest/projects/" + this.project.id + "/envs" + filterParam;
     },
 
     _needBackendFiltering: function(filter) {

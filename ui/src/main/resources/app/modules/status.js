@@ -113,7 +113,7 @@ function(genesis, Backbone) {
       if (!this.$("div.message").length) {
         this.$el.addClass("notification png_bg local-notification");
         this.$el.html(
-          "<a href='#' data-bypass class='close'><img src='/assets/img/cross_grey_small.png' alt='close'></a>" +
+          "<a href='#' data-bypass class='close'><img src='assets/img/cross_grey_small.png' alt='close'></a>" +
           "<div class='message'></div>"
         );
       }

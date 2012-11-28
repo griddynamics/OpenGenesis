@@ -33,7 +33,7 @@ function (genesis, Backbone, $) {
     },
 
     url: function() {
-      return "/rest/projects/" + this.projectId + "/envs/" + this.envId + "/history?" + $.param({"page_offset": this.pageOffset, "page_length": this.pageLength});
+      return "rest/projects/" + this.projectId + "/envs/" + this.envId + "/history?" + $.param({"page_offset": this.pageOffset, "page_length": this.pageLength});
     },
 
     refresh: function() {
@@ -99,7 +99,7 @@ function (genesis, Backbone, $) {
     },
 
     url: function() {
-      return "/rest/projects/" + this.projectId + "/envs/" + this.envId + "/steps/" + this.stepId + "/actions";
+      return "rest/projects/" + this.projectId + "/envs/" + this.envId + "/steps/" + this.stepId + "/actions";
     }
   });
 

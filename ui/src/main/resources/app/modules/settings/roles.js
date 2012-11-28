@@ -47,9 +47,9 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
 
     url: function() {
       if(this.projectId) {
-        return "/rest/projects/"+ this.projectId + "/roles/" + this.id;
+        return "rest/projects/"+ this.projectId + "/roles/" + this.id;
       } else {
-        return "/rest/roles/" + this.id
+        return "rest/roles/" + this.id
       }
     }
   });
@@ -177,7 +177,7 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
       var self = this;
 
       self.$("#groups-select").fcbkcomplete({
-        json_url: hasGroups ? "/rest/groups" : null,
+        json_url: hasGroups ? "rest/groups" : null,
         cache: false,
         filter_case: true,
         filter_hide: true,
@@ -190,7 +190,7 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
       });
 
       self.$("#users-select").fcbkcomplete({
-        json_url: hasUsers ? "/rest/users" : null,
+        json_url: hasUsers ? "rest/users" : null,
         cache: false,
         filter_case: true,
         filter_hide: true,

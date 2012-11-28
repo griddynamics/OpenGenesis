@@ -2,8 +2,7 @@
  Genesis Web Archive (WAR) Distribution
 ========================================
 
-This archive is intended to be deployed into servlet container like Tomcat. So far it is possible to use
-only ROOT context ('/').
+This archive is intended to be deployed into servlet container like Tomcat.
 
 
 NOTE: Servlet Container should be run with system property 'backend.properties' which points to Genesis configuration file.

@@ -29,7 +29,7 @@ function(genesis, status, properties, Backbone, $) {
     },
 
     url: function() {
-      return "/rest/projects/" + this.projectId + "/context";
+      return "rest/projects/" + this.projectId + "/context";
     }
   });
 
