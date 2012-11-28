@@ -46,7 +46,7 @@ import java.lang.System
 import scala.collection.JavaConversions._
 
 object GenesisFrontend extends Logging {
-    def main(args: Array[String]): Unit = try{
+    def main(args: Array[String]): Unit = try {
         val genesisProperties = loadGenesisProperties()
 
         val securityConfig = genesisProperties.getOrElse(SECURITY_CONFIG, "classpath:/WEB-INF/spring/security-config.xml")
@@ -179,7 +179,7 @@ object GenesisFrontend extends Logging {
   def doHousekeeping(houseKeeping: HousekeepingService) {
     log.info("Housekeeping: marking executing workflows statuses as failed")
     try {
-      houseKeeping.markExecutingWorkflowsAsFailed();
+      houseKeeping.markExecutingWorkflowsAsFailed()
     } catch {
       case e => log.error("Failed to complete housekeeping", e)
     }
@@ -187,7 +187,11 @@ object GenesisFrontend extends Logging {
 
   def loadGenesisProperties(): scala.collection.Map[String, String]  = {
     val resourceLoader = new DefaultResourceLoader()
-    val propertiesStream = resourceLoader.getResource(gp(BACKEND)).getInputStream
+
+    val pathToProperties = Option(gp(BACKEND))
+      .getOrElse(throw new RuntimeException("Required system property '%s' is undefined".format(BACKEND)))
+
+    val propertiesStream = resourceLoader.getResource(pathToProperties).getInputStream
 
     val genesisProperties = new Properties()
     genesisProperties.load(propertiesStream)

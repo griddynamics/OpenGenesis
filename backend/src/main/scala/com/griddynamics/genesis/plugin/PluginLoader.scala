@@ -87,7 +87,9 @@ object PluginLoader {
     def loadGenesisProperties(classLoader: ClassLoader) = {
         val resourceLoader = new DefaultResourceLoader(classLoader)
         val genesisProperties = new Properties
-        Closeables.using(resourceLoader.getResource(java.lang.System.getProperty(BACKEND)).getInputStream) {
+        val pathToProperties = Option(java.lang.System.getProperty(BACKEND))
+          .getOrElse(throw new RuntimeException("Required system property '%s' is undefined".format(BACKEND)))
+        Closeables.using(resourceLoader.getResource(pathToProperties).getInputStream) {
             stream => {
                 genesisProperties.load(stream)
             }
