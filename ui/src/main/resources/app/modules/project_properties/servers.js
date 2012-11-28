@@ -14,7 +14,7 @@ function(genesis, status, validation, Backbone, $) {
   Servers.ArrayModel = Backbone.Model.extend({
 
     urlRoot: function() {
-      return "/rest/projects/" + this.get("projectId") + "/server-arrays";
+      return "rest/projects/" + this.get("projectId") + "/server-arrays";
     },
 
     serversCollection: function() {
@@ -29,7 +29,7 @@ function(genesis, status, validation, Backbone, $) {
       this.projectId = options.projectId;
     },
 
-    url: function() { return "/rest/projects/" + this.projectId + "/server-arrays"; }
+    url: function() { return "rest/projects/" + this.projectId + "/server-arrays"; }
   });
 
   Servers.ServerModel = Backbone.Model.extend({
@@ -49,7 +49,7 @@ function(genesis, status, validation, Backbone, $) {
       this.serverArrayId = options.serverArrayId;
     },
 
-    url: function() { return "/rest/projects/" + this.projectId + "/server-arrays/" + this.serverArrayId + "/servers"; }
+    url: function() { return "rest/projects/" + this.projectId + "/server-arrays/" + this.serverArrayId + "/servers"; }
   });
 
   var CredentialsRef = Backbone.Collection.extend({
@@ -57,7 +57,7 @@ function(genesis, status, validation, Backbone, $) {
       this.projectId = options.projectId;
     },
 
-    url: function() { return "/rest/projects/" + this.projectId + "/credentials/?type=static" }
+    url: function() { return "rest/projects/" + this.projectId + "/credentials/?type=static" }
   });
 
   Servers.Views.Main = Backbone.View.extend({

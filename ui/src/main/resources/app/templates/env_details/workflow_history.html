@@ -126,7 +126,7 @@
             </td>
             <td>
               <% if ( step.status !== "Requested" ) { %>
-                <a class="show-logs" href="/rest/projects/<%= projectId %>/envs/<%= envId %>/logs/<%= step.stepId %>?timezone_offset=<%= utils.timezoneOffset() %>" target="_blank" data-bypass>Step Log</a>
+                <a class="show-logs" href="rest/projects/<%= projectId %>/envs/<%= envId %>/logs/<%= step.stepId %>?timezone_offset=<%= utils.timezoneOffset() %>" target="_blank" data-bypass>Step Log</a>
               <% } %>
             </td>
           </tr>

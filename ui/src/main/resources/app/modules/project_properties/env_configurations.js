@@ -24,7 +24,7 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
     },
 
     urlRoot: function() {
-      return "/rest/projects/" + this.projectId + "/configs"
+      return "rest/projects/" + this.projectId + "/configs"
     },
 
     parse: function(original) {
@@ -40,7 +40,7 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
     },
 
     url: function() {
-       return "/rest/projects/" + this.projectId + "/configs"
+       return "rest/projects/" + this.projectId + "/configs"
     }
   });
 
@@ -165,7 +165,7 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
     },
 
     url: function() {
-      return "/rest/projects/" + this.projectId + "/configs/" + this.configId + "/access"
+      return "rest/projects/" + this.projectId + "/configs/" + this.configId + "/access"
     },
 
     isNew: function() {

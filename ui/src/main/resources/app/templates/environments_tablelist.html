@@ -14,7 +14,7 @@
 <% if (envs.length > 0) { %>
     <% for(var i = 0, count = envs.length; i < count; i++) { var environment = envs[i]; %>
         <tr data-config="<%= k %>" class="<%= show ? '' : 'under_configuration' %>">
-            <td class="first"><a href="#project/<%= project.id %>/inst/<%= environment.id %>"><img src="/assets/img/env24.png" alt="Env" class="env-icon"><%= environment.name %></a></td>
+            <td class="first"><a href="#project/<%= project.id %>/inst/<%= environment.id %>"><img src="assets/img/env24.png" alt="Env" class="env-icon"><%= environment.name %></a></td>
             <td>
                 <% var time = utils.formatTime(environment.creationTime); %>
                 <span class="time ellipsis" title="<%= time %>"><%= time %></span>

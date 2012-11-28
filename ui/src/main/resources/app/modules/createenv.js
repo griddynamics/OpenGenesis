@@ -15,7 +15,7 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
 
   var EnvCreate = Backbone.Model.extend({
     url: function() {
-      return "/rest/projects/" + this.get("projectId") + "/envs";
+      return "rest/projects/" + this.get("projectId") + "/envs";
     }
   });
 
@@ -25,7 +25,7 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
     },
 
     url: function() {
-      return "/rest/projects/" + this.projectId + "/configs";
+      return "rest/projects/" + this.projectId + "/configs";
     }
   });
 

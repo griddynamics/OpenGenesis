@@ -14,7 +14,7 @@ function(genesis, status, validation, Backbone, $) {
     initialize: function(options) {this.set("projectId", options.projectId);},
 
     urlRoot: function() {
-      return "/rest/projects/" + this.get("projectId") + "/template/repository";
+      return "rest/projects/" + this.get("projectId") + "/template/repository";
     },
 
   });
@@ -94,8 +94,8 @@ function(genesis, status, validation, Backbone, $) {
     initialize: function(options) {this.set("mode", options.mode);},
 
     urlRoot: function() {
-      return "/rest/template/repository/modes/" + this.get("mode");
-    },
+      return "rest/template/repository/modes/" + this.get("mode");
+    }
 
   });
 
@@ -144,7 +144,7 @@ function(genesis, status, validation, Backbone, $) {
   listModes: function() {
     return $.ajax({
       type: "GET",
-      url: "/rest/template/repository/modes",
+      url: "rest/template/repository/modes",
       contentType : 'application/json'
     })
   },
@@ -152,7 +152,7 @@ function(genesis, status, validation, Backbone, $) {
   update: function(map) {
     return $.ajax({
       type: "PUT",
-      url: "/rest/projects/" + this.projectId + "/template/repository",
+      url: "rest/projects/" + this.projectId + "/template/repository",
       data: JSON.stringify(map),
       dataType: "json",
       contentType : 'application/json'

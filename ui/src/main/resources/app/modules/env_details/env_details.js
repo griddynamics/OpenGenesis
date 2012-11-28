@@ -32,7 +32,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
     },
 
     urlRoot: function () {
-      return "/rest/projects/" + this.get("projectId") + "/envs";
+      return "rest/projects/" + this.get("projectId") + "/envs";
     }
   });
 
