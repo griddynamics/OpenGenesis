@@ -29,13 +29,13 @@ trait ServersService {
   def update(array: ServerArray): ExtendedResult[ServerArray]
   def create(array: ServerArray): ExtendedResult[ServerArray]
   def delete(array: ServerArray): ExtendedResult[_]
-  def list(projectId: Int): Seq[api.ServerArray]
+  def list(projectId: Int): Iterable[api.ServerArray]
   def get(projectId: Int, id: Int): Option[api.ServerArray]
 
   def findArrayByName(projectId: Int, name: String): Option[api.ServerArray]
 
   def create(server: Server): ExtendedResult[Server]
-  def deleteServer(arrayId: Int, serverId: Int): ExtendedResult[Option[_]]
+  def deleteServer(arrayId: Int, serverId: Int): ExtendedResult[Int]
   def getServers(arrayId: Int): Seq[Server]
   def getServer(arrayId: Int,  serverId: Int): Option[Server]
 }

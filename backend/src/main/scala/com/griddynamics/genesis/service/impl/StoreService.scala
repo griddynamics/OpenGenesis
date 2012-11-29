@@ -513,11 +513,9 @@ class StoreService extends service.StoreService with Logging {
 
 
 object StoreService {
-    def isReadyForWorkflow(status: EnvStatus) = {
-        status match {
-            case EnvStatus.Busy => false
-            case EnvStatus.Destroyed => false
-            case _ => true
-        }
-    }
+  def isReadyForWorkflow(status: EnvStatus) = status match {
+    case EnvStatus.Busy => false
+    case EnvStatus.Destroyed => false
+    case _ => true
+  }
 }
