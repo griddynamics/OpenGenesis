@@ -34,6 +34,7 @@ trait ConfigService {
     def clear(prefix:Option[String])
     def get[B](projectId: Int, name: String, default: B): B
     def update(projectId: Int, config: Map[String, Any])
+  def restartRequired() : Boolean
 }
 
 object GenesisSystemProperties {
@@ -42,8 +43,6 @@ object GenesisSystemProperties {
     val PREFIX = "genesis.system"
     val PREFIX_DB = PREFIX + ".jdbc."
     val PLUGIN_PREFIX = "genesis.plugin"
-    val SUFFIX_DESC = ".desc"
-    val SUFFIX_TYPE = ".type"
     val PROJECT_PREFIX = "genesis.project"
 
     val SHUTDOWN_TIMEOUT = "genesis.system.shutdown.timeout.sec"

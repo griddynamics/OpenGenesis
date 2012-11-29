@@ -7,7 +7,7 @@
     <% if(!_.isEmpty(plugin.configuration)) { %>
       <% if (!_.isUndefined(settings["constants"])) { %>
         <h4>Read-only Settings</h4>
-        <table class="main-table key-value-table">
+        <table class="main-table key-value-table settings">
           <thead>
           <tr>
             <th style="width:47%">Key</th>
@@ -15,10 +15,16 @@
           </tr>
           </thead>
           <tbody>
-          <% for (var i = 0, count = settings["constants"].length; i < count; i++ ) { var config = settings["constants"][i]; %>
+          <% for (var i = 0, count = settings["constants"].length; i < count; i++ ) { var c = settings["constants"][i]; %>
             <tr>
-              <td ><%= config.name %></td>
-              <td ><%= config.value %></td>
+              <td ><%= c.name %></td>
+              <td >
+                  <% if (c.propertyType.name !== "password") { %>
+                    <%- c.value %>
+                  <% } else { %>
+                    <%- c.value.replace(/./g, "*") %>
+                  <% } %>
+              </td>
             </tr>
           <% } %>
           </tbody>
@@ -27,7 +33,7 @@
 
       <% if(!_.isUndefined(settings["properties"])) { %>
         <h4>Editable Settings</h4>
-        <table class="main-table key-value-table">
+        <table class="main-table key-value-table settings">
           <thead>
             <tr id="table-title">
               <th style="width:47%">Key</th>
@@ -37,7 +43,9 @@
           <tbody>
           <% for (var i = 0, count = settings["properties"].length; i < count; i++ ) { var config = settings["properties"][i]; %>
               <tr>
-                <td ><label for="<%= config.name %>" ><%= config.name %></label></td>
+                <td <% if (config.restartRequired) { %> class="restart-required" title="Changes are applied only after Genesis back-end restart!" <% } %> >
+                  <label for="<%= config.name %>" > <%= config.name %></label>
+                </td>
                 <td ><input id="<%= config.name %>" name="<%= config.name %>" <% if ( config.propertyType.name !== "password" ) { %> type="text" <% } else { %> type="password" <% } %> value="<%= config.value %>" class="property-value"></td>
               </tr>
             <% } %>

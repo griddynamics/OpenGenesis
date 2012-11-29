@@ -27,46 +27,53 @@ import org.springframework.context.annotation.{Configuration, Bean}
 import org.springframework.beans.factory.annotation._
 import org.springframework.beans.factory.config.PropertiesFactoryBean
 import org.apache.commons.configuration._
-import com.griddynamics.genesis.service.{ConfigService, GenesisSystemProperties, impl}
-import collection.JavaConversions.{propertiesAsScalaMap, mapAsJavaMap} 
-import GenesisSystemProperties.{SUFFIX_DESC, SUFFIX_TYPE}
+import com.griddynamics.genesis.service.{ConfigService, impl}
+import collection.JavaConversions.mapAsJavaMap
 import com.griddynamics.genesis.api.ConfigPropertyType
-import com.griddynamics.genesis.util.TryingUtil
+import org.springframework.core.io.ResourceLoader
+import org.springframework.core.io.support.ResourcePatternUtils
+import javax.annotation.Resource
+import net.liftweb.json.{Extraction, JsonParser}
+import java.io.InputStreamReader
+
+case class InputConfigProperty(default: String,
+                               description: Option[String] = None,
+                               `type`: Option[String] = None,
+                                restartRequired: Option[Boolean] = None) {
+  def propType = `type`.map(ConfigPropertyType.withName(_)).getOrElse(ConfigPropertyType.TEXT)
+}
 
 @Configuration
 class DefaultConfigServiceContext extends ConfigServiceContext {
-    @Autowired private var dbConfig : org.apache.commons.configuration.Configuration = _
-    @Autowired @Qualifier("main") private var filePropsAll: PropertiesFactoryBean = _
-    @Autowired @Qualifier("override") private var filePropsOverride: PropertiesFactoryBean = _
 
-    lazy val overrideConfig = ConfigurationConverter.getConfiguration(filePropsOverride.getObject)
-    private  lazy val props = filePropsAll.getObject.toMap.groupBy {
-        case (key, value) if key.endsWith(SUFFIX_DESC) => "DESC"
-        case (key, value) if key.endsWith(SUFFIX_TYPE) => "TYPE"
-        case _ => "VALUE"
-      }
-    private lazy val descs = props.getOrElse("DESC", Map[String, String]())
-    private lazy val types = props.getOrElse("TYPE", Map[String, String]())
-    private lazy val fileProps = props.getOrElse("VALUE", Map[String, String]())
+  @Autowired private var dbConfig : org.apache.commons.configuration.Configuration = _
+  @Autowired @Qualifier("override") private var filePropsOverride: PropertiesFactoryBean = _
+  @Resource private var rl: ResourceLoader = _
 
-    private  lazy val config = {
-        ConfigurationUtils.enableRuntimeExceptions(dbConfig)
-        val compConfig = new CompositeConfiguration
-        // read file properties overrides first
-        compConfig.addConfiguration(overrideConfig)
-         // then read DB, write to DB only
-        compConfig.addConfiguration(dbConfig, true)
-         // then read file properties defaults
-        compConfig.addConfiguration(new MapConfiguration(fileProps))
-        ConfigurationUtils.enableRuntimeExceptions(compConfig)
-        compConfig
-    }
+  private lazy val resolver = ResourcePatternUtils.getResourcePatternResolver(rl)
+  private val RESOURCE_PATTERNS = Seq("classpath*:defaults-system.json", "classpath*:genesis-plugin.json")
+  implicit val formats = net.liftweb.json.DefaultFormats
+  private lazy val defaults = RESOURCE_PATTERNS.map(resolver.getResources(_)).flatten.map(r =>
+    Extraction.extract(JsonParser.parse(new InputStreamReader(r.getInputStream)))
+    (formats, manifest[Map[String,InputConfigProperty]])
+  ).reduce(_ ++ _)
 
-    @Bean def configService: ConfigService = new impl.DefaultConfigService(config,
-      dbConfig,
-      overrideConfig,
-      (descs map { case (k,v) => (k.stripSuffix(SUFFIX_DESC), v)}).toMap,
-      (types map { case (k,v) => (k.stripSuffix(SUFFIX_TYPE), TryingUtil.attempt(ConfigPropertyType.withName(v)).getOrElse(ConfigPropertyType.TEXT)) } ).toMap
-    )
+  lazy val overrideConfig = ConfigurationConverter.getConfiguration(filePropsOverride.getObject)
 
+  private  lazy val config = {
+    ConfigurationUtils.enableRuntimeExceptions(dbConfig)
+    val compConfig = new CompositeConfiguration
+    // read file properties overrides first
+    compConfig.addConfiguration(overrideConfig)
+    // then read DB, write to DB only
+    compConfig.addConfiguration(dbConfig, true)
+    // then read file properties defaults
+    compConfig.addConfiguration(new MapConfiguration(defaults.map{
+      case (k, v) => k -> v.default
+    }))
+    ConfigurationUtils.enableRuntimeExceptions(compConfig)
+    compConfig
+  }
+
+  @Bean def configService: ConfigService = new impl.DefaultConfigService(config, dbConfig, overrideConfig, defaults)
 }

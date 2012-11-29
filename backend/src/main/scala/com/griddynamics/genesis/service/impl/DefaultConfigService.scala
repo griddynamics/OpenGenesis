@@ -25,19 +25,20 @@ package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.service
 import com.griddynamics.genesis.api
-import api.ConfigPropertyType
-import com.griddynamics.genesis.api.ConfigPropertyType.ConfigPropertyType
 import collection.JavaConversions.asScalaIterator
 import org.springframework.transaction.annotation.Transactional
 import org.apache.commons.configuration.Configuration
+import com.griddynamics.genesis.configuration.InputConfigProperty
 
 
 // TODO: add synchronization?
 class DefaultConfigService(val config: Configuration, val writeConfig: Configuration, val configRO: Configuration,
-                           val descriptions: Map[String, String] = Map(),
-                           val propertyTypes: Map[String, ConfigPropertyType] = Map()) extends service.ConfigService {
+                           val defaults: Map[String, InputConfigProperty] = Map()) extends service.ConfigService {
 
   import service.GenesisSystemProperties._
+
+  lazy val initialConfig = listSettings(None).filter(_.restartRequired).map(cp => (cp.name, config.getProperty(cp.name))).toMap
+
     @Transactional(readOnly = true)
     def get[B](name: String, default: B): B = {
       (default match {
@@ -59,14 +60,12 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
     def get(name: String) = Option(config.getProperty(name))
 
     private def isReadOnly(key: String) = key.startsWith(PREFIX_DB) || configRO.containsKey(key)
-    
-    private def desc(key: String) = descriptions.get(key)
-
-    private def propertyType(key: String) = propertyTypes.getOrElse(key, ConfigPropertyType.TEXT)
 
     @Transactional(readOnly = true)
-    def listSettings(prefix: Option[String]) = prefix.map(config.getKeys(_)).getOrElse(config.getKeys())
-         .map(k => api.ConfigProperty(k, config.getString(k), isReadOnly(k), desc(k), propertyType(k))).toSeq.sortBy(_.name)
+    def listSettings(prefix: Option[String]) = prefix.map(config.getKeys(_)).getOrElse(config.getKeys()).map(k => {
+      val default = defaults.getOrElse(k, InputConfigProperty("NOT-SET!!!"))
+      api.ConfigProperty(k, config.getString(k), isReadOnly(k), default.description, default.propType, default.restartRequired.getOrElse(false))
+    }).toSeq.sortBy(_.name)
 
   private def mkProjectPrefix(projectId: Int, prefix:String) = Seq(PROJECT_PREFIX, projectId, prefix.stripPrefix(PREFIX_GENESIS)).filter("" != _).mkString(".")
 
@@ -87,5 +86,9 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
 
   def update(projectId: Int, config: Map[String, Any]) {
     update(config.map{case (name, value) => mkProjectPrefix(projectId, name) -> value})
+  }
+
+  def restartRequired() = initialConfig.exists {
+    case (k, v) => v != config.getProperty(k)
   }
 }

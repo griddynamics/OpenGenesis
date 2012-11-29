@@ -41,14 +41,15 @@ function(genesis, Backbone, Plugins, SystemConfigs, Groups, Users, Roles, Databa
 
     showPluginsTab: function() {
       if(this.pluginsView == null) {
-        this.pluginsView = new Plugins.Views.Main({el: this.$("#plugin-panel")});
+        this.pluginsView = new Plugins.Views.Main({el: this.$("#plugin-panel"), main: this});
       }
     },
 
     showSettings: function() {
       if(this.configsView  == null) {
-        this.configsView = new SystemConfigs.Views.Main({el: this.$("#config-panel")});
+        this.configsView = new SystemConfigs.Views.Main({el: this.$("#config-panel"), main: this});
       }
+      this.toggleRestart();
     },
 
     showGroupsTab: function() {
@@ -75,6 +76,13 @@ function(genesis, Backbone, Plugins, SystemConfigs, Groups, Users, Roles, Databa
       if(this.databagsView == null) {
         this.databagsView = new Databags.Views.Main({el: this.$("#databags-panel")});
       }
+    },
+
+    toggleRestart: function() {
+      var view = this;
+      $.when(backend.SettingsManager.restartRequired()).done(function(restart) {
+        view.$("#restart").toggle(restart);
+      });
     },
 
     render: function() {

@@ -33,10 +33,11 @@ function(genesis, status, Backbone, $) {
       "click a.show-keys": "toggleShowKey"
     },
 
-    initialize: function() {
+    initialize: function(options) {
       this.collection = new Settings.Collection;
       this.collection.bind("reset", this.render, this);
       this.collection.fetch();
+      this.mainView = options.main;
     },
 
     render: function() {
@@ -47,6 +48,7 @@ function(genesis, status, Backbone, $) {
           return m.toJSON();
         })};
         view.$el.html( tmpl({"properties" : toJson(propsGrp[false]), "constants" : toJson(propsGrp[true])}));
+        view.mainView.toggleRestart();
       });
     },
 
@@ -68,7 +70,10 @@ function(genesis, status, Backbone, $) {
 
       if (!changedSettings.isEmpty()) {
         map.save(null, {
-          success: function (model, response) {status.StatusPanel.success("Settings changes saved.")},
+          success: function (model, response) {
+            status.StatusPanel.success("Settings changes saved.");
+            view.mainView.toggleRestart();
+          },
           error: function (model, response) {
             var errorMessage = response.status == 400 ? JSON.parse(response.responseText).compoundServiceErrors : "Failed to process request";
             status.StatusPanel.error(errorMessage);
