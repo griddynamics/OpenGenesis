@@ -38,7 +38,7 @@ trait ProjectBound {
 }
 
 case class Configuration( id: Option[Int],
-                          @Size(min = 1, max = 256) @NotBlank @Pattern(regexp = "[\\p{L}0-9.\\-_ ]*", message = "{validation.invalid.title}")
+                          @Size(min = 1, max = 128) @NotBlank @Pattern(regexp = "[\\p{L}0-9.\\-_ ]*", message = "{validation.invalid.title}")
                           name: String,
                           projectId: Int,
                           description: Option[String],

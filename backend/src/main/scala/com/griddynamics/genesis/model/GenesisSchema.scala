@@ -199,7 +199,7 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     ))
 
     on(configuration)(v => declare (
-      v.name is (dbType("varchar(256)")),
+      v.name is (dbType("varchar(128)")),
       v.description is (dbType("text")),
       columns(v.name, v.projectId) are (unique)
     ))
