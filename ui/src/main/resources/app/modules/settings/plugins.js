@@ -15,7 +15,7 @@ function(genesis, status, Backbone, $) {
 
   Plugins.Collection = Backbone.Collection.extend({
     model: Plugins.Model,
-    url: "/rest/plugins"
+    url: "rest/plugins"
   });
 
   Plugins.Views.Main = Backbone.View.extend({

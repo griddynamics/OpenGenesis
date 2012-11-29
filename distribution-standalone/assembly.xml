@@ -36,6 +36,7 @@
         <dependencySet>
             <outputDirectory>lib</outputDirectory>
             <useTransitiveDependencies>true</useTransitiveDependencies>
+            <useProjectArtifact>false</useProjectArtifact>
             <fileMode>644</fileMode>
             <scope>runtime</scope>
         </dependencySet>

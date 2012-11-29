@@ -21,12 +21,12 @@ function(genesis, status, backend, Backbone, $, validation) {
       }
     },
 
-    urlRoot: "/rest/projects"
+    urlRoot: "rest/projects"
   });
 
   Projects.Collection = Backbone.Collection.extend({
     model: Projects.Model,
-    url: "/rest/projects"
+    url: "rest/projects"
   });
 
   Projects.Views.ProjectsOverview = Backbone.View.extend({

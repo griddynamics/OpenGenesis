@@ -15,7 +15,7 @@ function(genesis, Backbone) {
     },
 
     url: function() {
-      return "/rest/projects/" + this.projectId + "/templates/" + this.get("name") + "/v" + this.get("version");
+      return "rest/projects/" + this.projectId + "/templates/" + this.get("name") + "/v" + this.get("version");
     },
 
     fetchSources: function() {
@@ -30,7 +30,7 @@ function(genesis, Backbone) {
      },
 
      url : function() {
-       return "/rest/projects/" + this.projectId + "/templates/" + this.get("name") + "/v" + this.get("version") + "/" + this.workflow;
+       return "rest/projects/" + this.projectId + "/templates/" + this.get("name") + "/v" + this.get("version") + "/" + this.workflow;
      }
   });
 
@@ -44,7 +44,7 @@ function(genesis, Backbone) {
     },
 
     url: function() {
-      return "/rest/projects/" + this.projectId + "/templates";
+      return "rest/projects/" + this.projectId + "/templates";
     }
   });
 
@@ -94,7 +94,7 @@ function(genesis, Backbone) {
           var title = _.template(
               'Template: <%= templateName%> / v<%= templateVersion%> ' +
               '<a target="_blank" title="Open template in a new blank window" data-bypass ' +
-              '   href="/template.html?templateName=<%= templateName%>&templateVersion=<%= templateVersion%>&projectId=<%= projectId%>">' +
+              '   href="template.html?templateName=<%= templateName%>&templateVersion=<%= templateVersion%>&projectId=<%= projectId%>">' +
               '     <span class="ui-icon ui-icon-newwin" style="display:inline-block;"></span>' +
               '</a>',
               {

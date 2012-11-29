@@ -75,7 +75,7 @@ require([
                 .fail(function (jqXHR) {
                     ({
                         401:function () {
-                            document.location = '/login.html?expire=true'
+                            document.location = 'login.html?expire=true'
                         },
                         403:function () {
                             contentEl.html('Access denied.')

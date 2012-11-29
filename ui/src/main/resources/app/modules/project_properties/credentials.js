@@ -13,7 +13,7 @@ function(genesis, status, validation, Backbone, $) {
   Credentials.Model = Backbone.Model.extend({
 
     urlRoot: function() {
-      return "/rest/projects/" + this.get("projectId") + "/credentials";
+      return "rest/projects/" + this.get("projectId") + "/credentials";
     }
   });
 
@@ -25,7 +25,7 @@ function(genesis, status, validation, Backbone, $) {
       this.projectId = options.projectId;
     },
 
-    url: function() { return "/rest/projects/" + this.projectId + "/credentials"; }
+    url: function() { return "rest/projects/" + this.projectId + "/credentials"; }
   });
 
   Credentials.Views.Main = Backbone.View.extend({

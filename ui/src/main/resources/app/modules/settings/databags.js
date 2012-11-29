@@ -12,7 +12,7 @@ define([
 function(genesis, Backbone, status, property, validation, backend, $) {
   var Databags = genesis.module();
 
-  var URL = "/rest/databags";
+  var URL = "rest/databags";
 
   Databags.Model = Backbone.Model.extend({
     initialize: function(options) {
@@ -23,7 +23,7 @@ function(genesis, Backbone, status, property, validation, backend, $) {
 
     urlRoot: function() {
       if (this.projectId) {
-        return "/rest/projects/" + this.projectId + "/databags"
+        return "rest/projects/" + this.projectId + "/databags"
       } else {
         return URL
       }
@@ -41,7 +41,7 @@ function(genesis, Backbone, status, property, validation, backend, $) {
 
     url: function() {
       if (this.projectId) {
-        return "/rest/projects/" + this.projectId + "/databags"
+        return "rest/projects/" + this.projectId + "/databags"
       } else {
         return URL;
       }

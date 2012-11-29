@@ -13,7 +13,7 @@ function(genesis, Backbone, Users, status, validation, backend, $) {
 
   var Groups = genesis.module();
 
-  var URL = "/rest/groups";
+  var URL = "rest/groups";
 
   Groups.Model = Backbone.Model.extend({
     urlRoot: URL

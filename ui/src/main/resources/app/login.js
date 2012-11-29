@@ -17,14 +17,14 @@
       var password = $('input[name=j_password]').val();
       var rememberme = $('input[name=_spring_security_remember_me]:checked').val();
       $.ajax({
-         url: "/signin",
+         url: "signin",
          type: "POST",
          dataType: "json",
          data: { j_username: userName, j_password: password, _spring_security_remember_me: rememberme },
          timeout: 4000,
          success: function(data, textStatus, jqXHR) {
            if(data.success) {
-             window.location = "/";
+             window.location = "index.html";
            } else {
              errorMessagePanel.text(data.errors);
              errorMessagePanel.fadeTo(500, 1.0);

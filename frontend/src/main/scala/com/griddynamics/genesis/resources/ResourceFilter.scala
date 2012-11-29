@@ -116,7 +116,7 @@ class ResourceFilter extends Filter with Logging {
 
     def doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
         val req: HttpServletRequest = request.asInstanceOf[HttpServletRequest]
-        val uri: String = req.getRequestURI
+        val uri: String = req.getRequestURI.substring(req.getContextPath.size)
         val wrappedResponse: CatchCodeWrapper = new CatchCodeWrapper(response.asInstanceOf[HttpServletResponse])
         try {
             chain.doFilter(request, wrappedResponse)
