@@ -262,8 +262,7 @@ case class ServerArray( id: Option[Int],
                         @Size(min = 1, max = 128) @NotBlank
                         name: String,
                         @OptString(min = 0, max = 128, notBlank = true)
-                        description: Option[String] ) {
-}
+                        description: Option[String] ) extends ProjectBound
 
 case class Server(id: Option[Int],
                   arrayId: Int,

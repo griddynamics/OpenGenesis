@@ -24,30 +24,27 @@ package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.repository.ServerArrayRepository
 import com.griddynamics.genesis.validation.Validation
-import com.griddynamics.genesis.api
-import api._
-import api.Failure
-import api.ServerArray
+import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.validation.Validation._
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.repository.ServerRepository
 import java.net.UnknownHostException
 import com.griddynamics.genesis.service.ServersService
 
-class ServersServiceImpl(repository: ServerArrayRepository, serverRepo: ServerRepository) extends ServersService with Validation[api.ServerArray] {
+class ServersServiceImpl(arrayRepo: ServerArrayRepository, serverRepo: ServerRepository) extends ServersService with Validation[ServerArray] {
 
   @Transactional
-  def create(array: ServerArray) = validCreate(array, repository.insert(_))
+  def create(array: ServerArray) = validCreate(array, arrayRepo.save(_))
 
   @Transactional
-  def update(array: ServerArray) = validUpdate(array, repository.update(_))
+  def update(array: ServerArray) = validUpdate(array, arrayRepo.save(_))
 
   @Transactional(readOnly = true)
-  def get(projectId: Int, id: Int) = repository.get(projectId, id)
+  def get(projectId: Int, id: Int) = arrayRepo.get(projectId, id)
 
   @Transactional
   def delete(array: ServerArray) = {
-    if (repository.delete(array) > 0){
+    if (arrayRepo.delete(array.projectId, array.id.get) > 0){
       Success(None)
     } else {
       Failure(isNotFound = true, compoundServiceErrors = List("No server array was found"))
@@ -55,15 +52,15 @@ class ServersServiceImpl(repository: ServerArrayRepository, serverRepo: ServerRe
   }
 
   @Transactional(readOnly = true)
-  def list(projectId: Int) = repository.list(projectId)
+  def list(projectId: Int) = arrayRepo.list(projectId)
 
   @Transactional
   def create(server: Server) = validateServer(server).map( serverRepo.insert(_) )
 
   @Transactional
-  def deleteServer(arrayId: Int, serverId: Int) = {
+  def deleteServer(arrayId: Int, serverId: Int): ExtendedResult[Int] = {
     if(serverRepo.deleteServer(arrayId: Int, serverId: Int) > 0) {
-      Success(None)
+      Success(arrayId)
     } else {
       Failure(isNotFound = true, compoundServiceErrors = List("No servers found"))
     }
@@ -73,8 +70,8 @@ class ServersServiceImpl(repository: ServerArrayRepository, serverRepo: ServerRe
   def getServers(arrayId: Int) = serverRepo.listServers(arrayId)
 
   @Transactional(readOnly = true)
-  def findArrayByName(projectId: Int, name: String): Option[api.ServerArray] = {
-    repository.findByName(name, projectId)
+  def findArrayByName(projectId: Int, name: String): Option[ServerArray] = {
+    arrayRepo.findByName(name, projectId)
   }
 
   @Transactional(readOnly = true)
@@ -97,14 +94,14 @@ class ServersServiceImpl(repository: ServerArrayRepository, serverRepo: ServerRe
   }
 
   protected def validateUpdate(c: ServerArray) =
-    mustExist(c){ it => repository.get(it.projectId, it.id.get) } ++
+    mustExist(c){ it => arrayRepo.get(it.projectId, it.id.get) } ++
     must(c, "Server array with name '" + c.name + "' already exists") {
-      array => repository.findByName(array.name, array.projectId).forall { _.id == array.id}
+      array => arrayRepo.findByName(array.name, array.projectId).forall { _.id == array.id}
     }
 
 
   protected def validateCreation(c: ServerArray) =
     must(c, "Server array with name '" + c.name + "' already exists") {
-        array => repository.findByName(array.name, array.projectId).isEmpty
+        array => arrayRepo.findByName(array.name, array.projectId).isEmpty
     }
 }
