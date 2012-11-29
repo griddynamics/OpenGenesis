@@ -25,7 +25,7 @@ function(genesis, status, Backbone, $) {
       "click .edit-settings": "editSettings"
     },
 
-    initialize: function() {
+    initialize: function(options) {
       _.bind(this.render, this);
       this.collection = new Plugins.Collection();
 
@@ -35,6 +35,7 @@ function(genesis, status, Backbone, $) {
         self.currentView = self.listView;
         self.render();
       });
+      this.mainView = options.main;
     },
 
     onClose: function() {
@@ -59,6 +60,7 @@ function(genesis, status, Backbone, $) {
     render: function() {
       if(this.currentView != null) {
         this.currentView.render();
+        this.mainView.toggleRestart();
       }
     }
   });

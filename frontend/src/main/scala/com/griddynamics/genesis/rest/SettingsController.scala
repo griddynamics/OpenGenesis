@@ -37,11 +37,12 @@ import org.springframework.beans.factory.annotation.Autowired
 class SettingsController extends RestApiExceptionsHandler {
 
     @Autowired var configService: ConfigService = _
+
     private val VISIBLE_PREFIXES = Seq(PREFIX, PLUGIN_PREFIX)
 
     private def isVisible(key: String) = VISIBLE_PREFIXES.map(key.startsWith(_)).reduce(_ || _)
 
-    @RequestMapping(method = Array(RequestMethod.GET))
+    @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
     @ResponseBody
     def listSettings(@RequestParam(value = "prefix", required = false) prefix: String) =
         configService.listSettings(paramToOption(prefix)).filter(p => isVisible(p.name))
@@ -73,13 +74,16 @@ class SettingsController extends RestApiExceptionsHandler {
 
     private def using (block : Any => Any) = {
         try {
-            block()
-            Success(None)
+            Success(block())
         } catch {
             case e: ResourceNotFoundException => Failure(compoundServiceErrors = Seq(e.msg), isNotFound = true)
             case ex => Failure(compoundServiceErrors = Seq(ex.getMessage))
         }
     }
+
+    @RequestMapping(value = Array("restart"), method = Array(RequestMethod.GET))
+    @ResponseBody
+    def restartRequired() = configService.restartRequired()
 
     private def validKey(key: String)(block: String => Any) {
        if (!isVisible(key)) throw new ResourceNotFoundException("Key %s is not found".format(key))

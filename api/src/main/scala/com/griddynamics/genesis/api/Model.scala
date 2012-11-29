@@ -219,7 +219,8 @@ case class ConfigProperty(name: String,
                           value: String,
                           readOnly: Boolean,
                           description: Option[String] = None,
-                          propertyType: ConfigPropertyType.ConfigPropertyType = ConfigPropertyType.TEXT  )
+                          propertyType: ConfigPropertyType.ConfigPropertyType = ConfigPropertyType.TEXT,
+                          restartRequired: Boolean = false)
 
 object ConfigPropertyType extends Enumeration {
   type ConfigPropertyType = Value
