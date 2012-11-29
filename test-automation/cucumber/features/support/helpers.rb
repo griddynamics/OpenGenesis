@@ -124,13 +124,13 @@ module ModelHelpers
   end
 
   def wait_for(count, &block)
-    cond = block.call
-    cur_count = count
+    cond = block.call()
+    cur_count = 0
     until cond
       raise "Too many tryouts #{count}" if cur_count > count
       sleep 1
-      cond = block.call
-      cur_count = count + 1
+      cond = block.call()
+      cur_count += 1
     end
   end
 
