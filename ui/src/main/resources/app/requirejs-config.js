@@ -21,8 +21,10 @@ require.config({
     backbone: "../assets/js/libs/backbone",
     prettify: "../assets/js/libs/prettify",
     multiselect: "../assets/js/plugins/jquery/jquery.multiselect",
+    'coffee-script': "../assets/js/libs/coffee-script",
 
-    tmplloader: "../assets/js/plugins/templateloader"
+    tmplloader: "../assets/js/plugins/templateloader",
+    cs: "../assets/js/plugins/cs"
   },
   priority: ["jquery"],
 
