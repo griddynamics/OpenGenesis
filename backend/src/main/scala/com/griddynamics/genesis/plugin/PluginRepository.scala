@@ -41,7 +41,7 @@ class PluginRepositoryImpl(pluginLoader: PluginLoader,
   private val plugins: Map[String, GenesisPlugin] = pluginLoader.loadedPlugins.map(plugin => (plugin.id(), plugin)).toMap
 
   lazy val listPlugins: Iterable[genesis.api.Plugin] =
-    plugins.values.map(annotation => genesis.api.Plugin(annotation.id, Option(annotation.description)));
+    plugins.values.map(annotation => genesis.api.Plugin(annotation.id, Option(annotation.description)))
 
 
   def getPlugin(id: String): Option[genesis.api.PluginDetails] = {
@@ -50,7 +50,6 @@ class PluginRepositoryImpl(pluginLoader: PluginLoader,
     }
   }
 
-  @Transactional
   def updateConfiguration(pluginId: String, configuration: Map[String, Any]) {
     configService.update(configuration)
   }
