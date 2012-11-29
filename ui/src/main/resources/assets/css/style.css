@@ -1523,6 +1523,7 @@ table .pre {
 
 #workflow-parameters-form input, #workflow-parameters-form select {
     width: auto;
+    max-width: 99%;
 }
 
 #workflow-parameters-form input[type=text].group, #workflow-parameters-form select.group {
