@@ -4,11 +4,11 @@ define([
   "utils/poller",
   "modules/status",
   "modules/common/env_status",
-  "use!backbone",
+  "backbone",
   "jquery",
-  "use!jqueryui",
-  "use!multiselect",
-  "use!jstorage"
+  "jqueryui",
+  "multiselect",
+  "jstorage"
 ],
 
 function (genesis, backend, poller, status, EnvStatus, Backbone, $) {

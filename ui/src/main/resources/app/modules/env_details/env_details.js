@@ -7,10 +7,10 @@ define([
   "modules/common/variables",
   "modules/common/templates",
   "modules/common/env_status",
-  "use!backbone",
+  "backbone",
   "jquery",
-  "use!jqueryui",
-  "use!jvalidate"
+  "jqueryui",
+  "jvalidate"
 ],
 
 function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtemplates, EnvStatus, Backbone, $) {
