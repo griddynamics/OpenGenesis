@@ -1,6 +1,6 @@
 define([
   "genesis",
-  "use!backbone",
+  "backbone",
   "prettify"
 ],
 function(genesis, Backbone) {

@@ -1,6 +1,6 @@
 define([
   "genesis",
-  "use!backbone",
+  "backbone",
   "modules/settings/plugins",
   "modules/settings/configs",
   "modules/settings/groups",

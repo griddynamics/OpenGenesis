@@ -1,6 +1,6 @@
 define([
   "genesis",
-  "use!backbone",
+  "backbone",
   "modules/environments"  //todo: dependency smell
 ],
 

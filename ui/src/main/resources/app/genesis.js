@@ -1,17 +1,17 @@
 define([
   // Libs
   "jquery",
-  "use!underscore",
-  "use!backbone",
+  "underscore",
+  "backbone",
   "utils/formats",
-  "use!jqueryui",
-  "use!dateformat"
+  "tmplloader!./templates",
+  "jqueryui",
+  "dateformat"
 ],
 
-function($, _, Backbone, formats) {
+function($, _, Backbone, formats, tmpls) {
 
   var _template = _.template;
-
   _.template = function (str, data) {
     return _template (
       str.replace(/<!--%[\s\S]*%-->/g, ""),
@@ -27,7 +27,7 @@ function($, _, Backbone, formats) {
     }
   };
 
-  if (_.isUndefined(window.console)) {
+  if (window && _.isUndefined(window.console)) {
     window.console = { log : function(){}, warn : function(){} };
   }
 
@@ -63,11 +63,11 @@ function($, _, Backbone, formats) {
         return def.resolve(JST[path]);
       }
 
-      $.get(path, function(contents) {
+      $.when(tmpls.get(path)).done(function(contents) {
         var tmpl = _.template(contents);
         done(JST[path] = tmpl);
         def.resolve(JST[path]);
-      }, "text");
+      });
 
       return def.promise();
     },

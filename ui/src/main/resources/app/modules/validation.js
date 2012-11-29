@@ -1,8 +1,8 @@
 define([
   "genesis",
-  "use!backbone",
+  "backbone",
   "modules/status",
-  "use!jvalidate"
+  "jvalidate"
 
 ],
 

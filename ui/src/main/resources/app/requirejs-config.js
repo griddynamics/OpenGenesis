@@ -22,16 +22,14 @@ require.config({
     prettify: "../assets/js/libs/prettify",
     multiselect: "../assets/js/plugins/jquery/jquery.multiselect",
 
-    // Shim Plugin
-    use: "../assets/js/plugins/use",
-    order: "../assets/js/plugins/order"
+    tmplloader: "../assets/js/plugins/templateloader"
   },
   priority: ["jquery"],
 
-  use: {
+  shim: {
     backbone: {
-      deps: ["use!underscore", "jquery"],
-      attach: "Backbone"
+      deps: ["underscore", "jquery"],
+      exports: "Backbone"
     },
     jqueryui: {
       deps: ["jquery"]
@@ -61,7 +59,10 @@ require.config({
       "deps": ["jqueryui"]
     },
     underscore: {
-      attach: "_"
+      exports: "_"
+    },
+    tmplloader: {
+      deps: ["jquery"]
     }
   }
 });

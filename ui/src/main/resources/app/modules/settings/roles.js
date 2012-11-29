@@ -6,10 +6,10 @@ define([
   "modules/settings/users",
   "modules/validation",
 
-  "use!backbone",
+  "backbone",
   "jquery",
-  "use!jvalidate",
-  "use!fcbcomplete"
+  "jvalidate",
+  "fcbcomplete"
 
 ],
 

@@ -1,6 +1,6 @@
 define([
   "genesis",
-  "use!backbone",
+  "backbone",
   "services/backend",
   "modules/projects",
   "modules/project_properties/env_configurations",

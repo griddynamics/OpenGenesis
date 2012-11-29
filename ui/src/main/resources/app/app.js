@@ -3,7 +3,7 @@ require([
 
   // Libs
   "jquery",
-  "use!backbone",
+  "backbone",
   //services
   "services/backend",
   // Modules
@@ -16,8 +16,8 @@ require([
   "modules/project_properties",
   "modules/settings/main",
 //jquery plugins
-  "use!bootstrap",
-  "use!tabs"
+  "bootstrap",
+  "tabs"
 ],
 
 function(genesis, jQuery, Backbone, backend, status, Projects, Environments, EnvironmentDetails, CreateEnvironment, Breadcrumbs, ProjectProperties, AppSettings) {

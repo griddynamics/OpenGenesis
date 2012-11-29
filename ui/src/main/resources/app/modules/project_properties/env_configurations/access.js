@@ -2,11 +2,11 @@ define([
   "genesis",
   "services/backend",
   "modules/settings/roles",
-  "use!backbone",
+  "backbone",
   "jquery",
-  "use!underscore",
-  "use!jqueryui",
-  "use!jvalidate"
+  "underscore",
+  "jqueryui",
+  "jvalidate"
 ],
 
 function (genesis, backend, roles, Backbone, $, _) {

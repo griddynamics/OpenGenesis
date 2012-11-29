@@ -2,9 +2,9 @@ define([
   "genesis",
   "modules/status",
   "modules/validation",
-  "use!backbone",
+  "backbone",
   "jquery",
-  "use!jvalidate"
+  "jvalidate"
 ],
 function(genesis, status, validation, Backbone, $) {
 
