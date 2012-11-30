@@ -53,7 +53,7 @@ object LoggerWrapper extends Logging {
   var logger: ActorRef = _
 
   def start(storeService: StoreService) {
-    val system: ActorSystem = ActorSystem("logging")
+    val system: ActorSystem = ActorSystem()
     logger = system.actorOf(Props(new LoggerActor(storeService)))
   }
 
