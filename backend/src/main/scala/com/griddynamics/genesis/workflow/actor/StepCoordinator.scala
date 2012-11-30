@@ -26,7 +26,7 @@ import scala.collection.mutable
 import com.griddynamics.genesis.workflow
 import com.griddynamics.genesis.workflow.message._
 import java.util.concurrent.ExecutorService
-import akka.actor.{PoisonPill, ActorRef, Actor}
+import akka.actor.{Props, PoisonPill, ActorRef, Actor}
 import com.griddynamics.genesis.workflow._
 import workflow.action.{DelayedExecutorInterrupt, ExecutorInterrupt}
 import scala.Some
@@ -64,12 +64,12 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
             interruptSignal = signal
             beatExecutors(beat, regularExecutors)
 
-            become(interrupted)
+            context.become(interrupted)
             startExecutors(safeStepCoordinator.onStepInterrupt(signal), signalExecutors)
             attemptToSignalFinish()
         }
         case result: ActionResult => {
-            removeExecutor(self.sender.get, regularExecutors)
+            removeExecutor(sender, regularExecutors)
             startExecutors(safeStepCoordinator.onActionFinish(result), regularExecutors)
             attemptToRegularFinish()
         }
@@ -83,20 +83,20 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
             log.debug("Signal '%s' was ignored because '%s' was already interrupted by signal '%s'",
                 signal, safeStepCoordinator.step, interruptSignal)
         }
-        case result: ActionResult if isExecutorPresented(self.sender.get, regularExecutors) => {
+        case result: ActionResult if isExecutorPresented(sender, regularExecutors) => {
             log.debug("Got ActionResult in interrupted state with presenting executors.")
-            removeExecutor(self.sender.get, regularExecutors)
+            removeExecutor(sender, regularExecutors)
             val interruptResult = DelayedExecutorInterrupt(result.action, result, interruptSignal)
             startExecutors(safeStepCoordinator.onActionFinish(interruptResult), signalExecutors)
             attemptToSignalFinish()
         }
         case result@ExecutorInterrupt(action, _) => {
-            removeExecutor(self.sender.get, regularExecutors)
+            removeExecutor(sender, regularExecutors)
             startExecutors(safeStepCoordinator.onActionFinish(result), signalExecutors)
             attemptToSignalFinish()
         }
         case result: ActionResult => {
-            removeExecutor(self.sender.get, signalExecutors)
+            removeExecutor(sender, signalExecutors)
             startExecutors(safeStepCoordinator.onActionFinish(result), signalExecutors)
             attemptToSignalFinish()
         }
@@ -153,13 +153,8 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
                 new SyncActionExecutorAdapter(e, executorService)
         }
 
-        val actionExecutionActor = Actor.actorOf {
-            new actor.ActionExecutor(asyncExecutor, self, beatSource)
-        }
-
-        actionExecutionActor.start()
+        val actionExecutionActor = context.system.actorOf(Props(new actor.ActionExecutor(asyncExecutor, self, beatSource)))
         actionExecutionActor ! Start
-
         executorsPool += actionExecutionActor
     }
 }

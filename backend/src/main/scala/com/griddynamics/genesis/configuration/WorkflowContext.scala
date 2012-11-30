@@ -23,7 +23,7 @@
 package com.griddynamics.genesis.configuration
 
 import org.springframework.beans.factory.annotation.{Value, Autowired}
-import akka.actor.TypedActor
+import akka.actor.{TypedProps, ActorSystem, TypedActor}
 import java.util.concurrent.Executors
 import com.griddynamics.genesis.bean._
 import org.springframework.context.annotation.{Configuration, Bean}
@@ -46,10 +46,12 @@ class DefaultWorkflowContext extends WorkflowContext {
     @Autowired var templateServiceContext: TemplateServiceContext = _
 
     @Bean def requestDispatcher: RequestDispatcher = {
-        TypedActor.newInstance(classOf[RequestDispatcher], requestDispatcherBean, 5000)
+      val system = ActorSystem()
+      val props: TypedProps[RequestDispatcher] = TypedProps(classOf[RequestDispatcher], requestDispatcherBean)
+      TypedActor(system).typedActorOf(props)
     }
 
-    @Bean def requestDispatcherBean = {
+    @Bean def requestDispatcherBean: RequestDispatcher = {
         new RequestDispatcherImpl(beatPeriodMs = beatPeriodMs,
             flowTimeOutMs = flowTimeOutMs,
             storeService = storeServiceContext.storeService,
