@@ -27,7 +27,7 @@ import com.griddynamics.genesis.workflow.message.Beat
 
 trait FlowActor extends Actor {
     def becomeIgnoreBeat() {
-        become {
+        context.become {
             case Beat(_) => ()
         }
     }

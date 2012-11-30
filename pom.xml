@@ -47,7 +47,7 @@
         <org.scalatest.id>scalatest_2.9.0</org.scalatest.id>
         <org.scalatest.version>1.4.1</org.scalatest.version>
 
-        <io.akka.version>1.1</io.akka.version>
+        <io.akka.version>2.0.4</io.akka.version>
 
         <org.springframework.version>3.1.2.RELEASE</org.springframework.version>
         <org.springframework.security.version>3.1.2.RELEASE</org.springframework.security.version>
@@ -330,21 +330,9 @@
             </dependency>
 
             <dependency>
-                <groupId>se.scalablesolutions.akka</groupId>
+                <groupId>com.typesafe.akka</groupId>
                 <artifactId>akka-actor</artifactId>
                 <version>${io.akka.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>se.scalablesolutions.akka</groupId>
-                <artifactId>akka-typed-actor</artifactId>
-                <version>${io.akka.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.guiceyfruit</groupId>
-                        <artifactId>guice-all</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
 
             <dependency>
