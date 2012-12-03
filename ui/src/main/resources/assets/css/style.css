@@ -1566,10 +1566,13 @@ table .pre {
     margin: 8px 0 0 0;
 }
 
-#restart .information-panel {
-    height: 25px;
-    font-size: 14px;
-    margin: 10px 0;
+div#restart {
+    padding: 0 15px;
+}
+
+div#restart .notification {
+    font-size:14px;
+    color: black;
 }
 
 .template-description p {
