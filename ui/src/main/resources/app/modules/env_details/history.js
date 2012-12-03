@@ -251,8 +251,10 @@ function (genesis, Backbone, $) {
     },
 
     refreshCurrentWorkflow: function() {
-      var latestWorkflowId = _.chain(this.workflowViews).keys().max().value();
-      this.workflowViews[latestWorkflowId].render();
+      var viewStartedTimestamp = function(view) {
+        return view.model.get('executionStartedTimestamp') || Number.MAX_VALUE;
+      };
+      _.chain(this.workflowViews).values().max(viewStartedTimestamp).value().render();
     },
 
     render: function () {
@@ -272,18 +274,16 @@ function (genesis, Backbone, $) {
           }));
 
           histories.each(function(workflow, index) {
-            var timestamp = workflow.get('executionStartedTimestamp');
-
-            var workflowView = view.workflowViews[timestamp] || new WorkflowHistoryView({
+            var workflowView = view.workflowViews[workflow.id] || new WorkflowHistoryView({
               expanded: index === 0 && pageInfo.page === 1
             });
 
             workflowView.model = workflow;
             workflowView.setElement(
-              view.$('div.workflow-section[data-workflow-execution-started="' + timestamp + '"]')
+              view.$('div.workflow-section[data-workflow-id="' + workflow.id + '"]')
             );
 
-            view.workflowViews[timestamp] = workflowView;
+            view.workflowViews[workflow.id] = workflowView;
 
             workflowView.render();
           });
