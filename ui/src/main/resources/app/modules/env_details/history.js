@@ -236,7 +236,11 @@ function (genesis, Backbone, $) {
       this.workflowViews = {};
       this.collection.fetch();
       this.collection.bind("reset", this.render, this);
-      this.model.bind("change:historyCount change:status change:workflowCompleted", this.collection.refresh, this.collection);
+      this.model.bind("change", function() {
+        var statuses = ['historyCount', 'status', 'workflowCompleted'];
+        if (_.chain(this.model.changedAttributes()).keys().intersection(statuses).value().length)
+          this.collection.refresh();
+      }, this);
       this.model.bind("change:currentWorkflowFinishedActionsCount", this.refreshCurrentWorkflow, this);
     },
 
