@@ -93,7 +93,8 @@ case class Workflow(name : String, variables : Seq[Variable])
 case class WorkflowStep(stepId: String, phase: String, status : String, details : String, started: Option[Long],
                         finished: Option[Long], title: Option[String], regular: Boolean)
 
-case class WorkflowDetails(name : String,
+case class WorkflowDetails(id: Int,
+                           name : String,
                            status: String,
                            startedBy: String,
                            variables: Map[String, String],
