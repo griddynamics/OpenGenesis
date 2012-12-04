@@ -157,10 +157,10 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   }
 
 
-  @RequestMapping(value = Array("{envName}"), method = Array(RequestMethod.GET))
+  @RequestMapping(value = Array("{envId}"), method = Array(RequestMethod.GET))
   @ResponseBody
   def describeEnv(@PathVariable("projectId") projectId: Int,
-                  @PathVariable("envName") envId: Int,
+                  @PathVariable("envId") envId: Int,
                   response : HttpServletResponse) : EnvironmentDetails = {
     genesisService.describeEnv(envId, projectId).getOrElse(throw new ResourceNotFoundException("Environment [" + envId + "] was not found"))
   }
