@@ -34,6 +34,7 @@ import com.griddynamics.genesis.model.EnvStatus
 import com.griddynamics.genesis.model.WorkflowStatus._
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.repository.ConfigurationRepository
+import java.sql.Timestamp
 
 trait RequestDispatcher {
     def createEnv(envName: Int, projectId: Int)
@@ -87,6 +88,7 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
           log.error(e, "Failed to start workflow [%s] for env [%d]".format(workflow.name, envId))
           env.status = EnvStatus.Broken
           workflow.status = Failed
+          workflow.executionStarted = Some(new Timestamp(System.currentTimeMillis()))
           storeService.finishWorkflow(env, workflow)
         }
       }
