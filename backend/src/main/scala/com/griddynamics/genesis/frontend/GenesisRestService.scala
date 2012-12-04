@@ -232,7 +232,7 @@ object GenesisRestService {
     def workflowHistoryDesc(history: Seq[(Workflow, Seq[model.WorkflowStep])], workflowsTotalCount: Int) = {
         val h = wrap(history)(() =>
             (for ((flow, steps) <- history) yield
-                new WorkflowDetails(flow.name, flow.status.toString, flow.startedBy, flow.displayVariables, stepsCompleted(Some(flow)),
+                new WorkflowDetails(flow.id, flow.name, flow.status.toString, flow.startedBy, flow.displayVariables, stepsCompleted(Some(flow)),
                   stepDesc(steps), flow.executionStarted.map (_.getTime), flow.executionFinished.map (_.getTime))).toSeq)
 
         WorkflowHistory(h, workflowsTotalCount)
