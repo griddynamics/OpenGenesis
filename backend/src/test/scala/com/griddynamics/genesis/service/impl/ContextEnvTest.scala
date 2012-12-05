@@ -53,6 +53,7 @@ class ContextEnvTest extends AssertionsForJUnit with MockitoSugar {
     when(storeService.insertWorkflowStep(Matchers.any())).thenReturn(
       new WorkflowStep(workflowId = 0, phase = "", status = Requested, details = "", started = None, finished = None )
     )
+    when(storeService.findWorkflow(Matchers.anyInt())).thenReturn(Option(mock[Workflow]))
     storeService
   }
 

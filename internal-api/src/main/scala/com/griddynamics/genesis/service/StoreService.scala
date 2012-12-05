@@ -70,6 +70,8 @@ trait StoreService {
 
     def resetEnvStatus(env: Environment): Option[Mistake]
 
+    def findWorkflow(id: Int): Option[Workflow]
+
     def updateWorkflow(w: Workflow)
 
     def createVm(vm: VirtualMachine): VirtualMachine

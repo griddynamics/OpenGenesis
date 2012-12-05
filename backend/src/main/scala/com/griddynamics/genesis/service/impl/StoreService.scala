@@ -375,6 +375,9 @@ class StoreService extends service.StoreService with Logging {
     (e, w, listVms(e) ++ listServers(e))
   }
 
+  @Transactional(readOnly = true)
+  def findWorkflow(id: Int) = GS.workflows.lookup(id)
+
   @Transactional
   def updateWorkflow(w: Workflow) {
     GS.workflows.update(w)
