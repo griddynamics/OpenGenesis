@@ -4,7 +4,7 @@
   "genesis.system.jdbc.username" : {"default": "", "description": "User name for access to the application database", "restartRequired": true},
   "genesis.system.jdbc.password" : {"default": "", "description": "Password for access to the application database", "type": "password", "restartRequired": true},
   "genesis.system.jdbc.drop.db" : {"default": "false", "description": "Recreate DB schema even if the schema already exists. Possible values: true, false", "restartRequired": true},
-  "genesis.system.shutdown.timeout.sec" : {"default": 60, "description": "Time to wait for graceful workflows termination in seconds. 0 - do not shutdown until everything canceled.", "restartRequired": true},
+  "genesis.system.shutdown.timeout.sec" : {"default": 60, "description": "Time to wait for graceful workflows termination in seconds. 0 - do not shutdown until everything canceled."},
   "genesis.system.default.vm.identity" : {"default": "not-set", "description": "Default login to virtual machines provisioned by Genesis", "restartRequired": true},
   "genesis.system.default.vm.credential" : {"default": "not-set", "description": "Path to default credential file (PEM RSA private key file for ssh) to login to virtual machines provisioned by Genesis", "restartRequired": true},
   "genesis.system.beat.period.ms": {"default":1000,"description":"Workflow execution actors heartbeats period in milliseconds", "restartRequired": true},
