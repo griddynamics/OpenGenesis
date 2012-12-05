@@ -1,3 +1,10 @@
+<%
+ var title = 'Changes are applied only after Genesis back-end restart!';
+ function propClassTitle(property) {
+    return 'class = "first' + (property.restartRequired ? ' restart-required" title="' + title + '"' : '"');
+  }
+%>
+
 <div id="dialog-confirm-reset" style="display: none; ">
     Are you sure you want to restore default settings?
 </div>
@@ -55,8 +62,8 @@
                 <tbody>
                 <% for (var i = 0, count = properties.length; i < count; i++) { var property = properties[i]; %>
                 <tr>
-                    <td class="first" >
-                        <div><%= property.description ? property.description : property.name %>
+                    <td <%= propClassTitle(property) %> >
+                        <%= property.description ? property.description : property.name %>
                         <a href="javascript:void(0)" rel="#propNames<%=i%>" class="show-keys" title="Show Key">
                           <span class="ui-icon ui-icon-carat-1-s" style="float:right"/>
                         </a>
