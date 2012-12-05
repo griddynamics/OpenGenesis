@@ -86,6 +86,8 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
         servers = iServers
         workflow = iWorkflow
         config = configurationRepository.get(projectId, env.configurationId).get
+
+        workflow = storeService.findWorkflow(workflow.id).get
         workflow.stepsCount = stepsToStart.size
         storeService.updateWorkflow(workflow)
 
@@ -108,9 +110,11 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
             case Cancel() => (Canceled, EnvStatus.Broken)
             case _ => (Failed, EnvStatus.Broken)
         }
-        workflow.status = workflowStatus
         val updEnv = storeService.findEnv(env.id).get // updating optimistic lock counter
         updEnv.status = envStatus
+
+        workflow = storeService.findWorkflow(workflow.id).get
+        workflow.status = workflowStatus
         storeService.finishWorkflow(updEnv, workflow)
     }
 
@@ -122,6 +126,7 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
 
     //TODO remove workflow.stepsFinished
     def onStepFinish(result: GenesisStepResult): Either[Signal, Seq[StepCoordinator]] = {
+        workflow = storeService.findWorkflow(workflow.id).get
         workflow.stepsFinished += 1
         storeService.updateWorkflow(workflow)
         finishedSteps = finishedSteps :+ result.step
