@@ -22,9 +22,7 @@
       Project:     Genesis
       Description:  Continuous Delivery Platform
 
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
+--><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.griddynamics.genesis</groupId>
@@ -87,6 +85,7 @@
     </properties>
 
     <modules>
+        <module>akka-remote-ssl</module>
         <module>internal-api</module>
         <module>backend</module>
         <module>frontend</module>
@@ -105,7 +104,7 @@
         <module>all-dependencies</module>
         <module>distribution-standalone</module>
         <module>distribution-war</module>
-    </modules>
+  </modules>
 
       <dependencyManagement>
         <dependencies>
@@ -332,6 +331,18 @@
             <dependency>
                 <groupId>com.typesafe.akka</groupId>
                 <artifactId>akka-actor</artifactId>
+                <version>${io.akka.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.typesafe.akka</groupId>
+                <artifactId>akka-remote</artifactId>
+                <version>${io.akka.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.typesafe.akka</groupId>
+                <artifactId>akka-kernel</artifactId>
                 <version>${io.akka.version}</version>
             </dependency>
 
