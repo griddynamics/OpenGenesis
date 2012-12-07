@@ -8,6 +8,7 @@ When /^I'm starting workflow '(.+)' on environment '(.+)' in project '(.+)'$/ do
   @last_response = environments_resource project do |resource, id|
     env = resource.find_by_name(env_name)
     env.should_not be_nil, "Expected to find env #{env_name} in project #{id}: #{project}, but got none"
+    wait_for_env_status(env_name, project, 'Ready')
     nested_resource resource.path, env['id'], "actions" do |r|
       r.post({:action=>'execute', :parameters => {:workflow => workflow}})
     end
