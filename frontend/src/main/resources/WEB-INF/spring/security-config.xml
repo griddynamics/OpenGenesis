@@ -77,6 +77,9 @@
         <s:intercept-url pattern="/rest/databags/**" method="GET" access="hasRole('ROLE_GENESIS_ADMIN')  or hasRole('ROLE_GENESIS_READONLY')" />
         <s:intercept-url pattern="/rest/databags/**" access="hasRole('ROLE_GENESIS_ADMIN')" />
 
+        <s:intercept-url pattern="/rest/agents/**"  method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_PROJECT_ADMIN') or hasRole('ROLE_GENESIS_READONLY')" />
+        <s:intercept-url pattern="/rest/agents/**"   method="GET" access="hasRole('ROLE_GENESIS_ADMIN')" />
+
         <s:intercept-url pattern="/rest/projects" method="GET" access="isAuthenticated()"/>
         <s:intercept-url pattern="/rest/projects/" method="GET" access="isAuthenticated()"/>
 

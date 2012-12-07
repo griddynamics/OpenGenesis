@@ -59,6 +59,7 @@ trait GenesisSchema extends Schema {
 
     val configuration = table[Configuration]("env_config")
     val configAttrs = table[SquerylEntityAttr]("env_config_attr")
+    val remoteAgents = table[RemoteAgent]("remote_agent")
 
     val genesisVersion = table[GenesisVersion]("genesis_version")
 }
@@ -204,6 +205,13 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
       columns(v.name, v.projectId) are (unique)
     ))
     on(settings) (s => declare(s.name is (unique)))
+
+    on(remoteAgents)(agent => declare(
+        agent.id is (primaryKey, autoIncremented),
+        agent.host is (dbType("varchar(128)")),
+        agent.port is (dbType("int")),
+        agent.tags is (dbType("varchar(512)"))
+    ))
 }
 
 trait GenesisSchemaCustom extends GenesisSchema {
