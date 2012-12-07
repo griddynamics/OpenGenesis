@@ -114,7 +114,8 @@ object SquerylConfigurator {
 
 class SquerylTransactionManager(dataSource : DataSource,
                                 defaultIsolationLevel : Int,
-                                databaseAdapter : DatabaseAdapter) extends DataSourceTransactionManager {
+                                databaseAdapter : DatabaseAdapter,
+                                logSql: Boolean) extends DataSourceTransactionManager {
     setDataSource(dataSource)
 
     override def afterPropertiesSet() {
@@ -133,6 +134,7 @@ class SquerylTransactionManager(dataSource : DataSource,
                         unbindFromCurrentThread
                     }
                 }
+                if (logSql) session.setLogger(msg => println(msg))
                 session.bindToCurrentThread
                 session
             }
