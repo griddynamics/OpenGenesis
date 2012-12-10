@@ -84,7 +84,7 @@ class RunLocalStepCoordinator(stepContext: StepExecutionContext, val step: RunLo
     serversUpdate = stepContext.serversUpdate())
 
   def getActionExecutor(action: Action) = action match {
-    case a: RunLocalShell => new RunLocalActionExecutor(a, stepContext.step.id, shellService)
+    case a: RunLocalShell => new RunLocalActionExecutor(a, shellService)
   }
 }
 

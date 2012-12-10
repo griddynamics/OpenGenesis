@@ -24,6 +24,7 @@ package com.griddynamics.genesis.run
 
 import org.springframework.context.annotation.{Configuration, Bean}
 import com.griddynamics.genesis.plugin._
+import com.griddynamics.genesis.workflow.{Action, ActionToExecutor}
 
 @Configuration
 class RunLocalPluginContext {
@@ -35,6 +36,15 @@ class RunLocalPluginContext {
   @Bean def runLocalCoordinatorFactory = new RunLocalStepCoordinatorFactory(shellExecutionService)
 
   @Bean def runLocalStepBuilderFactory: StepBuilderFactory = new RunLocalStepBuilderFactory
+
+  @Bean def runLocalActionToExec: ActionToExecutor = new ActionToExecutor {
+    def apply(action: Action) = action match {
+      // TODO: LoggerWrapper is not supported on remote agents yet
+      case a: RunLocalShell => new RunLocalActionExecutor(a, shellExecutionService, false)
+    }
+
+    def isDefinedAt(action: Action) = action.isInstanceOf[RunLocalShell]
+  }
 }
 
 

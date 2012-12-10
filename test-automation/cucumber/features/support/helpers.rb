@@ -2,6 +2,8 @@ require 'rubygems'
 require 'genesis_client'
 include Genesis
 module ModelHelpers
+  class ConditionTimeout < RuntimeError; end
+
   def project(name, manager, description = nil)
     {:name => name, :projectManager => manager, :description => description}
   end
@@ -127,13 +129,30 @@ module ModelHelpers
     cond = block.call()
     cur_count = 0
     until cond
-      raise "Too many tryouts #{count}" if cur_count > count
+      raise ConditionTimeout, "Too many tryouts #{count}" if cur_count > count
       sleep 1
       cond = block.call()
       cur_count += 1
     end
   end
 
+  def wait_for_env_status(env_name, project_name, status, count = 60)
+    actual_res = 'Undefined'
+    begin
+      environments_resource project_name do |resource, id|
+        env = resource.find_by_name(env_name)
+        env.should_not be_nil, "Expected to have environment named #{env_name}"
+        wait_for(count) do
+          env =  resource.find_by_name(env_name)
+          env.should_not be_nil, "Expected to have environment with id #{env['id']}"
+          actual_res = env['status']
+          actual_res == status
+        end
+      end
+    ensure
+      actual_res.should eq(status), "Env #{env_name} expected to have status #{status} after #{count} tries, but actually it's #{actual_res}"
+    end
+  end
 
 end
 

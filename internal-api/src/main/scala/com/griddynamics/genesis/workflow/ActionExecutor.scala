@@ -158,3 +158,7 @@ trait DurationLimitedActionExecutor extends AsyncTimeoutAwareActionExecutor with
         }
     }
 }
+
+trait ActionToExecutor extends PartialFunction[Action, ActionExecutor]
+
+case class RemoteTask(action: Action, supervisor: akka.actor.ActorRef)
