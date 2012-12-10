@@ -1,0 +1,13 @@
+{
+    "genesis.plugin.ldap.server.url": { "default": "", "description": "LDAP Authentication Server Url (e.g. ldap://domain.com)", "restartRequired": true},
+    "genesis.plugin.ldap.base": { "default": "", "description": "LDAP base (e.g. dc=domain,dc=com)", "restartRequired": true},
+    "genesis.plugin.ldap.domain": { "default": "", "description": "LDAP Authentication Domain (for Active Directory)", "restartRequired": true},
+    "genesis.plugin.ldap.manager.dn": { "default": "", "description": "LDAP Manager DN", "restartRequired": true},
+    "genesis.plugin.ldap.manager.password": { "default": "", "description": "LDAP Manager Password", "type": "password", "restartRequired": true},
+    "genesis.plugin.ldap.user.search.filter": { "default": "uid={0}", "description": "LDAP User Search Filter", "restartRequired": true},
+    "genesis.plugin.ldap.user.search.base": { "default": "", "description": "LDAP User Search Base", "restartRequired": true},
+    "genesis.plugin.ldap.group.search.filter": { "default": "uniqueMember={0}", "description": "LDAP Group Search Filter", "restartRequired": true},
+    "genesis.plugin.ldap.group.search.base": { "default": "", "description": "LDAP Group Search Base", "restartRequired": true},
+    "genesis.plugin.ldap.users.service.filter": { "default": "", "description": "LDAP Users Service Filter", "restartRequired": false},
+    "genesis.plugin.ldap.groups.service.filter": { "default": "", "description": "LDAP Groups Service Filter", "restartRequired": false}
+}
