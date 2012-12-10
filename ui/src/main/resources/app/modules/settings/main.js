@@ -7,10 +7,11 @@ define([
   "modules/settings/users",
   "modules/settings/roles",
   "modules/settings/databags",
+  "cs!modules/settings/agents",
   "services/backend"
 ],
 
-function(genesis, Backbone, Plugins, SystemConfigs, Groups, Users, Roles, Databags, backend) {
+function(genesis, Backbone, Plugins, SystemConfigs, Groups, Users, Roles, Databags, Agents, backend) {
 
   var AppSettings = genesis.module();
 
@@ -20,6 +21,7 @@ function(genesis, Backbone, Plugins, SystemConfigs, Groups, Users, Roles, Databa
     configsView: null,
     groupsView: null,
     usersView: null,
+    agentsView: null,
 
     events: {
       "click #plugin-panel-tab-header": "showPluginsTab",
@@ -27,7 +29,8 @@ function(genesis, Backbone, Plugins, SystemConfigs, Groups, Users, Roles, Databa
       "click #group-panel-tab-header": "showGroupsTab",
       "click #user-panel-tab-header": "showUsersTab",
       "click #roles-panel-tab-header": "showRolesTab",
-      "click #databags-panel-tab-header": "showDatabags"
+      "click #databags-panel-tab-header": "showDatabags",
+      "click #agents-panel-tab-header": "showAgents"
     },
 
     onClose: function() {
@@ -75,6 +78,12 @@ function(genesis, Backbone, Plugins, SystemConfigs, Groups, Users, Roles, Databa
     showDatabags: function() {
       if(this.databagsView == null) {
         this.databagsView = new Databags.Views.Main({el: this.$("#databags-panel")});
+      }
+    },
+
+    showAgents: function() {
+      if (this.agentsView == null) {
+        this.agentsView = new Agents.Views.Main({el: this.$("#agents-panel")});
       }
     },
 
