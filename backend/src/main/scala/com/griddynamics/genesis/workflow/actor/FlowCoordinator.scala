@@ -100,8 +100,8 @@ with FlowActor with Logging {
     def interruptFlow(signal: Signal) {
         log.debug("Interrupting flow with signal %s", signal)
         finishSignal = signal
-        beatCoordinators(Beat(signal))
         become(interrupted)
+        beatCoordinators(Beat(signal))
         attemptToFinish()
     }
 
@@ -128,8 +128,8 @@ with FlowActor with Logging {
     def beatCoordinators(beat: Beat) {
         log.debug("Pinging coordinators with %s", beat)
         for (coordinator <- stepCoordinators)
-            // TODO exception was looked during sync executor exception
-            coordinator ! beat
+            // ActorRef.bang operator for some reason throws ActorInitializationException if actor is not in running state in akka 1.1
+            if (coordinator.isRunning) coordinator ! beat
     }
 
     def startCoordinators(coordinators: Seq[workflow.StepCoordinator], rescue: Boolean = false) {
