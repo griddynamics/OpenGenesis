@@ -110,11 +110,11 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
             case Cancel() => (Canceled, EnvStatus.Broken)
             case _ => (Failed, EnvStatus.Broken)
         }
-        val updEnv = storeService.findEnv(env.id).get // updating optimistic lock counter
-        updEnv.status = envStatus
-
         workflow = storeService.findWorkflow(workflow.id).get
         workflow.status = workflowStatus
+
+        val updEnv = storeService.findEnv(env.id).get // updating optimistic lock counter
+        updEnv.status = envStatus
         storeService.finishWorkflow(updEnv, workflow)
     }
 

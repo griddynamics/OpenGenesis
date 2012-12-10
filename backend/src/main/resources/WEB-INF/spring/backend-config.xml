@@ -106,6 +106,7 @@
         <constructor-arg ref="ds" />
         <constructor-arg value="#{T(java.sql.Connection).TRANSACTION_REPEATABLE_READ}" />
         <constructor-arg ref="dbAdapter" />
+        <constructor-arg value="#{fileProps['genesis.system.jdbc.sql.show'] ?: false}" />
     </bean>
 
     <bean id="genesisSchemaCreator" class="com.griddynamics.genesis.configuration.GenesisSchemaCreator" >
