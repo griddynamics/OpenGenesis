@@ -31,6 +31,7 @@ import org.springframework.jdbc.datasource.{DataSourceUtils, DataSourceTransacti
 import org.squeryl.adapters.{PostgreSqlAdapter, MySQLAdapter, H2Adapter}
 import com.griddynamics.genesis.repository
 import com.griddynamics.genesis.service
+import repository.impl.RemoteAgentRepositoryImpl
 import repository.{GenesisVersionRepository, SchemaCreator}
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
@@ -63,6 +64,9 @@ class JdbcStoreServiceContext extends StoreServiceContext {
     @Bean def databagRepository: repository.DatabagRepository = new repository.impl.DatabagRepository
 
     @Bean def databagService: service.DataBagService = new impl.DataBagServiceImpl(databagRepository)
+
+    @Bean def agentsRepository: repository.RemoteAgentRepository = new RemoteAgentRepositoryImpl
+    @Bean def agentsService: service.RemoteAgentsService = new RemoteAgentsServiceImpl(agentsRepository)
 }
 
 class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager,
