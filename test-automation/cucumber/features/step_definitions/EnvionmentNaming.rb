@@ -32,7 +32,8 @@ When /^I'm renaming environment '(.+)' to '(.+)' in project '(.+)'$/ do |old_nam
   @last_response = environments_resource project do |resource, id|
      env = resource.find_by_name(old_name)
      env.should_not be_nil, "Expected that environment #{env} exists, but it's not found"
-     resource.put(env["id"], {:environment => {:name => new_name}})
+     wait_for_env_status(env['name'], project, 'Ready')
+     resource.put(env['id'], {:environment => {:name => new_name}})
   end
 end
 
@@ -42,11 +43,9 @@ When /^I can (?:remove|delete) environment '(.*)' in project '(.+)'$/ do |env_na
   environments_resource project do |resource, id|
     env = Hashed.new(resource.find_by_name(env_name))
     wait_for(20) do
-      Hashed.new(resource.find_by_name(env_name)).status != 'Busy'
+      Hashed.new(resource.find_by_name(env.name)).status != 'Busy'
     end
     resource.delete(env.id)
-    wait_for(10) do
-      Hashed.new(resource.find_by_name(env_name)).status == 'Destroyed'
-    end
+    wait_for_env_status(env.name, project, 'Destroyed')
   end
 end
