@@ -76,6 +76,56 @@ class NettySSLTransport(override val remoteSettings: RemoteSettings, override va
     }
   }
 
+  override def bindClient(remoteAddress: Address, client: RemoteClient, putIfAbsent: Boolean = false): Boolean = {
+    clientsLock.writeLock().lock()
+    try {
+      if (putIfAbsent && remoteClients.contains(remoteAddress)) false
+      else {
+        client.connect()
+        remoteClients.put(remoteAddress, client).foreach(_.shutdown())
+        true
+      }
+    } finally {
+      clientsLock.writeLock().unlock()
+    }
+  }
+
+  override def unbindClient(remoteAddress: Address): Unit = {
+    clientsLock.writeLock().lock()
+    try {
+      remoteClients foreach {
+        case (k, v) ⇒
+          if (v.isBoundTo(remoteAddress)) { v.shutdown(); remoteClients.remove(k) }
+      }
+    } finally {
+      clientsLock.writeLock().unlock()
+    }
+  }
+
+  override def shutdownClientConnection(remoteAddress: Address): Boolean = {
+    clientsLock.writeLock().lock()
+    try {
+      remoteClients.remove(remoteAddress) match {
+        case Some(client) ⇒ client.shutdown()
+        case None         ⇒ false
+      }
+    } finally {
+      clientsLock.writeLock().unlock()
+    }
+  }
+
+  override def restartClientConnection(remoteAddress: Address): Boolean = {
+    clientsLock.readLock().lock()
+    try {
+      remoteClients.get(remoteAddress) match {
+        case Some(client) ⇒ client.connect(reconnectIfAlreadyConnected = true)
+        case None         ⇒ false
+      }
+    } finally {
+      clientsLock.readLock().unlock()
+    }
+  }
+
 }
 
 class NettyRemoteServerWithSSL(override val netty: NettySSLTransport) extends NettyRemoteServer(netty) {
@@ -327,9 +377,10 @@ class ActiveRemoteSSLClient private[akka](netty: NettySSLTransport,
       reconnectionTimeWindowStart = System.currentTimeMillis
       true
     } else {
-      val timeLeft = (settings.ReconnectionTimeWindow.toMillis - (System.currentTimeMillis - reconnectionTimeWindowStart)) > 0
+      val timeLeftMs = settings.ReconnectionTimeWindow.toMillis - (System.currentTimeMillis - reconnectionTimeWindowStart)
+      val timeLeft = timeLeftMs > 0
       if (timeLeft)
-        log.info("Will try to reconnect to remote server for another [{}] milliseconds", timeLeft)
+        log.info("Will try to reconnect to remote server for another [{}] milliseconds", timeLeftMs)
 
       timeLeft
     }
