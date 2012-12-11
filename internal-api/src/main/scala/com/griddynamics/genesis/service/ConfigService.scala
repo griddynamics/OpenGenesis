@@ -59,4 +59,5 @@ object GenesisSystemProperties {
     val WEB_RESOURCE_ROOTS = "genesis.system.web.resourceRoots"
     val CLIENT_DEBUG_MODE = "genesis.web.client.debug"
     val LOGOUT_ENABLED = "genesis.web.logout.enabled"
+    val AUTH_MODE = "genesis.system.auth.mode"
 }

@@ -105,6 +105,7 @@
         <module>all-dependencies</module>
         <module>distribution-standalone</module>
         <module>distribution-war</module>
+        <module>ldap</module>
     </modules>
 
       <dependencyManagement>
@@ -242,6 +243,11 @@
             <dependency>
                 <groupId>com.griddynamics.genesis</groupId>
                 <artifactId>jenkins-ci-integration</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.griddynamics.genesis</groupId>
+                <artifactId>ldap</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
