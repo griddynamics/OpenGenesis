@@ -16,7 +16,7 @@
             </tr>
             <tr>
                 <td class="label-column"><label for="tags">Tags</label></td>
-                <td><textarea rows="2" cols="80" name="tags" id="tags"><%- agent.tags %></textarea></td>
+                <td><textarea rows="2" cols="80" name="tags" id="tags"><%- agent.tags.join(" ") %></textarea></td>
             </tr>
         </table>
         <div class="form-notice">All fields marked with * are required</div>
