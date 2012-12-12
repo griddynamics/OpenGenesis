@@ -33,6 +33,7 @@ import workflow._
 import scala.collection.mutable
 import java.util.concurrent.atomic.AtomicReference
 import com.griddynamics.genesis.plugin.StepBuilder
+import akka.actor.ActorSystem
 
 class FlowElement(val action: Action, val precursors: Set[FlowElement]) {
     override def toString = "FlowElement(%s, %s)".format(action, precursors)
@@ -157,7 +158,7 @@ class SimpleFlowTest extends AssertionsForJUnit with Logging {
         val testCoordinator = new TestCoordinator(flow)
 
         val flowCoordinator = new TypedFlowCoordinatorImpl(
-            testCoordinator, 20, 10000, Executors.newSingleThreadExecutor
+            testCoordinator, 20, 10000, Executors.newSingleThreadExecutor, ActorSystem()
         )
 
         flowCoordinator.start()
