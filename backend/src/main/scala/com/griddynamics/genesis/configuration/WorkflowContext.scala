@@ -45,11 +45,14 @@ class DefaultWorkflowContext extends WorkflowContext {
     @Autowired var storeServiceContext: StoreServiceContext = _
     @Autowired var templateServiceContext: TemplateServiceContext = _
 
+    val actorSystem: ActorSystem = ActorSystem()
+
     @Bean def requestDispatcher: RequestDispatcher = {
-      val system = ActorSystem()
       val props: TypedProps[RequestDispatcher] = TypedProps(classOf[RequestDispatcher], requestDispatcherBean)
-      TypedActor(system).typedActorOf(props)
+      TypedActor(actorSystem).typedActorOf(props)
     }
+
+    @Bean def system: ActorSystem = actorSystem
 
     @Bean def requestDispatcherBean: RequestDispatcher = {
         new RequestDispatcherImpl(beatPeriodMs = beatPeriodMs,
@@ -58,7 +61,7 @@ class DefaultWorkflowContext extends WorkflowContext {
             configRepo = storeServiceContext.configurationRepository,
             templateService = templateServiceContext.templateService,
             executorService = executorService,
-            stepCoordinatorFactory = stepCoordinatorFactory)
+            stepCoordinatorFactory = stepCoordinatorFactory, actorSystem = actorSystem)
     }
 
     // this executor service is used to 'asynchronously' execute SyncActionExecutors,
