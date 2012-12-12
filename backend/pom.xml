@@ -122,6 +122,11 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-acl</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-remote</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
