@@ -26,12 +26,14 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import javax.annotation.PostConstruct
 import com.griddynamics.genesis.logging.LoggerWrapper
+import akka.actor.ActorSystem
 
 @Configuration
 class LoggerContext {
     @Autowired var storeServiceContext: StoreServiceContext = _
+    @Autowired var actorSystem: ActorSystem = _
 
     @PostConstruct def init() = {
-      LoggerWrapper.start(storeServiceContext.storeService)
+      LoggerWrapper.start(actorSystem, storeServiceContext.storeService)
     }
 }
