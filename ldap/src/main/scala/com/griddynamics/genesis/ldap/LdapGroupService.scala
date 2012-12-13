@@ -23,19 +23,18 @@
 package com.griddynamics.genesis.ldap
 
 import com.griddynamics.genesis.groups.GroupService
-import com.griddynamics.genesis.service.ConfigService
 import org.springframework.ldap.core.{DirContextAdapter, ContextMapper, LdapTemplate}
 import com.griddynamics.genesis.api.UserGroup
 import util.control.Exception._
 import scala.collection.JavaConversions._
 import org.springframework.dao.IncorrectResultSizeDataAccessException
-import com.griddynamics.genesis.ldap.LdapPluginContext._
+import javax.naming.ldap.LdapName
 
 trait LdapGroupService extends GroupService
 
-class LdapGroupServiceImpl(val configService: ConfigService,
-                       val template: LdapTemplate,
-                       val userService: LdapUserService) extends LdapGroupService {
+class LdapGroupServiceImpl(val config: LdapPluginConfig,
+                           val template: LdapTemplate,
+                           val userService: LdapUserService) extends LdapGroupService {
 
   case class GroupContextMapper(includeUsers: Boolean = false) extends ContextMapper {
     def mapFromContext(ctx: Any): UserGroup = {
@@ -43,21 +42,26 @@ class LdapGroupServiceImpl(val configService: ConfigService,
 
       val idOpt = Option(adapter.getStringAttribute("gidNumber")).map{ _.toInt }
 
+      val usersOpt =
+        if (includeUsers) {
+          Option(adapter.getStringAttributes(config.groupMemberAttributeName)) map { _.toSeq map { dn =>
+            val ldapName = new LdapName(dn)
+            ldapName.getRdn(ldapName.size() - 1).getValue.toString
+          }}
+        } else None
+
       UserGroup(
-        adapter.getStringAttribute("cn"),
+        Option(adapter.getStringAttribute("cn")).getOrElse("UNKNOWN_NAME"),
         adapter.getStringAttribute("description"),
         None,
         idOpt,
-        if (includeUsers)
-          Option(adapter.getStringAttributes("memberUid").toSeq)
-        else
-          None
+        usersOpt
       )
     }
   }
 
   private def filter(attributeName: String, attributePattern: String) =
-    "(&%s(%s=%s))".format(configService.get(GROUPS_SERVICE_FILTER, ""), attributeName, attributePattern)
+    "(&(%s)(%s=%s))".format(config.groupsServiceFilter, attributeName, attributePattern)
 
   private def filterByNamePattern(groupPattern: String) = filter("cn", groupPattern)
 
@@ -66,9 +70,9 @@ class LdapGroupServiceImpl(val configService: ConfigService,
   def findByName(name: String) =
     catching(classOf[IncorrectResultSizeDataAccessException]).opt(
       template.searchForObject(
-        configService.get(GROUP_SEARCH_BASE, ""),
+        config.groupSearchBase,
         filterByNamePattern(name),
-        GroupContextMapper()
+        GroupContextMapper(includeUsers = true)
       ).asInstanceOf[UserGroup]
     )
 
@@ -84,7 +88,7 @@ class LdapGroupServiceImpl(val configService: ConfigService,
   def get(id: Int) =
     catching(classOf[IncorrectResultSizeDataAccessException]).opt(
       template.searchForObject(
-        configService.get(GROUP_SEARCH_BASE, ""),
+        config.groupSearchBase,
         filterById(id.toString),
         GroupContextMapper(includeUsers = true)
       ).asInstanceOf[UserGroup]
@@ -101,19 +105,19 @@ class LdapGroupServiceImpl(val configService: ConfigService,
 
   def search(nameLike: String) =
     template.search(
-      configService.get(GROUP_SEARCH_BASE, ""),
+      config.groupSearchBase,
       filterByNamePattern(nameLike),
       GroupContextMapper()
-    ).toList.asInstanceOf[List[UserGroup]]
+    ).toList.asInstanceOf[List[UserGroup]].sortBy(_.name.toLowerCase)
 
   def doesGroupExist(groupName: String) = findByName(groupName).isDefined
 
   def doGroupsExist(groupNames: Seq[String]) = groupNames forall { doesGroupExist(_) }
 
   def list = template.search(
-    configService.get(GROUP_SEARCH_BASE, ""),
-    configService.get(GROUPS_SERVICE_FILTER, ""),
+    config.groupSearchBase,
+    config.groupsServiceFilter,
     GroupContextMapper()
-  ).toList.asInstanceOf[List[UserGroup]]
+  ).toList.asInstanceOf[List[UserGroup]].sortBy(_.name.toLowerCase)
 
 }

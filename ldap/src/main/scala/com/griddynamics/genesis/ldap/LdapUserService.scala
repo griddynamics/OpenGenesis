@@ -26,46 +26,61 @@ import com.griddynamics.genesis.users.UserService
 import org.springframework.ldap.core.{DirContextAdapter, ContextMapper, LdapTemplate}
 import com.griddynamics.genesis.api.User
 import scala.collection.JavaConversions._
-import com.griddynamics.genesis.service.ConfigService
 import scala.util.control.Exception._
 import org.springframework.dao.IncorrectResultSizeDataAccessException
-import LdapPluginContext._
 import org.springframework.security.ldap.userdetails.LdapAuthoritiesPopulator
 
 trait LdapUserService extends UserService {
   def getUserGroups(username: String): Option[Seq[String]]
 }
 
-class LdapUserServiceImpl(val configService: ConfigService,
+class LdapUserServiceImpl(val config: LdapPluginConfig,
                           val template: LdapTemplate,
                           val authoritiesPopulator: LdapAuthoritiesPopulator) extends LdapUserService {
 
   case class UserContextMapper(includeGroups: Boolean = true, includeCredentials: Boolean = false) extends ContextMapper {
     def mapFromContext(ctx: Any): User = {
       val adapter = ctx.asInstanceOf[DirContextAdapter]
-      val username = adapter.getStringAttribute("uid")
+
+      val principal =
+        Option(adapter.getStringAttribute(config.principalAttributeName)).getOrElse("UNKNOWN_USERNAME")
+
+      val passwordOpt =
+        if (includeCredentials)
+          Option(adapter.getObjectAttribute("userPassword") match {
+            case p: String => p
+            case arr: Array[Byte] => new String(arr)
+            case null => null
+            case v => v.toString
+          })
+        else
+          None
+
+      val groupsOpt =
+        if (includeGroups)
+          Option(authoritiesPopulator.getGrantedAuthorities(adapter, principal).toSeq.map(_.getAuthority))
+        else
+          None
+
       User(
-        username,
+        principal,
         adapter.getStringAttribute("mail"),
         adapter.getStringAttribute("givenName"),
         adapter.getStringAttribute("sn"),
         Option(adapter.getStringAttribute("employeeType")),
-        if (includeCredentials) Option(adapter.getStringAttribute("userPassword")) else None,
-        if (includeGroups)
-          Option(authoritiesPopulator.getGrantedAuthorities(adapter, username).toSeq.map(_.getAuthority))
-        else
-          None
+        passwordOpt,
+        groupsOpt
       )
     }
   }
 
   private def filter(usernamePattern: String) =
-    "(&%s(uid=%s))".format(configService.get(USERS_SERVICE_FILTER, ""), usernamePattern)
+    "(&(%s)(%s))".format(config.usersServiceFilter, config.userSearchFilter.replace("{0}", usernamePattern))
 
   private def find(username: String, includeCredentials: Boolean) =
     catching(classOf[IncorrectResultSizeDataAccessException]).opt(
       template.searchForObject(
-        configService.get(USER_SEARCH_BASE, ""),
+        config.userSearchBase,
         filter(username),
         UserContextMapper(includeCredentials = includeCredentials)
       ).asInstanceOf[User]
@@ -77,10 +92,10 @@ class LdapUserServiceImpl(val configService: ConfigService,
 
   def search(usernameLike: String): List[User] =
     template.search(
-      configService.get(USER_SEARCH_BASE, ""),
+      config.userSearchBase,
       filter(usernameLike),
       UserContextMapper(includeGroups = false)
-    ).toList.asInstanceOf[List[User]]
+    ).toList.asInstanceOf[List[User]].sortBy(_.username.toLowerCase)
 
   def doesUserExist(userName: String): Boolean = findByUsername(userName).isDefined
 
@@ -88,10 +103,10 @@ class LdapUserServiceImpl(val configService: ConfigService,
 
   def list: List[User] =
     template.search(
-      configService.get(USER_SEARCH_BASE, ""),
-      configService.get(USERS_SERVICE_FILTER, ""),
+      config.userSearchBase,
+      config.usersServiceFilter,
       UserContextMapper(includeGroups = false)
-    ).toList.asInstanceOf[List[User]]
+    ).toList.asInstanceOf[List[User]].sortBy(_.username.toLowerCase)
 
   def getUserGroups(username: String): Option[Seq[String]] =
     find(username, includeCredentials = false) flatMap { _.groups }
