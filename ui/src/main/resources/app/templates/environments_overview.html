@@ -13,9 +13,9 @@
             <a href="/project/<%= project.id %>/createEnvInst" id="create-env-button" class="button executable" > <span> Create new instance... </span> </a>
         </div>
         <div id="right">
-          <label for="filter-statuses">Filter <input id="filter-name" type="text" value="<%= filter.namePart %>"></label>
+          <label for="filter-statuses">Filter <input id="filter-name" type="text" value="<%= filter.namePart %>" data-access-all="true"></label>
             <!--<label>Statuses&nbsp;</label>-->
-            <select id="filter-statuses" name="filter-statuses" multiple="multiple">
+            <select id="filter-statuses" name="filter-statuses" multiple="multiple" data-access-all="true">
               <% for (var i = 0, keys = _.keys(filter.statuses), count = keys.length; i < count; i++) {
               var status = filter.statuses[keys[i]],
               selected = status.visible ? "selected" : "";
