@@ -43,7 +43,6 @@ import com.griddynamics.genesis.api.UserGroup
 @Configuration
 @GenesisPlugin(id = "ldap", description = "Genesis LDAP Plugin")
 class LdapPluginContext {
-  import LdapPluginContext._
 
   @Autowired
   var configService : ConfigService = _
@@ -52,27 +51,25 @@ class LdapPluginContext {
   @Autowired
   var projectAuthorityService: ProjectAuthorityService = _
 
-  lazy val serverUrl: String =
-    configService.get(SERVER_URL) map { _.toString } getOrElse {
-      throw new IllegalArgumentException("LDAP URL must be defined (%s)".format(SERVER_URL))
-    }
+  lazy val config = new LdapPluginConfig(configService)
 
   lazy val contextSource = {
-    val context = new DefaultSpringSecurityContextSource(serverUrl)
-    configService.get(BASE) foreach { s => context.setBase(s.toString)}
-    configService.get(MANAGER_DN) foreach { s => context.setUserDn(s.toString) }
-    configService.get(MANAGER_PASSWORD) foreach { s => context.setPassword(s.toString) }
+    val context = new DefaultSpringSecurityContextSource(config.serverUrl)
+    config.base foreach { context.setBase(_) }
+    config.managerDn foreach { context.setUserDn(_) }
+    config.password foreach { context.setPassword(_) }
+    context.setReferral("follow")
     context.afterPropertiesSet()
     context
   }
 
   lazy val ldapAuthoritiesPopulator = {
     val populator =
-      new DefaultLdapAuthoritiesPopulator(contextSource, configService.get(GROUP_SEARCH_BASE, ""))
+      new DefaultLdapAuthoritiesPopulator(contextSource, config.groupSearchBase)
+    populator.setGroupSearchFilter(config.groupSearchFilter)
     populator.setSearchSubtree(true)
     populator.setConvertToUpperCase(false)
     populator.setRolePrefix("")
-    configService.get(GROUP_SEARCH_FILTER) foreach { s => populator.setGroupSearchFilter(s.toString) }
     populator
   }
 
@@ -103,9 +100,9 @@ class LdapPluginContext {
 
     def create() = {
       val authenticator = new BindAuthenticator(contextSource)
-      configService.get(USER_SEARCH_FILTER) foreach { filter =>
-        authenticator.setUserSearch(new FilterBasedLdapUserSearch(configService.get(USER_SEARCH_BASE, ""), filter.toString, contextSource))
-      }
+      authenticator.setUserSearch(
+        new FilterBasedLdapUserSearch(config.userSearchBase, config.userSearchFilter, contextSource)
+      )
       authenticator.afterPropertiesSet()
 
       new LdapAuthenticationProvider(authenticator, fullAuthoritiesPopulator)
@@ -116,15 +113,15 @@ class LdapPluginContext {
     val mode = "ad"
 
     def create() =
-      new ActiveDirectoryLdapAuthenticationProvider(configService.get(DOMAIN).map(_.toString).getOrElse(null), serverUrl)
+      new ActiveDirectoryLdapAuthenticationProvider(config.domain.getOrElse(null), config.serverUrl)
   }
 
   @Bean def ldapUserService = catching(classOf[Exception]).opt {
-    new LdapUserServiceImpl(configService, ldapTemplate, ldapAuthoritiesPopulator)
+    new LdapUserServiceImpl(config, ldapTemplate, ldapAuthoritiesPopulator)
   }.getOrElse(new UserServiceStub)
 
   @Bean def ldapGroupService = catching(classOf[Exception]).opt {
-    new LdapGroupServiceImpl(configService, ldapTemplate, ldapUserService.asInstanceOf[LdapUserService])
+    new LdapGroupServiceImpl(config, ldapTemplate, ldapUserService.asInstanceOf[LdapUserService])
   }.getOrElse(new GroupServiceStub)
 
 }
@@ -142,4 +139,61 @@ object LdapPluginContext {
   val GROUP_SEARCH_BASE = PREFIX_LDAP + "group.search.base"
   val USERS_SERVICE_FILTER = PREFIX_LDAP + "users.service.filter"
   val GROUPS_SERVICE_FILTER = PREFIX_LDAP + "groups.service.filter"
+}
+
+class LdapPluginConfig(val configService: ConfigService) {
+  import LdapPluginContext._
+
+  private val UserSearchFilter = """(?:.*\()?(\w+)=(?:.*)\{0\}(?:[^\)]*?)(?:\).*)?""".r
+
+  private val GroupSearchFilter = """(?:.*\()?(\w+)=\{0\}(?:\).*)?""".r
+
+  def serverUrl: String =
+    configService.get(SERVER_URL) map { _.toString } getOrElse {
+      throw new IllegalArgumentException("LDAP URL must be defined (%s)".format(SERVER_URL))
+    }
+
+  def base: Option[String] = configService.get(BASE).map(_.toString)
+
+  def managerDn: Option[String] = configService.get(MANAGER_DN).map(_.toString)
+
+  def password: Option[String] = configService.get(MANAGER_PASSWORD).map(_.toString)
+
+  def domain: Option[String] = configService.get(DOMAIN).map(_.toString)
+
+  def userSearchFilter: String = {
+    val filter = configService.get(USER_SEARCH_FILTER, "")
+    if (!filter.matches(UserSearchFilter.pattern.pattern()))
+      throw new IllegalArgumentException("Invalid user search filter (%s)".format(filter))
+    filter
+  }
+
+  def userSearchBase: String = configService.get(USER_SEARCH_BASE, "")
+
+  def groupSearchFilter: String = {
+    val filter = configService.get(GROUP_SEARCH_FILTER, "")
+    if (!filter.matches(GroupSearchFilter.pattern.pattern()))
+      throw new IllegalArgumentException("Invalid group search filter (%s)".format(filter))
+    filter
+  }
+
+  def groupSearchBase: String = configService.get(GROUP_SEARCH_BASE, "")
+
+  def usersServiceFilter: String = configService.get(USERS_SERVICE_FILTER) map { _.toString } getOrElse {
+    throw new IllegalArgumentException("Users service filter must be defined (%s)".format(USERS_SERVICE_FILTER))
+  }
+
+  def groupsServiceFilter: String = configService.get(GROUPS_SERVICE_FILTER) map { _.toString } getOrElse {
+    throw new IllegalArgumentException("Groups service filter must be defined (%s)".format(GROUPS_SERVICE_FILTER))
+  }
+
+  def principalAttributeName: String = {
+    val UserSearchFilter(attrName) = userSearchFilter
+    attrName
+  }
+
+  def groupMemberAttributeName: String = {
+    val GroupSearchFilter(attrName) = groupSearchFilter
+    attrName
+  }
 }

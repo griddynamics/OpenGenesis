@@ -179,7 +179,7 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
       self.$("#groups-select").fcbkcomplete({
         json_url: hasGroups ? "rest/groups" : null,
         cache: false,
-        filter_case: true,
+        filter_case: false,
         filter_hide: true,
         filter_selected: true,
         newel: !hasGroups,
@@ -192,7 +192,7 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
       self.$("#users-select").fcbkcomplete({
         json_url: hasUsers ? "rest/users" : null,
         cache: false,
-        filter_case: true,
+        filter_case: false,
         filter_hide: true,
         filter_selected: true,
         newel: !hasUsers,
