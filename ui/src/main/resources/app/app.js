@@ -203,13 +203,16 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Env
       if (user.readonly && !user.administrator) {
         $("#page").addClass("readonly");
         $(document).on("focus", ".readonly input", function(){
-          $(this).attr('disabled', 'disabled');
+          if (! $(this).is('[data-access-all]'))
+            $(this).attr('disabled', 'disabled');
         });
         $(document).on("focus", ".readonly textarea", function(){
-          $(this).attr('disabled', 'disabled');
+          if (! $(this).is('[data-access-all]'))
+            $(this).attr('disabled', 'disabled');
         });
         $(document).on("mouseenter focus", ".readonly select", function(){
-          $(this).attr('disabled', 'disabled');
+          if (! $(this).is('[data-access-all]'))
+            $(this).attr('disabled', 'disabled');
         });
       }
       if (user.logout_disabled) {
