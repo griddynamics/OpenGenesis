@@ -40,7 +40,7 @@ class RunLocalPluginContext {
   @Bean def runLocalActionToExec: ActionToExecutor = new ActionToExecutor {
     def apply(action: Action) = action match {
       // TODO: LoggerWrapper is not supported on remote agents yet
-      case a: RunLocalShell => new RunLocalActionExecutor(a, shellExecutionService, false)
+      case a: RunLocalShell => new RunLocalActionExecutor(a, shellExecutionService)
     }
 
     def isDefinedAt(action: Action) = action.isInstanceOf[RunLocalShell]

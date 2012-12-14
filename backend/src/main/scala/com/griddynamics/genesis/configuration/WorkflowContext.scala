@@ -23,7 +23,7 @@
 package com.griddynamics.genesis.configuration
 
 import org.springframework.beans.factory.annotation.{Value, Autowired}
-import akka.actor.{TypedProps, ActorSystem, TypedActor}
+import akka.actor._
 import java.util.concurrent.Executors
 import com.griddynamics.genesis.bean._
 import org.springframework.context.annotation.{Configuration, Bean}
@@ -31,6 +31,8 @@ import com.griddynamics.genesis.plugin.{PartialStepCoordinatorFactory, Composite
 import com.griddynamics.genesis.workflow.TrivialStepExecutor
 import com.griddynamics.genesis.core.TrivialStepCoordinatorFactory
 import com.griddynamics.genesis.workflow.{StepResult, Step}
+import com.griddynamics.genesis.service.RemoteAgentsService
+import akka.remote.RemoteLifeCycleEvent
 
 trait WorkflowContext {
     def requestBroker: RequestBroker
@@ -44,6 +46,7 @@ class DefaultWorkflowContext extends WorkflowContext {
 
     @Autowired var storeServiceContext: StoreServiceContext = _
     @Autowired var templateServiceContext: TemplateServiceContext = _
+    @Autowired var remoteAgentService: RemoteAgentsService = _
 
     val actorSystem: ActorSystem = ActorSystem()
 
@@ -61,7 +64,8 @@ class DefaultWorkflowContext extends WorkflowContext {
             configRepo = storeServiceContext.configurationRepository,
             templateService = templateServiceContext.templateService,
             executorService = executorService,
-            stepCoordinatorFactory = stepCoordinatorFactory, actorSystem = actorSystem)
+            stepCoordinatorFactory = stepCoordinatorFactory, actorSystem = actorSystem,
+            remoteAgentService = remoteAgentService)
     }
 
     // this executor service is used to 'asynchronously' execute SyncActionExecutors,

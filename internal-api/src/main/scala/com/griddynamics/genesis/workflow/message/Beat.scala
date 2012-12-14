@@ -24,4 +24,4 @@ package com.griddynamics.genesis.workflow.message
 
 import com.griddynamics.genesis.workflow.Signal
 
-case class Beat(signal: Signal)
+private[workflow] case class Beat (signal: Signal)

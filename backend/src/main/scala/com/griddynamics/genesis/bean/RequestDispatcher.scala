@@ -27,7 +27,7 @@ import java.util.concurrent.ExecutorService
 import akka.actor.{ActorSystem, TypedActor}
 import com.griddynamics.genesis.workflow.actor.{TypedFlowCoordinatorImpl, TypedFlowCoordinator}
 import com.griddynamics.genesis.core._
-import com.griddynamics.genesis.service.{Builders, TemplateService, StoreService}
+import com.griddynamics.genesis.service.{RemoteAgentsService, Builders, TemplateService, StoreService}
 import collection.mutable.ArrayBuffer
 import com.griddynamics.genesis.plugin.{StepBuilder, Cancel, StepCoordinatorFactory}
 import com.griddynamics.genesis.model.EnvStatus
@@ -53,7 +53,8 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
                             templateService: TemplateService,
                             executorService: ExecutorService,
                             stepCoordinatorFactory: StepCoordinatorFactory,
-                            actorSystem: ActorSystem) extends RequestDispatcher with Logging {
+                            actorSystem: ActorSystem,
+                            remoteAgentService: RemoteAgentsService) extends RequestDispatcher with Logging {
 
     val coordinators = mutable.Map[(Int, Int), TypedFlowCoordinator]()
 
@@ -133,13 +134,15 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
         new TypedFlowCoordinatorImpl(
             new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService, configRepo,
                 stepCoordinatorFactory, rescueSteps) with RegularWorkflow,
-            beatPeriodMs, flowTimeOutMs, executorService, actorSystem
+            beatPeriodMs, flowTimeOutMs, executorService, actorSystem, remoteAgentService
+
         )
 
     def destroyingCoordinator(envId: Int, projectId: Int, flowSteps: Seq[StepBuilder], rescueSteps: Seq[StepBuilder]) =
         new TypedFlowCoordinatorImpl(
             new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService, configRepo,
                 stepCoordinatorFactory, rescueSteps) with DestroyWorkflow,
-            beatPeriodMs, flowTimeOutMs, executorService, actorSystem
+            beatPeriodMs, flowTimeOutMs, executorService, actorSystem, remoteAgentService
+
         )
 }

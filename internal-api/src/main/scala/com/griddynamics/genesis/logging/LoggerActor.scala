@@ -24,7 +24,7 @@ package com.griddynamics.genesis.logging
 
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.service.StoreService
-import akka.actor.{Props, ActorSystem, ActorRef, Actor}
+import akka.actor._
 import java.sql.Timestamp
 
 class LoggerActor(val service: StoreService) extends Actor with Logging {
@@ -50,10 +50,12 @@ trait InternalLogger {
 }
 
 object LoggerWrapper extends Logging {
+
+  private val ACTOR_NAME = "LoggerActor"
   var logger: ActorRef = _
 
   def start(system: ActorSystem, storeService: StoreService) {
-    logger = system.actorOf(Props(new LoggerActor(storeService)))
+    logger = system.actorOf(Props(new LoggerActor(storeService)), ACTOR_NAME)
   }
 
   private def now = new Timestamp(System.currentTimeMillis())
@@ -65,4 +67,9 @@ object LoggerWrapper extends Logging {
   def writeStepLog(id: Int, message: String, timestamp: Timestamp = now) {
     logger ! Log(id, message, timestamp)
   }
+
+  def registerRemote(remote: ActorRef) {
+    logger = remote
+  }
+
 }

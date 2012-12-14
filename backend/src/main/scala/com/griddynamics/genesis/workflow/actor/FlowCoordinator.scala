@@ -33,9 +33,11 @@ import akka.actor._
 import com.griddynamics.genesis.common.Mistake
 import scala.Left
 import scala.Right
+import com.griddynamics.genesis.service.RemoteAgentsService
 
 class FlowCoordinator(unsafeFlowCoordinator: workflow.FlowCoordinator,
                       executorService: ExecutorService,
+                      remoteAgentService: RemoteAgentsService,
                       beatSource: BeatSource, flowTimeOutMs: Long) extends Actor
 with FlowActor with Logging {
     val safeFlowCoordinator = new SafeFlowCoordinator(unsafeFlowCoordinator)
@@ -141,7 +143,7 @@ with FlowActor with Logging {
 
     def startCoordinator(coordinator: workflow.StepCoordinator, rescue: Boolean = false) {
         log.debug("Starting coordinator %s", coordinator.getClass.getName)
-        val stepCoordinatorActor = context.actorOf(Props(new StepCoordinator(coordinator, self, executorService, beatSource, rescue)))
+        val stepCoordinatorActor = context.actorOf(Props(new StepCoordinator(coordinator, self, executorService, remoteAgentService, beatSource, rescue)))
         if (rescue)
             finalCoordinators += stepCoordinatorActor
         else
@@ -209,14 +211,15 @@ trait TypedFlowCoordinator {
 
 class TypedFlowCoordinatorImpl(flowCoordinator: workflow.FlowCoordinator,
                                beatPeriodMs: Long, flowTimeOutMs: Long,
-                               executorService: ExecutorService, actorSystem: ActorSystem) extends TypedFlowCoordinator
+                               executorService: ExecutorService, actorSystem: ActorSystem, remoteAgentService: RemoteAgentsService) extends TypedFlowCoordinator
+
 with Logging {
     val beatSource : BeatSource = {
       val props: TypedProps[BeatSource] = TypedProps(classOf[BeatSource], {new BeatSourceImpl(beatPeriodMs)})
       TypedActor(actorSystem).typedActorOf(props)
     }
 
-    val flowCoordinatorActor = actorSystem.actorOf(Props(new FlowCoordinator(flowCoordinator, executorService, beatSource, flowTimeOutMs)))
+    val flowCoordinatorActor = actorSystem.actorOf(Props(new FlowCoordinator(flowCoordinator, executorService, remoteAgentService, beatSource, flowTimeOutMs)))
 
     def start() {
         beatSource.start()

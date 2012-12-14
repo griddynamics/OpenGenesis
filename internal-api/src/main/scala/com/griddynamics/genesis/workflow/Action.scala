@@ -32,6 +32,11 @@ trait Action {
     final val uuid = util.UUID.randomUUID().toString
 }
 
+/* Trait for any action able to be executed on remote agent*/
+trait RemoteAgentExec {
+   def tag: String
+}
+
 /* Base trait for result of particular action */
 trait ActionResult {
     def action: Action
