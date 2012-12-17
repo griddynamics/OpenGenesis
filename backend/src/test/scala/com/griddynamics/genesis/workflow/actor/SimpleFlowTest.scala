@@ -36,6 +36,7 @@ import com.griddynamics.genesis.plugin.StepBuilder
 import akka.actor.ActorSystem
 import com.griddynamics.genesis.service.RemoteAgentsService
 import org.scalatest.mock.MockitoSugar
+import com.griddynamics.genesis.configuration.WorkflowConfig
 
 class FlowElement(val action: Action, val precursors: Set[FlowElement]) {
     override def toString = "FlowElement(%s, %s)".format(action, precursors)
@@ -161,7 +162,7 @@ class SimpleFlowTest extends AssertionsForJUnit with Logging with MockitoSugar {
         val remoteAgentService = mock[RemoteAgentsService]
 
         val flowCoordinator = new TypedFlowCoordinatorImpl(
-            testCoordinator, 20, 10000, Executors.newSingleThreadExecutor, actorSystem, remoteAgentService
+            testCoordinator, WorkflowConfig(20, 10000, 10), Executors.newSingleThreadExecutor, actorSystem, remoteAgentService
         )
 
         flowCoordinator.start()

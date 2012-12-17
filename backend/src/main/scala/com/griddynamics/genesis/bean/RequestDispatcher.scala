@@ -24,7 +24,7 @@ package com.griddynamics.genesis.bean
 
 import scala.collection.mutable
 import java.util.concurrent.ExecutorService
-import akka.actor.{ActorSystem, TypedActor}
+import akka.actor.ActorSystem
 import com.griddynamics.genesis.workflow.actor.{TypedFlowCoordinatorImpl, TypedFlowCoordinator}
 import com.griddynamics.genesis.core._
 import com.griddynamics.genesis.service.{RemoteAgentsService, Builders, TemplateService, StoreService}
@@ -35,6 +35,7 @@ import com.griddynamics.genesis.model.WorkflowStatus._
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.repository.ConfigurationRepository
 import java.sql.Timestamp
+import com.griddynamics.genesis.configuration.WorkflowConfig
 
 trait RequestDispatcher {
     def createEnv(envName: Int, projectId: Int)
@@ -46,8 +47,7 @@ trait RequestDispatcher {
     def cancelWorkflow(envId: Int, projectId: Int)
 }
 
-class RequestDispatcherImpl(beatPeriodMs: Long,
-                            flowTimeOutMs: Long,
+class RequestDispatcherImpl(workflowConfig: WorkflowConfig,
                             storeService: StoreService,
                             configRepo: ConfigurationRepository,
                             templateService: TemplateService,
@@ -134,7 +134,7 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
         new TypedFlowCoordinatorImpl(
             new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService, configRepo,
                 stepCoordinatorFactory, rescueSteps) with RegularWorkflow,
-            beatPeriodMs, flowTimeOutMs, executorService, actorSystem, remoteAgentService
+            workflowConfig, executorService, actorSystem, remoteAgentService
 
         )
 
@@ -142,7 +142,7 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
         new TypedFlowCoordinatorImpl(
             new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService, configRepo,
                 stepCoordinatorFactory, rescueSteps) with DestroyWorkflow,
-            beatPeriodMs, flowTimeOutMs, executorService, actorSystem, remoteAgentService
+            workflowConfig, executorService, actorSystem, remoteAgentService
 
         )
 }

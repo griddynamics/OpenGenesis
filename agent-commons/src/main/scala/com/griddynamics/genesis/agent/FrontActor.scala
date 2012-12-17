@@ -32,7 +32,8 @@ import com.griddynamics.genesis.agents.status.{GetStatus, StatusResponse}
 import com.griddynamics.genesis.logging.LoggerWrapper
 
 class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: ExecutorService) extends Actor {
-  val log = Logging(context.system, classOf[FrontActor])
+  import context.system
+  val log = Logging(system, classOf[FrontActor])
 
   protected def receive = {
 
@@ -53,7 +54,10 @@ class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: Ex
       case e: AsyncActionExecutor => e
       case e: SyncActionExecutor => new SyncActionExecutorAdapter(e, execService)
     }
+    val config = system.settings.config
+    val beatPeriodMs = config.getMilliseconds("beat.period")
+    log.info("Agent beat period is: {}", beatPeriodMs)
 
-    context.system.actorOf(Props(new ExecutorActor(asyncExecutor, remote))) //todo: not sure if we should create root level actors for tasks
+    system.actorOf(Props(new ExecutorActor(asyncExecutor, remote, beatPeriodMs)))  //todo: not sure if we should create root level actors for tasks
   }
 }

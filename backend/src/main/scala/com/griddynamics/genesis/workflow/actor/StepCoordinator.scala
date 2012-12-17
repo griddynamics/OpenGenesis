@@ -37,12 +37,13 @@ import com.griddynamics.genesis.common.Mistake
 import com.griddynamics.genesis.service.RemoteAgentsService
 import com.griddynamics.genesis.logging.LoggerWrapper
 import org.apache.commons.lang.exception.ExceptionUtils
+import com.griddynamics.genesis.configuration.WorkflowConfig
 
 class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
                       supervisor: ActorRef,
                       executorService: ExecutorService,
                       remoteAgentService: RemoteAgentsService,
-                      beatSource: BeatSource,
+                      beatSource: BeatSource, config: WorkflowConfig,
                       isRescue: Boolean  = false) extends Actor with FlowActor with Logging {
     val safeStepCoordinator = new SafeStepCoordinator(unsafeStepCoordinator)
 
@@ -173,7 +174,7 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
   import akka.pattern.ask
   import akka.util.duration._
   import akka.dispatch.Await
-  private val TIMEOUT_REMOTE_ACTOR = akka.util.Timeout(10 seconds)
+  private lazy val TIMEOUT_REMOTE_ACTOR = akka.util.Timeout(config.remoteExecutorWaitTimeout  seconds)
 
   private def remoteExecutor(tag: String, action: Action) = try {
     // TODO: is it possible to start single action on several agents?

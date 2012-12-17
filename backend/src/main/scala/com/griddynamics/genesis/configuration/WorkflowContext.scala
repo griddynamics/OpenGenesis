@@ -32,17 +32,19 @@ import com.griddynamics.genesis.workflow.TrivialStepExecutor
 import com.griddynamics.genesis.core.TrivialStepCoordinatorFactory
 import com.griddynamics.genesis.workflow.{StepResult, Step}
 import com.griddynamics.genesis.service.RemoteAgentsService
-import akka.remote.RemoteLifeCycleEvent
 
 trait WorkflowContext {
     def requestBroker: RequestBroker
 }
+
+case class WorkflowConfig(beatPeriodMs: Int, flowTimeOutMs: Int, remoteExecutorWaitTimeout: Int)
 
 @Configuration
 class DefaultWorkflowContext extends WorkflowContext {
     @Value("${genesis.system.beat.period.ms:1000}") var beatPeriodMs: Int = _
     @Value("${genesis.system.flow.timeout.ms:3600000}") var flowTimeOutMs: Int = _
     @Value("${genesis.system.flow.executor.sync.threads.max:5}") var syncExecThreadPoolSize: Int = _
+    @Value("${genesis.system.remote.executor.wait.timeout:10}") var remoteExecutorWaitTimeout: Int = _
 
     @Autowired var storeServiceContext: StoreServiceContext = _
     @Autowired var templateServiceContext: TemplateServiceContext = _
@@ -58,14 +60,14 @@ class DefaultWorkflowContext extends WorkflowContext {
     @Bean def system: ActorSystem = actorSystem
 
     @Bean def requestDispatcherBean: RequestDispatcher = {
-        new RequestDispatcherImpl(beatPeriodMs = beatPeriodMs,
-            flowTimeOutMs = flowTimeOutMs,
-            storeService = storeServiceContext.storeService,
-            configRepo = storeServiceContext.configurationRepository,
-            templateService = templateServiceContext.templateService,
-            executorService = executorService,
-            stepCoordinatorFactory = stepCoordinatorFactory, actorSystem = actorSystem,
-            remoteAgentService = remoteAgentService)
+      new RequestDispatcherImpl(
+        WorkflowConfig(beatPeriodMs, flowTimeOutMs, remoteExecutorWaitTimeout),
+        storeService = storeServiceContext.storeService,
+        configRepo = storeServiceContext.configurationRepository,
+        templateService = templateServiceContext.templateService,
+        executorService = executorService,
+        stepCoordinatorFactory = stepCoordinatorFactory, actorSystem = actorSystem,
+        remoteAgentService = remoteAgentService)
     }
 
     // this executor service is used to 'asynchronously' execute SyncActionExecutors,

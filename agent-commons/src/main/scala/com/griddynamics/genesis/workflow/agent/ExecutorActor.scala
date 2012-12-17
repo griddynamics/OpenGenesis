@@ -36,7 +36,8 @@ import signal.Success
 import org.apache.commons.lang.exception.ExceptionUtils
 
 class ExecutorActor(unsafeExecutor: AsyncActionExecutor,
-                    supervisor: ActorRef) extends Actor {
+                    supervisor: ActorRef,
+                    beatPeriodMs: Long) extends Actor {
   val log = Logging(context.system, this.getClass)
 
   private val safeExecutor = new SafeAsyncActionExecutor(unsafeExecutor)
@@ -47,7 +48,7 @@ class ExecutorActor(unsafeExecutor: AsyncActionExecutor,
     case Start => {
       log.debug("Starting async executor for '%s'", safeExecutor.action)
       safeExecutor.startAsync()
-      cancellable = context.system.scheduler.schedule(0 milliseconds, 2000 milliseconds, self, Beat(Success()))
+      cancellable = context.system.scheduler.schedule(0 milliseconds, beatPeriodMs.intValue() milliseconds, self, Beat(Success()))
       //            beatSource.subscribe(self, Beat(Success()))
     }
     case Beat(Success()) => {
