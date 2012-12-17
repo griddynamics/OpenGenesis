@@ -34,6 +34,9 @@ import scala.collection.mutable
 import java.util.concurrent.atomic.AtomicReference
 import com.griddynamics.genesis.plugin.StepBuilder
 import akka.actor.ActorSystem
+import com.griddynamics.genesis.service.RemoteAgentsService
+import org.scalatest.mock.MockitoSugar
+import com.griddynamics.genesis.configuration.WorkflowConfig
 
 class FlowElement(val action: Action, val precursors: Set[FlowElement]) {
     override def toString = "FlowElement(%s, %s)".format(action, precursors)
@@ -130,7 +133,7 @@ class TestExecutor(val action: TestAction, testCoordinator: TestCoordinator) ext
     def cleanUp(signal: Signal) {}
 }
 
-class SimpleFlowTest extends AssertionsForJUnit with Logging {
+class SimpleFlowTest extends AssertionsForJUnit with Logging with MockitoSugar {
 
     import SimpleFlowTest._
 
@@ -156,9 +159,10 @@ class SimpleFlowTest extends AssertionsForJUnit with Logging {
 
     def testWorkflow(flow: Set[FlowElement]) {
         val testCoordinator = new TestCoordinator(flow)
+        val remoteAgentService = mock[RemoteAgentsService]
 
         val flowCoordinator = new TypedFlowCoordinatorImpl(
-            testCoordinator, 20, 10000, Executors.newSingleThreadExecutor, ActorSystem()
+            testCoordinator, WorkflowConfig(20, 10000, 10), Executors.newSingleThreadExecutor, actorSystem, remoteAgentService
         )
 
         flowCoordinator.start()
@@ -178,6 +182,9 @@ class SimpleFlowTest extends AssertionsForJUnit with Logging {
 }
 
 object SimpleFlowTest {
+
+  lazy val actorSystem = ActorSystem()
+
     def isFlowSatisfied(stringFlow: Seq[String], flowElement: FlowElement): Boolean = {
         val actionName = flowElement.action.asInstanceOf[TestAction].name
 

@@ -11,4 +11,5 @@
   "genesis.system.flow.timeout.ms": {"default":3600000,"description":"Workflow execution timeout in ms.", "restartRequired": true},
   "genesis.system.agent.poll.period": {"default":30,"description":"Agents health check period in secs", "restartRequired": true},
   "genesis.system.flow.executor.sync.threads.max": {"default": 5,"description":"Maximum number of simultaneously executing synchronous actions", "restartRequired": true}
+  "genesis.system.remote.executor.wait.timeout": {"default": 10,"description":"Timeout (in seconds) to wait for remote actor returned by agent", "restartRequired": true}
 }

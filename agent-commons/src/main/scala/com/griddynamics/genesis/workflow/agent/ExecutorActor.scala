@@ -28,19 +28,20 @@ import akka.actor.{Cancellable, ActorRef, PoisonPill, Actor}
 import akka.util.duration._
 import com.griddynamics.genesis.logging.LoggerWrapper
 import akka.event.Logging
+import message._
 import scala.Some
 import com.griddynamics.genesis.workflow.action.{ExecutorInterrupt, ExecutorThrowable}
+import signal.Success
 
-//import org.apache.commons.lang.exception.ExceptionUtils
-case class Beat(signal: Signal)
-case object Start
-case object Success extends Signal
+import org.apache.commons.lang.exception.ExceptionUtils
 
 class ExecutorActor(unsafeExecutor: AsyncActionExecutor,
-                    supervisor: ActorRef) extends Actor {
+                    supervisor: ActorRef,
+                    beatPeriodMs: Long,
+                    logger: LoggerWrapper) extends Actor {
   val log = Logging(context.system, this.getClass)
 
-  private val safeExecutor = new SafeAsyncActionExecutor(unsafeExecutor)
+  private val safeExecutor = new SafeAsyncActionExecutor(unsafeExecutor, logger)
 
   private var cancellable: Cancellable = _
 
@@ -48,16 +49,16 @@ class ExecutorActor(unsafeExecutor: AsyncActionExecutor,
     case Start => {
       log.debug("Starting async executor for '%s'", safeExecutor.action)
       safeExecutor.startAsync()
-      cancellable = context.system.scheduler.schedule(0 milliseconds, 2000 milliseconds, self, Beat(Success))
+      cancellable = context.system.scheduler.schedule(0 milliseconds, beatPeriodMs.intValue() milliseconds, self, Beat(Success()))
       //            beatSource.subscribe(self, Beat(Success()))
     }
-    case Beat(Success) => {
+    case Beat(Success()) => {
       safeExecutor.getResult match {
         case Some(result) => {
           log.debug("Async executor for '%s' finished with result '%s'".format(safeExecutor.action, result))
           supervisor ! result
           log.debug("Sent result to '%s'".format(supervisor))
-          safeExecutor.cleanUp(Success)
+          safeExecutor.cleanUp(Success())
           finish()
         }
         case None =>
@@ -91,7 +92,7 @@ class ExecutorActor(unsafeExecutor: AsyncActionExecutor,
   }
 }
 
-class SafeAsyncActionExecutor(unsafeExecutor: AsyncActionExecutor) extends AsyncActionExecutor with Logging {
+class SafeAsyncActionExecutor(unsafeExecutor: AsyncActionExecutor, logger: LoggerWrapper) extends AsyncActionExecutor with Logging {
   val action = unsafeExecutor.action
 
   var result: Option[ActionResult] = None
@@ -117,7 +118,7 @@ class SafeAsyncActionExecutor(unsafeExecutor: AsyncActionExecutor) extends Async
   private def logThrowable(t: Throwable, method: String, signal: Signal = null) {
     val signalMsg = if(signal != null) " and signal '%s'".format(signal) else ""
     log.warn(t, "Throwable while %s for action '%s'%s", method, action, signalMsg)
-//    LoggerWrapper.writeActionLog(action.uuid, "Throwable while %s%s: %s".format(method, signalMsg, t.getMessage))
-//    LoggerWrapper.writeActionLog(action.uuid, "Stack trace:\n %s".format(ExceptionUtils.getStackTrace(t)))
+    logger.writeActionLog(action.uuid, "Throwable while %s%s: %s".format(method, signalMsg, t.getMessage))
+    logger.writeActionLog(action.uuid, "Stack trace:\n %s".format(ExceptionUtils.getStackTrace(t)))
   }
 }

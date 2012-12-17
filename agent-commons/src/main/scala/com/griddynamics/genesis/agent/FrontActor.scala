@@ -27,26 +27,35 @@ import akka.actor.{ActorRef, Props, Actor}
 import com.griddynamics.genesis.workflow._
 import akka.event.Logging
 import java.util.concurrent.ExecutorService
-import com.griddynamics.genesis.workflow.agent.{Start, ExecutorActor}
+import com.griddynamics.genesis.workflow.agent.ExecutorActor
 import com.griddynamics.genesis.agents.status.{GetStatus, StatusResponse}
+import com.griddynamics.genesis.logging.LoggerWrapper
 
 class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: ExecutorService) extends Actor {
-  val log = Logging(context.system, classOf[FrontActor])
+  import context.system
+  val log = Logging(system, classOf[FrontActor])
 
   protected def receive = {
-    case rt: RemoteTask => actionToExec(rt.action).map(startExecutor(_, rt.supervisor))
+    case rt@RemoteTask(action, supervisor, logger) => try {
+      actionToExec(action).foreach(sender ! executorActor(_, supervisor, logger))
+    } catch {
+      case t =>
+        sender ! akka.actor.Status.Failure(t)
+        log.error(t, "Error while processing remote task: %s", rt)
+    }
     case GetStatus => sender ! new StatusResponse(0, 0)
     case m => log.debug("Unknown message: " + m)
-    // TODO: add signal dispatching
   }
 
-  def startExecutor(executor: ActionExecutor, remote: ActorRef) {
+  def executorActor(executor: ActionExecutor, remote: ActorRef, logger: LoggerWrapper) = {
     val asyncExecutor = executor match {
       case e: AsyncActionExecutor => e
       case e: SyncActionExecutor => new SyncActionExecutorAdapter(e, execService)
     }
+    val config = system.settings.config
+    val beatPeriodMs = config.getMilliseconds("beat.period")
+    log.info("Agent beat period is: {}", beatPeriodMs)
 
-    val actionExecutionActor = context.system.actorOf(Props(new ExecutorActor(asyncExecutor, remote))) //todo: not sure if we should create root level actors for tasks
-    actionExecutionActor ! Start
+    system.actorOf(Props(new ExecutorActor(asyncExecutor, remote, beatPeriodMs, logger)))  //todo: not sure if we should create root level actors for tasks
   }
 }
