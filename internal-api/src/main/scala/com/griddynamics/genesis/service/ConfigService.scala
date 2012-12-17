@@ -26,37 +26,37 @@ package com.griddynamics.genesis.service
 import com.griddynamics.genesis.api.ConfigProperty
 
 trait ConfigService {
-    def get[B](name: String, default: B): B
-    def get(name: String) : Option[Any]
-    def listSettings(prefix: Option[String]) : Seq[ConfigProperty]
-    def update(config: Map[String, Any])
-    def delete(name:String)
-    def clear(prefix:Option[String])
-    def get[B](projectId: Int, name: String, default: B): B
-    def update(projectId: Int, config: Map[String, Any])
+  def get[B](name: String, default: B): B
+  def get(name: String) : Option[Any]
+  def listSettings(prefix: Option[String]) : Seq[ConfigProperty]
+  def update(config: Map[String, Any])
+  def delete(name:String)
+  def clear(prefix:Option[String])
+  def get[B](projectId: Int, name: String, default: B): B
+  def update(projectId: Int, config: Map[String, Any])
   def restartRequired() : Boolean
 }
 
 object GenesisSystemProperties {
-    val BACKEND = "backend.properties"
-    val PREFIX_GENESIS = "genesis."
-    val PREFIX = "genesis.system"
-    val PREFIX_DB = PREFIX + ".jdbc."
-    val PLUGIN_PREFIX = "genesis.plugin"
-    val PROJECT_PREFIX = "genesis.project"
+  val BACKEND = "backend.properties"
+  val PREFIX_GENESIS = "genesis."
+  val PREFIX = "genesis.system"
+  val PREFIX_DB = PREFIX + ".jdbc."
+  val PLUGIN_PREFIX = "genesis.plugin"
+  val PROJECT_PREFIX = "genesis.project"
 
-    val SHUTDOWN_TIMEOUT = "genesis.system.shutdown.timeout.sec"
-    val SERVICE_BACKEND_URL = "genesis.system.service.backendUrl"
-    val FRONTEND_READ_TIMEOUT = "genesis.web.frontend.readTimeout.ms"
-    val FRONTEND_CONNECT_TIMEOUT = "genesis.web.frontend.connectTimeout.ms"
-    val SERVER_MODE = "genesis.system.server.mode"
-    val SERVICE_REST_USEMOCK = "genesis.system.service.rest.use.mock"
-    val SECURITY_CONFIG = "genesis.system.security.config"
-    val SECURITY_GROUPS = "genesis.system.security.groups"
-    val BIND_HOST = "genesis.system.bind.host"
-    val BIND_PORT = "genesis.system.bind.port"
-    val MAX_IDLE = "genesis.system.request.maxIdle"
-    val WEB_RESOURCE_ROOTS = "genesis.system.web.resourceRoots"
-    val CLIENT_DEBUG_MODE = "genesis.web.client.debug"
-    val LOGOUT_ENABLED = "genesis.web.logout.enabled"
+  val SHUTDOWN_TIMEOUT = "genesis.system.shutdown.timeout.sec"
+  val SERVICE_BACKEND_URL = "genesis.system.service.backendUrl"
+  val FRONTEND_READ_TIMEOUT = "genesis.web.frontend.readTimeout.ms"
+  val FRONTEND_CONNECT_TIMEOUT = "genesis.web.frontend.connectTimeout.ms"
+  val SERVER_MODE = "genesis.system.server.mode"
+  val SECURITY_CONFIG = "genesis.system.security.config"
+  val SECURITY_GROUPS = "genesis.system.security.groups"
+  val BIND_HOST = "genesis.system.bind.host"
+  val BIND_PORT = "genesis.system.bind.port"
+  val MAX_IDLE = "genesis.system.request.maxIdle"
+  val AGENT_POLLING_PERIOD = "genesis.system.agent.poll.period"
+  val WEB_RESOURCE_ROOTS = "genesis.system.web.resourceRoots"
+  val CLIENT_DEBUG_MODE = "genesis.web.client.debug"
+  val LOGOUT_ENABLED = "genesis.web.logout.enabled"
 }

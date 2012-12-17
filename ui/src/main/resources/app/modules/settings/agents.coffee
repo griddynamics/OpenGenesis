@@ -1,5 +1,16 @@
-define ["genesis", "backbone", "modules/validation", "services/backend", "jquery", "jvalidate"], (genesis, Backbone, validation, backend, $) ->
+define [
+  "genesis",
+  "backbone",
+  "modules/validation",
+  "services/backend",
+  "utils/poller",
+  "jquery",
+  "jvalidate"
+], (genesis, Backbone, validation, backend, poller, $) ->
+  'use strict'
+
   Agents = genesis.module()
+
   URL = "rest/agents"
   class Agents.Model extends Backbone.Model
     urlRoot: URL
@@ -43,17 +54,33 @@ define ["genesis", "backbone", "modules/validation", "services/backend", "jquery
       @collection.fetch().done =>
         @listView = new Agents.Views.ListView(collection: @collection, el: @el)
         @currentView = @listView
+
+        @poll = @collection.clone()
+        poller.PollingManager.start @poll, { delay: 10000 }
+        @poll.bind "reset", @checkStatusUpdates, @
+
         @render()
+
+    onClose: ->
+      poller.PollingManager.stop @poll
 
     render: ->
       @currentView?.render()
+
+    checkStatusUpdates: ->
+      hasStatusChanges = ()=>
+        @poll.find (m) => @collection.get(m.id)?.get("status").name != m.get("status").name
+
+      if(@poll.size() != @collection.size() or hasStatusChanges())
+        @collection.reset @poll.models
+        @render() if @currentView == @listView
 
   class Agents.Views.ListView extends Backbone.View
     template: "app/templates/settings/agents/agents_list.html"
     events: "click .delete-agent": "deleteAgent"
 
     deleteAgent: (event) ->
-      agentId = $(event.currentTarget).attr("data-agent-id")
+      agentId = @$(event.currentTarget).attr("data-agent-id")
       self = this
       @dialog.dialog "option", "buttons",
         Yes: ->

@@ -4,9 +4,7 @@ import org.springframework.web.bind.annotation._
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.service.RemoteAgentsService
 import javax.validation.Valid
-import com.griddynamics.genesis.api.RemoteAgent
 import org.springframework.stereotype.Controller
-import com.griddynamics.genesis.api.RemoteAgent
 import com.griddynamics.genesis.api.RemoteAgent
 
 @Controller

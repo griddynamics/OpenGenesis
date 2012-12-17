@@ -5,7 +5,7 @@ import org.springframework.transaction.annotation.Transactional
 
 trait RemoteAgentRepository extends Repository[RemoteAgent]{
     @Transactional(readOnly = true)
-    def findByTags(tags: Seq[String]) : List[RemoteAgent]
+    def findByTags(tags: Seq[String]) : Seq[RemoteAgent]
 
     @Transactional(readOnly = false)
     def touch(key: Int)

@@ -306,4 +306,16 @@ case class RemoteAgent(id: Option[Int],
                        hostname: String,
                        @Min(1) @Max(32767) port: Int,
                        @ValidSeq tags: Seq[String],
-                       lastTimeAlive: Option[Long])
+                       lastTimeAlive: Option[Long],
+                       status: Option[AgentStatus.AgentStatus] = None
+                      )
+
+
+object AgentStatus extends Enumeration {
+  type AgentStatus = Value
+  val Connected = Value(0, "Connected")
+  val Active = Value(1, "Active")
+  val Disconnected = Value(2, "Disconnected")
+  val Unavailable = Value(3, "Unavailable")
+  val Error = Value(4, "Error")
+}
