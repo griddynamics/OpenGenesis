@@ -25,41 +25,41 @@ package com.griddynamics.genesis.run
 import com.griddynamics.genesis.util.Logging
 import java.io.{File, InputStream, PrintWriter}
 import io.Source
-import com.griddynamics.genesis.logging.LoggerWrapper
 import com.griddynamics.genesis.util.TryingUtil._
+import com.griddynamics.genesis.workflow.Action
 
 class LocalShellExecutionService(executionStrategies: List[ShellExecutionStrategy]) extends Logging {
   import scala.sys.process._
 
   val strategies = executionStrategies.map { strategy => (strategy.shell, strategy) }.toMap
 
-  private[this] def handleInputStream (logWriter: Option[PrintWriter], actionUUID: Option[String]) (is: InputStream, sb: StringBuilder) {
+  private[this] def handleInputStream (logWriter: Option[PrintWriter], action: Option[RunLocalShell]) (is: InputStream, sb: StringBuilder) {
     Source.fromInputStream(is, "UTF-8").getLines().foreach { line =>
       log.debug(line)
       logWriter.foreach { _.println(line) }
-      actionUUID.foreach { LoggerWrapper.writeActionLog(_, line) }
+      action.foreach { _.log(line) }
       sb.append(line).append('\n')
     }
   }
 
-  def exec(shell: String, command: String, outPath : Option[File] = None, actionUUID : Option[String] = None): ExecResponse = {
+  def exec(shell: String, command: String, outPath : Option[File] = None, action : Option[RunLocalShell] = None): ExecResponse = {
     val strategy = strategies.getOrElse(shell, throw new IllegalArgumentException)
 
     log.debug("Executing command: %s, log output path: %s, shell-run command: %s", command, outPath, shell)
 
     outPath.foreach { path =>
       if(!path.exists && !path.mkdirs()) {
-        actionUUID.foreach(LoggerWrapper.writeActionLog(_, "Couldn't create directory [%s]".format(path.getAbsolutePath)))
+        action.foreach(_.log("Couldn't create directory [%s]".format(path.getAbsolutePath)))
         throw new IllegalStateException("Failed to create %s".format(path))
       }
     }
     val processCmd = strategy.generateShellCommand(command, outPath)
 
     val outputWriter = outPath.map { it => new PrintWriter(new File(it, "exec.out")) }
-    val handleOutput = handleInputStream(outputWriter, actionUUID) _
+    val handleOutput = handleInputStream(outputWriter, action) _
 
     val errorWriter = outPath.map { it => new PrintWriter(new File(it, "exec.err")) }
-    val handleError = handleInputStream(errorWriter, actionUUID) _
+    val handleError = handleInputStream(errorWriter, action) _
 
     val exitCodeWriter = outPath.map { it => new PrintWriter(new File(it, "exec.status")) }
 

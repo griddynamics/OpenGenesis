@@ -49,17 +49,8 @@ trait InternalLogger {
    }
 }
 
-object LoggerWrapper extends Logging {
-
-  private val ACTOR_NAME = "LoggerActor"
-  var logger: ActorRef = _
-
-  def start(system: ActorSystem, storeService: StoreService) {
-    logger = system.actorOf(Props(new LoggerActor(storeService)), ACTOR_NAME)
-  }
-
-  private def now = new Timestamp(System.currentTimeMillis())
-
+class LoggerWrapper(logger: ActorRef) extends java.io.Serializable {
+  import LoggerWrapper.now
   def writeActionLog(actionUUID: String, message: String, timestamp: Timestamp = now) {
     logger ! ActionBasedLog(actionUUID, message, timestamp)
   }
@@ -67,9 +58,25 @@ object LoggerWrapper extends Logging {
   def writeStepLog(id: Int, message: String, timestamp: Timestamp = now) {
     logger ! Log(id, message, timestamp)
   }
+}
 
-  def registerRemote(remote: ActorRef) {
-    logger = remote
+object LoggerWrapper extends Logging {
+  private var instance: LoggerWrapper = _
+  private val ACTOR_NAME = "LoggerActor"
+
+  private def now = new Timestamp(System.currentTimeMillis())
+
+  def start(system: ActorSystem, storeService: StoreService) {
+    instance = new LoggerWrapper(system.actorOf(Props(new LoggerActor(storeService)), ACTOR_NAME))
   }
 
+  def writeActionLog(actionUUID: String, message: String, timestamp: Timestamp = now) {
+    instance.writeActionLog(actionUUID, message, timestamp)
+  }
+
+  def writeStepLog(id: Int, message: String, timestamp: Timestamp = now) {
+    instance.writeStepLog(id, message, timestamp)
+  }
+
+  def logger() = instance
 }

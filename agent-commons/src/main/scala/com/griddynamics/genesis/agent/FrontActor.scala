@@ -36,9 +36,8 @@ class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: Ex
   val log = Logging(system, classOf[FrontActor])
 
   protected def receive = {
-
-    case rt: RemoteTask => try {
-      actionToExec(rt.action).foreach(sender ! executorActor(_, rt.supervisor, rt.logger))
+    case rt@RemoteTask(action, supervisor, logger) => try {
+      actionToExec(action).foreach(sender ! executorActor(_, supervisor, logger))
     } catch {
       case t =>
         sender ! akka.actor.Status.Failure(t)
@@ -48,8 +47,7 @@ class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: Ex
     case m => log.debug("Unknown message: " + m)
   }
 
-  def executorActor(executor: ActionExecutor, remote: ActorRef, logger: ActorRef) = {
-    LoggerWrapper.registerRemote(logger)
+  def executorActor(executor: ActionExecutor, remote: ActorRef, logger: LoggerWrapper) = {
     val asyncExecutor = executor match {
       case e: AsyncActionExecutor => e
       case e: SyncActionExecutor => new SyncActionExecutorAdapter(e, execService)
@@ -58,6 +56,6 @@ class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: Ex
     val beatPeriodMs = config.getMilliseconds("beat.period")
     log.info("Agent beat period is: {}", beatPeriodMs)
 
-    system.actorOf(Props(new ExecutorActor(asyncExecutor, remote, beatPeriodMs)))  //todo: not sure if we should create root level actors for tasks
+    system.actorOf(Props(new ExecutorActor(asyncExecutor, remote, beatPeriodMs, logger)))  //todo: not sure if we should create root level actors for tasks
   }
 }

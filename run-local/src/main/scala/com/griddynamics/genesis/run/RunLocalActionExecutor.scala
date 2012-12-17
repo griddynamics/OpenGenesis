@@ -31,13 +31,13 @@ class RunLocalActionExecutor(val action: RunLocalShell, shellService: LocalShell
   def cleanUp(signal: Signal) {}
 
   def startSync() = {
-    val result = shellService.exec(action.shell, action.command, action.outputDirectory, Option(action.uuid))
+    val result = shellService.exec(action.shell, action.command, action.outputDirectory, Option(action))
     new RunLocalResult(action, result)
   }
 }
 
 case class RunLocalShell(shell: String, command: String, expectedExitCode: Int, outputDirectory: Option[File],
-                         remoteAgentTag: Option[String] = None) extends Action with RemoteAgentExec {
+                         remoteAgentTag: Option[String] = None) extends ActionWithLog with RemoteAgentExec {
   def tag = remoteAgentTag.getOrElse("")
 }
 

@@ -65,7 +65,7 @@ class RunLocalStepCoordinator(stepContext: StepExecutionContext, val step: RunLo
     case a: RunLocalResult => {
       isStepFailed = a.response.exitCode != step.successExitCode
       if(isStepFailed) {
-        LoggerWrapper.writeActionLog(a.action.uuid, "FAILURE: Process finished with exit code %d, expected result = %d".format(a.response.exitCode, step.successExitCode))
+        a.action.log("FAILURE: Process finished with exit code %d, expected result = %d".format(a.response.exitCode, step.successExitCode))
       }
       if (!isStepFailed && !toExecute.isEmpty) {
         Seq(toExecute.dequeue())

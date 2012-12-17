@@ -37,10 +37,11 @@ import org.apache.commons.lang.exception.ExceptionUtils
 
 class ExecutorActor(unsafeExecutor: AsyncActionExecutor,
                     supervisor: ActorRef,
-                    beatPeriodMs: Long) extends Actor {
+                    beatPeriodMs: Long,
+                    logger: LoggerWrapper) extends Actor {
   val log = Logging(context.system, this.getClass)
 
-  private val safeExecutor = new SafeAsyncActionExecutor(unsafeExecutor)
+  private val safeExecutor = new SafeAsyncActionExecutor(unsafeExecutor, logger)
 
   private var cancellable: Cancellable = _
 
@@ -91,7 +92,7 @@ class ExecutorActor(unsafeExecutor: AsyncActionExecutor,
   }
 }
 
-class SafeAsyncActionExecutor(unsafeExecutor: AsyncActionExecutor) extends AsyncActionExecutor with Logging {
+class SafeAsyncActionExecutor(unsafeExecutor: AsyncActionExecutor, logger: LoggerWrapper) extends AsyncActionExecutor with Logging {
   val action = unsafeExecutor.action
 
   var result: Option[ActionResult] = None
@@ -117,7 +118,7 @@ class SafeAsyncActionExecutor(unsafeExecutor: AsyncActionExecutor) extends Async
   private def logThrowable(t: Throwable, method: String, signal: Signal = null) {
     val signalMsg = if(signal != null) " and signal '%s'".format(signal) else ""
     log.warn(t, "Throwable while %s for action '%s'%s", method, action, signalMsg)
-    LoggerWrapper.writeActionLog(action.uuid, "Throwable while %s%s: %s".format(method, signalMsg, t.getMessage))
-    LoggerWrapper.writeActionLog(action.uuid, "Stack trace:\n %s".format(ExceptionUtils.getStackTrace(t)))
+    logger.writeActionLog(action.uuid, "Throwable while %s%s: %s".format(method, signalMsg, t.getMessage))
+    logger.writeActionLog(action.uuid, "Stack trace:\n %s".format(ExceptionUtils.getStackTrace(t)))
   }
 }

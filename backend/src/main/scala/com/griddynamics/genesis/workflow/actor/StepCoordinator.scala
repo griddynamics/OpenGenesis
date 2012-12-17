@@ -182,7 +182,11 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
     val path = REMOTE_ACTOR_LOOKUP_PATH.format(agent.hostname, agent.port)
     val remoteFront = system.actorFor(path)
     implicit val timeout = TIMEOUT_REMOTE_ACTOR
-    val futureRemote = remoteFront ? RemoteTask(action, self)
+    val logger = action match {
+      case al: ActionWithLog => al.logger
+      case _ => LoggerWrapper.logger
+    }
+    val futureRemote = remoteFront ? RemoteTask(action, self, logger)
     log.debug("Waiting for remote executor... ")
     Await.result(futureRemote, timeout.duration).asInstanceOf[ActorRef]
   } catch {
