@@ -36,13 +36,16 @@ import repository.{GenesisVersionRepository, SchemaCreator}
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import com.griddynamics.genesis.adapters.MSSQLServerWithPagination
-import service.impl
+import service.{AgentsHealthService, impl}
 import service.impl._
 import org.springframework.beans.factory.InitializingBean
 import com.griddynamics.genesis.util.Logging
+import org.springframework.beans.factory.annotation.Autowired
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
+
+    @Autowired var healthService: AgentsHealthService = _
 
     @Bean def storeService: service.StoreService = new impl.StoreService
 
@@ -66,7 +69,7 @@ class JdbcStoreServiceContext extends StoreServiceContext {
     @Bean def databagService: service.DataBagService = new impl.DataBagServiceImpl(databagRepository)
 
     @Bean def agentsRepository: repository.RemoteAgentRepository = new RemoteAgentRepositoryImpl
-    @Bean def agentsService: service.RemoteAgentsService = new RemoteAgentsServiceImpl(agentsRepository)
+    @Bean def agentsService: service.RemoteAgentsService = new RemoteAgentsServiceImpl(agentsRepository, healthService)
 }
 
 class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager,

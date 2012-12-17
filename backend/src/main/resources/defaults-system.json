@@ -9,5 +9,6 @@
   "genesis.system.default.vm.credential" : {"default": "not-set", "description": "Path to default credential file (PEM RSA private key file for ssh) to login to virtual machines provisioned by Genesis", "restartRequired": true},
   "genesis.system.beat.period.ms": {"default":1000,"description":"Workflow execution actors heartbeats period in milliseconds", "restartRequired": true},
   "genesis.system.flow.timeout.ms": {"default":3600000,"description":"Workflow execution timeout in ms.", "restartRequired": true},
+  "genesis.system.agent.poll.period": {"default":30,"description":"Agents health check period in secs", "restartRequired": true},
   "genesis.system.flow.executor.sync.threads.max": {"default": 5,"description":"Maximum number of simultaneously executing synchronous actions", "restartRequired": true}
 }

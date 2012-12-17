@@ -16,11 +16,11 @@ class RemoteAgentRepositoryImpl extends AbstractGenericRepository[model.RemoteAg
   implicit def convert(ent: api.RemoteAgent): model.RemoteAgent =
     new model.RemoteAgent(ent.id.getOrElse(0), ent.hostname, ent.port, ent.tags.distinct.mkString(" "), new Timestamp(0))
 
-  def findByTags(tags: Seq[String]): List[RemoteAgent] = from(table)(agent => {
+  def findByTags(tags: Seq[String]): Seq[RemoteAgent] = from(table)(agent => {
     val tags_has = { s: String => agent.tags like ("% " + s.toLowerCase + " %") }
     val alwaysTrue: BinaryOperatorNodeLogicalBoolean = 1 === 1
     where(tags.foldLeft(alwaysTrue) { case (acc, tag) => ( tags_has (tag) and acc) }) select (agent)
-  }).toList.map(convert _)
+  }).toSeq.map(convert _)
 
   @Transactional
   override def update(agent: api.RemoteAgent) = {

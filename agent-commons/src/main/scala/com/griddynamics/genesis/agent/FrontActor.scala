@@ -28,12 +28,14 @@ import com.griddynamics.genesis.workflow._
 import akka.event.Logging
 import java.util.concurrent.ExecutorService
 import com.griddynamics.genesis.workflow.agent.{Start, ExecutorActor}
+import com.griddynamics.genesis.agents.status.{GetStatus, StatusResponse}
 
 class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: ExecutorService) extends Actor {
   val log = Logging(context.system, classOf[FrontActor])
 
   protected def receive = {
     case rt: RemoteTask => actionToExec(rt.action).map(startExecutor(_, rt.supervisor))
+    case GetStatus => sender ! new StatusResponse(0, 0)
     case m => log.debug("Unknown message: " + m)
     // TODO: add signal dispatching
   }
@@ -44,7 +46,7 @@ class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: Ex
       case e: SyncActionExecutor => new SyncActionExecutorAdapter(e, execService)
     }
 
-    val actionExecutionActor = context.system.actorOf(Props(new ExecutorActor(asyncExecutor, remote)))
+    val actionExecutionActor = context.system.actorOf(Props(new ExecutorActor(asyncExecutor, remote))) //todo: not sure if we should create root level actors for tasks
     actionExecutionActor ! Start
   }
 }
