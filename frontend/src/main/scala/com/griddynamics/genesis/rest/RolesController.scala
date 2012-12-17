@@ -42,10 +42,8 @@ class RolesController extends RestApiExceptionsHandler {
   @Autowired var authorityService: AuthorityService = _
   @Autowired var  projectAuthorityService: ProjectAuthorityService= _
 
-  @Autowired(required = false) var userServiceBean: UserService = _
-  @Autowired(required = false) var groupServiceBean: GroupService = _
-  private lazy val userService: Option[UserService] = Option(userServiceBean)
-  private lazy val groupService: Option[GroupService] = Option(groupServiceBean)
+  @Autowired var userService: UserService = _
+  @Autowired var groupService: GroupService = _
 
   @RequestMapping(value = Array("roles"), method = Array(RequestMethod.GET))
   @ResponseBody
@@ -115,35 +113,27 @@ class RolesController extends RestApiExceptionsHandler {
   }
 
   private def validUser[A](username: String)(block: => A): A = {
-    userService.map { service =>
-      if (!service.doesUserExist(username)) {
-        throw new ResourceNotFoundException("User [username=" + username + "] was not found")
-      }
+    if (!userService.doesUserExist(username)) {
+      throw new ResourceNotFoundException("User [username=" + username + "] was not found")
     }
     block
   }
   private def validUsers[A](usernames: Seq[String])(block: => ExtendedResult[_]): ExtendedResult[_] = {
-    userService.map { service =>
-      if (!service.doUsersExist(usernames)) {
-        throw new ResourceNotFoundException("List of users contains unknown usernames")
-      }
+    if (!userService.doUsersExist(usernames)) {
+      throw new ResourceNotFoundException("List of users contains unknown usernames")
     }
     block
   }
 
   private def validGroup[A](groupName: String)(block: => A): A = {
-    groupService.map { service =>
-      if (!service.doesGroupExist(groupName)) {
-        throw new ResourceNotFoundException("Group [name = " + groupName + "] was not found")
-      }
+    if (!groupService.doesGroupExist(groupName)) {
+      throw new ResourceNotFoundException("Group [name = " + groupName + "] was not found")
     }
     block
   }
   private def validGroups[A](groupNames: Seq[String])(block: => ExtendedResult[_]): ExtendedResult[_] = {
-    groupService.map { service =>
-      if(!service.doGroupsExist(groupNames)) {
-        throw new ResourceNotFoundException("List of groups contains unknown  groups")
-      }
+    if(!groupService.doGroupsExist(groupNames)) {
+      throw new ResourceNotFoundException("List of groups contains unknown  groups")
     }
     block
   }
