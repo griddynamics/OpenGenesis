@@ -139,6 +139,7 @@ object LdapPluginContext {
   val GROUP_SEARCH_BASE = PREFIX_LDAP + "group.search.base"
   val USERS_SERVICE_FILTER = PREFIX_LDAP + "users.service.filter"
   val GROUPS_SERVICE_FILTER = PREFIX_LDAP + "groups.service.filter"
+  val SERVICE_DOMAIN_PREFIX = PREFIX_LDAP + "service.domain.prefix"
 }
 
 class LdapPluginConfig(val configService: ConfigService) {
@@ -196,4 +197,15 @@ class LdapPluginConfig(val configService: ConfigService) {
     val GroupSearchFilter(attrName) = groupSearchFilter
     attrName
   }
+
+  private def serviceDomainPrefix: String = configService.get(SERVICE_DOMAIN_PREFIX, "") match {
+    case s: String if !s.trim.isEmpty => s + "\\"
+    case _ => ""
+  }
+
+  def stripDomain(str: String): String =
+    Option(str) map { _.stripPrefix(serviceDomainPrefix) } getOrElse (str)
+
+  def addDomain(str: String): String =
+    Option(str) map { serviceDomainPrefix + _ } getOrElse (str)
 }

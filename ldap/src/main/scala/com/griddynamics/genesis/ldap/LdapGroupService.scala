@@ -46,12 +46,12 @@ class LdapGroupServiceImpl(val config: LdapPluginConfig,
         if (includeUsers) {
           Option(adapter.getStringAttributes(config.groupMemberAttributeName)) map { _.toSeq map { dn =>
             val ldapName = new LdapName(dn)
-            ldapName.getRdn(ldapName.size() - 1).getValue.toString
+            config.addDomain(ldapName.getRdn(ldapName.size() - 1).getValue.toString)
           }}
         } else None
 
       UserGroup(
-        Option(adapter.getStringAttribute("cn")).getOrElse("UNKNOWN_NAME"),
+        Option(config.addDomain(adapter.getStringAttribute("cn"))).getOrElse("UNKNOWN_NAME"),
         adapter.getStringAttribute("description"),
         None,
         idOpt,
@@ -71,7 +71,7 @@ class LdapGroupServiceImpl(val config: LdapPluginConfig,
     catching(classOf[IncorrectResultSizeDataAccessException]).opt(
       template.searchForObject(
         config.groupSearchBase,
-        filterByNamePattern(name),
+        filterByNamePattern(config.stripDomain(name)),
         GroupContextMapper(includeUsers = true)
       ).asInstanceOf[UserGroup]
     )
@@ -94,7 +94,7 @@ class LdapGroupServiceImpl(val config: LdapPluginConfig,
       ).asInstanceOf[UserGroup]
     )
 
-  def getUsersGroups(username: String) = userService.getUserGroups(username) match {
+  def getUsersGroups(username: String) = userService.getUserGroups(config.stripDomain(username)) match {
     case Some(groups) => groups flatMap { findByName(_) }
     case _ => Seq.empty
   }
@@ -110,9 +110,9 @@ class LdapGroupServiceImpl(val config: LdapPluginConfig,
       GroupContextMapper()
     ).toList.asInstanceOf[List[UserGroup]].sortBy(_.name.toLowerCase)
 
-  def doesGroupExist(groupName: String) = findByName(groupName).isDefined
+  def doesGroupExist(groupName: String) = findByName(config.stripDomain(groupName)).isDefined
 
-  def doGroupsExist(groupNames: Seq[String]) = groupNames forall { doesGroupExist(_) }
+  def doGroupsExist(groupNames: Seq[String]) = groupNames forall { g => doesGroupExist(config.stripDomain(g)) }
 
   def list = template.search(
     config.groupSearchBase,

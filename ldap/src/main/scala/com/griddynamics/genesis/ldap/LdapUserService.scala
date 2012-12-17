@@ -43,7 +43,7 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
       val adapter = ctx.asInstanceOf[DirContextAdapter]
 
       val principal =
-        Option(adapter.getStringAttribute(config.principalAttributeName)).getOrElse("UNKNOWN_USERNAME")
+        Option(config.addDomain(adapter.getStringAttribute(config.principalAttributeName))).getOrElse("UNKNOWN_USERNAME")
 
       val passwordOpt =
         if (includeCredentials)
@@ -86,9 +86,11 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
       ).asInstanceOf[User]
     )
 
-  def getWithCredentials(username: String): Option[User] = find(username, includeCredentials = true)
+  def getWithCredentials(username: String): Option[User] =
+    find(config.stripDomain(username), includeCredentials = true)
 
-  def findByUsername(username: String): Option[User] = find(username, includeCredentials = false)
+  def findByUsername(username: String): Option[User] =
+    find(config.stripDomain(username), includeCredentials = false)
 
   def search(usernameLike: String): List[User] =
     template.search(
@@ -97,9 +99,11 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
       UserContextMapper(includeGroups = false)
     ).toList.asInstanceOf[List[User]].sortBy(_.username.toLowerCase)
 
-  def doesUserExist(userName: String): Boolean = findByUsername(userName).isDefined
+  def doesUserExist(userName: String): Boolean =
+    findByUsername(config.stripDomain(userName)).isDefined
 
-  def doUsersExist(userNames: Seq[String]): Boolean = userNames.forall { doesUserExist(_) }
+  def doUsersExist(userNames: Seq[String]): Boolean =
+    userNames.forall { u => doesUserExist(config.stripDomain(u)) }
 
   def list: List[User] =
     template.search(
@@ -109,6 +113,6 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
     ).toList.asInstanceOf[List[User]].sortBy(_.username.toLowerCase)
 
   def getUserGroups(username: String): Option[Seq[String]] =
-    find(username, includeCredentials = false) flatMap { _.groups }
+    find(config.stripDomain(username), includeCredentials = false) flatMap { _.groups }
 
 }
