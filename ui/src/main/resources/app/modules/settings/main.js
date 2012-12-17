@@ -40,6 +40,7 @@ function(genesis, Backbone, Plugins, SystemConfigs, Groups, Users, Roles, Databa
       genesis.utils.nullSafeClose(this.usersView);
       genesis.utils.nullSafeClose(this.rolesView);
       genesis.utils.nullSafeClose(this.databagsView);
+      genesis.utils.nullSafeClose(this.agentsView);
     },
 
     showPluginsTab: function() {

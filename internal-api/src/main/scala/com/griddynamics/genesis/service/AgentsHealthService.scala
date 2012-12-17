@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
+ *   Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
  *   This library is free software; you can redistribute it and/or modify it under the terms of
@@ -18,18 +18,16 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *   Project:     Genesis
- *   Description:  Continuous Delivery Platform
+ *   Description: Continuous Delivery Platform
  */
-package com.griddynamics.genesis.dev
+package com.griddynamics.genesis.service
 
-import com.griddynamics.genesis.GenesisFrontend
-import com.griddynamics.genesis.service.GenesisSystemProperties.{BACKEND, SERVICE_REST_USEMOCK}
-import sys.props
+import com.griddynamics.genesis.api.AgentStatus._
+import com.griddynamics.genesis.api.RemoteAgent
 
-object DevMockGenesisUI {
-    def main(args: Array[String]) {
-        props(BACKEND) = "classpath:environments/nova.properties"
-        props(SERVICE_REST_USEMOCK) = "true"
-        GenesisFrontend.main(args)
-    }
+trait AgentsHealthService {
+  def checkStatus(agent: RemoteAgent): AgentStatus
+  def checkStatus(agents: Seq[RemoteAgent]): Seq[(RemoteAgent, AgentStatus)]
+  def stopTracking(agent: RemoteAgent)
+  def startTracking(agent: RemoteAgent)
 }
