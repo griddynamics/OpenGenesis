@@ -35,10 +35,8 @@ import javax.validation.Valid
 @RequestMapping(Array("/rest/users"))
 class UsersController extends RestApiExceptionsHandler {
 
-  @Autowired(required = false) var userServiceBean: UserService = _
-  @Autowired(required = false) var groupService: GroupService = _
-
-  private lazy val userService = Option(userServiceBean).getOrElse(UserServiceStub.get)
+  @Autowired var userService: UserService = _
+  @Autowired var groupService: GroupService = _
 
   @RequestMapping(method = Array(RequestMethod.GET), params = Array("available"))
   @ResponseBody
