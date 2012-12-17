@@ -23,7 +23,7 @@
 
 package com.griddynamics.genesis.agent
 
-import akka.actor.{Props, ActorSystem}
+import akka.actor.{Actor, Props, ActorSystem}
 import com.typesafe.config.ConfigFactory
 import akka.event.Logging
 import org.springframework.context.support.ClassPathXmlApplicationContext

@@ -38,16 +38,17 @@ class RunLocalStepBuilderFactory extends StepBuilderFactory {
 
     @BeanProperty var shell: String = _
     @BeanProperty var commands: JList[String] = util.Collections.emptyList()
+    @BeanProperty var agentTags: JList[String] = util.Collections.emptyList()
     @BeanProperty var runInParallel:Boolean = false
     @BeanProperty var successExitCode: Int = 0
     @BeanProperty var outputDirectory: String = _
 
-    def getDetails = RunLocalStep(shell, commands, runInParallel, successExitCode, Option(outputDirectory).map{new File(_)})
+    def getDetails = RunLocalStep(shell, commands, agentTags, runInParallel, successExitCode, Option(outputDirectory).map{new File(_)})
   }
 }
 
 sealed trait RunStep extends Step
 
-case class RunLocalStep(shell: String, commands: Seq[String], runInParallel: Boolean, successExitCode: Int, output: Option[File]) extends RunStep {
+case class RunLocalStep(shell: String, commands: Seq[String], agentTags: Seq[String], runInParallel: Boolean, successExitCode: Int, output: Option[File]) extends RunStep {
   override val stepDescription = new Describer("Shell commands execution").param("commands", commands).describe
 }

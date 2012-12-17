@@ -22,4 +22,4 @@
  */
 package com.griddynamics.genesis.workflow.message
 
-object Start
+private[workflow] case object Start

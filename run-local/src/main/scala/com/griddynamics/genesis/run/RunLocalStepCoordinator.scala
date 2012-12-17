@@ -44,8 +44,9 @@ class RunLocalStepCoordinator(stepContext: StepExecutionContext, val step: RunLo
 
     val actions = step.commands.zipWithIndex.map { case (command, index) =>
       val outputDirectory = step.output.map(new File(_, index.toString))
-      new RunLocalShell(step.shell, command, step.successExitCode, outputDirectory)
-    }
+      val tags = step.agentTags.toBuffer
+      RunLocalShell(step.shell, command, step.successExitCode, outputDirectory, remoteAgentTag = tags.lift(index))
+     }
 
     if(step.runInParallel) {
       actions
@@ -64,7 +65,7 @@ class RunLocalStepCoordinator(stepContext: StepExecutionContext, val step: RunLo
     case a: RunLocalResult => {
       isStepFailed = a.response.exitCode != step.successExitCode
       if(isStepFailed) {
-        LoggerWrapper.writeActionLog(a.action.uuid, "FAILURE: Process finished with exit code %d, expected result = %d".format(a.response.exitCode, step.successExitCode))
+        a.action.log("FAILURE: Process finished with exit code %d, expected result = %d".format(a.response.exitCode, step.successExitCode))
       }
       if (!isStepFailed && !toExecute.isEmpty) {
         Seq(toExecute.dequeue())
