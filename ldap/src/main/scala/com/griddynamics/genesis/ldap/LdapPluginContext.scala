@@ -117,11 +117,15 @@ class LdapPluginContext {
   }
 
   @Bean def ldapUserService = catching(classOf[Exception]).opt {
-    new LdapUserServiceImpl(config, ldapTemplate, ldapAuthoritiesPopulator)
+    val service = new LdapUserServiceImpl(config, ldapTemplate, ldapAuthoritiesPopulator)
+    service.findByUsername("username")
+    service
   }.getOrElse(new UserServiceStub)
 
   @Bean def ldapGroupService = catching(classOf[Exception]).opt {
-    new LdapGroupServiceImpl(config, ldapTemplate, ldapUserService.asInstanceOf[LdapUserService])
+    val service = new LdapGroupServiceImpl(config, ldapTemplate, ldapUserService.asInstanceOf[LdapUserService])
+    service.findByName("group")
+    service
   }.getOrElse(new GroupServiceStub)
 
 }
