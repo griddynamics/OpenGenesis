@@ -34,6 +34,7 @@ import com.griddynamics.genesis.workflow.action.{ExecutorInterrupt, ExecutorThro
 import signal.Success
 
 import org.apache.commons.lang.exception.ExceptionUtils
+import com.griddynamics.genesis.agent.{WorkDone, WorkStarted}
 
 class ExecutorActor(unsafeExecutor: AsyncActionExecutor,
                     supervisor: ActorRef,
@@ -47,7 +48,9 @@ class ExecutorActor(unsafeExecutor: AsyncActionExecutor,
 
   protected def receive = {
     case Start => {
-      log.debug("Starting async executor for '%s'", safeExecutor.action)
+      log.debug("Starting async executor for '%s'".format(safeExecutor.action))
+      log.debug("Supervisor is %s".format(supervisor))
+      context.system.eventStream.publish(WorkStarted())
       safeExecutor.startAsync()
       cancellable = context.system.scheduler.schedule(0 milliseconds, beatPeriodMs.intValue() milliseconds, self, Beat(Success()))
       //            beatSource.subscribe(self, Beat(Success()))
@@ -81,6 +84,7 @@ class ExecutorActor(unsafeExecutor: AsyncActionExecutor,
   def finish() {
     //beatSource.unsubscribe(self, self ! PoisonPill)
     cancellable.cancel()
+    context.system.eventStream.publish(WorkDone())
     self ! PoisonPill
     becomeIgnoreBeat()
   }
