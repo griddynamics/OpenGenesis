@@ -22,12 +22,17 @@
  */
 package com.griddynamics.genesis.agents
 
-import akka.actor.{RootActorPath, ActorRef, Address, ActorSystem}
+import akka.actor._
 import com.griddynamics.genesis.api.RemoteAgent
+import akka.actor.RootActorPath
 
-class AgentGatewayResolver(system: ActorSystem) {
+object AgentGateway {
 
   def address(agent: RemoteAgent): Address = Address("akka", "GenesisAgent", agent.hostname, agent.port)
 
-  def resolve(agent: RemoteAgent): ActorRef = system.actorFor ( RootActorPath(address(agent)) / "user" / "frontActor" )
+  def resolve(agent: RemoteAgent)(implicit context: ActorContext): ActorRef = {
+    context.system.actorFor ( RootActorPath(address(agent)) / "user" / "frontActor" )
+  }
+
+  implicit def convert(agent: RemoteAgent)(implicit context: ActorContext): ActorRef = resolve(agent)(context)
 }

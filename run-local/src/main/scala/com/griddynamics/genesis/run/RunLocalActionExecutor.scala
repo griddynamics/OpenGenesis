@@ -41,7 +41,7 @@ case class RunLocalShell(shell: String, command: String, expectedExitCode: Int, 
   def tag = remoteAgentTag.getOrElse("")
 }
 
-case class RunLocalResult(val action: RunLocalShell, val response: ExecResponse) extends ActionResult {
+case class RunLocalResult(action: RunLocalShell, response: ExecResponse) extends ActionResult {
     override def outcome = if (response.exitCode == action.expectedExitCode)
         Succeed
     else

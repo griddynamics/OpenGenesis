@@ -26,7 +26,6 @@ import com.griddynamics.genesis.util.Logging
 import java.io.{File, InputStream, PrintWriter}
 import io.Source
 import com.griddynamics.genesis.util.TryingUtil._
-import com.griddynamics.genesis.workflow.Action
 
 class LocalShellExecutionService(executionStrategies: List[ShellExecutionStrategy]) extends Logging {
   import scala.sys.process._

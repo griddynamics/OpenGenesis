@@ -24,7 +24,7 @@ package com.griddynamics.genesis.configuration
 
 import org.springframework.context.annotation.{Bean, Configuration}
 import akka.actor.ActorSystem
-import com.griddynamics.genesis.agents.{AgentsHealthServiceImpl, AgentGatewayResolver}
+import com.griddynamics.genesis.agents.AgentsHealthServiceImpl
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.service.{ConfigService, AgentsHealthService}
 
@@ -34,8 +34,5 @@ class AgentTrackerContext {
   @Autowired var actorSystem: ActorSystem = _
   @Autowired var configService: ConfigService = _
 
-  @Bean def gatewayResolver = new AgentGatewayResolver(actorSystem)
-
-  @Bean def healthService: AgentsHealthService =
-    new AgentsHealthServiceImpl(actorSystem, gatewayResolver, configService)
+  @Bean def healthService: AgentsHealthService = new AgentsHealthServiceImpl(actorSystem, configService)
 }
