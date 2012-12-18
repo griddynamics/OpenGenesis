@@ -36,6 +36,8 @@ class LdapGroupServiceImpl(val config: LdapPluginConfig,
                            val template: LdapTemplate,
                            val userService: LdapUserService) extends LdapGroupService {
 
+  override def isReadOnly = true
+
   case class GroupContextMapper(includeUsers: Boolean = false) extends ContextMapper {
     def mapFromContext(ctx: Any): UserGroup = {
       val adapter = ctx.asInstanceOf[DirContextAdapter]
