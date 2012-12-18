@@ -38,6 +38,8 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
                           val template: LdapTemplate,
                           val authoritiesPopulator: LdapAuthoritiesPopulator) extends LdapUserService {
 
+  override def isReadOnly = true
+
   case class UserContextMapper(includeGroups: Boolean = true, includeCredentials: Boolean = false) extends ContextMapper {
     def mapFromContext(ctx: Any): User = {
       val adapter = ctx.asInstanceOf[DirContextAdapter]

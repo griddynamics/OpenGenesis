@@ -119,7 +119,7 @@ class RolesController extends RestApiExceptionsHandler {
     block
   }
   private def validUsers[A](usernames: Seq[String])(block: => ExtendedResult[_]): ExtendedResult[_] = {
-    if (!userService.doUsersExist(usernames)) {
+    if (usernames.nonEmpty && !userService.doUsersExist(usernames)) {
       throw new ResourceNotFoundException("List of users contains unknown usernames")
     }
     block
@@ -132,7 +132,7 @@ class RolesController extends RestApiExceptionsHandler {
     block
   }
   private def validGroups[A](groupNames: Seq[String])(block: => ExtendedResult[_]): ExtendedResult[_] = {
-    if(!groupService.doGroupsExist(groupNames)) {
+    if(groupNames.nonEmpty && !groupService.doGroupsExist(groupNames)) {
       throw new ResourceNotFoundException("List of groups contains unknown  groups")
     }
     block
