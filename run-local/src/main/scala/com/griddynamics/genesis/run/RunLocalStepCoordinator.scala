@@ -28,9 +28,12 @@ import com.griddynamics.genesis.util.Logging
 import java.io.File
 import com.griddynamics.genesis.logging.LoggerWrapper
 
-class RunLocalStepCoordinator(stepContext: StepExecutionContext, val step: RunLocalStep, shellService: LocalShellExecutionService) extends ActionOrientedStepCoordinator with Logging {
-  var isStepFailed = false
+class RunLocalStepCoordinator(stepContext: StepExecutionContext,
+                              val step: RunLocalStep,
+                              shellService: LocalShellExecutionService)
+  extends ActionOrientedStepCoordinator with Logging {
 
+  var isStepFailed = false
   var toExecute = new scala.collection.mutable.Queue[Action]()
 
   def onStepStart(): Seq[Action] = {

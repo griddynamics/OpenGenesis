@@ -22,33 +22,18 @@
  */
 package com.griddynamics.genesis.run
 
-import com.griddynamics.genesis.plugin.{StepBuilder, StepBuilderFactory}
-import reflect.BeanProperty
 import java.util.{List => JList}
-import java.util
 import java.io.File
 import com.griddynamics.genesis.workflow.Step
 import com.griddynamics.genesis.util.Describer
 
-class RunLocalStepBuilderFactory extends StepBuilderFactory {
-  val stepName = "execLocal"
+case class RunLocalStep(shell: String,
+                        commands: Seq[String] = Seq(),
+                        agentTags: Seq[String] = Seq(),
+                        runInParallel: Boolean = false,
+                        successExitCode: Int = 0,
+                        outputDirectory: Option[String] = None) extends Step {
+  def output: Option[File] = outputDirectory.map(new File(_))
 
-  def newStepBuilder = new StepBuilder {
-    import scala.collection.JavaConversions._
-
-    @BeanProperty var shell: String = _
-    @BeanProperty var commands: JList[String] = util.Collections.emptyList()
-    @BeanProperty var agentTags: JList[String] = util.Collections.emptyList()
-    @BeanProperty var runInParallel:Boolean = false
-    @BeanProperty var successExitCode: Int = 0
-    @BeanProperty var outputDirectory: String = _
-
-    def getDetails = RunLocalStep(shell, commands, agentTags, runInParallel, successExitCode, Option(outputDirectory).map{new File(_)})
-  }
-}
-
-sealed trait RunStep extends Step
-
-case class RunLocalStep(shell: String, commands: Seq[String], agentTags: Seq[String], runInParallel: Boolean, successExitCode: Int, output: Option[File]) extends RunStep {
   override val stepDescription = new Describer("Shell commands execution").param("commands", commands).describe
 }

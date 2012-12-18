@@ -25,14 +25,17 @@ package com.griddynamics.genesis.service
 
 import com.griddynamics.genesis.api.ConfigProperty
 
-trait ConfigService {
+trait ConfigReaderService {
   def get[B](name: String, default: B): B
   def get(name: String) : Option[Any]
   def listSettings(prefix: Option[String]) : Seq[ConfigProperty]
+  def get[B](projectId: Int, name: String, default: B): B
+}
+
+trait ConfigService extends ConfigReaderService {
   def update(config: Map[String, Any])
   def delete(name:String)
   def clear(prefix:Option[String])
-  def get[B](projectId: Int, name: String, default: B): B
   def update(projectId: Int, config: Map[String, Any])
   def restartRequired() : Boolean
 }
