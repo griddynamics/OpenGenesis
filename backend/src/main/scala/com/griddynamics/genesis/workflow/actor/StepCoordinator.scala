@@ -38,6 +38,7 @@ import com.griddynamics.genesis.service.RemoteAgentsService
 import com.griddynamics.genesis.logging.LoggerWrapper
 import org.apache.commons.lang.exception.ExceptionUtils
 import com.griddynamics.genesis.configuration.WorkflowConfig
+import com.griddynamics.genesis.agents.AgentGateway
 
 class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
                       supervisor: ActorRef,
@@ -54,8 +55,6 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
 
     private val regularExecutors = mutable.Set[ActorRef]()
     val signalExecutors = mutable.Set[ActorRef]()
-
-  private val REMOTE_ACTOR_LOOKUP_PATH = "akka://GenesisAgent@%s:%d/user/frontActor"
 
     protected def receive = {
         case Start => {
@@ -179,8 +178,7 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
   private def remoteExecutor(tag: String, action: Action) = try {
     // TODO: is it possible to start single action on several agents?
     val agent = remoteAgentService.findByTags(Seq(tag)).head // exception is thrown in case no agents with tag are found
-    val path = REMOTE_ACTOR_LOOKUP_PATH.format(agent.hostname, agent.port)
-    val remoteFront = system.actorFor(path)
+    val remoteFront = AgentGateway.resolve(agent)
     implicit val timeout = TIMEOUT_REMOTE_ACTOR
     val logger = action match {
       case al: ActionWithLog => al.logger

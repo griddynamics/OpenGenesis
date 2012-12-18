@@ -40,7 +40,7 @@ case class GetAgentStatus(agent: RemoteAgent)
 case class StartTracking(agent: RemoteAgent)
 case class StopTracking(agent: RemoteAgent)
 
-class StatusTrackerRoot(gateway: AgentGatewayResolver, pollingPeriod: Int) extends Actor {
+class StatusTrackerRoot(pollingPeriod: Int) extends Actor {
   import scala.collection.mutable
 
   private val trackerActors: mutable.Map[Address, ActorRef] = new mutable.HashMap[Address, ActorRef]()
@@ -53,7 +53,7 @@ class StatusTrackerRoot(gateway: AgentGatewayResolver, pollingPeriod: Int) exten
   }
 
   private def createTracker(agent: RemoteAgent): ActorRef = {
-    context.actorOf(Props(new StatusTracker(agent, gateway, pollingPeriod)))
+    context.actorOf(Props(new StatusTracker(agent, pollingPeriod)))
   }
 
   protected def receive = {
@@ -71,7 +71,7 @@ class StatusTrackerRoot(gateway: AgentGatewayResolver, pollingPeriod: Int) exten
     case StartTracking(agent) => {
       val agentTracker = createTracker(agent)
       trackerState(agentTracker) = Unavailable
-      trackerActors(gateway.address(agent)) = agentTracker
+      trackerActors(AgentGateway.address(agent)) = agentTracker
       agentTracker ! SubscribeTransitionCallBack(self)
     }
 
@@ -79,19 +79,19 @@ class StatusTrackerRoot(gateway: AgentGatewayResolver, pollingPeriod: Int) exten
       val tracker = lookupTracker(agent)
       context.stop(tracker)
       trackerState -= tracker
-      trackerActors -= gateway.address(agent)
+      trackerActors -= AgentGateway.address(agent)
     }
   }
 
-  def lookupTracker(agent: RemoteAgent): ActorRef = lookupTracker(gateway.address(agent))
+  def lookupTracker(agent: RemoteAgent): ActorRef = lookupTracker(AgentGateway.address(agent))
 
   def lookupTracker(address: Address): ActorRef = trackerActors.getOrElse(address, context.system.deadLetters) //todo: not existing address
 }
 
-class StatusTracker(agent: RemoteAgent, resolver: AgentGatewayResolver, pollingPeriodSecs: Int) extends Actor with FSM[AgentStatus, Data] {
+class StatusTracker(agent: RemoteAgent, pollingPeriodSecs: Int) extends Actor with FSM[AgentStatus, Data] {
 
   private val timer = "remote-actor-status-check"
-  private val remoteAgent = resolver.resolve(agent)
+  private val remoteAgent = AgentGateway.resolve(agent)
 
   startWith(if (remoteAgent != context.system.deadLetters) Disconnected else Error, Uninitialized)
 
@@ -104,7 +104,7 @@ class StatusTracker(agent: RemoteAgent, resolver: AgentGatewayResolver, pollingP
   }
 
   onTransition {
-    case api.AgentStatus.Disconnected -> api.AgentStatus.Connected  => resolver.resolve(agent) ! GetStatus
+    case api.AgentStatus.Disconnected -> api.AgentStatus.Connected  => remoteAgent ! GetStatus
   }
 
   when(Active, stateTimeout = (pollingPeriodSecs * 3).seconds) {

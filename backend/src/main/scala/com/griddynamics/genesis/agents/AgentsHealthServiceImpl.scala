@@ -34,13 +34,13 @@ import java.util.concurrent.TimeoutException
 import com.griddynamics.genesis.util.Logging
 import akka.actor.SupervisorStrategy.Resume
 
-class AgentsHealthServiceImpl(actorSystem: ActorSystem, gateway: AgentGatewayResolver, configService: ConfigService)
+class AgentsHealthServiceImpl(actorSystem: ActorSystem, configService: ConfigService)
   extends AgentsHealthService with Logging{
 
   private val agentPollingPeriod = configService.get(GenesisSystemProperties.AGENT_POLLING_PERIOD, 30)
 
   private val tracker = actorSystem.actorOf(Props(new Actor with ActorLogging {
-    val child = context.actorOf(Props(new StatusTrackerRoot(gateway, agentPollingPeriod)))
+    val child = context.actorOf(Props(new StatusTrackerRoot(agentPollingPeriod)))
 
     protected def receive = {
       case m => child.forward(m)

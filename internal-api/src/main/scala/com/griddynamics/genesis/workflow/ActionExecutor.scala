@@ -161,4 +161,12 @@ trait DurationLimitedActionExecutor extends AsyncTimeoutAwareActionExecutor with
 
 trait ActionToExecutor extends PartialFunction[Action, ActionExecutor]
 
+object ActionToExecutor {
+  def apply(pf: PartialFunction[Action, ActionExecutor]): ActionToExecutor = new ActionToExecutor {
+    def apply(v1: Action) = pf.apply(v1)
+    def isDefinedAt(x: Action) = pf.isDefinedAt(x)
+  }
+}
+
+
 case class RemoteTask(action: Action, supervisor: akka.actor.ActorRef, logger: LoggerWrapper)
