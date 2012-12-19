@@ -13,13 +13,8 @@ import com.griddynamics.genesis.spring.ApplicationContextAware
 import com.griddynamics.genesis.users.UserService
 import org.springframework.beans.BeansException
 
-class HeaderBasedAuthFilter extends GenericFilterBean with Logging with ApplicationContextAware {
+class HeaderBasedAuthFilter extends GenericFilterBean with Logging {
     @Autowired var authenticationManager: AuthenticationManager = _
-    lazy val userService: Option[UserService] = try {
-        Some(applicationContext.getBean(classOf[UserService]))
-    } catch {
-        case e: BeansException => None
-    }
 
     def doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
         val httpRequest = request.asInstanceOf[HttpServletRequest]
@@ -48,6 +43,6 @@ class HeaderBasedAuthFilter extends GenericFilterBean with Logging with Applicat
 
     def authenticationRequired = {
         val existingAuth: Authentication = SecurityContextHolder.getContext.getAuthentication
-        userService.isEmpty && (existingAuth == null || !existingAuth.isAuthenticated)
+        existingAuth == null || !existingAuth.isAuthenticated
     }
 }

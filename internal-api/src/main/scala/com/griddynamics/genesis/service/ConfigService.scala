@@ -47,7 +47,6 @@ object GenesisSystemProperties {
   val PREFIX_DB = PREFIX + ".jdbc."
   val PLUGIN_PREFIX = "genesis.plugin"
   val PROJECT_PREFIX = "genesis.project"
-
   val SHUTDOWN_TIMEOUT = "genesis.system.shutdown.timeout.sec"
   val SERVICE_BACKEND_URL = "genesis.system.service.backendUrl"
   val FRONTEND_READ_TIMEOUT = "genesis.web.frontend.readTimeout.ms"
@@ -62,4 +61,5 @@ object GenesisSystemProperties {
   val WEB_RESOURCE_ROOTS = "genesis.system.web.resourceRoots"
   val CLIENT_DEBUG_MODE = "genesis.web.client.debug"
   val LOGOUT_ENABLED = "genesis.web.logout.enabled"
+  val AUTH_MODE = "genesis.system.auth.mode"
 }

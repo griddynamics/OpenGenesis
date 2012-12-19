@@ -106,6 +106,7 @@
         <module>distribution-war</module>
         <module>agent-commons</module>
         <module>agent-run-local</module>
+        <module>ldap</module>
     </modules>
 
       <dependencyManagement>
@@ -247,6 +248,11 @@
             </dependency>
             <dependency>
                 <groupId>com.griddynamics.genesis</groupId>
+                <artifactId>ldap</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.griddynamics.genesis</groupId>
                 <artifactId>all-dependencies</artifactId>
                 <version>${project.version}</version>
                 <type>pom</type>
@@ -321,12 +327,14 @@
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>${junit.version}</version>
+                <scope>test</scope>
             </dependency>
 
             <dependency>
                 <groupId>org.scalatest</groupId>
                 <artifactId>${org.scalatest.id}</artifactId>
                 <version>${org.scalatest.version}</version>
+                <scope>test</scope>
             </dependency>
 
             <dependency>
