@@ -34,7 +34,7 @@ trait ConfigService {
     def clear(prefix:Option[String])
     def get[B](projectId: Int, name: String, default: B): B
     def update(projectId: Int, config: Map[String, Any])
-  def restartRequired() : Boolean
+    def restartRequired() : Boolean
 }
 
 object GenesisSystemProperties {
