@@ -69,7 +69,9 @@ define [
 
     checkStatusUpdates: ->
       hasStatusChanges = ()=>
-        @poll.find (m) => @collection.get(m.id)?.get("status").name != m.get("status").name
+        @poll.find (m) => @collection.get(m.id)?.get("status").name != m.get("status").name or
+        @collection.get(m.id)?.get("stats")?.runningJobs != m.get("stats")?.runningJobs or
+        @collection.get(m.id)?.get("stats")?.totalJobs != m.get("stats")?.totalJobs
 
       if(@poll.size() != @collection.size() or hasStatusChanges())
         @collection.reset @poll.models

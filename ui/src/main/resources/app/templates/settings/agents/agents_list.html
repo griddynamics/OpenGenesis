@@ -14,9 +14,9 @@
                 <thead>
                 <tr id="table-title">
                     <th class="first" style="width: 25%">Host</th>
-                    <th style="width: 25%">Port</th>
+                    <th style="width: 15%">Port</th>
                     <th>Tags</th>
-                    <th style="width: 10%">Status</th>
+                    <th style="width: 20%">Status</th>
                     <th class="actions">Actions</th>
                 </tr>
                 </thead>
@@ -32,7 +32,15 @@
                         <% } %>
                         <% } %>
                     </td>
-                    <td><%- agent.status.name %></td>
+                    <td>
+                        <%- agent.status.name %>
+                        <% if (agent.status.name == 'Active' && agent.stats) { %>
+                            <span class="agent-stats">
+                                running: <%- agent.stats.runningJobs %>;
+                                total: <%- agent.stats.totalJobs %>
+                            </span>
+                        <% } %>
+                    </td>
                     <td class="actions">
                         <a href="javascript:void(0)" class="edit-agent" data-agent-id="<%= agent.id %>">Edit</a>
                         <a href="javascript:void(0)" class="delete-agent executable" data-agent-id="<%= agent.id %>">Delete</a>
