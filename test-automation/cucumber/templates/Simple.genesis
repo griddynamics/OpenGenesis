@@ -8,6 +8,12 @@ template {
 
     workflow("create") {
          steps {
+             execLocal {
+                 agentTags = ["dev"]
+                 phase = "init"
+                 shell = "sh"
+                 commands = ['sleep 60 && echo "Creation of new environment..."']
+             }
          }
     }
 

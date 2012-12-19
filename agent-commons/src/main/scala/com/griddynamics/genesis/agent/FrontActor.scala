@@ -23,27 +23,38 @@
 
 package com.griddynamics.genesis.agent
 
-import akka.actor.{ActorRef, Props, Actor}
+import akka.actor.{Terminated, ActorRef, Props, Actor}
 import com.griddynamics.genesis.workflow._
 import akka.event.Logging
 import java.util.concurrent.ExecutorService
 import com.griddynamics.genesis.workflow.agent.ExecutorActor
-import com.griddynamics.genesis.agents.status.{GetStatus, StatusResponse}
+import com.griddynamics.genesis.agents.status.{StatusResponse, GetStatus}
 import com.griddynamics.genesis.logging.LoggerWrapper
 
 class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: ExecutorService) extends Actor {
   import context.system
   val log = Logging(system, classOf[FrontActor])
+  var running = 0
+  var total = 0
 
   protected def receive = {
     case rt@RemoteTask(action, supervisor, logger) => try {
-      actionToExec(action).foreach(sender ! executorActor(_, supervisor, logger))
+      actionToExec(action).foreach(a => {
+        val actor = executorActor(a, supervisor, logger)
+        context.watch(actor)
+        running += 1
+        total += 1
+        sender ! actor
+      })
     } catch {
       case t =>
         sender ! akka.actor.Status.Failure(t)
         log.error(t, "Error while processing remote task: %s", rt)
     }
-    case GetStatus => sender ! new StatusResponse(0, 0)
+    case GetStatus =>
+      sender ! StatusResponse(running, total)
+    case Terminated(_) =>
+      running -= 1
     case m => log.debug("Unknown message: " + m)
   }
 
