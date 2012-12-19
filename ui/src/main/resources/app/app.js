@@ -193,6 +193,16 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Env
        }
     });
 
+    $.when(backend.SettingsManager.version()).done(function(buildInfo) {
+      $(".genesis-version")
+        .click(function(e){
+          if(e.shiftKey && window) {
+            window.prompt ("Copy to clipboard: Ctrl+C, Enter", JSON.stringify(buildInfo));
+            return false;
+          }
+        })
+    });
+
     function initCurrentUser(user){
       app.currentUser = user;
       app.currentConfiguration = user.configuration || {};
