@@ -23,11 +23,11 @@
 package com.griddynamics.genesis.service
 
 import com.griddynamics.genesis.api.AgentStatus._
-import com.griddynamics.genesis.api.RemoteAgent
+import com.griddynamics.genesis.api.{JobStats, RemoteAgent}
 
 trait AgentsHealthService {
-  def checkStatus(agent: RemoteAgent): AgentStatus
-  def checkStatus(agents: Seq[RemoteAgent]): Seq[(RemoteAgent, AgentStatus)]
+  def checkStatus(agent: RemoteAgent): (AgentStatus, Option[JobStats])
+  def checkStatus(agents: Seq[RemoteAgent]): Seq[(RemoteAgent, (AgentStatus, Option[JobStats]))]
   def stopTracking(agent: RemoteAgent)
   def startTracking(agent: RemoteAgent)
 }

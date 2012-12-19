@@ -1233,6 +1233,12 @@ table.main-table tr:hover, table.intab tr:hover{
 	line-height:22px;
 }
 
+#panel table.main-table span.agent-stats{
+    font-weight:normal;
+    color: #848484;
+    padding-left: 1em;
+}
+
 table .pre {
     white-space: pre;
     font-weight: normal;
