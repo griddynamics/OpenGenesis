@@ -241,7 +241,7 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
     val pluginContext = mutable.Map[String,Any]()
 
     def createStepExecutionContext(step: GenesisStep) =
-        new StepExecutionContextImpl(step, env.copy(), servers.map(_.copy()), workflow.copy(), globals, pluginContext)
+        new StepExecutionContextImpl(step, env.copy(), servers.map(_.copy()), workflow.copy(), pluginContext)
 
     abstract override def onStepFinish(result: GenesisStepResult) = {
         handleEnvState(result)
