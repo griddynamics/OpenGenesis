@@ -33,7 +33,7 @@ import akka.remote.RemoteClientDisconnected
 
 import com.griddynamics.genesis.api.AgentStatus._
 import com.griddynamics.genesis.api
-import com.griddynamics.genesis.api.RemoteAgent
+import api.{JobStats, RemoteAgent}
 import com.griddynamics.genesis.agents.status.{GetStatus, StatusResponse}
 
 case class GetAgentStatus(agent: RemoteAgent)
@@ -46,6 +46,7 @@ class StatusTrackerRoot(pollingPeriod: Int) extends Actor {
   private val trackerActors: mutable.Map[Address, ActorRef] = new mutable.HashMap[Address, ActorRef]()
 
   private val trackerState: mutable.Map[ActorRef, AgentStatus] = new mutable.HashMap[ActorRef, AgentStatus]()
+  private val trackerStats: mutable.Map[ActorRef, JobStats] = new mutable.HashMap[ActorRef, JobStats]()
 
   override def preStart() {
     context.system.eventStream.subscribe(self, classOf[RemoteClientLifeCycleEvent])
@@ -65,7 +66,7 @@ class StatusTrackerRoot(pollingPeriod: Int) extends Actor {
 
     case GetAgentStatus(agent) => {
       val tracker = lookupTracker(agent)
-      sender ! trackerState(tracker)
+      sender ! (trackerState(tracker), trackerStats.get(tracker))
     }
 
     case StartTracking(agent) => {
@@ -80,6 +81,11 @@ class StatusTrackerRoot(pollingPeriod: Int) extends Actor {
       context.stop(tracker)
       trackerState -= tracker
       trackerActors -= AgentGateway.address(agent)
+      trackerStats -= tracker
+    }
+
+    case (a: RemoteAgent, stat: JobsStat) => {
+       trackerStats(sender) = JobStats(stat.activeJobs, stat.totalJobs)
     }
   }
 
@@ -108,7 +114,10 @@ class StatusTracker(agent: RemoteAgent, pollingPeriodSecs: Int) extends Actor wi
   }
 
   when(Active, stateTimeout = (pollingPeriodSecs * 3).seconds) {
-    case Event(e: StatusResponse, _) => stay().using(JobsStat(e.totalJobs, e.activeJobs))
+    case Event(e: StatusResponse, _) =>
+      val stat: JobsStat = JobsStat(e.totalJobs, e.activeJobs)
+      context.parent ! (agent, stat)
+      stay().using(stat)
     case Event(StateTimeout, _) => goto(Disconnected)
   }
 

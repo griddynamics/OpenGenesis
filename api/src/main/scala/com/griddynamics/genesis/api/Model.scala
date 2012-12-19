@@ -307,7 +307,8 @@ case class RemoteAgent(id: Option[Int],
                        @Min(1) @Max(32767) port: Int,
                        @ValidSeq tags: Seq[String],
                        lastTimeAlive: Option[Long],
-                       status: Option[AgentStatus.AgentStatus] = None
+                       status: Option[AgentStatus.AgentStatus] = None,
+                       stats: Option[JobStats] = None
                       )
 
 
@@ -319,3 +320,5 @@ object AgentStatus extends Enumeration {
   val Unavailable = Value(3, "Unavailable")
   val Error = Value(4, "Error")
 }
+
+case class JobStats(runningJobs: Int, totalJobs: Int)

@@ -24,7 +24,7 @@ package com.griddynamics.genesis.agents
 
 import com.griddynamics.genesis.service.{GenesisSystemProperties, ConfigService, AgentsHealthService}
 import akka.actor._
-import com.griddynamics.genesis.api.RemoteAgent
+import com.griddynamics.genesis.api.{JobStats, RemoteAgent}
 import akka.dispatch.{Future, Await}
 import akka.util.duration.intToDurationInt
 import akka.pattern.{AskTimeoutException, ask}
@@ -55,17 +55,17 @@ class AgentsHealthServiceImpl(actorSystem: ActorSystem, configService: ConfigSer
   implicit val requestTimeout = Timeout(1 seconds)
 
   def checkStatus(agent: RemoteAgent) = try {
-    val future = (tracker ? GetAgentStatus(agent)).mapTo[AgentStatus]
+    val future = (tracker ? GetAgentStatus(agent)).mapTo[(AgentStatus, Option[JobStats])]
     Await.result(future, requestTimeout.duration)
   } catch {
-    case te: TimeoutException => Unavailable
+    case te: TimeoutException => (Unavailable, None)
   }
 
-  def checkStatus(agents: Seq[RemoteAgent]): Seq[(RemoteAgent, AgentStatus)] = {
+  def checkStatus(agents: Seq[RemoteAgent]): Seq[(RemoteAgent, (AgentStatus, Option[JobStats]))] = {
     val futures = agents.map { a =>
-      val statusFuture = (tracker ? GetAgentStatus(a)).mapTo[AgentStatus]
+      val statusFuture = (tracker ? GetAgentStatus(a)).mapTo[(AgentStatus, Option[JobStats])]
       statusFuture.recover {
-        case e: AskTimeoutException  => Unavailable
+        case e: AskTimeoutException  => (Unavailable, None)
       }.map ((a, _))
     }
     implicit val context = actorSystem.dispatcher

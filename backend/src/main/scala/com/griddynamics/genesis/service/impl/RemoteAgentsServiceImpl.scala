@@ -34,13 +34,16 @@ class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, health: AgentsH
     repository.list.map { health.startTracking(_) }
 
     private def withStatus(agents: Seq[RemoteAgent]): Seq[RemoteAgent] = {
-      health.checkStatus(agents).map { case (agent, status) => agent.copy(status = Some(status)) }
+      health.checkStatus(agents).map { case (agent, (status, jobs)) => agent.copy(status = Some(status), stats = jobs) }
     }
 
     def list: Seq[RemoteAgent] = withStatus(repository.list)
 
     def get(key: Int): Option[RemoteAgent] = repository.get(key).map(
-      agent => agent.copy(status = Option(health.checkStatus(agent)))
+      agent => {
+        val s = health.checkStatus(agent)
+        agent.copy(status = Some(s._1), stats = s._2)
+      }
     )
 
     def findByTags(tags: Seq[String]): Seq[RemoteAgent] = withStatus(repository.findByTags(tags))
