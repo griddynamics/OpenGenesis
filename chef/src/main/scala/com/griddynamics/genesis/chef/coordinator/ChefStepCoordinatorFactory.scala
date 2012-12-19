@@ -36,7 +36,7 @@ class ChefStepCoordinatorFactory(execPluginContext: ExecPluginContext,
 
   def apply(step: Step, context: StepExecutionContext) = {
 
-    val chefPluginContext = context.pluginContexts.getOrElseUpdate("chef", chefPluginContextProvider()).asInstanceOf[ChefPluginContext];
+    val chefPluginContext = context.pluginContexts.getOrElseUpdate("chef", chefPluginContextProvider()).asInstanceOf[ChefPluginContext]
 
     step match {
       case s: ChefRun => new ChefRunCoordinator(s, context, execPluginContext, chefPluginContext)

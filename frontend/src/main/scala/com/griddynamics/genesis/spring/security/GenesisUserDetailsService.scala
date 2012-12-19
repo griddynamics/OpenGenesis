@@ -30,28 +30,24 @@ import com.griddynamics.genesis.spring.ApplicationContextAware
 import com.griddynamics.genesis.groups.GroupService
 import com.griddynamics.genesis.users.{GenesisRole, UserService}
 import com.griddynamics.genesis.service.{ProjectAuthorityService, AuthorityService}
+import org.springframework.beans.factory.annotation.Autowired
 
 
 class GenesisUserDetailsService( adminUsername: String,
                                  adminPassword: String,
                                  authorityService: AuthorityService,
-                                 projectAuthorityService: ProjectAuthorityService
-                               ) extends UserDetailsService with ApplicationContextAware {
+                                 projectAuthorityService: ProjectAuthorityService) extends UserDetailsService {
 
-  lazy val userService: Option[UserService] = Option(applicationContext.getBean(classOf[UserService]))
-  lazy val groupService: Option[GroupService] = Option(applicationContext.getBean(classOf[GroupService]))
+  @Autowired var userService: UserService = _
+  @Autowired var groupService: GroupService = _
 
   def loadUserByUsername(username: String) = {
     if (username != adminUsername) {
 
       val user = for {
-        service <- userService
-        user <- service.getWithCredentials(username)
+        user <- userService.getWithCredentials(username)
       } yield {
-        val groups = groupService match {
-          case None => List()
-          case Some(gservice) => gservice.getUsersGroups(user.username)
-        }
+        val groups = groupService.getUsersGroups(user.username)
         var authorities = (
           authorityService.getAuthorities(groups) ++
             authorityService.getUserAuthorities(user.username) ++

@@ -1,5 +1,6 @@
 {
     "genesis.system.bind.host": { "default": "0.0.0.0", "description": "Genesis Backend WebServer(jetty) bind host",  "restartRequired": true},
     "genesis.system.bind.port": { "default": 8080, "description": "Genesis Backend listens on the following port", "restartRequired": true},
-    "genesis.system.security.environment.restriction.enabled": { "default": "false", "description": "Enable security access restrictions on environment level","restartRequired": true}
+    "genesis.system.security.environment.restriction.enabled": { "default": "false", "description": "Enable security access restrictions on environment level","restartRequired": true},
+    "genesis.system.auth.mode": { "default": "default", "description": "Genesis Authentication Schema", "restartRequired": true}
 }

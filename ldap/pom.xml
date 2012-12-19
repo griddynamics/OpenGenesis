@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
+      http://www.griddynamics.com
+
+      This library is free software; you can redistribute it and/or modify it under the terms of
+      the GNU Lesser General Public License as published by the Free Software Foundation; either
+      version 2.1 of the License, or any later version.
+
+      THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+      AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+      IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+      DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+      FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+      DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+      SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+      CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+      OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+      OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+      Project:     Genesis
+      Description:  Continuous Delivery Platform
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>parent</artifactId>
+        <groupId>com.griddynamics.genesis</groupId>
+        <version>2.0.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>ldap</artifactId>
+
+    <name>Genesis LDAP Module</name>
+
+    <description>Provides Integration with LDAP and Active Directory Services</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <ldap.server.port>10389</ldap.server.port>
+        <ldap.server.rootDn>dc=example,dc=com</ldap.server.rootDn>
+        <genesis.plugin.ldap.server.url>ldap://127.0.0.1:${ldap.server.port}</genesis.plugin.ldap.server.url>
+        <genesis.plugin.ldap.domain></genesis.plugin.ldap.domain>
+        <genesis.plugin.ldap.base>${ldap.server.rootDn}</genesis.plugin.ldap.base>
+        <genesis.plugin.ldap.manager.dn>uid=developer1,ou=people,dc=example,dc=com</genesis.plugin.ldap.manager.dn>
+        <genesis.plugin.ldap.manager.password>developer1pswd</genesis.plugin.ldap.manager.password>
+        <genesis.plugin.ldap.user.search.filter>uid={0}</genesis.plugin.ldap.user.search.filter>
+        <genesis.plugin.ldap.user.search.base>ou=people</genesis.plugin.ldap.user.search.base>
+        <genesis.plugin.ldap.group.search.filter>member={0}</genesis.plugin.ldap.group.search.filter>
+        <genesis.plugin.ldap.group.search.base>ou=groups</genesis.plugin.ldap.group.search.base>
+        <genesis.plugin.ldap.users.service.filter>objectClass=person</genesis.plugin.ldap.users.service.filter>
+        <genesis.plugin.ldap.groups.service.filter>objectClass=groupOfNames</genesis.plugin.ldap.groups.service.filter>
+    </properties>
+
+    <dependencies>
+        <!-- Modules -->
+        <dependency>
+            <groupId>com.griddynamics.genesis</groupId>
+            <artifactId>internal-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.griddynamics.genesis</groupId>
+            <artifactId>frontend</artifactId>
+        </dependency>
+
+        <!-- Spring -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-ldap</artifactId>
+        </dependency>
+
+        <!-- Testing -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <testResources>
+            <testResource>
+                <directory>${project.basedir}/src/test/resources</directory>
+                <filtering>true</filtering>
+            </testResource>
+        </testResources>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.12.4</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>ca.grimoire.maven</groupId>
+                <artifactId>apacheds-maven-plugin</artifactId>
+                <version>0.1</version>
+                <configuration>
+                    <!-- The LDAP server port. -->
+                    <port>${ldap.server.port}</port>
+                    <!-- Apache DS partitions to host. -->
+                    <partitions>
+                        <partition>
+                            <id>example.com</id>
+                            <baseDn>${ldap.server.rootDn}</baseDn>
+                        </partition>
+                    </partitions>
+                    <!-- LDIF files/directory with directory entries to load -->
+                    <ldifDirectory>${project.basedir}/src/test/resources</ldifDirectory>
+                    <!-- Apache DS stores its directory on the filesystem. -->
+                    <workingDirectory>${project.build.directory}/apache-ds/</workingDirectory>
+                </configuration>
+
+                <executions>
+                    <execution>
+                        <id>start-apache-ds</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>start</goal>
+                        </goals>
+                    </execution>
+
+                    <execution>
+                        <id>stop-apache-ds</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>stop</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

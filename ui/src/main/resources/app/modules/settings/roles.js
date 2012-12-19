@@ -173,16 +173,16 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
 
     },
 
-    initCompletion: function(hasGroups, hasUsers){
+    initCompletion: function(){
       var self = this;
 
       self.$("#groups-select").fcbkcomplete({
-        json_url: hasGroups ? "rest/groups" : null,
+        json_url: "rest/groups",
         cache: false,
-        filter_case: true,
+        filter_case: false,
         filter_hide: true,
         filter_selected: true,
-        newel: !hasGroups,
+        newel: false,
         width: "",
         input_name: "groups-select",
         complete_text: "Enter group name...",
@@ -190,12 +190,12 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
       });
 
       self.$("#users-select").fcbkcomplete({
-        json_url: hasUsers ? "rest/users" : null,
+        json_url: "rest/users",
         cache: false,
-        filter_case: true,
+        filter_case: false,
         filter_hide: true,
         filter_selected: true,
-        newel: !hasUsers,
+        newel: false,
         width: "",
         input_name: "users-select",
         complete_text: "Enter username...",
@@ -205,14 +205,14 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
     render: function(){
 
       var self = this;
-      $.when(backend.UserManager.hasUsers(), backend.UserManager.hasGroups(), genesis.fetchTemplate(this.template)).done(function(hasUsers, hasGroups, tmpl) {
+      $.when(genesis.fetchTemplate(this.template)).done(function(tmpl) {
         self.$el.html(tmpl({
           role: self.role.toJSON(),
           LANG: LANG,
           title: self.title,
           showButtons: self.showButtons
         }));
-        self.initCompletion(hasGroups[0], hasUsers[0]);
+        self.initCompletion();
         self.status = new status.LocalStatus({el: self.$(".notification")});
         validation.bindValidation(self.role, self.$("form"), self.status);
       });

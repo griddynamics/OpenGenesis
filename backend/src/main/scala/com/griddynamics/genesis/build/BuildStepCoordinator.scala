@@ -37,6 +37,7 @@ class BuildStepCoordinator(val step : Step, context: StepExecutionContext, plugi
     with Logging{
 
     var stepFailed = false
+    var buildAttributes: Option[Map[String, String]] = None
 
     def onStepStart() = {
         val buildStep: BuildStep = step.asInstanceOf[BuildStep]
@@ -60,7 +61,7 @@ class BuildStepCoordinator(val step : Step, context: StepExecutionContext, plugi
     def onActionFinish(result: ActionResult) = {
         result match {
             case result : BuildSuccessful => {
-                context.globals ++= result.outResult
+                buildAttributes = Some(result.outResult)
                 stepFailed = false
             }
             case _ => {
@@ -71,8 +72,10 @@ class BuildStepCoordinator(val step : Step, context: StepExecutionContext, plugi
     }
 
     def getStepResult() = {
-        new GenesisStepResult(isStepFailed = stepFailed, step = context.step,
-            envUpdate = context.envUpdate(), serversUpdate = context.serversUpdate())
+      val buildResult = buildAttributes.map(new BuildStepResult(context.step, _))
+
+      new GenesisStepResult(isStepFailed = stepFailed, step = context.step,
+            envUpdate = context.envUpdate(), serversUpdate = context.serversUpdate(), actualResult = buildResult)
     }
 }
 
@@ -125,3 +128,5 @@ case class BuildSuccessful(action: Action, outResult : Map[String, String]) exte
     override val desc = ""
 }
 case class BuildFailed(action: Action) extends ActionResult with ActionFailed
+
+case class BuildStepResult(step: Step, buildAttributes: Map[String, String]) extends StepResult
