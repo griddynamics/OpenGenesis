@@ -177,7 +177,9 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
 
   private def remoteExecutor(tag: String, action: Action) = try {
     // TODO: is it possible to start single action on several agents?
-    val agent = remoteAgentService.findByTags(Seq(tag)).head // exception is thrown in case no agents with tag are found
+    val agent = remoteAgentService.findByTags(Seq(tag)).headOption.getOrElse(
+       throw new IllegalArgumentException("Could not find agent for tag: " + tag)
+    )
     val remoteFront = AgentGateway.resolve(agent)
     implicit val timeout = TIMEOUT_REMOTE_ACTOR
     val logger = action match {
