@@ -229,8 +229,17 @@ function(genesis, $) {
         timeout: DEFAULT_TIMEOUT,
         processData: false
       });
-    }
+    },
 
+    version: function() {
+      return $.ajax({
+        url: "/rest/build-info",
+        dataType: "json",
+        type: "GET",
+        timeout: DEFAULT_TIMEOUT,
+        processData: false
+      })
+    }
   };
 
   return backend;
