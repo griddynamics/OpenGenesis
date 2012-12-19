@@ -47,7 +47,7 @@ class ExecutorActor(unsafeExecutor: AsyncActionExecutor,
 
   protected def receive = {
     case Start => {
-      log.debug("Starting async executor for '%s'", safeExecutor.action)
+      log.debug("Starting async executor for '{}'", safeExecutor.action)
       safeExecutor.startAsync()
       cancellable = context.system.scheduler.schedule(0 milliseconds, beatPeriodMs.intValue() milliseconds, self, Beat(Success()))
       //            beatSource.subscribe(self, Beat(Success()))
