@@ -50,5 +50,5 @@ case class SuccessfullyUpdated(val action: Action) extends ActionResult {
 }
 
 case class UpdateEnvAttributesAction(env: Environment, entries: Seq[DeploymentAttribute]) extends Action {
-  override def desc = "Update environment"
+  override def desc = "Update instance"
 }
