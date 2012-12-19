@@ -70,7 +70,8 @@ class ExternalUserAuthenticationProvider(details: ExternalUserDetailsService) ex
         val authRequest: ExternalAuthentication = authentication.asInstanceOf[ExternalAuthentication]
         val user = details.loadUserByUsername(authRequest.username, authRequest.assignedGroups)
         val additionalGroups = authRequest.assignedGroups.flatMap(details.getRolesByGroupName(_)).toList ++ user.getAuthorities
-        if(!additionalGroups.exists( gr => gr.getAuthority == GenesisRole.GenesisUser.toString || gr.getAuthority == GenesisRole.SystemAdmin.toString)) {
+        if(!additionalGroups.exists( gr => gr.getAuthority == GenesisRole.GenesisUser.toString || gr.getAuthority == GenesisRole.SystemAdmin.toString
+          || gr.getAuthority == GenesisRole.ReadonlySystemAdmin.toString)) {
             throw new UsernameNotFoundException("User %s doesn't have required role [%s]".format(authRequest.username, GenesisRole.GenesisUser))
         }
         new ExternalAuthentication(user, additionalGroups.toList)

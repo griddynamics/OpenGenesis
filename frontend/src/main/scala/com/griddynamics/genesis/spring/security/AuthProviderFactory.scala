@@ -20,35 +20,23 @@
  * Project:     Genesis
  * Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.metadata
+package com.griddynamics.genesis.spring.security
 
-import com.griddynamics.genesis.workflow.{ActionResult, Action, Signal, SyncActionExecutor}
-import com.griddynamics.genesis.plugin.StepExecutionContext
-import com.griddynamics.genesis.model.{Environment, DeploymentAttribute}
-import com.griddynamics.genesis.service.StoreService
+import org.springframework.security.authentication.{UsernamePasswordAuthenticationToken, AuthenticationProvider}
+import com.griddynamics.genesis.util.Logging
+import org.springframework.security.core.AuthenticationException
 
-class UpdateEnvAttributesActionExecutor(val action: UpdateEnvAttributesAction, context: StepExecutionContext, storeService: StoreService) extends SyncActionExecutor {
+trait AuthProviderFactory extends Logging {
+  def mode: String
 
-  def cleanUp(signal: Signal) {}
+  def create(): AuthenticationProvider
 
-  def startSync() = {
-    val env = storeService.findEnv(action.env.id).get // updating optimistic lock counter
-    val keys = action.entries.map(_.key).toSet
-
-    val preserved = env.deploymentAttrs.filterNot{ attr => keys.contains(attr.key) }
-    env.deploymentAttrs = preserved ++ action.entries
-
-    context.updateEnv(env)
-    storeService.updateEnv(env)
-
-    SuccessfullyUpdated(action)
+  def capable() = try {
+    val provider = create()
+    provider.authenticate(new UsernamePasswordAuthenticationToken("genesis", "genesis"))
+    true
+  } catch {
+    case e: AuthenticationException => true
+    case e: Exception => log.error(e, "It seems authentication provider doesn't work"); false
   }
-}
-
-case class SuccessfullyUpdated(val action: Action) extends ActionResult {
-  override def desc = ""
-}
-
-case class UpdateEnvAttributesAction(env: Environment, entries: Seq[DeploymentAttribute]) extends Action {
-  override def desc = "Update instance"
 }
