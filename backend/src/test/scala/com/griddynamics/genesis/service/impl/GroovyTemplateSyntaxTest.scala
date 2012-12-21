@@ -33,13 +33,9 @@ import scala.Array
 import com.griddynamics.genesis.service.TemplateRepoService
 import com.griddynamics.genesis.template.{VersionedTemplate, TemplateRepository}
 import com.griddynamics.genesis.repository.DatabagRepository
-import net.sf.ehcache.CacheManager
+import com.griddynamics.genesis.cache.NullCacheManager
 
 class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with MockitoSugar {
-
-    @Before def setUp() {
-      CacheManager.getInstance().clearAll()
-    }
 
     //Template declaration
     
@@ -186,7 +182,7 @@ class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with Mock
             List(
               new DoNothingStepBuilderFactory
             ),
-            ConversionServiceFactory.createDefaultConversionService(), Seq(), bagRepository, CacheManager.getInstance())
+            ConversionServiceFactory.createDefaultConversionService(), Seq(), bagRepository, NullCacheManager)
 
         templateService.listTemplates(0).headOption match {
             case Some((name, version)) => templateService.findTemplate(0, name, version)

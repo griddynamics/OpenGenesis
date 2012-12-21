@@ -31,11 +31,12 @@ import org.mockito.Matchers
 import org.mockito.stubbing.Answer
 import org.mockito.invocation.InvocationOnMock
 import com.griddynamics.genesis.api.User
+import com.griddynamics.genesis.cache.NullCacheManager
 
 class LdapUserServiceTest extends ShouldMatchers {
 
   var ldapTemplate: LdapTemplate = _
-  var userService: LdapUserService = _
+  var userService: LdapUserServiceImpl = _
 
   @Before
   def setUp() {
@@ -45,7 +46,7 @@ class LdapUserServiceTest extends ShouldMatchers {
     val authoritiesPopulator = mock(classOf[LdapAuthoritiesPopulator])
     ldapTemplate = mock(classOf[LdapTemplate])
 
-    userService = new LdapUserServiceImpl(config, ldapTemplate, authoritiesPopulator)
+    userService = new LdapUserServiceImpl(config, ldapTemplate, authoritiesPopulator, NullCacheManager)
   }
 
   @Test def testListSorting() {

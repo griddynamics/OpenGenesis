@@ -24,12 +24,11 @@ package com.griddynamics.genesis.jenkins.datasource
 
 import com.griddynamics.genesis.template.{DataSourceFactory, VarDataSource}
 import com.griddynamics.genesis.util.Logging
-import com.griddynamics.genesis.cache.Cache
+import com.griddynamics.genesis.cache.{CacheManager, Cache}
 import java.io.InputStream
 import io.Source
 import net.liftweb.json.JsonAST.JObject
 import net.liftweb.json._
-import net.sf.ehcache.CacheManager
 import com.griddynamics.genesis.service.CredentialsStoreService
 import com.griddynamics.genesis.jenkins.api.{JenkinsRemoteApi, JenkinsConnectSpecification}
 import collection.immutable.ListMap

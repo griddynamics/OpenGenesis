@@ -185,6 +185,7 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
         newel: false,
         width: "",
         input_name: "groups-select",
+        input_min_size: 2,
         complete_text: "Enter group name...",
         maxitems: 10000
       });
@@ -198,6 +199,7 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
         newel: false,
         width: "",
         input_name: "users-select",
+        input_min_size: 2,
         complete_text: "Enter username...",
         maxitems: 10000
       });

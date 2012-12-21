@@ -36,7 +36,7 @@ import collection.JavaConversions._
 import com.griddynamics.genesis.service._
 import com.griddynamics.genesis.plugin.api.GenesisPlugin
 import com.griddynamics.genesis.configuration.{ClientBootstrapContext, StoreServiceContext, CredentialServiceContext}
-import com.griddynamics.genesis.cache.Cache
+import com.griddynamics.genesis.cache.{CacheConfig, CacheManager, Cache}
 import org.jclouds.compute.{ComputeServiceContextFactory, ComputeServiceContext}
 import org.jclouds.ssh.jsch.config.JschSshClientModule
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule
@@ -45,7 +45,6 @@ import com.griddynamics.genesis.workflow.DurationLimitedActionExecutor
 import org.springframework.context.annotation.{Configuration, Bean}
 import org.springframework.beans.factory.annotation.Autowired
 import javax.annotation.PostConstruct
-import net.sf.ehcache.CacheManager
 import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.model.{IpAddresses, VirtualMachine}
 import org.jclouds.ec2.reference.EC2Constants
@@ -100,10 +99,7 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
 
   @PostConstruct
   def initCache() {
-    val cache = new net.sf.ehcache.Cache(
-     computeContextRegion, 100, false, false, TimeUnit.HOURS.toSeconds(2), TimeUnit.HOURS.toSeconds(1), false, 0
-    )
-    cacheManager.addCacheIfAbsent(cache)
+    cacheManager.createCacheIfAbsent(CacheConfig(computeContextRegion, TimeUnit.HOURS.toSeconds(1).toInt, 100))
   }
 
   var providersMap: Map[String, JCloudsVmCreationStrategyProvider] = _

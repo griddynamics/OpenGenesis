@@ -25,11 +25,11 @@ package com.griddynamics.genesis.jclouds.datasource
 import com.griddynamics.genesis.template.DataSourceFactory
 import com.griddynamics.genesis.jclouds.JCloudsComputeContextProvider
 import scala.collection.JavaConversions._
-import net.sf.ehcache.CacheManager
 import java.util
 import org.jclouds.compute.domain.Image
 import collection.immutable.ListMap
 import org.jclouds.compute.ComputeService
+import com.griddynamics.genesis.cache.CacheManager
 
 class ImagesDataSource(provider: JCloudsComputeContextProvider, val cacheManager: CacheManager) extends CloudBaseDataSourceTemplate(provider){
 

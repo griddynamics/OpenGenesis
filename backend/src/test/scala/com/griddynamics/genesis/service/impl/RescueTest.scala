@@ -7,10 +7,10 @@ import com.griddynamics.genesis.template.{VersionedTemplate, ListVarDSFactory, T
 import com.griddynamics.genesis.repository.DatabagRepository
 import org.springframework.core.convert.support.ConversionServiceFactory
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
-import net.sf.ehcache.CacheManager
 import com.griddynamics.genesis.util.IoUtil
 import org.junit.{Test, Before}
 import org.mockito.Mockito
+import com.griddynamics.genesis.cache.NullCacheManager
 
 class RescueTest extends AssertionsForJUnit with MockitoSugar {
     val templateRepository = mock[TemplateRepository]
@@ -19,13 +19,9 @@ class RescueTest extends AssertionsForJUnit with MockitoSugar {
     Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
     val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new DatabagDataSourceFactory(bagRepository)), bagRepository, CacheManager.getInstance())
+        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new DatabagDataSourceFactory(bagRepository)), bagRepository, NullCacheManager)
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/Rescue.genesis"))
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
-
-    @Before def setUp() {
-        CacheManager.getInstance().clearAll()
-    }
 
     @Test
     def testRescue() {
