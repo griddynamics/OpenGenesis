@@ -30,7 +30,7 @@ import com.griddynamics.genesis.util.IoUtil
 import org.springframework.core.convert.support.ConversionServiceFactory
 import org.mockito.Mockito
 import org.junit.{Test, Before}
-import net.sf.ehcache.CacheManager
+import com.griddynamics.genesis.cache.NullCacheManager
 
 class GroovyIncludesTest extends AssertionsForJUnit with MockitoSugar  {
     val templateRepository = mock[TemplateRepository]
@@ -38,7 +38,7 @@ class GroovyIncludesTest extends AssertionsForJUnit with MockitoSugar  {
     Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
     val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-        Seq(), null, CacheManager.getInstance)
+        Seq(), null, NullCacheManager)
     val bodyMain = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/Includes.genesis"))
     val bodyInc = "f = {x -> println(\"Test function call.\" + x)}"
 
@@ -46,10 +46,6 @@ class GroovyIncludesTest extends AssertionsForJUnit with MockitoSugar  {
         VersionedTemplate("1") -> bodyMain,
         VersionedTemplate("/groovy/test1.groovy") -> bodyInc)
     )
-
-    @Before def setUp() {
-        CacheManager.getInstance().clearAll()
-    }
 
     @Test
     def testInclude() {

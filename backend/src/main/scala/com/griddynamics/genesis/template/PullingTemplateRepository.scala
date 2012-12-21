@@ -26,8 +26,7 @@ import org.springframework.beans.factory.InitializingBean
 import java.util.concurrent.TimeUnit
 import java.lang.System.currentTimeMillis
 import com.griddynamics.genesis.util.Logging
-import com.griddynamics.genesis.cache.Cache
-import net.sf.ehcache.CacheManager
+import com.griddynamics.genesis.cache.{CacheManager, Cache}
 
 class PullingTemplateRepository(val delegate : TemplateRepository,
                                 pullPeriodSeconds : Long,

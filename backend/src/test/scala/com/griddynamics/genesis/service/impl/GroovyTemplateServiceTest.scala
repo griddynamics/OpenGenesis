@@ -33,8 +33,8 @@ import org.springframework.core.convert.support.ConversionServiceFactory
 import com.griddynamics.genesis.workflow.Step
 import com.griddynamics.genesis.template._
 import com.griddynamics.genesis.repository.DatabagRepository
-import net.sf.ehcache.CacheManager
 import com.griddynamics.genesis.service.TemplateRepoService
+import com.griddynamics.genesis.cache.NullCacheManager
 
 case class DoNothingStep(name: String) extends Step {
   override def stepDescription = "Best step ever!"
@@ -60,13 +60,9 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
     Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
     val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-        Seq(), databagRepo, CacheManager.getInstance())
+        Seq(), databagRepo, NullCacheManager)
 
     private def testTemplate = templateService.findTemplate(0, "TestEnv", "0.1").get
-
-    @Before def setUp() {
-      CacheManager.getInstance().clearAll()
-    }
 
     @Test def testEmbody() {
         val res = testTemplate.createWorkflow.embody(Map("nodesCount" -> "666", "test" -> "test"))

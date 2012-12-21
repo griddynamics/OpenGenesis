@@ -33,7 +33,7 @@ import com.griddynamics.genesis.service.TemplateService
 import javax.annotation.Resource
 import com.griddynamics.genesis.template.{DependentListFactory, ListVarDSFactory, DataSourceFactory}
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
-import net.sf.ehcache.CacheManager
+import com.griddynamics.genesis.cache.CacheManager
 
 @Configuration
 class GroovyTemplateServiceContext {
