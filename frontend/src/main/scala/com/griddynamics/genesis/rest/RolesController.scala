@@ -31,9 +31,10 @@ import GenesisRestController._
 import com.griddynamics.genesis.service.{ProjectAuthorityService, AuthorityService}
 import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.groups.GroupService
-import com.griddynamics.genesis.api.{Failure, ExtendedResult, RequestResult}
+import com.griddynamics.genesis.api._
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.validation.Validation
+import com.griddynamics.genesis.api.Failure
 
 @Controller
 @RequestMapping(Array("/rest"))
@@ -81,7 +82,22 @@ class RolesController extends RestApiExceptionsHandler {
     if(!authorityService.listAuthorities.contains(roleName)) {
       throw new ResourceNotFoundException("Role [name = " + roleName + "] was not found")
     }
-    authorityService.authorityAssociations(roleName)
+
+    val associations = authorityService.authorityAssociations(roleName)
+
+    def user(username: String) = User(username, null, null, null, None, None, None)
+
+    Map(
+      "name" -> associations.name,
+      "groups" -> associations.groups,
+      "users" -> associations.users.map { username =>
+        try {
+          userService.findByUsername(username).getOrElse(user(username))
+        } catch {
+          case _: UnsupportedOperationException => user(username)
+        }
+      }
+    )
   }
 
   @RequestMapping(value = Array("roles/{roleName}"), method = Array(RequestMethod.PUT))
