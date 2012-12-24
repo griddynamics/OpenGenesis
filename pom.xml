@@ -362,6 +362,12 @@
             </dependency>
 
             <dependency>
+                <groupId>com.typesafe.akka</groupId>
+                <artifactId>akka-slf4j</artifactId>
+                <version>${io.akka.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>akka-remote-ssl</artifactId>
                 <version>${project.version}</version>
