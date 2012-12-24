@@ -8,7 +8,7 @@ import com.griddynamics.genesis.service.impl.ProjectService
 import com.griddynamics.genesis.api._
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.Authentication
-import com.griddynamics.genesis.users.GenesisRole
+import com.griddynamics.genesis.users.{UserService, GenesisRole}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import com.griddynamics.genesis.service.ProjectAuthorityService
 import com.griddynamics.genesis.validation.Validation
@@ -45,6 +45,7 @@ class ProjectsController extends RestApiExceptionsHandler {
   @Autowired var projectService: ProjectService = _
   @Autowired var authorityService: ProjectAuthorityService = _
   @Autowired var configurationRepository: ConfigurationRepository = _
+  @Autowired var userService: UserService = _
 
   @Value("${genesis.system.server.mode:frontend}")
   var mode = ""
@@ -53,7 +54,6 @@ class ProjectsController extends RestApiExceptionsHandler {
   @ResponseBody
   def listProjects(@RequestParam(value = "sorting", required = false, defaultValue = "name") sorting: Ordering,
                    request: HttpServletRequest): Iterable[Project] = {
-    import scala.collection.JavaConversions._
     if (request.isUserInRole(GenesisRole.SystemAdmin.toString) || request.isUserInRole(GenesisRole.ReadonlySystemAdmin.toString)) {
       projectService.orderedList(sorting)
     } else {
@@ -137,8 +137,21 @@ class ProjectsController extends RestApiExceptionsHandler {
   def loadProjectAuths(@PathVariable("projectId") projectId: Int,
                        @PathVariable("roleName") roleName: String,
                        request: HttpServletRequest,
-                       response: HttpServletResponse): ExtendedResult[Map[String, Iterable[String]]] = {
-    authorityService.getProjectAuthority(projectId, GenesisRole.withName(roleName)).map{ case (users, groups) => Map("users" -> users, "groups" -> groups) }
+                       response: HttpServletResponse): ExtendedResult[Map[String, Any]] = {
+    def user(username: String) = User(username, null, null, null, None, None, None)
+
+    authorityService.getProjectAuthority(projectId, GenesisRole.withName(roleName)).map{ case (users, groups) =>
+      Map(
+        "users" -> users.map { username =>
+          try {
+            userService.findByUsername(username).getOrElse(user(username))
+          } catch {
+            case _: UnsupportedOperationException => user(username)
+          }
+        },
+        "groups" -> groups
+      )
+    }
   }
 
   @RequestMapping(value = Array("{projectId}/permissions"), method = Array(RequestMethod.GET))

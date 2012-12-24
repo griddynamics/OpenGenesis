@@ -129,7 +129,12 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
     render: function() {
       var self = this;
       $.when(genesis.fetchTemplate(this.template)/*, this.collection.fetch()*/).done(function (tmpl) {
-        self.$el.html(tmpl({ projectId: self.projectId, roles: self.collection.toJSON(), LANG: LANG }) );
+        self.$el.html(tmpl({
+          projectId: self.projectId,
+          roles: self.collection.toJSON(),
+          LANG: LANG,
+          utils: genesis.utils
+        }) );
       });
     }
   });
@@ -201,7 +206,10 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
         input_name: "users-select",
         input_min_size: 2,
         complete_text: "Enter username...",
-        maxitems: 10000
+        maxitems: 10000,
+        titleProcessor: function(label) {
+          return label.replace(/\s*\(.*\)$/, '');
+        }
       });
     },
     render: function(){
@@ -212,7 +220,8 @@ function(genesis, status, backend, Users, validation, Backbone, $) {
           role: self.role.toJSON(),
           LANG: LANG,
           title: self.title,
-          showButtons: self.showButtons
+          showButtons: self.showButtons,
+          utils: genesis.utils
         }));
         self.initCompletion();
         self.status = new status.LocalStatus({el: self.$(".notification")});
