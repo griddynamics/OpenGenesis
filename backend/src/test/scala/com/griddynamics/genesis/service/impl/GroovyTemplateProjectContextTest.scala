@@ -33,9 +33,9 @@ import org.mockito.Mockito
 import com.griddynamics.genesis.service.{ValidationError, VariableDescription}
 import com.griddynamics.genesis.plugin.{StepBuilder, GenesisStep}
 import com.griddynamics.genesis.repository.DatabagRepository
-import net.sf.ehcache.CacheManager
 import com.griddynamics.genesis.api.{DataItem, DataBag}
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
+import com.griddynamics.genesis.cache.NullCacheManager
 
 class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSugar {
     val templateRepository = mock[TemplateRepository]
@@ -44,7 +44,7 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
     Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
     val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new DatabagDataSourceFactory(bagRepository)), bagRepository, CacheManager.getInstance())
+        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new DatabagDataSourceFactory(bagRepository)), bagRepository, NullCacheManager)
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/ProjectContextExample.genesis"))
 
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
@@ -54,11 +54,6 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
     Mockito.when(bagRepository.findByTags(Seq("bar"), None)).thenReturn(Seq(systemDatabag))
     Mockito.when(bagRepository.findByTags(Seq("foo"), Some(0))).thenReturn(Seq(testDatabag))
     val createWorkflow = templateService.findTemplate(0, "Projects", "0.1").get.createWorkflow
-
-    @Before def setUp() {
-      CacheManager.getInstance().clearAll()
-    }
-
 
     def testDatabag : DataBag = {
         val db = DataBag(Some(0), "foo", Seq("foo"), Some(0), Seq(

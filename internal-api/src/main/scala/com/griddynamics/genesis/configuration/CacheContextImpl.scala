@@ -24,11 +24,12 @@ package com.griddynamics.genesis.configuration
 
 import org.springframework.context.annotation.{Bean, Configuration}
 import net.sf.ehcache.CacheManager
+import com.griddynamics.genesis.cache.EhCacheManager
 
 
 @Configuration
 class CacheContextImpl {
   @Bean def cacheManager() = {
-    new CacheManager()
+    new EhCacheManager(new CacheManager())
   }
 }

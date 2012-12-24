@@ -5,7 +5,6 @@ import org.springframework.core.convert.support.ConversionServiceFactory
 import org.junit.{Test, Before}
 import com.griddynamics.genesis.util.IoUtil
 import com.griddynamics.genesis.repository.DatabagRepository
-import net.sf.ehcache.CacheManager
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
 import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito
@@ -14,6 +13,7 @@ import com.griddynamics.genesis.service.{TemplateRepoService, WorkflowDefinition
 import com.griddynamics.genesis.api.{ExtendedResult, Failure}
 import com.griddynamics.genesis.api.Failure
 import com.griddynamics.genesis.template.VersionedTemplate
+import com.griddynamics.genesis.cache.NullCacheManager
 
 class PreconditionsTests extends AssertionsForJUnit with MockitoSugar {
     val templateRepository = mock[TemplateRepository]
@@ -22,15 +22,11 @@ class PreconditionsTests extends AssertionsForJUnit with MockitoSugar {
     val bagRepository = mock[DatabagRepository]
     val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new DatabagDataSourceFactory(bagRepository)), bagRepository, CacheManager.getInstance())
+        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new DatabagDataSourceFactory(bagRepository)), bagRepository, NullCacheManager)
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/Preconditions.genesis"))
 
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
     Mockito.when(bagRepository.findByName("foo")).thenReturn(None)
-
-    @Before def setUp() {
-        CacheManager.getInstance().clearAll()
-    }
 
     @Test
     def testPreconditions() {
