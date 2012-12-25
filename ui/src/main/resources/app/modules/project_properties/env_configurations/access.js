@@ -1,7 +1,7 @@
 define([
   "genesis",
   "services/backend",
-  "modules/settings/roles",
+  "cs!modules/settings/roles",
   "backbone",
   "jquery",
   "underscore",
