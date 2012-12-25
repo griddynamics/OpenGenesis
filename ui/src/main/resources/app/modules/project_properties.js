@@ -8,7 +8,7 @@ define([
   "modules/project_properties/other_settings",
   "modules/project_properties/servers",
   "modules/settings/roles",
-  "modules/settings/databags",
+  "cs!modules/settings/databags",
   "modules/project_properties/template_repo"
 ],
 

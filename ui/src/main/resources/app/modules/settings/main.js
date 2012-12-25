@@ -6,7 +6,7 @@ define([
   "modules/settings/groups",
   "modules/settings/users",
   "modules/settings/roles",
-  "modules/settings/databags",
+  "cs!modules/settings/databags",
   "services/backend"
 ],
 
