@@ -24,7 +24,7 @@
             <td>
               <ul>
                 <% for (var j = 0, usersCount = role.users.length; j < usersCount; j++) { var user = role.users[j]; %>
-                  <li class="name"><%- user %></li>
+                  <li class="name"><%- utils.formatUserLabel(user) %></li>
                 <% } %>
               </ul>
             </td>

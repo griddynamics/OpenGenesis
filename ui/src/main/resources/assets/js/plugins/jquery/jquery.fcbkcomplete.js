@@ -30,6 +30,7 @@
  * input_min_size   - minimum size of the input element (default: 1)
  * input_name       - value of the input element's 'name'-attribute (no 'name'-attribute set if empty)
  * select_all_text  - text for select all link
+ * titleProcessor   - optional function that produces label transformation before adding to list
  */
 
 /*
@@ -191,6 +192,11 @@
         if (!maxItems() || !(/\S/.test(title))) { // has non-space character
           return false;
         }
+
+        if (options.titleProcessor && $.isFunction(options.titleProcessor)) {
+          title = options.titleProcessor(title)
+        }
+
         var liclass = "bit-box" + (locked ? " locked": "");
         var id = randomId();
         var txt = document.createTextNode(title.replace("\\\\", "\\"));
@@ -346,7 +352,10 @@
         var content = '';
         $.each(cache.search(etext), function (i, object) {
           if (maximum) {
-            if (options.filter_selected && element.children('option[value="' + object.key + '"]').hasClass("selected")) {
+            // workaround due to jQuery parser doesn't support backslashes
+            var optionFilter = function() { return $(this).val() == object.key; };
+
+            if (options.filter_selected && element.children('option').filter(optionFilter).hasClass("selected")) {
               //nothing here...
             } else {
               content += '<li rel="' + object.key + '">' + itemIllumination(object.value, etext) + '</li>';

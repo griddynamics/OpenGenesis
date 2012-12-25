@@ -86,7 +86,8 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
   }
 
   private def filter(usernamePattern: String) =
-    "(&(%s)(%s))".format(config.usersServiceFilter, config.userSearchFilter.replace("{0}", usernamePattern))
+    "(&(%s)(|(%s)(sn=%s)(givenName=%3$s)))"
+      .format(config.usersServiceFilter, config.userSearchFilter.replace("{0}", usernamePattern), usernamePattern)
 
   private def find(username: String, includeCredentials: Boolean) =
     catching(classOf[IncorrectResultSizeDataAccessException]).opt(

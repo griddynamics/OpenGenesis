@@ -31,9 +31,13 @@ import com.griddynamics.genesis.api.User
 
 class LocalUserRepository extends AbstractGenericRepository[LocalUser, User](LocalUserSchema.users) {
 
-  def search(nameLike: String): List[User] = from(table)(
-    user => where(user.username like nameLike.replaceAll("\\*", "%") and user.deleted === false).select (user)
-  ).toList.map(convert _)
+  def search(nameLike: String): List[User] = {
+    val likeExpr = nameLike.replaceAll("\\*", "%")
+    from(table)(user =>
+      where((user.username like likeExpr) or (user.firstName like likeExpr) or (user.lastName like likeExpr)
+        and user.deleted === false).select (user)
+    ).toList.map(convert _)
+  }
 
   def getWithCredentials(username: String): Option[User] = {
         from (LocalUserSchema.users) {
