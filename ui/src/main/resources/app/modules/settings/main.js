@@ -3,7 +3,7 @@ define([
   "backbone",
   "modules/settings/plugins",
   "modules/settings/configs",
-  "modules/settings/groups",
+  "cs!modules/settings/groups",
   "modules/settings/users",
   "modules/settings/roles",
   "cs!modules/settings/databags",
