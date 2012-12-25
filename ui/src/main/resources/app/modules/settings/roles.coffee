@@ -97,7 +97,8 @@ define ["genesis", "modules/status", "services/backend", "modules/validation", "
         @$el.html tmpl(
           projectId: @projectId
           roles: @collection.toJSON()
-          LANG: LANG
+          LANG: LANG,
+          utils: genesis.utils
         )
 
   class RoleEdit extends Backbone.View
@@ -162,7 +163,8 @@ define ["genesis", "modules/status", "services/backend", "modules/validation", "
           role: @role.toJSON()
           LANG: LANG
           title: @title
-          showButtons: self.showButtons
+          showButtons: self.showButtons,
+          utils: genesis.utils
         )
         @initCompletion hasGroups[0], hasUsers[0]
         @status = new status.LocalStatus(el: self.$(".notification"))

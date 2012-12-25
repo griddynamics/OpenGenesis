@@ -5,10 +5,9 @@ define ["genesis", "backbone", "modules/status", "modules/validation", "services
     urlRoot: URL
     idAttribute: "username"
 
-  #strange: Users.Collections.Users is not recognized
   class Users.Collections.People extends Backbone.Collection
-    model: Users.Model
     url: URL
+    model: Users.Model
 
   class Users.Collections.Groups extends Backbone.Collection
     url: "rest/groups"
@@ -31,18 +30,14 @@ define ["genesis", "backbone", "modules/status", "modules/validation", "services
     initialize: ->
       _.bind @render, this
       @collection = new Users.Collections.People()
-      console.log('Collection done')
       @refresh()
 
     refresh: ->
-      console.log('about to fetch')
       @collection.fetch().done =>
-        console.log('collection fetched')
         @listView = new UsersList(
           collection: @collection
           el: @el
         )
-        console.log('list view constructed')
         @currentView = @listView
         @render()
 
