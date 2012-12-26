@@ -138,17 +138,9 @@ class ProjectsController extends RestApiExceptionsHandler {
                        @PathVariable("roleName") roleName: String,
                        request: HttpServletRequest,
                        response: HttpServletResponse): ExtendedResult[Map[String, Any]] = {
-    def user(username: String) = User(username, null, null, null, None, None, None)
-
     authorityService.getProjectAuthority(projectId, GenesisRole.withName(roleName)).map{ case (users, groups) =>
       Map(
-        "users" -> users.map { username =>
-          try {
-            userService.findByUsername(username).getOrElse(user(username))
-          } catch {
-            case _: UnsupportedOperationException => user(username)
-          }
-        },
+        "users" -> Users.of(userService).forUsernames(users),
         "groups" -> groups
       )
     }

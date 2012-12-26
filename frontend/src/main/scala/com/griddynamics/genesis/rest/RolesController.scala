@@ -85,18 +85,10 @@ class RolesController extends RestApiExceptionsHandler {
 
     val associations = authorityService.authorityAssociations(roleName)
 
-    def user(username: String) = User(username, null, null, null, None, None, None)
-
     Map(
       "name" -> associations.name,
       "groups" -> associations.groups,
-      "users" -> associations.users.map { username =>
-        try {
-          userService.findByUsername(username).getOrElse(user(username))
-        } catch {
-          case _: UnsupportedOperationException => user(username)
-        }
-      }
+      "users" -> Users.of(userService).forUsernames(associations.users)
     )
   }
 
