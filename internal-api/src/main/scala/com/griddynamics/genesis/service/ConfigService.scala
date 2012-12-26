@@ -23,13 +23,13 @@
 
 package com.griddynamics.genesis.service
 
-import com.griddynamics.genesis.api.ConfigProperty
+import com.griddynamics.genesis.api.{ExtendedResult, ConfigProperty}
 
 trait ConfigService {
     def get[B](name: String, default: B): B
     def get(name: String) : Option[Any]
     def listSettings(prefix: Option[String]) : Seq[ConfigProperty]
-    def update(config: Map[String, Any])
+    def update(config: Map[String, Any]): ExtendedResult[_]
     def delete(name:String)
     def clear(prefix:Option[String])
     def get[B](projectId: Int, name: String, default: B): B

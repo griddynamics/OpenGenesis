@@ -28,18 +28,20 @@ import org.springframework.beans.factory.annotation._
 import org.springframework.beans.factory.config.PropertiesFactoryBean
 import org.apache.commons.configuration._
 import com.griddynamics.genesis.service.{ConfigService, impl}
-import collection.JavaConversions.mapAsJavaMap
+import collection.JavaConversions.{mapAsJavaMap, mapAsScalaMap}
 import com.griddynamics.genesis.api.ConfigPropertyType
 import org.springframework.core.io.ResourceLoader
 import org.springframework.core.io.support.ResourcePatternUtils
 import javax.annotation.Resource
 import net.liftweb.json.{Extraction, JsonParser}
 import java.io.InputStreamReader
+import com.griddynamics.genesis.validation.{RegexValidator, ConfigValueValidator}
 
 case class InputConfigProperty(default: String,
                                description: Option[String] = None,
                                `type`: Option[String] = None,
-                                restartRequired: Option[Boolean] = None) {
+                                restartRequired: Option[Boolean] = None,
+                                validation: Option[Map[String, String]] = None) {
   def propType = `type`.map(ConfigPropertyType.withName(_)).getOrElse(ConfigPropertyType.TEXT)
 }
 
@@ -49,6 +51,7 @@ class DefaultConfigServiceContext extends ConfigServiceContext {
   @Autowired private var dbConfig : org.apache.commons.configuration.Configuration = _
   @Autowired @Qualifier("override") private var filePropsOverride: PropertiesFactoryBean = _
   @Resource private var rl: ResourceLoader = _
+  @Autowired(required = false) private var validators: java.util.Map[String, ConfigValueValidator] = mapAsJavaMap(Map())
 
   private lazy val resolver = ResourcePatternUtils.getResourcePatternResolver(rl)
   private val RESOURCE_PATTERNS = Seq("classpath*:defaults-system.json", "classpath*:genesis-plugin.json")
@@ -75,5 +78,6 @@ class DefaultConfigServiceContext extends ConfigServiceContext {
     compConfig
   }
 
-  @Bean def configService: ConfigService = new impl.DefaultConfigService(config, dbConfig, overrideConfig, defaults)
+  @Bean def configService: ConfigService = new impl.DefaultConfigService(config, dbConfig, overrideConfig, defaults,
+  validators.toMap, new RegexValidator)
 }
