@@ -43,18 +43,16 @@ define ["genesis", "backbone", "modules/status", "modules/common/properties", "m
       @refresh()
 
     refresh: ->
-      self = this
-      @collection.fetch().done ->
-        self.listView = new DatabagsList(
-          collection: self.collection
-          el: self.el
+      @collection.fetch().done =>
+        @listView = new DatabagsList(
+          collection: @collection
+          el: @el
         )
-        self.currentView = self.listView
-        self.render()
+        @currentView = @listView
+        @render()
 
 
     createDatabag: =>
-      self = this
       @showEditView new Databags.Model(
         name: ""
         tags: []
@@ -70,12 +68,11 @@ define ["genesis", "backbone", "modules/status", "modules/common/properties", "m
         model: model
         el: @el
       )
-      self = this
-      @currentView.bind "back", ->
-        self.currentView.unbind()
-        self.currentView.undelegateEvents()
-        self.currentView = self.listView
-        self.render()
+      @currentView.bind "back", =>
+        @currentView.unbind()
+        @currentView.undelegateEvents()
+        @currentView = @listView
+        @render()
 
 
     render: ->
@@ -105,7 +102,6 @@ define ["genesis", "backbone", "modules/status", "modules/common/properties", "m
       @$("#dialog-confirm-databag-delete").dialog title: "Confirmation"
 
     render: (done) =>
-      self = this
       $.when(genesis.fetchTemplate(@template), @collection.fetch()).done (tmpl) =>
         @$el.html tmpl(databags: @collection.toJSON())
         @dialog = @dialog or @initConfirmationDialog()
@@ -138,24 +134,22 @@ define ["genesis", "backbone", "modules/status", "modules/common/properties", "m
         items: properties.toJSON()
       )
       validation.bindValidation bag, @$("#edit-databag"), @status
-      self = this
-      bag.save().done ->
-        self.trigger "back"
+      bag.save().done =>
+        @trigger "back"
 
 
     render: ->
-      self = this
-      $.when(genesis.fetchTemplate(@template), @model.fetch()).done (tmpl) ->
-        items = _(self.model.get("items")).map((item) ->
+      $.when(genesis.fetchTemplate(@template), @model.fetch()).done (tmpl) =>
+        items = _(@model.get("items")).map((item) ->
           new DatabagItem(item)
         )
         itemsCollection = new ItemsCollection(items)
-        self.$el.html tmpl(databag: self.model.toJSON())
-        self.propertyView = new property.Views.PropertyEditor(
+        @$el.html tmpl(databag: @model.toJSON())
+        @propertyView = new property.Views.PropertyEditor(
           collection: itemsCollection
-          el: self.$("#properties")
+          el: @$("#properties")
         )
-        self.status = new status.LocalStatus(el: self.$(".notification"))
+        @status = new status.LocalStatus(el: @$(".notification"))
 
   Databags
 
