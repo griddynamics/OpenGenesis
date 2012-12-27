@@ -1,4 +1,4 @@
-define ["genesis", "modules/status", "backbone", "jquery", "jqueryui", "jvalidate"], (genesis, status, Backbone, $) ->
+define ["genesis", "modules/status", "modules/validation", "backbone", "jquery", "jqueryui", "jvalidate"], (genesis, status, validation, Backbone, $) ->
   Settings = genesis.module()
   URL = "rest/settings"
   TIMEOUT_AJAX = 4000
@@ -58,15 +58,10 @@ define ["genesis", "modules/status", "backbone", "jquery", "jqueryui", "jvalidat
         map.set item.get("name"), item.get("value")
 
       unless changedSettings.isEmpty()
-        map.save null,
-          success: (model, response) ->
-            status.StatusPanel.success "Settings changes saved."
-            view.mainView.toggleRestart()
-
-          error: (model, response) ->
-            errorMessage = (if response.status is 400 then JSON.parse(response.responseText).compoundServiceErrors else "Failed to process request")
-            status.StatusPanel.error errorMessage
-
+        validation.bindValidation map, @$("#edit-system-settings"), status.StatusPanel
+        map.save().done =>
+          status.StatusPanel.success "Settings changes saved."
+          @mainView.toggleRestart()
 
     restoreDefaults: ->
       $.ajax #todo: WHAT IS THIS??

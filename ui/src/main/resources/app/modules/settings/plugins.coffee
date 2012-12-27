@@ -1,4 +1,4 @@
-define ["genesis", "modules/status", "backbone", "jquery", "jvalidate"], (genesis, status, Backbone, $) ->
+define ["genesis", "modules/status", "modules/validation", "backbone", "jquery", "jvalidate"], (genesis, status, validation, Backbone, $) ->
   Plugins = genesis.module()
   class Plugins.Model extends Backbone.Model
 
@@ -84,13 +84,13 @@ define ["genesis", "modules/status", "backbone", "jquery", "jvalidate"], (genesi
         @plugin.save().done(=>
           status.StatusPanel.success "Plugin settings updated"
           @trigger "back"
-        ).error ->
-          status.StatusPanel.error "Failed to process request"
+        )
 
       else
         @trigger "back"
 
     render: ->
+      validation.unbindValidation @plugin, @$("#edit-plugin-settings")
       $.when(genesis.fetchTemplate(@template)).done (tmpl) =>
         settings = _(@plugin.get("configuration")).groupBy((item) ->
           (if item.readOnly then "constants" else "properties")
@@ -99,6 +99,7 @@ define ["genesis", "modules/status", "backbone", "jquery", "jvalidate"], (genesi
           plugin: @plugin.toJSON()
           settings: settings
         )
+        validation.bindValidation @plugin, @$("#edit-plugin-settings"), status.StatusPanel
 
   Plugins
 
