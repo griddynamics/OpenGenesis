@@ -42,6 +42,8 @@ trait CacheManager {
 
   def fromCache(name: String, key: Any): Option[Any]
 
+  def fromCache(name: String, keyPredicate: (Any) => Boolean): Option[Any]
+
   def putInCache(cacheName: String, key: Any, value: Any)
 
   def evictFromCache(cacheName: String, key: Any)
@@ -57,6 +59,8 @@ object NullCacheManager extends CacheManager {
   def cacheExists(name: String) = true
 
   def fromCache(name: String, key: Any) = None
+
+  def fromCache(name: String, keyPredicate: (Any) => Boolean) = None
 
   def putInCache(cacheName: String, key: Any, value: Any) {}
 
@@ -93,6 +97,19 @@ class EhCacheManager(val manager: EhManager) extends CacheManager {
     val cache = manager.getCache(name)
 
     Option(cache.get(key)) map {_.getObjectValue}
+  }
+
+  def fromCache(name: String, keyPredicate: (Any) => Boolean) = {
+    import scala.collection.JavaConversions.asScalaBuffer
+
+    assertCacheExists(name)
+    val cache = manager.getCache(name)
+
+    val keyOpt = cache.getKeysWithExpiryCheck.find(keyPredicate(_))
+
+    keyOpt flatMap { key =>
+      Option(cache.get(key)) map {_.getObjectValue}
+    }
   }
 
   def putInCache(cacheName: String, key: Any, value: Any) {
