@@ -61,7 +61,6 @@ define ["genesis", "modules/status", "backbone", "jquery", "jvalidate"], (genesi
 
     initialize: (options) ->
       @plugin = @model
-      self = this
       @plugin.fetch().done =>
         @configMap = _(@plugin.get("configuration")).reduce((memo, config) ->
           memo[config.name] = config.value

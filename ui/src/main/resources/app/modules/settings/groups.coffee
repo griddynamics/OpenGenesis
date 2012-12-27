@@ -119,11 +119,10 @@ define ["genesis", "backbone", "cs!modules/settings/users", "modules/status", "m
         $.when(@users.fetch()).done _.bind(@render, this)
 
     render: ->
-      self = this
       $.when(genesis.fetchTemplate(@template), backend.AuthorityManager.roles()).done (tmpl, rolesArray) =>
         usersInGroupMap = genesis.utils.toBoolean(@groupUsers.pluck("username"))
         groupRolesMap = genesis.utils.toBoolean(_(@groupRolesArray))
-        self.$el.html tmpl(
+        @el.html tmpl(
           group: @group.toJSON()
           users: @users.toJSON()
           usersInGroup: usersInGroupMap
@@ -131,7 +130,7 @@ define ["genesis", "backbone", "cs!modules/settings/users", "modules/status", "m
           groupRoles: groupRolesMap
         )
         @status = new status.LocalStatus(el: @$(".notification"))
-        validation.bindValidation self.group, @$("#group-attributes"), @status
+        validation.bindValidation @group, @$("#group-attributes"), @status
 
 
     saveChanges: ->
