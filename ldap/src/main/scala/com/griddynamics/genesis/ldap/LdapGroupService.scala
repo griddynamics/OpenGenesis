@@ -29,7 +29,7 @@ import util.control.Exception._
 import scala.collection.JavaConversions._
 import org.springframework.dao.IncorrectResultSizeDataAccessException
 import javax.naming.ldap.LdapName
-import com.griddynamics.genesis.cache.{CacheManager, Cache}
+import com.griddynamics.genesis.cache.CacheManager
 
 trait LdapGroupService extends GroupService
 
@@ -40,7 +40,7 @@ object LdapGroupService {
 class LdapGroupServiceImpl(val config: LdapPluginConfig,
                            val template: LdapTemplate,
                            val userService: LdapUserService,
-                           val cacheManager: CacheManager) extends LdapGroupService with Cache {
+                           val cacheManager: CacheManager) extends LdapGroupService with WildcardCaching {
 
   override def isReadOnly = true
 
@@ -114,12 +114,16 @@ class LdapGroupServiceImpl(val config: LdapPluginConfig,
     throw new UnsupportedOperationException
   }
 
-  def search(nameLike: String) = fromCache(LdapGroupService.SearchCacheRegion, nameLike) {
-    template.search(
-      config.groupSearchBase,
-      filterByNamePattern(nameLike),
-      GroupContextMapper()
-    ).toList.asInstanceOf[List[UserGroup]].sortBy(_.name.toLowerCase)
+  def search(nameLike: String) = {
+    val cacheFilter = (group: UserGroup) => Wildcard(nameLike).accept(group.name)
+
+    fromCache(LdapGroupService.SearchCacheRegion, nameLike, cacheFilter) {
+      template.search(
+        config.groupSearchBase,
+        filterByNamePattern(nameLike),
+        GroupContextMapper()
+      ).toList.asInstanceOf[List[UserGroup]].sortBy(_.name.toLowerCase)
+    }
   }
 
   def doesGroupExist(groupName: String) = findByName(config.stripDomain(groupName)).isDefined
