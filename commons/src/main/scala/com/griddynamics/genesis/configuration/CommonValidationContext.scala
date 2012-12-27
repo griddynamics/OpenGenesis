@@ -32,4 +32,5 @@ class CommonValidationContext {
    @Bean(name = Array("required")) def requiredConfigValidator = new NotEmptyValidator
    @Bean(name = Array("host")) def hostNameConfigValidator = new RegexValidator(Option(REGEX_HOST))
    @Bean(name = Array("port")) def portConfigValidator = new IntValidator(min = 1, max = 32767)
+   @Bean(name = Array("email")) def emailConfigValidator = new EmailConfigValidator
 }
