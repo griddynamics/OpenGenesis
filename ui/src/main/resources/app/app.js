@@ -14,7 +14,7 @@ require([
   "modules/createenv",
   "modules/breadcrumbs",
   "modules/project_properties",
-  "modules/settings/main",
+  "cs!modules/settings/main",
 //jquery plugins
   "bootstrap",
   "tabs"
