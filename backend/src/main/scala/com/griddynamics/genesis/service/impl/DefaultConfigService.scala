@@ -102,10 +102,8 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
 
   private def validate(propName: String, value: String): ExtendedResult[Any] =
     (for {prop <- defaults.get(propName).toSeq
-          validation <- prop.validation.toSeq
-          (msg, validatorName) <- validation
+          (msg, validatorName) <- prop.getValidation
           validator = validators.getOrElse(validatorName, defaultValidator)} yield
-
       validator.validate(propName, value, msg, Map("name" -> validatorName))
     ).reduceOption(_ ++ _).getOrElse(Success(value))
 }
