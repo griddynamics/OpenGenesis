@@ -121,13 +121,17 @@ define ["genesis", "modules/status", "services/backend", "modules/validation", "
       groups: @$("#groups-select").val() or []
 
     saveChanges: ->
-      @role.set
-        users: @$("#users-select").val() or []
-        groups: @$("#groups-select").val() or []
+      $not_found = $('.holder tester:not(:empty)').text()?.replace /\s+/, ''
+      if $not_found
+        status.StatusPanel.error("Some changes will not be saved. Offending input is #{$not_found}. Clear it before saving or re-enter it with completion, please")
+      else
+        @role.set
+          users: @$("#users-select").val() or []
+          groups: @$("#groups-select").val() or []
 
-      @role.save().done =>
-        @backToList()
-        status.StatusPanel.success "Changes have been saved"
+        @role.save().done =>
+          @backToList()
+          status.StatusPanel.success "Changes have been saved"
 
 
     initCompletion: (hasGroups, hasUsers) ->
