@@ -77,7 +77,7 @@ class WildcardCachingTest extends ShouldMatchers {
   @Test def testSearchCacheHit() {
     when(cacheManager.fromCache(
       Matchers.eq(LdapUserService.SearchCacheRegion),
-      Matchers.any(classOf[(String) => Boolean]))
+      Matchers.any(classOf[(Any) => Boolean]))
     ).thenReturn(Some(List(
       User("operator", null, "Operator", null, None, None, None),
       User("developer1", null, null, null, None, None, None),
@@ -91,7 +91,7 @@ class WildcardCachingTest extends ShouldMatchers {
     verify(cacheManager).createCacheIfAbsent(Matchers.any(classOf[CacheConfig]))
 
     verify(cacheManager)
-      .fromCache(Matchers.eq(LdapUserService.SearchCacheRegion), Matchers.any(classOf[(String) => Boolean]))
+      .fromCache(Matchers.eq(LdapUserService.SearchCacheRegion), Matchers.any(classOf[(Any) => Boolean]))
 
     verifyNoMoreInteractions(cacheManager)
     verifyNoMoreInteractions(ldapTemplate)
@@ -102,7 +102,7 @@ class WildcardCachingTest extends ShouldMatchers {
   @Test def testSearchCacheMiss() {
     when(cacheManager.fromCache(
       Matchers.eq(LdapUserService.SearchCacheRegion),
-      Matchers.any(classOf[(String) => Boolean]))
+      Matchers.any(classOf[(Any) => Boolean]))
     ).thenReturn(None)
 
     when(ldapTemplate.search(
@@ -132,7 +132,7 @@ class WildcardCachingTest extends ShouldMatchers {
     verify(cacheManager).createCacheIfAbsent(Matchers.any(classOf[CacheConfig]))
 
     verify(cacheManager)
-      .fromCache(Matchers.eq(LdapUserService.SearchCacheRegion), Matchers.any(classOf[(String) => Boolean]))
+      .fromCache(Matchers.eq(LdapUserService.SearchCacheRegion), Matchers.any(classOf[(Any) => Boolean]))
 
     verify(cacheManager).putInCache(Matchers.eq(LdapUserService.SearchCacheRegion),
       Matchers.eq(searchPattern), Matchers.any(classOf[List[User]]))
