@@ -1,10 +1,18 @@
 {
  "genesis.plugin.jclouds.provider" : {"default":"gdnova", "description" : "cloud provider"},
- "genesis.plugin.jclouds.endpoint" : {"default":"", "description" : "cloud compute service endpoint"},
+ "genesis.plugin.jclouds.endpoint" : {"default":"", "description" : "cloud compute service endpoint",
+    "validation": {"Endpoint must be a valid URL": "url"}
+  },
  "genesis.plugin.jclouds.identity" : {"default":"", "description": "login for compute service"},
  "genesis.plugin.jclouds.credential" : {"default":"", "description": "password for compute service", "type":"password"},
  "genesis.plugin.jclouds.nodename.prefix" : {"default": "GN", "description": "name prefix for provisioned nodes"},
- "genesis.plugin.jclouds.provision.vm.timeout.secs" : {"default": 360, "description": "provision vm timeout"},
- "genesis.plugin.jclouds.port.check.timeout.secs" : {"default": 180, "description": "check ssh port timeout"},
- "genesis.plugin.jclouds.public.ip.check.timeout.secs" : {"default": 30, "description": "ping timeout"}
+ "genesis.plugin.jclouds.provision.vm.timeout.secs" : {"default": 360, "description": "provision vm timeout",
+    "validation": {"Must be integer value >= 0": "int_nonnegative"}
+ },
+ "genesis.plugin.jclouds.port.check.timeout.secs" : {"default": 180, "description": "check ssh port timeout",
+    "validation": {"Must be integer value >= 0": "int_nonnegative"}
+ },
+ "genesis.plugin.jclouds.public.ip.check.timeout.secs" : {"default": 30, "description": "ping timeout",
+    "validation": {"Must be integer value >= 0": "int_nonnegative"}
+ }
 }

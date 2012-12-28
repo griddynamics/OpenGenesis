@@ -25,12 +25,19 @@ package com.griddynamics.genesis.configuration
 
 import org.springframework.context.annotation.{Bean, Configuration}
 import com.griddynamics.genesis.validation._
+import org.springframework.beans.factory.annotation.Autowired
 
 @Configuration
 class CommonValidationContext {
-   private val REGEX_HOST = "^(?:(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:(([a-zA-Z]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9]))$"
-   @Bean(name = Array("required")) def requiredConfigValidator = new NotEmptyValidator
-   @Bean(name = Array("host")) def hostNameConfigValidator = new RegexValidator(Option(REGEX_HOST))
-   @Bean(name = Array("port")) def portConfigValidator = new IntValidator(min = 1, max = 32767)
-   @Bean(name = Array("email")) def emailConfigValidator = new EmailConfigValidator
+  private val REGEX_HOST = "^(?:(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:(([a-zA-Z]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9]))$"
+  @Autowired var validator: javax.validation.Validator = _
+
+  @Bean(name = Array("required")) def requiredConfigValidator = new NotEmptyValidator
+  @Bean(name = Array("host")) def hostNameConfigValidator = new RegexValidator(Option(REGEX_HOST))
+  @Bean(name = Array("port")) def portConfigValidator = new IntValidator(min = 1, max = 32767)
+  @Bean(name = Array("int_nonnegative")) def intNonNegativeConfigValidator = new IntValidator(min = 0)
+  @Bean(name = Array("int_positive")) def intPositiveConfigValidator = new IntValidator(min = 1)
+  @Bean(name = Array("email")) def emailConfigValidator = new EmailConfigValidator(validator)
+  @Bean(name = Array("url")) def urlConfigValidator = new UrlConfigValidator(validator)
+  @Bean(name = Array("default_length")) def defaultLengthConfigValidator = new LengthConfigValidator
 }
