@@ -121,9 +121,9 @@ define ["genesis", "modules/status", "services/backend", "modules/validation", "
       groups: @$("#groups-select").val() or []
 
     saveChanges: ->
-      not_found = $('.holder tester:not(:empty)').text()?.replace /\s+/, ''
-      if not_found
-        status.StatusPanel.error("Some users or groups are failed to be found. Offending input is #{not_found}. Clear it before saving or do some pause when typing, please")
+      $not_found = $('.holder tester:not(:empty)').text()?.replace /\s+/, ''
+      if $not_found
+        status.StatusPanel.error("Some users or groups are failed to be found. Offending input is #{$not_found}. Clear it before saving or do some pause when typing, please")
       else
         @role.set
           users: @$("#users-select").val() or []
