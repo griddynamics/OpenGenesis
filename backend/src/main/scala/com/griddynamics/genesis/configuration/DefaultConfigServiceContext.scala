@@ -41,8 +41,9 @@ case class InputConfigProperty(default: String,
                                description: Option[String] = None,
                                `type`: Option[String] = None,
                                 restartRequired: Option[Boolean] = None,
-                                validation: Option[Map[String, String]] = None) {
+                                private val validation: Option[Map[String, String]] = None) {
   def propType = `type`.map(ConfigPropertyType.withName(_)).getOrElse(ConfigPropertyType.TEXT)
+  def getValidation = validation.getOrElse(Map[String, String]()) + ("Value Length must be less than 128 characters" -> "default_length")
 }
 
 @Configuration
