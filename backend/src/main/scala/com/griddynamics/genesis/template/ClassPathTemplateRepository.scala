@@ -84,7 +84,7 @@ object ClassPathTemplateRepository {
             }
         }
         catch {
-            case _ => Seq()
+            case _: Throwable => Seq()
         }
     }
 

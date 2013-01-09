@@ -136,7 +136,7 @@ class AclServiceContext {
           initializeTransientFields(value.asInstanceOf[MutableAcl])
         }.getOrElse(null.asInstanceOf[MutableAcl])
       } catch {
-        case _ => null
+        case _: Exception => null
       }
     }
 

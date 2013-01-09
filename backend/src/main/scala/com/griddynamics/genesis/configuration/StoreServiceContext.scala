@@ -41,6 +41,7 @@ import service.impl._
 import org.springframework.beans.factory.InitializingBean
 import com.griddynamics.genesis.util.Logging
 import org.springframework.beans.factory.annotation.Autowired
+import java.sql.SQLException
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
@@ -122,34 +123,48 @@ object SquerylConfigurator {
 class SquerylTransactionManager(dataSource : DataSource,
                                 defaultIsolationLevel : Int,
                                 databaseAdapter : DatabaseAdapter,
-                                logSql: Boolean) extends DataSourceTransactionManager {
+                                logSql: Boolean) extends DataSourceTransactionManager with Logging {
     setDataSource(dataSource)
 
     override def afterPropertiesSet() {
-        super.afterPropertiesSet()
-        SessionFactory.externalTransactionManagementAdapter = Some(() => {
-            if(Session.hasCurrentSession) {
-                Session.currentSessionOption.get
-            }
-            else {
-                val connection = DataSourceUtils.getConnection(getDataSource)
-                connection.setTransactionIsolation(defaultIsolationLevel)
+      super.afterPropertiesSet()
+      val transactionManagementAdapter = Some(() => {
+        SquerylTransactionManager.currentSession.get orElse {
+          log.debug("Requesting a new session")
+          val connection = DataSourceUtils.getConnection(getDataSource)
+          connection.setTransactionIsolation(defaultIsolationLevel)
+          val session = new Session(connection, databaseAdapter, None) with Logging {
 
-                val session = new Session(connection, databaseAdapter, None) {
-                    override def cleanup = {
-                        super.cleanup
-                        unbindFromCurrentThread
-                    }
-                }
-                if (logSql) session.setLogger(msg => println(msg))
-                session.bindToCurrentThread
-                session
+            override def cleanup {
+              super.cleanup
+              unbindFromCurrentThread
+              SquerylTransactionManager.currentSession.remove()
+              //unfortunately without it connections are hanging
+              try {
+                this.connection.close()
+              } catch {
+                case e: SQLException => log.error("Error closing database connection", e)
+              }
             }
-        })
+
+          }
+          if (logSql) session.setLogger(msg => println(msg))
+          session.bindToCurrentThread
+          SquerylTransactionManager.currentSession.set(Some(session))
+          Some(session)
+        }
+      })
+      SessionFactory.externalTransactionManagementAdapter = transactionManagementAdapter
     }
 
     override def doCleanupAfterCompletion(transaction: AnyRef) {
         super.doCleanupAfterCompletion(transaction)
         Session.cleanupResources //clean up resources when done, following the doc
     }
+}
+
+object SquerylTransactionManager {
+  val currentSession: ThreadLocal[Option[Session]] = new ThreadLocal[Option[Session]]() {
+    override def initialValue() = None
+  }
 }

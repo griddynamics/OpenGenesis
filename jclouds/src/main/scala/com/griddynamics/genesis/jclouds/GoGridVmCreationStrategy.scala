@@ -57,7 +57,7 @@ class IpStackWrapper() extends Logging {
         try {
             Some(ipStack.pop())
         } catch {
-            case _ => None
+            case _: Exception => None
         }
     }
 

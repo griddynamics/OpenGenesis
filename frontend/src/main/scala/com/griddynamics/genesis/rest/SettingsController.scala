@@ -80,7 +80,7 @@ class SettingsController extends RestApiExceptionsHandler {
           }
         } catch {
             case e: ResourceNotFoundException => Failure(compoundServiceErrors = Seq(e.msg), isNotFound = true)
-            case ex => Failure(compoundServiceErrors = Seq(ex.getMessage))
+            case ex: Throwable => Failure(compoundServiceErrors = Seq(ex.getMessage))
         }
     }
 

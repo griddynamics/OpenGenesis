@@ -33,7 +33,7 @@ class GenesisVersionRepository extends repository.GenesisVersionRepository {
 
   @Transactional
   def set(version: GenesisVersion) {
-    GS.genesisVersion.deleteWhere(v => true)
+    GS.genesisVersion.deleteWhere(v => 1 === 1)
     GS.genesisVersion.insert(version)
   }
 }

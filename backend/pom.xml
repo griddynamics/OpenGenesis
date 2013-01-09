@@ -125,12 +125,7 @@
 
         <dependency>
             <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-remote</artifactId>
-        </dependency>
-
-       <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>akka-remote-ssl</artifactId>
+            <artifactId>akka-remote_2.10</artifactId>
         </dependency>
     </dependencies>
 
