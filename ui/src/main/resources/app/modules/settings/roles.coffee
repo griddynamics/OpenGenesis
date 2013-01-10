@@ -136,24 +136,24 @@ define ["genesis", "modules/status", "services/backend", "modules/validation", "
 
     initCompletion: (hasGroups, hasUsers) ->
       @$("#groups-select").fcbkcomplete
-        json_url: (if hasGroups then "rest/groups" else null)
+        json_url: "rest/groups"
         cache: false
         filter_case: false
         filter_hide: true
         filter_selected: true
-        newel: not hasGroups
+        newel: false
         width: ""
         input_name: "groups-select"
         complete_text: "Enter group name..."
         maxitems: 10000
 
       @$("#users-select").fcbkcomplete
-        json_url: (if hasUsers then "rest/users" else null)
+        json_url: "rest/users"
         cache: false
         filter_case: false
         filter_hide: true
         filter_selected: true
-        newel: not hasUsers
+        newel: false
         width: ""
         input_name: "users-select"
         complete_text: "Enter username..."
