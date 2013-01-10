@@ -29,12 +29,13 @@ import util.control.Exception._
 import scala.collection.JavaConversions._
 import org.springframework.dao.IncorrectResultSizeDataAccessException
 import javax.naming.ldap.LdapName
+import com.griddynamics.genesis.util.Logging
 
 trait LdapGroupService extends GroupService
 
 class LdapGroupServiceImpl(val config: LdapPluginConfig,
                            val template: LdapTemplate,
-                           val userService: LdapUserService) extends LdapGroupService {
+                           val userService: LdapUserService) extends LdapGroupService with Logging {
 
   override def isReadOnly = true
 
@@ -69,14 +70,19 @@ class LdapGroupServiceImpl(val config: LdapPluginConfig,
 
   private def filterById(id: String) = filter("gidNumber", id)
 
-  def findByName(name: String) =
+  def findByName(name: String) = {
+    val filter = filterByNamePattern(config.stripDomain(name))
+
+    log.debug("Group search base: '%s'; filter: '%s'", config.groupSearchBase, filter)
+
     catching(classOf[IncorrectResultSizeDataAccessException]).opt(
       template.searchForObject(
         config.groupSearchBase,
-        filterByNamePattern(config.stripDomain(name)),
+        filter,
         GroupContextMapper(includeUsers = true)
       ).asInstanceOf[UserGroup]
     )
+  }
 
   def users(id: Int) = get(id) match {
     case Some(group) => group.users.map { _.flatMap(userService.findByUsername(_)) }.getOrElse(Seq.empty)
@@ -87,14 +93,20 @@ class LdapGroupServiceImpl(val config: LdapPluginConfig,
 
   def removeUserFromGroup(id: Int, username: String) = throw new UnsupportedOperationException
 
-  def get(id: Int) =
+  def get(id: Int) = {
+    val filter = filterById(id.toString)
+
+    log.debug("Group search base: '%s'; filter: '%s'", config.groupSearchBase, filter)
+
     catching(classOf[IncorrectResultSizeDataAccessException]).opt(
       template.searchForObject(
         config.groupSearchBase,
-        filterById(id.toString),
+        filter,
         GroupContextMapper(includeUsers = true)
       ).asInstanceOf[UserGroup]
     )
+  }
+
 
   def getUsersGroups(username: String) = userService.getUserGroups(config.stripDomain(username)) match {
     case Some(groups) => groups flatMap { findByName(_) }
@@ -105,21 +117,31 @@ class LdapGroupServiceImpl(val config: LdapPluginConfig,
     throw new UnsupportedOperationException
   }
 
-  def search(nameLike: String) =
+  def search(nameLike: String) = {
+    val filter = filterByNamePattern(nameLike)
+
+    log.debug("Group search base: '%s'; filter: '%s'", config.groupSearchBase, filter)
+
     template.search(
-        config.groupSearchBase,
-        filterByNamePattern(nameLike),
-        GroupContextMapper()
-      ).toList.asInstanceOf[List[UserGroup]].sortBy(_.name.toLowerCase)
+      config.groupSearchBase,
+      filter,
+      GroupContextMapper()
+    ).toList.asInstanceOf[List[UserGroup]].sortBy(_.name.toLowerCase)
+  }
+
 
   def doesGroupExist(groupName: String) = findByName(config.stripDomain(groupName)).isDefined
 
   def doGroupsExist(groupNames: Seq[String]) = groupNames forall { g => doesGroupExist(config.stripDomain(g)) }
 
-  def list = template.search(
-    config.groupSearchBase,
-    config.groupsServiceFilter,
-    GroupContextMapper()
-  ).toList.asInstanceOf[List[UserGroup]].sortBy(_.name.toLowerCase)
+  def list = {
+    log.debug("Group search base: '%s'; filter: '%s'", config.groupSearchBase, config.groupsServiceFilter)
+
+    template.search(
+      config.groupSearchBase,
+      config.groupsServiceFilter,
+      GroupContextMapper()
+    ).toList.asInstanceOf[List[UserGroup]].sortBy(_.name.toLowerCase)
+  }
 
 }

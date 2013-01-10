@@ -29,6 +29,7 @@ import scala.collection.JavaConversions._
 import scala.util.control.Exception._
 import org.springframework.dao.IncorrectResultSizeDataAccessException
 import org.springframework.security.ldap.userdetails.LdapAuthoritiesPopulator
+import com.griddynamics.genesis.util.Logging
 
 trait LdapUserService extends UserService {
   def getUserGroups(username: String): Option[Seq[String]]
@@ -36,7 +37,7 @@ trait LdapUserService extends UserService {
 
 class LdapUserServiceImpl(val config: LdapPluginConfig,
                           val template: LdapTemplate,
-                          val authoritiesPopulator: LdapAuthoritiesPopulator) extends LdapUserService {
+                          val authoritiesPopulator: LdapAuthoritiesPopulator) extends LdapUserService with Logging {
 
   override def isReadOnly = true
 
@@ -78,18 +79,19 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
 
   private def usernameFilter(pattern: String) = config.userSearchFilter.replace("{0}", pattern)
 
-  private def filter(usernamePattern: String) =
-    "(&(%s)(|(%s)(sn=%s)(givenName=%3$s)))"
-      .format(config.usersServiceFilter, usernameFilter(usernamePattern), usernamePattern)
+  private def find(username: String, includeCredentials: Boolean) = {
+    val filter = "(&(%s)(%s))".format(config.usersServiceFilter, usernameFilter(username))
 
-  private def find(username: String, includeCredentials: Boolean) =
+    log.debug("User search base: '%s'; filter: '%s'", config.userSearchBase, filter)
+
     catching(classOf[IncorrectResultSizeDataAccessException]).opt(
       template.searchForObject(
         config.userSearchBase,
-        filter(username),
+        filter,
         UserContextMapper(includeCredentials = includeCredentials)
       ).asInstanceOf[User]
     )
+  }
 
   def getWithCredentials(username: String): Option[User] =
     find(config.stripDomain(username), includeCredentials = true)
@@ -97,22 +99,33 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
   def findByUsername(username: String): Option[User] =
     find(config.stripDomain(username), includeCredentials = false)
 
-  def findByUsernames(userNames: Seq[String]): Seq[User] =
+  def findByUsernames(userNames: Seq[String]): Seq[User] = {
+    val filter = "(&(%s)(|%s))".format(
+      config.usersServiceFilter,
+      userNames.map { username => "(%s)".format(usernameFilter(config.stripDomain(username))) }.mkString
+    )
+
+    log.debug("User search base: '%s'; filter: '%s'", config.userSearchBase, filter)
+
     template.search(
       config.userSearchBase,
-      "(&(%s)(|%s))".format(
-        config.usersServiceFilter,
-        userNames.map { username => "(%s)".format(usernameFilter(config.stripDomain(username))) }.mkString
-      ),
+      filter,
       UserContextMapper(includeGroups = false, includeCredentials = false)
     ).toList.asInstanceOf[List[User]].sortBy(_.username.toLowerCase)
+  }
 
-  def search(usernameLike: String): List[User] =
+  def search(usernameLike: String): List[User] = {
+    val filter = "(&(%s)(|(%s)(sn=%s)(givenName=%3$s)))"
+                  .format(config.usersServiceFilter, usernameFilter(usernameLike), usernameLike)
+
+    log.debug("User search base: '%s'; filter: '%s'", config.userSearchBase, filter)
+
     template.search(
       config.userSearchBase,
-      filter(usernameLike),
+      filter,
       UserContextMapper(includeGroups = false)
     ).toList.asInstanceOf[List[User]].sortBy(_.username.toLowerCase)
+  }
 
   def doesUserExist(userName: String): Boolean =
     findByUsername(config.stripDomain(userName)).isDefined
@@ -120,12 +133,15 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
   def doUsersExist(userNames: Seq[String]): Boolean =
     findByUsernames(userNames).map(_.username.toLowerCase).toSet == userNames.map(_.toLowerCase).toSet
 
-  def list: List[User] =
+  def list: List[User] = {
+    log.debug("User search base: '%s'; filter: '%s'", config.userSearchBase, config.usersServiceFilter)
+
     template.search(
       config.userSearchBase,
       config.usersServiceFilter,
       UserContextMapper(includeGroups = false)
     ).toList.asInstanceOf[List[User]].sortBy(_.username.toLowerCase)
+  }
 
   def getUserGroups(username: String): Option[Seq[String]] =
     find(config.stripDomain(username), includeCredentials = false) flatMap { _.groups }

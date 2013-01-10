@@ -79,7 +79,7 @@ class UsersController extends RestApiExceptionsHandler {
       buffer.toString()
     }
 
-    userService.search("*" + search + "*").map(item =>
+    userService.search(search + "*").map(item =>
       Map(
         "key" -> item.username,
         "value" -> formatLabel(item)
