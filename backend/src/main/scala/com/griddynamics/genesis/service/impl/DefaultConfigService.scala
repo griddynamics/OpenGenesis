@@ -106,4 +106,9 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
           validator = validators.getOrElse(validatorName, defaultValidator)} yield
       validator.validate(propName, value, msg, Map("name" -> validatorName))
     ).reduceOption(_ ++ _).getOrElse(Success(value))
+
+  def validateSettings = config.getKeys.map(k => validate(k, config.getString(k))).reduceOption(_ ++ _)
+    .getOrElse(Success(None))
+
+  def isImportant(name: String) = defaults.get(name).map(_.isImportant).getOrElse(false)
 }
