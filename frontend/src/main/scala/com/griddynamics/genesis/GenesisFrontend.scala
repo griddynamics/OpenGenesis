@@ -204,8 +204,9 @@ object GenesisFrontend extends Logging {
 
 }
 
-
 private class PropertyHelper(genesisProperties: scala.collection.Map[String, String], appContext: ClassPathXmlApplicationContext) {
+
+  private val configServiceOpt = appContext.getBeansOfType(classOf[ConfigService]).headOption.map(_._2)
 
   def getFileProperty[T](name: String, default: T) = {
     val strVal = gp(name, genesisProperties.getOrElse(name, String.valueOf(default)))
@@ -218,30 +219,26 @@ private class PropertyHelper(genesisProperties: scala.collection.Map[String, Str
     }).asInstanceOf[T]
   }
 
-  def getProperty[T](name: String, default: T) = appContext.getBean(classOf[ConfigService]).get(name, default)
+  def getPropWithFallback[T](name: String, default: T) = configServiceOpt.map(_.get(name, default)).getOrElse(
+    getFileProperty(name, default)
+  )
 
-  def getPropWithFallback[T](name: String, default: T) = {
-    appContext.getBeansOfType(classOf[ConfigService]).isEmpty match {
-      case true => getFileProperty(name, default)
-      case false => getProperty(name, default)
-    }
-  }
+  def validateProperties(log: RichLogger) = configServiceOpt map (
+    configService => configService.validateSettings match {
+      case f: Failure => log.error("Settings validation failed!!!")
+      val failedPropNames = f.variablesErrors.keySet
+      (f.variablesErrors ++ f.serviceErrors).foreach(
+        e => log.error("Validation of Genesis configuration property [%s] failed: %s", e._1, e._2)
+      )
+      (f.compoundVariablesErrors ++ f.compoundServiceErrors).foreach(log.error("%s", _))
+      failedPropNames.filter(configService.isImportant(_)) match {
+        case s if s.nonEmpty =>
+          throw new RuntimeException("Failed to start Genesis, following settings are invalid: %s".format(s.mkString(" ")))
+        case _ => log.warn("There are property validation errors, but no essential properties are affected.")
+      }
 
-  def validateProperties(log: RichLogger) = appContext.getBeansOfType(classOf[ConfigService]).headOption match {
-    case Some((_, configService)) =>
-     configService.validateSettings match {
-       case f: Failure => log.error("Settings validation failed!!!")
-       val failedPropNames = f.variablesErrors.keySet
-         (f.variablesErrors ++ f.serviceErrors).foreach(e => log.error("%s: %s", e._1, e._2))
-         (f.compoundVariablesErrors ++ f.compoundServiceErrors).foreach(log.error("%s", _))
-         failedPropNames.filter(configService.isImportant(_)) match {
-           case s if s.nonEmpty =>
-             throw new RuntimeException("Failed to start Genesis, following settings are invalid: %s".format(s.mkString(" ")))
-           case _ => log.debug("There are property validation errors, but no essential properties are affected.")
-         }
-       case _ => log.debug("Settings validation passed.")
-     }
-    case _ => // TODO: validate file properties
-      log.debug("Skipping settings validation, probably running in front-end mode!")
-  }
+      case _ => log.debug("Settings validation passed.")
+    }) getOrElse // TODO: validate file properties
+    log.debug("Skipping settings validation, probably running in front-end mode!")
+
 }
