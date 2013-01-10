@@ -85,9 +85,11 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
     }
   }
 
+  private def usernameFilter(pattern: String) = config.userSearchFilter.replace("{0}", pattern)
+
   private def filter(usernamePattern: String) =
     "(&(%s)(|(%s)(sn=%s)(givenName=%3$s)))"
-      .format(config.usersServiceFilter, config.userSearchFilter.replace("{0}", usernamePattern), usernamePattern)
+      .format(config.usersServiceFilter, usernameFilter(usernamePattern), usernamePattern)
 
   private def find(username: String, includeCredentials: Boolean) =
     catching(classOf[IncorrectResultSizeDataAccessException]).opt(
@@ -103,6 +105,16 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
 
   def findByUsername(username: String): Option[User] =
     find(config.stripDomain(username), includeCredentials = false)
+
+  def findByUsernames(userNames: Seq[String]): Seq[User] =
+    template.search(
+      config.userSearchBase,
+      "(&(%s)(|%s))".format(
+        config.usersServiceFilter,
+        userNames.map { username => "(%s)".format(usernameFilter(config.stripDomain(username))) }.mkString
+      ),
+      UserContextMapper(includeGroups = false, includeCredentials = false)
+    ).toList.asInstanceOf[List[User]].sortBy(_.username.toLowerCase)
 
   def search(usernameLike: String): List[User] = {
     def cacheFilter(user: User): Boolean = {
@@ -123,7 +135,7 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
     findByUsername(config.stripDomain(userName)).isDefined
 
   def doUsersExist(userNames: Seq[String]): Boolean =
-    userNames.forall { u => doesUserExist(config.stripDomain(u)) }
+    findByUsernames(userNames).map(_.username.toLowerCase).toSet == userNames.map(_.toLowerCase).toSet
 
   def list: List[User] =
     template.search(

@@ -23,12 +23,12 @@
 package com.griddynamics.genesis.users.service
 
 import com.griddynamics.genesis.users.UserService
-import org.springframework.transaction.annotation.{Propagation, Transactional}
+import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.validation.Validation
 import com.griddynamics.genesis.validation.Validation._
 import com.griddynamics.genesis.users.repository.LocalUserRepository
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.service.{ProjectAuthorityService, AuthorityService}
+import com.griddynamics.genesis.service.AuthorityService
 import com.griddynamics.genesis.groups.GroupService
 import com.griddynamics.genesis.api._
 
@@ -45,6 +45,9 @@ class LocalUserService(val repository: LocalUserRepository) extends UserService 
 
   @Transactional(readOnly = true)
   override def findByUsername(username: String) = repository.findByUsername(username)
+
+  @Transactional(readOnly = true)
+  def findByUsernames(userNames: Seq[String]) = repository.findByUsernames(userNames)
 
   @Transactional(readOnly = true)
   def list = repository.list

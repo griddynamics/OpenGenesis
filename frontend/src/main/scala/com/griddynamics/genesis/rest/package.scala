@@ -30,15 +30,16 @@ import users.UserService
 package object rest {
 
   private[rest] class Users private(val userService: UserService) {
-    def forUsernames(usernames: Iterable[String]) = {
+    def forUsernames(usernames: Iterable[String]): Iterable[User] = {
       def user(username: String) = User(username, null, null, null, None, None, None)
 
-      usernames.map { username =>
-        try {
-          userService.findByUsername(username).getOrElse(user(username))
-        } catch {
-          case _: UnsupportedOperationException => user(username)
+      try {
+        val userMap = userService.findByUsernames(usernames.toSeq).groupBy(_.username.toLowerCase)
+        usernames map { username =>
+          userMap.get(username.toLowerCase).getOrElse(Seq(user(username))).head
         }
+      } catch {
+        case _: UnsupportedOperationException => usernames map { user(_) }
       }
     }
   }
