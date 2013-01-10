@@ -10,11 +10,5 @@
     "genesis.plugin.ldap.group.search.base": { "default": "", "description": "LDAP Group Search Base", "restartRequired": true},
     "genesis.plugin.ldap.users.service.filter": { "default": "", "description": "LDAP Users Service Filter", "restartRequired": false},
     "genesis.plugin.ldap.groups.service.filter": { "default": "", "description": "LDAP Groups Service Filter", "restartRequired": false},
-    "genesis.plugin.ldap.service.domain.prefix": { "default": "", "description": "LDAP Users/Groups Name Prefix", "restartRequired": false},
-    "genesis.plugin.ldap.cache.ttl": { "default": "30", "description": "Cache Time To Live", "restartRequired": true,
-      "validation": {"Must be integer value >= 0": "int_nonnegative"}
-    },
-    "genesis.plugin.ldap.cache.maxEntries": { "default": "1000", "description": "Maximum Amount Of Cache Entries", "restartRequired": true,
-      "validation": {"Must be integer value >= 0": "int_nonnegative"}
-    }
+    "genesis.plugin.ldap.service.domain.prefix": { "default": "", "description": "LDAP Users/Groups Name Prefix", "restartRequired": false}
 }

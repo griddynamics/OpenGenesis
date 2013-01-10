@@ -27,10 +27,9 @@ import org.scalatest.matchers.ShouldMatchers
 import org.mockito.Mockito._
 import org.springframework.ldap.core.{ContextMapper, LdapTemplate}
 import org.mockito.Matchers
-import com.griddynamics.genesis.api.{UserGroup, User}
+import com.griddynamics.genesis.api.UserGroup
 import org.mockito.stubbing.Answer
 import org.mockito.invocation.InvocationOnMock
-import com.griddynamics.genesis.cache.NullCacheManager
 
 class LdapGroupServiceTest extends ShouldMatchers {
 
@@ -43,7 +42,7 @@ class LdapGroupServiceTest extends ShouldMatchers {
     val userService = mock(classOf[LdapUserService])
     ldapTemplate = mock(classOf[LdapTemplate])
 
-    groupService = new LdapGroupServiceImpl(config, ldapTemplate, userService, NullCacheManager)
+    groupService = new LdapGroupServiceImpl(config, ldapTemplate, userService)
   }
 
   @Test def testListSorting() {
