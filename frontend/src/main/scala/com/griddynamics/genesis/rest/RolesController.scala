@@ -60,7 +60,7 @@ class RolesController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("users/{username}/roles"), method = Array(RequestMethod.PUT))
   @ResponseBody
-  def updateUserRoles(@PathVariable("username")username: String, request: HttpServletRequest): RequestResult = validUser(username) {
+  def updateUserRoles(@PathVariable("username")username: String, request: HttpServletRequest) = validUser(username) {
     val roles = GenesisRestController.extractParamsList(request)
     authorityService.grantAuthoritiesToUser(username, roles)
   }

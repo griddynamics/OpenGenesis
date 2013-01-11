@@ -25,7 +25,7 @@ package com.griddynamics.genesis.configuration
 import org.springframework.context.annotation.{Configuration, Bean}
 import com.griddynamics.genesis.steps.builder.ReflectionBasedStepBuilderFactory
 import com.griddynamics.genesis.plugin.{StepDefinition, StepBuilderFactory}
-import org.springframework.core.convert.support.ConversionServiceFactory
+import org.springframework.core.convert.support.DefaultConversionService
 import com.griddynamics.genesis.service.impl.GroovyTemplateService
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.spring.ApplicationContextAware
@@ -47,7 +47,7 @@ class GroovyTemplateServiceContext {
     @Bean(name = Array("groovy")) def templateService = new GroovyTemplateService(
         templateRepositoryContext.templateRepository,
         stepBuilderFactories ++ genericStepDefinitions.map(definition => new ReflectionBasedStepBuilderFactory(definition.name, definition.step)),
-        ConversionServiceFactory.createDefaultConversionService(),
+        new DefaultConversionService,
         varDataSourceFactories, storeServiceContext.databagRepository, cacheManager)
 }
 

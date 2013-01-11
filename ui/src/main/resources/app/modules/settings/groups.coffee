@@ -122,7 +122,7 @@ define ["genesis", "backbone", "cs!modules/settings/users", "modules/status", "m
       $.when(genesis.fetchTemplate(@template), backend.AuthorityManager.roles()).done (tmpl, rolesArray) =>
         usersInGroupMap = genesis.utils.toBoolean(@groupUsers.pluck("username"))
         groupRolesMap = genesis.utils.toBoolean(_(@groupRolesArray))
-        @el.html tmpl(
+        @$el.html tmpl(
           group: @group.toJSON()
           users: @users.toJSON()
           usersInGroup: usersInGroupMap
