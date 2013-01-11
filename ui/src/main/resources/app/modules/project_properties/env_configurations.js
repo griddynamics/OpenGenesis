@@ -4,7 +4,7 @@ define([
     "modules/status",
     "modules/common/properties",
     "modules/project_properties/env_configurations/access",
-    "modules/settings/roles",
+    "cs!modules/settings/roles",
     "modules/validation",
     "services/backend",
     "jquery",

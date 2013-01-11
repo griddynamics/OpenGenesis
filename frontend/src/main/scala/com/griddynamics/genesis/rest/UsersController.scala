@@ -25,7 +25,7 @@ package com.griddynamics.genesis.rest
 
 import org.springframework.stereotype.Controller
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.users.{UserServiceStub, UserService}
+import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.groups.GroupService
 import org.springframework.web.bind.annotation._
 import com.griddynamics.genesis.api.User
@@ -64,8 +64,28 @@ class UsersController extends RestApiExceptionsHandler {
 
   @RequestMapping(method = Array(RequestMethod.GET), params = Array("tag"))
   @ResponseBody
-  def pick(@RequestParam("tag") search: String) =
-    userService.search("*" + search + "*").map(item => Map("key" -> item.username, "value" -> item.username))
+  def pick(@RequestParam("tag") search: String) = {
+
+    def formatLabel(user: User): String = {
+      val buffer = new StringBuilder
+      if (user.firstName != null) buffer.append(user.firstName).append(" ")
+      if (user.lastName != null) buffer.append(user.lastName).append(" ")
+
+      val nameExists = user.firstName != null || user.lastName != null
+      if (nameExists) buffer.append("(")
+      buffer.append(user.username)
+      if (nameExists) buffer.append(")")
+
+      buffer.toString()
+    }
+
+    userService.search("*" + search + "*").map(item =>
+      Map(
+        "key" -> item.username,
+        "value" -> formatLabel(item)
+      )
+    )
+  }
 
   @RequestMapping(value = Array("{username:.+}"), method=Array(RequestMethod.GET))
   @ResponseBody

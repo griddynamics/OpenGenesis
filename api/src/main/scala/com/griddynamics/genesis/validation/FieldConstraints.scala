@@ -42,6 +42,7 @@ object FieldConstraints {
 
   type NotBlank = hibernate.NotBlank @field
   type Email = hibernate.Email @field
+  type URL = hibernate.URL @field
 
   type ValidSeq = custom.ValidSeq @field
   type OptString = custom.OptString @field

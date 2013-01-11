@@ -24,9 +24,8 @@
 package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.service.{TemplateRepoService, ConfigService, StoreService => SS}
-import com.griddynamics.genesis.cache.Cache
+import com.griddynamics.genesis.cache.{CacheManager, Cache}
 import com.griddynamics.genesis.util.Logging
-import net.sf.ehcache.CacheManager
 import com.griddynamics.genesis.template.{Modes, TemplateRepositoryFactory}
 import com.griddynamics.genesis.api.TemplateRepo
 
@@ -41,8 +40,7 @@ class TemplateRepoServiceImpl(config: ConfigService, storeService: SS,
   private def getMode(projectId: Int) = config.get(projectId, PROPERTY_MODE, "classpath")
 
   // never expire:
-  override val eternal = true
-  override val defaultTtl = 0
+  override val defaultTtl = -1
 
   def get(projectId: Int) = {
     fromCache(CACHE_REGION, projectId) {
@@ -69,7 +67,7 @@ class TemplateRepoServiceImpl(config: ConfigService, storeService: SS,
     // config property names should NOT already contain project prefix
     config.update(projectId, settings)
     if (cacheManager.cacheExists(CACHE_REGION)) {
-      cacheManager.getCache(CACHE_REGION).remove(projectId)
+      cacheManager.evictFromCache(CACHE_REGION, projectId)
     }
   }
 }

@@ -46,7 +46,7 @@ class PluginsController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{pluginId}"), method = Array(RequestMethod.PUT))
   @ResponseBody
-  def updatePluginConfiguration(@PathVariable("pluginId") pluginId: String, request: HttpServletRequest) {
+  def updatePluginConfiguration(@PathVariable("pluginId") pluginId: String, request: HttpServletRequest) = {
     val plugin = repository.getPlugin(pluginId).getOrElse(throw new ResourceNotFoundException("Plugin [id = " + pluginId + "] was not found"))
     val pluginConfig = plugin.configuration.filterNot(_.readOnly).map(item => (item.name, item.value)).toMap
     

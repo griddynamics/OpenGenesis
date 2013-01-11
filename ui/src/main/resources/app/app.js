@@ -14,7 +14,7 @@ require([
   "modules/createenv",
   "modules/breadcrumbs",
   "modules/project_properties",
-  "modules/settings/main",
+  "cs!modules/settings/main",
 //jquery plugins
   "bootstrap",
   "tabs"
@@ -191,6 +191,16 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Env
           status.StatusPanel.error("You are not allowed to access this page");
           genesis.app.trigger("page-view-loading-completed");
        }
+    });
+
+    $.when(backend.SettingsManager.version()).done(function(buildInfo) {
+      $(".genesis-version")
+        .click(function(e){
+          if(e.shiftKey && window) {
+            window.prompt ("Copy to clipboard: Ctrl+C, Enter", JSON.stringify(buildInfo));
+            return false;
+          }
+        })
     });
 
     function initCurrentUser(user){

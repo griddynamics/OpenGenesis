@@ -52,34 +52,36 @@
         </div>
 
         <div id="rw-settings-panel" class="tab-content opened rw-settings-panel">
-            <table class="main-table key-value-table settings">
-                <thead>
-                <tr id="table-title">
-                    <th class="first">Description</th>
-                    <th>Value</th>
-                </tr>
-                </thead>
-                <tbody>
-                <% for (var i = 0, count = properties.length; i < count; i++) { var property = properties[i]; %>
-                <tr>
-                    <td <%= propClassTitle(property) %> >
+            <form id="edit-system-settings">
+                <table class="main-table key-value-table settings">
+                    <thead>
+                    <tr id="table-title">
+                        <th class="first">Description</th>
+                        <th>Value</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <% for (var i = 0, count = properties.length; i < count; i++) { var property = properties[i]; %>
+                    <tr>
+                        <td <%= propClassTitle(property) %> >
                         <%= property.description ? property.description : property.name %>
                         <a href="javascript:void(0)" rel="#propNames<%=i%>" class="show-keys" title="Show Key">
-                          <span class="ui-icon ui-icon-carat-1-s" style="float:right"/>
+                            <span class="ui-icon ui-icon-carat-1-s" style="float:right"/>
                         </a>
                         <div class="toggle-content" id="propNames<%=i%>"> <%= property.name %></div>
-                    </td>
-                    <td><input <% if ( property.propertyType.name !== "password" ) { %> type="text" <% } else { %> type="password" <% } %> value="<%- property.value %>"
-                               class="property-value" name="<%= property.name %>"/>
-                    </td>
-                </tr>
-                <% } %>
-                </tbody>
-            </table>
-            <div class="stepbutton">
-                <a href="javascript:void(0)" class="save button executable"> <span> Save </span> </a>
-                <a href="javascript:void(0)" class="reset button executable"> <span> Reset </span> </a>
-            </div>
+                        </td>
+                        <td><input <% if ( property.propertyType.name !== "password" ) { %> type="text" <% } else { %> type="password" <% } %> value="<%- property.value %>"
+                            class="property-value" name="<%= property.name %>"/>
+                        </td>
+                    </tr>
+                    <% } %>
+                    </tbody>
+                </table>
+                <div class="stepbutton">
+                    <a href="javascript:void(0)" class="save button executable"> <span> Save </span> </a>
+                    <a href="javascript:void(0)" class="reset button executable"> <span> Reset </span> </a>
+                </div>
+            </form>
         </div>
     </div>
 </div>

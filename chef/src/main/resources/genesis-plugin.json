@@ -4,5 +4,5 @@
  "genesis.plugin.chef.credential" : {"default":"","type":"password"},
  "genesis.plugin.chef.validator.identity" : {"default":""},
  "genesis.plugin.chef.validator.credential" : {"default":"","type":"password"},
- "genesis.plugin.chef.endpoint" : {"default": ""}
+ "genesis.plugin.chef.endpoint" : {"default": "", "validation": {"Must be valid URL": "url"}}
 }

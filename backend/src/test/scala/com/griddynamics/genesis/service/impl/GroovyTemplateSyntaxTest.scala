@@ -24,22 +24,18 @@ package com.griddynamics.genesis.service.impl
 
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import org.junit.{Before, Test}
+import org.junit.Test
 import org.mockito.Mockito
-import org.springframework.core.convert.support.ConversionServiceFactory
+import org.springframework.core.convert.support.DefaultConversionService
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.template.dsl.groovy.WorkflowDeclaration
 import scala.Array
 import com.griddynamics.genesis.service.TemplateRepoService
 import com.griddynamics.genesis.template.{VersionedTemplate, TemplateRepository}
 import com.griddynamics.genesis.repository.DatabagRepository
-import net.sf.ehcache.CacheManager
+import com.griddynamics.genesis.cache.NullCacheManager
 
 class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with MockitoSugar {
-
-    @Before def setUp() {
-      CacheManager.getInstance().clearAll()
-    }
 
     //Template declaration
     
@@ -186,7 +182,7 @@ class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with Mock
             List(
               new DoNothingStepBuilderFactory
             ),
-            ConversionServiceFactory.createDefaultConversionService(), Seq(), bagRepository, CacheManager.getInstance())
+           new DefaultConversionService, Seq(), bagRepository, NullCacheManager)
 
         templateService.listTemplates(0).headOption match {
             case Some((name, version)) => templateService.findTemplate(0, name, version)
