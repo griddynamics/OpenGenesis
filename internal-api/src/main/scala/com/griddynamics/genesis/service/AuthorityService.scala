@@ -23,20 +23,20 @@
 package com.griddynamics.genesis.service
 
 import com.griddynamics.genesis.api
-import api.{ExtendedResult, AuthorityDescription, RequestResult}
+import api.{ExtendedResult, AuthorityDescription}
 
 trait AuthorityService {
   def authorityAssociations(authorityName: String): AuthorityDescription
 
   def updateAuthority(authorityName: String, groups: List[String], usernames: List[String]): ExtendedResult[_]
 
-  def grantAuthoritiesToUser(username: String, auths: List[String]): RequestResult
+  def grantAuthoritiesToUser(username: String, auths: List[String]): ExtendedResult[String]
 
-  def grantAuthoritiesToGroup(groupName: String, auths: List[String]): RequestResult
+  def grantAuthoritiesToGroup(groupName: String, auths: List[String]): ExtendedResult[String]
 
-  def removeAuthoritiesFromUser(username: String): RequestResult
+  def removeAuthoritiesFromUser(username: String): ExtendedResult[String]
 
-  def removeAuthoritiesFromGroup(groupName: String): RequestResult
+  def removeAuthoritiesFromGroup(groupName: String): ExtendedResult[String]
 
   def getUserAuthorities(username: String): List[String]
 

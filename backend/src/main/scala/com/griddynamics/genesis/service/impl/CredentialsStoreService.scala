@@ -24,7 +24,7 @@ package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.validation.Validation
 import com.griddynamics.genesis.api
-import api.{Failure, ExtendedResult, RequestResult}
+import api.{Success, Failure, ExtendedResult}
 import com.griddynamics.genesis.service
 import com.griddynamics.genesis.validation.Validation._
 import org.springframework.transaction.annotation.Transactional
@@ -48,9 +48,9 @@ class CredentialsStoreService(repository: CredentialsRepository, projectReposito
 
   def delete(projectId: Int, id: Int) = {
     if(repository.delete(projectId, id) > 0){
-      RequestResult(isSuccess = true)
+      Success(id)
     } else {
-      RequestResult(isSuccess = false, isNotFound = true, compoundServiceErrors = List("No credentials found"))
+      Failure(isNotFound = true, compoundServiceErrors = List("No credentials found"))
     }
   }
 

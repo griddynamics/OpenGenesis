@@ -28,7 +28,6 @@ import java.nio.charset.Charset
 import java.util.Collections
 import org.springframework.http.server.ServerHttpResponse
 import org.springframework.http.{HttpStatus, HttpOutputMessage, HttpInputMessage, MediaType}
-import com.griddynamics.genesis.api.RequestResult
 import com.griddynamics.genesis.api.Success
 import com.griddynamics.genesis.api.Failure
 import com.griddynamics.genesis.rest.GenesisRestController.{DEFAULT_CHARSET => DC}
@@ -57,9 +56,6 @@ class JsonMessageConverter
     }
 
     private def getStatus(requestResult : AnyRef) : Int = requestResult match  {
-        case RequestResult(_, _, _, _, true, _, _) => 200
-        case RequestResult(_, _, _, _, false, true, _) => 404
-        case RequestResult(_, _, _, _, false, _, _) => 400
         case Success(_, _) => 200
         case Failure(_, _, _, _, false, false, _) => 400
         case Failure(_, _, _, _, true, _, _) => 404

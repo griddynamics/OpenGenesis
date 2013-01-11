@@ -41,7 +41,7 @@ class DefaultAuthorityService(permissionService: PermissionService) extends Auth
     val grantedAuths = auths.map { new Authority(username, _) }
     userAuthorities.insert(grantedAuths)
 
-    new RequestResult(isSuccess = true)
+    Success(username)
   }
 
   @Transactional
@@ -51,21 +51,21 @@ class DefaultAuthorityService(permissionService: PermissionService) extends Auth
     val grantedAuths = auths.map(new Authority(groupName, _))
     groupAuthorities.insert(grantedAuths)
 
-    new RequestResult(isSuccess = true)
+    Success(groupName)
   }
 
   @Transactional
   def removeAuthoritiesFromUser(username: String) = {
     userAuthorities.deleteWhere(item => item.principalName === username)
     permissionService.cleanUserPermissions(username)
-    new RequestResult(isSuccess = true)
+    Success(username)
   }
 
   @Transactional
   def removeAuthoritiesFromGroup(groupName: String) = {
     groupAuthorities.deleteWhere(item => item.principalName === groupName)
     permissionService.cleanGroupPermissions(groupName)
-    new RequestResult(isSuccess = true)
+    Success(groupName)
   }
 
   @Transactional(readOnly = true)
@@ -83,12 +83,12 @@ class DefaultAuthorityService(permissionService: PermissionService) extends Auth
     where(item.principalName in (groups.map(_.name))).select(item.authority)
   ).distinct.toList
 
-  private def withValidRoles(auths: List[String])(block: => RequestResult) = {
+  private def withValidRoles[A](auths: List[String])(block: => ExtendedResult[A]) = {
     val unknownRoles: List[String] = auths.diff(listAuthorities)
     if(unknownRoles.isEmpty) {
       block
     } else {
-      new RequestResult(isSuccess = false, compoundServiceErrors = List("Unknown authorities: [" + unknownRoles.mkString(",") + "]"))
+      Failure(compoundServiceErrors = List("Unknown authorities: [" + unknownRoles.mkString(",") + "]"))
     }
   }
 
