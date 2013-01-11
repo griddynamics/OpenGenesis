@@ -274,3 +274,27 @@ case class StepLogEntry(timestamp: Timestamp, message: String) {
 
   override def toString = toString(Locale.getDefault, TimeZone.getDefault)
 }
+
+case class RemoteAgent(id: Option[Int],
+                       @NotBlank
+                       @Pattern(message = "{validation.invalid.host}",
+                           regexp="^(?:(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:(([a-zA-Z]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9]))$")
+                       hostname: String,
+                       @Min(1) @Max(32767) port: Int,
+                       @ValidSeq tags: Seq[String],
+                       lastTimeAlive: Option[Long],
+                       status: Option[AgentStatus.AgentStatus] = None,
+                       stats: Option[JobStats] = None
+                      )
+
+
+object AgentStatus extends Enumeration {
+  type AgentStatus = Value
+  val Connected = Value(0, "Connected")
+  val Active = Value(1, "Active")
+  val Disconnected = Value(2, "Disconnected")
+  val Unavailable = Value(3, "Unavailable")
+  val Error = Value(4, "Error")
+}
+
+case class JobStats(runningJobs: Int, totalJobs: Int)

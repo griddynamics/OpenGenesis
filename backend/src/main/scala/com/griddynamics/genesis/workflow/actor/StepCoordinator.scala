@@ -28,17 +28,23 @@ import com.griddynamics.genesis.workflow.message._
 import java.util.concurrent.ExecutorService
 import akka.actor.{Props, PoisonPill, ActorRef, Actor}
 import com.griddynamics.genesis.workflow._
-import workflow.action.{DelayedExecutorInterrupt, ExecutorInterrupt}
+import workflow.action.{ExecutorThrowable, DelayedExecutorInterrupt, ExecutorInterrupt}
 import scala.Some
 import workflow.signal.{Rescue, Fail, Success}
 import workflow.step.{CoordinatorThrowable, CoordinatorInterrupt}
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.common.Mistake
+import com.griddynamics.genesis.service.RemoteAgentsService
+import com.griddynamics.genesis.logging.LoggerWrapper
+import org.apache.commons.lang.exception.ExceptionUtils
+import com.griddynamics.genesis.configuration.WorkflowConfig
+import com.griddynamics.genesis.agents.AgentGateway
 
 class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
                       supervisor: ActorRef,
                       executorService: ExecutorService,
-                      beatSource: BeatSource,
+                      remoteAgentService: RemoteAgentsService,
+                      beatSource: BeatSource, config: WorkflowConfig,
                       isRescue: Boolean  = false) extends Actor with FlowActor with Logging {
     val safeStepCoordinator = new SafeStepCoordinator(unsafeStepCoordinator)
 
@@ -152,11 +158,49 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
             case e: SyncActionExecutor =>
                 new SyncActionExecutorAdapter(e, executorService)
         }
-
-        val actionExecutionActor = context.system.actorOf(Props(new actor.ActionExecutor(asyncExecutor, self, beatSource)))
-        actionExecutionActor ! Start
-        executorsPool += actionExecutionActor
+      val actionExecutionActor = executorActor(asyncExecutor)
+      actionExecutionActor ! Start
+      executorsPool += actionExecutionActor
     }
+
+  import context.system
+  private def executorActor(asyncExecutor: AsyncActionExecutor) = asyncExecutor.action match {
+    case r: RemoteAgentExec if r.tag.nonEmpty => remoteExecutor(r.tag, asyncExecutor.action)
+    case _ =>
+      system.actorOf(Props(new actor.ActionExecutor(asyncExecutor, self, beatSource)))
+   }
+
+  import akka.pattern.ask
+  import akka.util.duration._
+  import akka.dispatch.Await
+  private lazy val TIMEOUT_REMOTE_ACTOR = akka.util.Timeout(config.remoteExecutorWaitTimeout  seconds)
+
+  private def remoteExecutor(tag: String, action: Action) = try {
+    // TODO: is it possible to start single action on several agents?
+    val agent = remoteAgentService.findByTags(Seq(tag)).headOption.getOrElse(
+       throw new IllegalArgumentException("Could not find agent for tag: " + tag)
+    )
+    val remoteFront = AgentGateway.resolve(agent)
+    implicit val timeout = TIMEOUT_REMOTE_ACTOR
+    val logger = action match {
+      case al: ActionWithLog => al.logger
+      case _ => LoggerWrapper.logger
+    }
+    val futureRemote = remoteFront ? RemoteTask(action, self, logger)
+    log.debug("Waiting for remote executor... ")
+    Await.result(futureRemote, timeout.duration).asInstanceOf[ActorRef]
+  } catch {
+    case t => logThrowable(action, t, "remoteExecutor")
+    self ! ExecutorThrowable(action, t)
+    self
+  }
+
+  private def logThrowable(action: Action, t: Throwable, method: String, signal: Signal = null) {
+    val signalMsg = if(signal != null) " and signal '%s'".format(signal) else ""
+    log.warn(t, "Throwable while %s for action '%s'%s", method, action, signalMsg)
+    LoggerWrapper.writeActionLog(action.uuid, "Throwable while %s%s: %s".format(method, signalMsg, t.getMessage))
+    LoggerWrapper.writeActionLog(action.uuid, "Stack trace:\n %s".format(ExceptionUtils.getStackTrace(t)))
+  }
 }
 
 class SafeStepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator)

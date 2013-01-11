@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,6 +20,16 @@
  *   Project:     Genesis
  *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.workflow.message
 
-object Start
+package com.griddynamics.genesis.repository
+
+import com.griddynamics.genesis.api.RemoteAgent
+import org.springframework.transaction.annotation.Transactional
+
+trait RemoteAgentRepository extends Repository[RemoteAgent]{
+    @Transactional(readOnly = true)
+    def findByTags(tags: Seq[String]) : Seq[RemoteAgent]
+
+    @Transactional(readOnly = false)
+    def touch(key: Int)
+}

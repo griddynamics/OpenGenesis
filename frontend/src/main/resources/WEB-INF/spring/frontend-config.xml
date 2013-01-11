@@ -74,4 +74,6 @@
     <bean class="com.griddynamics.genesis.rest.TemplateRepoController"/>
 
     <bean class="com.griddynamics.genesis.rest.ConfigurationController"/>
+
+    <bean class="com.griddynamics.genesis.rest.RemoteAgentController"/>
 </beans>

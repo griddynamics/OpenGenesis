@@ -24,10 +24,10 @@ package com.griddynamics.genesis.bean
 
 import scala.collection.mutable
 import java.util.concurrent.ExecutorService
-import akka.actor.TypedActor
+import akka.actor.ActorSystem
 import com.griddynamics.genesis.workflow.actor.{TypedFlowCoordinatorImpl, TypedFlowCoordinator}
 import com.griddynamics.genesis.core._
-import com.griddynamics.genesis.service.{Builders, TemplateService, StoreService}
+import com.griddynamics.genesis.service.{RemoteAgentsService, Builders, TemplateService, StoreService}
 import collection.mutable.ArrayBuffer
 import com.griddynamics.genesis.plugin.{StepBuilder, Cancel, StepCoordinatorFactory}
 import com.griddynamics.genesis.model.EnvStatus
@@ -35,6 +35,7 @@ import com.griddynamics.genesis.model.WorkflowStatus._
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.repository.ConfigurationRepository
 import java.sql.Timestamp
+import com.griddynamics.genesis.configuration.WorkflowConfig
 
 trait RequestDispatcher {
     def createEnv(envName: Int, projectId: Int)
@@ -46,13 +47,14 @@ trait RequestDispatcher {
     def cancelWorkflow(envId: Int, projectId: Int)
 }
 
-class RequestDispatcherImpl(beatPeriodMs: Long,
-                            flowTimeOutMs: Long,
+class RequestDispatcherImpl(workflowConfig: WorkflowConfig,
                             storeService: StoreService,
                             configRepo: ConfigurationRepository,
                             templateService: TemplateService,
                             executorService: ExecutorService,
-                            stepCoordinatorFactory: StepCoordinatorFactory) extends RequestDispatcher with Logging {
+                            stepCoordinatorFactory: StepCoordinatorFactory,
+                            actorSystem: ActorSystem,
+                            remoteAgentService: RemoteAgentsService) extends RequestDispatcher with Logging {
 
     val coordinators = mutable.Map[(Int, Int), TypedFlowCoordinator]()
 
@@ -132,13 +134,15 @@ class RequestDispatcherImpl(beatPeriodMs: Long,
         new TypedFlowCoordinatorImpl(
             new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService, configRepo,
                 stepCoordinatorFactory, rescueSteps) with RegularWorkflow,
-            beatPeriodMs, flowTimeOutMs, executorService
+            workflowConfig, executorService, actorSystem, remoteAgentService
+
         )
 
     def destroyingCoordinator(envId: Int, projectId: Int, flowSteps: Seq[StepBuilder], rescueSteps: Seq[StepBuilder]) =
         new TypedFlowCoordinatorImpl(
             new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService, configRepo,
                 stepCoordinatorFactory, rescueSteps) with DestroyWorkflow,
-            beatPeriodMs, flowTimeOutMs, executorService
+            workflowConfig, executorService, actorSystem, remoteAgentService
+
         )
 }

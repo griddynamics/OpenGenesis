@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,16 +20,23 @@
  *   Project:     Genesis
  *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.dev
 
-import com.griddynamics.genesis.GenesisFrontend
-import com.griddynamics.genesis.service.GenesisSystemProperties.{BACKEND, SERVICE_REST_USEMOCK}
-import sys.props
+package com.griddynamics.genesis.agent
 
-object DevMockGenesisUI {
-    def main(args: Array[String]) {
-        props(BACKEND) = "classpath:environments/nova.properties"
-        props(SERVICE_REST_USEMOCK) = "true"
-        GenesisFrontend.main(args)
-    }
+import org.springframework.context.annotation.{Bean, Configuration}
+import org.springframework.beans.factory.annotation.Autowired
+import scala.Array
+import com.griddynamics.genesis.workflow.{Action, ActionToExecutor}
+import java.util.concurrent.Executors
+
+@Configuration
+class AgentContext {
+   @Autowired private var execs: Array[ActionToExecutor] = _
+
+  // this executor service is used to 'asynchronously' execute SyncActionExecutors,
+  // @see com.griddynamics.genesis.workflow.actor.SyncActionExecutorAdapter
+  @Bean def executorService = Executors.newFixedThreadPool(5)
+
+  private def getExecutor(action: Action) = execs.find(_.isDefinedAt(action)).map(_(action))
+  def frontActor = new FrontActor(getExecutor, executorService)
 }

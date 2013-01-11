@@ -22,15 +22,13 @@
       Project:     Genesis
       Description:  Continuous Delivery Platform
 
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
+--><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.griddynamics.genesis</groupId>
     <artifactId>parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.5.0-SNAPSHOT</version>
+    <version>2.0.0-SNAPSHOT</version>
 
     <scm>
         <developerConnection>scm:git:ssh://git@github.com/griddynamics/OpenGenesis.git</developerConnection>
@@ -87,6 +85,7 @@
     </properties>
 
     <modules>
+        <module>akka-remote-ssl</module>
         <module>internal-api</module>
         <module>backend</module>
         <module>frontend</module>
@@ -105,6 +104,8 @@
         <module>all-dependencies</module>
         <module>distribution-standalone</module>
         <module>distribution-war</module>
+        <module>agent-commons</module>
+        <module>agent-run-local</module>
         <module>ldap</module>
     </modules>
 
@@ -256,6 +257,11 @@
                 <version>${project.version}</version>
                 <type>pom</type>
             </dependency>
+            <dependency>
+                <groupId>com.griddynamics.genesis</groupId>
+                <artifactId>agent-commons</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
             <dependency>
                 <groupId>commons-cli</groupId>
@@ -341,6 +347,30 @@
                 <groupId>com.typesafe.akka</groupId>
                 <artifactId>akka-actor</artifactId>
                 <version>${io.akka.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.typesafe.akka</groupId>
+                <artifactId>akka-remote</artifactId>
+                <version>${io.akka.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.typesafe.akka</groupId>
+                <artifactId>akka-kernel</artifactId>
+                <version>${io.akka.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.typesafe.akka</groupId>
+                <artifactId>akka-slf4j</artifactId>
+                <version>${io.akka.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>akka-remote-ssl</artifactId>
+                <version>${project.version}</version>
             </dependency>
 
             <dependency>
