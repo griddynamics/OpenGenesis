@@ -25,7 +25,7 @@ package com.griddynamics.genesis.configuration
 import org.springframework.context.annotation.{Configuration, Bean}
 import com.griddynamics.genesis.steps.builder.ReflectionBasedStepBuilderFactory
 import com.griddynamics.genesis.plugin.{StepDefinition, StepBuilderFactory}
-import org.springframework.core.convert.support.{DefaultConversionService, ConversionServiceFactory}
+import org.springframework.core.convert.support.DefaultConversionService
 import com.griddynamics.genesis.service.impl.GroovyTemplateService
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.spring.ApplicationContextAware
