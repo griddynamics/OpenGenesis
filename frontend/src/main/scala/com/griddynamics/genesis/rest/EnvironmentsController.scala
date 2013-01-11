@@ -205,7 +205,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     extractNotEmptyValue("action", requestMap) match {
       case "cancel" => {
         genesisService.cancelWorkflow(envId, projectId)
-        RequestResult(isSuccess = true)
+        Success(envId)
       }
 
       case "execute" => {

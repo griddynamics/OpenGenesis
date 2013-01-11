@@ -25,15 +25,14 @@ package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.service.TemplateRepoService
 import com.griddynamics.genesis.template.{VersionedTemplate, ListVarDSFactory, TemplateRepository}
-import org.springframework.core.convert.support.ConversionServiceFactory
-import org.junit.{Test, Before}
+import org.springframework.core.convert.support.DefaultConversionService
+import org.junit.Test
 import com.griddynamics.genesis.util.IoUtil
 import com.griddynamics.genesis.repository.DatabagRepository
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
 import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito
 import org.scalatest.junit.AssertionsForJUnit
-import com.griddynamics.genesis.service.ValidationError
 import com.griddynamics.genesis.cache.NullCacheManager
 
 class VarGroupsTest extends AssertionsForJUnit with MockitoSugar {
@@ -42,7 +41,7 @@ class VarGroupsTest extends AssertionsForJUnit with MockitoSugar {
     val templateRepoService = mock[TemplateRepoService]
     Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
     val templateService = new GroovyTemplateService(templateRepoService,
-        List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
+        List(new DoNothingStepBuilderFactory), new DefaultConversionService,
         Seq(new ListVarDSFactory, new DependentListVarDSFactory, new DatabagDataSourceFactory(bagRepository)), bagRepository, NullCacheManager)
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/VarGroups.genesis"))
 
