@@ -145,7 +145,8 @@ define ["genesis", "modules/status", "services/backend", "modules/validation", "
         width: ""
         input_name: "groups-select"
         complete_text: "Enter group name..."
-        maxitems: 10000
+        maxitems: 10000,
+        input_min_size: 2
 
       @$("#users-select").fcbkcomplete
         json_url: "rest/users"
@@ -157,7 +158,8 @@ define ["genesis", "modules/status", "services/backend", "modules/validation", "
         width: ""
         input_name: "users-select"
         complete_text: "Enter username..."
-        maxitems: 10000
+        maxitems: 10000,
+        input_min_size: 2
 
 
     render: ->
