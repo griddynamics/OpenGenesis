@@ -38,16 +38,23 @@ class DefaultSetting(c: Config) {
   val description = getStringOption("description")
   val propType = getStringOption("type").map(x => ConfigPropertyType.withName(x)).getOrElse(ConfigPropertyType.TEXT)
   val restartRequired = getBoolean("restartRequired")
-  def getValidation = getMap("validation").mapValues(_.unwrapped.toString) + ("Value Length must be less than 128 characters" -> "default_length")
+
+  def getValidation = getMap("validation").mapValues(_.unwrapped.toString) +
+    ("Value Length must be less than 128 characters" -> "default_length")
+
   def isImportant = getBoolean("important")
-  private def get [T](key: String, getter: String => T, default: T) = try {
+
+  private def get[T](key: String, getter: String => T, default: T) = try {
     getter(key)
   } catch {
     case m: ConfigException.Missing => default
     case n: ConfigException.Null => default
   }
+
   private def getStringOption(key: String) = get(key, k => Option(c.getString(k)), None)
+
   private def getBoolean(key: String) = get(key, c.getBoolean(_), false)
+
   private def getMap(key: String) = get(key, k => c.getObject(k).toMap, Map[String, ConfigValue]())
 }
 
