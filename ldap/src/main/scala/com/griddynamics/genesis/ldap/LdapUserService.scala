@@ -29,16 +29,25 @@ import scala.collection.JavaConversions._
 import scala.util.control.Exception._
 import org.springframework.dao.IncorrectResultSizeDataAccessException
 import org.springframework.security.ldap.userdetails.LdapAuthoritiesPopulator
+import com.griddynamics.genesis.cache.CacheManager
 
 trait LdapUserService extends UserService {
   def getUserGroups(username: String): Option[Seq[String]]
 }
 
+object LdapUserService {
+  val SearchCacheRegion = "ldap-user-service-search"
+}
+
 class LdapUserServiceImpl(val config: LdapPluginConfig,
                           val template: LdapTemplate,
-                          val authoritiesPopulator: LdapAuthoritiesPopulator) extends LdapUserService {
+                          val authoritiesPopulator: LdapAuthoritiesPopulator,
+                          val cacheManager: CacheManager) extends LdapUserService with WildcardCaching {
 
   override def isReadOnly = true
+
+  override def defaultTtl = config.cacheTtl
+  override def maxEntries = config.cacheMaxEntries
 
   case class UserContextMapper(includeGroups: Boolean = true, includeCredentials: Boolean = false) extends ContextMapper {
     def mapFromContext(ctx: Any): User = {
@@ -77,7 +86,8 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
   }
 
   private def filter(usernamePattern: String) =
-    "(&(%s)(%s))".format(config.usersServiceFilter, config.userSearchFilter.replace("{0}", usernamePattern))
+    "(&(%s)(|(%s)(sn=%s)(givenName=%3$s)))"
+      .format(config.usersServiceFilter, config.userSearchFilter.replace("{0}", usernamePattern), usernamePattern)
 
   private def find(username: String, includeCredentials: Boolean) =
     catching(classOf[IncorrectResultSizeDataAccessException]).opt(
@@ -94,12 +104,20 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
   def findByUsername(username: String): Option[User] =
     find(config.stripDomain(username), includeCredentials = false)
 
-  def search(usernameLike: String): List[User] =
-    template.search(
-      config.userSearchBase,
-      filter(usernameLike),
-      UserContextMapper(includeGroups = false)
-    ).toList.asInstanceOf[List[User]].sortBy(_.username.toLowerCase)
+  def search(usernameLike: String): List[User] = {
+    def cacheFilter(user: User): Boolean = {
+      val wildcard = Wildcard(usernameLike)
+      wildcard.accept(user.username) || wildcard.accept(user.firstName) || wildcard.accept(user.lastName)
+    }
+
+    fromCache(LdapUserService.SearchCacheRegion, usernameLike, cacheFilter) {
+      template.search(
+        config.userSearchBase,
+        filter(usernameLike),
+        UserContextMapper(includeGroups = false)
+      ).toList.asInstanceOf[List[User]].sortBy(_.username.toLowerCase)
+    }
+  }
 
   def doesUserExist(userName: String): Boolean =
     findByUsername(config.stripDomain(userName)).isDefined

@@ -2,11 +2,12 @@ package com.griddynamics.genesis.util
 
 import java.lang.reflect.Method
 import net.sf.ehcache.CacheManager
+import com.griddynamics.genesis.cache.EhCacheManager
 
 
 object ScalaUtils extends com.griddynamics.genesis.cache.Cache {
 
-  lazy val cacheManager = CacheManager.getInstance()
+  lazy val cacheManager = new EhCacheManager(CacheManager.getInstance())
 
   private val CacheName = "PropertyCache"
 

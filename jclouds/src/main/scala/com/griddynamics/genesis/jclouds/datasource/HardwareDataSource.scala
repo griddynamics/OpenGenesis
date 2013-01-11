@@ -23,11 +23,11 @@
 package com.griddynamics.genesis.jclouds.datasource
 
 import com.griddynamics.genesis.jclouds.JCloudsComputeContextProvider
-import net.sf.ehcache.CacheManager
 import org.jclouds.compute.ComputeService
 import com.griddynamics.genesis.template.DataSourceFactory
 import scala.collection.JavaConversions._
 import collection.immutable.ListMap
+import com.griddynamics.genesis.cache.CacheManager
 
 
 class HardwareDataSource(provider: JCloudsComputeContextProvider, val cacheManager: CacheManager) extends CloudBaseDataSourceTemplate(provider)  {

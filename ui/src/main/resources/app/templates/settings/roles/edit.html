@@ -11,7 +11,7 @@
 
       <select id="users-select" name="users-select">
         <% for (var i = 0, count = role.users.length; i < count; i++) { var user = role.users[i]; %>
-         <option value="<%= user %>" class="selected"><%- user %></option>
+         <option value="<%= user.username %>" class="selected"><%- utils.formatUserLabel(user) %></option>
 
         <% } %>
       </select>

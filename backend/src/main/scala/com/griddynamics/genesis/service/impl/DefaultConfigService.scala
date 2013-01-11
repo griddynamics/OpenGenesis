@@ -25,15 +25,19 @@ package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.service
 import com.griddynamics.genesis.api
+import api.{ExtendedResult, Success}
 import collection.JavaConversions.asScalaIterator
 import org.springframework.transaction.annotation.Transactional
 import org.apache.commons.configuration.Configuration
 import com.griddynamics.genesis.configuration.InputConfigProperty
+import com.griddynamics.genesis.validation.ConfigValueValidator
 
 
 // TODO: add synchronization?
 class DefaultConfigService(val config: Configuration, val writeConfig: Configuration, val configRO: Configuration,
-                           val defaults: Map[String, InputConfigProperty] = Map()) extends service.ConfigService {
+                           val defaults: Map[String, InputConfigProperty] = Map(),
+                           validators: Map[String, ConfigValueValidator],
+                           defaultValidator: ConfigValueValidator) extends service.ConfigService {
 
   import service.GenesisSystemProperties._
 
@@ -69,20 +73,24 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
 
   private def mkProjectPrefix(projectId: Int, prefix:String) = Seq(PROJECT_PREFIX, projectId, prefix.stripPrefix(PREFIX_GENESIS)).filter("" != _).mkString(".")
 
-    @Transactional
-    def update(configuration: Map[String, Any]) = configuration.foreach {
-        case (name, _) if isReadOnly(name) => throw new IllegalArgumentException("Could not modify read-only property: " + name)
-        case (name, value) => writeConfig.setProperty(name, value)
+  @Transactional
+  def update(configuration: Map[String, Any]) = configuration.map {
+    case (name, _) if isReadOnly(name) => throw new IllegalArgumentException("Could not modify read-only property: " + name)
+    case (name, value) => validate(name, value.toString) match {
+      case s: Success[_] => writeConfig.setProperty(name, value)
+      s
+      case f => f
     }
+  }.reduceOption(_ ++ _).getOrElse(Success(None))
 
-    @Transactional
-    def delete(key: String) = isReadOnly(key) match {
-        case true => throw new IllegalArgumentException("Could not modify read-only property")
-        case _ => writeConfig.clearProperty(key)
-    }
+  @Transactional
+  def delete(key: String) = isReadOnly(key) match {
+    case true => throw new IllegalArgumentException("Could not modify read-only property")
+    case _ => writeConfig.clearProperty(key)
+  }
 
-    @Transactional
-    def clear(prefix: Option[String]) {prefix.map(writeConfig.subset(_)).getOrElse(writeConfig).clear}
+  @Transactional
+  def clear(prefix: Option[String]) {prefix.map(writeConfig.subset(_)).getOrElse(writeConfig).clear}
 
   def update(projectId: Int, config: Map[String, Any]) {
     update(config.map{case (name, value) => mkProjectPrefix(projectId, name) -> value})
@@ -91,4 +99,16 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
   def restartRequired() = initialConfig.exists {
     case (k, v) => v != config.getProperty(k)
   }
+
+  private def validate(propName: String, value: String): ExtendedResult[Any] =
+    (for {prop <- defaults.get(propName).toSeq
+          (msg, validatorName) <- prop.getValidation
+          validator = validators.getOrElse(validatorName, defaultValidator)} yield
+      validator.validate(propName, value, msg, Map("name" -> validatorName))
+    ).reduceOption(_ ++ _).getOrElse(Success(value))
+
+  def validateSettings = config.getKeys.map(k => validate(k, config.getString(k))).reduceOption(_ ++ _)
+    .getOrElse(Success(None))
+
+  def isImportant(name: String) = defaults.get(name).map(_.isImportant).getOrElse(false)
 }

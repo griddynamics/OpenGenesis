@@ -27,15 +27,16 @@ import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.repository.ConfigurationRepository
 import scala.Array
 import javax.validation.Valid
-import com.griddynamics.genesis.api.{ExtendedResult, Ordering}
+import com.griddynamics.genesis.api._
 import org.springframework.security.access.prepost.PostFilter
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.validation.Validation
-import com.griddynamics.genesis.api.Configuration
-import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.service.{StoreService, EnvironmentAccessService}
+import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.api.Failure
 import scala.Some
-import com.griddynamics.genesis.service.{StoreService, EnvironmentAccessService}
+import com.griddynamics.genesis.api.Configuration
+import com.griddynamics.genesis.api.Success
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/configs"))
@@ -44,6 +45,7 @@ class ConfigurationController extends RestApiExceptionsHandler{
   @Autowired var configRepository: ConfigurationRepository = _
   @Autowired var envAuthService: EnvironmentAccessService = _
   @Autowired var storeService: StoreService = _
+  @Autowired var userService: UserService = _
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
   @ResponseBody
@@ -107,7 +109,10 @@ class ConfigurationController extends RestApiExceptionsHandler{
                    @PathVariable("configId") configId: Int,
                    request: HttpServletRequest) = {
     val (users, groups) = envAuthService.getConfigAccessGrantees(configId)
-    Map("users" -> users, "groups" -> groups)
+    Map(
+      "users" -> Users.of(userService).forUsernames(users),
+      "groups" -> groups
+    )
   }
 
   @RequestMapping(value = Array("{configId}/access"), method = Array(RequestMethod.PUT))

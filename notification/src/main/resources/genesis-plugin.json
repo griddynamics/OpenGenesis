@@ -1,13 +1,25 @@
 {
  "genesis.plugin.notification.sender.name" : {"default":"Genesis"},
- "genesis.plugin.notification.sender.email" : {"default":"genesis-instance@example.com"},
- "genesis.plugin.notification.smtp.host" : {"default":"localhost"},
- "genesis.plugin.notification.smtp.port" : {"default": 25},
+ "genesis.plugin.notification.sender.email" : {"default":"genesis-instance@example.com",
+   "validation": {
+      "Not a well-formed email address": "email", "E-mail address is required": "required"
+   }
+ },
+ "genesis.plugin.notification.smtp.host" : {"default":"localhost",
+   "validation": {
+      "Invalid format. Hostname must be a host name according to RFC 952 or valid IP v4 address": "host"
+   }
+ },
+ "genesis.plugin.notification.smtp.port" : {"default": 25,
+    "validation": {
+        "Invalid format. Port must be an integer between 1 and 32767" : "port"
+    }
+  },
  "genesis.plugin.notification.smtp.username" : {"default": ""},
  "genesis.plugin.notification.smtp.password" : {"default": "", "type": "password"},
- "genesis.plugin.notification.smtp.useTls" : {"default": "false"},
- "genesis.plugin.notification.smtp.useSSL" : {"default": "false"},
+ "genesis.plugin.notification.smtp.useTls" : {"default": "false", "validation": {"Must be true or false": "true|false"}},
+ "genesis.plugin.notification.smtp.useSSL" : {"default": "false", "validation": {"Must be true or false": "true|false"}},
  "genesis.plugin.notification.template.folder" : {"default": "email_templates"},
- "genesis.plugin.notification.connectTimeout" : {"default": 5000},
- "genesis.plugin.notification.smtpTimeout" : {"default": 5000}
+ "genesis.plugin.notification.connectTimeout" : {"default": 5000, "validation": {"Must be integer value >= 0": "int_nonnegative"}},
+ "genesis.plugin.notification.smtpTimeout" : {"default": 5000, "validation": {"Must be integer value >= 0": "int_nonnegative"}}
 }

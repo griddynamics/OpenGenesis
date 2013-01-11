@@ -26,7 +26,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.context.annotation.{Bean, Configuration}
 import org.springframework.security.acls.domain._
 import org.springframework.beans.factory.annotation.Autowired
-import net.sf.ehcache.CacheManager
 import org.springframework.security.acls.model._
 import org.springframework.security.acls.jdbc.{JdbcMutableAclService, LookupStrategy, BasicLookupStrategy}
 import org.apache.commons.dbcp.BasicDataSource
@@ -37,6 +36,9 @@ import com.griddynamics.genesis.api.Identifiable
 import scala.Some
 import java.util
 import com.griddynamics.genesis.users.GenesisRole
+import com.griddynamics.genesis.cache.{CacheConfig, Cache, CacheManager}
+import java.io.Serializable
+import org.springframework.security.util.FieldUtils
 
 @Configuration
 class AclServiceContext {
@@ -61,12 +63,12 @@ class AclServiceContext {
 
   }
 
-  @Bean def aclCache: AclCache = new EhCacheBasedAclCache(
-    cache,
+  @Bean def aclCache: AclCache = new GenesisAclCache(
+    "aclCache",
+    cacheManager,
     permissionGrantingStrategy,
     aclAuthorizationStrategy
   )
-
 
   @Bean def lookupStrategy:LookupStrategy = new BasicLookupStrategy(dataSource, aclCache, aclAuthorizationStrategy, permissionGrantingStrategy)
 
@@ -100,9 +102,68 @@ class AclServiceContext {
     }
   }
 
-  def cache = {
-    val cache = new net.sf.ehcache.Cache("aclCache", 100, false, false, TimeUnit.HOURS.toSeconds(2), TimeUnit.HOURS.toSeconds(1), false, 0)
-    cacheManager.addCacheIfAbsent(cache)
+  class GenesisAclCache(val cacheName: String,
+                        val cacheManager: CacheManager,
+                        val permissionGrantingStrategy: PermissionGrantingStrategy,
+                        val aclAuthorizationStrategy: AclAuthorizationStrategy) extends AclCache {
+
+    private def assureCacheExists() {
+      cacheManager.createCacheIfAbsent(CacheConfig(cacheName, TimeUnit.HOURS.toSeconds(1).toInt, 100))
+    }
+
+    def evictFromCache(pk: Serializable) {
+      assureCacheExists()
+
+      val acl = getFromCache(pk)
+
+      if (acl != null) {
+        cacheManager.evictFromCache(cacheName, acl.getId)
+        cacheManager.evictFromCache(cacheName, acl.getObjectIdentity)
+      }
+    }
+
+    def evictFromCache(objectIdentity: ObjectIdentity) {
+      evictFromCache(objectIdentity.asInstanceOf[Serializable])
+    }
+
+    def getFromCache(objectIdentity: ObjectIdentity) =
+      getFromCache(objectIdentity.asInstanceOf[Serializable])
+
+    def getFromCache(pk: Serializable) = {
+      assureCacheExists()
+      try {
+        cacheManager.fromCache(cacheName, pk).map { value =>
+          initializeTransientFields(value.asInstanceOf[MutableAcl])
+        }.getOrElse(null.asInstanceOf[MutableAcl])
+      } catch {
+        case _ => null
+      }
+    }
+
+    def putInCache(acl: MutableAcl) {
+      assureCacheExists()
+      if ((acl.getParentAcl != null) && (acl.getParentAcl.isInstanceOf[MutableAcl])) {
+        putInCache(acl.getParentAcl.asInstanceOf[MutableAcl])
+      }
+      cacheManager.putInCache(cacheName, acl.getObjectIdentity, acl)
+      cacheManager.putInCache(cacheName, acl.getId, acl)
+    }
+
+    def clearCache() {
+      if (cacheManager.cacheExists(cacheName))
+        cacheManager.clearCache(cacheName)
+    }
+
+    private def initializeTransientFields(value: MutableAcl): MutableAcl = {
+      if (value.isInstanceOf[AclImpl]) {
+        FieldUtils.setProtectedFieldValue("aclAuthorizationStrategy", value, this.aclAuthorizationStrategy)
+        FieldUtils.setProtectedFieldValue("permissionGrantingStrategy", value, this.permissionGrantingStrategy)
+      }
+      if (value.getParentAcl != null) {
+        initializeTransientFields(value.getParentAcl.asInstanceOf[MutableAcl])
+      }
+      value
+    }
   }
 
 }

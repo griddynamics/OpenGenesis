@@ -118,30 +118,6 @@ case class VirtualMachine(envName : String,
 
 case class BorrowedMachine(envName: String, roleName: String, instanceId: String, address: String, status: String)
 
-/**
- * @deprecated use {@see com.griddynamics.genesis.api.ExtendedResult} instead
- */
-@deprecated("Use ExtendedResult instead of RequestResult", "1.1.0")
-case class RequestResult(serviceErrors : Map[String, String] = Map(),
-                         variablesErrors : Map[String, String] = Map(),
-                         compoundServiceErrors : Seq[String] = Seq(),
-                         compoundVariablesErrors : Seq[String] = Seq(),
-                         isSuccess : Boolean = false,
-                         isNotFound : Boolean = false,
-                         stackTrace : Option[String] = None)  {
-    def hasValidationErrors = ! isSuccess && (! variablesErrors.isEmpty || ! serviceErrors.isEmpty)
-    def ++(other: RequestResult) : RequestResult = {
-        RequestResult(serviceErrors = this.serviceErrors ++ other.serviceErrors,
-            variablesErrors = this.variablesErrors ++ other.variablesErrors,
-            compoundServiceErrors = this.compoundServiceErrors ++ other.compoundServiceErrors,
-            compoundVariablesErrors = this.compoundVariablesErrors ++ other.compoundVariablesErrors,
-            isSuccess = this.isSuccess && other.isSuccess,
-            isNotFound = this.isNotFound && other.isNotFound,
-            stackTrace = other.stackTrace
-        )
-    }
-}
-
 sealed abstract class ExtendedResult[+S]() extends Product with Serializable {
   def map[B](f: S => B): ExtendedResult[B] = this match {
     case x: Failure => x
@@ -164,7 +140,7 @@ sealed abstract class ExtendedResult[+S]() extends Product with Serializable {
 }
 
 final case class Success[+S](result: S, isSuccess: Boolean = true) extends ExtendedResult[S] {
-    def get = result
+  def get = result
 }
 
 final case class Failure(serviceErrors : Map[String, String] = Map(),
@@ -174,7 +150,7 @@ final case class Failure(serviceErrors : Map[String, String] = Map(),
                          isNotFound: Boolean = false,
                          isSuccess: Boolean = false,
                          stackTrace: Option[String] = None) extends ExtendedResult[Nothing] {
-    def get = throw new NoSuchElementException("Failure.get")
+  def get = throw new NoSuchElementException("Failure.get")
 }
 
 case class User( @Size(min = 2, max = 32) @Pattern(regexp = "[a-z0-9.\\-_]*", message = "{validation.invalid.name}")

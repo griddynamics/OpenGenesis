@@ -29,7 +29,7 @@ import com.griddynamics.genesis.service.ConfigService
 import com.griddynamics.genesis.service.GenesisSystemProperties.{PREFIX, PLUGIN_PREFIX}
 import com.griddynamics.genesis.rest.GenesisRestController.{extractParamsMap, paramToOption}
 import javax.servlet.http.HttpServletRequest
-import com.griddynamics.genesis.api.{Failure, Success}
+import com.griddynamics.genesis.api.{ExtendedResult, Failure, Success}
 import org.springframework.beans.factory.annotation.Autowired
 
 @Controller
@@ -74,7 +74,10 @@ class SettingsController extends RestApiExceptionsHandler {
 
     private def using (block : Any => Any) = {
         try {
-            Success(block())
+          block() match {
+            case er: ExtendedResult[_] => er
+            case r => Success(r)
+          }
         } catch {
             case e: ResourceNotFoundException => Failure(compoundServiceErrors = Seq(e.msg), isNotFound = true)
             case ex => Failure(compoundServiceErrors = Seq(ex.getMessage))

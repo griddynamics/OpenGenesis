@@ -164,6 +164,16 @@ function($, _, Backbone, formats, tmpls) {
 
       timezoneOffset: function() {
           return new Date().getTimezoneOffset();
+      },
+
+      formatUserLabel: function(user) {
+        var hasFirstName = user.firstName !== null && !_.isUndefined(user.firstName);
+        var hasLastName = user.lastName !== null && !_.isUndefined(user.lastName);
+
+        if (!hasFirstName && !hasLastName)
+          return user.username;
+
+        return (user.firstName + " " + user.lastName).trim();
       }
     }
   };

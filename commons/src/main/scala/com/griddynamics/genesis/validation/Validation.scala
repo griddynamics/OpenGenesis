@@ -63,7 +63,7 @@ object Validation {
 
     def mustMatch[C](obj: C, fieldName: String, error : String = "Invalid format")(pattern: Regex)(value: String) : ExtendedResult[C] = {
         value match {
-            case pattern(s) => Success(obj)
+            case pattern(_*) => Success(obj)
             case _ => Failure(variablesErrors = Map(fieldName -> error))
         }
     }

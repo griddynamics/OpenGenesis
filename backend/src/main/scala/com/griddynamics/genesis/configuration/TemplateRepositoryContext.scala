@@ -28,13 +28,13 @@ import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.spring.{ApplicationContextAware, BeanClassLoaderAware}
 import com.griddynamics.genesis.template._
 import org.springframework.beans.factory.annotation.{Autowired, Value}
-import net.sf.ehcache.CacheManager
 import org.springframework.context.annotation.{Configuration, Bean}
 import java.net.{URLClassLoader, URL}
 import com.griddynamics.genesis.plugin.PluginRegistry
 import com.griddynamics.genesis.service.impl.TemplateRepoServiceImpl
 import com.griddynamics.genesis.api.{GenesisService, ConfigPropertyType, ConfigProperty}
 import ConfigPropertyType._
+import com.griddynamics.genesis.cache.CacheManager
 
 @Configuration
 class TemplateRepositoryContextImpl extends TemplateRepositoryContext

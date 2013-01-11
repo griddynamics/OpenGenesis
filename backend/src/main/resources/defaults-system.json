@@ -3,13 +3,24 @@
   "genesis.system.jdbc.url": {"default": "jdbc:h2:mem:.", "description": "Application database JDBC URL", "restartRequired": true},
   "genesis.system.jdbc.username" : {"default": "", "description": "User name for access to the application database", "restartRequired": true},
   "genesis.system.jdbc.password" : {"default": "", "description": "Password for access to the application database", "type": "password", "restartRequired": true},
-  "genesis.system.jdbc.drop.db" : {"default": "false", "description": "Recreate DB schema even if the schema already exists. Possible values: true, false", "restartRequired": true},
-  "genesis.system.shutdown.timeout.sec" : {"default": 60, "description": "Time to wait for graceful workflows termination in seconds. 0 - do not shutdown until everything canceled."},
+  "genesis.system.jdbc.drop.db" : {"default": "false", "description": "Recreate DB schema even if the schema already exists. Possible values: true, false",
+    "restartRequired": true, "validation": {"Must be true or false": "true|false"}
+  },
+  "genesis.system.shutdown.timeout.sec" : {"default": 60, "description": "Time to wait for graceful workflows termination in seconds. 0 - do not shutdown until everything canceled.",
+    "validation": {"Must be integer value >= 0": "int_nonnegative"}
+  },
   "genesis.system.default.vm.identity" : {"default": "not-set", "description": "Default login to virtual machines provisioned by Genesis", "restartRequired": true},
   "genesis.system.default.vm.credential" : {"default": "not-set", "description": "Path to default credential file (PEM RSA private key file for ssh) to login to virtual machines provisioned by Genesis", "restartRequired": true},
-  "genesis.system.beat.period.ms": {"default":1000,"description":"Workflow execution actors heartbeats period in milliseconds", "restartRequired": true},
-  "genesis.system.flow.timeout.ms": {"default":3600000,"description":"Workflow execution timeout in ms.", "restartRequired": true},
   "genesis.system.agent.poll.period": {"default":30,"description":"Agents health check period in secs", "restartRequired": true},
-  "genesis.system.flow.executor.sync.threads.max": {"default": 5,"description":"Maximum number of simultaneously executing synchronous actions", "restartRequired": true},
-  "genesis.system.remote.executor.wait.timeout": {"default": 10,"description":"Timeout (in seconds) to wait for remote actor returned by agent", "restartRequired": true}
+  "genesis.system.remote.executor.wait.timeout": {"default": 10,"description":"Timeout (in seconds) to wait for remote actor returned by agent", "restartRequired": true},
+  "genesis.system.beat.period.ms": {"default":1000,"description":"Workflow execution actors heartbeats period in milliseconds", "restartRequired": true,
+    "validation": {"Must be integer value >= 0": "int_nonnegative"}
+  },
+  "genesis.system.flow.timeout.ms": {"default":3600000,"description":"Workflow execution timeout in ms.", "restartRequired": true,
+    "validation": {"Must be integer value >= 0": "int_nonnegative"}
+  },
+  "genesis.system.flow.executor.sync.threads.max": {"default": 5,"description":"Maximum number of simultaneously executing synchronous actions",
+   "restartRequired": true,
+    "validation": {"Must be positive integer value": "int_positive"}
+   }
 }

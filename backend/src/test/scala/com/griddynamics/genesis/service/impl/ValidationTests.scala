@@ -2,16 +2,16 @@ package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.service.TemplateRepoService
 import com.griddynamics.genesis.template.{VersionedTemplate, ListVarDSFactory, TemplateRepository}
-import org.springframework.core.convert.support.ConversionServiceFactory
-import org.junit.{Test, Before}
+import org.springframework.core.convert.support.DefaultConversionService
+import org.junit.Test
 import com.griddynamics.genesis.util.IoUtil
 import com.griddynamics.genesis.repository.DatabagRepository
-import net.sf.ehcache.CacheManager
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
 import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito
 import org.scalatest.junit.AssertionsForJUnit
 import com.griddynamics.genesis.service.ValidationError
+import com.griddynamics.genesis.cache.NullCacheManager
 
 class ValidationTests extends AssertionsForJUnit with MockitoSugar {
     val templateRepository = mock[TemplateRepository]
@@ -19,16 +19,12 @@ class ValidationTests extends AssertionsForJUnit with MockitoSugar {
     val templateRepoService = mock[TemplateRepoService]
     Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
     val templateService = new GroovyTemplateService(templateRepoService,
-        List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
-        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new DatabagDataSourceFactory(bagRepository)), bagRepository, CacheManager.getInstance())
+        List(new DoNothingStepBuilderFactory), new DefaultConversionService,
+        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new DatabagDataSourceFactory(bagRepository)), bagRepository, NullCacheManager)
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/Validations.genesis"))
 
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
     val createWorkflow = templateService.findTemplate(0, "Validations", "0.1").get.createWorkflow
-
-    @Before def setUp() {
-        CacheManager.getInstance().clearAll()
-    }
 
     @Test
     def testSimpleValidationWithCustomMessage() {

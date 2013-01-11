@@ -1,7 +1,7 @@
 define([
   "genesis",
   "services/backend",
-  "modules/settings/roles",
+  "cs!modules/settings/roles",
   "backbone",
   "jquery",
   "underscore",
@@ -59,14 +59,19 @@ function (genesis, backend, roles, Backbone, $, _) {
       editView.bind("back", function() {
         editView.unbind();
         editView.undelegateEvents();
-        self.render();
+        $.when(self.accessConfiguration.fetch()).done(
+          _.bind(self.render, self)
+        );
       });
     },
 
     render: function(){
       var self = this;
       $.when(genesis.fetchTemplate(this.template)).done(function(tmpl) {
-        self.$el.html(tmpl({ accessConfiguration: self.accessConfiguration.toJSON() }));
+        self.$el.html(tmpl({
+          accessConfiguration: self.accessConfiguration.toJSON(),
+          utils: genesis.utils
+        }));
       });
     }
   });
