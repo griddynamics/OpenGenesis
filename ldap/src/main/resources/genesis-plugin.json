@@ -14,7 +14,7 @@
     "genesis.plugin.ldap.cache.ttl": { "default": "30", "description": "Cache Time To Live", "restartRequired": true,
       "validation": {"Must be integer value >= 0": "int_nonnegative"}
     },
-    "genesis.plugin.ldap.cache.maxEntries": { "default": "1000", "description": "Maximum Amount Of Cache Entries", "restartRequired": true
+    "genesis.plugin.ldap.cache.maxEntries": { "default": "1000", "description": "Maximum Amount Of Cache Entries", "restartRequired": true,
       "validation": {"Must be integer value >= 0": "int_nonnegative"}
     }
 }
