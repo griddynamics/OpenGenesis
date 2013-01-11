@@ -25,7 +25,7 @@ package com.griddynamics.genesis.service.impl
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.util.IoUtil
-import org.springframework.core.convert.support.ConversionServiceFactory
+import org.springframework.core.convert.support.{DefaultConversionService, ConversionServiceFactory}
 import com.griddynamics.genesis.service.TemplateRepoService
 import com.griddynamics.genesis.template.{ListVarDSFactory, VersionedTemplate, TemplateRepository}
 import org.junit.{Before, Test}
@@ -65,7 +65,7 @@ class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar {
   Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
   Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
   val templateService = new GroovyTemplateService(templateRepoService,
-    List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
+    List(new DoNothingStepBuilderFactory), new DefaultConversionService,
     Seq(new ListVarDSFactory, new DependentListVarDSFactory), databagRepository, NullCacheManager)
 
   @Test def contextVariableAccess() {

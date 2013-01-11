@@ -29,7 +29,7 @@ import com.griddynamics.genesis.util.IoUtil
 import org.mockito.{Matchers, Mockito}
 import com.griddynamics.genesis.plugin._
 import reflect.BeanProperty
-import org.springframework.core.convert.support.ConversionServiceFactory
+import org.springframework.core.convert.support.{DefaultConversionService, ConversionServiceFactory}
 import com.griddynamics.genesis.workflow.Step
 import com.griddynamics.genesis.template._
 import com.griddynamics.genesis.repository.DatabagRepository
@@ -59,7 +59,7 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
     val templateRepoService = mock[TemplateRepoService]
     Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
     val templateService = new GroovyTemplateService(templateRepoService,
-        List(new DoNothingStepBuilderFactory), ConversionServiceFactory.createDefaultConversionService(),
+        List(new DoNothingStepBuilderFactory), new DefaultConversionService,
         Seq(), databagRepo, NullCacheManager)
 
     private def testTemplate = templateService.findTemplate(0, "TestEnv", "0.1").get

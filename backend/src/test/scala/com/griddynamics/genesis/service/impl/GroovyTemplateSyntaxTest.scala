@@ -26,7 +26,7 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import org.junit.{Before, Test}
 import org.mockito.Mockito
-import org.springframework.core.convert.support.ConversionServiceFactory
+import org.springframework.core.convert.support.{DefaultConversionService, ConversionServiceFactory}
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.template.dsl.groovy.WorkflowDeclaration
 import scala.Array
@@ -182,7 +182,7 @@ class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with Mock
             List(
               new DoNothingStepBuilderFactory
             ),
-            ConversionServiceFactory.createDefaultConversionService(), Seq(), bagRepository, NullCacheManager)
+           new DefaultConversionService, Seq(), bagRepository, NullCacheManager)
 
         templateService.listTemplates(0).headOption match {
             case Some((name, version)) => templateService.findTemplate(0, name, version)

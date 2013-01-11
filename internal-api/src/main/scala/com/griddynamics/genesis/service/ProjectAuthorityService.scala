@@ -22,7 +22,7 @@
  */
 package com.griddynamics.genesis.service
 
-import com.griddynamics.genesis.api.{ExtendedResult, RequestResult}
+import com.griddynamics.genesis.api.ExtendedResult
 import com.griddynamics.genesis.users.GenesisRole
 
 trait ProjectAuthorityService {
