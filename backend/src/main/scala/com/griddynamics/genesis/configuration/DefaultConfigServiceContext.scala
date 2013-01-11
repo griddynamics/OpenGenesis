@@ -33,7 +33,7 @@ import com.griddynamics.genesis.api.ConfigPropertyType
 import com.typesafe.config._
 import com.griddynamics.genesis.validation.{RegexValidator, ConfigValueValidator}
 
-class DefaultSetting(c: Config) {
+class GenesisSettingMetadata(c: Config) {
   val default = c.getString("default")
   val description = getStringOption("description")
   val propType = getStringOption("type").map(x => ConfigPropertyType.withName(x)).getOrElse(ConfigPropertyType.TEXT)
@@ -58,8 +58,8 @@ class DefaultSetting(c: Config) {
   private def getMap(key: String) = get(key, k => c.getObject(k).toMap, Map[String, ConfigValue]())
 }
 
-object DefaultSetting {
-  def apply(default: String) = new DefaultSetting(ConfigValueFactory.fromMap(Map("default" -> default)).toConfig)
+object GenesisSettingMetadata {
+  def apply(default: String) = new GenesisSettingMetadata(ConfigValueFactory.fromMap(Map("default" -> default)).toConfig)
 }
 
 @Configuration
@@ -71,7 +71,7 @@ class DefaultConfigServiceContext extends ConfigServiceContext {
 
   private val defaults = ConfigFactory.load("defaults-system").withFallback(ConfigFactory.load("genesis-plugin")).
     root.toMap.filterKeys(_.startsWith("genesis")).mapValues {
-    case co: ConfigObject => new DefaultSetting(co.toConfig)
+    case co: ConfigObject => new GenesisSettingMetadata(co.toConfig)
   }
   lazy val overrideConfig = ConfigurationConverter.getConfiguration(filePropsOverride.getObject)
 
