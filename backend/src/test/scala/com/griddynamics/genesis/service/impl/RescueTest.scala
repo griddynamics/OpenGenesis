@@ -5,10 +5,10 @@ import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.service.TemplateRepoService
 import com.griddynamics.genesis.template.{VersionedTemplate, ListVarDSFactory, TemplateRepository}
 import com.griddynamics.genesis.repository.DatabagRepository
-import org.springframework.core.convert.support.{DefaultConversionService, ConversionServiceFactory}
+import org.springframework.core.convert.support.DefaultConversionService
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
 import com.griddynamics.genesis.util.IoUtil
-import org.junit.{Test, Before}
+import org.junit.Test
 import org.mockito.Mockito
 import com.griddynamics.genesis.cache.NullCacheManager
 

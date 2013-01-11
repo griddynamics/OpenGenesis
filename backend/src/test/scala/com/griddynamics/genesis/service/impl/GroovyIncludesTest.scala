@@ -27,9 +27,9 @@ import org.scalatest.junit.AssertionsForJUnit
 import com.griddynamics.genesis.service.TemplateRepoService
 import com.griddynamics.genesis.template.{VersionedTemplate, TemplateRepository}
 import com.griddynamics.genesis.util.IoUtil
-import org.springframework.core.convert.support.{DefaultConversionService, ConversionServiceFactory}
+import org.springframework.core.convert.support.DefaultConversionService
 import org.mockito.Mockito
-import org.junit.{Test, Before}
+import org.junit.Test
 import com.griddynamics.genesis.cache.NullCacheManager
 
 class GroovyIncludesTest extends AssertionsForJUnit with MockitoSugar  {

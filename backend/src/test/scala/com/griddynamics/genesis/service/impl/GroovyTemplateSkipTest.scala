@@ -23,18 +23,18 @@
 
 package com.griddynamics.genesis.service.impl
 
-import com.griddynamics.genesis.service.{TemplateRepoService, WorkflowDefinition, TemplateDefinition}
+import com.griddynamics.genesis.service.TemplateRepoService
 import com.griddynamics.genesis.template.{VersionedTemplate, ListVarDSFactory, TemplateRepository}
 import com.griddynamics.genesis.repository.DatabagRepository
-import org.springframework.core.convert.support.{DefaultConversionService, ConversionServiceFactory}
+import org.springframework.core.convert.support.DefaultConversionService
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
 import com.griddynamics.genesis.util.IoUtil
 import org.mockito.Mockito
-import org.junit.{Test, Before}
+import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.service.{WorkflowDefinition, TemplateDefinition}
-import com.griddynamics.genesis.api.{Failure, ExtendedResult}
+import com.griddynamics.genesis.api.ExtendedResult
 import com.griddynamics.genesis.cache.NullCacheManager
 
 class GroovyTemplateSkipTest  extends AssertionsForJUnit with MockitoSugar {

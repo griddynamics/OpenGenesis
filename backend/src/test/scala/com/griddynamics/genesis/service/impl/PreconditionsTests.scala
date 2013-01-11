@@ -1,8 +1,8 @@
 package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.template._
-import org.springframework.core.convert.support.{DefaultConversionService, ConversionServiceFactory}
-import org.junit.{Test, Before}
+import org.springframework.core.convert.support.DefaultConversionService
+import org.junit.Test
 import com.griddynamics.genesis.util.IoUtil
 import com.griddynamics.genesis.repository.DatabagRepository
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
@@ -10,7 +10,7 @@ import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito
 import org.scalatest.junit.AssertionsForJUnit
 import com.griddynamics.genesis.service.{TemplateRepoService, WorkflowDefinition, TemplateDefinition}
-import com.griddynamics.genesis.api.{ExtendedResult, Failure}
+import com.griddynamics.genesis.api.ExtendedResult
 import com.griddynamics.genesis.api.Failure
 import com.griddynamics.genesis.template.VersionedTemplate
 import com.griddynamics.genesis.cache.NullCacheManager

@@ -24,12 +24,12 @@ package com.griddynamics.genesis.service.impl
 
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import org.junit.{Before, Test}
+import org.junit.Test
 import com.griddynamics.genesis.util.IoUtil
-import org.mockito.{Matchers, Mockito}
+import org.mockito.Mockito
 import com.griddynamics.genesis.plugin._
 import reflect.BeanProperty
-import org.springframework.core.convert.support.{DefaultConversionService, ConversionServiceFactory}
+import org.springframework.core.convert.support.DefaultConversionService
 import com.griddynamics.genesis.workflow.Step
 import com.griddynamics.genesis.template._
 import com.griddynamics.genesis.repository.DatabagRepository

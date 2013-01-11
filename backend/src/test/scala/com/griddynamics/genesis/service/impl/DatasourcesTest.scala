@@ -1,11 +1,11 @@
 package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.template._
-import org.springframework.core.convert.support.{DefaultConversionService, ConversionServiceFactory}
+import org.springframework.core.convert.support.DefaultConversionService
 import com.griddynamics.genesis.util.IoUtil
 import org.mockito.Mockito
-import org.junit.{Before, Test}
-import com.griddynamics.genesis.service.{Builders, TemplateRepoService, VariableDescription}
+import org.junit.Test
+import com.griddynamics.genesis.service.{TemplateRepoService, VariableDescription}
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.template.VersionedTemplate

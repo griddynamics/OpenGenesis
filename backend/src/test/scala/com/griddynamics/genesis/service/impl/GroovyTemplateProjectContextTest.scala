@@ -26,8 +26,8 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.service.TemplateRepoService
 import com.griddynamics.genesis.template.{VersionedTemplate, ListVarDSFactory, TemplateRepository}
-import org.springframework.core.convert.support.{DefaultConversionService, ConversionServiceFactory}
-import org.junit.{Before, Test}
+import org.springframework.core.convert.support.DefaultConversionService
+import org.junit.Test
 import com.griddynamics.genesis.util.IoUtil
 import org.mockito.Mockito
 import com.griddynamics.genesis.service.{ValidationError, VariableDescription}
