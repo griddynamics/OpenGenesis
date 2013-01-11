@@ -30,22 +30,29 @@ import org.apache.commons.configuration._
 import com.griddynamics.genesis.service.{ConfigService, impl}
 import collection.JavaConversions.{mapAsJavaMap, mapAsScalaMap}
 import com.griddynamics.genesis.api.ConfigPropertyType
-import org.springframework.core.io.ResourceLoader
-import org.springframework.core.io.support.ResourcePatternUtils
-import javax.annotation.Resource
-import net.liftweb.json.{Extraction, JsonParser}
-import java.io.InputStreamReader
+import com.typesafe.config._
 import com.griddynamics.genesis.validation.{RegexValidator, ConfigValueValidator}
 
-case class InputConfigProperty(default: String,
-                               description: Option[String] = None,
-                               `type`: Option[String] = None,
-                                restartRequired: Option[Boolean] = None,
-                                private val validation: Option[Map[String, String]] = None,
-                                private val important: Option[Boolean] = None) {
-  def propType = `type`.map(ConfigPropertyType.withName(_)).getOrElse(ConfigPropertyType.TEXT)
-  def getValidation = validation.getOrElse(Map[String, String]()) + ("Value Length must be less than 128 characters" -> "default_length")
-  def isImportant = important.getOrElse(false)
+class DefaultSetting(c: Config) {
+  val default = c.getString("default")
+  val description = getStringOption("description")
+  val propType = getStringOption("type").map(x => ConfigPropertyType.withName(x)).getOrElse(ConfigPropertyType.TEXT)
+  val restartRequired = getBoolean("restartRequired")
+  def getValidation = getMap("validation").mapValues(_.unwrapped.toString) + ("Value Length must be less than 128 characters" -> "default_length")
+  def isImportant = getBoolean("important")
+  private def get [T](key: String, getter: String => T, default: T) = try {
+    getter(key)
+  } catch {
+    case m: ConfigException.Missing => default
+    case n: ConfigException.Null => default
+  }
+  private def getStringOption(key: String) = get(key, k => Option(c.getString(k)), None)
+  private def getBoolean(key: String) = get(key, c.getBoolean(_), false)
+  private def getMap(key: String) = get(key, k => c.getObject(k).toMap, Map[String, ConfigValue]())
+}
+
+object DefaultSetting {
+  def apply(default: String) = new DefaultSetting(ConfigValueFactory.fromMap(Map("default" -> default)).toConfig)
 }
 
 @Configuration
@@ -53,17 +60,12 @@ class DefaultConfigServiceContext extends ConfigServiceContext {
 
   @Autowired private var dbConfig : org.apache.commons.configuration.Configuration = _
   @Autowired @Qualifier("override") private var filePropsOverride: PropertiesFactoryBean = _
-  @Resource private var rl: ResourceLoader = _
   @Autowired(required = false) private var validators: java.util.Map[String, ConfigValueValidator] = mapAsJavaMap(Map())
 
-  private lazy val resolver = ResourcePatternUtils.getResourcePatternResolver(rl)
-  private val RESOURCE_PATTERNS = Seq("classpath*:defaults-system.json", "classpath*:genesis-plugin.json")
-  implicit val formats = net.liftweb.json.DefaultFormats
-  private lazy val defaults = RESOURCE_PATTERNS.map(resolver.getResources(_)).flatten.map(r =>
-    Extraction.extract(JsonParser.parse(new InputStreamReader(r.getInputStream)))
-    (formats, manifest[Map[String,InputConfigProperty]])
-  ).reduce(_ ++ _)
-
+  private val defaults = ConfigFactory.load("defaults-system").withFallback(ConfigFactory.load("genesis-plugin")).
+    root.toMap.filterKeys(_.startsWith("genesis")).mapValues {
+    case co: ConfigObject => new DefaultSetting(co.toConfig)
+  }
   lazy val overrideConfig = ConfigurationConverter.getConfiguration(filePropsOverride.getObject)
 
   private  lazy val config = {

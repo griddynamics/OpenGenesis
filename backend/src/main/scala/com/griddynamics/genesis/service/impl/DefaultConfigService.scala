@@ -29,13 +29,13 @@ import api.{ExtendedResult, Success}
 import collection.JavaConversions.asScalaIterator
 import org.springframework.transaction.annotation.Transactional
 import org.apache.commons.configuration.Configuration
-import com.griddynamics.genesis.configuration.InputConfigProperty
+import com.griddynamics.genesis.configuration.DefaultSetting
 import com.griddynamics.genesis.validation.ConfigValueValidator
 
 
 // TODO: add synchronization?
 class DefaultConfigService(val config: Configuration, val writeConfig: Configuration, val configRO: Configuration,
-                           val defaults: Map[String, InputConfigProperty] = Map(),
+                           val defaults: Map[String, DefaultSetting] = Map(),
                            validators: Map[String, ConfigValueValidator],
                            defaultValidator: ConfigValueValidator) extends service.ConfigService {
 
@@ -67,8 +67,8 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
 
     @Transactional(readOnly = true)
     def listSettings(prefix: Option[String]) = prefix.map(config.getKeys(_)).getOrElse(config.getKeys()).map(k => {
-      val default = defaults.getOrElse(k, InputConfigProperty("NOT-SET!!!"))
-      api.ConfigProperty(k, config.getString(k), isReadOnly(k), default.description, default.propType, default.restartRequired.getOrElse(false))
+      val default = defaults.getOrElse(k, DefaultSetting("NOT-SET!!!"))
+      api.ConfigProperty(k, config.getString(k), isReadOnly(k), default.description, default.propType, default.restartRequired)
     }).toSeq.sortBy(_.name)
 
   private def mkProjectPrefix(projectId: Int, prefix:String) = Seq(PROJECT_PREFIX, projectId, prefix.stripPrefix(PREFIX_GENESIS)).filter("" != _).mkString(".")
