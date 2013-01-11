@@ -158,7 +158,7 @@ class RequestBrokerImpl(storeService: StoreService,
             case EnvStatus.Broken => {
                 storeService.resetEnvStatus(env) match {
                     case Some(m) => Failure(compoundServiceErrors = Seq(m.toString))
-                    case _ => Success(envId, isSuccess = true)
+                    case _ => Success(envId)
                 }
             }
             case _ => Failure(compoundServiceErrors = Seq("Instance is not in 'Broken' state"))
