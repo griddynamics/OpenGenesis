@@ -24,14 +24,14 @@ package com.griddynamics.genesis.plugin
 
 import api.GenesisPlugin
 import com.griddynamics.genesis
-import genesis.api.PluginDetails
+import genesis.api.{ExtendedResult, PluginDetails}
 import collection.immutable.Map
 import genesis.service.{GenesisSystemProperties, ConfigService}
 import org.springframework.transaction.annotation.Transactional
 
 trait PluginRepository {
   def getPlugin(id: String): Option[genesis.api.PluginDetails]
-  def updateConfiguration(pluginId: String, configuration: Map[String, Any])
+  def updateConfiguration(pluginId: String, configuration: Map[String, Any]): ExtendedResult[_]
   def listPlugins: Iterable[genesis.api.Plugin]
 }
 
@@ -50,9 +50,7 @@ class PluginRepositoryImpl(pluginLoader: PluginLoader,
     }
   }
 
-  def updateConfiguration(pluginId: String, configuration: Map[String, Any]) {
-    configService.update(configuration)
-  }
+  def updateConfiguration(pluginId: String, configuration: Map[String, Any]) = configService.update(configuration)
 
   def configuration(pluginId: String): Map[String, String] = {
     val settingsKey = Some(GenesisSystemProperties.PLUGIN_PREFIX + "." + pluginId)

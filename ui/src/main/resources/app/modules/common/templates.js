@@ -45,6 +45,14 @@ function(genesis, Backbone) {
 
     url: function() {
       return "rest/projects/" + this.projectId + "/templates";
+    },
+
+    comparator: function(template) {
+      var version = template.get('version');
+      if (! isNaN(parseFloat(version)) && isFinite(version)) {
+        version = (Array(64).join("0") + version).slice(-64)
+      }
+      return template.get('name').toLowerCase() + version;
     }
   });
 

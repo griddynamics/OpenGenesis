@@ -23,21 +23,21 @@
 
 package com.griddynamics.genesis.service
 
-import com.griddynamics.genesis.api.ConfigProperty
+import com.griddynamics.genesis.api.{ExtendedResult, ConfigProperty}
 
-trait ConfigReaderService {
+
+trait ConfigService {
   def get[B](name: String, default: B): B
   def get(name: String) : Option[Any]
   def listSettings(prefix: Option[String]) : Seq[ConfigProperty]
-  def get[B](projectId: Int, name: String, default: B): B
-}
-
-trait ConfigService extends ConfigReaderService {
-  def update(config: Map[String, Any])
+  def update(config: Map[String, Any]): ExtendedResult[_]
   def delete(name:String)
   def clear(prefix:Option[String])
+  def get[B](projectId: Int, name: String, default: B): B
   def update(projectId: Int, config: Map[String, Any])
   def restartRequired() : Boolean
+  def validateSettings : ExtendedResult[_]
+  def isImportant(name: String) : Boolean
 }
 
 object GenesisSystemProperties {

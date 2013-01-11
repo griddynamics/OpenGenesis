@@ -1,11 +1,11 @@
 package com.griddynamics.genesis.service
 
 import com.griddynamics.genesis.api
-import api.{ExtendedResult, RequestResult}
+import api.{ExtendedResult}
 
 trait CredentialsStoreService {
   def get(projectId: Int, id: Int): Option[api.Credentials]
-  def delete(projectId: Int, id: Int): RequestResult
+  def delete(projectId: Int, id: Int): ExtendedResult[Int]
   def list(projectId: Int): Iterable[api.Credentials]
   def create(creds: api.Credentials): ExtendedResult[api.Credentials]
 

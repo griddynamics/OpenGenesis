@@ -38,9 +38,8 @@ import org.codehaus.groovy.runtime.{InvokerHelper, MethodClosure}
 import service.ValidationError
 import com.griddynamics.genesis.plugin.GenesisStep
 import com.griddynamics.genesis.repository.DatabagRepository
-import com.griddynamics.genesis.cache.Cache
+import com.griddynamics.genesis.cache.{CacheConfig, CacheManager, Cache}
 import groovy.util.Expando
-import net.sf.ehcache.{CacheManager, Element}
 import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.template.dsl.groovy.{Delegate => DslDelegate}
 import com.griddynamics.genesis.api.{ExtendedResult, Configuration, Failure, Success}
@@ -52,10 +51,9 @@ class GroovyTemplateService(val templateRepoService : TemplateRepoService,
                             val conversionService : ConversionService,
                             val dataSourceFactories : Seq[DataSourceFactory] = Seq(),
                             databagRepository: DatabagRepository,
-                            val cacheManager: CacheManager)
-    extends service.TemplateService with Logging with Cache {
+                            val cacheManager: CacheManager) extends service.TemplateService with Logging with Cache {
 
-    val cache = addCacheIfAbsent("GroovyTemplateService")
+    val CACHE_NAME = "GroovyTemplateService"
 
     private def templateRepo(projectId: Int) = templateRepoService.get(projectId)
 
@@ -81,7 +79,7 @@ class GroovyTemplateService(val templateRepoService : TemplateRepoService,
 
 
   def getTemplateBody(name: String, version: String, projectId: Int): Option[String] = {
-    val ref = Option(cache.get(TmplCacheKey(name, version, projectId))).map(_.getObjectValue.asInstanceOf[VersionedTemplate])
+    val ref = Option(fromCache(CACHE_NAME, TmplCacheKey(name, version, projectId)) { null.asInstanceOf[VersionedTemplate] })
     val bodyOpt = ref match {
       case Some(verTmpl) => templateRepo(projectId).getContent(verTmpl)
       case None => templatesMap(projectId).get(name, version)
@@ -99,7 +97,8 @@ class GroovyTemplateService(val templateRepoService : TemplateRepoService,
             template.foreach(t => {
               val key = TmplCacheKey(t.name, t.version, projectId)
               val value = new VersionedTemplate(version.name)
-              cache.putIfAbsent(new Element(key, value))//todo (RB): we assume repo is not using vsc versions
+              cacheManager.createCacheIfAbsent(CacheConfig(CACHE_NAME, defaultTtl, maxEntries))
+              cacheManager.putInCache(CACHE_NAME, key, value) //todo (RB): we assume repo is not using vsc versions
             })
 
             template.map(t => ((t.name, t.version), body))
@@ -147,12 +146,13 @@ class GroovyTemplateService(val templateRepoService : TemplateRepoService,
         map.get(name, version)
     }
 
-  import scala.collection.JavaConversions.{asScalaBuffer, asJavaCollection}
   def clearCache(projectId: Int) {
-    cache.removeAll(cache.getKeys.filter{
-      case TmplCacheKey(_, _, pId) => pId == projectId
-      case _ => false
-    })}
+    if (cacheManager.cacheExists(CACHE_NAME))
+      cacheManager.removeFromCache(CACHE_NAME, {
+        case TmplCacheKey(_, _, pId) => pId == projectId
+        case _ => false
+      })
+  }
 }
 
 class StepBodiesCollector(variables: Map[String, AnyRef],

@@ -39,6 +39,7 @@ import com.griddynamics.genesis.users.{GenesisRole, UserService, UserServiceStub
 import com.griddynamics.genesis.groups.GroupServiceStub
 import scala.collection.JavaConversions._
 import com.griddynamics.genesis.api.UserGroup
+import com.griddynamics.genesis.cache.CacheManager
 
 @Configuration
 @GenesisPlugin(id = "ldap", description = "Genesis LDAP Plugin")
@@ -50,6 +51,8 @@ class LdapPluginContext {
   var authorityService: AuthorityService = _
   @Autowired
   var projectAuthorityService: ProjectAuthorityService = _
+  @Autowired
+  var cacheManager: CacheManager = _
 
   lazy val config = new LdapPluginConfig(configService)
 
@@ -117,13 +120,13 @@ class LdapPluginContext {
   }
 
   @Bean def ldapUserService = catching(classOf[Exception]).opt {
-    val service = new LdapUserServiceImpl(config, ldapTemplate, ldapAuthoritiesPopulator)
+    val service = new LdapUserServiceImpl(config, ldapTemplate, ldapAuthoritiesPopulator, cacheManager)
     service.findByUsername("username")
     service
   }.getOrElse(new UserServiceStub)
 
   @Bean def ldapGroupService = catching(classOf[Exception]).opt {
-    val service = new LdapGroupServiceImpl(config, ldapTemplate, ldapUserService.asInstanceOf[LdapUserService])
+    val service = new LdapGroupServiceImpl(config, ldapTemplate, ldapUserService.asInstanceOf[LdapUserService], cacheManager)
     service.findByName("group")
     service
   }.getOrElse(new GroupServiceStub)
@@ -144,6 +147,8 @@ object LdapPluginContext {
   val USERS_SERVICE_FILTER = PREFIX_LDAP + "users.service.filter"
   val GROUPS_SERVICE_FILTER = PREFIX_LDAP + "groups.service.filter"
   val SERVICE_DOMAIN_PREFIX = PREFIX_LDAP + "service.domain.prefix"
+  val CACHE_TTL = PREFIX_LDAP + "cache.ttl"
+  val CACHE_MAX_ENTRIES = PREFIX_LDAP + "cache.maxEntries"
 }
 
 class LdapPluginConfig(val configService: ConfigService) {
@@ -212,4 +217,8 @@ class LdapPluginConfig(val configService: ConfigService) {
 
   def addDomain(str: String): String =
     Option(str) map { serviceDomainPrefix + _ } getOrElse (str)
+
+  def cacheTtl: Int = configService.get(CACHE_TTL, 30)
+
+  def cacheMaxEntries: Int = configService.get(CACHE_MAX_ENTRIES, 1000)
 }

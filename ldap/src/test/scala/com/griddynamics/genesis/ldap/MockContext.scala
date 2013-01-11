@@ -32,6 +32,7 @@ import org.mockito.invocation.InvocationOnMock
 import org.mockito.Mockito._
 import com.griddynamics.genesis.api.UserGroup
 import com.griddynamics.genesis.users.GenesisRole
+import com.griddynamics.genesis.cache.{NullCacheManager, CacheManager}
 
 @Configuration
 class MockContext {
@@ -83,5 +84,7 @@ class MockContext {
   }
 
   @Bean def projectAuthorityService: ProjectAuthorityService = mock(classOf[ProjectAuthorityService])
+
+  @Bean def cacheManager: CacheManager = NullCacheManager
 
 }

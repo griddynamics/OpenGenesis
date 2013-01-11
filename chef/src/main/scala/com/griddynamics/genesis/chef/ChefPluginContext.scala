@@ -33,8 +33,7 @@ import com.griddynamics.genesis.chef.rest.ChefRestClient
 import step.ChefResourcesImpl
 import com.griddynamics.genesis.plugin.PluginConfigurationContext
 import org.springframework.context.annotation.{Bean, Configuration}
-import com.griddynamics.genesis.cache.Cache
-import net.sf.ehcache.CacheManager
+import com.griddynamics.genesis.cache.{CacheConfig, CacheManager, Cache}
 import org.springframework.beans.factory.annotation.Autowired
 import javax.annotation.PostConstruct
 import java.util.concurrent.TimeUnit
@@ -84,9 +83,7 @@ class ChefPluginContextImpl extends Cache {
 
     @PostConstruct
     def initCache() {
-      val cache = new net.sf.ehcache.Cache(
-        CacheRegion, 100, false, false, TimeUnit.HOURS.toSeconds(2), TimeUnit.HOURS.toSeconds(1), false, 0);
-      cacheManager.addCacheIfAbsent(cache)
+      cacheManager.createCacheIfAbsent(CacheConfig(CacheRegion, TimeUnit.HOURS.toSeconds(1).toInt, 100))
     }
 
     def chefService(config: ChefPluginConfig) = new ChefServiceImpl(config.chefId , config.chefEndpoint,
