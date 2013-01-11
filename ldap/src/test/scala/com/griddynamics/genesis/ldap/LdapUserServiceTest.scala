@@ -25,11 +25,14 @@ package com.griddynamics.genesis.ldap
 import org.junit.{Before, Test}
 import org.scalatest.matchers.ShouldMatchers
 import org.mockito.Mockito._
-import org.springframework.ldap.core.{ContextMapper, LdapTemplate}
+import org.springframework.ldap.core._
 import org.springframework.security.ldap.userdetails.LdapAuthoritiesPopulator
 import org.mockito.Matchers
 import org.mockito.stubbing.Answer
 import org.mockito.invocation.InvocationOnMock
+import javax.naming.directory.SearchControls
+import javax.naming.Binding
+import org.springframework.test.util.ReflectionTestUtils
 import com.griddynamics.genesis.api.User
 
 class LdapUserServiceTest extends ShouldMatchers {
@@ -49,48 +52,57 @@ class LdapUserServiceTest extends ShouldMatchers {
   }
 
   @Test def testListSorting() {
-    when(ldapTemplate.search(
-      Matchers.any(classOf[String]),
-      Matchers.any(classOf[String]),
-      Matchers.any(classOf[ContextMapper])))
-      .thenAnswer(new Answer[java.util.List[_]] {
-      def answer(invocation: InvocationOnMock) = {
-        java.util.Arrays.asList(
-          User("wyzwa", null, null, null, None, None, None),
-          User("_username", null, null, null, None, None, None),
-          User("azhuchkoff", null, null, null, None, None, None),
-          User("AZhuchkov", null, null, null, None, None, None),
-          User("__username", null, null, null, None, None, None),
-          User("WYZame", null, null, null, None, None, None),
-          User("WYZW", null, null, null, None, None, None)
-        )
-      }
-    })
+    setupSearchResult(
+      List(
+        User("wyzwa", null, null, null, None, None, None),
+        User("_username", null, null, null, None, None, None),
+        User("azhuchkoff", null, null, null, None, None, None),
+        User("AZhuchkov", null, null, null, None, None, None),
+        User("__username", null, null, null, None, None, None),
+        User("WYZame", null, null, null, None, None, None),
+        User("WYZW", null, null, null, None, None, None)
+      )
+    )
 
     val users = userService.list
     users.map(_.username) should equal(List("__username", "_username", "azhuchkoff", "AZhuchkov", "WYZame", "WYZW", "wyzwa"))
   }
 
   @Test def testSearchSorting() {
+    setupSearchResult(
+      List(
+        User("wyszwa", null, null, null, None, None, None),
+        User("_usersname", null, null, null, None, None, None),
+        User("azhuchskoff", null, null, null, None, None, None),
+        User("AZhuchskov", null, null, null, None, None, None),
+        User("__usersname", null, null, null, None, None, None),
+        User("WYZasme", null, null, null, None, None, None),
+        User("WYsZW", null, null, null, None, None, None)
+      )
+    )
+    val users = userService.search("*s*")
+    users.map(_.username) should equal(List("__usersname", "_usersname", "azhuchskoff", "AZhuchskov", "WYsZW", "wyszwa", "WYZasme"))
+  }
+
+  private def setupSearchResult(users: Seq[User]) {
     when(ldapTemplate.search(
       Matchers.any(classOf[String]),
       Matchers.any(classOf[String]),
-      Matchers.any(classOf[ContextMapper])))
-      .thenAnswer(new Answer[java.util.List[_]] {
-      def answer(invocation: InvocationOnMock) = {
-        java.util.Arrays.asList(
-          User("wyszwa", null, null, null, None, None, None),
-          User("_usersname", null, null, null, None, None, None),
-          User("azhuchskoff", null, null, null, None, None, None),
-          User("AZhuchskov", null, null, null, None, None, None),
-          User("__usersname", null, null, null, None, None, None),
-          User("WYZasme", null, null, null, None, None, None),
-          User("WYsZW", null, null, null, None, None, None)
-        )
+      Matchers.any(classOf[SearchControls]),
+      Matchers.any(classOf[ContextMapperCallbackHandler]))
+    ).then(new Answer[Unit] {
+      def answer(invocation: InvocationOnMock) {
+        val handler = invocation.getArguments.toSeq(3).asInstanceOf[ContextMapperCallbackHandler]
+
+        ReflectionTestUtils.setField(handler, "mapper", new ContextMapper {
+          def mapFromContext(ctx: Any) = ctx.asInstanceOf[AnyRef]
+        })
+
+        users.foreach { user =>
+            handler.handleNameClassPair(new Binding("", user))
+        }
       }
     })
-    val users = userService.search("*s*")
-    users.map(_.username) should equal(List("__usersname", "_usersname", "azhuchskoff", "AZhuchskov", "WYsZW", "wyszwa", "WYZasme"))
   }
 
 }

@@ -39,6 +39,7 @@ import com.griddynamics.genesis.users.{GenesisRole, UserServiceStub}
 import com.griddynamics.genesis.groups.GroupServiceStub
 import scala.collection.JavaConversions._
 import com.griddynamics.genesis.api.UserGroup
+import java.util.concurrent.TimeUnit
 
 @Configuration
 @GenesisPlugin(id = "ldap", description = "Genesis LDAP Plugin")
@@ -144,6 +145,8 @@ object LdapPluginContext {
   val USERS_SERVICE_FILTER = PREFIX_LDAP + "users.service.filter"
   val GROUPS_SERVICE_FILTER = PREFIX_LDAP + "groups.service.filter"
   val SERVICE_DOMAIN_PREFIX = PREFIX_LDAP + "service.domain.prefix"
+  val TIMEOUT = PREFIX_LDAP + "timeout"
+  val SIZE_LIMIT = PREFIX_LDAP + "size.limit"
 }
 
 class LdapPluginConfig(val configService: ConfigService) {
@@ -212,5 +215,9 @@ class LdapPluginConfig(val configService: ConfigService) {
 
   def addDomain(str: String): String =
     Option(str) map { serviceDomainPrefix + _ } getOrElse (str)
+
+  def timeout: Int = configService.get(TIMEOUT, TimeUnit.SECONDS.toMillis(30).toInt)
+
+  def sizeLimit: Int = configService.get(SIZE_LIMIT, 500)
 
 }

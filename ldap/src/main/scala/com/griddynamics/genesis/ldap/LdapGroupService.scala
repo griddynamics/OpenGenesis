@@ -23,13 +23,15 @@
 package com.griddynamics.genesis.ldap
 
 import com.griddynamics.genesis.groups.GroupService
-import org.springframework.ldap.core.{DirContextAdapter, ContextMapper, LdapTemplate}
+import org.springframework.ldap.core.{ContextMapperCallbackHandler, DirContextAdapter, ContextMapper, LdapTemplate}
 import com.griddynamics.genesis.api.UserGroup
 import util.control.Exception._
 import scala.collection.JavaConversions._
 import org.springframework.dao.IncorrectResultSizeDataAccessException
 import javax.naming.ldap.LdapName
 import com.griddynamics.genesis.util.Logging
+import javax.naming.directory.SearchControls
+import org.springframework.ldap.{TimeLimitExceededException, SizeLimitExceededException}
 
 trait LdapGroupService extends GroupService
 
@@ -70,9 +72,7 @@ class LdapGroupServiceImpl(val config: LdapPluginConfig,
 
   private def filterById(id: String) = filter("gidNumber", id)
 
-  def findByName(name: String) = {
-    val filter = filterByNamePattern(config.stripDomain(name))
-
+  private def findGroup(filter: String): Option[UserGroup] = {
     log.debug("Group search base: '%s'; filter: '%s'", config.groupSearchBase, filter)
 
     catching(classOf[IncorrectResultSizeDataAccessException]).opt(
@@ -83,6 +83,8 @@ class LdapGroupServiceImpl(val config: LdapPluginConfig,
       ).asInstanceOf[UserGroup]
     )
   }
+
+  def findByName(name: String) = findGroup(filterByNamePattern(config.stripDomain(name)))
 
   def users(id: Int) = get(id) match {
     case Some(group) => group.users.map { _.flatMap(userService.findByUsername(_)) }.getOrElse(Seq.empty)
@@ -93,20 +95,7 @@ class LdapGroupServiceImpl(val config: LdapPluginConfig,
 
   def removeUserFromGroup(id: Int, username: String) = throw new UnsupportedOperationException
 
-  def get(id: Int) = {
-    val filter = filterById(id.toString)
-
-    log.debug("Group search base: '%s'; filter: '%s'", config.groupSearchBase, filter)
-
-    catching(classOf[IncorrectResultSizeDataAccessException]).opt(
-      template.searchForObject(
-        config.groupSearchBase,
-        filter,
-        GroupContextMapper(includeUsers = true)
-      ).asInstanceOf[UserGroup]
-    )
-  }
-
+  def get(id: Int) = findGroup(filterById(id.toString))
 
   def getUsersGroups(username: String) = userService.getUserGroups(config.stripDomain(username)) match {
     case Some(groups) => groups flatMap { findByName(_) }
@@ -117,31 +106,31 @@ class LdapGroupServiceImpl(val config: LdapPluginConfig,
     throw new UnsupportedOperationException
   }
 
-  def search(nameLike: String) = {
-    val filter = filterByNamePattern(nameLike)
-
-    log.debug("Group search base: '%s'; filter: '%s'", config.groupSearchBase, filter)
-
-    template.search(
-      config.groupSearchBase,
-      filter,
-      GroupContextMapper()
-    ).toList.asInstanceOf[List[UserGroup]].sortBy(_.name.toLowerCase)
-  }
-
+  def search(nameLike: String) = search(filterByNamePattern(nameLike), GroupContextMapper())
 
   def doesGroupExist(groupName: String) = findByName(config.stripDomain(groupName)).isDefined
 
   def doGroupsExist(groupNames: Seq[String]) = groupNames forall { g => doesGroupExist(config.stripDomain(g)) }
 
-  def list = {
-    log.debug("Group search base: '%s'; filter: '%s'", config.groupSearchBase, config.groupsServiceFilter)
+  def list = search(config.groupsServiceFilter, GroupContextMapper())
 
-    template.search(
-      config.groupSearchBase,
-      config.groupsServiceFilter,
-      GroupContextMapper()
-    ).toList.asInstanceOf[List[UserGroup]].sortBy(_.name.toLowerCase)
+  private def search(filter: String, mapper: ContextMapper) = {
+    val handler = new ContextMapperCallbackHandler(mapper)
+    val controls =
+      new SearchControls(SearchControls.SUBTREE_SCOPE, config.sizeLimit, config.timeout, null, true, false)
+
+    log.debug("Group search base: '%s'; filter: '%s'", config.groupSearchBase, filter)
+
+    try {
+      template.search(config.groupSearchBase, filter, controls, handler)
+    } catch {
+      case e: SizeLimitExceededException =>
+        log.warn("Size limit exceeded error occured. Found %s records", handler.getList.size())
+      case e: TimeLimitExceededException =>
+        log.warn("Time limit exceeded error occured. Found %s records", handler.getList.size())
+    }
+
+    handler.getList.toList.asInstanceOf[List[UserGroup]].sortBy(_.name.toLowerCase)
   }
 
 }
