@@ -37,19 +37,11 @@ import javax.validation.Valid
 @RequestMapping(Array("/rest/groups"))
 class GroupController extends RestApiExceptionsHandler with ApplicationContextAware {
 
-  @Autowired var groupServiceBean: GroupService = _
-
-  private lazy val groupService: GroupService = try {
-    groupServiceBean.findByName("group")
-    groupServiceBean
-  } catch {
-    case e: UnsupportedOperationException =>
-      throw new ResourceNotFoundException("Group service is not found. Probably its configuration is wrong.")
-  }
+  @Autowired var groupService: GroupService = _
 
   @RequestMapping(method = Array(RequestMethod.GET), params = Array("available"))
   @ResponseBody
-  def available() = !groupServiceBean.isReadOnly
+  def available() = !groupService.isReadOnly
 
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody

@@ -35,28 +35,12 @@ import javax.validation.Valid
 @RequestMapping(Array("/rest/users"))
 class UsersController extends RestApiExceptionsHandler {
 
-  @Autowired var userServiceBean: UserService = _
-  @Autowired var groupServiceBean: GroupService = _
-
-  private lazy val userService: UserService = try {
-    userServiceBean.findByUsername("username")
-    userServiceBean
-  } catch {
-    case e: UnsupportedOperationException =>
-      throw new ResourceNotFoundException("User service is not found. Probably its configuration is wrong.")
-  }
-
-  private lazy val groupService: GroupService = try {
-    groupServiceBean.findByName("group")
-    groupServiceBean
-  } catch {
-    case e: UnsupportedOperationException =>
-      throw new ResourceNotFoundException("Group service is not found. Probably its configuration is wrong.")
-  }
+  @Autowired var userService: UserService = _
+  @Autowired var groupService: GroupService = _
 
   @RequestMapping(method = Array(RequestMethod.GET), params = Array("available"))
   @ResponseBody
-  def available() = !userServiceBean.isReadOnly
+  def available() = !userService.isReadOnly
 
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody

@@ -36,8 +36,8 @@ import org.springframework.ldap.{TimeLimitExceededException, SizeLimitExceededEx
 trait LdapGroupService extends GroupService
 
 class LdapGroupServiceImpl(val config: LdapPluginConfig,
-                           val template: LdapTemplate,
-                           val userService: LdapUserService) extends LdapGroupService with Logging {
+                           template: => LdapTemplate, // by-name parameters are needed to avoid failure at startup
+                           userService: => LdapUserService) extends LdapGroupService with Logging {
 
   override def isReadOnly = true
 

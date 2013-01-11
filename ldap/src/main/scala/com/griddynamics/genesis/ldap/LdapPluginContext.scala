@@ -117,17 +117,11 @@ class LdapPluginContext {
       new ActiveDirectoryLdapAuthenticationProvider(config.domain.getOrElse(null), config.serverUrl)
   }
 
-  @Bean def ldapUserService = catching(classOf[Exception]).opt {
-    val service = new LdapUserServiceImpl(config, ldapTemplate, ldapAuthoritiesPopulator)
-    service.findByUsername("username")
-    service
-  }.getOrElse(new UserServiceStub)
+  @Bean def ldapUserService: LdapUserService =
+    new LdapUserServiceImpl(config, ldapTemplate, ldapAuthoritiesPopulator)
 
-  @Bean def ldapGroupService = catching(classOf[Exception]).opt {
-    val service = new LdapGroupServiceImpl(config, ldapTemplate, ldapUserService.asInstanceOf[LdapUserService])
-    service.findByName("group")
-    service
-  }.getOrElse(new GroupServiceStub)
+  @Bean def ldapGroupService =
+    new LdapGroupServiceImpl(config, ldapTemplate, ldapUserService)
 
 }
 

@@ -1,5 +1,6 @@
 define([
   "genesis",
+  "modules/status",
   "services/backend",
   "cs!modules/settings/roles",
   "backbone",
@@ -9,7 +10,7 @@ define([
   "jvalidate"
 ],
 
-function (genesis, backend, roles, Backbone, $, _) {
+function (genesis, status, backend, roles, Backbone, $, _) {
   var EnvironmentAccess = genesis.module();
 
   EnvironmentAccess.Model = Backbone.Model.extend({
@@ -43,7 +44,9 @@ function (genesis, backend, roles, Backbone, $, _) {
             options.tabHeader.show();
             $.when(self.accessConfiguration.fetch()).done(
               _.bind(self.render, self)
-            );
+            ).fail(function(){
+                status.StatusPanel.error("Failed to load permissions!")
+            });
           }
         });
       }

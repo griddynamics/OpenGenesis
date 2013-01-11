@@ -38,8 +38,8 @@ trait LdapUserService extends UserService {
 }
 
 class LdapUserServiceImpl(val config: LdapPluginConfig,
-                          val template: LdapTemplate,
-                          val authoritiesPopulator: LdapAuthoritiesPopulator) extends LdapUserService with Logging {
+                          template: => LdapTemplate,  // by-name parameters are needed to avoid failure at startup
+                          authoritiesPopulator: => LdapAuthoritiesPopulator) extends LdapUserService with Logging {
 
   override def isReadOnly = true
 

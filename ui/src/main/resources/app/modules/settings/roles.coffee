@@ -66,7 +66,8 @@ define ["genesis", "modules/status", "services/backend", "modules/validation", "
       )
       $.when.apply($, allLoad).done =>
         @collection.reset @roles
-
+      .fail ->
+        status.StatusPanel.error "Failed to load roles!"
 
     editRole: (event) ->
       roleName = $(event.currentTarget).attr("data-role-name")
