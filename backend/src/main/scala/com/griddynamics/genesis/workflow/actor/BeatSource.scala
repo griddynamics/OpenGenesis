@@ -51,11 +51,11 @@ trait BeatSource {
 class BeatSourceImpl(beatPeriodMs: Long) extends BeatSource with Logging {
   val subscribeMap: mutable.Map[ActorRef, Beat] = mutable.WeakHashMap()
   var subscribeOnceMap: mutable.Map[ActorRef, (Beat, Long)] = mutable.WeakHashMap()
-  implicit val ec: ExecutionContext = ExecutionContext.Implicits.global
   def start() {
     val duration: FiniteDuration = Duration(beatPeriodMs, TimeUnit.MILLISECONDS)
     val receiver = this
     val scheduler = TypedActor.context.system.scheduler
+    implicit val ec: ExecutionContext = TypedActor.context.dispatcher
     scheduler.schedule(duration, duration, new Runnable {
       def run() {
          receiver.beat()
