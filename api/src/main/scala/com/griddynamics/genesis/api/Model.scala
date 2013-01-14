@@ -81,7 +81,8 @@ case class EnvironmentDetails(envId: Int,
                               currentWorkflowFinishedActionsCount: Int,
                               workflowCompleted: Option[Double],
                               attributes: Map[String, Attribute] = Map(),
-                              configuration: String)
+                              configuration: String,
+                              timeToLive: Option[Long])
 
 case class Variable(name : String, `type`: String, description : String, optional: Boolean = false, defaultValue: String = null,
                     values:Map[String,String] = Map(), dependsOn: Option[List[String]] = None, group : Option[String] = None)
@@ -143,8 +144,7 @@ sealed abstract class ExtendedResult[+S]() extends Product with Serializable {
 
 final case class Success[+S](result: S) extends ExtendedResult[S] {
   def get = result
-
-  val isSuccess = true
+  override val isSuccess = true
 }
 
 final case class Failure(serviceErrors : Map[String, String] = Map(),
@@ -155,7 +155,7 @@ final case class Failure(serviceErrors : Map[String, String] = Map(),
                          stackTrace: Option[String] = None) extends ExtendedResult[Nothing] {
   def get = throw new NoSuchElementException("Failure.get")
 
-  val isSuccess = false
+  override val isSuccess = false
 }
 
 case class User( @Size(min = 2, max = 32) @Pattern(regexp = "[a-z0-9.\\-_]*", message = "{validation.invalid.name}")

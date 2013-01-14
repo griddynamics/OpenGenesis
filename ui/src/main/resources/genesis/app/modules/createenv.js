@@ -267,11 +267,18 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
     },
 
     modelValues: function() {
-      return {
+      var value = {
         envName: this.$("input[name='envName']").val(),
         variables: this.workflowParams(),
         configId: this.$("select[name='configId']").val()
+      };
+
+      var timeToLive = this.$("select[name='timeToLive']").val();
+      if($.isNumeric(timeToLive)){
+        value['timeToLive'] = timeToLive;
       }
+
+      return value;
     },
 
     _settingsForm: function() {

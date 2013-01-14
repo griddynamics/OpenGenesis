@@ -23,9 +23,11 @@
 package com.griddynamics.genesis.model
 
 import org.squeryl.Schema
+import scheduling.QuartzSchema
 import security.GenesisAclSchema
 
 object GenesisSchema extends GenesisSchema with GenesisSchemaPrimitive with GenesisSchemaCustom with GenesisAclSchema
+  with QuartzSchema
 
 trait GenesisSchema extends Schema {
     val envs = table[Environment]("environment")

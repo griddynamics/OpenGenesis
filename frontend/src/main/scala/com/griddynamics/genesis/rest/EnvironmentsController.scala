@@ -38,10 +38,18 @@ import com.griddynamics.genesis.api.Failure
 import com.griddynamics.genesis.api.WorkflowHistory
 import org.springframework.security.access.prepost.PostFilter
 import org.springframework.http.{HttpHeaders, MediaType}
-import java.util.{TimeZone, Locale}
+import java.util.{Date, TimeZone, Locale}
 import org.springframework.security.access.AccessDeniedException
 import com.griddynamics.genesis.repository.ConfigurationRepository
 import org.apache.commons.lang3.StringEscapeUtils
+import java.util.concurrent.TimeUnit
+import com.griddynamics.genesis.api.ActionTracking
+import com.griddynamics.genesis.api.EnvironmentDetails
+import com.griddynamics.genesis.api.Failure
+import com.griddynamics.genesis.api.WorkflowHistory
+import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.api.StepLogEntry
+import com.griddynamics.genesis.rest.InvalidInputException
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
@@ -60,7 +68,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @RequestMapping(value=Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
   def createEnv(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response : HttpServletResponse): ExtendedResult[Int] = {
-    val paramsMap = extractParamsMap(request)
+    implicit val paramsMap = extractParamsMap(request)
     val envName = extractValue("envName", paramsMap).trim
     val templateName = extractValue("templateName", paramsMap)
     val templateVersion = extractValue("templateVersion", paramsMap)
@@ -73,6 +81,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
         case f: Failure => return f
       }
     }
+    val timeToLive = extractOption("timeToLive", paramsMap).map(min => TimeUnit.MINUTES.toMillis(min.toLong))
 
     if(!envAuthService.hasAccessToConfig(projectId, config.id.get, getCurrentUser, getCurrentUserAuthorities)) {
       throw new AccessDeniedException("User doesn't have access to configuration id=%s".format(config))
@@ -82,7 +91,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
       case "backend" => request.getHeader(TunnelFilter.SEC_HEADER_NAME)
       case _ => getCurrentUser
     }
-    genesisService.createEnv(projectId, envName, user, templateName, templateVersion, variables, config)
+    genesisService.createEnv(projectId, envName, user, templateName, templateVersion, variables, config, timeToLive)
   }
 
   private val LINK_REGEX = """(?i)\[link:(.*?)(?:\|([^\[\]]+))?\]""".r
@@ -160,8 +169,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @RequestMapping(value = Array("{envId}"), method = Array(RequestMethod.GET))
   @ResponseBody
   def describeEnv(@PathVariable("projectId") projectId: Int,
-                  @PathVariable("envId") envId: Int,
-                  response : HttpServletResponse) : EnvironmentDetails = {
+                  @PathVariable("envId") envId: Int) : EnvironmentDetails = {
     genesisService.describeEnv(envId, projectId).getOrElse(throw new ResourceNotFoundException("Environment [" + envId + "] was not found"))
   }
 
@@ -245,4 +253,23 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     if (!genesisService.stepExists(stepId, envId)) throw new ResourceNotFoundException("Step [id=%d] wasn't found in environment [id=%d]"
       .format(stepId, envId))
   }
+
+  @RequestMapping(value = Array("{envId}/timeToLive"), method = Array(RequestMethod.PUT))
+  @ResponseBody
+  def expandLiveTime(@PathVariable("projectId")projectId: Int, @PathVariable("envId") envId: Int, request: HttpServletRequest): ExtendedResult[Date] = {
+    val paramsMap = GenesisRestController.extractParamsMap(request)
+    try {
+      val timeToLive = TimeUnit.MINUTES.toMillis(extractValue("value", paramsMap).toLong)
+      genesisService.updateTimeToLive(projectId, envId, timeToLive)
+    } catch {
+      case e: NumberFormatException => throw new InvalidInputException("Value should be numeric")
+    }
+  }
+
+  @RequestMapping(value = Array("{envId}/timeToLive"), method = Array(RequestMethod.DELETE))
+  @ResponseBody
+  def removeLiveTime(@PathVariable("projectId")projectId: Int, @PathVariable("envId") envId: Int, request: HttpServletRequest) = {
+    genesisService.removeTimeToLive(projectId, envId)
+  }
+
 }

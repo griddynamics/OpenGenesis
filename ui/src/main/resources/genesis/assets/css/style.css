@@ -1349,10 +1349,10 @@ table .pre {
     background-color: #fff;
 }
 
-.show-sources:hover .ui-icon {
+.show-sources:hover .ui-icon, .postpone-destruction:hover .ui-icon {
     background-image: url(jqueryui/images/ui-icons_222222_256x240.png);
 }
-.show-sources.ui-state-default {
+.show-sources.ui-state-default, .postpone-destruction.ui-state-default {
     border:none;
     cursor: pointer;
 }
