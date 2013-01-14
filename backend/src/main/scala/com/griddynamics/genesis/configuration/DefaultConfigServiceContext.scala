@@ -78,6 +78,11 @@ class DefaultConfigServiceContext extends ConfigServiceContext {
   private  lazy val config = {
     ConfigurationUtils.enableRuntimeExceptions(dbConfig)
     val compConfig = new CompositeConfiguration
+    overrideConfig match {
+      // allow comma to be used inside string property values in file
+      case ac: AbstractConfiguration => ac.setDelimiterParsingDisabled(true)
+      case _ =>
+    }
     // read file properties overrides first
     compConfig.addConfiguration(overrideConfig)
     // then read DB, write to DB only
@@ -87,6 +92,8 @@ class DefaultConfigServiceContext extends ConfigServiceContext {
       case (k, v) => k -> v.default
     }))
     ConfigurationUtils.enableRuntimeExceptions(compConfig)
+    // allow comma to be used inside string property values in DB
+    compConfig.setDelimiterParsingDisabled(true)
     compConfig
   }
 
