@@ -1,4 +1,4 @@
-define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settings/configs", "cs!modules/settings/groups", "cs!modules/settings/users", "cs!modules/settings/roles", "cs!modules/settings/databags", "services/backend"], (genesis, Backbone, Plugins, SystemConfigs, Groups, Users, Roles, Databags, backend) ->
+define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settings/configs", "cs!modules/settings/groups", "cs!modules/settings/users", "cs!modules/settings/roles", "cs!modules/settings/databags", "cs!modules/settings/agents", "services/backend"], (genesis, Backbone, Plugins, SystemConfigs, Groups, Users, Roles, Databags, Agents, backend) ->
   AppSettings = genesis.module()
   class AppSettings.Views.Main extends Backbone.View
     template: "app/templates/settings.html"
@@ -6,6 +6,7 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
     configsView: null
     groupsView: null
     usersView: null
+    agentsView: null
     events:
       "click #plugin-panel-tab-header": "showPluginsTab"
       "click #settings-panel-tab-header": "showSettings"
@@ -13,6 +14,7 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
       "click #user-panel-tab-header": "showUsersTab"
       "click #roles-panel-tab-header": "showRolesTab"
       "click #databags-panel-tab-header": "showDatabags"
+      "click #agents-panel-tab-header": "showAgents"
 
     onClose: ->
       genesis.utils.nullSafeClose @pluginsView
@@ -21,6 +23,7 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
       genesis.utils.nullSafeClose @usersView
       genesis.utils.nullSafeClose @rolesView
       genesis.utils.nullSafeClose @databagsView
+      genesis.utils.nullSafeClose @agentsView
 
     showPluginsTab: ->
       unless @pluginsView?
@@ -51,6 +54,9 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
 
     showDatabags: ->
       @databagsView = new Databags.Views.Main(el: @$("#databags-panel"))  unless @databagsView?
+
+    showAgents: ->
+      @agentsView = new Agents.Views.Main(el: @$("#agents-panel")) unless @agentsView?
 
     toggleRestart: ->
       $.when(backend.SettingsManager.restartRequired()).done (restart) =>
