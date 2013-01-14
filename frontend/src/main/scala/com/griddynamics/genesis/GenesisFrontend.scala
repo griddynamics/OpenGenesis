@@ -129,6 +129,9 @@ object GenesisFrontend extends Logging {
         httpConnector.setHost(host)
         httpConnector.setPort(port)
 
+        httpConnector.setRequestHeaderSize(16 * 1024)   // authorization negotiate can contain lots of data
+        httpConnector.setResponseHeaderSize(16 * 1024)  // http://serverfault.com/questions/362280/apache-bad-request-size-of-a-request-header-field-exceeds-server-limit-with-ke
+
         if (SystemUtils.IS_OS_WINDOWS)
             httpConnector.setReuseAddress(false)
 
