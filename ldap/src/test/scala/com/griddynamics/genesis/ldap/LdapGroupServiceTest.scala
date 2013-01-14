@@ -25,12 +25,14 @@ package com.griddynamics.genesis.ldap
 import org.junit.{Before, Test}
 import org.scalatest.matchers.ShouldMatchers
 import org.mockito.Mockito._
-import org.springframework.ldap.core.{ContextMapper, LdapTemplate}
+import org.springframework.ldap.core.{ContextMapperCallbackHandler, ContextMapper, LdapTemplate}
 import org.mockito.Matchers
-import com.griddynamics.genesis.api.{UserGroup, User}
+import com.griddynamics.genesis.api.UserGroup
 import org.mockito.stubbing.Answer
 import org.mockito.invocation.InvocationOnMock
-import com.griddynamics.genesis.cache.NullCacheManager
+import javax.naming.directory.SearchControls
+import org.springframework.test.util.ReflectionTestUtils
+import javax.naming.Binding
 
 class LdapGroupServiceTest extends ShouldMatchers {
 
@@ -43,52 +45,62 @@ class LdapGroupServiceTest extends ShouldMatchers {
     val userService = mock(classOf[LdapUserService])
     ldapTemplate = mock(classOf[LdapTemplate])
 
-    groupService = new LdapGroupServiceImpl(config, ldapTemplate, userService, NullCacheManager)
+    groupService = new LdapGroupServiceImpl(config, ldapTemplate, userService)
   }
 
   @Test def testListSorting() {
-    when(ldapTemplate.search(
-      Matchers.any(classOf[String]),
-      Matchers.any(classOf[String]),
-      Matchers.any(classOf[ContextMapper])))
-      .thenAnswer(new Answer[java.util.List[_]] {
-      def answer(invocation: InvocationOnMock) = {
-        java.util.Arrays.asList(
-          UserGroup("wyzwa", null, None, None, None),
-          UserGroup("_groupname", null, None, None, None),
-          UserGroup("developer", null, None, None, None),
-          UserGroup("DeVelopers", null, None, None, None),
-          UserGroup("__groupname", null, None, None, None),
-          UserGroup("WYZame", null, None, None, None),
-          UserGroup("WYZW", null, None, None, None)
-        )
-      }
-    })
+    setupSearchResult(
+      List(
+        UserGroup("wyzwa", null, None, None, None),
+        UserGroup("_groupname", null, None, None, None),
+        UserGroup("developer", null, None, None, None),
+        UserGroup("DeVelopers", null, None, None, None),
+        UserGroup("__groupname", null, None, None, None),
+        UserGroup("WYZame", null, None, None, None),
+        UserGroup("WYZW", null, None, None, None)
+      )
+    )
 
     val users = groupService.list
     users.map(_.name) should equal(List("__groupname", "_groupname", "developer", "DeVelopers", "WYZame", "WYZW", "wyzwa"))
   }
 
   @Test def testSearchSorting() {
+    setupSearchResult(
+      List(
+        UserGroup("wyszwa", null, None, None, None),
+        UserGroup("_groupsname", null, None, None, None),
+        UserGroup("develosper", null, None, None, None),
+        UserGroup("DeVelospers", null, None, None, None),
+        UserGroup("__groupsname", null, None, None, None),
+        UserGroup("WYZasme", null, None, None, None),
+        UserGroup("WYsZW", null, None, None, None)
+      )
+    )
+    val users = groupService.search("*s*")
+    users.map(_.name) should equal(List("__groupsname", "_groupsname", "develosper", "DeVelospers", "WYsZW", "wyszwa", "WYZasme"))
+  }
+
+  private def setupSearchResult(groups: Seq[UserGroup]) {
     when(ldapTemplate.search(
       Matchers.any(classOf[String]),
       Matchers.any(classOf[String]),
-      Matchers.any(classOf[ContextMapper])))
-      .thenAnswer(new Answer[java.util.List[_]] {
-      def answer(invocation: InvocationOnMock) = {
-        java.util.Arrays.asList(
-          UserGroup("wyszwa", null, None, None, None),
-          UserGroup("_groupsname", null, None, None, None),
-          UserGroup("develosper", null, None, None, None),
-          UserGroup("DeVelospers", null, None, None, None),
-          UserGroup("__groupsname", null, None, None, None),
-          UserGroup("WYZasme", null, None, None, None),
-          UserGroup("WYsZW", null, None, None, None)
-        )
+      Matchers.any(classOf[SearchControls]),
+      Matchers.any(classOf[ContextMapperCallbackHandler]))
+    ).then(new Answer[Unit] {
+      def answer(invocation: InvocationOnMock) {
+        val handler = invocation.getArguments.toSeq(3).asInstanceOf[ContextMapperCallbackHandler]
+
+        ReflectionTestUtils.setField(handler, "mapper", new ContextMapper {
+          def mapFromContext(ctx: Any) = ctx.asInstanceOf[AnyRef]
+        })
+
+        groups.foreach {
+          group =>
+            handler.handleNameClassPair(new Binding("", group))
+        }
       }
     })
-    val users = groupService.search("*s*")
-    users.map(_.name) should equal(List("__groupsname", "_groupsname", "develosper", "DeVelospers", "WYsZW", "wyszwa", "WYZasme"))
   }
 
 }
