@@ -24,41 +24,53 @@ package com.griddynamics.genesis.users
 
 import com.griddynamics.genesis.common.CRUDService
 import org.springframework.transaction.annotation.Transactional
-import com.griddynamics.genesis.api.{Failure, ExtendedResult, User}
+import com.griddynamics.genesis.api.User
 
 trait UserService extends CRUDService[User, String] {
-    @Transactional(readOnly = true)
-    override def get(key: String) = findByUsername(key)
-    @Transactional(readOnly = true)
-    def getWithCredentials(username: String): Option[User]
-    @Transactional(readOnly = true)
-    def findByUsername(username: String): Option[User]
-    @Transactional(readOnly = true)
-    def search(usernameLike: String): List[User]
-    @Transactional(readOnly = true)
-    def doesUserExist(userName: String): Boolean
-    @Transactional(readOnly = true)
-    def doUsersExist(userNames: Seq[String]): Boolean
-    def isReadOnly = false
+  @Transactional(readOnly = true)
+  override def get(key: String) = findByUsername(key)
+
+  @Transactional(readOnly = true)
+  def getWithCredentials(username: String): Option[User]
+
+  @Transactional(readOnly = true)
+  def findByUsername(username: String): Option[User]
+
+  @Transactional(readOnly = true)
+  def findByUsernames(userNames: Seq[String]): Seq[User]
+
+  @Transactional(readOnly = true)
+  def search(usernameLike: String): List[User]
+
+  @Transactional(readOnly = true)
+  def doesUserExist(userName: String): Boolean
+
+  @Transactional(readOnly = true)
+  def doUsersExist(userNames: Seq[String]): Boolean
+
+  def isReadOnly = false
 }
 
 class UserServiceStub extends UserService {
-    def getWithCredentials(username: String) = throw new UnsupportedOperationException
+  def getWithCredentials(username: String) = throw new UnsupportedOperationException
 
-    def findByUsername(username: String) = throw new UnsupportedOperationException
+  def findByUsername(username: String) = throw new UnsupportedOperationException
 
-    def search(usernameLike: String) = throw new UnsupportedOperationException
+  def findByUsernames(userNames: Seq[String]) = throw new UnsupportedOperationException
 
-    def doesUserExist(userName: String) = throw new UnsupportedOperationException
+  def search(usernameLike: String) = throw new UnsupportedOperationException
 
-    def doUsersExist(userNames: Seq[String]) = throw new UnsupportedOperationException
+  def doesUserExist(userName: String) = throw new UnsupportedOperationException
 
-    def list = throw new UnsupportedOperationException
+  def doUsersExist(userNames: Seq[String]) = throw new UnsupportedOperationException
 
-    override val isReadOnly = true
+  def list = throw new UnsupportedOperationException
+
+  override val isReadOnly = true
 }
 
- object UserServiceStub {
-    private lazy val stub = new UserServiceStub
-    def get = stub
+object UserServiceStub {
+  private lazy val stub = new UserServiceStub
+
+  def get = stub
 }

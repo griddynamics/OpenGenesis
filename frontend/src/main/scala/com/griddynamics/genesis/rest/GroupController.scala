@@ -25,12 +25,11 @@ package com.griddynamics.genesis.rest
 
 import org.springframework.stereotype.Controller
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.groups.{GroupServiceStub, GroupService}
+import com.griddynamics.genesis.groups.GroupService
 import javax.servlet.http.HttpServletRequest
 import GenesisRestController._
 import org.springframework.web.bind.annotation._
 import com.griddynamics.genesis.api.{ExtendedResult, UserGroup}
-import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.spring.ApplicationContextAware
 import javax.validation.Valid
 
@@ -38,19 +37,11 @@ import javax.validation.Valid
 @RequestMapping(Array("/rest/groups"))
 class GroupController extends RestApiExceptionsHandler with ApplicationContextAware {
 
-  @Autowired var groupServiceBean: GroupService = _
-
-  private lazy val groupService: GroupService = try {
-    groupServiceBean.findByName("group")
-    groupServiceBean
-  } catch {
-    case e: UnsupportedOperationException =>
-      throw new ResourceNotFoundException("Group service is not found. Probably its configuration is wrong.")
-  }
+  @Autowired var groupService: GroupService = _
 
   @RequestMapping(method = Array(RequestMethod.GET), params = Array("available"))
   @ResponseBody
-  def available() = !groupServiceBean.isReadOnly
+  def available() = !groupService.isReadOnly
 
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
@@ -64,7 +55,7 @@ class GroupController extends RestApiExceptionsHandler with ApplicationContextAw
   @RequestMapping(method = Array(RequestMethod.GET), params = Array("tag"))
   @ResponseBody
   def pick(@RequestParam("tag") search: String) = {
-    groupService.search("*" + search + "*").map(item => Map("key" -> item.name, "value" -> item.name))
+    groupService.search(search + "*").map(item => Map("key" -> item.name, "value" -> item.name))
   }
 
   @RequestMapping(method = Array(RequestMethod.POST))

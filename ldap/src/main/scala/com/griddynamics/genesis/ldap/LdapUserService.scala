@@ -23,31 +23,25 @@
 package com.griddynamics.genesis.ldap
 
 import com.griddynamics.genesis.users.UserService
-import org.springframework.ldap.core.{DirContextAdapter, ContextMapper, LdapTemplate}
-import com.griddynamics.genesis.api.User
+import org.springframework.ldap.core._
 import scala.collection.JavaConversions._
 import scala.util.control.Exception._
 import org.springframework.dao.IncorrectResultSizeDataAccessException
 import org.springframework.security.ldap.userdetails.LdapAuthoritiesPopulator
-import com.griddynamics.genesis.cache.CacheManager
+import com.griddynamics.genesis.util.Logging
+import com.griddynamics.genesis.api.User
+import org.springframework.ldap.{TimeLimitExceededException, SizeLimitExceededException}
+import javax.naming.directory.SearchControls
 
 trait LdapUserService extends UserService {
   def getUserGroups(username: String): Option[Seq[String]]
 }
 
-object LdapUserService {
-  val SearchCacheRegion = "ldap-user-service-search"
-}
-
 class LdapUserServiceImpl(val config: LdapPluginConfig,
-                          val template: LdapTemplate,
-                          val authoritiesPopulator: LdapAuthoritiesPopulator,
-                          val cacheManager: CacheManager) extends LdapUserService with WildcardCaching {
+                          template: => LdapTemplate,  // by-name parameters are needed to avoid failure at startup
+                          authoritiesPopulator: => LdapAuthoritiesPopulator) extends LdapUserService with Logging {
 
   override def isReadOnly = true
-
-  override def defaultTtl = config.cacheTtl
-  override def maxEntries = config.cacheMaxEntries
 
   case class UserContextMapper(includeGroups: Boolean = true, includeCredentials: Boolean = false) extends ContextMapper {
     def mapFromContext(ctx: Any): User = {
@@ -85,18 +79,21 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
     }
   }
 
-  private def filter(usernamePattern: String) =
-    "(&(%s)(|(%s)(sn=%s)(givenName=%3$s)))"
-      .format(config.usersServiceFilter, config.userSearchFilter.replace("{0}", usernamePattern), usernamePattern)
+  private def usernameFilter(pattern: String) = config.userSearchFilter.replace("{0}", pattern)
 
-  private def find(username: String, includeCredentials: Boolean) =
+  private def find(username: String, includeCredentials: Boolean) = {
+    val filter = "(&(%s)(%s))".format(config.usersServiceFilter, usernameFilter(username))
+
+    log.debug("User search base: '%s'; filter: '%s'", config.userSearchBase, filter)
+
     catching(classOf[IncorrectResultSizeDataAccessException]).opt(
       template.searchForObject(
         config.userSearchBase,
-        filter(username),
+        filter,
         UserContextMapper(includeCredentials = includeCredentials)
       ).asInstanceOf[User]
     )
+  }
 
   def getWithCredentials(username: String): Option[User] =
     find(config.stripDomain(username), includeCredentials = true)
@@ -104,35 +101,49 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
   def findByUsername(username: String): Option[User] =
     find(config.stripDomain(username), includeCredentials = false)
 
-  def search(usernameLike: String): List[User] = {
-    def cacheFilter(user: User): Boolean = {
-      val wildcard = Wildcard(usernameLike)
-      wildcard.accept(user.username) || wildcard.accept(user.firstName) || wildcard.accept(user.lastName)
-    }
-
-    fromCache(LdapUserService.SearchCacheRegion, usernameLike, cacheFilter) {
-      template.search(
-        config.userSearchBase,
-        filter(usernameLike),
-        UserContextMapper(includeGroups = false)
-      ).toList.asInstanceOf[List[User]].sortBy(_.username.toLowerCase)
-    }
+  def findByUsernames(userNames: Seq[String]): Seq[User] = {
+    val filter = "(&(%s)(|%s))".format(
+      config.usersServiceFilter,
+      userNames.map { username => "(%s)".format(usernameFilter(config.stripDomain(username))) }.mkString
+    )
+    search(filter, UserContextMapper(includeGroups = false, includeCredentials = false))
   }
+
+  def search(pattern: String): List[User] =
+    search(
+      "(&(%s)(|(%s)(sn=%s)(givenName=%3$s)))".format(config.usersServiceFilter, usernameFilter(pattern), pattern),
+      UserContextMapper(includeGroups = false)
+    )
 
   def doesUserExist(userName: String): Boolean =
     findByUsername(config.stripDomain(userName)).isDefined
 
   def doUsersExist(userNames: Seq[String]): Boolean =
-    userNames.forall { u => doesUserExist(config.stripDomain(u)) }
+    findByUsernames(userNames).map(_.username.toLowerCase).toSet == userNames.map(_.toLowerCase).toSet
 
   def list: List[User] =
-    template.search(
-      config.userSearchBase,
-      config.usersServiceFilter,
-      UserContextMapper(includeGroups = false)
-    ).toList.asInstanceOf[List[User]].sortBy(_.username.toLowerCase)
+    search(config.usersServiceFilter, UserContextMapper(includeGroups = false))
 
   def getUserGroups(username: String): Option[Seq[String]] =
     find(config.stripDomain(username), includeCredentials = false) flatMap { _.groups }
+
+  private def search(filter: String, mapper: ContextMapper) = {
+    val handler = new ContextMapperCallbackHandler(mapper)
+    val controls =
+      new SearchControls(SearchControls.SUBTREE_SCOPE, config.sizeLimit, config.timeout, null, true, false)
+
+    log.debug("User search base: '%s'; filter: '%s'", config.userSearchBase, filter)
+
+    try {
+      template.search(config.userSearchBase, filter, controls, handler)
+    } catch {
+      case e: SizeLimitExceededException =>
+        log.warn("Size limit exceeded error occured. Found %s records", handler.getList.size())
+      case e: TimeLimitExceededException =>
+        log.warn("Time limit exceeded error occured. Found %s records", handler.getList.size())
+    }
+
+    handler.getList.toList.asInstanceOf[List[User]].sortBy(_.username.toLowerCase)
+  }
 
 }
