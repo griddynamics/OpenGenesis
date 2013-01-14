@@ -37,7 +37,7 @@ class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: Ex
   var running = 0
   var total = 0
 
-  protected def receive = {
+  override def receive = {
     case rt@RemoteTask(action, supervisor, logger) => try {
       actionToExec(action).foreach(a => {
         val actor = executorActor(a, supervisor, logger)
@@ -47,7 +47,7 @@ class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: Ex
         sender ! actor
       })
     } catch {
-      case t =>
+      case t: Throwable =>
         sender ! akka.actor.Status.Failure(t)
         log.error(t, "Error while processing remote task: %s", rt)
     }

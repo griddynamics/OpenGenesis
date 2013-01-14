@@ -26,11 +26,11 @@ object TryingUtil {
 
   def attempt[A](f: => A): Option[A] = {
     try { Some( f ) }
-    catch { case _ => None }
+    catch { case _: Throwable => None }
   }
 
   def silently [A](f: => A) {
     try{ f }
-    catch { case _ => }
+    catch { case _: Throwable => }
   }
 }

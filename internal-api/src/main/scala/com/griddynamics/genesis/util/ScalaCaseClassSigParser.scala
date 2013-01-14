@@ -24,13 +24,13 @@ package com.griddynamics.genesis.util
 
 import tools.scalap.scalax.rules.scalasig._
 import reflect.ScalaSignature
-import reflect.generic.ByteCodecs
 import scala.{Some, Error}
 import tools.scalap.scalax.rules.scalasig.MethodSymbol
 import tools.scalap.scalax.rules.scalasig.ClassFile
 import tools.scalap.scalax.rules.scalasig.ClassSymbol
 import tools.scalap.scalax.rules.scalasig.ScalaSig
 import tools.scalap.scalax.rules.scalasig.TypeRefType
+import reflect.internal.pickling.ByteCodecs
 
 object ScalaCaseClassSigParser {
 

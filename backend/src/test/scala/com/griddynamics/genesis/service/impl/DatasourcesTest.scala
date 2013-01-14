@@ -49,7 +49,7 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
         assert(varDesc.nonEmpty)
         val listDS12 = varDesc.find(_.name == "listDS12")
         assert(listDS12.isDefined)
-        expect(Map("value1"->"value1", "value2" -> "value2", "value3" -> "value3"))(listDS12.get.values)
+        expectResult(Map("value1"->"value1", "value2" -> "value2", "value3" -> "value3"))(listDS12.get.values)
     }
 
     @Test def testNoArgsSource() {
@@ -58,7 +58,7 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
         assert(varDesc.nonEmpty)
         val listDS12 = varDesc.find(_.name == "noArgs")
         assert(listDS12.isDefined)
-        expect(Seq("a", "b", "c").zip(Seq("a", "b", "c")).toMap)(listDS12.get.values)
+        expectResult(Seq("a", "b", "c").zip(Seq("a", "b", "c")).toMap)(listDS12.get.values)
     }
 
     @Test def testNoArgsDefault() {
@@ -67,7 +67,7 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
         assert(varDesc.nonEmpty)
         val listDS12 = varDesc.find(_.name == "noArgs")
         assert(listDS12.isDefined)
-        expect(Seq("a", "b", "c").zip(Seq("a", "b", "c")).toMap)(listDS12.get.values)
+        expectResult(Seq("a", "b", "c").zip(Seq("a", "b", "c")).toMap)(listDS12.get.values)
         template.createWorkflow.embody(Map("nodesCount" -> "1"))
     }
 
@@ -77,7 +77,7 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
         assert(varDesc.nonEmpty)
         val listDS1 = varDesc.find(_.name == "listDS1")
         assert(listDS1.isDefined)
-        expect(Seq("value1", "value2").map(v => (v,v)).toMap)(listDS1.get.values)
+        expectResult(Seq("value1", "value2").map(v => (v,v)).toMap)(listDS1.get.values)
     }
 
     @Test def testDependent() {
@@ -87,12 +87,12 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
         val listDS1 = varDesc.find(_.name == "dependent")
         assert(listDS1.isDefined)
         val S1 = Map()
-        expect(S1)(listDS1.get.values)
+        expectResult(S1)(listDS1.get.values)
         val partial: Seq[VariableDescription] = template.createWorkflow.partial(Map("nodesCount" -> 1))
         val descAfterApply = partial.find(_.name == "dependent")
         assert(descAfterApply.isDefined)
         assert(! descAfterApply.get.values.isEmpty)
-        expect(Map("11" -> "1", "31" -> "3", "41" -> "4"))(descAfterApply.get.values)
+        expectResult(Map("11" -> "1", "31" -> "3", "41" -> "4"))(descAfterApply.get.values)
     }
 
     @Test def testDoubleDependent() {
@@ -102,12 +102,12 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
         val listDS1 = varDesc.find(_.name == "doubleDep")
         assert(listDS1.isDefined)
         val S1 = Map()
-        expect(S1)(listDS1.get.values)
+        expectResult(S1)(listDS1.get.values)
         val partial: Seq[VariableDescription] = template.createWorkflow.partial(Map("dependent" -> "z", "nodesCount" -> 1))
         val descAfterApply = partial.find(_.name == "doubleDep")
         assert(descAfterApply.isDefined)
         assert(! descAfterApply.get.values.isEmpty)
-        expect(Map("1 < nc:1 < dp:z" -> "1", "3 < nc:1 < dp:z" -> "3", "4 < nc:1 < dp:z" -> "4"))(descAfterApply.get.values)
+        expectResult(Map("1 < nc:1 < dp:z" -> "1", "3 < nc:1 < dp:z" -> "3", "4 < nc:1 < dp:z" -> "4"))(descAfterApply.get.values)
     }
 
     @Test def testTripleDependent() {
@@ -118,13 +118,13 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
         val listDS1 = varDesc.find(_.name == "triple")
         assert(listDS1.isDefined)
         val S1 = Map()
-        expect(S1)(listDS1.get.values)
+        expectResult(S1)(listDS1.get.values)
         val partial = template.createWorkflow.partial(Map("list" -> 13, "dependent" -> 'z', "nodesCount" -> 1))
         assert(partial.length == 8)
         val descAfterApply = partial.find(_.name == "triple")
         assert(descAfterApply.isDefined)
         assert(! descAfterApply.get.values.isEmpty)
-        expect(Map("1<13<1<z" -> "1", "3<13<1<z" -> "3", "4<13<1<z" -> "4"))(descAfterApply.get.values)
+        expectResult(Map("1<13<1<z" -> "1", "3<13<1<z" -> "3", "4<13<1<z" -> "4"))(descAfterApply.get.values)
     }
 
     @Test def testInlineDSDeclarationWithDependency() {
@@ -136,14 +136,14 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
         val listDS1 = varDesc.find(_.name == "list")
         assert(listDS1.isDefined)
 
-        expect(Map())(listDS1.get.values)
-        expect(Some(List("key")))(listDS1.get.dependsOn)
+        expectResult(Map())(listDS1.get.values)
+        expectResult(Some(List("key")))(listDS1.get.dependsOn)
 
         val partial = template.createWorkflow.partial(Map("key" -> 666))
 
         val descAfterApply = partial.find(_.name == "list")
         assert(descAfterApply.isDefined)
-        expect(Map("666" -> "666"))(descAfterApply.get.values)
+        expectResult(Map("666" -> "666"))(descAfterApply.get.values)
     }
 
     @Test def testInlineDSDeclaration() {
@@ -155,16 +155,16 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
         val listDS1 = varDesc.find(_.name == "independant")
         assert(listDS1.isDefined)
 
-        expect(None)(listDS1.get.dependsOn)
+        expectResult(None)(listDS1.get.dependsOn)
 
         val partial = template.createWorkflow.partial(Map())
 
         val descAfterApply = partial.find(_.name == "independant")
         assert(descAfterApply.isDefined)
-        expect(Map("1" -> "1", "2" -> "2"))(descAfterApply.get.values)
+        expectResult(Map("1" -> "1", "2" -> "2"))(descAfterApply.get.values)
         val validation = template.createWorkflow.validate(Map("key" -> "a", "list" -> "a", "independant" -> 3))
-        expect(1)(validation.size)
-        expect("independant")(validation.head.variableName)
+        expectResult(1)(validation.size)
+        expectResult("independant")(validation.head.variableName)
     }
 }
 

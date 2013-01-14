@@ -25,7 +25,7 @@ package com.griddynamics.genesis.util
 object SafeOperation {
     def apply[T](action : => T)(handler : Throwable => Unit) : Option[T] = {
         try { Some(action) }
-        catch { case t => {
+        catch { case t: Throwable => {
             handler(t)
             None
         }}

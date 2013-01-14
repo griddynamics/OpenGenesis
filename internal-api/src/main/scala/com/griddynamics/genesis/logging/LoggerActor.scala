@@ -28,7 +28,7 @@ import akka.actor._
 import java.sql.Timestamp
 
 class LoggerActor(val service: StoreService) extends Actor with Logging {
-  protected def receive = {
+  override def receive = {
     case Log(id, message, timestamp) => {
       service.writeLog(id, message, timestamp)
     }

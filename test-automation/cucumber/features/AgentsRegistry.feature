@@ -18,6 +18,6 @@ Feature: Agent registry CRUD tests
     Then Variable error with code 400 and error "<field>": "<message>" should be returned
     Examples:
     |hostname|port    |tags   |field        |message                                  |
-    |        |       0|test   |hostname     |may not be empty                         |
+    |        |       0|test   |hostname     |Invalid format. Hostname must be a host name according to RFC 952 or valid IP v4 address                        |
     |host    |       0|test   |port         |must be greater than or equal to 1       |
     |host    |   40000|test   |port         |must be less than or equal to 32767      |

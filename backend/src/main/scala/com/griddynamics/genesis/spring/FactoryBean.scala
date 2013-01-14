@@ -23,8 +23,9 @@
 package com.griddynamics.genesis.spring
 
 import org.springframework.beans.factory.{FactoryBean=>SpringFactoryBean}
+import reflect.ClassTag
 
 abstract class FactoryBean[T](val isSingleton : Boolean = true)
-                             (implicit manifest : ClassManifest[T]) extends SpringFactoryBean[T] {
-    def getObjectType = manifest.erasure
+                             (implicit manifest : ClassTag[T]) extends SpringFactoryBean[T] {
+    def getObjectType = manifest.runtimeClass
 }

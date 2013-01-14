@@ -23,6 +23,7 @@
 package com.griddynamics.genesis.workflow.actor
 
 import scala.collection.mutable
+import scala.concurrent.duration._
 import com.griddynamics.genesis.workflow
 import com.griddynamics.genesis.workflow.message._
 import java.util.concurrent.ExecutorService
@@ -39,6 +40,8 @@ import com.griddynamics.genesis.logging.LoggerWrapper
 import org.apache.commons.lang.exception.ExceptionUtils
 import com.griddynamics.genesis.configuration.WorkflowConfig
 import com.griddynamics.genesis.agents.AgentGateway
+import concurrent.Await
+import akka.util.Timeout
 
 class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
                       supervisor: ActorRef,
@@ -56,7 +59,7 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
     private val regularExecutors = mutable.Set[ActorRef]()
     val signalExecutors = mutable.Set[ActorRef]()
 
-    protected def receive = {
+    override def receive = {
         case Start => {
             log.debug("Starting step '%s'", safeStepCoordinator.step)
 
@@ -171,9 +174,7 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
    }
 
   import akka.pattern.ask
-  import akka.util.duration._
-  import akka.dispatch.Await
-  private lazy val TIMEOUT_REMOTE_ACTOR = akka.util.Timeout(config.remoteExecutorWaitTimeout  seconds)
+  private val TIMEOUT_REMOTE_ACTOR = Timeout(config.remoteExecutorWaitTimeout  seconds)
 
   private def remoteExecutor(tag: String, action: Action) = try {
     // TODO: is it possible to start single action on several agents?
@@ -184,13 +185,13 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
     implicit val timeout = TIMEOUT_REMOTE_ACTOR
     val logger = action match {
       case al: ActionWithLog => al.logger
-      case _ => LoggerWrapper.logger
+      case _ => LoggerWrapper.logger()
     }
     val futureRemote = remoteFront ? RemoteTask(action, self, logger)
     log.debug("Waiting for remote executor... ")
     Await.result(futureRemote, timeout.duration).asInstanceOf[ActorRef]
   } catch {
-    case t => logThrowable(action, t, "remoteExecutor")
+    case t: Throwable => logThrowable(action, t, "remoteExecutor")
     self ! ExecutorThrowable(action, t)
     self
   }
@@ -214,7 +215,7 @@ class SafeStepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator)
         try {
             unsafeStepCoordinator.onStepStart()
         } catch {
-            case t => {
+            case t: Throwable => {
                 log.warn(t, "Throwable while onStepStart for step '%s'", step)
                 exceptionalResult = Some(CoordinatorThrowable(step, t))
                 this.onStepInterrupt(Fail(Mistake(t)))
@@ -225,7 +226,7 @@ class SafeStepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator)
         try {
             unsafeStepCoordinator.onStepInterrupt(signal)
         } catch {
-            case t => {
+            case t: Throwable => {
                 log.warn(t, "Throwable while onStepInterrupt for step '%s' and signal '%s'",
                     step, signal)
                 Seq()
@@ -236,7 +237,7 @@ class SafeStepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator)
         try {
             unsafeStepCoordinator.onActionFinish(actionResult)
         } catch {
-            case t => {
+            case t: Throwable => {
                 log.warn(t, "Throwable while onActionFinish for step '%s' and action result '%s'",
                     step, actionResult)
 
@@ -251,7 +252,7 @@ class SafeStepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator)
         try {
             exceptionalResult.getOrElse { unsafeStepCoordinator.getStepResult() }
         } catch {
-            case t => {
+            case t: Throwable => {
                 log.warn(t, "Throwable while getStepResult for step '%s'", step)
                 CoordinatorThrowable(step, t)
             }

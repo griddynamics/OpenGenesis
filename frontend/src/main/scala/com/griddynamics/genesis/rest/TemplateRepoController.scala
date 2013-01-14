@@ -46,7 +46,7 @@ class TemplateRepoController extends RestApiExceptionsHandler {
   def getModeSettings(@PathVariable("mode") mode: String) = try {
     service.listSettings(Modes.withName(mode))
   } catch {
-    case t => throw new ResourceNotFoundException("No such template repository: %s".format(mode))
+    case t: Throwable => throw new ResourceNotFoundException("No such template repository: %s".format(mode))
   }
 
   @RequestMapping(value = Array("projects/{projectId}/template/repository"), method = Array(RequestMethod.GET))

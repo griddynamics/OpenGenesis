@@ -24,15 +24,16 @@ package com.griddynamics.genesis.agents
 
 import com.griddynamics.genesis.service.{GenesisSystemProperties, ConfigService, AgentsHealthService}
 import akka.actor._
-import com.griddynamics.genesis.api.{JobStats, RemoteAgent}
-import akka.dispatch.{Future, Await}
-import akka.util.duration.intToDurationInt
+import com.griddynamics.genesis.api.{AgentStatus, JobStats, RemoteAgent}
+import concurrent.{ExecutionContext, Future, Await}
+import scala.concurrent.duration._
 import akka.pattern.{AskTimeoutException, ask}
 import com.griddynamics.genesis.api.AgentStatus._
-import akka.util.Timeout
 import java.util.concurrent.TimeoutException
 import com.griddynamics.genesis.util.Logging
 import akka.actor.SupervisorStrategy.Resume
+import akka.util.Timeout
+import com.griddynamics.genesis.api.AgentStatus.AgentStatus
 
 class AgentsHealthServiceImpl(actorSystem: ActorSystem, configService: ConfigService)
   extends AgentsHealthService with Logging{
@@ -42,17 +43,17 @@ class AgentsHealthServiceImpl(actorSystem: ActorSystem, configService: ConfigSer
   private val tracker = actorSystem.actorOf(Props(new Actor with ActorLogging {
     val child = context.actorOf(Props(new StatusTrackerRoot(agentPollingPeriod)))
 
-    protected def receive = {
+    override def receive = {
       case m => child.forward(m)
     }
 
-    override def supervisorStrategy() = {
+    override def supervisorStrategy = {
      def decider: SupervisorStrategy.Decider = { case _: Exception => Resume }
      OneForOneStrategy()(decider)
     }
   }))
 
-  implicit val requestTimeout = Timeout(1 seconds)
+  implicit val requestTimeout = Timeout(1 second)
 
   def checkStatus(agent: RemoteAgent) = try {
     val future = (tracker ? GetAgentStatus(agent)).mapTo[(AgentStatus, Option[JobStats])]
@@ -62,14 +63,16 @@ class AgentsHealthServiceImpl(actorSystem: ActorSystem, configService: ConfigSer
   }
 
   def checkStatus(agents: Seq[RemoteAgent]): Seq[(RemoteAgent, (AgentStatus, Option[JobStats]))] = {
+    implicit val ec: ExecutionContext = actorSystem.dispatcher
     val futures = agents.map { a =>
       val statusFuture = (tracker ? GetAgentStatus(a)).mapTo[(AgentStatus, Option[JobStats])]
       statusFuture.recover {
         case e: AskTimeoutException  => (Unavailable, None)
       }.map ((a, _))
     }
-    implicit val context = actorSystem.dispatcher
-    Await.result(Future.sequence(futures), 2 seconds)
+    val result: Seq[(RemoteAgent, (AgentStatus.AgentStatus, Option[JobStats]))]
+        = Await.result(Future.sequence(futures), Timeout(2 seconds).duration)
+    result
   }
 
   def stopTracking(agent: RemoteAgent) {

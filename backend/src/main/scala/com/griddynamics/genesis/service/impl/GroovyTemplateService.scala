@@ -92,7 +92,7 @@ class GroovyTemplateService(val templateRepoService : TemplateRepoService,
     private def templatesMap(projectId: Int) = {
         val sources = templateRepo(projectId).listSources()
         (for ((version, body) <- sources) yield try {
-            val template = evaluateTemplate(projectId, body, None, None, None, true)
+            val template = evaluateTemplate(projectId, body, None, None, None, listOnly = true)
 
             template.foreach(t => {
               val key = TmplCacheKey(t.name, t.version, projectId)
@@ -327,7 +327,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
         try {
           convert(String.valueOf(v), variable)
         } catch {
-          case e => null
+          case e: Throwable => null
         }
       ))
     }
@@ -364,7 +364,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
       try {
         conversionService.convert(value, variable.clazz)
       } catch {
-        case _ => {
+        case _: Throwable => {
             val className = variable.clazz.getName
             throw new ConversionException(variable.name, "Conversion failed. Expected type is %s".format(className.substring(className.lastIndexOf('.') + 1)))
         }

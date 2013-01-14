@@ -48,7 +48,7 @@ with FlowActor with Logging {
     val stepCoordinators = mutable.Set[ActorRef]()
     val finalCoordinators = mutable.Set[ActorRef]()
 
-    protected def receive = {
+    override def receive = {
         case Start => {
             log.debug("Starting flow '%s'", safeFlowCoordinator.flowDescription)
             beatSource.subscribeOnce(self, Beat(TimeOut()), config.flowTimeOutMs)
@@ -160,7 +160,7 @@ class SafeFlowCoordinator(unsafeFlowCoordinator: workflow.FlowCoordinator)
         try {
             unsafeFlowCoordinator.flowDescription
         } catch {
-            case t => {
+            case t: Throwable => {
                 val systemName = unsafeFlowCoordinator.getClass.getName + "@" +
                     java.lang.System.identityHashCode(unsafeFlowCoordinator)
                 log.warn(t, "Throwable while flowDescription for flow coordinator %s", systemName)
@@ -172,7 +172,7 @@ class SafeFlowCoordinator(unsafeFlowCoordinator: workflow.FlowCoordinator)
         try {
             unsafeFlowCoordinator.onStepFinish(result)
         } catch {
-            case t => {
+            case t: Throwable => {
                 log.warn(t, "Throwable while onStepFinish for flow '%s' and step result '%s'",
                     flowDescription, result)
                 Left(Fail(Mistake(t)))
@@ -184,7 +184,7 @@ class SafeFlowCoordinator(unsafeFlowCoordinator: workflow.FlowCoordinator)
             unsafeFlowCoordinator.onFlowFinish(signal)
         }
         catch {
-            case t => log.warn(t, "Throwable while onFlowFinish for flow '%s' and signal '%s'",
+            case t: Throwable => log.warn(t, "Throwable while onFlowFinish for flow '%s' and signal '%s'",
                 flowDescription, signal)
         }
     }
@@ -193,7 +193,7 @@ class SafeFlowCoordinator(unsafeFlowCoordinator: workflow.FlowCoordinator)
         try {
             unsafeFlowCoordinator.onFlowStart()
         } catch {
-            case t => {
+            case t: Throwable => {
                 log.warn(t, "Throwable while onFlowStart for flow '%s'", flowDescription)
                 Left(Fail(Mistake(t)))
             }

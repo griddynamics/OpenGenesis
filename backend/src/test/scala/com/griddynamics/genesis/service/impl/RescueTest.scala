@@ -27,6 +27,6 @@ class RescueTest extends AssertionsForJUnit with MockitoSugar {
     def testRescue() {
         val createWorkflow = templateService.findTemplate(0, "Rescue", "0.1").get.createWorkflow
         val steps = createWorkflow.embody(Map())
-        expect(1)(steps.onError.size)
+        expectResult(1)(steps.onError.size)
     }
 }

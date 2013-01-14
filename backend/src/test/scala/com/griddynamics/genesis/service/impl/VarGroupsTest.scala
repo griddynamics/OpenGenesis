@@ -50,28 +50,28 @@ class VarGroupsTest extends AssertionsForJUnit with MockitoSugar {
 
     @Test
     def testSimpleGroup() {
-      expect(None)(createWorkflow.variableDescriptions.find(_.name == "a").get.group)
-      expect(Some("testGroup"))(createWorkflow.variableDescriptions.find(_.name == "b").get.group)
-      expect(Some("testGroup"))(createWorkflow.variableDescriptions.find(_.name == "c").get.group)
+      expectResult(None)(createWorkflow.variableDescriptions.find(_.name == "a").get.group)
+      expectResult(Some("testGroup"))(createWorkflow.variableDescriptions.find(_.name == "b").get.group)
+      expectResult(Some("testGroup"))(createWorkflow.variableDescriptions.find(_.name == "c").get.group)
     }
 
     @Test
     def testValidateSuccess() {
-      expect(Seq())(createWorkflow.validate(Map("a" -> 1, "b" -> true, "y" -> 3, "x" -> "s")))
+      expectResult(Seq())(createWorkflow.validate(Map("a" -> 1, "b" -> true, "y" -> 3, "x" -> "s")))
     }
 
     @Test
     def testValidateFail() {
       val errors = createWorkflow.validate(Map("a" -> 1, "b" -> false, "c" -> 3, "y" -> 0))
-      expect(2)(errors.size)
-      expect("b")(errors.head.variableName)
-      expect("No more than one variable in group 'testGroup' could have value")(errors.head.description)
-      expect("c")(errors.tail.head.variableName)
+      expectResult(2)(errors.size)
+      expectResult("b")(errors.head.variableName)
+      expectResult("No more than one variable in group 'testGroup' could have value")(errors.head.description)
+      expectResult("c")(errors.tail.head.variableName)
      }
 
     @Test
     def testValidateRequiredFail() {
       val errors = createWorkflow.validate(Map("a" -> 1))
-      expect(1)(errors.size)
+      expectResult(1)(errors.size)
     }
 }

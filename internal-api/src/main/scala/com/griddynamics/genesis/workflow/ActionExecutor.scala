@@ -81,7 +81,7 @@ with Logging {
                     syncExecutor.cleanUp(signal.get())
                 }
                 catch {
-                    case t => log.warn(t, "Throwable while invoking cleanUp for '%s'", action)
+                    case t: Throwable => log.warn(t, "Throwable while invoking cleanUp for '%s'", action)
                 }
             }
         }
