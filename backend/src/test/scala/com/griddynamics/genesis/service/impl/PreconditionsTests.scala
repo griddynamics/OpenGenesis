@@ -33,7 +33,7 @@ class PreconditionsTests extends AssertionsForJUnit with MockitoSugar {
         val definition: TemplateDefinition = templateService.findTemplate(0, "Precondidions", "0.1").get
         assert(definition != null)
         val workflow: ExtendedResult[WorkflowDefinition] = definition.getValidWorkflow(definition.createWorkflow.name)
-        expect(Failure(compoundServiceErrors = Seq("Second requirement not met")))(workflow)
+        expectResult(Failure(compoundServiceErrors = Seq("Second requirement not met")))(workflow)
     }
 
 }
