@@ -33,20 +33,20 @@ class ScalaMethodSecurityExpressionHandler extends DefaultMethodSecurityExpressi
 
   override def filter(filterTarget: Any, filterExpression: Expression, ctx: EvaluationContext) = {
     filterTarget match {
-      case seq: Iterable[_] => filterScalaCollection(seq, filterExpression, ctx)
+      case seq: Iterable[AnyRef] => filterScalaCollection(seq, filterExpression, ctx)
       case _ => super.filter(filterTarget, filterExpression, ctx)
     }
   }
 
-  def filterScalaCollection(filterTarget: Iterable[_], filterExpression: Expression, ctx: EvaluationContext) = {
+  def filterScalaCollection(filterTarget: Iterable[AnyRef], filterExpression: Expression, ctx: EvaluationContext) = {
     import scala.collection.JavaConversions._
 
     val rootObject = ctx.getRootObject.getValue.asInstanceOf[SecurityExpressionRoot]
     permissionCacheOptimizer.foreach { _.cachePermissionsFor(rootObject.getAuthentication, filterTarget) }
 
     val accessor = rootObject.asInstanceOf[{ def setFilterObject(o: AnyRef) }]
-    filterTarget.filter { filterObject =>
-      accessor.setFilterObject(filterObject.asInstanceOf[AnyRef])
+    filterTarget filter { filterObject =>
+      accessor.setFilterObject(filterObject)
       ExpressionUtils.evaluateAsBoolean(filterExpression, ctx)
     }
   }

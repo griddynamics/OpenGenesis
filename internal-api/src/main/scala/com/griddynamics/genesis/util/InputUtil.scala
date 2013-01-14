@@ -51,7 +51,7 @@ object InputUtil {
             val lines = IOUtils.readLines(input, encoding)
             JavaConversions.asScalaBuffer(lines).toSeq
         } finally {
-            try {input.close} catch {case _ => ()}
+            try {input.close} catch {case _: Throwable => ()}
         }
     }
 }

@@ -118,8 +118,8 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
         val actualStep: DoNothingStep = newStep.actualStep.asInstanceOf[DoNothingStep]
         assert(actualStep.name == "wilma")
         val step = regular.tail.head.newStep.actualStep.asInstanceOf[DoNothingStep]
-        expect("bar")(step.name)
+        expectResult("bar")(step.name)
         val lastStep = regular.tail.tail.head.newStep.actualStep.asInstanceOf[DoNothingStep]
-        expect("zoo")(lastStep.name)
+        expectResult("zoo")(lastStep.name)
     }
 }

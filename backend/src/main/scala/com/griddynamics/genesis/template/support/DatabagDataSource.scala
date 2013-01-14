@@ -24,7 +24,7 @@ class DatabagDataSource(repository: DatabagRepository) extends VarDataSource {
     val source = map.getOrElse(Source, "project")
     this.tags = tagsList match {
       case s: String => List(s)
-      case list: JList[String] => list
+      case list: JList[_] => list.map(_.toString)
       case _ => List()
     }
     this.selector = source match {

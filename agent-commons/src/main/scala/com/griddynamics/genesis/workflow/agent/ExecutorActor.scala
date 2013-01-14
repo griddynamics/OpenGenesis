@@ -25,7 +25,6 @@ package com.griddynamics.genesis.workflow.agent
 import com.griddynamics.genesis.util.{SafeOperation, Logging}
 import com.griddynamics.genesis.workflow._
 import akka.actor.{Cancellable, ActorRef, PoisonPill, Actor}
-import akka.util.duration._
 import com.griddynamics.genesis.logging.LoggerWrapper
 import akka.event.Logging
 import message._
@@ -33,24 +32,26 @@ import scala.Some
 import com.griddynamics.genesis.workflow.action.{ExecutorInterrupt, ExecutorThrowable}
 import signal.Success
 
-import org.apache.commons.lang.exception.ExceptionUtils
+import org.apache.commons.lang3.exception.ExceptionUtils
+import scala.concurrent.duration._
+import concurrent.ExecutionContext
 
 class ExecutorActor(unsafeExecutor: AsyncActionExecutor,
                     supervisor: ActorRef,
                     beatPeriodMs: Long,
                     logger: LoggerWrapper) extends Actor {
+  import context.dispatcher
   val log = Logging(context.system, this.getClass)
 
   private val safeExecutor = new SafeAsyncActionExecutor(unsafeExecutor, logger)
 
   private var cancellable: Cancellable = _
 
-  protected def receive = {
+  override def receive = {
     case Start => {
       log.debug("Starting async executor for '{}'", safeExecutor.action)
       safeExecutor.startAsync()
       cancellable = context.system.scheduler.schedule(0 milliseconds, beatPeriodMs.intValue() milliseconds, self, Beat(Success()))
-      //            beatSource.subscribe(self, Beat(Success()))
     }
     case Beat(Success()) => {
       safeExecutor.getResult match {

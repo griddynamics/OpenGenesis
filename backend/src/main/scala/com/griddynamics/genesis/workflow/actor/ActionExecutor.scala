@@ -36,7 +36,7 @@ class ActionExecutor(unsafeExecutor: AsyncActionExecutor,
                      beatSource: BeatSource) extends Actor with FlowActor with Logging {
     private val safeExecutor = new SafeAsyncActionExecutor(unsafeExecutor)
 
-    protected def receive = {
+    override def receive = {
         case Start => {
             log.debug("Starting async executor for '%s'", safeExecutor.action)
             safeExecutor.startAsync()
@@ -84,7 +84,7 @@ with Logging {
   def startAsync() = try {
     unsafeExecutor.startAsync
   } catch {
-    case t => logThrowable(t, "startAsync")
+    case t: Throwable => logThrowable(t, "startAsync")
     result = Some(ExecutorThrowable(unsafeExecutor.action, t))
   }
 
@@ -92,7 +92,7 @@ with Logging {
     try {
       result  = unsafeExecutor.getResult
     } catch {
-      case t => logThrowable(t, "getResult")
+      case t: Throwable => logThrowable(t, "getResult")
       result = Some(ExecutorThrowable(unsafeExecutor.action, t))
     }
     result
@@ -102,7 +102,7 @@ with Logging {
     try {
       unsafeExecutor.cleanUp(signal)
     } catch {
-      case t => logThrowable(t, "cleanUp", signal)
+      case t: Throwable => logThrowable(t, "cleanUp", signal)
     }
   }
 

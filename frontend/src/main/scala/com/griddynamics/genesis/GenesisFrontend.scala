@@ -143,7 +143,7 @@ object GenesisFrontend extends Logging {
             server.stop()
         }
     } catch {
-      case e => {
+      case e: Throwable => {
         log.error(e, e.getMessage)
         throw e
       }

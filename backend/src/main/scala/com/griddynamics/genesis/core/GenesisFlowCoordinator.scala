@@ -288,7 +288,7 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
           }
 
         } catch {
-          case e => {
+          case e: Throwable => {
             LoggerWrapper.writeStepLog(result.step.id, "Failed to export step result to context: export settings = " + result.step.exportTo)
             throw e
           }

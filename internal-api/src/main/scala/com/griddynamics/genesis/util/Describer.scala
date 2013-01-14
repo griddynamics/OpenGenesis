@@ -57,11 +57,11 @@ class Describer(description: String = "") {
   }
 
 
-  private def toString(list: Iterable[_]): String =
-    "[ " + list.map(toString(_)).mkString(", ") + " ]"
+  private def toString(list: Iterable[Any]): String =
+    "[ " + list.map(e => toString(e)).mkString(", ") + " ]"
 
-  private def toString(values: scala.collection.Map[_, _]): String =
-    "{ " + values.map(toString(_)).mkString(", ") + " }"
+  private def toString(values: scala.collection.Map[Any, Any]): String =
+    "{ " + values.map(tuple => toString(tuple)).mkString(", ") + " }"
 
   private def toString(tuple: (Any, Any)): String = tuple._1 + " = " + toString(tuple._2)
 

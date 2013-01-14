@@ -27,7 +27,6 @@ import akka.remote._
 import akka.actor.FSM.Transition
 import akka.actor.FSM.CurrentState
 import akka.actor.FSM.SubscribeTransitionCallBack
-import akka.util.duration.intToDurationInt
 import akka.remote.RemoteClientConnected
 import akka.remote.RemoteClientDisconnected
 
@@ -35,6 +34,7 @@ import com.griddynamics.genesis.api.AgentStatus._
 import com.griddynamics.genesis.api
 import api.{JobStats, RemoteAgent}
 import com.griddynamics.genesis.agents.status.{GetStatus, StatusResponse}
+import scala.concurrent.duration._
 
 case class GetAgentStatus(agent: RemoteAgent)
 case class StartTracking(agent: RemoteAgent)
@@ -57,7 +57,7 @@ class StatusTrackerRoot(pollingPeriod: Int) extends Actor {
     context.actorOf(Props(new StatusTracker(agent, pollingPeriod)))
   }
 
-  protected def receive = {
+  override def receive = {
     case m@RemoteClientConnected(remote, address) => lookupTracker(address).forward(m)
     case m@RemoteClientDisconnected(remote, address) => lookupTracker(address).forward(m)
 
@@ -113,7 +113,7 @@ class StatusTracker(agent: RemoteAgent, pollingPeriodSecs: Int) extends Actor wi
     case api.AgentStatus.Disconnected -> api.AgentStatus.Connected  => remoteAgent ! GetStatus
   }
 
-  when(Active, stateTimeout = (pollingPeriodSecs * 3).seconds) {
+  when(Active, stateTimeout = (pollingPeriodSecs * 3) seconds) {
     case Event(e: StatusResponse, _) =>
       val stat: JobsStat = JobsStat(e.totalJobs, e.activeJobs)
       context.parent ! (agent, stat)
@@ -132,7 +132,7 @@ class StatusTracker(agent: RemoteAgent, pollingPeriodSecs: Int) extends Actor wi
 
   override def preStart() {
     if(stateName != Error) {
-      setTimer(timer, GetStatus, pollingPeriodSecs.seconds, repeat = true)
+      setTimer(timer, GetStatus, pollingPeriodSecs seconds, repeat = true)
       remoteAgent ! GetStatus
     }
     super.preStart()

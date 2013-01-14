@@ -50,7 +50,6 @@ class DefaultAuthorityService(permissionService: PermissionService) extends Auth
 
     val grantedAuths = auths.map(new Authority(groupName, _))
     groupAuthorities.insert(grantedAuths)
-
     Success(groupName)
   }
 
@@ -83,7 +82,8 @@ class DefaultAuthorityService(permissionService: PermissionService) extends Auth
     where(item.principalName in (groups.map(_.name))).select(item.authority)
   ).distinct.toList
 
-  private def withValidRoles[A](auths: List[String])(block: => ExtendedResult[A]) = {
+
+  private  def withValidRoles[A](auths: List[String])(block: => ExtendedResult[A]) = {
     val unknownRoles: List[String] = auths.diff(listAuthorities)
     if(unknownRoles.isEmpty) {
       block

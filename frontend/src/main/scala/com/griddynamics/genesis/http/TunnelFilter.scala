@@ -108,7 +108,6 @@ object TunnelFilter extends Logging {
     }
 
     def authorities = {
-        import collection.JavaConversions._
         val context: SecurityContext = SecurityContextHolder.getContext
         if (context != null && context.getAuthentication != null)
             context.getAuthentication.getAuthorities
@@ -276,7 +275,7 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
               connection.getInputStream
             } catch {
               //on codes >= 400 connection.getInputStream throws error, but all data are in connection.errorStream
-              case e => connection.getErrorStream
+              case e: Throwable => connection.getErrorStream
             }
             //I have no idea why there is nulls for header names, but we have to check it
             for(entry <- connection.getHeaderFields if (entry._1 != null && entry._1 != "Connection"
@@ -295,11 +294,11 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
             try {
                 stream.close()
             } catch {
-                case e => log.debug("Error when re-closing stream")
+                case e: Throwable => log.debug("Error when re-closing stream")
             }
             localOut.flush()
         } catch {
-            case e => {
+            case e: Throwable => {
                 log.error(e, "Error when tunneling request")
                 response.resetBuffer()
                 response.sendError(503, "Error reading remote answer")

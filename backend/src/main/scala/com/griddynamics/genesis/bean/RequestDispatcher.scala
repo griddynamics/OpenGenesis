@@ -85,7 +85,7 @@ class RequestDispatcherImpl(workflowConfig: WorkflowConfig,
             coordinators((env.id, env.projectId)).start()
         })
       } catch {
-        case e => {
+        case e: Throwable => {
           log.error(e, "Failed to start workflow [%s] for env [%d]".format(workflow.name, envId))
           env.status = EnvStatus.Broken
           workflow.status = Failed
