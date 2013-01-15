@@ -32,6 +32,8 @@ import com.griddynamics.genesis.workflow.TrivialStepExecutor
 import com.griddynamics.genesis.core.TrivialStepCoordinatorFactory
 import com.griddynamics.genesis.workflow.{StepResult, Step}
 import com.griddynamics.genesis.service.RemoteAgentsService
+import com.typesafe.config.{Config, ConfigFactory}
+import org.springframework.core.io.Resource
 
 trait WorkflowContext {
     def requestBroker: RequestBroker
@@ -45,21 +47,23 @@ class DefaultWorkflowContext extends WorkflowContext {
     @Value("${genesis.system.flow.timeout.ms:3600000}") var flowTimeOutMs: Int = _
     @Value("${genesis.system.flow.executor.sync.threads.max:5}") var syncExecThreadPoolSize: Int = _
     @Value("${genesis.system.remote.executor.wait.timeout:10}") var remoteExecutorWaitTimeout: Int = _
+    @Value("${backend.properties}") var backendProperties: Resource = _
 
     @Autowired var storeServiceContext: StoreServiceContext = _
     @Autowired var templateServiceContext: TemplateServiceContext = _
     @Autowired var remoteAgentService: RemoteAgentsService = _
 
-    val actorSystem: ActorSystem = ActorSystem()
+    private val defaultConfigs: Config = ConfigFactory.load()
+    private def overrides: Config = ConfigFactory.parseFile(backendProperties.getFile)
+
+    @Bean def actorSystem: ActorSystem = ActorSystem("genesis-actor-system", overrides.withFallback(defaultConfigs))
 
     @Bean def requestDispatcher: RequestDispatcher = {
       val props: TypedProps[RequestDispatcher] = TypedProps(classOf[RequestDispatcher], requestDispatcherBean)
       TypedActor(actorSystem).typedActorOf(props)
     }
 
-    @Bean def system: ActorSystem = actorSystem
-
-    @Bean def requestDispatcherBean: RequestDispatcher = {
+    private def requestDispatcherBean: RequestDispatcher = {
       new RequestDispatcherImpl(
         WorkflowConfig(beatPeriodMs, flowTimeOutMs, remoteExecutorWaitTimeout),
         storeService = storeServiceContext.storeService,
@@ -89,5 +93,4 @@ class DefaultWorkflowContext extends WorkflowContext {
     @Autowired var stepCoordinators: Array[PartialStepCoordinatorFactory] = _
 
     @Autowired(required = false) var executors: Array[TrivialStepExecutor[_ <: Step, _ <: StepResult]] = Array()
-
 }
