@@ -47,7 +47,7 @@
         <filter-class>com.griddynamics.genesis.resources.ResourceFilter</filter-class>
         <init-param>
             <param-name>resourceRoots</param-name>
-            <param-value>classpath:</param-value>
+            <param-value>classpath:genesis/</param-value>
         </init-param>
         <init-param>
             <param-name>debugMode</param-name>
