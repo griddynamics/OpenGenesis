@@ -1,8 +1,8 @@
 ({
-    baseUrl: "src/main/resources/app",
-    mainConfigFile: "src/main/resources/app/requirejs-config.js",
-    out: "target/appdirectory-build/main-built.js",
+    baseUrl: "src/main/resources/genesis/app",
+    mainConfigFile: "src/main/resources/genesis/app/requirejs-config.js",
+    out: "target/appdirectory-build/genesis/main-built.js",
     name: "app",
-    resourcesRoot: "src/main/resources/", //note: non-standard config
+    resourcesRoot: "src/main/resources/genesis/", //note: non-standard config
     stubModules: ['cs']
 })
