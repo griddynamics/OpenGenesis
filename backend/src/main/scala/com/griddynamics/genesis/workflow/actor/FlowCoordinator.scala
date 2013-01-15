@@ -212,9 +212,8 @@ trait TypedFlowCoordinator {
 
 class TypedFlowCoordinatorImpl(flowCoordinator: workflow.FlowCoordinator,
                                workflowConfig: WorkflowConfig,
-                               executorService: ExecutorService, actorSystem: ActorSystem, remoteAgentService: RemoteAgentsService) extends TypedFlowCoordinator
-
-with Logging {
+                               executorService: ExecutorService, actorSystem: ActorSystem, remoteAgentService: RemoteAgentsService)
+  extends TypedFlowCoordinator with Logging {
     val beatSource : BeatSource = {
       val props: TypedProps[BeatSource] = TypedProps(classOf[BeatSource], {new BeatSourceImpl(workflowConfig.beatPeriodMs)})
       TypedActor(actorSystem).typedActorOf(props)
