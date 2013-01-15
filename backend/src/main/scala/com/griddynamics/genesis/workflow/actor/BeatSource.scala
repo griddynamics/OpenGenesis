@@ -53,8 +53,8 @@ class BeatSourceImpl(beatPeriodMs: Long) extends BeatSource with Logging {
   var subscribeOnceMap: mutable.Map[ActorRef, (Beat, Long)] = mutable.WeakHashMap()
   def start() {
     val duration: FiniteDuration = Duration(beatPeriodMs, TimeUnit.MILLISECONDS)
-    val receiver = this
     val scheduler = TypedActor.context.system.scheduler
+    val receiver = TypedActor.self[BeatSource]
     implicit val ec: ExecutionContext = TypedActor.context.dispatcher
     scheduler.schedule(duration, duration, new Runnable {
       def run() {
