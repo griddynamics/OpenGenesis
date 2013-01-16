@@ -36,6 +36,8 @@ class HashedSpec < Test::Unit::TestCase
        hashed.errors.respond_to?("compound").should eq(true)
        hashed.errors.compound.respond_to?("simple").should eq(true)
        hashed.errors.compound.simple.respond_to?("error").should eq(true)
+       hashed.instance_eval("errors.compound.simple.error").should eq("Simple error")
+       hashed.send("errors.compound.simple.error").should eq("Simple error")
      end
   end
 end
