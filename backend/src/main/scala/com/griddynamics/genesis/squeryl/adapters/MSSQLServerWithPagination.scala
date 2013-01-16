@@ -89,16 +89,6 @@ class MSSQLServerWithPagination extends MSSQLServer {
             sw.pushPendingNextLine
           }
 
-          if(! qen.orderByClause.isEmpty && qen.parent == None) {
-            sw.write("Order By")
-            sw.nextLine
-            val ob0 = qen.orderByClause.filter(e => ! e.inhibited)
-            sw.writeIndented {
-              sw.writeNodesWithSeparator(ob0, ",", newLineAfterSeparator = true)
-            }
-            sw.pushPendingNextLine
-          }
-
           writeEndOfQueryHint(qen, sw)
 
           writePaginatedQueryDeclaration(qen, sw)
