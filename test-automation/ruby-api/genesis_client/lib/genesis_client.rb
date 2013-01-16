@@ -145,13 +145,26 @@ module Genesis
   class Hashed
     def initialize(hash)
       hash.each do |k,v|
-        if v.class == Hash
-          self.instance_variable_set("@#{k}", Hashed.new(v))
-        else
-          self.instance_variable_set("@#{k}", v)
-        end
-        self.class.send :define_method, k, proc { self.instance_variable_get("@#{k}") }
+        elements = k.split('.')
+        create_methods_from_elements(elements, v)
       end
+    end
+
+    def create_methods_from_elements(elements, v)
+      if (elements.size == 1)
+        create_methods(elements.first, v)
+      else
+        create_methods_from_elements([elements.first], {elements.drop(1).join(".") => v})
+      end
+    end
+
+    def create_methods(k, v)
+      if v.class == Hash
+        self.instance_variable_set("@#{k}", Hashed.new(v))
+      else
+        self.instance_variable_set("@#{k}", v)
+      end
+      self.class.send :define_method, k, proc { self.instance_variable_get("@#{k}") }
     end
   end
 end
