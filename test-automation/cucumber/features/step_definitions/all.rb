@@ -13,15 +13,8 @@ end
 
 Then /^Variable error with code (\d+) and error "([^"]*)": "([^"]*)" should be returned$/ do |code, field, message|
   error = errors(@last_response, code)
-  error.variablesErrors.respond_to?(field).should eq(true)
+#  error.variablesErrors.respond_to?(field).should eq(true)
   actual = error.variablesErrors.send(field)
-  actual.should eq(message), "Expected to have message #{message}, but actually it's not here: #{actual}"
-end
-
-Then /^settings error with code (\d+) and error "([^"]*)": "([^"]*)" should be returned$/ do |code, propName, message|
-  error = errors(@last_response, code)
-  # must use instance_eval instead of send/respond_to? since propName contains "."
-  actual = error.variablesErrors.instance_eval(propName)
   actual.should eq(message), "Expected to have message #{message}, but actually it's not here: #{actual}"
 end
 

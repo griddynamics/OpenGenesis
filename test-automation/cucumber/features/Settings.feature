@@ -23,7 +23,7 @@ Feature: System and plugins settings create, read, update, delete
 
   Scenario Outline: Update existing settings to invalid values
     When I update a setting "<propName>" set to "<value>"
-    Then settings error with code 400 and error "<propName>": "<message>" should be returned
+    Then Variable error with code 400 and error "<propName>": "<message>" should be returned
     Examples:
     | propName                                      | value				    | message |
     | genesis.system.bind.host                      | !@#$^%  	            | Invalid format. Hostname must be a host name according to RFC 952 or valid IP v4 address|
