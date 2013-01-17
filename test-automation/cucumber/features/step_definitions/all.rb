@@ -13,7 +13,7 @@ end
 
 Then /^Variable error with code (\d+) and error "([^"]*)": "([^"]*)" should be returned$/ do |code, field, message|
   error = errors(@last_response, code)
-  error.variablesErrors.respond_to?(field).should eq(true)
+#  error.variablesErrors.respond_to?(field).should eq(true)
   actual = error.variablesErrors.send(field)
   actual.should eq(message), "Expected to have message #{message}, but actually it's not here: #{actual}"
 end
