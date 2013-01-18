@@ -28,9 +28,9 @@ import java.nio.charset.Charset
 import java.util.Collections
 import org.springframework.http.server.ServerHttpResponse
 import org.springframework.http.{HttpStatus, HttpOutputMessage, HttpInputMessage, MediaType}
-import com.griddynamics.genesis.api.Success
-import com.griddynamics.genesis.api.Failure
+import com.griddynamics.genesis.api.{ExtendedResult, Success, Failure}
 import com.griddynamics.genesis.rest.GenesisRestController.{DEFAULT_CHARSET => DC}
+import java.io.StringWriter
 
 class JsonMessageConverter
         extends HttpMessageConverter[AnyRef]{
@@ -42,6 +42,11 @@ class JsonMessageConverter
     val ApiPackage = Package.getPackage("com.griddynamics.genesis.api")
 
     def write(t: AnyRef, contentType: MediaType, outputMessage: HttpOutputMessage) {
+        def serializeExtendedResult(res: ExtendedResult[_]): String = {
+          val json = Extraction.decompose(res) ++ JField("isSuccess", JBool(res.isSuccess))
+          Printer.compact(render(json), new StringWriter()).toString
+        }
+
         val statusCode  = getStatus(t)
         if (outputMessage.isInstanceOf[ServerHttpResponse] && statusCode > 0)  {
             val response = outputMessage.asInstanceOf[ServerHttpResponse]
@@ -49,16 +54,19 @@ class JsonMessageConverter
         }
 
         outputMessage.getHeaders.setContentType(MediaType.APPLICATION_JSON)
-        val message: String = Serialization.write(t)
+        val message: String = t match {
+          case b: ExtendedResult[_] => serializeExtendedResult(b)
+          case _ => Serialization.write(t)
+        }
         val messageBytes: Array[Byte] = message.getBytes(DEFAULT_CHARSET.name())
         outputMessage.getHeaders.setContentLength(messageBytes.length)
         outputMessage.getBody.write(messageBytes)
     }
 
     private def getStatus(requestResult : AnyRef) : Int = requestResult match  {
-        case Success(_, _) => 200
-        case Failure(_, _, _, _, false, false, _) => 400
-        case Failure(_, _, _, _, true, _, _) => 404
+        case Success(_) => 200
+        case Failure(_, _, _, _, false, _) => 400
+        case Failure(_, _, _, _, true, _) => 404
         case _ => -1
     }
 

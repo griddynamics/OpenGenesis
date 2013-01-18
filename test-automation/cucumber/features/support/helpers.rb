@@ -67,11 +67,15 @@ module ModelHelpers
     project_resource project, :configs, &block
   end
 
-  def genesis_settings_value(name)
+  def genesis_setting(name)
     config = resource "/settings?prefix=#{name}" do |r|
       r.get
     end
-    JSON.parse(config.body)[0]["value"]
+    JSON.parse(config.body)[0]
+  end
+
+  def genesis_settings_value(name)
+    genesis_setting(name)["value"]
   end
 
   def find_config(config_name, project, username)

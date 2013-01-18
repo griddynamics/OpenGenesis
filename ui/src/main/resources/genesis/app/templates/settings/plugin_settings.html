@@ -47,7 +47,7 @@
                 <td <% if (config.restartRequired) { %> class="restart-required" title="Changes are applied only after Genesis back-end restart!" <% } %> >
                   <label for="<%= config.name %>" > <%= config.name %></label>
                 </td>
-                <td ><input id="<%= config.name %>" name="<%= config.name %>" <% if ( config.propertyType.name !== "password" ) { %> type="text" <% } else { %> type="password" <% } %> value="<%= config.value %>" class="property-value"></td>
+                <td ><input id="<%= config.name %>" name="<%= config.name %>" <% if ( config.propertyType.name !== "password" ) { %> type="text" <% } else { %> type="password" <% } %> value="<%- config.value %>" class="property-value"></td>
               </tr>
             <% } %>
           </tbody>

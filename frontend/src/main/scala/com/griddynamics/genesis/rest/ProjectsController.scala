@@ -77,7 +77,7 @@ class ProjectsController extends RestApiExceptionsHandler {
 
     val result = projectService.create(project)
     result match {
-      case r@Success(pr, true) => {
+      case r@Success(pr) => {
         configurationRepository.save(new Configuration(None, "Default", pr.id.get, None))
         r
       }

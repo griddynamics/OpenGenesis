@@ -63,8 +63,7 @@ class RequestBrokerImpl(storeService: StoreService,
         }
 
         val twf = templateService.findTemplate(projectId, templateName, templateVersion) match  {
-            case None => return Failure(compoundVariablesErrors = Seq("Template %s with version %s not found".format(templateName, templateVersion)),
-                isSuccess = false, isNotFound = true)
+            case None => return Failure(compoundVariablesErrors = Seq("Template %s with version %s not found".format(templateName, templateVersion)), isNotFound = true)
             case Some(template) => template.getWorkflow(template.createWorkflow.name) match {
                 case Some(w) => w
                 case None => return Failure(isNotFound = true)
@@ -73,7 +72,7 @@ class RequestBrokerImpl(storeService: StoreService,
 
         validateWorkflow(twf, variables, config) match {
             case f: Failure => return f
-            case Success(w, _) =>
+            case Success(w) =>
         }
 
         val env = new Environment(envName, EnvStatus.Busy, envCreator,
@@ -199,7 +198,7 @@ object RequestBrokerImpl {
         if (creator != null && creator.trim.length > 0)
             Success(creator)
         else
-            Failure(isSuccess = false, compoundServiceErrors = Seq("Creator not found"))
+            Failure(compoundServiceErrors = Seq("Creator not found"))
     }
 
     def toFailure(errors : Seq[ValidationError]) = {
