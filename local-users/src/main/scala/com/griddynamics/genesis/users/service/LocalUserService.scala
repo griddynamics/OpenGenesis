@@ -65,9 +65,9 @@ class LocalUserService(val repository: LocalUserRepository) extends UserService 
   override def create(user: User) = {
     checkGroups(user.groups.getOrElse(Seq()), user) match {
       case f: Failure => f
-      case Success(_,_) =>
+      case Success(_) =>
         validCreate(user, repository.insert(_)) match {
-          case s@Success(u, _) =>
+          case s@Success(u) =>
               groupService.setUsersGroups(u.username, user.groups.getOrElse(Seq()))
               s
           case f => f
@@ -80,7 +80,7 @@ class LocalUserService(val repository: LocalUserRepository) extends UserService 
     case f: Failure => f
     case _ => {
       validUpdate(user, repository.update(_)) match {
-        case s@Success(u, _) =>
+        case s@Success(u) =>
           groupService.setUsersGroups(user.username, user.groups.getOrElse(Seq()))
           s
         case f: Failure => f
