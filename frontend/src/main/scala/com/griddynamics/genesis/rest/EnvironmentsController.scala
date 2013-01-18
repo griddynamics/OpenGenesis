@@ -69,7 +69,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
       configRepository.get(projectId, cid.toInt).getOrElse(throw new ResourceNotFoundException("Failed to find config with id = %s in project %d".format(cid, projectId)))
     }.getOrElse {
       configRepository.getDefaultConfig(projectId) match {
-        case Success(s, true) => s
+        case Success(s) => s
         case f: Failure => return f
       }
     }
