@@ -121,26 +121,30 @@ case class BorrowedMachine(envName: String, roleName: String, instanceId: String
 sealed abstract class ExtendedResult[+S]() extends Product with Serializable {
   def map[B](f: S => B): ExtendedResult[B] = this match {
     case x: Failure => x
-    case (Success(a, _)) => Success(f(a))
+    case (Success(a)) => Success(f(a))
   }
 
   def flatMap[B](f: S => ExtendedResult[B]): ExtendedResult[B] = this match {
       case x: Failure => x
-      case Success(a, _) => f(a)
+      case Success(a) => f(a)
   }
 
   def ++[B >: S](r: ExtendedResult[B]) : ExtendedResult[B] = (this, r) match {
-        case (Success(a, _), Success(b, _)) => Success(a)
-        case (a@Failure(s, v, cs, cw, nf, _, _), b@Failure(s1, v1, cs1, cw1, nf1, _, _)) => Failure(s ++ s1, v ++ v1, cs ++ cs1, cw ++ cw1, nf || nf1)
-        case (_, b@Failure(_, _, _, _, _, _, _)) => b.asInstanceOf[ExtendedResult[B]]
-        case (a@Failure(_, _, _, _, _, _, _), _) => a.asInstanceOf[ExtendedResult[B]]
+        case (Success(a), Success(b)) => Success(a)
+        case (a@Failure(s, v, cs, cw, nf, _), b@Failure(s1, v1, cs1, cw1, nf1, _)) => Failure(s ++ s1, v ++ v1, cs ++ cs1, cw ++ cw1, nf || nf1)
+        case (_, b@Failure(_, _, _, _, _, _)) => b.asInstanceOf[ExtendedResult[B]]
+        case (a@Failure(_, _, _, _, _, _), _) => a.asInstanceOf[ExtendedResult[B]]
   }
 
   def get: S
+
+  def isSuccess: Boolean
 }
 
-final case class Success[+S](result: S, isSuccess: Boolean = true) extends ExtendedResult[S] {
+final case class Success[+S](result: S) extends ExtendedResult[S] {
   def get = result
+
+  val isSuccess = true
 }
 
 final case class Failure(serviceErrors : Map[String, String] = Map(),
@@ -148,9 +152,10 @@ final case class Failure(serviceErrors : Map[String, String] = Map(),
                          compoundServiceErrors : Seq[String] = Seq(),
                          compoundVariablesErrors : Seq[String] = Seq(),
                          isNotFound: Boolean = false,
-                         isSuccess: Boolean = false,
                          stackTrace: Option[String] = None) extends ExtendedResult[Nothing] {
   def get = throw new NoSuchElementException("Failure.get")
+
+  val isSuccess = false
 }
 
 case class User( @Size(min = 2, max = 32) @Pattern(regexp = "[a-z0-9.\\-_]*", message = "{validation.invalid.name}")

@@ -65,7 +65,7 @@ trait RestApiExceptionsHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     def handleResourceNotFound(response : HttpServletResponse, exception: ResourceNotFoundException) {
       response.setContentType(MediaType.APPLICATION_JSON.toString)
-      response.getWriter.write(Serialization.write(new Failure(isNotFound = true, isSuccess = false, compoundServiceErrors = List(exception.msg))))
+      response.getWriter.write(Serialization.write(new Failure(isNotFound = true, compoundServiceErrors = List(exception.msg))))
     }
 
     @ExceptionHandler(value = Array(classOf[UnsupportedOperationException]))
@@ -85,7 +85,7 @@ trait RestApiExceptionsHandler {
       val servErrors = errors.collect {case error: ObjectError if !error.isInstanceOf[FieldError] => error.getDefaultMessage }
 
       response.getWriter.write(Serialization.write(
-        new Failure(isSuccess = false,  variablesErrors = fieldErrors.toMap, compoundServiceErrors = servErrors))
+        new Failure(variablesErrors = fieldErrors.toMap, compoundServiceErrors = servErrors))
       )
     }
 
