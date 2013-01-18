@@ -145,13 +145,46 @@ module Genesis
   class Hashed
     def initialize(hash)
       hash.each do |k,v|
-        if v.class == Hash
-          self.instance_variable_set("@#{k}", Hashed.new(v))
-        else
-          self.instance_variable_set("@#{k}", v)
-        end
-        self.class.send :define_method, k, proc { self.instance_variable_get("@#{k}") }
+        elements = k.split('.')
+        create_methods_from_elements(elements, v)
       end
+    end
+
+    def method_missing(name, *arguments)
+      method_name = name.to_s
+      elements = method_name.split('.')
+      if elements.size < 2
+        raise NoMethodError.new("Only names with dots are expected in Hashed.method_missing, but got #{name}", name)
+      end
+      obj = self.send(elements.first)
+      if obj.class == self.class
+        obj.send(elements.drop(1).join("."))
+      else
+        obj
+      end
+    end
+
+    private
+    def create_methods_from_elements(elements, v)
+      if (elements.size == 1)
+        create_methods(elements.first, v)
+      else
+        create_methods_from_elements([elements.first], {elements.drop(1).join(".") => v})
+      end
+    end
+
+    def create_methods(k, v)
+      if v.class == Hash
+        self.instance_variable_set("@#{k}", Hashed.new(v))
+      else
+        self.instance_variable_set("@#{k}", v)
+      end
+      # Here we create singleton methods because otherwise we'll create methods
+      # for all instances of a Hashed class. For example, having key as 'some.simple.val'
+      # we'll create methods :some, :simple and :val for every instance of Hashed class,
+      # though only top-level class should have method :some, and so on
+      singleton = class << self; self end
+      singleton.send :define_method, k, proc { self.instance_variable_get("@#{k}") }
     end
   end
 end

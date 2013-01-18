@@ -57,7 +57,7 @@ class GenesisRestService(storeService: StoreService,
         val result = broker.createEnv(projectId, envName, creator, templateName, templateVersion, variables, config)
 
         result match {
-          case Success(envId, true) => {
+          case Success(envId) => {
             config.id.foreach { cId =>
               val (users, groups) = envAccessService.getConfigAccessGrantees(cId)
               envAccessService.grantAccess(envId, users, groups)
