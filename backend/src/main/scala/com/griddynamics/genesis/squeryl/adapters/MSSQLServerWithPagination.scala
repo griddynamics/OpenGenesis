@@ -6,7 +6,9 @@ import org.squeryl.dsl.ast.{OrderByExpression, QueryExpressionElements}
 
 class MSSQLServerWithPagination extends MSSQLServer {
 
-    override def writeQuery(qen: QueryExpressionElements, sw: StatementWriter) {
+  override def binaryTypeDeclaration = "image"
+
+  override def writeQuery(qen: QueryExpressionElements, sw: StatementWriter) {
         if (qen.page == None)
             super.writeQuery(qen, sw)
         else {
