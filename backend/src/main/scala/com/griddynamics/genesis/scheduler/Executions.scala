@@ -44,7 +44,8 @@ sealed trait Execution extends ExecutionId {
 }
 
 case class WorkflowExecution(workflow: String, envId: Int, projectId: Int) extends Execution {
-  val id = "execution-" + workflow +"-env-" + envId
+
+  val id = s"execution-$workflow-env-$envId"
 
   def this(jobDataMap: JobDataMap) = this(jobDataMap.getString("workflowName"), jobDataMap.getInt("envId"), jobDataMap.getInt("projectId"))
 
@@ -74,7 +75,7 @@ case class ExpireNotification(envId: Int, projectId: Int, destroyDate: Date) ext
     data
   }
 
-  val id = "env-expire-notification-" + envId
+  val id = s"env-expire-notification-$envId"
 
   def jobClass = classOf[NotificationJob]
 }
@@ -82,7 +83,7 @@ case class ExpireNotification(envId: Int, projectId: Int, destroyDate: Date) ext
 case class DestructionCheck(envId: Int, projectId: Int, destructionTrigger: String) extends Execution {
   def this(jobDataMap: JobDataMap) = this(jobDataMap.getInt("envId"), jobDataMap.getInt("projectId"), jobDataMap.getString("destructionTriggerName"))
 
-  val id = "env-destruction-check" + envId
+  val id = s"env-destruction-check-$envId"
 
   def toJobDataMap = {
     val data = new JobDataMap()

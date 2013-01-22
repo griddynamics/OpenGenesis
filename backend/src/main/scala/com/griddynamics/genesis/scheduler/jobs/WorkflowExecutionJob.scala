@@ -13,7 +13,9 @@ class WorkflowExecutionJob(broker: RequestBroker, storeService: StoreService) ex
 
   def execute(context: JobExecutionContext) {
     val details = new WorkflowExecution(context.getMergedJobDataMap)
-    val env = storeService.findEnv(details.envId, details.projectId).get
+    val env = storeService.findEnv(details.envId, details.projectId).getOrElse{
+      throw new IllegalStateException(s"Scheduling job ${details.toString} failed to perform execution because env wasn't found in database")
+    }
     env.status match {
       case EnvStatus.Destroyed => /* do nothing */
       case EnvStatus.Busy => rescheduleJob(context, TimeUnit.MINUTES.toMillis(3))

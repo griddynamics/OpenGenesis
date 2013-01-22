@@ -85,7 +85,22 @@ class GenesisRestService(storeService: StoreService,
     }
 
     def requestWorkflow(envId: Int, projectId: Int, workflowName: String, variables: Map[String, String], startedBy: String) = {
-        broker.requestWorkflow(envId, projectId, workflowName, variables, startedBy)
+        val result = broker.requestWorkflow(envId, projectId, workflowName, variables, startedBy)
+
+        if (result.isSuccess && isDestroyWorkflow(envId, projectId, workflowName)) {
+          destructionService.removeScheduledDestruction(projectId, envId)
+        }
+
+        result
+    }
+
+    private def isDestroyWorkflow(envId: Int, projectId: Int, workflowName: String): Boolean = {
+      val definition = for {
+        env <- storeService.findEnv(envId, projectId)
+        template <- templateService.findTemplate(projectId, env.templateName, env.templateVersion)}
+      yield template.destroyWorkflow
+
+      definition.map(_.name == workflowName).getOrElse(false)
     }
 
     def cancelWorkflow(envId: Int, projectId: Int) {
@@ -177,7 +192,7 @@ class GenesisRestService(storeService: StoreService,
 
   def updateTimeToLive(projectId: Int, envId: Int, timeToLiveMillis: Long): ExtendedResult[Date] = {
     val env = storeService.findEnv(envId, projectId).getOrElse {
-      return Failure(isNotFound = true, compoundServiceErrors = Seq("Coulnd't find environment %d in project %d".format(envId, projectId)))
+      return Failure(isNotFound = true, compoundServiceErrors = Seq(s"Couldn't find environment $envId in project $projectId"))
     }
 
     try {
@@ -193,7 +208,7 @@ class GenesisRestService(storeService: StoreService,
 
   def removeTimeToLive(projectId: Int, envId: Int): ExtendedResult[Boolean] = {
     val env = storeService.findEnv(envId, projectId).getOrElse {
-      return Failure(isNotFound = true, compoundServiceErrors = Seq("Coulnd't find environment %d in project %d".format(envId, projectId)))
+      return Failure(isNotFound = true, compoundServiceErrors = Seq(s"Couldn't find environment $envId in project $projectId"))
     }
     try {
       destructionService.removeScheduledDestruction(env.projectId, env.id)

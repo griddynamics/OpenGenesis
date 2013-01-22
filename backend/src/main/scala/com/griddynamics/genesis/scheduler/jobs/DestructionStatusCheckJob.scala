@@ -14,8 +14,9 @@ class DestructionStatusCheckJob(storeService: StoreService,
 
   def execute(context: JobExecutionContext) {
     val execution = new DestructionCheck(context.getMergedJobDataMap)
-    val env = storeService.findEnv(execution.envId, execution.projectId).get //get
-
+    val env = storeService.findEnv(execution.envId, execution.projectId).getOrElse{
+      throw new IllegalStateException(s"Scheduling job ${execution.toString} failed to perform execution because env wasn't found in database")
+    }
     env.status match {
       case EnvStatus.Destroyed => notifyEnvDestroyed(env)
       case EnvStatus.Busy => rescheduleCheck(context)

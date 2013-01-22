@@ -68,7 +68,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @RequestMapping(value=Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
   def createEnv(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response : HttpServletResponse): ExtendedResult[Int] = {
-    implicit val paramsMap = extractParamsMap(request)
+    val paramsMap = extractParamsMap(request)
     val envName = extractValue("envName", paramsMap).trim
     val templateName = extractValue("templateName", paramsMap)
     val templateVersion = extractValue("templateVersion", paramsMap)
@@ -81,7 +81,11 @@ class EnvironmentsController extends RestApiExceptionsHandler {
         case f: Failure => return f
       }
     }
-    val timeToLive = extractOption("timeToLive", paramsMap).map(min => TimeUnit.MINUTES.toMillis(min.toLong))
+    val timeToLive = try {
+      extractOption("timeToLive", paramsMap).map(min => TimeUnit.MINUTES.toMillis(min.toLong))
+    } catch {
+      case e: NumberFormatException => return Failure(serviceErrors = Map("timeToLive" -> "Should be numeric"))
+    }
 
     if(!envAuthService.hasAccessToConfig(projectId, config.id.get, getCurrentUser, getCurrentUserAuthorities)) {
       throw new AccessDeniedException("User doesn't have access to configuration id=%s".format(config))
