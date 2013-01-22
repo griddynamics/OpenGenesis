@@ -147,18 +147,17 @@ trait QuartzSchema extends Schema {
     new ConstantExpressionNode[Option[BinaryType]](i) with BinaryExpression[Option[BinaryType]]
   }
 
-  val details = table[JobDetails]("qrtz_job_details")
-  val triggers = table[Trigger]("qrtz_triggers")
-  val simpleTriggers = table[SimpleTrigger]("qrtz_simple_triggers")
-  val cronTriggers = table[CronTrigger]("qrtz_cron_triggers")
-  val simpropTriggers = table[SimpropTrigger]("qrtz_simprop_triggers")
-  val blobTriggers = table[BlobTrigger]("qrtz_blob_triggers")
-  val calendars = table[Calendar]("qrtz_calendars")
-  val pausedTriggerGrps = table[PausedTriggerGrps]("qrtz_paused_trigger_grps")
-  val firedTriggers = table[FiredTrigger]("qrtz_fired_triggers")
-  val schedulerState = table[SchedulerState]("qrtz_scheduler_state")
-  val locks = table[Lock]("qrtz_locks")
-
+  val details = table[JobDetails]("QRTZ_JOB_DETAILS")
+  val triggers = table[Trigger]("QRTZ_TRIGGERS")
+  val simpleTriggers = table[SimpleTrigger]("QRTZ_SIMPLE_TRIGGERS")
+  val cronTriggers = table[CronTrigger]("QRTZ_CRON_TRIGGERS")
+  val simpropTriggers = table[SimpropTrigger]("QRTZ_SIMPROP_TRIGGERS")
+  val blobTriggers = table[BlobTrigger]("QRTZ_BLOB_TRIGGERS")
+  val calendars = table[Calendar]("QRTZ_CALENDARS")
+  val pausedTriggerGrps = table[PausedTriggerGrps]("QRTZ_PAUSED_TRIGGER_GRPS")
+  val firedTriggers = table[FiredTrigger]("QRTZ_FIRED_TRIGGERS")
+  val schedulerState = table[SchedulerState]("QRTZ_SCHEDULER_STATE")
+  val locks = table[Lock]("QRTZ_LOCKS")
 
 // TODO: no referential integrity declared because of https://www.assembla.com/spaces/squeryl/tickets/25-compositekeys-cannot-be-the-binding-expression-for-relations#/activity/ticket:
 
