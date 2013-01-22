@@ -36,9 +36,11 @@ class RemoteAgentRepositoryImpl extends AbstractGenericRepository[model.RemoteAg
   implicit def convert(m: model.RemoteAgent): RemoteAgent =
     RemoteAgent(Some(m.id), m.host, m.port, m.tags.trim.toLowerCase.split(" "), Some(m.lastTimeAlive.getTime))
 
-  implicit def convert(ent: api.RemoteAgent): model.RemoteAgent =
-    new model.RemoteAgent(ent.id.getOrElse(0), ent.hostname, ent.port, ent.tags.distinct.mkString(" "), new Timestamp(0))
-
+  implicit def convert(ent: api.RemoteAgent): model.RemoteAgent = {
+    val m = new model.RemoteAgent(ent.hostname, ent.port, ent.tags.distinct.mkString(" "), new Timestamp(0))
+    m.id = ent.id.getOrElse(0)
+    m
+  }
 
   def findByTags(tags: Seq[String]): Seq[RemoteAgent] = from(table)(agent => {
     val tags_has = { s: String => lower(agent.tags) like ("%" + s.toLowerCase + "%") }
@@ -57,13 +59,6 @@ class RemoteAgentRepositoryImpl extends AbstractGenericRepository[model.RemoteAg
         )
     )
     agent
-  }
-
-  @Transactional
-  override def delete(dto: api.RemoteAgent) = {
-    dto.id.map(a => {
-      table.deleteWhere(b => b.id === a )
-    }).getOrElse(0)
   }
 
   def touch(key: Int) = {

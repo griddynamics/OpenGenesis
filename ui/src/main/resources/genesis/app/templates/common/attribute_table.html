@@ -1,3 +1,8 @@
+<%
+    function timeToLiveStyle(environment) {
+        return environment.timeToLive < 3600000 ? "color: #cc4a48;" : "";
+    }
+%>
 <table class="main-table intab" >
   <tr>
     <td class="first">Template</td>
@@ -29,6 +34,20 @@
      <% } %>
      </td>
   </tr>
+
+  <% if (environment.timeToLive && environment.timeToLive > 0) { %>
+    <tr style="<%= timeToLiveStyle(environment) %> ">
+        <td class="first" >Instance will be destroyed</td>
+        <td>
+            <p style="float:left; margin-top: 1px; margin-bottom: 2px;" > <%- environment.timeToLiveStr %> </p>
+            <a title="Postpone" class="ui-widget postpone-destruction ui-state-default">
+                <span style="float:left; margin-left: 10px" class="ui-icon ui-icon-clock" ></span>
+            </a>
+
+        </td>
+    </tr>
+  <% } %>
+
   <% for (var i = 0; i < attributes.length; i++) { var attr = attributes[i]; %>
   <tr>
     <td class="first"><%= attr.description %></td>

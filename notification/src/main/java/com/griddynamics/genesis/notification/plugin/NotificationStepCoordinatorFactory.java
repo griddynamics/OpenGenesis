@@ -22,30 +22,23 @@
  */
 package com.griddynamics.genesis.notification.plugin;
 
-import com.griddynamics.genesis.notification.template.StringTemplateEngine;
-import com.griddynamics.genesis.notification.template.TemplateEngine;
+import com.griddynamics.genesis.notification.service.MailServiceProvider;
 import com.griddynamics.genesis.plugin.PluginConfigurationContext;
 import com.griddynamics.genesis.plugin.StepExecutionContext;
 import com.griddynamics.genesis.plugin.adapter.AbstractPartialStepCoordinatorFactory;
-import com.griddynamics.genesis.workflow.*;
-import org.apache.commons.lang.StringUtils;
+import com.griddynamics.genesis.workflow.Step;
+import com.griddynamics.genesis.workflow.StepCoordinator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Bean;
-import org.springframework.mail.MailSender;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import scala.collection.JavaConversions;
-
-import java.util.Properties;
 
 public class NotificationStepCoordinatorFactory extends AbstractPartialStepCoordinatorFactory {
 
-    private Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final MailServiceProvider provider;
 
-    public NotificationStepCoordinatorFactory(String pluginId, PluginConfigurationContext pluginConfiguration) {
+    public NotificationStepCoordinatorFactory(String pluginId, PluginConfigurationContext pluginConfiguration, MailServiceProvider provider) {
         super(pluginId, pluginConfiguration);
+        this.provider = provider;
     }
 
     @Override
@@ -55,55 +48,6 @@ public class NotificationStepCoordinatorFactory extends AbstractPartialStepCoord
 
     @Override
     public StepCoordinator apply(Step step, StepExecutionContext context) {
-        return new NotificationStepCoordinator(context, (NotificationStep) step, emailSenderConfiguration(), getTemplateEngine());
+        return new NotificationStepCoordinator(context, (NotificationStep) step, provider.emailSenderConfiguration(), provider.getTemplateEngine());
     }
-
-    public EmailSenderConfiguration emailSenderConfiguration() {
-        java.util.Map<String,String> config = getConfig();
-        String senderName = config.get(NotificationPluginConfig.senderName);
-        String senderEmail = getRequiredParameter(config, NotificationPluginConfig.senderEmail);
-        String smtpHost = getRequiredParameter(config, NotificationPluginConfig.smtpHost);
-        Integer smtpPort = getIntParameter(config, NotificationPluginConfig.smtpPort, Short.MAX_VALUE * 2);
-        String smtpUsername = config.get(NotificationPluginConfig.smtpUsername);
-        String smtpPassword = config.get(NotificationPluginConfig.smtpPassword);
-        Boolean useTls = Boolean.parseBoolean(config.get(NotificationPluginConfig.useTls));
-        Boolean useSSL = Boolean.parseBoolean(config.get(NotificationPluginConfig.useSSL));
-        Integer connectTimeout = getIntParameter(config, NotificationPluginConfig.connectTimeout, Integer.MAX_VALUE);
-        Integer smtpTimeout = getIntParameter(config, NotificationPluginConfig.smtpTimeout, Integer.MAX_VALUE);
-        return new EmailSenderConfiguration(senderName, senderEmail, smtpHost, smtpPort,
-                smtpUsername, smtpPassword, useTls, connectTimeout, smtpTimeout, useSSL);
-    }
-
-    private String getRequiredParameter(java.util.Map<String, String> config, String parameterName) {
-        String value = config.get(parameterName);
-        if (StringUtils.isEmpty(value)) {
-            throw new IllegalArgumentException(String.format("'%s' cannot be empty", parameterName));
-        }
-        return value;
-    }
-
-    private static Integer getIntParameter(java.util.Map<String, String> config, String paramName, int maxValue) {
-        String paramValue = config.get(paramName);
-        if (StringUtils.isNotEmpty(paramValue) && StringUtils.isNumeric(paramValue)) {
-            try {
-                int i = Integer.parseInt(paramValue);
-                if (i > maxValue) {
-                    throw new IllegalArgumentException(String.format("%s is too big: %s", paramName, paramValue));
-                }
-                return i;
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException(String.format("%s is is too big: %s", paramName, paramValue));
-            }
-        } else {
-            throw new IllegalArgumentException(paramName + String.format("%s is not a number: '%s'", paramName, paramValue));
-        }
-    }
-
-    private TemplateEngine getTemplateEngine() {
-        String templateFolder = getConfig().get(NotificationPluginConfig.templateFolder);
-        TemplateEngine templateEngine;
-        templateEngine = new StringTemplateEngine(templateFolder);
-        return templateEngine;
-    }
-
 }

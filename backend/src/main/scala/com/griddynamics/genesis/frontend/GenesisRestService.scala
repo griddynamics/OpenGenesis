@@ -25,19 +25,22 @@ package com.griddynamics.genesis.frontend
 import GenesisRestService._
 import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.bean.RequestBroker
-import com.griddynamics.genesis.{model, service}
 import com.griddynamics.genesis.model.{Workflow, EnvStatus}
 import com.griddynamics.genesis.repository.ConfigurationRepository
+import com.griddynamics.genesis.scheduler.DestructionService
 import com.griddynamics.genesis.service._
 import com.griddynamics.genesis.validation.Validation._
+import com.griddynamics.genesis.{model, service}
+import java.util.Date
+import com.griddynamics.genesis.util.Logging
 
 class GenesisRestService(storeService: StoreService,
                          templateService: TemplateService,
                          computeService: ComputeService,
                          broker: RequestBroker,
                          envAccessService: EnvironmentAccessService,
-                         configurationRepository: ConfigurationRepository) extends GenesisService {
-
+                         configurationRepository: ConfigurationRepository,
+                         destructionService: DestructionService) extends GenesisService with Logging {
 
     def listEnvs(projectId: Int, statusFilter: Option[Seq[String]] = None, ordering: Option[Ordering] = None) = {
       val filterOpt = statusFilter.map(_.map(EnvStatus.withName(_)))
@@ -53,7 +56,7 @@ class GenesisRestService(storeService: StoreService,
         for {(name, version) <- templateService.listTemplates(projectId)} yield Template(name, version, null, Seq())
 
     def createEnv(projectId: Int, envName: String, creator: String, templateName: String,
-                  templateVersion: String, variables: Map[String, String], config: Configuration) = {
+                  templateVersion: String, variables: Map[String, String], config: Configuration, timeToLive: Option[Long]) = {
         val result = broker.createEnv(projectId, envName, creator, templateName, templateVersion, variables, config)
 
         result match {
@@ -62,6 +65,11 @@ class GenesisRestService(storeService: StoreService,
               val (users, groups) = envAccessService.getConfigAccessGrantees(cId)
               envAccessService.grantAccess(envId, users, groups)
             }
+            timeToLive.foreach { ttl =>
+              val destroyDate = new Date(System.currentTimeMillis() + ttl)
+              destructionService.scheduleDestruction(projectId, envId, destroyDate)
+            }
+
             Success(envId)
           }
           case other => other
@@ -69,11 +77,30 @@ class GenesisRestService(storeService: StoreService,
     }
 
     def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String], startedBy: String) = {
-        broker.destroyEnv(envId, projectId, variables, startedBy)
+      val result = broker.destroyEnv(envId, projectId, variables, startedBy)
+      if(result.isSuccess) {
+        destructionService.removeScheduledDestruction(projectId, envId)
+      }
+      result
     }
 
     def requestWorkflow(envId: Int, projectId: Int, workflowName: String, variables: Map[String, String], startedBy: String) = {
-        broker.requestWorkflow(envId, projectId, workflowName, variables, startedBy)
+        val result = broker.requestWorkflow(envId, projectId, workflowName, variables, startedBy)
+
+        if (result.isSuccess && isDestroyWorkflow(envId, projectId, workflowName)) {
+          destructionService.removeScheduledDestruction(projectId, envId)
+        }
+
+        result
+    }
+
+    private def isDestroyWorkflow(envId: Int, projectId: Int, workflowName: String): Boolean = {
+      val definition = for {
+        env <- storeService.findEnv(envId, projectId)
+        template <- templateService.findTemplate(projectId, env.templateName, env.templateVersion)}
+      yield template.destroyWorkflow
+
+      definition.map(_.name == workflowName).getOrElse(false)
     }
 
     def cancelWorkflow(envId: Int, projectId: Int) {
@@ -91,17 +118,18 @@ class GenesisRestService(storeService: StoreService,
     def describeEnv(envId: Int, projectId: Int) = {
         storeService.findEnvWithWorkflow(envId, projectId) match {
             case Some((env, flow)) =>
-                templateService.descTemplate(env.projectId, env.templateName, env.templateVersion).map {
+                templateService.descTemplate(env.projectId, env.templateName, env.templateVersion).map { template =>
                     envDesc(
                         env,
                         storeService.listVms(env),
                         storeService.listServers(env),
-                        _,
+                        template,
                         computeService,
                         storeService.countWorkflows(env),
                         storeService.countFinishedActionsForCurrentWorkflow(env),
                         stepsCompleted(flow),
-                        configurationRepository.get(projectId, env.configurationId)
+                        configurationRepository.get(projectId, env.configurationId),
+                        destructionService.destructionDate(env, template.destroyWorkflow)
                     )
                 }
             case None => None
@@ -162,6 +190,36 @@ class GenesisRestService(storeService: StoreService,
 
   def stepExists(stepId: Int, envId: Int) = storeService.stepExists(stepId, envId)
 
+  def updateTimeToLive(projectId: Int, envId: Int, timeToLiveMillis: Long): ExtendedResult[Date] = {
+    val env = storeService.findEnv(envId, projectId).getOrElse {
+      return Failure(isNotFound = true, compoundServiceErrors = Seq(s"Couldn't find environment $envId in project $projectId"))
+    }
+
+    try {
+      val destructionDate = new Date(System.currentTimeMillis() + timeToLiveMillis)
+      destructionService.scheduleDestruction(env.projectId, env.id, destructionDate)
+      Success(destructionDate)
+    } catch {
+      case e: Exception =>
+        log.error(e, s"Failed to update time to live for environment $envId")
+        Failure(compoundServiceErrors = Seq(s"Failed to update time to live. Cause: ${e.getMessage}"))
+    }
+  }
+
+  def removeTimeToLive(projectId: Int, envId: Int): ExtendedResult[Boolean] = {
+    val env = storeService.findEnv(envId, projectId).getOrElse {
+      return Failure(isNotFound = true, compoundServiceErrors = Seq(s"Couldn't find environment $envId in project $projectId"))
+    }
+    try {
+      destructionService.removeScheduledDestruction(env.projectId, env.id)
+      Success(true)
+    } catch {
+      case e: Exception =>
+        log.error(e, s"Failed to remove time to live from environment $envId")
+        Failure(compoundServiceErrors = Seq(s"Failed to remove time to live. Cause: ${e.getMessage}"))
+    }
+  }
+
 }
 
 object GenesisRestService {
@@ -197,7 +255,8 @@ object GenesisRestService {
                 historyCount: Int,
                 currentWorkflowFinishedActionsCount: Int,
                 workflowCompleted: Option[Double],
-                config: Option[Configuration]) = {
+                config: Option[Configuration],
+                destructionTime: Option[Date]) = {
 
         val workflows = template.workflows.map (Workflow(_, Seq()))
 
@@ -225,7 +284,8 @@ object GenesisRestService {
             currentWorkflowFinishedActionsCount,
             workflowCompleted,
             attrDesc(env.deploymentAttrs),
-            config.map(_.name).getOrElse("*deleted*")
+            config.map(_.name).getOrElse("*deleted*"),
+            timeToLive = destructionTime.map( _.getTime - System.currentTimeMillis() ).map(t => if (t < 0) 0 else t)
         )
     }
 

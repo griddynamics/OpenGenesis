@@ -9,6 +9,7 @@ define([
   "modules/common/env_status",
   "backbone",
   "jquery",
+  "momentjs",
   "jqueryui",
   "jvalidate"
 ],
@@ -17,22 +18,18 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
   var EnvironmentDetails = genesis.module();
 
   EnvironmentDetails.Model = Backbone.Model.extend({
-    defaults: {
-      "id" : 0,
-      "name": "",
-      "creator": "",
-      "manifest": {},
-      "status": "",
-      "completed": 0,
-      "templateName": "",
-      "templateVersion": "",
-      "projectId": "",
-      "historyCount": 0,
-      "finishedActionsCount": 0
-    },
-
     urlRoot: function () {
       return "rest/projects/" + this.get("projectId") + "/envs";
+    },
+
+    parse: function(json) {
+      if(json.timeToLive) {
+        json.timeToLiveStr = moment().add(json.timeToLive).fromNow();
+      } else {
+        this.unset("timeToLive", {silent: true}); //todo: is it a backbone bug??
+        this.unset("timeToLiveStr", {silent: true});
+      }
+      return json;
     }
   });
 
@@ -58,6 +55,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       "click .cancel-button:not(.disabled)": "cancelWorkflow",
       "click .reset-button:not(.disabled)": "resetEnvStatus",
       "click a.show-sources" : "showSources",
+      "click a.postpone-destruction" : "postponeDestruction",
       "click a.rename-button": "renameEnv"
     },
 
@@ -70,9 +68,8 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       this.details.bind("change:vms", this.renderVirtualMachines, this);
       this.details.bind("change:servers", this.renderServers, this);
       this.details.bind("change:servers change:vms", this.checkServersAndVms, this);
-      this.details.bind("change:attributes change:modificationTime", this.renderAttributes, this);
+      this.details.bind("change:attributes change:modificationTime change:timeToLiveStr", this.renderAttributes, this);
       this.details.bind("change:name", this.onRename, this);
-
       this.executeWorkflowDialog = new ExecuteWorkflowDialog().
         bind('workflow-started', function(workflow) {
           status.StatusPanel.information("Workflow '" + workflow.name + "' execution started");
@@ -99,6 +96,10 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       if (this.envRenameDialog) {
         this.envRenameDialog.dialog('destroy').remove();
       }
+      if(this.expandLifeTimeDialog) {
+        this.expandLifeTimeDialog.dialog('destroy').remove();
+      }
+
       genesis.utils.nullSafeClose(this.workflowHistory);
       genesis.utils.nullSafeClose(this.sourcesView);
       genesis.utils.nullSafeClose(this.accessView);
@@ -117,6 +118,11 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       }
 
       this.sourcesView.showTemplate(templateName, templateVersion);
+    },
+
+    postponeDestruction: function(){
+      this.expandLifeTimeDialog.dialog('open');
+      //backend.EnvironmentManager.expandLiveTime(this.details, 42);
     },
 
     cancelWorkflow: function () {
@@ -281,6 +287,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
           view.confirmationDialog = view.createConfirmationDialog(view.$("#dialog-confirm"));
           view.resetEnvStatusDialog = view.createResetEnvStatusDialog(view.$("#dialog-reset"));
           view.envRenameDialog = view.createRenameDialog(view.$("#env-rename"));
+          view.expandLifeTimeDialog = view.createExpandLifeTimeDialog(view.$("#expand-env-life-time"))
       }).fail(function() {
           genesis.app.trigger("server-communication-error",
             "Failed to get instance details<br/><br/> Please contact administrator.",
@@ -364,6 +371,35 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
           $('input:text:first', this).val(view.details.get("name")).select().focus();
         }
       });
+    },
+
+    createExpandLifeTimeDialog: function($element) {
+      var view = this;
+      return $element.dialog({
+        title: 'Expand time to live',
+        buttons: {
+          "Set": function () {
+            var dialog = this;
+            genesis.app.trigger("page-view-loading-started");
+            var ttl = $(this).find('#new-env-ttl').val();
+            $.when(backend.EnvironmentManager.expandLifeTime(view.details, ttl)).done(function() {
+              $(dialog).dialog("close");
+              status.StatusPanel.information(ttl ? "Instance lifespan was updated" : "Instance lifespan was set to 'unlimited'");
+              view.details.set("timeToLive", ttl * 1000)
+            }).fail(function(jqxhr) {
+              status.StatusPanel.error(jqxhr);
+            }).always(function() {
+              genesis.app.trigger("page-view-loading-completed");
+            });
+          },
+          "Cancel": function () {
+            $(this).dialog("close");
+          }
+        },
+        open: function() {
+          $('input:text:first', this).val(view.details.get("name")).select().focus();
+        }
+      });
     }
   });
 
@@ -390,7 +426,6 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
     },
 
     runWorkflow: function() {
-      var vals = {};
       if (this.workflow.variables.length > 0) {
         if (!$('#workflow-parameters-form').valid()) {
           this.trigger("workflow-validation-errors");
@@ -456,7 +491,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
             width: _.size(view.workflow.variables) > 0 ? 1052 : 400,
             autoOpen: true,
             buttons: {
-              "Run": function(e) {
+              "Run": function() {
                 var $thisButton = $(this).parent().find("button:contains('Run')"),
                   disabled = $thisButton.button( "option", "disabled" );
                 if(!disabled) {

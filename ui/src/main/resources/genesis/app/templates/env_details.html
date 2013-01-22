@@ -10,6 +10,19 @@
         <label for="new-env-name">Enter new name: </label>
     </form>
 </div>
+<div id="expand-env-life-time" style="display: none; ">
+    <form>
+        <label for="new-env-ttl" style="display: inline-block; width: 48%">Set instance lifespan: </label>
+        <select id="new-env-ttl" name="new-env-ttl" style="width: 48%">
+            <option value="">unlimited</option>
+            <option value="60">1 hour</option>
+            <option value="240" selected="selected">4 hours</option>
+            <option value="480">8 hours</option>
+            <option value="1440">24 hours</option>
+            <option value="10080">1 week</option>
+        </select>
+    </form>
+</div>
 <div id="top-panel">
     <div id="page-title">
         <img id="env-icon" src="assets/img/env32.png" alt="Env">

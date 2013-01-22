@@ -32,6 +32,8 @@ import com.griddynamics.genesis.api
 import com.griddynamics.genesis.api.Failure
 import com.griddynamics.genesis.api.Success
 import com.griddynamics.genesis.repository.ConfigurationRepository
+import com.griddynamics.genesis.scheduler.SchedulingService
+import java.util.Date
 
 trait RequestBroker {
     def createEnv(projectId: Int, envName: String, envCreator : String,
@@ -62,9 +64,12 @@ class RequestBrokerImpl(storeService: StoreService,
             case _ =>
         }
 
-        val twf = templateService.findTemplate(projectId, templateName, templateVersion) match  {
-            case None => return Failure(compoundVariablesErrors = Seq("Template %s with version %s not found".format(templateName, templateVersion)), isNotFound = true)
-            case Some(template) => template.getWorkflow(template.createWorkflow.name) match {
+        val tmplOption = templateService.findTemplate(projectId, templateName, templateVersion)
+        val twf = tmplOption match  {
+          case None => return Failure(
+            compoundVariablesErrors = Seq("Template %s with version %s not found".format(templateName, templateVersion)),
+            isNotFound = true)
+          case Some(template) => template.getWorkflow(template.createWorkflow.name) match {
                 case Some(w) => w
                 case None => return Failure(isNotFound = true)
             }
