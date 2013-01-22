@@ -26,20 +26,23 @@ import com.griddynamics.genesis.common.CRUDService
 import com.griddynamics.genesis.validation.Validation
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.validation.Validation._
-import com.griddynamics.genesis.api.{Project, Ordering}
+import com.griddynamics.genesis.api.{Success, Project, Ordering}
 import com.griddynamics.genesis.service
 import com.griddynamics.genesis.model.EnvStatus
 import com.griddynamics.genesis.repository
 import repository.ProjectRepository
+import com.griddynamics.genesis.users.GenesisRole
 
 trait ProjectService extends CRUDService[Project, Int] {
 
   def orderedList(ordering: Ordering): Seq[Project]
 
   def getProjects(ids: Iterable[Int], ordering: Option[Ordering] = None): Iterable[Project]
+
+  def getProjectAdmins(projectId: Int): Seq[String]
 }
 
-class ProjectServiceImpl(repository: ProjectRepository, storeService: service.StoreService) extends ProjectService with Validation[Project] {
+class ProjectServiceImpl(repository: ProjectRepository, storeService: service.StoreService, authorityService: service.ProjectAuthorityService) extends ProjectService with Validation[Project] {
 
   protected def validateCreation(project: Project) =
       must(project, "Project with name '" + project.name + "' already exists") {
@@ -90,5 +93,13 @@ class ProjectServiceImpl(repository: ProjectRepository, storeService: service.St
   @Transactional(readOnly = true)
   def getProjects(ids: Iterable[Int], ordering: Option[Ordering] = None): Iterable[Project] = {
     repository.getProjects(ids, ordering)
+  }
+
+  @Transactional(readOnly = true)
+  def getProjectAdmins(projectId: Int): Seq[String] = {
+    authorityService.getProjectAuthority(projectId, GenesisRole.ProjectAdmin) match {
+      case Success((usernames, groups)) => usernames.toSeq
+      case _ => Seq()//todo !!!
+    }
   }
 }

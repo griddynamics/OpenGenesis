@@ -70,6 +70,18 @@ function(genesis, $) {
         data: JSON.stringify({environment:{name: envName}}),
         timeout: DEFAULT_TIMEOUT
       })
+    },
+
+    expandLifeTime: function(env, newTtl) {
+      return $.ajax({
+        url: env.url() + "/timeToLive",
+        type: newTtl ? "PUT" : "DELETE",
+        contentType : 'application/json',
+        dataType: "json",
+        data: JSON.stringify({value: newTtl}),
+        timeout: DEFAULT_TIMEOUT
+      });
+
     }
   };
 

@@ -48,11 +48,13 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 
     @Autowired var healthService: AgentsHealthService = _
 
+    @Autowired var projectAuthority: service.ProjectAuthorityService = _
+
     @Bean def storeService: service.StoreService = new impl.StoreService
 
     @Bean def projectRepository: repository.ProjectRepository = new repository.impl.ProjectRepository
 
-    @Bean def projectService: ProjectService = new ProjectServiceImpl(projectRepository, storeService)
+    @Bean def projectService: ProjectService = new ProjectServiceImpl(projectRepository, storeService, projectAuthority)
 
     @Bean def credentialsRepository: repository.CredentialsRepository = new repository.impl.CredentialsRepository
     @Bean def configurationRepository: repository.ConfigurationRepository = new repository.impl.ConfigurationRepositoryImpl

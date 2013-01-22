@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
+ *   Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
  *   This library is free software; you can redistribute it and/or modify it under the terms of
@@ -18,24 +18,12 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *   Project:     Genesis
- *   Description:  Continuous Delivery Platform
+ *   Description: Continuous Delivery Platform
  */
-package com.griddynamics.genesis.rest
+package com.griddynamics.genesis.service
 
-// RuntimeException are important for spring aspects to work property
+trait EmailService {
+  def sendEmail(recipients: java.util.List[String], subject: String, message: String)
 
-class InvalidInputException(val msg: Option[String] = None) extends RuntimeException {
-  def this(msg: String) = this(Some(msg))
+  def sendEmail(recipients: java.util.List[String], subject: String, templateName: String, templateParameters: java.util.Map[String, String])
 }
-
-class MissingParameterException(s : String) extends RuntimeException {
-    val paramName = s
-}
-
-/**
- * @param msg mandatory explanation of what wasn't found
- */
-class ResourceNotFoundException(val msg: String) extends RuntimeException
-
-
-class ResourceConflictException() extends RuntimeException

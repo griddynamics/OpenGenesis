@@ -32,8 +32,9 @@ import com.griddynamics.genesis.workflow.TrivialStepExecutor
 import com.griddynamics.genesis.core.TrivialStepCoordinatorFactory
 import com.griddynamics.genesis.workflow.{StepResult, Step}
 import com.griddynamics.genesis.service.RemoteAgentsService
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.{ConfigSyntax, ConfigParseOptions, Config, ConfigFactory}
 import org.springframework.core.io.Resource
+import com.griddynamics.genesis.scheduler.SchedulingService
 
 trait WorkflowContext {
     def requestBroker: RequestBroker
@@ -54,7 +55,7 @@ class DefaultWorkflowContext extends WorkflowContext {
     @Autowired var remoteAgentService: RemoteAgentsService = _
 
     private val defaultConfigs: Config = ConfigFactory.load()
-    private def overrides: Config = ConfigFactory.parseFile(backendProperties.getFile)
+    private def overrides: Config = ConfigFactory.parseFile(backendProperties.getFile, ConfigParseOptions.defaults().setSyntax(ConfigSyntax.PROPERTIES))
 
     @Bean def actorSystem: ActorSystem = ActorSystem("genesis-actor-system", overrides.withFallback(defaultConfigs))
 
@@ -78,7 +79,7 @@ class DefaultWorkflowContext extends WorkflowContext {
     // @see com.griddynamics.genesis.workflow.actor.SyncActionExecutorAdapter
     @Bean def executorService = Executors.newFixedThreadPool(syncExecThreadPoolSize)
 
-    @Bean def requestBroker = new RequestBrokerImpl(
+    @Bean def requestBroker: RequestBroker = new RequestBrokerImpl(
       storeServiceContext.storeService,
       storeServiceContext.configurationRepository,
       templateServiceContext.templateService,

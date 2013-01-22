@@ -35,7 +35,7 @@ trait PluginRegistry {
 
 class PluginRegistryImpl(configService: ConfigService) extends PluginRegistry with ApplicationContextAware {
 
-  private var factories: Iterable[PluginInstanceFactory[_]] = _
+  @volatile private var factories: Iterable[PluginInstanceFactory[_]] = _
 
   @PostConstruct
   def init() {

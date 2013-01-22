@@ -23,7 +23,20 @@
             </div>
               <div style="clear: both"></div>
             <% } %>
-
+            <div style="margin-top: 10px; margin-bottom: 10px;">
+                <label for="time-to-live" class="label" >Automatically destroy</label>
+                <div class="value">
+                   <select id="time-to-live" name="timeToLive">
+                       <option value="">do not destroy</option>
+                       <option value="60">in 1 hour</option>
+                       <option value="240">in 4 hours</option>
+                       <option value="480">in 8 hours</option>
+                       <option value="1440">in 24 hours</option>
+                       <option value="10080">in 1 week</option>
+                   </select>
+                </div>
+            </div>
+           <div style="clear: both"></div>
             <div id="workflow_vars"/>
         </div>
         <div class="form-notice">All fields marked with * are required</div>

@@ -22,29 +22,29 @@
  */
 package com.griddynamics.genesis
 
-import api.Failure
-import http.{UrlConnectionTunnel, TunnelFilter}
-import org.springframework.core.io.DefaultResourceLoader
+import com.griddynamics.genesis.api.Failure
+import com.griddynamics.genesis.http.{UrlConnectionTunnel, TunnelFilter}
+import com.griddynamics.genesis.resources.ResourceFilter
+import com.griddynamics.genesis.service.ConfigService
+import com.griddynamics.genesis.service.GenesisSystemProperties._
+import com.griddynamics.genesis.util.{RichLogger, Logging}
+import java.lang.System
+import java.lang.System.{getProperty => gp}
 import java.util.Properties
+import java.util.concurrent.TimeUnit
+import org.apache.commons.lang3.SystemUtils
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.nio.SelectChannelConnector
-import org.springframework.web.servlet.DispatcherServlet
-import org.springframework.web.filter.DelegatingFilterProxy
 import org.eclipse.jetty.servlet.{FilterHolder, ServletHolder, ServletContextHandler}
 import org.eclipse.jetty.servlets.GzipFilter
-import org.apache.commons.lang3.SystemUtils
-import java.lang.System.{getProperty => gp}
-import resources.ResourceFilter
-import service.ConfigService
-import service.GenesisSystemProperties._
-import service.impl.HousekeepingService
-import util.{RichLogger, Logging}
-import org.springframework.web.context.support.GenericWebApplicationContext
 import org.springframework.context.support.ClassPathXmlApplicationContext
+import org.springframework.core.io.DefaultResourceLoader
 import org.springframework.web.context.WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE
-import java.util.concurrent.TimeUnit
-import java.lang.System
+import org.springframework.web.context.support.GenericWebApplicationContext
+import org.springframework.web.filter.DelegatingFilterProxy
+import org.springframework.web.servlet.DispatcherServlet
 import scala.collection.JavaConversions._
+import service.impl.HousekeepingService
 
 object GenesisFrontend extends Logging {
     def main(args: Array[String]): Unit = try {
@@ -186,7 +186,7 @@ object GenesisFrontend extends Logging {
     try {
       houseKeeping.markExecutingWorkflowsAsFailed()
     } catch {
-      case e => log.error("Failed to complete housekeeping", e)
+      case e: Exception => log.error("Failed to complete housekeeping", e)
     }
   }
 

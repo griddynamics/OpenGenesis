@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
+ *   Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
  *   This library is free software; you can redistribute it and/or modify it under the terms of
@@ -18,24 +18,25 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *   Project:     Genesis
- *   Description:  Continuous Delivery Platform
- */
-package com.griddynamics.genesis.rest
+ *   Description: Continuous Delivery Platform
+ */ package com.griddynamics.genesis.configuration
 
-// RuntimeException are important for spring aspects to work property
+import org.springframework.context.annotation.{Primary, Bean, Configuration}
+import com.griddynamics.genesis.service.EmailService
+import java.util
+import com.griddynamics.genesis.util.Logging
 
-class InvalidInputException(val msg: Option[String] = None) extends RuntimeException {
-  def this(msg: String) = this(Some(msg))
+@Configuration("mailContext")
+class DefaultEmailServiceContext extends MailServiceContext {
+
+  val getEmailService = new EmailService with Logging {
+    def sendEmail(recipients: util.List[String], subject: String, templateName: String, templateParameters: util.Map[String, String]) {
+      log.warn(s"Attempt to send email '$subject'. Email notification plugin is not included in current distribution or misconfigured.")
+    }
+
+    def sendEmail(recipients: util.List[String], subject: String, message: String) {
+      log.warn(s"Attempt to send email '$subject'. Email notification plugin is not included in current distribution or misconfigured.")
+    }
+  }
+
 }
-
-class MissingParameterException(s : String) extends RuntimeException {
-    val paramName = s
-}
-
-/**
- * @param msg mandatory explanation of what wasn't found
- */
-class ResourceNotFoundException(val msg: String) extends RuntimeException
-
-
-class ResourceConflictException() extends RuntimeException

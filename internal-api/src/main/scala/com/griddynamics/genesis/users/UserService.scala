@@ -25,8 +25,12 @@ package com.griddynamics.genesis.users
 import com.griddynamics.genesis.common.CRUDService
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.api.User
+import org.springframework.beans.factory.annotation.{Value, Autowired}
 
 trait UserService extends CRUDService[User, String] {
+
+  @Value("genesis.system.admin.email") var adminEmail: String =_
+
   @Transactional(readOnly = true)
   override def get(key: String) = findByUsername(key)
 
