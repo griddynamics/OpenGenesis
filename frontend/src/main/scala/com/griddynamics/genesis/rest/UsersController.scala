@@ -51,11 +51,13 @@ class UsersController extends RestApiExceptionsHandler {
   def pick(@RequestParam("tag") search: String) = {
 
     def formatLabel(user: User): String = {
-      val buffer = new StringBuilder
-      if (user.firstName != null) buffer.append(user.firstName).append(" ")
-      if (user.lastName != null) buffer.append(user.lastName).append(" ")
+      val nonEmpty = (str: String) => { Option(str).getOrElse("").nonEmpty }
 
-      val nameExists = user.firstName != null || user.lastName != null
+      val buffer = new StringBuilder
+      if (nonEmpty(user.firstName)) buffer.append(user.firstName).append(" ")
+      if (nonEmpty(user.lastName)) buffer.append(user.lastName).append(" ")
+
+      val nameExists = buffer.nonEmpty
       if (nameExists) buffer.append("(")
       buffer.append(user.username)
       if (nameExists) buffer.append(")")
