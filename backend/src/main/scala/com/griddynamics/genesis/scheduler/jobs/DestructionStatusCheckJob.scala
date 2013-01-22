@@ -1,16 +1,15 @@
 package com.griddynamics.genesis.scheduler.jobs
 
-import com.griddynamics.genesis.service.{EmailService, StoreService}
-import org.quartz._
 import com.griddynamics.genesis.model.{Environment, EnvStatus}
-import java.util.concurrent.TimeUnit
-import java.util.Date
 import com.griddynamics.genesis.scheduler.{NotificationService, DestructionCheck}
-import com.griddynamics.genesis.configuration.MailServiceContext
-import com.griddynamics.genesis.users.UserService
+import com.griddynamics.genesis.service.StoreService
+import com.griddynamics.genesis.util.Logging
+import java.util.Date
+import java.util.concurrent.TimeUnit
+import org.quartz._
 
 class DestructionStatusCheckJob(storeService: StoreService,
-                                notificationService: NotificationService) extends Job {
+                                notificationService: NotificationService) extends Job with Logging {
 
   def execute(context: JobExecutionContext) {
     val execution = new DestructionCheck(context.getMergedJobDataMap)
@@ -19,7 +18,7 @@ class DestructionStatusCheckJob(storeService: StoreService,
     }
     env.status match {
       case EnvStatus.Destroyed => notifyEnvDestroyed(env)
-      case EnvStatus.Busy => rescheduleCheck(context)
+      case EnvStatus.Busy => rescheduleCheck(context, env)
       case _ => checkState(execution, env, context)
     }
   }
@@ -37,19 +36,23 @@ class DestructionStatusCheckJob(storeService: StoreService,
     }
 
     if (!fired) {
-      rescheduleCheck(context)
+      rescheduleCheck(context, env)
     } else {
       notifyDestructionFailure(env)
     }
   }
 
-  private def rescheduleCheck(context: JobExecutionContext) {
+  private def rescheduleCheck(context: JobExecutionContext, env: Environment ) {
+    log.debug(s"Environment automatic destruction for ${env.name} in project ${env.projectId} rescheduling check because of env being in BUSY state")
+
     val inFiveMinutes = new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toSeconds(5))
     val newTrigger = context.getTrigger.getTriggerBuilder.startAt(inFiveMinutes).build()
     context.getScheduler.rescheduleJob(context.getTrigger.getKey, newTrigger)
   }
 
   private def notifyDestructionFailure(env: Environment) {
+    log.warn(s"Environment ${env.name} wasn't destroyed according scheduling plan. Sending notification to creator.")
+
     notificationService.notifyCreator(env,
       subject = "[Genesis] Error: Genesis automatic instance destruction failure",
       message = s"""
@@ -63,6 +66,8 @@ class DestructionStatusCheckJob(storeService: StoreService,
   }
 
   private def notifyEnvDestroyed(env: Environment) {
+    log.debug(s"Environment ${env.name} was successfully destroyed according scheduling plan.")
+
     notificationService.notifyCreator(env,
       subject = s"[Genesis] Instance '${env.name}' was successfully destroyed according to schedule plan",
       message = s"""

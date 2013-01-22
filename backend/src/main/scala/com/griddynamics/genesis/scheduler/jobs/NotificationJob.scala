@@ -6,9 +6,10 @@ import com.griddynamics.genesis.service.StoreService
 import java.util.Date
 import java.util.concurrent.TimeUnit
 import org.quartz.{JobExecutionContext, Job}
+import com.griddynamics.genesis.util.Logging
 
 class NotificationJob(storeService: StoreService,
-                      notificationService: NotificationService) extends Job {
+                      notificationService: NotificationService) extends Job with Logging {
 
   def execute(context: JobExecutionContext) {
     val execution = new ExpireNotification(context.getMergedJobDataMap)
@@ -20,8 +21,9 @@ class NotificationJob(storeService: StoreService,
     }
   }
 
-  private def notifyCreator( env: Environment, destroyDate: Date) {
-    notificationService.notifyCreator(env,
+  private def notifyCreator(env: Environment, destroyDate: Date) {
+    notificationService.notifyCreator(
+      env = env,
       subject = s"[Genesis] Attention: Genesis instance ${env.name} will be automatically destroyed",
       message =
         s"""
