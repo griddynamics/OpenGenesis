@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.{RequestMethod, RequestMapping}
 import org.springframework.web.util.UriComponentsBuilder
 import com.griddynamics.genesis.http.TunnelFilter
 
-case class Link(href: String, rel: String, `type`: String, methods: List[String] = List())
+case class Link(href: String, rel: String, `type`: String, methods: Array[String] = Array())
 
 object ControllerClassAggregator {
   def apply(controllerClazz: Class[_], modelClazz: Class[_])(implicit request: HttpServletRequest) =  {
@@ -23,9 +23,10 @@ object ControllerClassAggregator {
     }).getOrElse(Array())
   }
 
-  private[links] def getMethods(methods: Array[RequestMethod]) : List[String] =
-    methods.toList match {
-      case x :: xs => x.toString.toLowerCase :: xs.map(_.toString.toLowerCase)
-      case Nil => List(RequestMethod.GET.toString.toLowerCase)
-    }
+  private[links] def getMethods(methods: Array[RequestMethod]) : Array[String] =
+    if (methods.isEmpty)
+      Array(RequestMethod.GET.toString.toLowerCase)
+    else
+      methods.map(_.toString.toLowerCase)
+
 }
