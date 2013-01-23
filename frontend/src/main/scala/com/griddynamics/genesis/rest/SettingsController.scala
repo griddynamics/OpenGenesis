@@ -29,12 +29,14 @@ import com.griddynamics.genesis.service.ConfigService
 import com.griddynamics.genesis.service.GenesisSystemProperties.{PREFIX, PLUGIN_PREFIX}
 import com.griddynamics.genesis.rest.GenesisRestController.{extractParamsMap, paramToOption}
 import javax.servlet.http.HttpServletRequest
-import com.griddynamics.genesis.api.{ExtendedResult, Failure, Success}
+import com.griddynamics.genesis.api.{ConfigProperty, ConfigPropertyType, ExtendedResult, Failure, Success}
 import org.springframework.beans.factory.annotation.Autowired
 
 @Controller
 @RequestMapping(value = Array("/rest/settings"))
 class SettingsController extends RestApiExceptionsHandler {
+
+    import ConfigPasswordHelper._
 
     @Autowired var configService: ConfigService = _
 
@@ -44,14 +46,20 @@ class SettingsController extends RestApiExceptionsHandler {
 
     @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
     @ResponseBody
-    def listSettings(@RequestParam(value = "prefix", required = false) prefix: String) =
-        configService.listSettings(paramToOption(prefix)).filter(p => isVisible(p.name))
+    def listSettings(@RequestParam(value = "prefix", required = false) prefix: String) = {
+      val configs = configService.
+        listSettings(paramToOption(prefix)).
+        filter(p => isVisible(p.name))
+
+      hidePasswords(configs)
+    }
 
     @RequestMapping(value = Array(""), method = Array(RequestMethod.PUT))
     @ResponseBody
     def update(request: HttpServletRequest) = using { _ =>
-      val map = extractParamsMap(request)
-      map.foreach{case (key,_) => validKey(key){s =>}}
+      val map = extractParamsMap(request).
+        filter { case (key, value) => validKey(key) { _.propertyType != ConfigPropertyType.PASSWORD || value != blankPassword  }}
+
       configService.update(map)
     }
 
@@ -59,7 +67,7 @@ class SettingsController extends RestApiExceptionsHandler {
     @ResponseBody
     def delete(@PathVariable("key") key: String) = using { _ =>
       validKey(key) { k=>
-        configService.delete(k)
+        configService.delete(k.name)
       }
     }
 
@@ -88,10 +96,11 @@ class SettingsController extends RestApiExceptionsHandler {
     @ResponseBody
     def restartRequired() = configService.restartRequired()
 
-    private def validKey(key: String)(block: String => Any) {
+
+    private def validKey[T](key: String)(block: ConfigProperty => T): T = {
        if (!isVisible(key)) throw new ResourceNotFoundException("Key %s is not found".format(key))
-       configService.get(key) match {
-         case Some(v) => block(key)
+       configService.getPropertyWithMeta(key) match {
+         case Some(v) => block(v)
          case None => throw new ResourceNotFoundException("Key %s is not found".format(key))
        }
     }
