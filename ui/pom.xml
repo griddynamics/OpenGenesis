@@ -22,8 +22,7 @@
       Description:  Continuous Delivery Platform
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>ui</artifactId>
@@ -32,7 +31,7 @@
     <parent>
         <groupId>com.griddynamics.genesis</groupId>
         <artifactId>parent</artifactId>
-        <version>1.5.0-SNAPSHOT</version>
+        <version>1.5.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <dependencies>
@@ -183,10 +182,9 @@
                                 <configuration>
                                     <target>
 
-                                        <copy file="target/appdirectory-build/genesis/main-built.js"
-                                              tofile="target/classes/genesis/app/main-built${git.commit.id}.js"/>
+                                        <copy file="target/appdirectory-build/genesis/main-built.js" tofile="target/classes/genesis/app/main-built${git.commit.id}.js" />
 
-                                        <copy file="target/classes/genesis/app/requirejs-config.js" tofile="target/classes/genesis/app/debug-requirejs-config.js"/>
+                                        <copy file="target/classes/genesis/app/requirejs-config.js" tofile="target/classes/genesis/app/debug-requirejs-config.js" />
 
                                         <echo file="target/classes/genesis/app/requirejs-config.js"><![CDATA[
                                             require.config({
@@ -198,12 +196,10 @@
                                         ]]></echo>
 
                                         <delete includeemptydirs="true">
-                                            <fileset dir="target/classes/genesis/assets/css" includes="*.css"
-                                                     excludes="reset.css login.css"/>
+                                            <fileset dir="target/classes/genesis/assets/css" includes="*.css" excludes="reset.css login.css" />
                                         </delete>
 
-                                        <copy file="target/appdirectory-build/genesis/style.css"
-                                              tofile="target/classes/genesis/assets/css/style${git.commit.id}.css"/>
+                                        <copy file="target/appdirectory-build/genesis/style.css" tofile="target/classes/genesis/assets/css/style${git.commit.id}.css" />
 
                                         <echo file="target/classes/genesis/assets/css/index.css"><![CDATA[
                                             @import "style${git.commit.id}.css";
