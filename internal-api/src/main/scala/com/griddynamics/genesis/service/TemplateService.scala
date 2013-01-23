@@ -54,7 +54,7 @@ trait WorkflowDefinition {
 
     def embody(variables: Map[String, String], envId: Option[Int] = None, projectId: Option[Int] = None): Builders
 
-    def validate(variables: Map[String, Any]): Seq[ValidationError]
+    def validate(variables: Map[String, Any], config: Option[Configuration] = None) : Seq[ValidationError]
 
     def validatePreconditions(variables: Map[String, Any], config: Configuration): ExtendedResult[_]
 

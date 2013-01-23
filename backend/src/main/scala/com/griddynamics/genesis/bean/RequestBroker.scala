@@ -188,7 +188,7 @@ class RequestBrokerImpl(storeService: StoreService,
 
 object RequestBrokerImpl {
     def validateWorkflow(workflow : service.WorkflowDefinition, variables: Map[String, Any], config: api.Configuration) = {
-        val validationResults = workflow.validate(variables)
+        val validationResults = workflow.validate(variables, Some(config))
         val preconditionsResult = workflow.validatePreconditions(variables, config).map(_ => workflow)
 
         val varResult =  if (!validationResults.isEmpty)
