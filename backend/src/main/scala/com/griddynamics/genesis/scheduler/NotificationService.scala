@@ -37,7 +37,7 @@ class NotificationService(adminUsername: Option[String],
   @Autowired var emailService: MailServiceContext = _
 
   def creatorEmail(env: Environment): Option[String] = {
-    if (adminUsername == Option(env.creator)) {
+    if (adminUsername == Option(env.creator) && adminEmail.isDefined) {
       adminEmail
     } else {
       userService.findByUsername(env.creator).map(_.email)
