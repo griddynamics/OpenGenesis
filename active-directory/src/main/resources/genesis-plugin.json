@@ -1,0 +1,5 @@
+{
+    "genesis.plugin.active-directory.use.domain": { "default": "false", "description": "Whether plugin should add prefix DOMAIN/ or not", "restartRequired": false,
+        "validation": { "Must be true or false" : "true|false" }
+    }
+}
