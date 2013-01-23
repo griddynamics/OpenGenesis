@@ -109,11 +109,20 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
     search(filter, UserContextMapper(includeGroups = false, includeCredentials = false))
   }
 
-  def search(pattern: String): List[User] =
+  def search(pattern: String): List[User] = {
+    val filter =
+      if (pattern.contains(" ")) {
+        val compositeName = pattern.split(" ", 2)
+        "(&(%s)(&(givenName=%2$s)(sn=%3$s)))".format(config.usersServiceFilter, compositeName(0), compositeName(1))
+      } else {
+        "(&(%s)(|(%s)(sn=%s)(givenName=%3$s)))".format(config.usersServiceFilter, usernameFilter(pattern), pattern)
+      }
+
     search(
-      "(&(%s)(|(%s)(sn=%s)(givenName=%3$s)))".format(config.usersServiceFilter, usernameFilter(pattern), pattern),
+      filter,
       UserContextMapper(includeGroups = false)
     )
+  }
 
   def doesUserExist(userName: String): Boolean =
     findByUsername(config.stripDomain(userName)).isDefined

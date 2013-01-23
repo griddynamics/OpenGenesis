@@ -33,10 +33,22 @@ class LocalUserRepository extends AbstractGenericRepository[LocalUser, User](Loc
 
   def search(nameLike: String): List[User] = {
     val likeExpr = nameLike.replaceAll("\\*", "%")
-    from(table)(user =>
-      where((user.username like likeExpr) or (user.firstName like likeExpr) or (user.lastName like likeExpr)
-        and user.deleted === false).select (user)
-    ).toList.map(convert _)
+
+    val users = if (nameLike.contains(" ")) {
+      val compositeName = likeExpr.split(" ", 2)
+
+      from(table)(user =>
+        where((user.firstName like compositeName(0)) and (user.lastName like compositeName(1))
+          and user.deleted === false).select (user)
+      )
+    } else {
+      from(table)(user =>
+        where((user.username like likeExpr) or (user.firstName like likeExpr) or (user.lastName like likeExpr)
+          and user.deleted === false).select (user)
+      )
+    }
+
+    users.toList.map(convert _)
   }
 
   def getWithCredentials(username: String): Option[User] = {

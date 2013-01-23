@@ -640,7 +640,7 @@
       var cache = {
         'search': function (text, callback) {
           var temp = new Array();
-          var regex = new RegExp((options.filter_begin ? '^' : '') + escape(text), (options.filter_case ? "g": "gi"));
+          var regex = new RegExp((options.filter_begin ? '^' : '') + text, (options.filter_case ? "g": "gi"));
           $.each(element.data("cache"), function (i, _elem) {
             if (typeof _elem.search === 'function') {
               if (_elem.search(regex) != -1) {
