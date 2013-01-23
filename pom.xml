@@ -929,6 +929,16 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
+
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <name>Jenkins repository</name>
+            <url>http://repo.jenkins-ci.org/public/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+
     </repositories>
 
     <pluginRepositories>
