@@ -25,7 +25,7 @@ package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.service
 import com.griddynamics.genesis.api
-import api.{ExtendedResult, Success}
+import com.griddynamics.genesis.api.{ConfigProperty, ExtendedResult, Success}
 import collection.JavaConversions.asScalaIterator
 import org.springframework.transaction.annotation.Transactional
 import org.apache.commons.configuration.Configuration
@@ -43,33 +43,38 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
 
   lazy val initialConfig = listSettings(None).filter(_.restartRequired).map(cp => (cp.name, config.getProperty(cp.name))).toMap
 
-    @Transactional(readOnly = true)
-    def get[B](name: String, default: B): B = {
-      (default match {
-        case value: Int => config.getInt(name, value)
-        case value: Long => config.getLong(name, value)
-        case value: String => config.getString(name, value)
-        case value: Boolean => config.getBoolean(name, value)
-        case _ => throw new IllegalArgumentException("Not supported type")
-      }).asInstanceOf[B]
-    }
+  @Transactional(readOnly = true)
+  def get[B](name: String, default: B): B = {
+    (default match {
+      case value: Int => config.getInt(name, value)
+      case value: Long => config.getLong(name, value)
+      case value: String => config.getString(name, value)
+      case value: Boolean => config.getBoolean(name, value)
+      case _ => throw new IllegalArgumentException("Not supported type")
+    }).asInstanceOf[B]
+  }
 
-    @Transactional(readOnly = true)
-    def get[B](projectId: Int, name: String, default: B) = {
-      val projPropName = mkProjectPrefix(projectId, name)
-      get(projPropName).asInstanceOf[Option[B]] getOrElse get(name, default)
-    }
+  @Transactional(readOnly = true)
+  def get[B](projectId: Int, name: String, default: B) = {
+    val projPropName = mkProjectPrefix(projectId, name)
+    get(projPropName).asInstanceOf[Option[B]] getOrElse get(name, default)
+  }
 
-    @Transactional(readOnly = true)
-    def get(name: String) = Option(config.getProperty(name))
+  @Transactional(readOnly = true)
+  def get(name: String) = Option(config.getProperty(name))
 
-    private def isReadOnly(key: String) = key.startsWith(PREFIX_DB) || configRO.containsKey(key)
+  private def isReadOnly(key: String) = key.startsWith(PREFIX_DB) || configRO.containsKey(key)
 
-    @Transactional(readOnly = true)
-    def listSettings(prefix: Option[String]) = prefix.map(config.getKeys(_)).getOrElse(config.getKeys()).map(k => {
-      val default = defaults.getOrElse(k, GenesisSettingMetadata("NOT-SET!!!"))
-      api.ConfigProperty(k, config.getString(k), isReadOnly(k), default.description, default.propType, default.restartRequired)
-    }).toSeq.sortBy(_.name)
+  @Transactional(readOnly = true)
+  def listSettings(prefix: Option[String]) = prefix.map(config.getKeys(_)).getOrElse(config.getKeys()).flatMap(k => {
+    getPropertyWithMeta(k)
+  }).toSeq.sortBy(_.name)
+
+
+  def getPropertyWithMeta(name: String) : Option[ConfigProperty] = {
+    val default = defaults.getOrElse(name, GenesisSettingMetadata("NOT-SET!!!"))
+    Option(config.getString(name)).map { api.ConfigProperty(name, _ , isReadOnly(name), default.description, default.propType, default.restartRequired) }
+  }
 
   private def mkProjectPrefix(projectId: Int, prefix:String) = Seq(PROJECT_PREFIX, projectId, prefix.stripPrefix(PREFIX_GENESIS)).filter("" != _).mkString(".")
 
