@@ -37,6 +37,7 @@ import com.griddynamics.genesis.resources.ResourceFilter
 import org.jboss.netty.buffer.{ChannelBuffer, ChannelBuffers}
 import java.util.concurrent.{CountDownLatch, TimeUnit, Executors}
 import java.util.zip.GZIPInputStream
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 sealed trait Tunnel {
     def backendHost: String
@@ -88,6 +89,7 @@ object TunnelFilter extends Logging {
     val SEC_HEADER_NAME = "X-On-Behalf-of"
     val AUTH_HEADER_NAME = "X-Authorities"
     val TUNNELED_HEADER_NAME = "X-Tunneled-By"
+    val FORWARDED_HEADER = "X-Forwarded-By"
     val SEPARATOR_CHAR = ","
     def currentUser = {
         val context: SecurityContext = SecurityContextHolder.getContext
@@ -159,6 +161,7 @@ trait NettyTunnel extends Tunnel with Logging {
         if (req.getContentType != null)
             request.setHeader(HttpHeaders.Names.CONTENT_TYPE, req.getContentType)
         request.setHeader(TunnelFilter.SEC_HEADER_NAME, TunnelFilter.currentUser)
+        request.setHeader(TunnelFilter.FORWARDED_HEADER, ServletUriComponentsBuilder.fromContextPath(req).build().toString)
         request.setMethod(HttpMethod.valueOf(req.getMethod))
         val input = Iterator.continually(req.getInputStream.read).takeWhile(-1 != _).map(_.toByte).toArray
         val buffer = ChannelBuffers.copiedBuffer(input)
@@ -256,6 +259,8 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
         }
         connection.addRequestProperty(TunnelFilter.SEC_HEADER_NAME, TunnelFilter.currentUser)
         connection.addRequestProperty(TunnelFilter.AUTH_HEADER_NAME, TunnelFilter.authorities.mkString(TunnelFilter.SEPARATOR_CHAR))
+        connection.addRequestProperty(TunnelFilter.FORWARDED_HEADER,
+          ServletUriComponentsBuilder.fromContextPath(request).build().toString)
         connection.addRequestProperty("Connection", "close") //no keep-alive
         connection.setConnectTimeout(connectTimeout)
         connection.setReadTimeout(readTimeout)
