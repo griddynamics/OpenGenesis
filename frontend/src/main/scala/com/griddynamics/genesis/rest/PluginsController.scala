@@ -25,13 +25,16 @@ package com.griddynamics.genesis.rest
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
 import javax.servlet.http.HttpServletRequest
-import com.griddynamics.genesis.api.{PluginDetails, Plugin}
+import com.griddynamics.genesis.api.{ConfigPropertyType, PluginDetails, Plugin}
 import com.griddynamics.genesis.plugin.PluginRepository
 import org.springframework.beans.factory.annotation.Autowired
 
 @Controller
 @RequestMapping(value = Array("/rest/plugins"))
-class PluginsController extends RestApiExceptionsHandler {
+class PluginsController extends RestApiExceptionsHandler  {
+
+  import ConfigPasswordHelper._
+
   @Autowired var repository: PluginRepository = _
 
   @RequestMapping(method = Array(RequestMethod.GET))
@@ -40,15 +43,16 @@ class PluginsController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{pluginId}"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def getPluginDescription(@PathVariable("pluginId") pluginId: String): PluginDetails =
-    repository.getPlugin(pluginId).getOrElse(throw new ResourceNotFoundException("Plugin [id = " + pluginId + "] was not found"))
-
+  def getPluginDescription(@PathVariable("pluginId") pluginId: String): PluginDetails ={
+    val plugin = repository.getPlugin(pluginId).getOrElse(throw new ResourceNotFoundException("Plugin [id = " + pluginId + "] was not found"))
+    plugin.copy(configuration = hidePasswords(plugin.configuration))
+  }
 
   @RequestMapping(value = Array("{pluginId}"), method = Array(RequestMethod.PUT))
   @ResponseBody
   def updatePluginConfiguration(@PathVariable("pluginId") pluginId: String, request: HttpServletRequest) = {
     val plugin = repository.getPlugin(pluginId).getOrElse(throw new ResourceNotFoundException("Plugin [id = " + pluginId + "] was not found"))
-    val pluginConfig = plugin.configuration.filterNot(_.readOnly).map(item => (item.name, item.value)).toMap
+    val pluginConfig = plugin.configuration.filterNot(_.readOnly).map(item => (item.name, item.propertyType)).toMap
     
     val paramsMap = GenesisRestController.extractParamsMap(request)
 
@@ -58,7 +62,10 @@ class PluginsController extends RestApiExceptionsHandler {
 
     val updatedConfigs = for {
       property  <- propertiesList
-      if (pluginConfig.isDefinedAt(property("name")))
+      name <- property.get("name")
+      value <- property.get("value")
+      if (pluginConfig.isDefinedAt(name))
+      if (pluginConfig(name) != ConfigPropertyType.PASSWORD || value != blankPassword)
     } yield (property("name"), property("value").trim)
 
     repository.updateConfiguration(plugin.id, updatedConfigs.toMap)
