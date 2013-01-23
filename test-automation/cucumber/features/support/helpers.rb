@@ -167,6 +167,17 @@ class GenesisWorld
     yaml = YAML::load(File.open(File.dirname(__FILE__) + "/../../config.yml"))
     @config = yaml["genesis"]
   end
+
+  def full_url(partial)
+    host = @config["host"]
+    port = @config["port"]
+    format = if port == 80
+      ""
+             else
+      ":#{port}"
+             end
+    "http://#{host}#{format}#{partial}"
+  end
 end
 
 World do
