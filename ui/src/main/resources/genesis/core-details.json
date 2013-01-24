@@ -1,0 +1,12 @@
+{
+    "build": {
+        "time": "${git.build.time}",
+        "version": "${project.version}"
+    },
+    "revision": {
+        "short": "${git.commit.id.abbrev}",
+        "long": "${git.commit.id}",
+        "time": "${git.commit.time}",
+        "branch": "${git.branch}"
+    }
+}

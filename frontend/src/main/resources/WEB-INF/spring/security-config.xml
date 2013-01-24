@@ -46,6 +46,7 @@
         <s:intercept-url pattern="/favicon.ico" access="permitAll" />
         <s:intercept-url pattern="/login.html" access="permitAll" />
         <s:intercept-url pattern="/*.html" access="isAuthenticated()" />
+        <s:intercept-url pattern="/*.json" access="isAuthenticated()" />
         <s:intercept-url pattern="/app/**/*.js" access="permitAll" />
         <s:intercept-url pattern="/app/**/*.coffee" access="permitAll" />
         <s:intercept-url pattern="/app/**/*.html" access="permitAll" />
