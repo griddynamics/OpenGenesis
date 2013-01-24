@@ -4,6 +4,7 @@ require([
   // Libs
   "jquery",
   "backbone",
+  "underscore",
   //services
   "services/backend",
   // Modules
@@ -20,7 +21,7 @@ require([
   "tabs"
 ],
 
-function(genesis, jQuery, Backbone, backend, status, Projects, Environments, EnvironmentDetails, CreateEnvironment, Breadcrumbs, ProjectProperties, AppSettings) {
+function(genesis, jQuery, Backbone, _, backend, status, Projects, Environments, EnvironmentDetails, CreateEnvironment, Breadcrumbs, ProjectProperties, AppSettings) {
 
   var app = genesis.app;
 
@@ -64,7 +65,7 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Env
       if(this.projects.get(projectId)){
         this.setCurrentView(new ProjectProperties.Views.Main({project: this.projects.get(projectId), el: this.$viewDiv()}));
       } else {
-        genesis.app.trigger("server-communication-error", "Requested project wasn't found")
+        genesis.app.trigger("server-communication-error", "Requested project wasn't found", "/")
       }
     },
 
@@ -74,7 +75,7 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Env
         var view = new Environments.Views.List({collection: environments, el: this.$viewDiv()});
         this.setCurrentView(view);
       } else {
-        genesis.app.trigger("server-communication-error", "Requested project wasn't found")
+        genesis.app.trigger("server-communication-error", "Requested project wasn't found", "/")
       }
     },
 
@@ -87,7 +88,7 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Env
       if(this.projects.get(projectId)){
         this.setCurrentView(new CreateEnvironment.Views.Main({project : this.projects.get(projectId), el: this.$viewDiv()}));
       } else {
-        genesis.app.trigger("server-communication-error", "Requested project wasn't found")
+        genesis.app.trigger("server-communication-error", "Requested project wasn't found", "/")
       }
     },
 
@@ -127,25 +128,25 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Env
         errorDialog.dialog("option", "buttons", {
           "OK": function() {
             $(this).dialog("close");
-            genesis.app.router.navigate(_.isUndefined(url) ? "/" : url, {trigger: true});
+            if(!_.isUndefined(url)) {
+              genesis.app.router.navigate(url, {trigger: true});
+            }
           }
         }).dialog('open');
       }
     });
-
-    $.ajaxSetup({cache: false});
 
     $(document).ajaxError(function(event, xhr, settings) {
       if (settings.suppressErrors) return;
 
       return ({
         403: function() {
-          genesis.app.trigger("server-communication-error", "You don't have enough permissions to access this page")
+          genesis.app.trigger("server-communication-error", "You don't have enough permissions to access this page", "/")
         },
 
         404: function() {
           genesis.app.trigger("page-view-loading-completed");
-          genesis.app.trigger("server-communication-error", "Requested resource wasn't found");
+          genesis.app.trigger("server-communication-error", "Requested resource wasn't found", "/");
         },
 
         503: function() {
@@ -157,8 +158,12 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Env
                 "Please try again later or contact administrator if the problem persists.");
             errorDialog.dialog('open');
           }
+        },
+        401: function() {
+           window.location.href = "login.html?expire=true";
         }
-      }[xhr.status] || function(){})();
+
+    }[xhr.status] || function(){})();
     });
 
     var userProjects = new Projects.Collection();
@@ -256,11 +261,13 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Env
 
     $("#connection-error").ajaxError(function(event, jqXHR) {
       if (((jqXHR.status === 0 && jqXHR.statusText !== "abort") || jqXHR.status === 12029) && $(this).is(":hidden")) {
-        $(this).show();
-        pollServerStatus($(this));
-      }
-      if(jqXHR.status === 401) {
-        window.location.href = "login.html?expire=true";
+        if(jqXHR.statusText === "timeout") {
+          genesis.app.trigger("page-view-loading-completed");
+          genesis.app.trigger("server-communication-error", "Timeout. Server took too long to respond.")
+        } else {
+          $(this).show();
+          pollServerStatus($(this));
+        }
       }
     });
 

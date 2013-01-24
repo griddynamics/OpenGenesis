@@ -50,6 +50,11 @@ function($, _, Backbone, formats, tmpls) {
     }
   });
 
+  $.ajaxSetup({
+    cache: false,
+    timeout: 30000
+  });
+
   var genesis = {
     fetchTemplate: function(path, done) {
       done = done || function(){};
