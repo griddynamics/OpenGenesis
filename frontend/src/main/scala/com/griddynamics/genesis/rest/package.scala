@@ -34,7 +34,7 @@ package object rest {
       def user(username: String) = User(username, null, null, null, None, None, None)
 
       try {
-        val userMap = userService.findByUsernames(usernames.toSeq).groupBy(_.username.toLowerCase)
+        val userMap = userService.findByUsernames(usernames).groupBy(_.username.toLowerCase)
         usernames map { username =>
           userMap.get(username.toLowerCase).getOrElse(Seq(user(username))).head
         }
