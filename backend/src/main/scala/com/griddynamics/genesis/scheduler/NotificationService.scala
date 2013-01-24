@@ -45,10 +45,13 @@ class NotificationService(adminUsername: Option[String],
   }
 
   def notifyCreator(env: Environment, subject: String, message: String) {
+    val email = creatorEmail(env)
     try {
-      emailService.getEmailService.sendEmail(creatorEmail(env).toSeq, subject, message )
+      emailService.getEmailService.sendEmail(email.toSeq, subject, message )
     } catch {
-      case e: Exception => log.error(e, s"Failed to send notification message ${subject}: '${message}' to user ${env.creator}")
+      case e: Exception =>
+        val emailStr = email.map{ c => if(c.isEmpty) "<EMPTY>" else c }.getOrElse("<NONE>")
+        log.error(e, s"Failed to send notification message $subject: '$message' to user ${env.creator} (email: $emailStr)")
     }
   }
 
@@ -60,7 +63,7 @@ class NotificationService(adminUsername: Option[String],
     try {
       emailService.getEmailService.sendEmail(adminEmails, subject, message )
     } catch {
-      case e: Exception => log.error(e, s"Failed to send notification message $subject: '$message' to admins $adminEmails")
+      case e: Exception => log.error(e, s"Failed to send notification message $subject: '$message' to admins ($adminEmails)")
     }
   }
 
