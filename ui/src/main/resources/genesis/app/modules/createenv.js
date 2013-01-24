@@ -287,11 +287,13 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
 
     renderError: function(error, htmltemplate) {
       var view = this;
-      $("#ready").hide();
-      var errorMsg = _.has(error, "responseText") ? JSON.parse(error.responseText) : error;
-      $.when(genesis.fetchTemplate(htmltemplate || this.errorTemplate)).done(function(tmpl){
-        view.$el.html(tmpl({error: errorMsg}));
-      });
+      view.$("#ready").hide();
+      if(error.status === 400) {
+        var errorMsg = _.has(error, "responseText") ? JSON.parse(error.responseText) : error;
+        $.when(genesis.fetchTemplate(htmltemplate || this.errorTemplate)).done(function(tmpl){
+          view.$el.html(tmpl({error: errorMsg}));
+        });
+      }
     },
 
     render: function (template, workflow) {
