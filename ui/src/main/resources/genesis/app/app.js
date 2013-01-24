@@ -140,6 +140,10 @@ function(genesis, jQuery, Backbone, _, backend, status, Projects, Environments, 
       if (settings.suppressErrors) return;
 
       return ({
+        401: function() {
+          window.location.href = "login.html?expire=true";
+        },
+
         403: function() {
           genesis.app.trigger("server-communication-error", "You don't have enough permissions to access this page", "/")
         },
@@ -149,6 +153,14 @@ function(genesis, jQuery, Backbone, _, backend, status, Projects, Environments, 
           genesis.app.trigger("server-communication-error", "Requested resource wasn't found", "/");
         },
 
+        500: function(event, xhr, settings) {
+          genesis.app.trigger("page-view-loading-completed");
+          try {
+            genesis.app.trigger("server-communication-error", "Internal server error occurred. <br/><br/>Please contact system administrator" );
+          } catch (e) {
+            //todo(RB): what to do?
+          }
+        },
         503: function() {
           genesis.app.trigger("page-view-loading-completed");
           if (!errorDialog.dialog('isOpen')) {
@@ -158,12 +170,7 @@ function(genesis, jQuery, Backbone, _, backend, status, Projects, Environments, 
                 "Please try again later or contact administrator if the problem persists.");
             errorDialog.dialog('open');
           }
-        },
-        401: function() {
-           window.location.href = "login.html?expire=true";
-        }
-
-    }[xhr.status] || function(){})();
+        }}[xhr.status] || function(){})(event, xhr, settings);
     });
 
     var userProjects = new Projects.Collection();
