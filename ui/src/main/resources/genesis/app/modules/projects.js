@@ -26,7 +26,13 @@ function(genesis, status, backend, Backbone, $, validation) {
 
   Projects.Collection = Backbone.Collection.extend({
     model: Projects.Model,
-    url: "rest/projects"
+    url: "rest/projects",
+    parse: function(json) {
+      if (json.items)
+        return json.items
+      else
+        return json;
+    }
   });
 
   Projects.Views.ProjectsOverview = Backbone.View.extend({

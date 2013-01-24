@@ -1,7 +1,9 @@
 package com.griddynamics.genesis.rest
 
+import annotations.{LinkTarget, LinkTo, LinksTo}
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import com.griddynamics.genesis.rest.GenesisRestController._
+import links.CollectionWrapper
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
 import com.griddynamics.genesis.service.impl.ProjectService
@@ -52,8 +54,9 @@ class ProjectsController extends RestApiExceptionsHandler {
 
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
+  @LinksTo(value = Array(new LinkTo(methods = Array(RequestMethod.POST), clazz = classOf[Project], controller = classOf[ProjectsController])))
   def listProjects(@RequestParam(value = "sorting", required = false, defaultValue = "name") sorting: Ordering,
-                   request: HttpServletRequest): Iterable[Project] = {
+                   request: HttpServletRequest): CollectionWrapper[Project] = {
     if (request.isUserInRole(GenesisRole.SystemAdmin.toString) || request.isUserInRole(GenesisRole.ReadonlySystemAdmin.toString)) {
       projectService.orderedList(sorting)
     } else {
@@ -62,6 +65,7 @@ class ProjectsController extends RestApiExceptionsHandler {
       projectService.getProjects(ids, Option(sorting))
     }
   }
+
 
   @RequestMapping(method = Array(RequestMethod.POST))
   @ResponseBody

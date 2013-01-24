@@ -43,6 +43,7 @@
     <aop:aspectj-autoproxy proxy-target-class="true"/>
      <!--Aspects-->
     <bean class="com.griddynamics.genesis.spring.aop.ProjectBoundaryCheckingAspect"   />
+    <bean class="com.griddynamics.genesis.spring.aop.LinksToAspect"   />
 
     <!-- Controllers -->
     <bean class="com.griddynamics.genesis.rest.ProjectsController"/>
