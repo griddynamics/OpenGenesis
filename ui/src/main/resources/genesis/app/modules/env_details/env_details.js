@@ -446,11 +446,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
           try {
             json = JSON.parse(response.responseText);
           } catch (e) {
-            if(response.statusText && response.statusText  === "timeout") {
-              json = {compoundVariablesErrors: [], compoundServiceErrors: ["Timeout: server taking too long time to respond"] }
-            } else {
-              json = {compoundVariablesErrors: [], compoundServiceErrors: ["Internal server error"] }
-            }
+            json = {compoundVariablesErrors: [], compoundServiceErrors: ["Internal server error"] }
           }
           if (_.isEmpty(json.variablesErrors)) {
             var errors = _.union(
