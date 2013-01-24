@@ -27,9 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation._
 import javax.servlet.http.HttpServletRequest
 import java.security.Principal
-import java.util.Properties
-import org.springframework.beans.factory.annotation.{Qualifier, Autowired}
-import collection.JavaConversions
+import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.service.{ConversionException, TemplateService}
 import com.griddynamics.genesis.api.{Failure, GenesisService}
 import com.griddynamics.genesis.util.Logging
@@ -42,14 +40,6 @@ class GenesisRestController extends RestApiExceptionsHandler with Logging {
 
     @Autowired var genesisService: GenesisService = _
     @Autowired var templateService: TemplateService = _
-
-    @Autowired
-    @Qualifier("buildInfo")
-    var buildInfoProps: Properties = _
-
-    @RequestMapping(value = Array("build-info"), method = Array(RequestMethod.GET))
-    @ResponseBody
-    def buildInfo = JavaConversions.propertiesAsScalaMap(buildInfoProps).toMap
 
     @RequestMapping(value = Array("projects/{projectId}/templates"), method = Array(RequestMethod.GET))
     @ResponseBody

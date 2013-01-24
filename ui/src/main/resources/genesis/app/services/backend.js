@@ -243,13 +243,18 @@ function(genesis, $) {
       });
     },
 
-    version: function() {
+    coreDetails: function() {
+      return $.getJSON("core-details.json");
+    },
+
+    distributionDetails: function() {
       return $.ajax({
-        url: "/rest/build-info",
+        url: "distribution-details.json",
         dataType: "json",
         type: "GET",
         timeout: DEFAULT_TIMEOUT,
-        processData: false
+        processData: false,
+        suppressErrors: true
       })
     }
   };

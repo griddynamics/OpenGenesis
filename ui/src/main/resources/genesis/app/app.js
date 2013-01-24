@@ -133,27 +133,33 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Env
       }
     });
 
-    $.ajaxSetup({cache: false, statusCode: {
-      403: function() {
-        genesis.app.trigger("server-communication-error", "You don't have enough permissions to access this page")
-      },
+    $.ajaxSetup({cache: false});
 
-      404: function() {
-        genesis.app.trigger("page-view-loading-completed");
-        genesis.app.trigger("server-communication-error", "Requested resource wasn't found");
-      },
+    $(document).ajaxError(function(event, xhr, settings) {
+      if (settings.suppressErrors) return;
 
-      503: function() {
-        genesis.app.trigger("page-view-loading-completed");
-        if (!errorDialog.dialog('isOpen')) {
-          errorDialog.dialog("option", "buttons", {});
-          $("#server-communication-error-dialog").
-            html("Backend service became unreachable (or took to long to respond). <br/><br/>" +
-                 "Please try again later or contact administrator if the problem persists.");
-          errorDialog.dialog('open');
+      return ({
+        403: function() {
+          genesis.app.trigger("server-communication-error", "You don't have enough permissions to access this page")
+        },
+
+        404: function() {
+          genesis.app.trigger("page-view-loading-completed");
+          genesis.app.trigger("server-communication-error", "Requested resource wasn't found");
+        },
+
+        503: function() {
+          genesis.app.trigger("page-view-loading-completed");
+          if (!errorDialog.dialog('isOpen')) {
+            errorDialog.dialog("option", "buttons", {});
+            $("#server-communication-error-dialog").
+              html("Backend service became unreachable (or took to long to respond). <br/><br/>" +
+                "Please try again later or contact administrator if the problem persists.");
+            errorDialog.dialog('open');
+          }
         }
-      }
-    }});
+      }[xhr.status] || function(){})();
+    });
 
     var userProjects = new Projects.Collection();
 
@@ -193,14 +199,30 @@ function(genesis, jQuery, Backbone, backend, status, Projects, Environments, Env
        }
     });
 
-    $.when(backend.SettingsManager.version()).done(function(buildInfo) {
-      $(".genesis-version")
-        .click(function(e){
-          if(e.shiftKey && window) {
-            window.prompt ("Copy to clipboard: Ctrl+C, Enter", JSON.stringify(buildInfo));
-            return false;
-          }
-        })
+    $.when(backend.SettingsManager.coreDetails()).done(function(details) {
+      $(".core-details").data("details", details).text("v" + details.build.version + "-sha:" + details.revision.short)
+    });
+
+    $.when(backend.SettingsManager.distributionDetails()).done(function(details) {
+      var hasVersion = details.build && details.build.version;
+      var hasRevision = details.revision && details.revision.short;
+
+      var info = details.name || 'Unknown';
+      if (hasVersion) info = info + " v" + details.build.version;
+      if (hasRevision) info = info + (hasVersion ? "-" : " ") + "sha:" + details.revision.short;
+
+      $(".distr-details").data("details", details).text(info)
+    });
+
+    $(".genesis-version").click(function(e) {
+      if (e.shiftKey && window) {
+        window.prompt("Copy to clipboard: Ctrl+C, Enter",
+          JSON.stringify({
+            "core": $(".core-details").data("details") || null,
+            "distribution": $(".distr-details").data("details") || null
+          }));
+        return false;
+      }
     });
 
     function initCurrentUser(user){
