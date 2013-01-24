@@ -49,8 +49,8 @@ class SchedulerContext extends Logging {
   @Autowired var projectService: ProjectService = _
   @Autowired var userService: UserService = _
 
-  @Value("${genesis.web.admin.username: NOT-SET}") var adminUserName: String = _
-  @Value("${genesis.web.admin.email: NOT-SET}") var adminEmail: String = _
+  @Value("${genesis.web.admin.username:NOT-SET}") var adminUserName: String = _
+  @Value("${genesis.web.admin.email:NOT-SET}") var adminEmail: String = _
 
   @PostConstruct
   def afterPropertiesSet() {
