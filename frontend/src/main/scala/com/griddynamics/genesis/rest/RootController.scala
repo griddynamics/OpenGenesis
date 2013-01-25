@@ -1,5 +1,6 @@
 package com.griddynamics.genesis.rest
 
+import annotations.LinkTarget
 import links.{ControllerClassAggregator, Link}
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.{ResponseBody, RequestMethod, RequestMapping}
@@ -18,9 +19,9 @@ class RootController {
   @ResponseBody
   def root(request: HttpServletRequest) = {
     implicit val req = request
-    val links = ControllerClassAggregator(classOf[ProjectsController], classOf[Project])
+    val links = ControllerClassAggregator(classOf[ProjectsController], classOf[Project], LinkTarget.COLLECTION)
     if (request.isUserInRole(GenesisRole.SystemAdmin.toString) || request.isUserInRole(GenesisRole.ReadonlySystemAdmin.toString))
-      links ++ ControllerClassAggregator(classOf[SettingsController], classOf[Link])
+      links ++ ControllerClassAggregator(classOf[SettingsController], classOf[Link], LinkTarget.COLLECTION)
     else
       links
   }

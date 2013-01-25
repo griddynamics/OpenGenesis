@@ -31,6 +31,7 @@ import org.springframework.http.{HttpStatus, HttpOutputMessage, HttpInputMessage
 import com.griddynamics.genesis.api.{ExtendedResult, Success, Failure}
 import com.griddynamics.genesis.rest.GenesisRestController.{DEFAULT_CHARSET => DC}
 import java.io.StringWriter
+import com.griddynamics.genesis.rest.links.ItemWrapper
 
 class JsonMessageConverter
         extends HttpMessageConverter[AnyRef]{
@@ -47,6 +48,11 @@ class JsonMessageConverter
           Printer.compact(render(json), new StringWriter()).toString
         }
 
+        def serializeItemWrapper(res: ItemWrapper[_]): String = {
+          val json = Extraction.decompose(res.item) ++ JField("links", Extraction.decompose(res.links))
+          Printer.compact(render(json), new StringWriter()).toString
+        }
+
         val statusCode  = getStatus(t)
         if (outputMessage.isInstanceOf[ServerHttpResponse] && statusCode > 0)  {
             val response = outputMessage.asInstanceOf[ServerHttpResponse]
@@ -56,6 +62,7 @@ class JsonMessageConverter
         outputMessage.getHeaders.setContentType(MediaType.APPLICATION_JSON)
         val message: String = t match {
           case b: ExtendedResult[_] => serializeExtendedResult(b)
+          case wrapped: ItemWrapper[_] => serializeItemWrapper(wrapped)
           case _ => Serialization.write(t)
         }
         val messageBytes: Array[Byte] = message.getBytes(DEFAULT_CHARSET.name())
