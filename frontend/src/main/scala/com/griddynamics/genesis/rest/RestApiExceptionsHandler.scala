@@ -100,7 +100,7 @@ trait RestApiExceptionsHandler extends Logging {
 
       if(acceptMediaTypes.contains(MediaType.APPLICATION_JSON)){
         response.setContentType(MediaType.APPLICATION_JSON.toString)
-        response.getWriter.write("{\"error\": \"Internal server error occurred\"}")
+        response.getWriter.write("{\"error\": \"%s\"}".format(exception.getMessage))
       } else {
         response.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error occurred")
       }
