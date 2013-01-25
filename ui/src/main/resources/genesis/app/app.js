@@ -136,36 +136,33 @@ function(genesis, jQuery, Backbone, _, backend, status, Projects, Environments, 
       }
     });
 
-    $(document).ajaxError(function(event, xhr, settings) {
-      if (settings.suppressErrors) return;
 
-      return ({
-        401: function() {
+    (function initializeErrorHandler(doc) {
+      var errorHandler = {
+        401: function () {
           window.location.href = "login.html?expire=true";
         },
 
-        403: function() {
+        403: function () {
           genesis.app.trigger("server-communication-error", "You don't have enough permissions to access this page", "/")
         },
 
-        404: function() {
-          genesis.app.trigger("page-view-loading-completed");
+        404: function () {
           genesis.app.trigger("server-communication-error", "Requested resource wasn't found", "/");
         },
 
-        500: function(event, xhr, settings) {
-          genesis.app.trigger("page-view-loading-completed");
+        500: function (event, xhr, settings) {
           var errorMsg = "";
           try {
             var error = JSON.parse(xhr.responseText).error;
-            errorMsg = "Internal server error: " + error ;
+            errorMsg = "Internal server error: " + error;
           } catch (e) {
             errorMsg = "Internal server error occurred.";
           }
           genesis.app.trigger("server-communication-error", errorMsg + (!app.currentUser.administrator ? "<br/><br/> Please contact system administrator" : ""));
         },
-        503: function() {
-          genesis.app.trigger("page-view-loading-completed");
+
+        503: function () {
           if (!errorDialog.dialog('isOpen')) {
             errorDialog.dialog("option", "buttons", {});
             $("#server-communication-error-dialog").
@@ -173,8 +170,16 @@ function(genesis, jQuery, Backbone, _, backend, status, Projects, Environments, 
                 "Please try again later or contact administrator if the problem persists.");
             errorDialog.dialog('open');
           }
-        }}[xhr.status] || function(){})(event, xhr, settings);
-    });
+        }
+      };
+
+      $(doc).ajaxError(function (event, xhr, settings) {
+        if (!settings.suppressErrors) {
+          genesis.app.trigger("page-view-loading-completed");
+          (errorHandler[xhr.status] || function () {}) (event, xhr, settings);
+        }
+      });
+    })(document || {});
 
     var userProjects = new Projects.Collection();
 
