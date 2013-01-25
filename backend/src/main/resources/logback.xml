@@ -47,6 +47,7 @@
     <logger name="org.springframework.web" level="warn"/>
     <logger name="org.springframework.security" level="error"/>
     <logger name="org.springframework.web.servlet.PageNotFound" level="error"/>
+    <logger name="org.springframework.aop" level="error"/>
 
     <!-- JClouds JSON body -->
     <!--<logger name="jclouds.wire" level="debug" /> -->
