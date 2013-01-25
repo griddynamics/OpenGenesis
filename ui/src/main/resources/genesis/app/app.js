@@ -155,11 +155,14 @@ function(genesis, jQuery, Backbone, _, backend, status, Projects, Environments, 
 
         500: function(event, xhr, settings) {
           genesis.app.trigger("page-view-loading-completed");
+          var errorMsg = "";
           try {
-            genesis.app.trigger("server-communication-error", "Internal server error occurred. <br/><br/>Please contact system administrator" );
+            var error = JSON.parse(xhr.responseText).error;
+            errorMsg = "Internal server error: " + error ;
           } catch (e) {
-            //todo(RB): what to do?
+            errorMsg = "Internal server error occurred.";
           }
+          genesis.app.trigger("server-communication-error", errorMsg + (!app.currentUser.administrator ? "<br/><br/> Please contact system administrator" : ""));
         },
         503: function() {
           genesis.app.trigger("page-view-loading-completed");
