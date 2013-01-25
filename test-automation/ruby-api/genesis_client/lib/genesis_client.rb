@@ -62,6 +62,9 @@ module Genesis
               criteria = concat_arguments('#{attributes.join(",")}', arguments)
               response = get
               arr = JSON.parse(response.body)
+              if arr.class == Hash && arr.has_key?("items")
+                 arr = arr["items"]
+              end
               criteria.each do |k,v|
                 arr = arr.reject {|g| g[k.to_s] != v}
               end
