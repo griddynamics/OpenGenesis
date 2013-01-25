@@ -283,9 +283,13 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
               case e: Throwable => connection.getErrorStream
             }
             //I have no idea why there is nulls for header names, but we have to check it
-            for(entry <- connection.getHeaderFields if (entry._1 != null && entry._1 != "Connection"
-              && entry._1 != "Set-Cookie")) {
-                response.addHeader(entry._1, entry._2(0))
+            for { (name, values) <- connection.getHeaderFields if (name != null && name != "Connection" && name != "Set-Cookie") } {
+              values match {
+                case null => log.warn(s"Suspicious response from backend(${connection.getURL}): header $name has null as a value")
+                  response.addHeader(name, "")
+                case list if list.isEmpty => response.addHeader(name, "")
+                case list => list.foreach(response.addHeader(name, _))
+              }
             }
             response.addHeader(TunnelFilter.TUNNELED_HEADER_NAME, "UrlConnection")
             response.setHeader("Content-Encoding", "identity")
