@@ -71,11 +71,11 @@ class LocalUserRepository extends AbstractGenericRepository[LocalUser, User](Loc
         }
     }
 
-    def findByUsernames(usernames: Seq[String]): Seq[User] =
+    def findByUsernames(usernames: Iterable[String]): Set[User] =
       from(LocalUserSchema.users) { user =>
         where(lower(user.username) in usernames.map(_.toLowerCase) and user.deleted === false)
         .select(user)
-      }.toList.map(convert _)
+      }.toList.map(convert _).toSet
 
     def findByEmail(email: String) : Option[User] = {
         from (LocalUserSchema.users) {

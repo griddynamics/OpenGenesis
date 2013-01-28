@@ -172,10 +172,7 @@ function($, _, Backbone, formats, tmpls) {
       },
 
       formatUserLabel: function(user) {
-        var hasFirstName = user.firstName !== null && !_.isUndefined(user.firstName);
-        var hasLastName = user.lastName !== null && !_.isUndefined(user.lastName);
-
-        if (!hasFirstName && !hasLastName)
+        if (!user.firstName && !user.lastName)
           return user.username;
 
         return (user.firstName + " " + user.lastName).trim();

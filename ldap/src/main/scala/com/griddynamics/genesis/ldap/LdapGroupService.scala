@@ -86,6 +86,17 @@ class LdapGroupServiceImpl(val config: LdapPluginConfig,
 
   def findByName(name: String) = findGroup(filterByNamePattern(config.stripDomain(name)))
 
+  def findByNames(names: Iterable[String]) = {
+    val filter = "(&(%s)(|%s))".format(
+      config.groupsServiceFilter,
+      names.map { name => "(cn=%s)".format(config.stripDomain(name)) }.mkString
+    )
+
+    log.debug("Group search base: '%s'; filter: '%s'", config.groupSearchBase, filter)
+
+    search(filter, GroupContextMapper()).toSet
+  }
+
   def users(id: Int) = get(id) match {
     case Some(group) => group.users.map { _.flatMap(userService.findByUsername(_)) }.getOrElse(Seq.empty)
     case _ => Seq.empty
@@ -110,7 +121,8 @@ class LdapGroupServiceImpl(val config: LdapPluginConfig,
 
   def doesGroupExist(groupName: String) = findByName(config.stripDomain(groupName)).isDefined
 
-  def doGroupsExist(groupNames: Seq[String]) = groupNames forall { g => doesGroupExist(config.stripDomain(g)) }
+  def doGroupsExist(groupNames: Iterable[String]) =
+    findByNames(groupNames).map(_.name.toLowerCase).toSet == groupNames.map(_.toLowerCase).toSet
 
   def list = search(config.groupsServiceFilter, GroupContextMapper())
 

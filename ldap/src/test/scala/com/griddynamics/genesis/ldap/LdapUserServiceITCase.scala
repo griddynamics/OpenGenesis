@@ -166,6 +166,16 @@ class LdapUserServiceITCase extends ShouldMatchers {
     users.map(_.username).toSet should equal(Set("developer1"))
   }
 
+  @Test def testSearchWithLeadingSpaces() {
+    val users = userService.search("    *")
+    users should be ('empty)
+  }
+
+  @Test def testSearchBySpaces() {
+    val users = userService.search("    ")
+    users should be ('empty)
+  }
+
   @Test def testFindByUsernames() {
     val users = userService.findByUsernames(Seq("developer1", "unknown", "manager1"))
     users.map(_.username).toSet should equal(Set("developer1", "manager1"))

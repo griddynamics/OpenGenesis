@@ -118,8 +118,13 @@ class LdapGroupServiceITCase extends ShouldMatchers {
   }
 
   @Test def testSearchPatternIsCaseInsensitive() {
-    val group = groupService.search("DeV*")
-    group.map(_.name).toSet should equal(Set("developers"))
+    val groups = groupService.search("DeV*")
+    groups.map(_.name).toSet should equal(Set("developers"))
+  }
+
+  @Test def testFindByNames() {
+    val groups = groupService.findByNames(Seq("developers", "managers", "notfound"))
+    groups.map(_.name).toSet should equal(Set("developers", "managers"))
   }
 
 }
