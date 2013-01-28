@@ -45,6 +45,9 @@
     <bean class="com.griddynamics.genesis.spring.aop.ProjectBoundaryCheckingAspect"   />
     <bean class="com.griddynamics.genesis.spring.aop.LinksToAspect"   />
 
+    <!-- MVC local beans -->
+    <bean class="com.griddynamics.genesis.spring.security.LinkSecurityBean"/>
+
     <!-- Controllers -->
     <bean class="com.griddynamics.genesis.rest.ProjectsController"/>
 
