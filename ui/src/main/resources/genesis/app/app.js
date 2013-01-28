@@ -129,7 +129,11 @@ function(genesis, jQuery, Backbone, _, backend, status, Projects, Environments, 
           "OK": function() {
             $(this).dialog("close");
             if(!_.isUndefined(url)) {
-              genesis.app.router.navigate(url, {trigger: true});
+              if(_.isFunction(url)){
+                url();
+              } else {
+                genesis.app.router.navigate(url, {trigger: true});
+              }
             }
           }
         }).dialog('open');
@@ -139,8 +143,18 @@ function(genesis, jQuery, Backbone, _, backend, status, Projects, Environments, 
 
     (function initializeErrorHandler(doc) {
       var errorHandler = {
-        401: function () {
-          window.location.href = "login.html?expire=true";
+        401: function (event, xhr, settings) {
+          if(!app.currentConfiguration.logout_disabled) {
+            var retry = settings.retry || 1;
+            if(retry < 2) {
+              settings.retry = retry + 1;
+              $.ajax(settings);
+            } else {
+              genesis.app.trigger("server-communication-error", "Server authentication has expired <br/><br/> Press OK to reload the page", function(){ location.reload(true); });
+            }
+          } else {
+            window.location.href = "login.html?expire=true";
+          }
         },
 
         403: function () {
@@ -179,6 +193,15 @@ function(genesis, jQuery, Backbone, _, backend, status, Projects, Environments, 
           (errorHandler[xhr.status] || function () {}) (event, xhr, settings);
         }
       });
+
+      $.ajaxPrefilter(function( options, originalOptions, jqXHR ) {
+        options.error = function (xhr, status, thrown) {
+          if(xhr.status != 401 && originalOptions.error) {
+            originalOptions.error(xhr, status, thrown);
+          }
+        }
+      });
+
     })(document || {});
 
     var userProjects = new Projects.Collection();
@@ -248,6 +271,8 @@ function(genesis, jQuery, Backbone, _, backend, status, Projects, Environments, 
     function initCurrentUser(user){
       app.currentUser = user;
       app.currentConfiguration = user.configuration || {};
+      app.currentConfiguration["logout_disabled"] = user.logout_disabled;
+
       $('.user-name').text(user.user);
       if (user.administrator || user.readonly) {
         $(".system-settings").show();
