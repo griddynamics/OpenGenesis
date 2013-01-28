@@ -56,6 +56,16 @@ class ActiveDirectoryGroupServiceImpl(val namingContext: String,
   def findByName(name: String) =
     template.query(Query("(sAMAccountName=%s)".format(normalize(name))), GroupMapper).headOption
 
+  def findByNames(names: Iterable[String]): Set[UserGroup] = {
+    if (names.isEmpty)
+      return Set()
+
+    val filter = "(|%s)".format(
+      names.map { name => "(sAMAccountName=%s)".format(normalize(name)) }.mkString
+    )
+    template.query(Query(filter), GroupMapper).toSet
+  }
+
   def users(name: Int) = throw new UnsupportedOperationException
 
   def addUserToGroup(id: Int, username: String) = throw new UnsupportedOperationException
@@ -75,7 +85,7 @@ class ActiveDirectoryGroupServiceImpl(val namingContext: String,
 
   def doesGroupExist(groupName: String) = findByName(groupName).isDefined
 
-  def doGroupsExist(groupNames: Seq[String]) = groupNames forall { g => doesGroupExist(g) }
+  def doGroupsExist(groupNames: Iterable[String]) = groupNames forall { g => doesGroupExist(g) }
 
   def list = template.query(Query("(*)"), GroupMapper)
 }

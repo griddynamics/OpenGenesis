@@ -61,7 +61,7 @@ class NotificationService(adminUsername: Option[String],
     val adminEmails = userService.findByUsernames(projectAdmins).map(_.email) ++ managerEmail
 
     try {
-      emailService.getEmailService.sendEmail(adminEmails, subject, message )
+      emailService.getEmailService.sendEmail(adminEmails.toList, subject, message )
     } catch {
       case e: Exception => log.error(e, s"Failed to send notification message $subject: '$message' to admins ($adminEmails)")
     }

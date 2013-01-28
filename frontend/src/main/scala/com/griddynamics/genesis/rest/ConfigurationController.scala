@@ -37,6 +37,7 @@ import com.griddynamics.genesis.api.Failure
 import scala.Some
 import com.griddynamics.genesis.api.Configuration
 import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.groups.GroupService
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/configs"))
@@ -46,6 +47,7 @@ class ConfigurationController extends RestApiExceptionsHandler{
   @Autowired var envAuthService: EnvironmentAccessService = _
   @Autowired var storeService: StoreService = _
   @Autowired var userService: UserService = _
+  @Autowired var groupService: GroupService = _
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
   @ResponseBody
@@ -135,8 +137,17 @@ class ConfigurationController extends RestApiExceptionsHandler{
       )
     }
 
-    envAuthService.grantConfigAccess(configId, users.distinct, groups.distinct )
-    Success(None)
+    val nonExistentUsers = users.map(_.toLowerCase).toSet -- userService.findByUsernames(users).map(_.username.toLowerCase)
+    val nonExistentGroups = groups.map(_.toLowerCase).toSet -- groupService.findByNames(groups).map(_.name.toLowerCase)
+
+    envAuthService.grantConfigAccess(configId, users.distinct, groups.distinct)
+
+    Success(
+      Map(
+        "nonExistentUsers" -> nonExistentUsers,
+        "nonExistentGroups" -> nonExistentGroups
+      )
+    )
   }
 
 }

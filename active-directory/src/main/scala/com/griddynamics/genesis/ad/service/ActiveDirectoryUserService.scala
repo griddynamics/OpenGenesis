@@ -62,14 +62,14 @@ class ActiveDirectoryUserServiceImpl(val namingContext: String,
   def findByUsername(username: String) =
     template.query(Query("(sAMAccountName=%s)".format(normalize(username))), UserMapper).headOption
 
-  def findByUsernames(userNames: Seq[String]): Seq[User] = {
+  def findByUsernames(userNames: Iterable[String]): Set[User] = {
     if (userNames.isEmpty)
-      return Seq()
+      return Set()
 
     val filter = "(|%s)".format(
       userNames.map { username => "(sAMAccountName=%s)".format(normalize(username)) }.mkString
     )
-    template.query(Query(filter), UserMapper)
+    template.query(Query(filter), UserMapper).toSet
   }
 
   def search(usernameLike: String) = {
@@ -85,7 +85,7 @@ class ActiveDirectoryUserServiceImpl(val namingContext: String,
 
   def doesUserExist(userName: String) = findByUsername(userName).isDefined
 
-  def doUsersExist(userNames: Seq[String]) =
+  def doUsersExist(userNames: Iterable[String]) =
     findByUsernames(userNames).map(_.username.toLowerCase).toSet == userNames.map(_.toLowerCase).toSet
 
   def list = template.query(Query("(*)"), UserMapper)

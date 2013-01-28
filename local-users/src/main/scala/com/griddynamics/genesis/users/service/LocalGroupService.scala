@@ -50,6 +50,9 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
   def findByName(name: String) = repository.findByName(name)
 
   @Transactional(readOnly = true)
+  def findByNames(names: Iterable[String]) = repository.findByNames(names)
+
+  @Transactional(readOnly = true)
   def search(nameLike: String): List[UserGroup] = repository.search(nameLike)
 
   @Transactional(readOnly = true)
@@ -59,7 +62,7 @@ class LocalGroupService(val repository: LocalGroupRepository) extends GroupServi
   def doesGroupExist(groupName: String) = findByName(groupName).isDefined
 
   @Transactional(readOnly = true)
-  def doGroupsExist(groupNames: Seq[String]) = groupNames.forall { doesGroupExist(_) }
+  def doGroupsExist(groupNames: Iterable[String]) = groupNames.forall { doesGroupExist(_) }
 
   @Transactional
   override def create(a: UserGroup): ExtendedResult[UserGroup] = {

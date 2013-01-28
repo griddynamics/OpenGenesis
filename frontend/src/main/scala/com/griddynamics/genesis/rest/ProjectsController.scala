@@ -1,6 +1,6 @@
 package com.griddynamics.genesis.rest
 
-import annotations.{LinkTarget, LinkTo, LinksTo}
+import annotations.{LinkTo, LinksTo}
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import com.griddynamics.genesis.rest.GenesisRestController._
 import links.CollectionWrapper
@@ -17,6 +17,7 @@ import com.griddynamics.genesis.validation.Validation
 import com.griddynamics.genesis.api.Project
 import javax.validation.Valid
 import com.griddynamics.genesis.repository.ConfigurationRepository
+import com.griddynamics.genesis.groups.GroupService
 
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
@@ -48,6 +49,7 @@ class ProjectsController extends RestApiExceptionsHandler {
   @Autowired var authorityService: ProjectAuthorityService = _
   @Autowired var configurationRepository: ConfigurationRepository = _
   @Autowired var userService: UserService = _
+  @Autowired var groupService: GroupService = _
 
   @Value("${genesis.system.server.mode:frontend}")
   var mode = ""
@@ -130,10 +132,20 @@ class ProjectsController extends RestApiExceptionsHandler {
       )
     }
 
+    val nonExistentUsers = users.map(_.toLowerCase).toSet -- userService.findByUsernames(users).map(_.username.toLowerCase)
+    val nonExistentGroups = groups.map(_.toLowerCase).toSet -- groupService.findByNames(groups).map(_.name.toLowerCase)
+
     authorityService.updateProjectAuthority(projectId,
       GenesisRole.withName(roleName),
       users.distinct,
       groups.distinct)
+
+    Success(
+      Map(
+        "nonExistentUsers" -> nonExistentUsers,
+        "nonExistentGroups" -> nonExistentGroups
+      )
+    )
   }
 
   @RequestMapping(value = Array("{projectId}/roles/{roleName}"), method = Array(RequestMethod.GET))

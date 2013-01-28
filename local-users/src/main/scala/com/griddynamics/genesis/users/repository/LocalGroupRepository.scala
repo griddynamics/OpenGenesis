@@ -39,6 +39,9 @@ abstract class LocalGroupRepository extends AbstractGenericRepository[LocalGroup
       from(table)(group => where(group.name === name).select(group)).headOption.map(convert(_))
   }
 
+  def findByNames(names: Iterable[String]): Set[UserGroup] =
+    from(table)(group => where(group.name in names).select(group)).toList.map(convert _).toSet
+
   override def update(group: UserGroup) = {
       table.update(
           g => where (g.id === group.id)
