@@ -144,7 +144,7 @@ function(genesis, jQuery, Backbone, _, backend, status, Projects, Environments, 
     (function initializeErrorHandler(doc) {
       var errorHandler = {
         401: function (event, xhr, settings) {
-          if(!app.currentConfiguration.logout_disabled) {
+          if(app.currentConfiguration.logout_disabled) {
             var retry = settings.retry || 1;
             if(retry < 2) {
               settings.retry = retry + 1;
