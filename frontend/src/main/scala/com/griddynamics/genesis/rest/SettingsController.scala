@@ -23,15 +23,27 @@
 
 package com.griddynamics.genesis.rest
 
+import annotations.LinkTarget._
+import links.WebPath
 import org.springframework.web.bind.annotation._
+import org.springframework.web.bind.annotation.RequestMethod._
 import org.springframework.stereotype.Controller
 import com.griddynamics.genesis.service.ConfigService
 import com.griddynamics.genesis.service.GenesisSystemProperties.{PREFIX, PLUGIN_PREFIX}
 import com.griddynamics.genesis.rest.GenesisRestController.{extractParamsMap, paramToOption}
 import javax.servlet.http.HttpServletRequest
-import com.griddynamics.genesis.api.{ConfigProperty, ConfigPropertyType, ExtendedResult, Failure, Success}
+import com.griddynamics.genesis.api._
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.rest.links.Link
+import links.{WebPath, HrefBuilder, Link}
+import HrefBuilder._
+import com.griddynamics.genesis.spring.security.LinkSecurityBean
+import com.griddynamics.genesis.api.ConfigProperty
+import com.griddynamics.genesis.api.Failure
+import scala.Some
+import com.griddynamics.genesis.rest.SystemSettings
+import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.users.UserService
+import com.griddynamics.genesis.groups.GroupService
 
 case class SystemSettings(links: Array[Link]) //TODO: move to api after link will be moved
 
@@ -42,6 +54,9 @@ class SettingsController extends RestApiExceptionsHandler {
     import ConfigPasswordHelper._
 
     @Autowired var configService: ConfigService = _
+    @Autowired implicit var linkSecurity: LinkSecurityBean = _
+    @Autowired var userService: UserService = _
+    @Autowired var groupService: GroupService = _
 
     private val VISIBLE_PREFIXES = Seq(PREFIX, PLUGIN_PREFIX)
 
@@ -49,7 +64,28 @@ class SettingsController extends RestApiExceptionsHandler {
 
     @RequestMapping(value = Array("root"), method = Array(RequestMethod.GET)) //TODO: mapping will be changed
     @ResponseBody
-    def root(): SystemSettings = new SystemSettings(Array())
+    def root(request: HttpServletRequest): SystemSettings = {
+      new SystemSettings(linkSecurity.filter(collectLinks(request)).toArray)
+    }
+
+    def collectLinks(request: HttpServletRequest): Array[Link] = {
+       implicit val req: HttpServletRequest = request
+       val path: WebPath = WebPath(absolutePath("/rest"))
+       var result = List (
+          Link(path / "settings", COLLECTION, classOf[ConfigProperty], GET),
+          Link(path / "databags", COLLECTION, classOf[DataBag], GET),
+          Link(path / "roles", COLLECTION, GET, POST),
+          Link(path / "agents", COLLECTION, classOf[RemoteAgent], GET),
+          Link(path / "plugins", COLLECTION, classOf[Plugin], GET)
+       )
+       if (! userService.isReadOnly) {
+         result = Link(path / "users", COLLECTION, classOf[User], GET) :: result
+       }
+       if (! groupService.isReadOnly) {
+         result = Link(path / "groups", COLLECTION, classOf[UserGroup], GET) :: result
+       }
+       result.toArray
+    }
 
     @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
     @ResponseBody
