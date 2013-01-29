@@ -30,10 +30,24 @@ object Links {
 
 object Link {
   def apply(href: String, rel: LinkTarget, method: RequestMethod) = new Link(href, rel.toRel, None, Array(method.toString.toLowerCase))
+  def apply(href: String, rel: LinkTarget, modelClazz: Class[_], method: RequestMethod) = new Link(href, rel.toRel, modelClazz, Array(method.toString.toLowerCase))
+  implicit def toContentType(modelClazz: Class[_]): Some[String] = {
+    Some(s"application/vnd.griddynamics.genesis.${modelClazz.getSimpleName}+json")
+  }
 }
 
 object HrefBuilder {
   def absolutePath(localPath: String)(implicit request: HttpServletRequest): String = uriBuilder.path(localPath).build().toString
+  implicit def duplicate(request: HttpServletRequest) = {
+    implicit val req: HttpServletRequest = request
+    absolutePath(request.getServletPath)
+  }
+
+  def withPathParam(request: HttpServletRequest, pathParam: Any) = {
+    implicit val req: HttpServletRequest = request
+    absolutePath(request.getServletPath.stripSuffix("/") + "/" + pathParam.toString)
+  }
+
 
   private[links] def uriBuilder(implicit request: HttpServletRequest): UriComponentsBuilder = {
     request.getHeader(TunnelFilter.FORWARDED_HEADER) match {
@@ -44,7 +58,7 @@ object HrefBuilder {
 }
 
 object ControllerClassAggregator {
-
+  import Link._
   def apply(controllerClazz: Class[_], modelClazz: Class[_], rel: LinkTarget, methods: Array[RequestMethod] = Array())(implicit request: HttpServletRequest): Array[Link] =  {
     val builder = HrefBuilder.uriBuilder
 
@@ -55,7 +69,7 @@ object ControllerClassAggregator {
           ann.method()
         else
           methods
-        Link(link, rel.toRel, Some(s"application/vnd.griddynamics.genesis.${modelClazz.getSimpleName}+json"), getMethods(method))
+        Link(link, rel.toRel, modelClazz, getMethods(method))
       })
     }).getOrElse(Array())
   }

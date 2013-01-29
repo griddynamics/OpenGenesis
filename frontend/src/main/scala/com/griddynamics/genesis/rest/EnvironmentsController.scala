@@ -22,20 +22,17 @@
  */
 package com.griddynamics.genesis.rest
 
+import annotations.LinkTarget
 import filters.EnvFilter
+import links._
+import HrefBuilder.duplicate
 import org.springframework.stereotype.Controller
 import scala.Array
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import com.griddynamics.genesis.http.TunnelFilter
 import org.springframework.web.bind.annotation._
 import org.springframework.beans.factory.annotation.{Autowired, Value}
-import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.service.EnvironmentAccessService
-import com.griddynamics.genesis.validation.Validation
-import com.griddynamics.genesis.api.ActionTracking
-import com.griddynamics.genesis.api.EnvironmentDetails
-import com.griddynamics.genesis.api.Failure
-import com.griddynamics.genesis.api.WorkflowHistory
 import org.springframework.security.access.prepost.PostFilter
 import org.springframework.http.{HttpHeaders, MediaType}
 import java.util.{Date, TimeZone, Locale}
@@ -43,13 +40,7 @@ import org.springframework.security.access.AccessDeniedException
 import com.griddynamics.genesis.repository.ConfigurationRepository
 import org.apache.commons.lang3.StringEscapeUtils
 import java.util.concurrent.TimeUnit
-import com.griddynamics.genesis.api.ActionTracking
-import com.griddynamics.genesis.api.EnvironmentDetails
-import com.griddynamics.genesis.api.Failure
-import com.griddynamics.genesis.api.WorkflowHistory
-import com.griddynamics.genesis.api.Success
-import com.griddynamics.genesis.api.StepLogEntry
-import com.griddynamics.genesis.rest.InvalidInputException
+import com.griddynamics.genesis.api._
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
@@ -200,11 +191,20 @@ class EnvironmentsController extends RestApiExceptionsHandler {
                          @RequestParam(value="filter", required = false, defaultValue = "") filter: String,
                          @RequestParam(value="sorting", required = false, defaultValue = "name") ordering: Ordering,
                          request: HttpServletRequest) = {
-    filter match {
-      case EnvFilter(statuses @ _*) => genesisService.listEnvs(projectId, Option(statuses.map(_.toString)), Option(ordering))
+
+    val environments: Seq[Environment] = filter match {
+      case EnvFilter(statuses@_*) => genesisService.listEnvs(projectId, Option(statuses.map(_.toString)), Option(ordering))
       case "" => genesisService.listEnvs(projectId, ordering = Option(ordering))
       case _ => throw new InvalidInputException
     }
+    implicit val req: HttpServletRequest = request
+    val wrapped = environments.map(environment =>
+      ItemWrapper.wrap(environment).withLinks(Link(HrefBuilder.withPathParam(request, environment.id),
+        LinkTarget.SELF, classOf[Environment], RequestMethod.GET))
+    )
+
+    CollectionWrapper.wrap(wrapped).withLinks(Link(request,
+      LinkTarget.SELF, classOf[Environment], RequestMethod.POST))
   }
 
   @RequestMapping(value = Array("{envId}/actions"), method = Array(RequestMethod.POST))
