@@ -1,5 +1,7 @@
 package com.griddynamics.genesis.rest.links
 
+import javax.servlet.http.HttpServletRequest
+
 
 trait WithLinks {
   def links: Iterable[Link]
@@ -8,10 +10,13 @@ trait WithLinks {
 
 case class CollectionWrapper[T](items: Iterable[T], links: Iterable[Link]) extends WithLinks {
   override def add(coll: Iterable[Link]) = copy(items = items, links = coll)
+  def withItems(newItems: Iterable[T]) = copy(items = newItems, links = links)
+  def withLinks(link: Link, rest: Link*) = copy(items = items, links = links ++ (link :: rest.toList))
 }
 
 case class ItemWrapper[T](item: T, links: Iterable[Link]) extends WithLinks {
   override def add(coll: Iterable[Link]) = copy(item = item, links = coll)
+  def withLinks(link: Link, rest: Link*) = copy(item = item, links = links ++ (link :: rest.toList))
 }
 
 

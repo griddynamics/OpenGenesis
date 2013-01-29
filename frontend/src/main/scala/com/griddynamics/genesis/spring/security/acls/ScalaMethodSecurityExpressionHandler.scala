@@ -26,6 +26,7 @@ import org.springframework.security.access.expression.method.DefaultMethodSecuri
 import org.springframework.expression.{EvaluationContext, Expression}
 import org.springframework.security.access.expression.{SecurityExpressionRoot, ExpressionUtils}
 import org.springframework.security.access.PermissionCacheOptimizer
+import com.griddynamics.genesis.rest.links.{ItemWrapper, CollectionWrapper}
 
 class ScalaMethodSecurityExpressionHandler extends DefaultMethodSecurityExpressionHandler {
 
@@ -34,6 +35,7 @@ class ScalaMethodSecurityExpressionHandler extends DefaultMethodSecurityExpressi
   override def filter(filterTarget: Any, filterExpression: Expression, ctx: EvaluationContext) = {
     filterTarget match {
       case seq: Iterable[AnyRef] => filterScalaCollection(seq, filterExpression, ctx)
+      case wrapper: CollectionWrapper[AnyRef] => wrapper.withItems(filterScalaCollection(wrapper.items, filterExpression, ctx))
       case _ => super.filter(filterTarget, filterExpression, ctx)
     }
   }
@@ -46,7 +48,10 @@ class ScalaMethodSecurityExpressionHandler extends DefaultMethodSecurityExpressi
 
     val accessor = rootObject.asInstanceOf[{ def setFilterObject(o: AnyRef) }]
     filterTarget filter { filterObject =>
-      accessor.setFilterObject(filterObject)
+      filterObject match {
+        case wrapper: ItemWrapper[AnyRef] => accessor.setFilterObject(wrapper.item)
+        case item => accessor.setFilterObject(item)
+      }
       ExpressionUtils.evaluateAsBoolean(filterExpression, ctx)
     }
   }
