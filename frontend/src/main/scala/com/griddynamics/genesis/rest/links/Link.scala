@@ -28,15 +28,16 @@ object Links {
   }
 }
 
-case class WebPath(val start: String, val elements: List[String] = List()) {
+case class WebPath(start: String, elements: List[String] = List()) {
   def / (path: String) = WebPath(start, elements ++ (path :: Nil))
-  override def toString() = (start :: elements).mkString("/")
+  override def toString = (start :: elements).mkString("/")
 }
 
 object Link {
-  def apply(href: String, rel: LinkTarget, method: RequestMethod) = new Link(href, rel.toRel, None, Array(method.toString.toLowerCase))
+  def apply(href: String, rel: LinkTarget, methods: RequestMethod*) =
+    new Link(href, rel.toRel, None, (methods.toList).map(_.toString.toLowerCase).toArray)
   def apply(href: String, rel: LinkTarget, modelClazz: Class[_], methods: RequestMethod*) =
-    new Link(href, rel.toRel, modelClazz, (methods.toList).map(_.toString.toLowerCase()).toArray)
+    new Link(href, rel.toRel, modelClazz, (methods.toList).map(_.toString.toLowerCase).toArray)
   implicit def toContentType(modelClazz: Class[_]): Some[String] = {
     Some(s"application/vnd.griddynamics.genesis.${modelClazz.getSimpleName}+json")
   }

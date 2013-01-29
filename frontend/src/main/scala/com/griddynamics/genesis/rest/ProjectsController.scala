@@ -108,9 +108,14 @@ class ProjectsController extends RestApiExceptionsHandler {
   def findProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest): ItemWrapper[Project] = {
     val top = WebPath(request)
     ItemWrapper.wrap(getProject(projectId)).withLinks(
-        Link(top, SELF, classOf[Project], GET, PUT, DELETE),
-        Link(top / "configs", COLLECTION, GET),
-        Link(top / "envs",  COLLECTION, classOf[Environment], GET, POST)
+      Link(top, SELF, classOf[Project], GET, PUT, DELETE),
+      Link(top / "envs",  COLLECTION, classOf[Environment], GET, POST),
+      Link(top / "databags", COLLECTION, classOf[DataBag], GET),
+      Link(top / "configs", COLLECTION, classOf[Configuration], GET),
+      Link(top / "credentials", COLLECTION, classOf[Credentials], GET),
+      Link(top / "server-arrays", COLLECTION, classOf[ServerArray], GET),
+      Link(top / "templates" / "repository", COLLECTION, classOf[TemplateRepo], GET),
+      Link(top / "roles", COLLECTION, GET) //TODO: fake link, but seems to be ok for now
     ).filtered()
   }
 
