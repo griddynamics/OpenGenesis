@@ -1,5 +1,6 @@
 define ["genesis", "modules/status", "services/backend", "modules/validation", "backbone", "jquery", "jvalidate", "fcbcomplete"], (genesis, status, backend, validation, Backbone, $) ->
   Roles = genesis.module()
+
   LANG =
     ROLE_GENESIS_ADMIN: "System Administrator"
     "ROLE_GENESIS_ADMIN.description": "Have full control over genesis application"
@@ -18,10 +19,7 @@ define ["genesis", "modules/status", "services/backend", "modules/validation", "
       @projectId = options.projectId  if options.projectId
 
     parse: (json) ->
-      if json.result
-        json.result
-      else
-        json
+      if json.result? then json.result else json
 
     url: ->
       if @projectId

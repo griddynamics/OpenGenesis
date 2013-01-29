@@ -27,6 +27,48 @@ function($, _, Backbone, formats, tmpls) {
     }
   };
 
+  // TODO: remove monkey patching
+  Backbone.Model.prototype.canEdit = function() {
+    return !_.isUndefined(this._editLink)
+  };
+
+  Backbone.Model.prototype.canDelete = function() {
+    return !_.isUndefined(this._deleteLink)
+  };
+
+  var modelSuperClone = Backbone.Model.prototype.clone;
+
+  Backbone.Model.prototype.clone = function() {
+    var cloned = modelSuperClone.call(this);
+    cloned._editLink = this._editLink;
+    cloned._deleteLink = this._deleteLink;
+    return cloned;
+  }
+
+  var collectionSuperClone = Backbone.Collection.prototype.clone;
+
+  Backbone.Collection.prototype.canCreate = function(){
+    return !_.isUndefined(this._createLink)
+  };
+
+  Backbone.Collection.prototype.clone = function() {
+    var cloned = collectionSuperClone.call(this);
+    cloned._createLink = this._createLink;
+    return cloned;
+  };
+
+  Backbone.Collection.prototype.itemAccessRights = function(){
+    return this.chain()
+      .map(function (item) {
+        return {
+          id: item.id,
+          canEdit: item.canEdit(),
+          canDelete: item.canDelete()
+        }})
+      .groupBy("id")
+      .value()
+  };
+
   if (window && _.isUndefined(window.console)) {
     window.console = { log : function(){}, warn : function(){} };
   }
@@ -56,6 +98,7 @@ function($, _, Backbone, formats, tmpls) {
   });
 
   var genesis = {
+
     fetchTemplate: function(path, done) {
       done = done || function(){};
 

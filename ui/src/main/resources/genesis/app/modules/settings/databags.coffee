@@ -1,6 +1,18 @@
-define ["genesis", "backbone", "modules/status", "modules/common/properties", "modules/validation", "services/backend", "jquery", "jvalidate"], (genesis, Backbone, status, property, validation, backend, $) ->
+define [
+  "genesis",
+  "backbone",
+  "modules/status",
+  "modules/common/properties",
+  "modules/validation",
+  "services/backend",
+  "jquery",
+  "jvalidate"],
+(genesis, Backbone, status, property, validation, backend, $) ->
   Databags = genesis.module()
   URL = "rest/databags"
+
+  linkTypes = backend.LinkTypes
+
   class Databags.Model extends Backbone.Model
     initialize: (options) ->
       @projectId = options.projectId if options.projectId
@@ -10,6 +22,12 @@ define ["genesis", "backbone", "modules/status", "modules/common/properties", "m
         "rest/projects/" + @projectId + "/databags"
       else
         URL
+
+    parse: (json) ->
+      @_editLink = _(json.links).find linkTypes.DataBag.edit
+      @_deleteLink = _(json.links).find linkTypes.DataBag.delete
+      json
+
 
   class Databags.Collection extends Backbone.Collection
     model: Databags.Model
@@ -24,6 +42,7 @@ define ["genesis", "backbone", "modules/status", "modules/common/properties", "m
 
     parse: (json) ->
       if json.items?
+        @_createLink = _(json.links).find linkTypes.DataBag.create
         json.items
       else
         json
@@ -72,6 +91,7 @@ define ["genesis", "backbone", "modules/status", "modules/common/properties", "m
     showEditView: (model) ->
       @currentView = new EditDatabagView(
         model: model
+        collection: @collection
         el: @el
       )
       @currentView.bind "back", =>
@@ -109,7 +129,17 @@ define ["genesis", "backbone", "modules/status", "modules/common/properties", "m
 
     render: (done) =>
       $.when(genesis.fetchTemplate(@template), @collection.fetch()).done (tmpl) =>
-        @$el.html tmpl(databags: @collection.toJSON())
+#        accessRights = @collection
+#          .chain()
+#          .map((item) -> {id: item.id, canEdit: item.canEdit(), canDelete: item.canDelete()})
+#          .groupBy("id")
+#          .value()
+#        debugger;
+        @$el.html tmpl(
+          databags: @collection.toJSON()
+          canCreate: @collection.canCreate()
+          accessRights: @collection.itemAccessRights()
+        )
         @dialog = @dialog or @initConfirmationDialog()
 
 
@@ -150,7 +180,10 @@ define ["genesis", "backbone", "modules/status", "modules/common/properties", "m
           new DatabagItem(item)
         )
         itemsCollection = new ItemsCollection(items)
-        @$el.html tmpl(databag: @model.toJSON())
+        @$el.html tmpl(
+          databag: @model.toJSON()
+          canSave: @model.canEdit() or @collection.canCreate()
+        )
         @propertyView = new property.Views.PropertyEditor(
           collection: itemsCollection
           el: @$("#properties")

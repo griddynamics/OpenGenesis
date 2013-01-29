@@ -1,5 +1,6 @@
 define([
   "genesis",
+  "services/backend",
   "modules/status",
   "modules/validation",
   "backbone",
@@ -8,7 +9,7 @@ define([
   "jvalidate"
 ],
 
-function(genesis, status, validation, Backbone, $) {
+function(genesis, backend, status, validation, Backbone, $) {
   var Servers = genesis.module();
 
   Servers.ArrayModel = Backbone.Model.extend({
@@ -19,7 +20,14 @@ function(genesis, status, validation, Backbone, $) {
 
     serversCollection: function() {
       return new Servers.ServersCollection([], { projectId: this.get("projectId"), serverArrayId: this.id });
+    },
+
+    parse: function(json) {
+      this._editLink = _(json.links).find(backend.LinkTypes.ServerArray.edit);
+      this._deleteLink = _(json.links).find(backend.LinkTypes.ServerArray.delete);
+      return json;
     }
+
   });
 
   Servers.ArrayCollection = Backbone.Collection.extend({
@@ -33,11 +41,14 @@ function(genesis, status, validation, Backbone, $) {
 
     parse: function(json) {
       if (json.items) {
+        this._createLink = _(json.links).find(backend.LinkTypes.ServerArray.create);
         return json.items;
       } else {
         return json;
       }
-    }
+    },
+
+    url: function() { return "rest/projects/" + this.projectId + "/server-arrays"; }
   });
 
   Servers.ServerModel = Backbone.Model.extend({
@@ -45,6 +56,8 @@ function(genesis, status, validation, Backbone, $) {
       if(json.result) {
         return json.result;
       } else {
+        this._editLink = _(json.links).find(backend.LinkTypes.Server.edit);
+        this._deleteLink = _(json.links).find(backend.LinkTypes.Server.delete);
         return json;
       }
     }
@@ -55,6 +68,15 @@ function(genesis, status, validation, Backbone, $) {
     initialize: function(elements, options) {
       this.projectId = options.projectId;
       this.serverArrayId = options.serverArrayId;
+    },
+
+    parse: function(json) {
+      if(json.items) {
+        this._createLink = _(json.links).find(backend.LinkTypes.Server.create);
+        return json.items
+      } else {
+        return json;
+      }
     },
 
     url: function() { return "rest/projects/" + this.projectId + "/server-arrays/" + this.serverArrayId + "/servers"; }
@@ -182,7 +204,11 @@ function(genesis, status, validation, Backbone, $) {
     render: function() {
       var self = this;
       $.when(genesis.fetchTemplate(this.template)).done(function(tmpl) {
-        self.$el.html( tmpl({"serverArrays" : self.collection.toJSON()}));
+        self.$el.html( tmpl({
+          "serverArrays" : self.collection.toJSON(),
+          "accessRights": self.collection.itemAccessRights(),
+          "canCreate": self.collection.canCreate()
+        }));
         self.dialog = self.initConfirmationDialog();
         self.delegateEvents(self.events);
       });
@@ -319,7 +345,12 @@ function(genesis, status, validation, Backbone, $) {
     render: function() {
       var self = this;
       $.when(genesis.fetchTemplate(this.template)).done(function(tmpl) {
-        self.$el.html( tmpl({array: self.array.toJSON(), servers: self.servers.toJSON()}) );
+        self.$el.html( tmpl({
+          array: self.array.toJSON(),
+          servers: self.servers.toJSON(),
+          canCreate: self.servers.canCreate(),
+          accessRights: self.servers.itemAccessRights()
+        }) );
 
         self.delegateEvents(self.events);
         self.dialog = self.initConfirmationDialog();

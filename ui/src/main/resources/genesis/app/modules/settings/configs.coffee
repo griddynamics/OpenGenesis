@@ -1,7 +1,21 @@
-define ["genesis", "modules/status", "modules/validation", "backbone", "jquery", "jqueryui", "jvalidate"], (genesis, status, validation, Backbone, $) ->
+define [
+  "genesis",
+  "services/backend",
+  "modules/status",
+  "modules/validation",
+  "backbone",
+  "jquery",
+  "jqueryui",
+  "jvalidate"],
+(genesis, backend, status, validation, Backbone, $) ->
+
   Settings = genesis.module()
+
   URL = "rest/settings"
   TIMEOUT_AJAX = 4000
+
+  linkTypes = backend.LinkTypes
+
   class Settings.Model extends Backbone.Model
     idAttribute: "name"
     url: URL
@@ -9,6 +23,11 @@ define ["genesis", "modules/status", "modules/validation", "backbone", "jquery",
   class Settings.Collection extends Backbone.Collection
     model: Settings.Model
     url: URL + "?prefix=genesis.system"
+    parse: (json) ->
+      @_editLink = _(json.links).find linkTypes.ConfigProperty.edit
+      if (json.items) then json.items else json
+    canEdit: ->
+      not _.isUndefined(@_editLink)
 
   class Settings.Views.Main extends Backbone.View
     template: "app/templates/settings/system_configs.html"
@@ -35,6 +54,7 @@ define ["genesis", "modules/status", "modules/validation", "backbone", "jquery",
         @$el.html tmpl(
           properties: toJson(propsGrp[false])
           constants: toJson(propsGrp[true])
+          canEdit: @collection.canEdit()
         )
         @mainView.toggleRestart()
 

@@ -105,7 +105,7 @@ function(genesis, $) {
 
     whoami: function() {
       return $.ajax({
-        url: "rest/whoami",
+        url: "rest/",
         dataType: "json",
         type: "GET",
         timeout: DEFAULT_TIMEOUT
@@ -257,6 +257,56 @@ function(genesis, $) {
         suppressErrors: true
       })
     }
+  };
+
+
+  function _type(name) {
+    var type = "application/vnd.griddynamics.genesis." + name + "+json";
+    this.name = type;
+
+    this.get =  function(link) {
+      return link.type == type && _(link.methods).contains("get")
+    };
+
+    this.edit = function(link) {
+      return link.type == type && _(link.methods).contains("put")
+    };
+
+    this.delete = function(link) {
+      return link.type == type && _(link.methods).contains("delete")
+    };
+
+    this.create = function(link) {
+      return link.type == type && _(link.methods).contains("post")
+    };
+
+    this.any = function(link) {
+      return link.type == type;
+    }
+  }
+
+  backend.LinkTypes = {
+    SystemSettings: new _type("SystemSettings"),
+    Project: new _type("Project"),
+    Environment: new _type("Environment"),
+    ProjectSettings: new _type("Credentials"),//todo:!!!!
+
+    ConfigProperty: new _type("ConfigProperty"),
+    User: new _type("User"),
+    UserGroup: new _type("UserGroup"),
+    Role: new _type("Role"),
+    Plugin: new _type("Plugin"),
+    DataBag: new _type("DataBag"),
+    RemoteAgent: new _type("RemoteAgent"),
+
+    Credentials: new _type("Credentials"),
+
+    ServerArray: new _type("ServerArray"),
+    Server: new _type("Server"),
+
+    TemplateRepo: new _type("TemplateRepo"),
+    EnvConfig: new _type("Configuration"),
+    EnvConfigAccess: new _type("Access")
   };
 
   return backend;

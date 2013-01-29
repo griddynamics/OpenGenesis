@@ -1,16 +1,22 @@
 define([
   "genesis",
+  "services/backend",
   "modules/status",
   "modules/validation",
   "backbone",
   "jquery",
   "jvalidate"
 ],
-function(genesis, status, validation, Backbone, $) {
+function(genesis, backend, status, validation, Backbone, $) {
 
   var Credentials = genesis.module();
 
   Credentials.Model = Backbone.Model.extend({
+    parse: function(json) {
+      this._editLink = _(json.links).find(backend.LinkTypes.Credentials.edit);
+      this._deleteLink = _(json.links).find(backend.LinkTypes.Credentials.delete);
+      return json;
+    },
 
     urlRoot: function() {
       return "rest/projects/" + this.get("projectId") + "/credentials";
@@ -23,6 +29,15 @@ function(genesis, status, validation, Backbone, $) {
 
     initialize: function(elements, options) {
       this.projectId = options.projectId;
+    },
+
+    parse: function(json) {
+      if (json.items) {
+        this._createLink = _(json.links).find(backend.LinkTypes.Credentials.create);
+        return json.items;
+      } else {
+        return json;
+      }
     },
 
     url: function() { return "rest/projects/" + this.projectId + "/credentials"; }
@@ -48,7 +63,7 @@ function(genesis, status, validation, Backbone, $) {
     },
 
     createCredentials: function() {
-      this.setCurrentView(new CreateView({el: this.el, projectId: this.projectId}));
+      this.setCurrentView(new CreateView({el: this.el, projectId: this.projectId, collection: this.collection}));
 
       var self = this;
       this.currentView.bind("back", function() {
@@ -112,7 +127,11 @@ function(genesis, status, validation, Backbone, $) {
     render: function() {
       var self = this;
       $.when(genesis.fetchTemplate(this.template)).done(function(tmpl) {
-        self.$el.html( tmpl({"credentials" : self.collection.toJSON()}));
+        self.$el.html( tmpl({
+          "credentials" : self.collection.toJSON(),
+          "canCreate": self.collection.canCreate(),
+          "accessRights": self.collection.itemAccessRights()
+        }));
         self.dialog = self.initConfirmationDialog();
         self.delegateEvents(self.events);
       });
@@ -158,7 +177,9 @@ function(genesis, status, validation, Backbone, $) {
     render: function() {
       var self = this;
       $.when(genesis.fetchTemplate(this.template)).done(function(tmpl) {
-        self.$el.html( tmpl() );
+        self.$el.html(
+          tmpl({ canCreate: self.collection.canCreate() })
+        );
         self.$("textarea[name='credentials']").on("keyup", function() {
           var $this = $(this);
           if($this.css("height") !== "350px" && $this.val().indexOf("\n") != -1) {

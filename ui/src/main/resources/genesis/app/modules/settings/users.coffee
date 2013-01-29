@@ -1,9 +1,23 @@
-define ["genesis", "backbone", "modules/status", "modules/validation", "services/backend", "jquery", "jvalidate"], (genesis, Backbone, status, validation, backend, $) ->
+define [
+  "genesis",
+  "backbone",
+  "modules/status",
+  "modules/validation",
+  "services/backend",
+  "jquery",
+  "jvalidate"],
+(genesis, Backbone, status, validation, backend, $) ->
   Users = genesis.module(Collections: {})
+
   URL = "rest/users"
+
   class Users.Model extends Backbone.Model
     urlRoot: URL
     idAttribute: "username"
+    parse: (json) ->
+      @_editLink = _(json.links).find backend.LinkTypes.User.edit
+      @_deleteLink = _(json.links).find backend.LinkTypes.User.delete
+      json
 
   class Users.Collections.People extends Backbone.Collection
     url: URL
@@ -17,10 +31,8 @@ define ["genesis", "backbone", "modules/status", "modules/validation", "services
   class Users.Collections.Groups extends Backbone.Collection
     url: "rest/groups"
     parse: (json) ->
-      if json.items?
-        json.items
-      else
-        json
+      @_createLink = _(json.links).find backend.LinkTypes.UserGroup.create
+      if json.items then json.items else json
 
   EMPTY_USER = new Users.Model(
     username: ""
@@ -64,6 +76,7 @@ define ["genesis", "backbone", "modules/status", "modules/validation", "services
       @currentView = new UsersEdit(
         user: user
         groups: new Users.Collections.Groups()
+        usersCollection: @collection
         el: @el
       )
       @currentView.bind "back", =>
@@ -78,6 +91,7 @@ define ["genesis", "backbone", "modules/status", "modules/validation", "services
       user = @listView.collection.get(username)
       @currentView = new UsersEdit(
         user: user
+        usersCollection: @listView.collection
         groups: new Users.Collections.Groups()
         el: @el
       )
@@ -116,7 +130,11 @@ define ["genesis", "backbone", "modules/status", "modules/validation", "services
     template: "app/templates/settings/users/user_list.html"
     render: ->
       $.when(genesis.fetchTemplate(@template), @collection.fetch()).done (tmpl) =>
-        @$el.html tmpl(users: @collection.toJSON())
+        @$el.html tmpl(
+          users: @collection.toJSON()
+          canCreate: @collection.canCreate()
+          accessRights: @collection.itemAccessRights()
+        )
 
   class UsersEdit extends Backbone.View
     template: "app/templates/settings/users/edit_user.html"
@@ -129,6 +147,7 @@ define ["genesis", "backbone", "modules/status", "modules/validation", "services
       @groups = options.groups
       @userRoles = []
       @userGroups = []
+      @usersCollection = options.usersCollection
       unless @user.isNew()
         $.when(backend.AuthorityManager.getUserRoles(@user.get("username")), backend.UserManager.getUserGroups(@user.get("username")), @groups.fetch()).done (userRoles, userGroups) =>
           @userRoles = userRoles[0]
@@ -148,6 +167,7 @@ define ["genesis", "backbone", "modules/status", "modules/validation", "services
           roles: availableRoles
           userRoles: userRolesLookupMap
           userGroups: userGroupsLookupMap
+          canEdit: @user.canEdit() or @usersCollection.canCreate()
         )
         @status = new status.LocalStatus(el: @$(".notification"))
         validation.bindValidation @user, @$("#user-attributes"), @status

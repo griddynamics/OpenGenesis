@@ -4,7 +4,7 @@
 </div>
 <div class="panel">
     <div class="notification" style="display:none"></div>
-    <form id="edit-agent">
+    <form id="edit-agent" <% if (!canEdit) { %> class="readonly" <% } %>>
         <table class="forform-table wide" >
             <tr>
                 <td class="label-required label-column" style="width: 12%"><label for="hostname">* Host</label></td>

@@ -17,8 +17,13 @@ function(genesis, status, backend, Backbone, $, validation) {
       if (json.result) {
         return json.result
       } else {
+        this._propertiesLink = _(json.links).filter(function (link) { return link.type == backend.LinkTypes.ProjectSettings });
         return json
       }
+    },
+
+    canAccessProperties: function() {
+      return !_.isUndefined(this._propertiesLink);
     },
 
     urlRoot: "rest/projects"
@@ -26,13 +31,27 @@ function(genesis, status, backend, Backbone, $, validation) {
 
   Projects.Collection = Backbone.Collection.extend({
     model: Projects.Model,
-    url: "rest/projects",
+//    url: "rest/projects",
+
+    initialize: function(models, options) {
+      if (options.url) this.url = options.url;
+    },
+
     parse: function(json) {
-      if (json.items)
+      if (json.items) {
+        this._createLink = _(json.links).find(function(link) {
+          return link.type == backend.LinkTypes.Project && _(link.methods).contains("post");
+        });
+
         return json.items
-      else
+      } else {
         return json;
-    }
+      }
+    }//,
+
+//    canCreate: function() {
+//      return !_.isUndefined(this._createLink);
+//    }
   });
 
   Projects.Views.ProjectsOverview = Backbone.View.extend({
@@ -40,11 +59,7 @@ function(genesis, status, backend, Backbone, $, validation) {
 
     initialize: function(options) {
       this.collection = options.collection;
-
-      var self = this;
-      this.collection.fetch().done(function() {
-        self.render();
-      });
+      this.collection.fetch().done(_.bind(this.render, this));
     },
 
     render: function(done) {
@@ -53,7 +68,7 @@ function(genesis, status, backend, Backbone, $, validation) {
         self.$el.html(
           tmpl({
             "projects" : self.collection.toJSON(),
-            "currentUser": genesis.app.currentUser,
+            "showCreateLink": self.collection.canCreate(),
             "utils": genesis.utils
           })
         );
@@ -75,7 +90,11 @@ function(genesis, status, backend, Backbone, $, validation) {
     initialize: function(options) {
       this.project = options.project;
 
-      this.project.fetch().done(_.bind(this.render, this));
+      if (this.project.id) {
+        this.project.fetch().done(_.bind(this.render, this));
+      } else {
+        this.render();
+      }
     },
 
     onSave: function() {

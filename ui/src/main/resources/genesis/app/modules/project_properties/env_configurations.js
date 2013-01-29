@@ -27,8 +27,19 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
       return "rest/projects/" + this.projectId + "/configs"
     },
 
-    parse: function(original) {
-      return original.result ? original.result : original;
+    hasAccessRestrictions: function() {
+      return !_.isUndefined(this._accessLink);
+    },
+
+    parse: function(json) {
+      if (json.result) {
+        this._editLink = _(json.links).find(backend.LinkTypes.EnvConfig.edit);
+        this._deleteLink = _(json.links).find(backend.LinkTypes.EnvConfig.delete);
+        this._accessLink = _(json.links).find(backend.LinkTypes.EnvConfigAccess.edit);
+        return json.result;
+      } else {
+        return json;
+      }
     }
   });
 
@@ -37,6 +48,15 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
 
     initialize: function(options) {
        this.projectId = options.projectId;
+    },
+
+    parse: function(json) {
+      if(json.items){
+        this._createLink = _(json.links).find(backend.LinkTypes.EnvConfig.create);
+        return json.items;
+      } else {
+        return json;
+      }
     },
 
     url: function() {
@@ -151,7 +171,12 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
     render: function() {
       var self = this;
       $.when(genesis.fetchTemplate(this.template), this.collection.fetch()).done(function(tmpl) {
-        self.$el.html(tmpl({"configs": self.collection.toJSON()}));
+        self.$el.html(tmpl({
+          "configs": self.collection.toJSON(),
+          "canCreate": self.collection.canCreate(),
+          "accessRights": self.collection.itemAccessRights()
+        }));
+
         self.dialog = self.dialog || self.initConfirmationDialog();
       });
     }
