@@ -31,7 +31,7 @@ import org.springframework.http.{HttpStatus, HttpOutputMessage, HttpInputMessage
 import com.griddynamics.genesis.api.{ExtendedResult, Success, Failure}
 import com.griddynamics.genesis.rest.GenesisRestController.{DEFAULT_CHARSET => DC}
 import java.io.StringWriter
-import com.griddynamics.genesis.rest.links.ItemWrapper
+import com.griddynamics.genesis.rest.links.{CollectionWrapper, ItemWrapper}
 
 class JsonMessageConverter
         extends HttpMessageConverter[AnyRef]{
@@ -42,32 +42,56 @@ class JsonMessageConverter
 
     val ApiPackage = Package.getPackage("com.griddynamics.genesis.api")
 
-    def write(t: AnyRef, contentType: MediaType, outputMessage: HttpOutputMessage) {
-        def serializeExtendedResult(res: ExtendedResult[_]): String = {
-          val json = Extraction.decompose(res) ++ JField("isSuccess", JBool(res.isSuccess))
-          Printer.compact(render(json), new StringWriter()).toString
-        }
 
-        def serializeItemWrapper(res: ItemWrapper[_]): String = {
-          val json = Extraction.decompose(res.item) ++ JField("links", Extraction.decompose(res.links))
-          Printer.compact(render(json), new StringWriter()).toString
-        }
+  def write(t: AnyRef, contentType: MediaType, outputMessage: HttpOutputMessage) {
+    def serializeExtendedResult(res: ExtendedResult[_]): String = {
+      val json = Extraction.decompose(res) ++ JField("isSuccess", JBool(res.isSuccess))
+      Printer.compact(render(json), new StringWriter()).toString
+    }
 
-        val statusCode  = getStatus(t)
-        if (outputMessage.isInstanceOf[ServerHttpResponse] && statusCode > 0)  {
-            val response = outputMessage.asInstanceOf[ServerHttpResponse]
-            response.setStatusCode(HttpStatus.valueOf(statusCode))
-        }
+    def decomposeItemWrapper(res: ItemWrapper[_]): JsonAST.JValue = {
+      Extraction.decompose(res.item) ++ JField("links", Extraction.decompose(res.links))
+    }
 
-        outputMessage.getHeaders.setContentType(MediaType.APPLICATION_JSON)
-        val message: String = t match {
-          case b: ExtendedResult[_] => serializeExtendedResult(b)
-          case wrapped: ItemWrapper[_] => serializeItemWrapper(wrapped)
-          case _ => Serialization.write(t)
+    def serializeItemWrapper(res: ItemWrapper[_]): String = {
+      val json = decomposeItemWrapper(res)
+      Printer.compact(render(json), new StringWriter()).toString
+    }
+
+    def decomposeCollection(wrapped: Iterable[ItemWrapper[_]]): JValue = {
+      JField("items", JArray(wrapped.toList map decomposeItemWrapper))
+    }
+
+    def serializeCollectionWrapper(res: CollectionWrapper[_]): String = {
+      if (res.items.isEmpty) {
+        Serialization.write(res)
+      } else {
+        res.items.head match {
+          case wrapped: ItemWrapper[_] => {
+            val json = JField("links", Extraction.decompose(res.links)) ++ decomposeCollection(res.items.asInstanceOf[Iterable[ItemWrapper[_]]])
+            Printer.compact(render(json), new StringWriter()).toString
+          }
+          case _ => Serialization.write(res)
         }
-        val messageBytes: Array[Byte] = message.getBytes(DEFAULT_CHARSET.name())
-        outputMessage.getHeaders.setContentLength(messageBytes.length)
-        outputMessage.getBody.write(messageBytes)
+      }
+    }
+
+    val statusCode  = getStatus(t)
+    if (outputMessage.isInstanceOf[ServerHttpResponse] && statusCode > 0)  {
+      val response = outputMessage.asInstanceOf[ServerHttpResponse]
+      response.setStatusCode(HttpStatus.valueOf(statusCode))
+    }
+
+    outputMessage.getHeaders.setContentType(MediaType.APPLICATION_JSON)
+    val message: String = t match {
+      case b: ExtendedResult[_] => serializeExtendedResult(b)
+      case wrapped: ItemWrapper[_] => serializeItemWrapper(wrapped)
+      case collectionWrapper: CollectionWrapper[_] => serializeCollectionWrapper(collectionWrapper)
+      case _ => Serialization.write(t)
+    }
+    val messageBytes: Array[Byte] = message.getBytes(DEFAULT_CHARSET.name())
+    outputMessage.getHeaders.setContentLength(messageBytes.length)
+    outputMessage.getBody.write(messageBytes)
     }
 
     private def getStatus(requestResult : AnyRef) : Int = requestResult match  {
