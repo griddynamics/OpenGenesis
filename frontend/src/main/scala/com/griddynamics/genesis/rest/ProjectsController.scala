@@ -1,9 +1,11 @@
 package com.griddynamics.genesis.rest
 
-import annotations.{LinkTo, LinksTo}
+import annotations.{LinkTarget, LinkTo, LinksTo}
+import LinkTarget._
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import com.griddynamics.genesis.rest.GenesisRestController._
-import links.CollectionWrapper
+import links._
+import HrefBuilder._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
 import com.griddynamics.genesis.service.impl.ProjectService
@@ -13,11 +15,18 @@ import org.springframework.security.core.Authentication
 import com.griddynamics.genesis.users.{UserService, GenesisRole}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import com.griddynamics.genesis.service.ProjectAuthorityService
+import RequestMethod._
 import com.griddynamics.genesis.validation.Validation
-import com.griddynamics.genesis.api.Project
 import javax.validation.Valid
 import com.griddynamics.genesis.repository.ConfigurationRepository
 import com.griddynamics.genesis.groups.GroupService
+import com.griddynamics.genesis.spring.security.LinkSecurityBean
+import com.griddynamics.genesis.api.ProjectAttributes
+import com.griddynamics.genesis.api.Failure
+import com.griddynamics.genesis.api.Configuration
+import com.griddynamics.genesis.api.Environment
+import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.api.Project
 
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
@@ -50,6 +59,7 @@ class ProjectsController extends RestApiExceptionsHandler {
   @Autowired var configurationRepository: ConfigurationRepository = _
   @Autowired var userService: UserService = _
   @Autowired var groupService: GroupService = _
+  @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
   @Value("${genesis.system.server.mode:frontend}")
   var mode = ""
@@ -58,14 +68,16 @@ class ProjectsController extends RestApiExceptionsHandler {
   @ResponseBody
   @LinksTo(value = Array(new LinkTo(methods = Array(RequestMethod.POST), clazz = classOf[Project], controller = classOf[ProjectsController])))
   def listProjects(@RequestParam(value = "sorting", required = false, defaultValue = "name") sorting: Ordering,
-                   request: HttpServletRequest): CollectionWrapper[Project] = {
-    if (request.isUserInRole(GenesisRole.SystemAdmin.toString) || request.isUserInRole(GenesisRole.ReadonlySystemAdmin.toString)) {
+                   request: HttpServletRequest): CollectionWrapper[ItemWrapper[_]] = {
+    val projects = if (request.isUserInRole(GenesisRole.SystemAdmin.toString) || request.isUserInRole(GenesisRole.ReadonlySystemAdmin.toString)) {
       projectService.orderedList(sorting)
     } else {
       val authorities = GenesisRestController.getCurrentUserAuthorities
       val ids = authorityService.getAllowedProjectIds(request.getUserPrincipal.getName, authorities)
       projectService.getProjects(ids, Option(sorting))
     }
+    projects.map(project => ItemWrapper.wrap(project).withLinks(Link(WebPath(request) / project.id.get.toString,
+      SELF, classOf[Environment], GET)).filtered())
   }
 
 
@@ -93,21 +105,33 @@ class ProjectsController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def findProject(@PathVariable("projectId") projectId: Int): Project =
-    projectService.get(projectId).getOrElse { throw new ResourceNotFoundException("Project [id = " + projectId + "]  was not found") }
+  def findProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest): ItemWrapper[Project] = {
+    val top = WebPath(request)
+    ItemWrapper.wrap(getProject(projectId)).withLinks(
+        Link(top, SELF, classOf[Project], GET, PUT, DELETE),
+        Link(top / "configs", COLLECTION, GET),
+        Link(top / "envs",  COLLECTION, classOf[Environment], GET, POST)
+    ).filtered()
+  }
 
+
+  def getProject(projectId: Int): Project = {
+    projectService.get(projectId).getOrElse {
+      throw new ResourceNotFoundException("Project [id = " + projectId + "]  was not found")
+    }
+  }
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.PUT))
   @ResponseBody
   def updateProject(@PathVariable("projectId") projectId: Int, @Valid @RequestBody attr: ProjectAttributes) = {
-    val project = findProject(projectId).copy(name = attr.name.trim, projectManager =  attr.projectManager.trim, description = attr.description.map(_.trim))
+    val project = getProject(projectId).copy(name = attr.name.trim, projectManager =  attr.projectManager.trim, description = attr.description.map(_.trim))
     projectService.update(project)
   }
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
   def deleteProject(@PathVariable("projectId") projectId: Int) = {
-    val project = findProject(projectId)
+    val project = getProject(projectId)
     projectService.delete(project)
   }
 

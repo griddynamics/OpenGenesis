@@ -41,6 +41,7 @@ import com.griddynamics.genesis.repository.ConfigurationRepository
 import org.apache.commons.lang3.StringEscapeUtils
 import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.api._
+import com.griddynamics.genesis.spring.security.LinkSecurityBean
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
@@ -51,6 +52,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
 
   @Autowired var envAuthService: EnvironmentAccessService = _
   @Autowired var configRepository: ConfigurationRepository = _
+  @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
 
   @Value("${genesis.system.server.mode:frontend}")
@@ -204,7 +206,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     )
 
     CollectionWrapper.wrap(wrapped).withLinks(Link(request,
-      LinkTarget.SELF, classOf[Environment], RequestMethod.POST))
+      LinkTarget.SELF, classOf[Environment], RequestMethod.POST)).filtered()
   }
 
   @RequestMapping(value = Array("{envId}/actions"), method = Array(RequestMethod.POST))
