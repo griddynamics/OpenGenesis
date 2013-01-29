@@ -34,10 +34,7 @@ class RootController {
 
     Map(
       "user" -> GenesisRestController.getCurrentUser,
-      "administrator" -> (request.isUserInRole(GenesisRole.SystemAdmin.toString)),
-      "readonly" -> (request.isUserInRole(GenesisRole.ReadonlySystemAdmin.toString)),
       "configuration" -> Map(
-        "environment_security_enabled" -> envSecurityService.restrictionsEnabled,
         "locale" -> (request.getLocale.getLanguage + "-" + request.getLocale.getCountry)
       ),
       "links" -> links

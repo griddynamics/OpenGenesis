@@ -4,7 +4,7 @@
 <div  style="display: block; ">
     <div class="top-panel">
         <div class="page-title"><h2>Agents</h2></div>
-        <a href="javascript:void(0)" class="button add-agent executable"> <span> Add... </span> </a>
+        <% if (canCreate) { %> <a href="javascript:void(0)" class="button add-agent executable"> <span> Add... </span> </a> <% } %>
     </div>
 
     <div class="panel">
@@ -43,7 +43,7 @@
                     </td>
                     <td class="actions">
                         <a href="javascript:void(0)" class="edit-agent" data-agent-id="<%= agent.id %>">Edit</a>
-                        <a href="javascript:void(0)" class="delete-agent executable" data-agent-id="<%= agent.id %>">Delete</a>
+                        <% if (accessRights[agent.id].canDelete) { %> <a href="javascript:void(0)" class="delete-agent executable" data-agent-id="<%= agent.id %>">Delete</a> <% } %>
                     </td>
                 </tr>
                 <% } %>

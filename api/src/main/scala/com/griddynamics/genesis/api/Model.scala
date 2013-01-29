@@ -335,3 +335,6 @@ case class ApplicationRole(name: String)
 case class Access(users: Array[User], groups: Array[String])
 
 case class Action(name: String)
+
+object CancelAction extends Action("cancel")
+object ResetAction extends Action("reset")

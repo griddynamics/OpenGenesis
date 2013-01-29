@@ -1,5 +1,11 @@
 define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settings/configs", "cs!modules/settings/groups", "cs!modules/settings/users", "cs!modules/settings/roles", "cs!modules/settings/databags", "cs!modules/settings/agents", "services/backend"], (genesis, Backbone, Plugins, SystemConfigs, Groups, Users, Roles, Databags, Agents, backend) ->
   AppSettings = genesis.module()
+
+  class AppSettings.SystemSettings extends Backbone.Model
+    initialize: (project) -> @project = project
+
+    url: "rest/settings/root"
+
   class AppSettings.Views.Main extends Backbone.View
     template: "app/templates/settings.html"
     pluginsView: null
@@ -15,6 +21,9 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
       "click #roles-panel-tab-header": "showRolesTab"
       "click #databags-panel-tab-header": "showDatabags"
       "click #agents-panel-tab-header": "showAgents"
+
+    initialize: (options) ->
+      @model = new AppSettings.SystemSettings
 
     onClose: ->
       genesis.utils.nullSafeClose @pluginsView
@@ -64,10 +73,15 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
 
 
     render: ->
-      $.when(backend.UserManager.hasUsers(), backend.UserManager.hasGroups(), genesis.fetchTemplate(@template)).done (hasUsers, hasGroups, tmpl) =>
+      $.when(@model.fetch(), genesis.fetchTemplate(@template)).done (linksAggregator, tmpl) =>
+        typeToLink = _(@model.get("links")).groupBy 'type'
         @$el.html tmpl(
-          users: hasUsers[0]
-          groups: hasGroups[0]
+          users: typeToLink[backend.LinkTypes.User.name]
+          groups: typeToLink[backend.LinkTypes.UserGroup.name]
+          roles: typeToLink[backend.LinkTypes.Role.name]
+          plugins: typeToLink[backend.LinkTypes.Plugin.name]
+          databags: typeToLink[backend.LinkTypes.DataBag.name]
+          agents: typeToLink[backend.LinkTypes.RemoteAgent.name]
         )
         @showSettings()
 

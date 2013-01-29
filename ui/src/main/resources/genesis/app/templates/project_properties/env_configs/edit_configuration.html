@@ -1,11 +1,11 @@
-<div>
+<div <% if (!canEdit) { %> class="readonly" <% } %>>
   <a href="javascript:void(0)" class="back" style="margin-left: 15px"><img src="assets/img/back.png" alt="Back link"/>Back to environments list</a>
 
   <div class="top-panel">
     <div class="page-title"><h2><%= (config.id ? 'Edit' : 'Create') %> environment configuration</h2></div>
   </div>
 
-  <% if (config.id && access_security) { %>
+<% if (config.id && access_security) { %>
   <div id="tab-panel">
     <div id="tabs" data-tabpanel="header">
       <a href="javascript:void(0);" class="tab tab-selected" id="tab1" rel="#panel-tab-details"> <span> Details </span> </a>
@@ -15,7 +15,7 @@
     <div id="panel">
       <div id="panel-tab-details" class="tab-content opened">
 <% } %>
-        <div class="panel">
+        <div class="panel"   >
           <div class="notification" style="display:none"></div>
           <form id="edit-config">
             <table class="forform-table wide" >

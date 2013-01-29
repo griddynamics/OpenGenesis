@@ -22,7 +22,7 @@
  */
 package com.griddynamics.genesis.rest
 
-import annotations.{AddSelfLinks, LinkTo, LinksTo}
+import annotations.{LinkTarget, AddSelfLinks, LinkTo, LinksTo}
 import annotations.LinkTarget._
 import filters.EnvFilter
 import links._
@@ -179,9 +179,23 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   ))
   @AddSelfLinks(methods = Array(GET, PUT, DELETE), modelClass = classOf[EnvironmentDetails])
   def describeEnv(@PathVariable("projectId") projectId: Int,
-                  @PathVariable("envId") envId: Int, request: HttpServletRequest) : ItemWrapper[EnvironmentDetails] = {
-    genesisService.describeEnv(envId, projectId).
+                  @PathVariable("envId") envId: Int,
+                  request: HttpServletRequest) : ItemWrapper[EnvironmentDetails] = {
+    import WebPath._
+
+    val env = genesisService.describeEnv(envId, projectId).
       getOrElse(throw new ResourceNotFoundException("Environment [" + envId + "] was not found"))
+
+    val actions = EnvStatus.fromString(env.status) match {
+      case Some(EnvStatus.Busy) => Some((Actions.Cancel, CancelAction))
+      case Some(EnvStatus.Broken) => Some((Actions.Reset, ResetAction))
+      case _ => None
+    }
+    actions.map { case (action, t) =>
+      env.withLinks(LinkBuilder(request / "actions" / action.toString, ACTION, t.getClass, POST)).filtered
+    }.getOrElse (
+      env
+    )
   }
 
 
@@ -194,7 +208,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
                        @RequestParam(value = "page_length", defaultValue = "1000") pageLength: Int,
                        request: HttpServletRequest): ItemWrapper[WorkflowHistory] = {
     genesisService.workflowHistory(envId, projectId, pageOffset, pageLength).getOrElse(
-        throw new ResourceNotFoundException("Environment [" + envId + "] was not found")
+        throw new ResourceNotFoundException(s"Environment $envId was not found")
     )
   }
 
@@ -208,6 +222,8 @@ class EnvironmentsController extends RestApiExceptionsHandler {
                          @RequestParam(value="filter", required = false, defaultValue = "") filter: String,
                          @RequestParam(value="sorting", required = false, defaultValue = "name") ordering: Ordering,
                          request: HttpServletRequest) = {
+    import WebPath._
+    import LinkBuilder.{apply => link}
 
     val environments: Seq[Environment] = filter match {
       case EnvFilter(statuses@_*) => genesisService.listEnvs(projectId, Option(statuses.map(_.toString)), Option(ordering))
@@ -215,16 +231,17 @@ class EnvironmentsController extends RestApiExceptionsHandler {
       case _ => throw new InvalidInputException
     }
     implicit val req: HttpServletRequest = request
+
     val wrapped = environments.map(environment =>
-      wrap(environment).withLinks(LinkBuilder(HrefBuilder.withPathParam(request, environment.id),
-        SELF, classOf[Environment], GET)).filtered()
+      environment.withLinks(
+        link(request / environment.id, SELF, classOf[Environment], GET)
+      ).filtered()
     )
 
-    wrapCollection(wrapped).withLinks(LinkBuilder(request,
-      SELF, classOf[Environment], POST)).filtered()
+    wrapped.withLinks(link(request, SELF, classOf[Environment], POST)).filtered()
   }
 
-  @RequestMapping(value = Array("{envId}/actions"), method = Array(GET, POST))
+  @RequestMapping(value = Array("{envId}/actions"), method = Array(POST))
   @ResponseBody
   @deprecated(since = "2.0.0", message="This method is kept only for backward compatibility")
   def executeAction(@PathVariable("projectId") projectId: Int,
@@ -291,9 +308,8 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     val filteredList: Seq[Workflow] = env.workflows.filter(workflow => {
       workflow.name != env.createWorkflowName && EnvStatus.Destroyed.toString != env.status
     })
-    wrap(filteredList) { workflow =>
-      workflow.withLinksToSelf(WebPath(request) / workflow.name, POST)
-    }
+
+    filteredList.map { workflow => workflow.withLinksToSelf(WebPath(request) / workflow.name, POST) }
   }
 
   @RequestMapping(value = Array("{envId}/actions"), method = Array(RequestMethod.GET))
@@ -308,9 +324,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
       case Some(EnvStatus.Broken) => Actions.Reset :: Nil
       case _ => Nil
     }
-    wrap(availableActions.map(v => Action(v.toString))) { action =>
-      action.withLinksToSelf(WebPath(request) / action.name, POST)
-    }
+    availableActions.map { action => Action(action.toString).withLinksToSelf(WebPath(request) / action, POST) }
   }
 
   @RequestMapping(value = Array("{envId}/workflows/{workflow}"), method = Array(RequestMethod.GET))

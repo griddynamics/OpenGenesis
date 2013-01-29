@@ -29,7 +29,39 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
         this.unset("timeToLive", {silent: true}); //todo: is it a backbone bug??
         this.unset("timeToLiveStr", {silent: true});
       }
+      this.parseLinks(json.links || []);
       return json;
+    },
+
+    parseLinks: function(links) {
+      var self = this;
+      _(links).forEach(function(link) {
+        if(backend.LinkTypes.EnvironmentDetails.edit(link)) {
+          self.renameLink = link
+        } else if(backend.LinkTypes.ResetAction.edit(link)) {
+          self.resetStatusLink = link
+        } else if(backend.LinkTypes.CancelAction.edit(link)) {
+          self.cancelLink = link
+        } else if(backend.LinkTypes.Workflow.any(link)) {
+          self.workflowsLink = link
+        }
+      });
+    },
+
+    canRename: function() {
+      return !_.isUndefined(this.renameLink);
+    },
+
+    canResetStatus: function() {
+      return !_.isUndefined(this.resetStatusLink);
+    },
+
+    canCancelWorkflow: function() {
+      return !_.isUndefined(this.cancelLink);
+    },
+
+    canRunWorkflows: function() {
+      return !_.isUndefined(this.workflowsLink)
     }
   });
 
@@ -193,9 +225,8 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
     updateControlButtons: function () {
       var status = this.details.get('status'),
           activeExecution = (status === "Busy");
-
       this.$(".cancel-button")
-        .toggleClass("disabled", !activeExecution)
+        .toggleClass("disabled", !this.details.canCancelWorkflow())
         .toggle(status !== "Destroyed");
 
       this.$(".action-button")
@@ -203,7 +234,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
         .toggle(status !== "Destroyed");
 
       this.$("#resetBtn")
-        .toggle(status === "Broken");
+        .toggle(this.details.canResetStatus());
     },
 
     renderVirtualMachines: function() {
@@ -275,12 +306,16 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       ).done(function (tmpl) {
           var details = view.details.toJSON();
 
+          var actions = _(details.workflows).reject(function (flow) {
+            return flow.name === details.createWorkflowName
+          });
+
           view.$el.html(tmpl({
             environment: details,
-            actions: _(details.workflows).reject(function (flow) {
-              return flow.name === details.createWorkflowName
-            })
+            actions: view.details.canRunWorkflows() ? actions : []
           }));
+
+          view.$(".rename-button").toggle(view.details.canRename());
 
           view.updateControlButtons();
           view._renderAllSubViews();
