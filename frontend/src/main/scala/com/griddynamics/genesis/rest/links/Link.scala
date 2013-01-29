@@ -7,7 +7,7 @@ import org.springframework.web.util.UriComponentsBuilder
 import com.griddynamics.genesis.http.TunnelFilter
 import com.griddynamics.genesis.rest.annotations.LinkTarget
 
-case class Link(href: String, rel: String, `type`: String, methods: Array[String] = Array())  {
+case class Link(href: String, rel: String, `type`: Option[String], methods: Array[String] = Array())  {
   def disassemble: Array[Link] = methods.map(m => new Link(href, rel, `type`, Array(m)))
   def remove(method: String) = new Link(href, rel, `type`, methods.filter(_ != method))
 }
@@ -28,12 +28,25 @@ object Links {
   }
 }
 
-object ControllerClassAggregator {
-  def apply(controllerClazz: Class[_], modelClazz: Class[_], rel: LinkTarget, methods: Array[RequestMethod] = Array())(implicit request: HttpServletRequest) =  {
-    val builder: UriComponentsBuilder = request.getHeader(TunnelFilter.FORWARDED_HEADER) match {
+object Link {
+  def apply(href: String, rel: LinkTarget, method: RequestMethod) = new Link(href, rel.toRel, None, Array(method.toString.toLowerCase))
+}
+
+object HrefBuilder {
+  def absolutePath(localPath: String)(implicit request: HttpServletRequest): String = uriBuilder.path(localPath).build().toString
+
+  private[links] def uriBuilder(implicit request: HttpServletRequest): UriComponentsBuilder = {
+    request.getHeader(TunnelFilter.FORWARDED_HEADER) match {
       case s: String => UriComponentsBuilder.fromHttpUrl(s)
       case _ => ServletUriComponentsBuilder.fromContextPath(request)
     }
+  }
+}
+
+object ControllerClassAggregator {
+
+  def apply(controllerClazz: Class[_], modelClazz: Class[_], rel: LinkTarget, methods: Array[RequestMethod] = Array())(implicit request: HttpServletRequest): Array[Link] =  {
+    val builder = HrefBuilder.uriBuilder
 
     Option(controllerClazz.getAnnotation(classOf[RequestMapping])).map(ann => {
       ann.value().map ( mapping => {
@@ -42,7 +55,7 @@ object ControllerClassAggregator {
           ann.method()
         else
           methods
-        Link(link, rel.toRel, s"application/vnd.griddynamics.genesis.${modelClazz.getSimpleName}+json", getMethods(method))
+        Link(link, rel.toRel, Some(s"application/vnd.griddynamics.genesis.${modelClazz.getSimpleName}+json"), getMethods(method))
       })
     }).getOrElse(Array())
   }
