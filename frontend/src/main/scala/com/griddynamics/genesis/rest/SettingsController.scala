@@ -31,6 +31,9 @@ import com.griddynamics.genesis.rest.GenesisRestController.{extractParamsMap, pa
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.api.{ConfigProperty, ConfigPropertyType, ExtendedResult, Failure, Success}
 import org.springframework.beans.factory.annotation.Autowired
+import com.griddynamics.genesis.rest.links.Link
+
+case class SystemSettings(links: Array[Link]) //TODO: move to api after link will be moved
 
 @Controller
 @RequestMapping(value = Array("/rest/settings"))
@@ -43,6 +46,10 @@ class SettingsController extends RestApiExceptionsHandler {
     private val VISIBLE_PREFIXES = Seq(PREFIX, PLUGIN_PREFIX)
 
     private def isVisible(key: String) = VISIBLE_PREFIXES.map(key.startsWith(_)).reduce(_ || _)
+
+    @RequestMapping(value = Array("root"), method = Array(RequestMethod.GET)) //TODO: mapping will be changed
+    @ResponseBody
+    def root(): SystemSettings = new SystemSettings(Array())
 
     @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
     @ResponseBody
