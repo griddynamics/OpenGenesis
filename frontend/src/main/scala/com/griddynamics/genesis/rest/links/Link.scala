@@ -28,9 +28,15 @@ object Links {
   }
 }
 
+case class WebPath(val start: String, val elements: List[String] = List()) {
+  def / (path: String) = WebPath(start, elements ++ (path :: Nil))
+  override def toString() = (start :: elements).mkString("/")
+}
+
 object Link {
   def apply(href: String, rel: LinkTarget, method: RequestMethod) = new Link(href, rel.toRel, None, Array(method.toString.toLowerCase))
-  def apply(href: String, rel: LinkTarget, modelClazz: Class[_], method: RequestMethod) = new Link(href, rel.toRel, modelClazz, Array(method.toString.toLowerCase))
+  def apply(href: String, rel: LinkTarget, modelClazz: Class[_], methods: RequestMethod*) =
+    new Link(href, rel.toRel, modelClazz, (methods.toList).map(_.toString.toLowerCase()).toArray)
   implicit def toContentType(modelClazz: Class[_]): Some[String] = {
     Some(s"application/vnd.griddynamics.genesis.${modelClazz.getSimpleName}+json")
   }
@@ -47,6 +53,8 @@ object HrefBuilder {
     implicit val req: HttpServletRequest = request
     absolutePath(request.getServletPath.stripSuffix("/") + "/" + pathParam.toString)
   }
+
+  implicit def webPathToString(path: WebPath) = path.toString
 
 
   private[links] def uriBuilder(implicit request: HttpServletRequest): UriComponentsBuilder = {
