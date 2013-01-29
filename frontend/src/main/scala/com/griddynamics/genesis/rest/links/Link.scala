@@ -14,7 +14,17 @@ case class Link(href: String, rel: String, `type`: String, methods: Array[String
 
 object Links {
   def merge(links: Array[Link]) = {
-    links.groupBy(_.href).map(entry => Link(entry._1, entry._2(0).rel, entry._2(0).`type`, entry._2.map(l => l.methods).flatten))
+    val groupedByHref = links.groupBy(_.href)
+
+    def assembleLinkList(linksList: Array[Link], href: String): Link = {
+      val firstLink = linksList(0)
+      val methods = linksList.map(_.methods).flatten
+      Link(href, firstLink.rel, firstLink.`type`, methods)
+    }
+
+    groupedByHref.map {
+      case (href, linksList) =>  assembleLinkList(linksList, href)
+    }
   }
 }
 
