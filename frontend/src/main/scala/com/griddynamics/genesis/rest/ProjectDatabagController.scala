@@ -22,22 +22,39 @@
  */
 package com.griddynamics.genesis.rest
 
+import annotations.{LinkTarget, AddSelfLinks}
+import links.CollectionWrapper._
+import links.HrefBuilder._
+import links.{WebPath, LinkBuilder, ItemWrapper, CollectionWrapper}
 import org.springframework.stereotype.Controller
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation._
+import org.springframework.web.bind.annotation.RequestMethod._
 import com.griddynamics.genesis.service.DataBagService
-import com.griddynamics.genesis.api.DataBag
 import javax.validation.Valid
+import javax.servlet.http.HttpServletRequest
+import com.griddynamics.genesis.spring.security.LinkSecurityBean
+import com.griddynamics.genesis.api.DataBag
+import scala.Some
 
 @Controller
 @RequestMapping(value = Array("/rest/projects/{projectId}/databags"))
 class ProjectDatabagController extends RestApiExceptionsHandler {
   @Autowired
   var databagService: DataBagService = _
+  @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
-  def listForProject(@PathVariable("projectId") projectId: Int) = databagService.listForProject(projectId)
+  @AddSelfLinks(methods = Array(GET, POST), modelClass = classOf[DataBag])
+  def listForProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) : CollectionWrapper[ItemWrapper[DataBag]] = {
+    def wrapDatabag(databag: DataBag) : ItemWrapper[DataBag] = {
+      val top = WebPath(request)
+      val wrappedItem: ItemWrapper[DataBag] = databag
+      wrappedItem.withLinks(LinkBuilder(top / databag.id.get.toString, LinkTarget.SELF, classOf[DataBag], GET, PUT, DELETE)).filtered()
+    }
+    databagService.listForProject(projectId).map(wrapDatabag(_))
+  }
 
   @RequestMapping(value = Array("{databagId}"), method = Array(RequestMethod.PUT))
   @ResponseBody
@@ -49,14 +66,20 @@ class ProjectDatabagController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{databagId}"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def find(@PathVariable("projectId") projectId: Int, @PathVariable("databagId") databagId: Int) = {
-      val bag = for {
-        databag <- databagService.get(databagId)
-        project <- databag.projectId
-        if project == projectId
-      } yield databag
+  @AddSelfLinks(methods = Array(GET, PUT, DELETE), modelClass = classOf[DataBag])
+  def find(@PathVariable("projectId") projectId: Int, @PathVariable("databagId") databagId: Int, request: HttpServletRequest) : ItemWrapper[DataBag] = {
+    get(databagId, projectId)
+  }
 
-      bag.getOrElse(throw new ResourceNotFoundException("Couldn't find databag"))
+
+  def get(databagId: Int, projectId: Int): DataBag = {
+    val bag = for {
+      databag <- databagService.get(databagId)
+      project <- databag.projectId
+      if project == projectId
+    } yield databag
+
+    bag.getOrElse(throw new ResourceNotFoundException("Couldn't find databag"))
   }
 
   @RequestMapping(method = Array(RequestMethod.POST))
@@ -68,7 +91,7 @@ class ProjectDatabagController extends RestApiExceptionsHandler {
   @RequestMapping(value = Array("{databagId}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
   def delete(@PathVariable("projectId") projectId: Int, @PathVariable("databagId") databagId: Int) = {
-    val bag = find(projectId, databagId)
+    val bag = get(databagId, projectId)
     databagService.delete(bag)
   }
 }

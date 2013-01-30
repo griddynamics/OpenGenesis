@@ -28,7 +28,7 @@ import links._
 import HrefBuilder._
 import links.ItemWrapper
 import links.WebPath
-import Wrappers._
+import CollectionWrapper._
 import org.springframework.stereotype.Controller
 import scala.Array
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
@@ -177,8 +177,8 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     implicit val req: HttpServletRequest = request
     val top = WebPath(request)
     wrapper.withLinksToSelf(GET, PUT, DELETE).withLinks(
-      Link(top / "history", COLLECTION, classOf[WorkflowHistory], GET),
-      Link(top / "actions", COLLECTION, POST) // TODO: GET not present now. User can only post there.
+      LinkBuilder(top / "history", COLLECTION, classOf[WorkflowHistory], GET),
+      LinkBuilder(top / "actions", COLLECTION, POST) // TODO: GET not present now. User can only post there.
     ).filtered()
   }
 
@@ -213,11 +213,11 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     }
     implicit val req: HttpServletRequest = request
     val wrapped = environments.map(environment =>
-      wrap(environment).withLinks(Link(HrefBuilder.withPathParam(request, environment.id),
+      wrap(environment).withLinks(LinkBuilder(HrefBuilder.withPathParam(request, environment.id),
         SELF, classOf[Environment], GET))
     )
 
-    wrapCollection(wrapped).withLinks(Link(request,
+    wrapCollection(wrapped).withLinks(LinkBuilder(request,
       SELF, classOf[Environment], POST)).filtered()
   }
 

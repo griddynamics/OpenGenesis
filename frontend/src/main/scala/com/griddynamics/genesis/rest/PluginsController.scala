@@ -25,7 +25,7 @@ package com.griddynamics.genesis.rest
 import annotations.LinkTarget._
 import links._
 import HrefBuilder._
-import Wrappers._
+import CollectionWrapper._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
 import org.springframework.web.bind.annotation.RequestMethod._
@@ -48,11 +48,12 @@ class PluginsController extends RestApiExceptionsHandler  {
 
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
-  def listPlugins(request: HttpServletRequest): Wrappers[ItemWrapper[Plugin]] = {
+  def listPlugins(request: HttpServletRequest): CollectionWrapper[ItemWrapper[Plugin]] = {
+    implicit val req = request
     wrapCollection(repository.listPlugins.toList.map(plugin => {
        val top = WebPath(request)
-       wrap(plugin).withLinks(Link(top / plugin.id, SELF, classOf[Plugin], GET)).filtered()
-    })).withLinks(Link(request, SELF, GET)).filtered()
+       wrap(plugin).withLinks(LinkBuilder(top / plugin.id, SELF, classOf[Plugin], GET, PUT)).filtered()
+    })).withLinksToSelf(classOf[Plugin], GET).filtered()
   }
 
   @RequestMapping(value = Array("{pluginId}"), method = Array(RequestMethod.GET))
@@ -60,7 +61,7 @@ class PluginsController extends RestApiExceptionsHandler  {
   def getPluginDescription(@PathVariable("pluginId") pluginId: String, request: HttpServletRequest): ItemWrapper[PluginDetails] ={
     val plugin = repository.getPlugin(pluginId).getOrElse(throw new ResourceNotFoundException("Plugin [id = " + pluginId + "] was not found"))
     wrap(plugin.copy(configuration = hidePasswords(plugin.configuration))).
-      withLinks(Link(request, SELF, classOf[PluginDetails], GET, PUT)).filtered()
+      withLinks(LinkBuilder(request, SELF, classOf[PluginDetails], GET, PUT)).filtered()
   }
 
   @RequestMapping(value = Array("{pluginId}"), method = Array(RequestMethod.PUT))

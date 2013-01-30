@@ -22,18 +22,21 @@
  */
 package com.griddynamics.genesis.rest
 
+import annotations.{AddSelfLinks, LinkTarget}
+import links.CollectionWrapper._
+import links.{CollectionWrapper, ItemWrapper, WebPath, LinkBuilder}
+import links.HrefBuilder._
+import org.springframework.web.bind.annotation.RequestMethod._
 import org.springframework.web.bind.annotation._
 import org.springframework.stereotype.Controller
-import scala.Array
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.service.{CredentialsStoreService, ServersLoanService, ServersService}
 import com.griddynamics.genesis.rest.GenesisRestController._
 import com.griddynamics.genesis.api
 import api.{ServerArray, ServerDescription, ExtendedResult}
-import scala.Some
-import com.griddynamics.genesis.service.impl.ProjectService
 import org.springframework.beans.factory.annotation.Autowired
 import javax.validation.Valid
+import com.griddynamics.genesis.spring.security.LinkSecurityBean
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/server-arrays"))
@@ -42,6 +45,7 @@ class ServersController extends RestApiExceptionsHandler {
   @Autowired var service: ServersService = _
   @Autowired var loanService: ServersLoanService = _
   @Autowired var credService: CredentialsStoreService =_
+  @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
@@ -51,26 +55,35 @@ class ServersController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
   @ResponseBody
-  def list(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = {
-    service.list(projectId)
+  @AddSelfLinks(methods = Array(GET, POST), modelClass = classOf[ServerArray])
+  def list(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) : CollectionWrapper[ItemWrapper[ServerArray]] = {
+    implicit val req = request
+    def wrapServer(server: ServerArray) = {
+      val top = WebPath(request)
+      wrap(server).withLinks(LinkBuilder(top / server.id.get.toString, LinkTarget.SELF, server.getClass, PUT, DELETE, GET)).filtered()
+    }
+    wrapCollection(service.list(projectId).map(wrapServer(_)))
   }
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def get(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int) = {
-    service.get(projectId, id).getOrElse(throw new ResourceNotFoundException("Server array wasn't found in project"))
+  @AddSelfLinks(methods = Array(GET, PUT, DELETE), modelClass = classOf[ServerArray])
+  def get(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) : ItemWrapper[ServerArray] = {
+    find(projectId, id)
   }
+
+  private def find(projectId: Int, id: Int) = service.get(projectId, id).getOrElse(throw new ResourceNotFoundException("Server array wasn't found in project"))
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
   def delete(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) = {
-    service.delete(get(projectId, id))
+    service.delete(find(projectId, id))
   }
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.PUT))
   @ResponseBody
   def updateServerArray(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, @Valid @RequestBody request: ServerArray) = {
-    val array = get(projectId, id).copy(
+    val array = find(projectId, id).copy(
       name = request.name,
       description = request.description
     )

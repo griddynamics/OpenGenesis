@@ -23,13 +23,20 @@
 
 package com.griddynamics.genesis.rest
 
+import annotations.LinkTarget
+import links.CollectionWrapper._
+import links.{WebPath, LinkBuilder}
+import links.HrefBuilder._
 import org.springframework.stereotype.Controller
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.groups.GroupService
 import org.springframework.web.bind.annotation._
+import org.springframework.web.bind.annotation.RequestMethod._
 import com.griddynamics.genesis.api.User
 import javax.validation.Valid
+import com.griddynamics.genesis.spring.security.LinkSecurityBean
+import javax.servlet.http.HttpServletRequest
 
 @Controller
 @RequestMapping(Array("/rest/users"))
@@ -37,6 +44,7 @@ class UsersController extends RestApiExceptionsHandler {
 
   @Autowired var userService: UserService = _
   @Autowired var groupService: GroupService = _
+  @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
   @RequestMapping(method = Array(RequestMethod.GET), params = Array("available"))
   @ResponseBody
@@ -44,7 +52,14 @@ class UsersController extends RestApiExceptionsHandler {
 
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
-  def list() = userService.list
+  def list(request: HttpServletRequest) = {
+    implicit val req = request
+    val top = WebPath(request)
+    def wrapUser(user: User) = {
+      wrap(user).withLinks(LinkBuilder(top / user.username, LinkTarget.SELF, classOf[User], GET, PUT, DELETE)).filtered()
+    }
+    wrapCollection(userService.list.map(wrapUser(_))).withLinksToSelf(classOf[User], GET, POST).filtered()
+  }
 
   @RequestMapping(method = Array(RequestMethod.GET), params = Array("tag"))
   @ResponseBody
@@ -75,9 +90,13 @@ class UsersController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{username:.+}"), method=Array(RequestMethod.GET))
   @ResponseBody
-  def get(@PathVariable(value = "username") username: String) = {
-    userService.findByUsername(username).getOrElse(throw new ResourceNotFoundException("User[username = " + username + "] was not found"))
+  def get(@PathVariable(value = "username") username: String, request: HttpServletRequest) = {
+    implicit val req = request
+    val user = find(username)
+    wrap(user).withLinksToSelf(GET, PUT, DELETE).filtered()
   }
+
+  private def find(username: String) = userService.findByUsername(username).getOrElse(throw new ResourceNotFoundException("User[username = " + username + "] was not found"))
 
   @RequestMapping(method = Array(RequestMethod.POST))
   @ResponseBody
@@ -86,7 +105,7 @@ class UsersController extends RestApiExceptionsHandler {
   @RequestMapping(value = Array("{username:.+}"), method = Array(RequestMethod.PUT))
   @ResponseBody
   def update(@PathVariable("username") username: String, @RequestBody @Valid request: User) = {
-    val user = get(username).copy(
+    val user = find(username).copy(
       email = request.email,
       firstName = request.firstName,
       lastName = request.lastName,
@@ -99,7 +118,7 @@ class UsersController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{username:.+}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
-  def delete(@PathVariable(value="username") username: String) = userService.delete(get(username))
+  def delete(@PathVariable(value="username") username: String) = userService.delete(find(username))
 
   @RequestMapping(value = Array("{userName}/groups"), method = Array(RequestMethod.GET))
   @ResponseBody
