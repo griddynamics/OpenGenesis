@@ -29,7 +29,15 @@ function(genesis, status, validation, Backbone, $) {
       this.projectId = options.projectId;
     },
 
-    url: function() { return "rest/projects/" + this.projectId + "/server-arrays"; }
+    url: function() { return "rest/projects/" + this.projectId + "/server-arrays"; },
+
+    parse: function(json) {
+      if (json.items) {
+        return json.items;
+      } else {
+        return json;
+      }
+    }
   });
 
   Servers.ServerModel = Backbone.Model.extend({
