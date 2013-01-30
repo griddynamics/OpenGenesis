@@ -87,6 +87,10 @@ function(genesis, status, $, _, Backbone) {
     })
   }
 
+  function escapeCss(str) {
+    return str.replace(/([ !"#$%&'()*+,.\/:;<=>?@[\\\]^`{|}~])/g,'\\$1')
+  }
+
   variables.Views.AbstractWorkflowParamsView = Backbone.View.extend({
     events: {
       "click .group-radio": "groupVarSelected"
@@ -120,10 +124,10 @@ function(genesis, status, $, _, Backbone) {
       var group = $currentTarget.attr('name');
       var name = $currentTarget.attr('data-var-name');
 
-      view.$("#" + name).removeAttr('disabled');
+      view.$("#" + escapeCss(name)).removeAttr('disabled');
 
       _.each(this.variablesModel().filter(function (v) { return group === v.group && name !== v.name}), function (x) {
-        view.$("#" + x.name).attr('disabled', '');
+        view.$("#" + escapeCss(x.name)).attr('disabled', '');
       });
     }
   });
@@ -154,7 +158,7 @@ function(genesis, status, $, _, Backbone) {
       if (variable.group) {
         enable = this.$groupVariableRadio(variable).is(':checked');
       }
-      if (enable) this.$('#' + variable.name).removeAttr("disabled");
+      if (enable) this.$('#' + escapeCss(variable.name)).removeAttr("disabled");
     },
 
     _isMultiValue: function (variable) {
@@ -181,7 +185,7 @@ function(genesis, status, $, _, Backbone) {
     _collectValueObject: function (variables) {
       var self = this;
       return _(variables).inject(function (nameValueMap, variableName) {
-        var val = self.$('#' + variableName).val();
+        var val = self.$('#' + escapeCss(variableName)).val();
         if (val) {
           nameValueMap[variableName] = val;
         }
@@ -207,11 +211,11 @@ function(genesis, status, $, _, Backbone) {
           events = {};
 
       _(this.graph.allButLeafs()).each(function (node) {
-        events["change #" + node] = function () {
+        events["change #" + escapeCss(node)] = function () {
           genesis.app.trigger("page-view-loading-started");
 
           var descendants = _(graph.allDescendants(node));
-          descendants.each(function (name) { self._disable("#" + name) });
+          descendants.each(function (name) { self._disable("#" + escapeCss(name)) });
 
           var resolvedVariables = _.difference(graph.all(), descendants);
           var nameValueMap = self._collectValueObject(resolvedVariables);
@@ -220,14 +224,14 @@ function(genesis, status, $, _, Backbone) {
             _(data).each(function (variable) {
               self._enableChecked(variable);
               if (descendants.contains(variable.name) && self._isMultiValue(variable)) {
-                self._buildOptions(self.$("#" + variable.name), variable.values, variable.defaultValue || null);
+                self._buildOptions(self.$("#" + escapeCss(variable.name)), variable.values, variable.defaultValue || null);
               }
             });
 
             var unresolvedVarNames = _(descendants.difference(_(data).pluck("name")));
             _(self.variables).each(function (v) {
               if (v.group && unresolvedVarNames.contains(v.name) && self.$groupVariableRadio(v).is(':checked')) {
-                self.$('#' + v.name).removeAttr("disabled");
+                self.$('#' + escapeCss(v.name)).removeAttr("disabled");
               }
             });
 

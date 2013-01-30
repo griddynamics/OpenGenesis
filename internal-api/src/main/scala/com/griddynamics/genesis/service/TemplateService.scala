@@ -24,6 +24,7 @@ package com.griddynamics.genesis.service
 
 import com.griddynamics.genesis.plugin.StepBuilder
 import com.griddynamics.genesis.api.{Configuration, Failure, Success, ExtendedResult}
+import com.griddynamics.genesis.model.Environment
 
 class VariableDescription(val name: String, val clazz : Class[_ <: Any], val description: String, val isOptional: Boolean = false,
                           val defaultValue: String = null, val values: Map[String,String] = Map(), val dependsOn: Option[List[String]] = None,
@@ -69,7 +70,8 @@ case class TemplateDescription (name: String, version: String, createWorkflow: S
 
 trait TemplateService {
     def listTemplates(projectId: Int): Seq[(String, String)] // (name, version)
-    def findTemplate(projectId: Int, templateName: String, templateVersion: String): Option[TemplateDefinition]
+    def findTemplate(projectId: Int, templateName: String, templateVersion: String, envConfId: Option[Int] = None): Option[TemplateDefinition]
+    def findTemplate(env: Environment): Option[TemplateDefinition]
 
     def descTemplate(projectId: Int, templateName: String, templateVersion: String): Option[TemplateDescription]
     def templateRawContent(projectId: Int, name: String, version: String): Option[String]

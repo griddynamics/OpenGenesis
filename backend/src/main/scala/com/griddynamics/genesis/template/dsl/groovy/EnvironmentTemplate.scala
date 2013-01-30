@@ -22,15 +22,15 @@
  */
 package com.griddynamics.genesis.template.dsl.groovy
 
-import groovy.lang.{GroovyObjectSupport, Closure}
+import groovy.lang.{Binding, GroovyObjectSupport, Closure}
 import scala._
 import collection.mutable.ListBuffer
 import com.griddynamics.genesis.template._
 import java.lang.IllegalStateException
 import scala.Some
-import com.griddynamics.genesis.repository.DatabagRepository
-import support.{UnifiedDatabagSupport, ProjectDatabagSupport, SystemWideContextSupport}
-import groovy.util.Expando
+import com.griddynamics.genesis.repository.{ConfigurationRepository, DatabagRepository}
+import support.{EnvConfigSupport, UnifiedDatabagSupport, ProjectDatabagSupport, SystemWideContextSupport}
+import com.griddynamics.genesis.api.{Success, Configuration}
 
 class EnvironmentTemplate(val name : String,
                           val version : String,
@@ -40,7 +40,7 @@ class EnvironmentTemplate(val name : String,
                           val workflows : List[EnvWorkflow]) {
 }
 
-class NameVersionDelegate extends Delegate {
+class NameVersionDelegate extends GroovyObjectSupport with Delegate {
     var name : String = _
     var version : String = _
     var createWorkflowName : String = _
@@ -82,21 +82,29 @@ class NameVersionDelegate extends Delegate {
         this
     }
     def dataSources(ds : Closure[Unit]){}
+
+  // STOP delegating to owner here: owner is just groovy script
+  override def delegationStrategy = Closure.DELEGATE_ONLY
 }
 
 class EnvTemplateBuilder(val projectId: Int,
                          val dataSourceFactories : Seq[DataSourceFactory],
-                         val databagRepository: DatabagRepository) extends NameVersionDelegate with SystemWideContextSupport
+                         val databagRepository: DatabagRepository,
+                         envConfigRepo: ConfigurationRepository,
+                         envConfigOpt: Option[Configuration],
+                         binding: Binding) extends NameVersionDelegate with SystemWideContextSupport
                          with ProjectDatabagSupport with UnifiedDatabagSupport {
 
     var dsObjSupport : Option[DSObjectSupport] = None
     var dsClozures: Option[Closure[Unit]] = None
+  private var envConfig: AnyRef = _
 
     override def workflow(name: String, details : Closure[Unit]) = {
         if (workflows.find(_.name == name).isDefined)
             throw new IllegalStateException("workflow with name '%s' is already defined".format(name))
 
-        val delegate = Delegate(details).to(new WorkflowDeclaration(dsClozures, dataSourceFactories, projectId))
+        val delegate = Delegate(details)
+          .to(new WorkflowDeclaration(dsClozures, dataSourceFactories, projectId, defaultEnvConfigId(name)))
 
         workflows += new EnvWorkflow(name, delegate.stepsBlock,
             preconditions = delegate.requirements.toMap, rescues = delegate.rescueBlock) {
@@ -105,6 +113,12 @@ class EnvTemplateBuilder(val projectId: Int,
         this
     }
 
+  private def defaultEnvConfigId(name: String) = if (createWorkflowName == name)
+    envConfigRepo.getDefaultConfig(projectId) match {
+      case Success(c) => c.id
+      case _ => None
+    }
+  else None
 
     override def createWorkflow(name : String) : EnvTemplateBuilder = {
         if (createWorkflowName != null) throw new IllegalStateException("create workflow name is already set")
@@ -134,7 +148,30 @@ class EnvTemplateBuilder(val projectId: Int,
         if (workflows.find(_.name == destroyWorkflowName).isEmpty) throw new IllegalStateException("destroy workflow is not defined")
         new EnvironmentTemplate(name, version, None, createWorkflowName, destroyWorkflowName, workflows.toList)
     }
-  
+
+
+  override def getProperty(name: String) = name match {
+    case Reserved.configRef => envConfigOpt.map(EnvConfigSupport.asGroovyMap(_)).getOrElse(if (envConfig != null) envConfig else super.getProperty(name))
+    case _ => if (binding.hasVariable(name)) binding.getProperty(name) else super.getProperty(name)
+  }
+
+  override def setProperty(property: String, newValue: Any) {
+    (property, newValue) match {
+      case (Reserved.configRef, s: String) => envConfig = EnvConfigSupport.getConfig(envConfigRepo, projectId, s)
+      case (Reserved.configRef, conf: AnyRef) => envConfig = conf
+      case _ => // DO NOTHING HERE
+    }
+  }
+
+  override def invokeMethod(name: String, args: AnyRef) = {
+    if (binding.hasVariable(name)) binding.getProperty(name) match {
+      case cl: Closure[AnyRef] => cl.call(args)
+      case _ => super.invokeMethod(name, args)
+    }
+    else super.invokeMethod(name, args)
+  }
+
+
     override def newTemplate(extName: Option[String], extVersion: Option[String], extProject: Option[String]) = {
       val templateName = extName match {
         case None => name

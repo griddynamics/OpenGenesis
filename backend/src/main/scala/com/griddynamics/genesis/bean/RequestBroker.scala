@@ -64,7 +64,7 @@ class RequestBrokerImpl(storeService: StoreService,
             case _ =>
         }
 
-        val tmplOption = templateService.findTemplate(projectId, templateName, templateVersion)
+        val tmplOption = templateService.findTemplate(projectId, templateName, templateVersion, config.id)
         val twf = tmplOption match  {
           case None => return Failure(
             compoundVariablesErrors = Seq("Template %s with version %s not found".format(templateName, templateVersion)),
@@ -114,7 +114,7 @@ class RequestBrokerImpl(storeService: StoreService,
             })
         }})
 
-    private def getTemplate(env: Environment) = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion) match {
+    private def getTemplate(env: Environment) = templateService.findTemplate(env) match {
         case Some(t) => Success(t)
         case None => Failure(compoundVariablesErrors = Seq("Template used to create instance %s is not found".format(env.name)))
     }
