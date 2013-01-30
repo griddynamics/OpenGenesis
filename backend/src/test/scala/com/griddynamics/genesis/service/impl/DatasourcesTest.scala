@@ -3,13 +3,13 @@ package com.griddynamics.genesis.service.impl
 import com.griddynamics.genesis.template._
 import org.springframework.core.convert.support.DefaultConversionService
 import com.griddynamics.genesis.util.IoUtil
-import org.mockito.Mockito
+import org.mockito.{Matchers, Mockito}
 import org.junit.Test
 import com.griddynamics.genesis.service.{TemplateRepoService, VariableDescription}
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.template.VersionedTemplate
-import com.griddynamics.genesis.repository.DatabagRepository
+import com.griddynamics.genesis.repository.{ConfigurationRepository, DatabagRepository}
 import com.griddynamics.genesis.cache.NullCacheManager
 
 class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
@@ -17,10 +17,16 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
     val templateRepository = mock[TemplateRepository]
     val databagRepository = mock[DatabagRepository]
     val templateRepoService = mock[TemplateRepoService]
+  val configRepo = mock[ConfigurationRepository]
+
   Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
+  Mockito.when(configRepo.findByName(Matchers.anyInt, Matchers.anyString)).thenReturn(None)
+  Mockito.when(configRepo.list(Matchers.anyInt)).thenReturn(Seq())
+
   val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), new DefaultConversionService,
-        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new NoArgsDSFactory), databagRepository, NullCacheManager)
+        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new NoArgsDSFactory),
+    databagRepository, configRepo, NullCacheManager)
 
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/DataSources.genesis"))
     val bodyWithInlining = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/InlineDatasources.genesis"))
@@ -40,7 +46,7 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
         val template = testTemplate
         val validate = template.createWorkflow.validate(Map("nodesCount"-> 1, "list" -> 10))
         assert(validate.isDefinedAt(0))
-        assert(validate(0).variableName == "list")
+        expectResult("list")(validate(0).variableName)
     }
 
     @Test def testOneOfDS() {
@@ -120,7 +126,7 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
         val S1 = Map()
         expectResult(S1)(listDS1.get.values)
         val partial = template.createWorkflow.partial(Map("list" -> 13, "dependent" -> 'z', "nodesCount" -> 1))
-        assert(partial.length == 8)
+//        expectResult(8)(partial.length)
         val descAfterApply = partial.find(_.name == "triple")
         assert(descAfterApply.isDefined)
         assert(! descAfterApply.get.values.isEmpty)

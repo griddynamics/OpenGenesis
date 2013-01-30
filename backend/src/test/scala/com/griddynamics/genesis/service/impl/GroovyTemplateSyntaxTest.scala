@@ -32,7 +32,7 @@ import com.griddynamics.genesis.template.dsl.groovy.WorkflowDeclaration
 import scala.Array
 import com.griddynamics.genesis.service.TemplateRepoService
 import com.griddynamics.genesis.template.{VersionedTemplate, TemplateRepository}
-import com.griddynamics.genesis.repository.DatabagRepository
+import com.griddynamics.genesis.repository.{ConfigurationRepository, DatabagRepository}
 import com.griddynamics.genesis.cache.NullCacheManager
 
 class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with MockitoSugar {
@@ -182,7 +182,7 @@ class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with Mock
             List(
               new DoNothingStepBuilderFactory
             ),
-           new DefaultConversionService, Seq(), bagRepository, NullCacheManager)
+           new DefaultConversionService, Seq(), bagRepository, mock[ConfigurationRepository], NullCacheManager)
 
         templateService.listTemplates(0).headOption match {
             case Some((name, version)) => templateService.findTemplate(0, name, version)

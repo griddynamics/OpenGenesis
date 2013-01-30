@@ -40,7 +40,7 @@ trait TemplateRepository {
     }
 }
 
-case class VersionedTemplate(name: String,  version: String = "LATEST")
+case class VersionedTemplate(name: String,  version: String = "LATEST", fullName: String = "")
 
 object TemplateRepository {
     val wildCardIOCase = IOCase.SENSITIVE

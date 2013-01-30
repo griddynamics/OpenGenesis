@@ -12,7 +12,7 @@ template {
                 .description("Erlang worker nodes count")
                 .validator { it > 0 }
             variable("test").description("test")
-            variable("optional").description("Optional variable").optional(defaultValue = 1)
+            variable("optional").description("Optional variable").optional().defaultValue(1)
             variable("optionalNoValue").description("Optional variable without default value").optional()
         }
 

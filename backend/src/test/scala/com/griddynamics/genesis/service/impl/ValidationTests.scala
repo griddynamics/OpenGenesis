@@ -5,10 +5,10 @@ import com.griddynamics.genesis.template.{VersionedTemplate, ListVarDSFactory, T
 import org.springframework.core.convert.support.DefaultConversionService
 import org.junit.Test
 import com.griddynamics.genesis.util.IoUtil
-import com.griddynamics.genesis.repository.DatabagRepository
+import com.griddynamics.genesis.repository.{ConfigurationRepository, DatabagRepository}
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
 import org.scalatest.mock.MockitoSugar
-import org.mockito.Mockito
+import org.mockito.{Matchers, Mockito}
 import org.scalatest.junit.AssertionsForJUnit
 import com.griddynamics.genesis.service.ValidationError
 import com.griddynamics.genesis.cache.NullCacheManager
@@ -16,11 +16,14 @@ import com.griddynamics.genesis.cache.NullCacheManager
 class ValidationTests extends AssertionsForJUnit with MockitoSugar {
     val templateRepository = mock[TemplateRepository]
     val bagRepository = mock[DatabagRepository]
+  val configRepository = mock[ConfigurationRepository]
     val templateRepoService = mock[TemplateRepoService]
     Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
+  Mockito.when(configRepository.findByName(Matchers.anyInt, Matchers.anyString)).thenReturn(None)
     val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), new DefaultConversionService,
-        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new DatabagDataSourceFactory(bagRepository)), bagRepository, NullCacheManager)
+        Seq(new ListVarDSFactory, new DependentListVarDSFactory,
+        new DatabagDataSourceFactory(bagRepository)), bagRepository, configRepository, NullCacheManager)
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/Validations.genesis"))
 
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))

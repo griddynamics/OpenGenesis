@@ -46,14 +46,7 @@ import org.apache.commons.lang3.StringEscapeUtils
 import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.spring.security.LinkSecurityBean
-import com.griddynamics.genesis.api.ActionTracking
-import com.griddynamics.genesis.api.EnvironmentDetails
-import com.griddynamics.genesis.api.Failure
-import com.griddynamics.genesis.api.WorkflowHistory
-import com.griddynamics.genesis.api.Success
-import com.griddynamics.genesis.api.Environment
-import com.griddynamics.genesis.api.StepLogEntry
-import com.griddynamics.genesis.api.DataBag
+import com.griddynamics.genesis.template.dsl.groovy.Reserved
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
@@ -78,7 +71,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     val templateName = extractValue("templateName", paramsMap)
     val templateVersion = extractValue("templateVersion", paramsMap)
     val variables = extractVariables(paramsMap)
-    val config =  extractOption("configId", paramsMap).map { cid =>
+    val config =  variables.get(Reserved.configRef).map { cid =>
       configRepository.get(projectId, cid.toInt).getOrElse(throw new ResourceNotFoundException("Failed to find config with id = %s in project %d".format(cid, projectId)))
     }.getOrElse {
       configRepository.getDefaultConfig(projectId) match {
@@ -253,6 +246,18 @@ class EnvironmentsController extends RestApiExceptionsHandler {
 
       case _ => throw new InvalidInputException ()
     }
+  }
+
+  @RequestMapping(value = Array("{envId}/actions/{workflow}"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  def getWorkflow(@PathVariable("projectId") projectId: Int,
+                  @PathVariable("envId") envId: Int,
+                  @PathVariable("workflow") workflowName: String) = try {
+    genesisService.getWorkflow(projectId, envId, workflowName)
+  } catch {
+    case e: Exception =>
+      log.error(e, s"Failed to get workflow ${workflowName} for env id=${envId}, project id=${envId}")
+      Failure(compoundServiceErrors = List(e.getMessage), stackTrace = Option(e.getStackTraceString))
   }
 
   @RequestMapping(value = Array("{envId}/steps/{stepId}/actions"), method = Array(RequestMethod.GET))
