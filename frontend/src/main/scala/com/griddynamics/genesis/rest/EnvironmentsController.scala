@@ -22,16 +22,19 @@
  */
 package com.griddynamics.genesis.rest
 
-import annotations.LinkTarget
+import annotations.LinkTarget._
 import filters.EnvFilter
 import links._
-import HrefBuilder.duplicate
+import HrefBuilder._
+import links.ItemWrapper
+import links.WebPath
 import Wrappers._
 import org.springframework.stereotype.Controller
 import scala.Array
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import com.griddynamics.genesis.http.TunnelFilter
 import org.springframework.web.bind.annotation._
+import org.springframework.web.bind.annotation.RequestMethod._
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import com.griddynamics.genesis.service.EnvironmentAccessService
 import org.springframework.security.access.prepost.PostFilter
@@ -43,6 +46,14 @@ import org.apache.commons.lang3.StringEscapeUtils
 import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.spring.security.LinkSecurityBean
+import com.griddynamics.genesis.api.ActionTracking
+import com.griddynamics.genesis.api.EnvironmentDetails
+import com.griddynamics.genesis.api.Failure
+import com.griddynamics.genesis.api.WorkflowHistory
+import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.api.Environment
+import com.griddynamics.genesis.api.StepLogEntry
+import com.griddynamics.genesis.api.DataBag
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
@@ -167,8 +178,15 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @RequestMapping(value = Array("{envId}"), method = Array(RequestMethod.GET))
   @ResponseBody
   def describeEnv(@PathVariable("projectId") projectId: Int,
-                  @PathVariable("envId") envId: Int) : EnvironmentDetails = {
-    genesisService.describeEnv(envId, projectId).getOrElse(throw new ResourceNotFoundException("Environment [" + envId + "] was not found"))
+                  @PathVariable("envId") envId: Int, request: HttpServletRequest) : ItemWrapper[EnvironmentDetails] = {
+    val wrapper: ItemWrapper[EnvironmentDetails] = genesisService.describeEnv(envId, projectId).
+      getOrElse(throw new ResourceNotFoundException("Environment [" + envId + "] was not found"))
+    implicit val req: HttpServletRequest = request
+    val top = WebPath(request)
+    wrapper.withLinksToSelf(GET, PUT, DELETE).withLinks(
+      Link(top / "history", COLLECTION, classOf[WorkflowHistory], GET),
+      Link(top / "actions", COLLECTION, POST) // TODO: GET not present now. User can only post there.
+    ).filtered()
   }
 
 
@@ -203,11 +221,11 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     implicit val req: HttpServletRequest = request
     val wrapped = environments.map(environment =>
       wrap(environment).withLinks(Link(HrefBuilder.withPathParam(request, environment.id),
-        LinkTarget.SELF, classOf[Environment], RequestMethod.GET))
+        SELF, classOf[Environment], GET))
     )
 
     wrapCollection(wrapped).withLinks(Link(request,
-      LinkTarget.SELF, classOf[Environment], RequestMethod.POST)).filtered()
+      SELF, classOf[Environment], POST)).filtered()
   }
 
   @RequestMapping(value = Array("{envId}/actions"), method = Array(RequestMethod.POST))

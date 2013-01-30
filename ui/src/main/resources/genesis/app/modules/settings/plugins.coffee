@@ -5,6 +5,8 @@ define ["genesis", "modules/status", "modules/validation", "backbone", "jquery",
   class Plugins.Collection extends Backbone.Collection
     model: Plugins.Model
     url: "rest/plugins"
+    parse: (json) ->
+      json.items
 
   class Plugins.Views.Main extends Backbone.View
     template: "app/templates/settings/plugins.html"
