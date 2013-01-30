@@ -25,7 +25,7 @@ package com.griddynamics.genesis.rest
 import annotations.LinkTarget
 import links._
 import HrefBuilder._
-import Wrappers._
+import CollectionWrapper._
 import links.WebPath
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
@@ -80,7 +80,7 @@ class DatabagController extends RestApiExceptionsHandler {
     wrapCollection(
       service.list.map(databag => {
         val wrappedItem: ItemWrapper[DataBag] = wrap(databag)
-        wrappedItem.withLinks(Link(top / databag.id.get.toString, LinkTarget.SELF, classOf[DataBag], GET)).filtered()
+        wrappedItem.withLinks(LinkBuilder(top / databag.id.get.toString, LinkTarget.SELF, classOf[DataBag], GET)).filtered()
       })
     ).withLinksToSelf(classOf[DataBag], GET, POST).filtered()
   }

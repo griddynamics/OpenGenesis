@@ -3,13 +3,14 @@ package com.griddynamics.genesis.spring.aop
 import org.aspectj.lang.annotation._
 import org.aspectj.lang.ProceedingJoinPoint
 import com.griddynamics.genesis.rest.annotations.LinksTo
-import com.griddynamics.genesis.rest.links.{ControllerClassAggregator, Link, WithLinks}
+import com.griddynamics.genesis.rest.links.{ControllerClassAggregator, WithLinks}
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.util.Logging
 import org.springframework.security.access.{SecurityMetadataSource, AccessDecisionManager}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import com.griddynamics.genesis.spring.security.LinkSecurityBean
+import com.griddynamics.genesis.api.Link
 
 @Aspect
 class LinksToAspect extends Logging {

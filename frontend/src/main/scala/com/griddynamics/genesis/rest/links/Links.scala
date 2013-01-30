@@ -6,38 +6,18 @@ import org.springframework.web.bind.annotation.{RequestMethod, RequestMapping}
 import org.springframework.web.util.UriComponentsBuilder
 import com.griddynamics.genesis.http.TunnelFilter
 import com.griddynamics.genesis.rest.annotations.LinkTarget
-
-case class Link(href: String, rel: String, `type`: Option[String], methods: Array[String] = Array())  {
-  def disassemble: Array[Link] = methods.map(m => new Link(href, rel, `type`, Array(m)))
-  def remove(method: String) = new Link(href, rel, `type`, methods.filter(_ != method))
-}
-
-object Links {
-  def merge(links: Array[Link]) = {
-    val groupedByHref = links.groupBy(_.href)
-
-    def assembleLinkList(linksList: Array[Link], href: String): Link = {
-      val firstLink = linksList(0)
-      val methods = linksList.map(_.methods).flatten
-      Link(href, firstLink.rel, firstLink.`type`, methods)
-    }
-
-    groupedByHref.map {
-      case (href, linksList) =>  assembleLinkList(linksList, href)
-    }
-  }
-}
+import com.griddynamics.genesis.api.Link
 
 case class WebPath(start: String, elements: List[String] = List()) {
   def / (path: String) = WebPath(start, elements ++ (path :: Nil))
   override def toString = (start :: elements).mkString("/")
 }
 
-object Link {
+object LinkBuilder {
   def apply(href: String, rel: LinkTarget, methods: RequestMethod*) =
-    new Link(href, rel.toRel, None, (methods.toList).map(_.toString.toLowerCase).toArray)
+    Link(href, rel.toRel, None, (methods.toList).map(_.toString.toLowerCase).toArray)
   def apply(href: String, rel: LinkTarget, modelClazz: Class[_], methods: RequestMethod*) =
-    new Link(href, rel.toRel, modelClazz, (methods.toList).map(_.toString.toLowerCase).toArray)
+    Link(href, rel.toRel, modelClazz, (methods.toList).map(_.toString.toLowerCase).toArray)
   implicit def toContentType(modelClazz: Class[_]): Some[String] = {
     Some(s"application/vnd.griddynamics.genesis.${modelClazz.getSimpleName}+json")
   }
@@ -67,7 +47,6 @@ object HrefBuilder {
 }
 
 object ControllerClassAggregator {
-  import Link._
   def apply(controllerClazz: Class[_], modelClazz: Class[_], rel: LinkTarget, methods: Array[RequestMethod] = Array())(implicit request: HttpServletRequest): Array[Link] =  {
     val builder = HrefBuilder.uriBuilder
 
@@ -78,15 +57,15 @@ object ControllerClassAggregator {
           ann.method()
         else
           methods
-        Link(link, rel.toRel, modelClazz, getMethods(method))
+        LinkBuilder(link, rel, modelClazz, getMethods(method): _*)
       })
     }).getOrElse(Array())
   }
 
-  private[links] def getMethods(methods: Array[RequestMethod]) : Array[String] =
+  private[links] def getMethods(methods: Array[RequestMethod]) : Array[RequestMethod] =
     if (methods.isEmpty)
-      Array(RequestMethod.GET.toString.toLowerCase)
+      Array(RequestMethod.GET)
     else
-      methods.map(_.toString.toLowerCase)
+      methods
 
 }

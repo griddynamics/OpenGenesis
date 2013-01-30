@@ -1,11 +1,11 @@
 package com.griddynamics.genesis.rest
 
 import annotations.LinkTarget
-import com.griddynamics.genesis.rest.links.{HrefBuilder, ControllerClassAggregator, Link}
+import links.{LinkBuilder, HrefBuilder, ControllerClassAggregator}
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.{ResponseBody, RequestMethod, RequestMapping}
 import javax.servlet.http.HttpServletRequest
-import com.griddynamics.genesis.api.Project
+import com.griddynamics.genesis.api.{SystemSettings, Link, Project}
 import org.springframework.beans.factory.annotation.Autowired
 import javax.servlet.{ServletContext, ServletConfig}
 import com.griddynamics.genesis.users.GenesisRole
@@ -30,7 +30,7 @@ class RootController {
     val links: Seq[Link] =
       collectLinks(classOf[ProjectsController], classOf[Project], LinkTarget.COLLECTION) ++
       (if (isAdminOrReadOnly) collectLinks(classOf[SettingsController], classOf[SystemSettings], LinkTarget.COLLECTION) else Seq()) ++
-      (if (!isLogoutDisabled) Seq(Link(HrefBuilder.absolutePath("logout"), LinkTarget.LOGOUT, RequestMethod.GET)) else Seq())
+      (if (!isLogoutDisabled) Seq(LinkBuilder(HrefBuilder.absolutePath("logout"), LinkTarget.LOGOUT, RequestMethod.GET)) else Seq())
 
     Map(
       "user" -> GenesisRestController.getCurrentUser,

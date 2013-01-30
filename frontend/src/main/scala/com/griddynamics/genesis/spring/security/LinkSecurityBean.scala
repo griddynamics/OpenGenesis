@@ -7,10 +7,10 @@ import javax.annotation.PostConstruct
 import org.springframework.security.web.FilterInvocation
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor
 import com.griddynamics.genesis.util.Logging
-import com.griddynamics.genesis.rest.links.{Links, Link}
 import java.net.URL
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.authentication.InsufficientAuthenticationException
+import com.griddynamics.genesis.api.{Links, Link}
 
 
 class LinkSecurityBean extends Logging {

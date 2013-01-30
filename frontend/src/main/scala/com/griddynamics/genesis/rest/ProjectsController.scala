@@ -6,7 +6,7 @@ import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import com.griddynamics.genesis.rest.GenesisRestController._
 import links._
 import HrefBuilder._
-import Wrappers._
+import CollectionWrapper._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
 import com.griddynamics.genesis.service.impl.ProjectService
@@ -69,7 +69,7 @@ class ProjectsController extends RestApiExceptionsHandler {
   @ResponseBody
   @LinksTo(value = Array(new LinkTo(methods = Array(RequestMethod.POST), clazz = classOf[Project], controller = classOf[ProjectsController])))
   def listProjects(@RequestParam(value = "sorting", required = false, defaultValue = "name") sorting: Ordering,
-                   request: HttpServletRequest): Wrappers[ItemWrapper[_]] = {
+                   request: HttpServletRequest): CollectionWrapper[ItemWrapper[_]] = {
     val projects = if (request.isUserInRole(GenesisRole.SystemAdmin.toString) || request.isUserInRole(GenesisRole.ReadonlySystemAdmin.toString)) {
       projectService.orderedList(sorting)
     } else {
@@ -77,8 +77,38 @@ class ProjectsController extends RestApiExceptionsHandler {
       val ids = authorityService.getAllowedProjectIds(request.getUserPrincipal.getName, authorities)
       projectService.getProjects(ids, Option(sorting))
     }
-    projects.map(project => wrap(project).withLinks(Link(WebPath(request) / project.id.get.toString,
+    projects.map(project => wrap(project).withLinks(LinkBuilder(WebPath(request) / project.id.get.toString,
       SELF, classOf[Environment], GET)).filtered())
+  }
+
+
+  @RequestMapping(value = Array("{projectId}/settings"), method = Array(GET))
+  @ResponseBody
+  def projectSettings(@PathVariable("projectId") projectId: Int, request: HttpServletRequest): SystemSettings  = {
+    val top = WebPath(absolutePath(s"/rest/projects/${projectId}")(request))
+    val links = Array(
+      LinkBuilder(top / "envs", COLLECTION, classOf[Environment], GET, POST),
+      LinkBuilder(top / "databags", COLLECTION, classOf[DataBag], GET),
+      LinkBuilder(top / "configs", COLLECTION, classOf[Configuration], GET),
+      LinkBuilder(top / "credentials", COLLECTION, classOf[Credentials], GET),
+      LinkBuilder(top / "server-arrays", COLLECTION, classOf[ServerArray], GET),
+      LinkBuilder(top / "template" / "repository", COLLECTION, classOf[TemplateRepo], GET),
+      LinkBuilder(top / "roles", COLLECTION, classOf[ApplicationRole], GET)
+    )
+    SystemSettings(linkSecurity.filter(links).toArray)
+  }
+
+  @RequestMapping(value = Array("{projectId}/roles"), method = Array(GET))
+  @ResponseBody
+  def projectRoles(@PathVariable("projectId") projectId: Int, request: HttpServletRequest): CollectionWrapper[ItemWrapper[ApplicationRole]]  = {
+    implicit val req = request
+    val rolesToShow = List(GenesisRole.ProjectAdmin, GenesisRole.ProjectUser).map(role => ApplicationRole(role.toString))
+    def wrapRole(role: ApplicationRole): ItemWrapper[ApplicationRole] = {
+      wrap(role).withLinks(
+        LinkBuilder(WebPath(request) / role.name, SELF, classOf[ApplicationRole], GET, PUT)
+      ).filtered()
+    }
+    wrapCollection(rolesToShow.map(role => wrapRole(role))).withLinksToSelf(classOf[ApplicationRole], GET).filtered()
   }
 
 
@@ -109,14 +139,9 @@ class ProjectsController extends RestApiExceptionsHandler {
   def findProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest): ItemWrapper[Project] = {
     val top = WebPath(request)
     wrap(getProject(projectId)).withLinks(
-      Link(top, SELF, classOf[Project], GET, PUT, DELETE),
-      Link(top / "envs",  COLLECTION, classOf[Environment], GET, POST),
-      Link(top / "databags", COLLECTION, classOf[DataBag], GET),
-      Link(top / "configs", COLLECTION, classOf[Configuration], GET),
-      Link(top / "credentials", COLLECTION, classOf[Credentials], GET),
-      Link(top / "server-arrays", COLLECTION, classOf[ServerArray], GET),
-      Link(top / "templates" / "repository", COLLECTION, classOf[TemplateRepo], GET),
-      Link(top / "roles", COLLECTION, GET) //TODO: fake link, but seems to be ok for now
+      LinkBuilder(top, SELF, classOf[Project], GET, PUT, DELETE),
+      LinkBuilder(top / "envs",  COLLECTION, classOf[Environment], GET, POST),
+      LinkBuilder(top / "settings", COLLECTION, classOf[SystemSettings], GET)
     ).filtered()
   }
 
