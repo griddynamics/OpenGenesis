@@ -1,5 +1,5 @@
 {
- "genesis.plugin.jclouds.provider" : {"default":"gdnova", "description" : "cloud provider"},
+ "genesis.plugin.jclouds.provider" : {"default":"nova", "description" : "cloud provider"},
  "genesis.plugin.jclouds.endpoint" : {"default":"", "description" : "cloud compute service endpoint",
     "validation": {"Endpoint must be a valid URL": "url"}
   },

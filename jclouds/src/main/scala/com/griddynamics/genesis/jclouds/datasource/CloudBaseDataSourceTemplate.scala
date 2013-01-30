@@ -29,6 +29,7 @@ import org.jclouds.compute.ComputeService
 import java.util.concurrent.TimeUnit
 import scala.collection.JavaConversions._
 import org.jclouds.ec2.reference.EC2Constants._
+import java.util.{Map => JMap}
 
 abstract private[datasource] class CloudBaseDataSourceTemplate(provider: JCloudsComputeContextProvider) extends VarDataSource with Cache {
   def cacheRegion: String
@@ -50,7 +51,9 @@ abstract private[datasource] class CloudBaseDataSourceTemplate(provider: JClouds
   }
 
   def config(map: Map[String, Any]) {
-    computeSettings = map.get("account").map { case config: java.util.Map[String, String] => Account.mapToComputeSettings(config) }.getOrElse(provider.defaultComputeSettings)
+    computeSettings = map.get("account").map { case config: JMap[_, _] =>
+      Account.mapToComputeSettings(config.asInstanceOf[JMap[String, String]])
+    }.getOrElse(provider.defaultComputeSettings)
     filter = map.get("filter").map(_.toString)
   }
 }
