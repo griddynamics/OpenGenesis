@@ -49,10 +49,11 @@ class PluginsController extends RestApiExceptionsHandler  {
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
   def listPlugins(request: HttpServletRequest): CollectionWrapper[ItemWrapper[Plugin]] = {
+    implicit val req = request
     wrapCollection(repository.listPlugins.toList.map(plugin => {
        val top = WebPath(request)
-       wrap(plugin).withLinks(LinkBuilder(top / plugin.id, SELF, classOf[Plugin], GET)).filtered()
-    })).withLinks(LinkBuilder(request, SELF, GET)).filtered()
+       wrap(plugin).withLinks(LinkBuilder(top / plugin.id, SELF, classOf[Plugin], GET, PUT)).filtered()
+    })).withLinksToSelf(classOf[Plugin], GET).filtered()
   }
 
   @RequestMapping(value = Array("{pluginId}"), method = Array(RequestMethod.GET))

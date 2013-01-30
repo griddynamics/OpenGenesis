@@ -80,7 +80,7 @@ class DatabagController extends RestApiExceptionsHandler {
     wrapCollection(
       service.list.map(databag => {
         val wrappedItem: ItemWrapper[DataBag] = wrap(databag)
-        wrappedItem.withLinks(LinkBuilder(top / databag.id.get.toString, LinkTarget.SELF, classOf[DataBag], GET)).filtered()
+        wrappedItem.withLinks(LinkBuilder(top / databag.id.get.toString, LinkTarget.SELF, classOf[DataBag], GET, PUT, DELETE)).filtered()
       })
     ).withLinksToSelf(classOf[DataBag], GET, POST).filtered()
   }

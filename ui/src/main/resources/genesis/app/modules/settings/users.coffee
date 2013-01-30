@@ -8,9 +8,19 @@ define ["genesis", "backbone", "modules/status", "modules/validation", "services
   class Users.Collections.People extends Backbone.Collection
     url: URL
     model: Users.Model
+    parse: (json) ->
+      if json.items?
+        json.items
+      else
+        json
 
   class Users.Collections.Groups extends Backbone.Collection
     url: "rest/groups"
+    parse: (json) ->
+      if json.items?
+        json.items
+      else
+        json
 
   EMPTY_USER = new Users.Model(
     username: ""

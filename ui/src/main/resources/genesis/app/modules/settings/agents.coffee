@@ -18,6 +18,8 @@ define [
   class Agents.Collection extends Backbone.Collection
     model: Agents.Model
     url: URL
+    parse: (json) ->
+      json.items
 
   class Agents.Views.Main extends Backbone.View
     events:

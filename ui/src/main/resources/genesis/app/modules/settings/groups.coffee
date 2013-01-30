@@ -10,6 +10,9 @@ define ["genesis", "backbone", "cs!modules/settings/users", "modules/status", "m
     url: ->
       URL + "/" + @groupId + "/users"
 
+    parse: (json) ->
+      json.items
+
   EmptyGroup = new Groups.Model(
     name: ""
     description: ""
