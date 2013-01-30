@@ -21,8 +21,13 @@
  *   Description: Continuous Delivery Platform
  */ package com.griddynamics.genesis.rest
 
+import annotations.{AddSelfLinks, LinkTarget}
+import links.{WebPath, LinkBuilder, ItemWrapper, CollectionWrapper}
+import links.CollectionWrapper._
+import links.HrefBuilder._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
+import org.springframework.web.bind.annotation.RequestMethod._
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.repository.ConfigurationRepository
 import scala.Array
@@ -38,6 +43,7 @@ import scala.Some
 import com.griddynamics.genesis.api.Configuration
 import com.griddynamics.genesis.api.Success
 import com.griddynamics.genesis.groups.GroupService
+import com.griddynamics.genesis.spring.security.LinkSecurityBean
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/configs"))
@@ -48,6 +54,7 @@ class ConfigurationController extends RestApiExceptionsHandler{
   @Autowired var storeService: StoreService = _
   @Autowired var userService: UserService = _
   @Autowired var groupService: GroupService = _
+  @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
@@ -56,14 +63,25 @@ class ConfigurationController extends RestApiExceptionsHandler{
     "or hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')" +
     "or hasPermission( #projectId, 'com.griddynamics.genesis.api.Project', 'administration') " +
     "or hasPermission(filterObject, 'read')")
+  @AddSelfLinks(methods = Array(GET, POST), modelClass = classOf[Configuration])
   def list(@PathVariable("projectId") projectId: Int,
-           @RequestParam(value = "sorting", required = false, defaultValue = "name") ordering: Ordering) =
-    configRepository.list(projectId, ordering)
+           @RequestParam(value = "sorting", required = false, defaultValue = "name") ordering: Ordering,
+           request: HttpServletRequest): CollectionWrapper[ItemWrapper[Configuration]] = {
+    def wrapConfig(config: Configuration) = {
+       val top: WebPath = WebPath(request)
+       wrap(config).withLinks(LinkBuilder(top / config.id.get.toString, LinkTarget.SELF, classOf[Configuration], GET, PUT, DELETE)).filtered()
+    }
+    configRepository.list(projectId, ordering).map(wrapConfig(_))
+  }
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def get(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int) =
-    configRepository.get(projectId, id).getOrElse(throw new ResourceNotFoundException("Can not find environment configuration id = %d".format(id)))
+  @AddSelfLinks(methods = Array(GET, PUT, DELETE), modelClass = classOf[Configuration])
+  def get(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest): ItemWrapper[Configuration] = {
+    val item: ItemWrapper[Configuration] =
+      configRepository.get(projectId, id).getOrElse(throw new ResourceNotFoundException("Can not find environment configuration id = %d".format(id)))
+    item.withLinks(LinkBuilder(WebPath(request) / "access", LinkTarget.COLLECTION, classOf[ConfigurationAccess], GET, PUT)).filtered()
+  }
 
   @ResponseBody
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
@@ -108,14 +126,12 @@ class ConfigurationController extends RestApiExceptionsHandler{
 
   @RequestMapping(value = Array("{configId}/access"), method = Array(RequestMethod.GET))
   @ResponseBody
+  @AddSelfLinks(methods = Array(GET, PUT), modelClass = classOf[ConfigurationAccess])
   def getEnvAccess(@PathVariable("projectId") projectId: Int,
                    @PathVariable("configId") configId: Int,
-                   request: HttpServletRequest) = {
+                   request: HttpServletRequest): ItemWrapper[ConfigurationAccess] = {
     val (users, groups) = envAuthService.getConfigAccessGrantees(configId)
-    Map(
-      "users" -> Users.of(userService).forUsernames(users),
-      "groups" -> groups
-    )
+    ConfigurationAccess(Users.of(userService).forUsernames(users).toArray, groups.toArray)
   }
 
   @RequestMapping(value = Array("{configId}/access"), method = Array(RequestMethod.PUT))

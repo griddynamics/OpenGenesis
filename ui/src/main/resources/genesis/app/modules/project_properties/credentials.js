@@ -25,7 +25,15 @@ function(genesis, status, validation, Backbone, $) {
       this.projectId = options.projectId;
     },
 
-    url: function() { return "rest/projects/" + this.projectId + "/credentials"; }
+    url: function() { return "rest/projects/" + this.projectId + "/credentials"; },
+
+    parse: function(json) {
+      if (json.items) {
+        return json.items;
+      } else {
+        return json;
+      }
+    }
   });
 
   Credentials.Views.Main = Backbone.View.extend({

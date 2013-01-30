@@ -31,44 +31,44 @@ class LinksToAspect extends Logging {
   def addSelfLinks() {}
 
   @Around(value = "linksTo() && @annotation(ann)")
-  def postProcessMessage(joinPoint: ProceedingJoinPoint, ann: LinksTo) = {
+  def processLinksTo(joinPoint: ProceedingJoinPoint, ann: LinksTo) = {
+    addLinks(joinPoint, ann) { (ann: LinksTo, request:HttpServletRequest) => processAnnotation(ann)(request) }
+  }
+
+  @Around(value = "addSelfLinks() && @annotation(ann)")
+  def processAddSelfLinks(joinPoint: ProceedingJoinPoint, ann: AddSelfLinks) = {
+    addLinks(joinPoint, ann) { (ann: AddSelfLinks, request:HttpServletRequest) => processAnnotation(ann)(request) }
+  }
+
+  private def processAnnotation(ann: LinksTo)(implicit request: HttpServletRequest): Array[Link] = {
+    ann.value().map(a => ControllerClassAggregator(a.controller, a.clazz(), a.rel(), a.methods())).flatten
+  }
+
+  private def processAnnotation(ann: AddSelfLinks)(implicit request: HttpServletRequest): Array[Link] = {
+    val top = WebPath(request)
+    val link = Array(LinkBuilder(top, LinkTarget.SELF, ann.modelClass(), ann.methods(): _*))
+    link
+  }
+
+  private def addLinks[T](joinPoint: ProceedingJoinPoint, ann: T)(block: (T, HttpServletRequest) => Array[Link]): Any = {
     val proceed = joinPoint.proceed()
     if (proceed.isInstanceOf[WithLinks]) {
       LinksToAspect.getRequest(joinPoint).map(
         implicit request => {
-          def objWithLinks = proceed.asInstanceOf[WithLinks]
-          val links: Array[Link] = ann.value().map(a => ControllerClassAggregator(a.controller, a.clazz(), a.rel(), a.methods())).flatten
-          objWithLinks.add(linkSecurity.filter(links))
+          def wrapper = proceed.asInstanceOf[WithLinks]
+          val link: Iterable[Link] = block(ann, request)
+          wrapper.add(linkSecurity.filter(link.toArray))
         }
       ).getOrElse({
-        log.warn("Cannot find request in arguments of method annotated with @LinksTo")
+        log.warn("Cannot find HttpServletRequest in arguments of method annotated with %s", ann)
         proceed
       })
-    } else {
-      proceed
-    }
-  }
-
-  @Around(value = "addSelfLinks() && @annotation(ann)")
-  def appendLinks(joinPoint: ProceedingJoinPoint, ann: AddSelfLinks) = {
-    val proceed = joinPoint.proceed()
-    if (proceed.isInstanceOf[WithLinks]) {
-       LinksToAspect.getRequest(joinPoint).map(
-          implicit request => {
-            def wrapper = proceed.asInstanceOf[WithLinks]
-            val top = WebPath(request)
-            val link = Array(LinkBuilder(top, LinkTarget.SELF, ann.modelClass(), ann.methods() : _*))
-            wrapper.add(linkSecurity.filter(link))
-          }
-       ).getOrElse({
-         log.warn("Cannot find request in arguments of method annotated with %s", ann.getClass)
-       })
     } else {
       val actualClass = if (proceed != null)
         proceed.getClass
       else
         Void.TYPE
-      log.warn("Unsupported result for method annotated with %s. Expected one of WithLinks actually: %s", ann.getClass, actualClass)
+      log.warn("Unsupported result for method annotated with %s. Expected one of WithLinks, but actually it's: %s", ann, actualClass)
       proceed
     }
   }

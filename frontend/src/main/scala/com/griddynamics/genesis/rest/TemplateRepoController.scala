@@ -22,13 +22,18 @@
  */
 package com.griddynamics.genesis.rest
 
+import annotations.AddSelfLinks
+import links.ItemWrapper
+import links.CollectionWrapper._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
+import org.springframework.web.bind.annotation.RequestMethod._
 import javax.servlet.http.HttpServletRequest
 import scala.Array
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.service.{TemplateService, TemplateRepoService}
 import com.griddynamics.genesis.template.Modes
+import com.griddynamics.genesis.api.TemplateRepo
 
 @Controller
 @RequestMapping(value = Array("/rest"))
@@ -51,7 +56,8 @@ class TemplateRepoController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("projects/{projectId}/template/repository"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def getConfig(@PathVariable("projectId") projectId: Int) = service.getConfig(projectId)
+  @AddSelfLinks(methods = Array(GET, PUT), modelClass = classOf[TemplateRepo])
+  def getConfig(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) : ItemWrapper[TemplateRepo] = service.getConfig(projectId)
 
   @RequestMapping(value = Array("projects/{projectId}/template/repository"), method = Array(RequestMethod.PUT))
   @ResponseBody
