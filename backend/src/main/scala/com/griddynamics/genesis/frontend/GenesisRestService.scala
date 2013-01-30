@@ -33,6 +33,8 @@ import com.griddynamics.genesis.validation.Validation._
 import com.griddynamics.genesis.{model, service}
 import java.util.Date
 import com.griddynamics.genesis.util.Logging
+import com.griddynamics.genesis.template.dsl.groovy.Reserved
+import org.apache.commons.lang3.math.NumberUtils
 
 class GenesisRestService(storeService: StoreService,
                          templateService: TemplateService,
@@ -97,7 +99,7 @@ class GenesisRestService(storeService: StoreService,
     private def isDestroyWorkflow(envId: Int, projectId: Int, workflowName: String): Boolean = {
       val definition = for {
         env <- storeService.findEnv(envId, projectId)
-        template <- templateService.findTemplate(projectId, env.templateName, env.templateVersion)}
+        template <- templateService.findTemplate(env)}
       yield template.destroyWorkflow
 
       definition.map(_.name == workflowName).getOrElse(false)
@@ -152,7 +154,9 @@ class GenesisRestService(storeService: StoreService,
       storeService.getLogs(actionUUID).map { entry => StepLogEntry(entry.timestamp, entry.message) }
 
     def queryVariables(projectId: Int, templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]) = {
-        templateService.findTemplate(projectId, templateName, templateVersion).flatMap {t => {
+        templateService.findTemplate(projectId, templateName, templateVersion, variables.collectFirst{
+          case (Reserved.configRef, v: String) if NumberUtils.isDigits(v) => v.toInt
+        }).flatMap {t => {
                 t.getWorkflow(workflow).map(workflow => {
                     workflow.partial(variables).map(varDesc(_))
                 })
@@ -167,13 +171,23 @@ class GenesisRestService(storeService: StoreService,
       new ActionTracking(action.actionUUID, action.actionName, action.description, action.started.getTime, action.finished.map(_.getTime), action.status.toString)
     }
 
-    def getWorkflow (projectId: Int, templateName: String, templateVersion: String, workflowName: String) : ExtendedResult[com.griddynamics.genesis.api.Workflow] =  {
+    def getWorkflow(projectId: Int, templateName: String, templateVersion: String, workflowName: String) : ExtendedResult[com.griddynamics.genesis.api.Workflow] =  {
         templateService.findTemplate(projectId, templateName, templateVersion).map(_.getValidWorkflow(workflowName)) match {
             case Some(x) => x.map(workflowDesc(_))
             case _ => Failure(isNotFound = true)
         }
     }
 
+  def getWorkflow(projectId: Int, envId: Int, workflowName: String) : ExtendedResult[com.griddynamics.genesis.api.Workflow] = {
+    val env = storeService.findEnv(envId, projectId).getOrElse {
+      return Failure(isNotFound = true, compoundServiceErrors = Seq(s"Couldn't find instance $envId in project $projectId"))
+    }
+    templateService.findTemplate(env).map(_.getValidWorkflow(workflowName)) match {
+      case Some(x) => x.map(workflowDesc(_))
+      case _ => Failure(isNotFound = true)
+    }
+
+  }
     def updateEnvironmentName(envId: Int, projectId: Int, newName: String) = {
        validateNewName(envId, projectId, newName).map(name => storeService.updateEnvName(envId, name))
     }
@@ -192,7 +206,7 @@ class GenesisRestService(storeService: StoreService,
 
   def updateTimeToLive(projectId: Int, envId: Int, timeToLiveMillis: Long): ExtendedResult[Date] = {
     val env = storeService.findEnv(envId, projectId).getOrElse {
-      return Failure(isNotFound = true, compoundServiceErrors = Seq(s"Couldn't find environment $envId in project $projectId"))
+      return Failure(isNotFound = true, compoundServiceErrors = Seq(s"Couldn't find instance $envId in project $projectId"))
     }
 
     try {
@@ -242,9 +256,13 @@ object GenesisRestService {
         Template(name, version, createWorkflow, workflows)
     }
 
-    def workflowDesc(workflow: service.WorkflowDefinition) = {
-        val vars = for (variable <- workflow.variableDescriptions) yield varDesc(variable)
-        Workflow(workflow.name, vars)
+    private def workflowDesc(workflow: service.WorkflowDefinition) = {
+      val allVars = workflow.variableDescriptions
+      val appliedVars = workflow.partial(allVars.collect{
+        case v if v.defaultValue != null => v.name -> v.defaultValue
+      }.toMap).map(v => v.name -> v).toMap
+      val vars = for (variable <- allVars) yield varDesc(appliedVars.getOrElse(variable.name, variable))
+      Workflow(workflow.name, vars)
     }
 
     def envDesc(env: model.Environment,

@@ -70,7 +70,7 @@ class RequestDispatcherImpl(workflowConfig: WorkflowConfig,
       val (env, workflow) = storeService.retrieveWorkflow(envId, projectId)
 
       try{
-        val definition = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion)
+        val definition = templateService.findTemplate(env)
         val rawSteps = definition.flatMap(_.getWorkflow(workflow.name)
             .map(_.embody(workflow.variables, Option(env.id), Option(env.projectId)))).getOrElse(Builders(Seq()))
 

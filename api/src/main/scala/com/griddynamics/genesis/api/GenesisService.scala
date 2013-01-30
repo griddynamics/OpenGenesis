@@ -62,6 +62,8 @@ trait GenesisService {
 
   def getWorkflow(projectId: Int, templateName: String, templateVersion: String, workflowName: String): ExtendedResult[Workflow]
 
+  def getWorkflow(projectId: Int, envId: Int, workflowName: String): ExtendedResult[Workflow]
+
   def stepExists(stepId: Int, envId: Int): Boolean
 
   def updateTimeToLive(projectId: Int, envId: Int, timeToLiveSecs: Long): ExtendedResult[Date]

@@ -172,7 +172,8 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
               },
               {
                 projectId: self.details.get("projectId"),
-                workflow: workflowName
+                workflow: workflowName,
+                instanceId: self.details.get("id")
               });
 
             $.when(wmodel.fetch()).done(function(){

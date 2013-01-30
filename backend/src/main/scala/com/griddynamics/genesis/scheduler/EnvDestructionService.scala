@@ -45,7 +45,7 @@ class EnvDestructionService(scheduler: SchedulingService,
 
     for {
       env <- storeService.findEnv(envId, projectId )
-      template <- templateService.findTemplate(projectId, env.templateName, env.templateVersion)
+      template <- templateService.findTemplate(env)
     } yield {
 
       if (destructionDate(env, template.destroyWorkflow.name).isDefined) {
@@ -80,7 +80,7 @@ class EnvDestructionService(scheduler: SchedulingService,
 
   @Transactional(readOnly = true)
   def destructionDate(env: Environment) = {
-    templateService.findTemplate(env.projectId, env.templateName, env.templateVersion).flatMap ( t => destructionDate(env, t.destroyWorkflow.name) )
+    templateService.findTemplate(env).flatMap ( t => destructionDate(env, t.destroyWorkflow.name) )
   }
 
   @Transactional

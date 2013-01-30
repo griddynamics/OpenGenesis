@@ -66,7 +66,7 @@ class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar {
   Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
   val templateService = new GroovyTemplateService(templateRepoService,
     List(new DoNothingStepBuilderFactory), new DefaultConversionService,
-    Seq(new ListVarDSFactory, new DependentListVarDSFactory), databagRepository, NullCacheManager)
+    Seq(new ListVarDSFactory, new DependentListVarDSFactory), databagRepository, configRepo, NullCacheManager)
 
   @Test def contextVariableAccess() {
     val stepBuilders = templateService.findTemplate(0, "TestEnv", "0.1").get.createWorkflow.embody(Map())
