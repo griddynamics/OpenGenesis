@@ -25,6 +25,7 @@ package com.griddynamics.genesis.rest
 import annotations.LinkTarget
 import links._
 import HrefBuilder._
+import Wrappers._
 import links.WebPath
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
@@ -33,8 +34,6 @@ import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.service.DataBagService
 import scala.Array
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.api.DataBag
-import scala.Some
 import javax.validation.Valid
 import com.griddynamics.genesis.spring.security.LinkSecurityBean
 import com.griddynamics.genesis.api.DataBag
@@ -66,9 +65,8 @@ class DatabagController extends RestApiExceptionsHandler {
   @ResponseBody
   def getDataBag(@PathVariable("databagId") id: Int, request: HttpServletRequest) = {
     implicit val req: HttpServletRequest = request
-    ItemWrapper.wrap(findDataBag(id)).withLinksToSelf(GET, PUT).filtered()
+    wrap(findDataBag(id)).withLinksToSelf(GET, PUT, DELETE).filtered()
   }
-
 
   def findDataBag(id: Int): DataBag = {
     service.get(id).getOrElse(throw new ResourceNotFoundException("Couldn't find databag"))
@@ -79,9 +77,11 @@ class DatabagController extends RestApiExceptionsHandler {
   def listDataBags(request: HttpServletRequest) = {
     implicit val req: HttpServletRequest = request
     val top = WebPath(req)
-    CollectionWrapper.wrap(
-      service.list.map(databag => ItemWrapper.wrap(databag)
-        .withLinks(Link(top / databag.id.get.toString, LinkTarget.SELF, classOf[DataBag], GET)).filtered())
+    wrapCollection(
+      service.list.map(databag => {
+        val wrappedItem: ItemWrapper[DataBag] = wrap(databag)
+        wrappedItem.withLinks(Link(top / databag.id.get.toString, LinkTarget.SELF, classOf[DataBag], GET)).filtered()
+      })
     ).withLinksToSelf(classOf[DataBag], GET, POST).filtered()
   }
 }

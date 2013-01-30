@@ -22,6 +22,12 @@ define ["genesis", "backbone", "modules/status", "modules/common/properties", "m
       else
         URL
 
+    parse: (json) ->
+      if json.items?
+        json.items
+      else
+        json
+
   class DatabagItem extends Backbone.Model
 
   class ItemsCollection extends Backbone.Collection

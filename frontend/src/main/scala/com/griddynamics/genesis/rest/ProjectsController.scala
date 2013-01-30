@@ -6,6 +6,7 @@ import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import com.griddynamics.genesis.rest.GenesisRestController._
 import links._
 import HrefBuilder._
+import Wrappers._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
 import com.griddynamics.genesis.service.impl.ProjectService
@@ -68,7 +69,7 @@ class ProjectsController extends RestApiExceptionsHandler {
   @ResponseBody
   @LinksTo(value = Array(new LinkTo(methods = Array(RequestMethod.POST), clazz = classOf[Project], controller = classOf[ProjectsController])))
   def listProjects(@RequestParam(value = "sorting", required = false, defaultValue = "name") sorting: Ordering,
-                   request: HttpServletRequest): CollectionWrapper[ItemWrapper[_]] = {
+                   request: HttpServletRequest): Wrappers[ItemWrapper[_]] = {
     val projects = if (request.isUserInRole(GenesisRole.SystemAdmin.toString) || request.isUserInRole(GenesisRole.ReadonlySystemAdmin.toString)) {
       projectService.orderedList(sorting)
     } else {
@@ -76,7 +77,7 @@ class ProjectsController extends RestApiExceptionsHandler {
       val ids = authorityService.getAllowedProjectIds(request.getUserPrincipal.getName, authorities)
       projectService.getProjects(ids, Option(sorting))
     }
-    projects.map(project => ItemWrapper.wrap(project).withLinks(Link(WebPath(request) / project.id.get.toString,
+    projects.map(project => wrap(project).withLinks(Link(WebPath(request) / project.id.get.toString,
       SELF, classOf[Environment], GET)).filtered())
   }
 
@@ -107,7 +108,7 @@ class ProjectsController extends RestApiExceptionsHandler {
   @ResponseBody
   def findProject(@PathVariable("projectId") projectId: Int, request: HttpServletRequest): ItemWrapper[Project] = {
     val top = WebPath(request)
-    ItemWrapper.wrap(getProject(projectId)).withLinks(
+    wrap(getProject(projectId)).withLinks(
       Link(top, SELF, classOf[Project], GET, PUT, DELETE),
       Link(top / "envs",  COLLECTION, classOf[Environment], GET, POST),
       Link(top / "databags", COLLECTION, classOf[DataBag], GET),
