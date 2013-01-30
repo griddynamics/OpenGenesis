@@ -69,7 +69,6 @@ class ServersController extends RestApiExceptionsHandler {
   @ResponseBody
   @AddSelfLinks(methods = Array(GET, PUT, DELETE), modelClass = classOf[ServerArray])
   def get(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) : ItemWrapper[ServerArray] = {
-    implicit val req = request
     find(projectId, id)
   }
 
