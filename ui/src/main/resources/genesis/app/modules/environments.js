@@ -58,6 +58,13 @@ function (genesis, backend, poller, status, EnvStatus, Backbone, $) {
       return "rest/projects/" + this.project.id + "/envs" + filterParam;
     },
 
+    parse: function(json) {
+      if (json.items)
+        return json.items;
+      else
+        return json;
+    },
+
     _needBackendFiltering: function(filter) {
       return _(filter.statuses).any(function(status) { return !status.visible });
     },
