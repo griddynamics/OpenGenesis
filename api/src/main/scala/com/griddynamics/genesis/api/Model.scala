@@ -303,3 +303,28 @@ object AgentStatus extends Enumeration {
 }
 
 case class JobStats(runningJobs: Int, totalJobs: Int)
+
+case class Link(href: String, rel: String, `type`: Option[String], methods: Array[String] = Array())  {
+  def disassemble: Array[Link] = methods.map(m => new Link(href, rel, `type`, Array(m)))
+  def remove(method: String) = new Link(href, rel, `type`, methods.filter(_ != method))
+}
+
+object Links {
+  def merge(links: Array[Link]) = {
+    val groupedByHref = links.groupBy(_.href)
+
+    def assembleLinkList(linksList: Array[Link], href: String): Link = {
+      val firstLink = linksList(0)
+      val methods = linksList.map(_.methods).flatten
+      Link(href, firstLink.rel, firstLink.`type`, methods)
+    }
+
+    groupedByHref.map {
+      case (href, linksList) =>  assembleLinkList(linksList, href)
+    }
+  }
+}
+
+case class SystemSettings(links: Array[Link])
+
+case class ApplicationRole(name: String)

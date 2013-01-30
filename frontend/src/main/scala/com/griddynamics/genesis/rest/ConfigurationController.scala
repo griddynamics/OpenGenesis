@@ -49,6 +49,7 @@ class ConfigurationController extends RestApiExceptionsHandler{
   @Autowired var userService: UserService = _
   @Autowired var groupService: GroupService = _
 
+
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
   @ResponseBody
   @PostFilter("not(@environmentSecurity.restrictionsEnabled()) " +
