@@ -26,6 +26,7 @@ import annotations.LinkTarget
 import filters.EnvFilter
 import links._
 import HrefBuilder.duplicate
+import Wrappers._
 import org.springframework.stereotype.Controller
 import scala.Array
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
@@ -201,11 +202,11 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     }
     implicit val req: HttpServletRequest = request
     val wrapped = environments.map(environment =>
-      ItemWrapper.wrap(environment).withLinks(Link(HrefBuilder.withPathParam(request, environment.id),
+      wrap(environment).withLinks(Link(HrefBuilder.withPathParam(request, environment.id),
         LinkTarget.SELF, classOf[Environment], RequestMethod.GET))
     )
 
-    CollectionWrapper.wrap(wrapped).withLinks(Link(request,
+    wrapCollection(wrapped).withLinks(Link(request,
       LinkTarget.SELF, classOf[Environment], RequestMethod.POST)).filtered()
   }
 

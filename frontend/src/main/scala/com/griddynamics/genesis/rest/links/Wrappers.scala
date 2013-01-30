@@ -13,7 +13,7 @@ trait WithLinks {
   def filtered()(implicit security: LinkSecurityBean): WithLinks
 }
 
-case class CollectionWrapper[T](items: Iterable[T], links: Iterable[Link]) extends WithLinks {
+case class Wrappers[T](items: Iterable[T], links: Iterable[Link]) extends WithLinks {
   override def add(coll: Iterable[Link]) = copy(items = items, links = coll)
   def withItems(newItems: Iterable[T]) = copy(items = newItems, links = links)
   def withLinks(link: Link, rest: Link*) = copy(items = items, links = links ++ (link :: rest.toList))
@@ -31,10 +31,8 @@ case class ItemWrapper[T](item: T, links: Iterable[Link]) extends WithLinks {
 }
 
 
-object CollectionWrapper {
-  implicit def wrap[T](coll: Iterable[T]) = new CollectionWrapper[T](coll, List())
-}
-
-object ItemWrapper {
+object Wrappers {
+  implicit def wrapCollection[T](coll: Iterable[T]) = new Wrappers[T](coll, List())
   implicit def wrap[T](item: T) = ItemWrapper[T](item, List())
 }
+
