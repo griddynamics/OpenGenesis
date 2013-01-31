@@ -15,7 +15,7 @@ trait WithLinks {
 }
 
 case class CollectionWrapper[T](items: Iterable[T], links: Iterable[Link]) extends WithLinks {
-  override def add(coll: Iterable[Link]) = copy(items = items, links = coll)
+  override def add(coll: Iterable[Link]) = copy(items = items, links = links ++ coll)
   def withItems(newItems: Iterable[T]) = copy(items = newItems, links = links)
   def withLinks(link: Link, rest: Link*) = copy(items = items, links = links ++ (link :: rest.toList))
   def withLinksToSelf(clazz: Class[_], method: RequestMethod, methods: RequestMethod*)(implicit request: HttpServletRequest) =
@@ -24,7 +24,7 @@ case class CollectionWrapper[T](items: Iterable[T], links: Iterable[Link]) exten
 }
 
 case class ItemWrapper[T](item: T, links: Iterable[Link]) extends WithLinks {
-  override def add(coll: Iterable[Link]) = copy(item = item, links = coll)
+  override def add(coll: Iterable[Link]) = copy(item = item, links = links ++ coll)
   implicit def withLinks(link: Link, rest: Link*) = copy(item = item, links = links ++ (link :: rest.toList))
   override def filtered()(implicit security: LinkSecurityBean) =  copy(item = item, links = security.filter(links.toArray))
   def withLinksToSelf(method: RequestMethod, methods: RequestMethod*)(implicit request: HttpServletRequest) =

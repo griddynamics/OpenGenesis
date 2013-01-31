@@ -328,3 +328,5 @@ object Links {
 case class SystemSettings(links: Array[Link])
 
 case class ApplicationRole(name: String)
+
+case class ConfigurationAccess(users: Array[User], groups: Array[String])

@@ -41,6 +41,14 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
 
     url: function() {
        return "rest/projects/" + this.projectId + "/configs"
+    },
+
+    parse: function(json) {
+       if (json.items) {
+         return json.items;
+       } else {
+         return json;
+       }
     }
   });
 
