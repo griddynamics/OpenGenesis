@@ -24,18 +24,17 @@ package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.service
 import com.griddynamics.genesis.model._
-import org.jclouds.domain.LoginCredentials
+import org.jclouds.domain.Credentials
 import org.jclouds.compute.domain.NodeMetadataBuilder
+import org.jclouds.net.IPSocket
 import com.griddynamics.genesis.util.Logging
 import org.jclouds.ssh.SshClient
 import com.griddynamics.genesis.jclouds.JCloudsComputeContextProvider
 import service.{Credentials => GenesisCredentials, ComputeService, CredentialService}
-import org.jclouds.compute.ComputeServiceContext
+import org.jclouds.compute.{ComputeServiceContext, ComputeServiceContextFactory}
 import java.util.Properties
 import org.jclouds.ssh.jsch.config.JschSshClientModule
 import java.util
-import com.google.common.net.HostAndPort
-import org.jclouds.ContextBuilder
 
 class SshService(
                  credentialService: CredentialService,
@@ -43,15 +42,10 @@ class SshService(
                  contextFactory: JCloudsComputeContextProvider) extends service.SshService with Logging {
 
   val context: ComputeServiceContext = {
+    val contextFactory = new ComputeServiceContextFactory
     val overrides = new Properties()
     overrides.setProperty(org.jclouds.Constants.PROPERTY_ENDPOINT, "na")
-
-    ContextBuilder
-      .newBuilder("nova")
-      .credentials("na", "na")
-      .modules(util.Collections.singletonList(new JschSshClientModule))
-      .overrides(overrides)
-      .buildView(classOf[ComputeServiceContext])
+    contextFactory.createContext("nova", "na", "na", util.Collections.singletonList(new JschSshClientModule), overrides)
   }
 
   def sshClient(env: Environment, server: EnvResource): SshClient = {
@@ -68,14 +62,14 @@ class SshService(
       case server: BorrowedMachine => sshClient(server, credentials)
   }
 
-  private[this] def sshClient(server: BorrowedMachine, gcredentials: Option[GenesisCredentials]): SshClient = {
+  private[this] def sshClient(server: BorrowedMachine, gcredentials: Option[GenesisCredentials]) = {
     val credentials = gcredentials.orElse(credentialService.defaultCredentials).map {
-      credentials => LoginCredentials.builder().identity(credentials.identity).credential(credentials.credential).build()
+      credentials => new Credentials(credentials.identity, credentials.credential)
     }
     val addresses = server.getIp.map(_.address).getOrElse(
       throw new IllegalStateException("No address provided for server %s".format(server))
     )
-    context.utils().getSshClientFactory.create(HostAndPort.fromParts(addresses, 22), credentials.get)
+    context.utils().getSshClientFactory.create(new IPSocket(addresses, 22), credentials.get)
   }
 
 
@@ -83,7 +77,7 @@ class SshService(
     val computeContext = contextFactory.computeContext(vm)
 
     val credentials = gcredentials.map {
-      creds => LoginCredentials.builder().identity(creds.identity).credential(creds.credential).build()
+      creds => new Credentials(creds.identity, creds.credential)
     }
 
     val ip = computeService.getIpAddresses(vm).map(_.address).getOrElse {
@@ -110,7 +104,7 @@ class SshService(
     val utils = computeContext.utils()
     val sshClient = node.map(utils.sshForNode().apply(_)) orElse
       credentials.map {
-        utils.getSshClientFactory.create(HostAndPort.fromParts(ip, 22), _)
+        utils.getSshClientFactory.create(new IPSocket(ip, 22), _)
       }
     sshClient.get
   }
