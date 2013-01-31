@@ -14,18 +14,17 @@ define [
   URL = "rest/settings"
   TIMEOUT_AJAX = 4000
 
-  linkTypes = backend.LinkTypes
+
 
   class Settings.Model extends Backbone.Model
     idAttribute: "name"
     url: URL
 
-  class Settings.Collection extends Backbone.Collection
+  class Settings.Collection extends genesis.Backbone.Collection
     model: Settings.Model
     url: URL + "?prefix=genesis.system"
-    parse: (json) ->
-      @_editLink = _(json.links).find linkTypes.ConfigProperty.edit
-      if (json.items) then json.items else json
+    parseLinks: (links) ->
+      @_editLink = _(links).find backend.LinkTypes.ConfigProperty.edit
     canEdit: ->
       not _.isUndefined(@_editLink)
 

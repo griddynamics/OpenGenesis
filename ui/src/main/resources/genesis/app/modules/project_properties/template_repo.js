@@ -11,18 +11,18 @@ define([
 function(genesis, backend, status, validation, Backbone, $) {
   var TemplateRepo = genesis.module();
 
-  TemplateRepo.Model = Backbone.Model.extend({
+  TemplateRepo.Model = genesis.Backbone.Model.extend({
+    linkType: backend.LinkTypes.TemplateRepo,
+
     initialize: function(options) {this.set("projectId", options.projectId);},
 
     urlRoot: function() {
       return "rest/projects/" + this.get("projectId") + "/template/repository";
     },
 
-    parse: function(json) {
-      this._editLink = _(json.links).find(backend.LinkTypes.TemplateRepo.edit);
-      return json;
+    parseLinks: function(links) {
+      this._editLink = _(links).find(this.linkType.edit);
     }
-
   });
 
   TemplateRepo.Views.Main = Backbone.View.extend({

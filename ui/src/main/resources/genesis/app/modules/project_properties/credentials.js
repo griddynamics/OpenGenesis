@@ -11,33 +11,21 @@ function(genesis, backend, status, validation, Backbone, $) {
 
   var Credentials = genesis.module();
 
-  Credentials.Model = Backbone.Model.extend({
-    parse: function(json) {
-      this._editLink = _(json.links).find(backend.LinkTypes.Credentials.edit);
-      this._deleteLink = _(json.links).find(backend.LinkTypes.Credentials.delete);
-      return json;
-    },
+  Credentials.Model = genesis.Backbone.Model.extend({
+    linkType: backend.LinkTypes.Credentials,
 
     urlRoot: function() {
       return "rest/projects/" + this.get("projectId") + "/credentials";
     }
   });
 
-  Credentials.Collection = Backbone.Collection.extend({
+  Credentials.Collection = genesis.Backbone.Collection.extend({
     model: Credentials.Model,
     projectId: null,
+    linkType: backend.LinkTypes.Credentials,
 
     initialize: function(elements, options) {
       this.projectId = options.projectId;
-    },
-
-    parse: function(json) {
-      if (json.items) {
-        this._createLink = _(json.links).find(backend.LinkTypes.Credentials.create);
-        return json.items;
-      } else {
-        return json;
-      }
     },
 
     url: function() { return "rest/projects/" + this.projectId + "/credentials"; }

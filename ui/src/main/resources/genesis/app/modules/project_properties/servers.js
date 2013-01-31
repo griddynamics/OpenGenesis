@@ -12,7 +12,8 @@ define([
 function(genesis, backend, status, validation, Backbone, $) {
   var Servers = genesis.module();
 
-  Servers.ArrayModel = Backbone.Model.extend({
+  Servers.ArrayModel = genesis.Backbone.Model.extend({
+    linkType: backend.LinkTypes.ServerArray,
 
     urlRoot: function() {
       return "rest/projects/" + this.get("projectId") + "/server-arrays";
@@ -20,63 +21,31 @@ function(genesis, backend, status, validation, Backbone, $) {
 
     serversCollection: function() {
       return new Servers.ServersCollection([], { projectId: this.get("projectId"), serverArrayId: this.id });
-    },
-
-    parse: function(json) {
-      this._editLink = _(json.links).find(backend.LinkTypes.ServerArray.edit);
-      this._deleteLink = _(json.links).find(backend.LinkTypes.ServerArray.delete);
-      return json;
     }
-
   });
 
-  Servers.ArrayCollection = Backbone.Collection.extend({
+  Servers.ArrayCollection = genesis.Backbone.Collection.extend({
     model: Servers.ArrayModel,
+    linkType: backend.LinkTypes.ServerArray,
 
     initialize: function(elements, options) {
       this.projectId = options.projectId;
-    },
-
-    url: function() { return "rest/projects/" + this.projectId + "/server-arrays"; },
-
-    parse: function(json) {
-      if (json.items) {
-        this._createLink = _(json.links).find(backend.LinkTypes.ServerArray.create);
-        return json.items;
-      } else {
-        return json;
-      }
     },
 
     url: function() { return "rest/projects/" + this.projectId + "/server-arrays"; }
   });
 
   Servers.ServerModel = Backbone.Model.extend({
-    parse: function(json) {
-      if(json.result) {
-        return json.result;
-      } else {
-        this._editLink = _(json.links).find(backend.LinkTypes.Server.edit);
-        this._deleteLink = _(json.links).find(backend.LinkTypes.Server.delete);
-        return json;
-      }
-    }
+    linkType: backend.LinkTypes.Server
   });
 
-  Servers.ServersCollection = Backbone.Collection.extend({
+  Servers.ServersCollection = genesis.Backbone.Collection.extend({
     model: Servers.ServerModel,
+    linkType: backend.LinkTypes.Server,
+
     initialize: function(elements, options) {
       this.projectId = options.projectId;
       this.serverArrayId = options.serverArrayId;
-    },
-
-    parse: function(json) {
-      if(json.items) {
-        this._createLink = _(json.links).find(backend.LinkTypes.Server.create);
-        return json.items
-      } else {
-        return json;
-      }
     },
 
     url: function() { return "rest/projects/" + this.projectId + "/server-arrays/" + this.serverArrayId + "/servers"; }

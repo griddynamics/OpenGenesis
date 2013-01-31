@@ -9,10 +9,9 @@ define [
 (genesis, backend, status, validation, Backbone, $) ->
 
   Plugins = genesis.module()
+
   class Plugins.Model extends Backbone.Model
-    parse: (json) ->
-      @_editLink = _(json.links).find backend.LinkTypes.Plugin.edit
-      json
+    linkType: backend.LinkTypes.Plugin
 
   class Plugins.Collection extends Backbone.Collection
     model: Plugins.Model

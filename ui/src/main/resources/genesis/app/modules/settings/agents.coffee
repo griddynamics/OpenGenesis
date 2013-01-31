@@ -13,21 +13,15 @@ define [
 
   URL = "rest/agents"
 
-  linkTypes = backend.LinkTypes
-
-  class Agents.Model extends Backbone.Model
+  class Agents.Model extends genesis.Backbone.Model
     urlRoot: URL
-    parse: (json) ->
-      @_editLink = _(json.links).find linkTypes.RemoteAgent.edit
-      @_deleteLink = _(json.links).find linkTypes.RemoteAgent.delete
-      json
+    linkType: backend.LinkTypes.RemoteAgent
 
-  class Agents.Collection extends Backbone.Collection
+  class Agents.Collection extends genesis.Backbone.Collection
     model: Agents.Model
     url: URL
-    parse: (json) ->
-      @_createLink = _(json.links).find linkTypes.RemoteAgent.create
-      if json.items? then json.items else json
+    linkType: backend.LinkTypes.RemoteAgent
+
 
   class Agents.Views.Main extends Backbone.View
     events:

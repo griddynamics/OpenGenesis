@@ -13,7 +13,8 @@ define [
 
   linkTypes = backend.LinkTypes
 
-  class Databags.Model extends Backbone.Model
+  class Databags.Model extends genesis.Backbone.Model
+    linkType: backend.LinkTypes.DataBag
     initialize: (options) ->
       @projectId = options.projectId if options.projectId
 
@@ -23,14 +24,9 @@ define [
       else
         URL
 
-    parse: (json) ->
-      @_editLink = _(json.links).find linkTypes.DataBag.edit
-      @_deleteLink = _(json.links).find linkTypes.DataBag.delete
-      json
-
-
-  class Databags.Collection extends Backbone.Collection
-    model: Databags.Model
+  class Databags.Collection extends genesis.Backbone.Collection
+    model: Databags.Model,
+    linkType: backend.LinkTypes.DataBag
     initialize: (options) ->
       @projectId = options.projectId if options.projectId?
 
@@ -39,13 +35,6 @@ define [
         "rest/projects/" + @projectId + "/databags"
       else
         URL
-
-    parse: (json) ->
-      if json.items?
-        @_createLink = _(json.links).find linkTypes.DataBag.create
-        json.items
-      else
-        json
 
   class DatabagItem extends Backbone.Model
 

@@ -14,7 +14,7 @@ define([
 function(genesis, Backbone, status, property, access, roles, validation, backend, $) {
   var EnvConfigs = genesis.module();
 
-  EnvConfigs.Model = Backbone.Model.extend({
+  EnvConfigs.Model = genesis.Backbone.Model.extend({
     defaults: {
       description: ""
     },
@@ -31,32 +31,19 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
       return !_.isUndefined(this._accessLink);
     },
 
-    parse: function(json) {
-      if (json.result) {
-        this._editLink = _(json.links).find(backend.LinkTypes.EnvConfig.edit);
-        this._deleteLink = _(json.links).find(backend.LinkTypes.EnvConfig.delete);
-        this._accessLink = _(json.links).find(backend.LinkTypes.EnvConfigAccess.edit);
-        return json.result;
-      } else {
-        return json;
-      }
+    parseLinks: function(links) {
+      this._editLink = _(links).find(backend.LinkTypes.EnvConfig.edit);
+      this._deleteLink = _(links).find(backend.LinkTypes.EnvConfig.delete);
+      this._accessLink = _(links).find(backend.LinkTypes.EnvConfigAccess.edit);
     }
   });
 
-  EnvConfigs.Collection = Backbone.Collection.extend({
+  EnvConfigs.Collection = genesis.Backbone.Collection.extend({
     model: EnvConfigs.Model,
+    linkType: backend.LinkTypes.EnvConfig,
 
     initialize: function(options) {
        this.projectId = options.projectId;
-    },
-
-    parse: function(json) {
-      if(json.items){
-        this._createLink = _(json.links).find(backend.LinkTypes.EnvConfig.create);
-        return json.items;
-      } else {
-        return json;
-      }
     },
 
     url: function() {

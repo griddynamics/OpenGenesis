@@ -35,7 +35,7 @@
                 <% } %>
               </ul>
             </td>
-            <td class="actions">
+            <td class="actions" <% if(!canEdit) {%> class="readonly" <% } %}>
                 <a href="javascript:void(0)" class="edit-link executable" data-role-name="<%= role.name %>"> Edit </a>
             </td>
           </tr>

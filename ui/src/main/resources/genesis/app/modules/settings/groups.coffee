@@ -2,12 +2,9 @@ define ["genesis", "backbone", "cs!modules/settings/users", "modules/status", "m
   Groups = genesis.module()
   URL = "rest/groups"
 
-  class Groups.Model extends Backbone.Model
+  class Groups.Model extends genesis.Backbone.Model
     urlRoot: URL
-    parse: (json) ->
-      @_editLink = _(json.links).find backend.LinkTypes.UserGroup.edit
-      @_deleteLink = _(json.links).find backend.LinkTypes.UserGroup.delete
-      json
+    linkType: backend.LinkTypes.UserGroup
 
   class GroupUsers extends Backbone.Collection
     initialize: (models, groupId) ->

@@ -11,28 +11,18 @@ define [
 
   URL = "rest/users"
 
-  class Users.Model extends Backbone.Model
+  class Users.Model extends genesis.Backbone.Model
     urlRoot: URL
     idAttribute: "username"
-    parse: (json) ->
-      @_editLink = _(json.links).find backend.LinkTypes.User.edit
-      @_deleteLink = _(json.links).find backend.LinkTypes.User.delete
-      json
+    linkType: backend.LinkTypes.User
 
-  class Users.Collections.People extends Backbone.Collection
+  class Users.Collections.People extends genesis.Backbone.Collection
     url: URL
     model: Users.Model
-    parse: (json) ->
-      if json.items?
-        json.items
-      else
-        json
 
-  class Users.Collections.Groups extends Backbone.Collection
+  class Users.Collections.Groups extends genesis.Backbone.Collection
     url: "rest/groups"
-    parse: (json) ->
-      @_createLink = _(json.links).find backend.LinkTypes.UserGroup.create
-      if json.items then json.items else json
+    linkType: backend.LinkTypes.UserGroup
 
   EMPTY_USER = new Users.Model(
     username: ""
