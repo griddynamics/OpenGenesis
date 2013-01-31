@@ -73,11 +73,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.jclouds.api</groupId>
-            <artifactId>openstack-nova</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.jclouds.driver</groupId>
             <artifactId>jclouds-jsch</artifactId>
         </dependency>
@@ -95,11 +90,6 @@
         <dependency>
             <groupId>com.griddynamics.genesis</groupId>
             <artifactId>commons</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
         </dependency>
     </dependencies>
 
