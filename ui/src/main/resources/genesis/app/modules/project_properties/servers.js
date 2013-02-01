@@ -57,7 +57,14 @@ function(genesis, status, validation, Backbone, $) {
       this.serverArrayId = options.serverArrayId;
     },
 
-    url: function() { return "rest/projects/" + this.projectId + "/server-arrays/" + this.serverArrayId + "/servers"; }
+    url: function() { return "rest/projects/" + this.projectId + "/server-arrays/" + this.serverArrayId + "/servers"; },
+    parse: function(json) {
+      if (json.items) {
+        return json.items;
+      } else {
+        return json;
+      }
+    }
   });
 
   var CredentialsRef = Backbone.Collection.extend({
@@ -65,7 +72,14 @@ function(genesis, status, validation, Backbone, $) {
       this.projectId = options.projectId;
     },
 
-    url: function() { return "rest/projects/" + this.projectId + "/credentials/?type=static" }
+    url: function() { return "rest/projects/" + this.projectId + "/credentials/?type=static" },
+    parse: function(json) {
+       if (json.items) {
+         return json.items;
+       } else {
+         return json;
+       }
+    }
   });
 
   Servers.Views.Main = Backbone.View.extend({

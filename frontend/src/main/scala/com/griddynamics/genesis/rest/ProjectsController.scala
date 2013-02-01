@@ -1,6 +1,6 @@
 package com.griddynamics.genesis.rest
 
-import annotations.{LinkTarget, LinkTo, LinksTo}
+import annotations.{AddSelfLinks, LinkTarget}
 import LinkTarget._
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import com.griddynamics.genesis.rest.GenesisRestController._
@@ -67,7 +67,7 @@ class ProjectsController extends RestApiExceptionsHandler {
 
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
-  @LinksTo(value = Array(new LinkTo(methods = Array(RequestMethod.POST), clazz = classOf[Project], controller = classOf[ProjectsController])))
+  @AddSelfLinks(methods = Array(GET, POST), modelClass = classOf[Project])
   def listProjects(@RequestParam(value = "sorting", required = false, defaultValue = "name") sorting: Ordering,
                    request: HttpServletRequest): CollectionWrapper[ItemWrapper[_]] = {
     val projects = if (request.isUserInRole(GenesisRole.SystemAdmin.toString) || request.isUserInRole(GenesisRole.ReadonlySystemAdmin.toString)) {
@@ -205,16 +205,16 @@ class ProjectsController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{projectId}/roles/{roleName}"), method = Array(RequestMethod.GET))
   @ResponseBody
+  @AddSelfLinks(methods = Array(GET, PUT), modelClass = classOf[Access])
   def loadProjectAuths(@PathVariable("projectId") projectId: Int,
                        @PathVariable("roleName") roleName: String,
                        request: HttpServletRequest,
-                       response: HttpServletResponse): ExtendedResult[Map[String, Any]] = {
-    authorityService.getProjectAuthority(projectId, GenesisRole.withName(roleName)).map{ case (users, groups) =>
-      Map(
-        "users" -> Users.of(userService).forUsernames(users),
-        "groups" -> groups
-      )
+                       response: HttpServletResponse): ItemWrapper[Access] = {
+    val result: ExtendedResult[Access] = authorityService.getProjectAuthority(projectId, GenesisRole.withName(roleName)).map {
+      case (users, groups) =>
+        Access(Users.of(userService).forUsernames(users).toArray, groups.toArray)
     }
+    result.getOrElse(throw new ResourceNotFoundException(s"Cannot find access map for role ${roleName}"))
   }
 
   @RequestMapping(value = Array("{projectId}/permissions"), method = Array(RequestMethod.GET))
