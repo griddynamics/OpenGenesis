@@ -214,7 +214,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     implicit val req: HttpServletRequest = request
     val wrapped = environments.map(environment =>
       wrap(environment).withLinks(LinkBuilder(HrefBuilder.withPathParam(request, environment.id),
-        SELF, classOf[Environment], GET))
+        SELF, classOf[Environment], GET)).filtered()
     )
 
     wrapCollection(wrapped).withLinks(LinkBuilder(request,

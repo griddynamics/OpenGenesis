@@ -3,7 +3,7 @@ package com.griddynamics.genesis.spring.aop
 import org.aspectj.lang.annotation._
 import org.aspectj.lang.ProceedingJoinPoint
 import com.griddynamics.genesis.rest.annotations.{LinkTarget, AddSelfLinks, LinksTo}
-import com.griddynamics.genesis.rest.links.{LinkBuilder, WebPath, ControllerClassAggregator, WithLinks}
+import com.griddynamics.genesis.rest.links._
 import com.griddynamics.genesis.rest.links.HrefBuilder._
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.util.Logging
@@ -41,7 +41,13 @@ class LinksToAspect extends Logging {
   }
 
   private def processAnnotation(ann: LinksTo)(implicit request: HttpServletRequest): Array[Link] = {
-    ann.value().map(a => ControllerClassAggregator(a.controller, a.clazz(), a.rel(), a.methods())).flatten
+    ann.value().map(a => {
+      val links: Array[Link] = a.path() match {
+        case "" => ControllerClassAggregator(a.controller, a.modelClass(), a.rel(), a.methods())
+        case x => Array(LinkBuilder(WebPath(request) / x, a.rel(), a.modelClass(), a.methods(): _*))
+      }
+      links
+    }).flatten
   }
 
   private def processAnnotation(ann: AddSelfLinks)(implicit request: HttpServletRequest): Array[Link] = {
