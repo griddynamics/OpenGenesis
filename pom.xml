@@ -101,13 +101,21 @@
         <module>run-local</module>
         <module>ui</module>
         <module>all-dependencies</module>
-        <module>distribution-standalone</module>
-        <module>distribution-war</module>
         <module>agent-commons</module>
         <module>agent-run-local</module>
         <module>ldap</module>
         <module>active-directory</module>
     </modules>
+
+    <profiles>
+        <profile>
+            <id>distributions</id>
+            <modules>
+                <module>distribution-standalone</module>
+                <module>distribution-war</module>
+            </modules>
+        </profile>
+    </profiles>
 
       <dependencyManagement>
         <dependencies>
