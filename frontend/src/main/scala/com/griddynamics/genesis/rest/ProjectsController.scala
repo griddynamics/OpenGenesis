@@ -205,16 +205,16 @@ class ProjectsController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{projectId}/roles/{roleName}"), method = Array(RequestMethod.GET))
   @ResponseBody
+  @AddSelfLinks(methods = Array(GET, PUT), modelClass = classOf[Access])
   def loadProjectAuths(@PathVariable("projectId") projectId: Int,
                        @PathVariable("roleName") roleName: String,
                        request: HttpServletRequest,
-                       response: HttpServletResponse): ExtendedResult[Map[String, Any]] = {
-    authorityService.getProjectAuthority(projectId, GenesisRole.withName(roleName)).map{ case (users, groups) =>
-      Map(
-        "users" -> Users.of(userService).forUsernames(users),
-        "groups" -> groups
-      )
+                       response: HttpServletResponse): ItemWrapper[Access] = {
+    val result: ExtendedResult[Access] = authorityService.getProjectAuthority(projectId, GenesisRole.withName(roleName)).map {
+      case (users, groups) =>
+        Access(Users.of(userService).forUsernames(users).toArray, groups.toArray)
     }
+    result.getOrElse(throw new ResourceNotFoundException(s"Cannot find access map for role ${roleName}"))
   }
 
   @RequestMapping(value = Array("{projectId}/permissions"), method = Array(RequestMethod.GET))

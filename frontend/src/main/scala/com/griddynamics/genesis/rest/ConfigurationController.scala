@@ -80,7 +80,7 @@ class ConfigurationController extends RestApiExceptionsHandler{
   def get(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest): ItemWrapper[Configuration] = {
     val item: ItemWrapper[Configuration] =
       configRepository.get(projectId, id).getOrElse(throw new ResourceNotFoundException("Can not find environment configuration id = %d".format(id)))
-    item.withLinks(LinkBuilder(WebPath(request) / "access", LinkTarget.COLLECTION, classOf[ConfigurationAccess], GET, PUT)).filtered()
+    item.withLinks(LinkBuilder(WebPath(request) / "access", LinkTarget.COLLECTION, classOf[Access], GET, PUT)).filtered()
   }
 
   @ResponseBody
@@ -126,12 +126,12 @@ class ConfigurationController extends RestApiExceptionsHandler{
 
   @RequestMapping(value = Array("{configId}/access"), method = Array(RequestMethod.GET))
   @ResponseBody
-  @AddSelfLinks(methods = Array(GET, PUT), modelClass = classOf[ConfigurationAccess])
+  @AddSelfLinks(methods = Array(GET, PUT), modelClass = classOf[Access])
   def getEnvAccess(@PathVariable("projectId") projectId: Int,
                    @PathVariable("configId") configId: Int,
-                   request: HttpServletRequest): ItemWrapper[ConfigurationAccess] = {
+                   request: HttpServletRequest): ItemWrapper[Access] = {
     val (users, groups) = envAuthService.getConfigAccessGrantees(configId)
-    ConfigurationAccess(Users.of(userService).forUsernames(users).toArray, groups.toArray)
+    Access(Users.of(userService).forUsernames(users).toArray, groups.toArray)
   }
 
   @RequestMapping(value = Array("{configId}/access"), method = Array(RequestMethod.PUT))
