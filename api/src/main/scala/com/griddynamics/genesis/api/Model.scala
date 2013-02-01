@@ -139,6 +139,9 @@ sealed abstract class ExtendedResult[+S]() extends Product with Serializable {
 
   def get: S
 
+  final def getOrElse[B >: S](default: => B): B =
+    if (isSuccess) this.get else default
+
   def isSuccess: Boolean
 }
 
@@ -329,4 +332,4 @@ case class SystemSettings(links: Array[Link])
 
 case class ApplicationRole(name: String)
 
-case class ConfigurationAccess(users: Array[User], groups: Array[String])
+case class Access(users: Array[User], groups: Array[String])

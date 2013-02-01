@@ -26,6 +26,7 @@ case class CollectionWrapper[T](items: Iterable[T], links: Iterable[Link]) exten
 case class ItemWrapper[T](item: T, links: Iterable[Link]) extends WithLinks {
   override def add(coll: Iterable[Link]) = copy(item = item, links = links ++ coll)
   implicit def withLinks(link: Link, rest: Link*) = copy(item = item, links = links ++ (link :: rest.toList))
+  def withLinksToSelf(path: String, methods: RequestMethod*) = withLinks(LinkBuilder(path, LinkTarget.SELF, item.getClass, methods : _*))
   override def filtered()(implicit security: LinkSecurityBean) =  copy(item = item, links = security.filter(links.toArray))
   def withLinksToSelf(method: RequestMethod, methods: RequestMethod*)(implicit request: HttpServletRequest) =
     copy(item = item, links = LinkBuilder(request, LinkTarget.SELF, item.getClass, (method :: methods.toList).toArray : _*) :: Nil)
@@ -35,5 +36,8 @@ case class ItemWrapper[T](item: T, links: Iterable[Link]) extends WithLinks {
 object CollectionWrapper {
   implicit def wrapCollection[T](coll: Iterable[T]) = new CollectionWrapper[T](coll, List())
   implicit def wrap[T](item: T) = ItemWrapper[T](item, List())
+  implicit def wrap[T](coll: Iterable[T])(block: (T) => ItemWrapper[T])(implicit security: LinkSecurityBean) : CollectionWrapper[ItemWrapper[T]] = {
+     coll.map(block(_).filtered())
+  }
 }
 

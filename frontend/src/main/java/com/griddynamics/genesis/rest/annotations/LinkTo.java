@@ -12,8 +12,8 @@ import java.lang.annotation.Target;
 public @interface LinkTo {
     LinkTarget rel() default LinkTarget.SELF;
     RequestMethod[] methods() default {RequestMethod.GET};
-    Class<?> controller();
-    String controllerMethod() default "";
-    Class<?> clazz();
+    Class<?> controller() default Void.class;
+    String path() default "";
+    Class<?> modelClass();
 }
 

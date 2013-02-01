@@ -9,8 +9,21 @@ import com.griddynamics.genesis.rest.annotations.LinkTarget
 import com.griddynamics.genesis.api.Link
 
 case class WebPath(start: String, elements: List[String] = List()) {
-  def / (path: String) = WebPath(start, elements ++ (path :: Nil))
+  def / (p: Any) = {
+    val path: String = p match {
+      case p: String => p
+      case a: Some[_] => String.valueOf(a.get)
+      case None => ""
+      case x => String.valueOf(x)
+    }
+    WebPath(start, elements ++ (path :: Nil))
+  }
   override def toString = (start :: elements).mkString("/")
+}
+
+object WebPath {
+  implicit def webPathToString(path: WebPath) = path.toString
+  implicit def fromRequest(request: HttpServletRequest) = WebPath(request.getServletPath)
 }
 
 object LinkBuilder {
@@ -34,8 +47,6 @@ object HrefBuilder {
     implicit val req: HttpServletRequest = request
     absolutePath(request.getServletPath.stripSuffix("/") + "/" + pathParam.toString)
   }
-
-  implicit def webPathToString(path: WebPath) = path.toString
 
 
   private[links] def uriBuilder(implicit request: HttpServletRequest): UriComponentsBuilder = {

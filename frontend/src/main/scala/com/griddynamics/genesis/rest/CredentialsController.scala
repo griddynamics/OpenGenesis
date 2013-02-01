@@ -79,7 +79,7 @@ class CredentialsController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.GET))
   @ResponseBody
-  @AddSelfLinks(methods = Array(GET, PUT), modelClass = classOf[Credentials])
+  @AddSelfLinks(methods = Array(GET, PUT, DELETE), modelClass = classOf[Credentials])
   def getCredentials(@PathVariable("projectId") projectId: Int, @PathVariable("id") credId: Int, request: HttpServletRequest): ItemWrapper[Credentials] = {
     val cred = service.get(projectId, credId).getOrElse(
       throw new ResourceNotFoundException("Credential [id = %d] was not found in Project [id = %d]".format(credId, projectId))
