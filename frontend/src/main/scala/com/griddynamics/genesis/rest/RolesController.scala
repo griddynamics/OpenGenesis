@@ -23,8 +23,12 @@
 
 package com.griddynamics.genesis.rest
 
-import scala.Array
+import annotations.AddSelfLinks
+import links.{WebPath, ItemWrapper, CollectionWrapper}
+import links.CollectionWrapper._
+import links.WebPath._
 import org.springframework.web.bind.annotation.{PathVariable, ResponseBody, RequestMethod, RequestMapping}
+import org.springframework.web.bind.annotation.RequestMethod._
 import javax.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Controller
 import GenesisRestController._
@@ -35,6 +39,7 @@ import com.griddynamics.genesis.api._
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.validation.Validation._
 import com.griddynamics.genesis.api.Failure
+import com.griddynamics.genesis.spring.security.LinkSecurityBean
 
 @Controller
 @RequestMapping(Array("/rest"))
@@ -42,13 +47,22 @@ class RolesController extends RestApiExceptionsHandler {
 
   @Autowired var authorityService: AuthorityService = _
   @Autowired var projectAuthorityService: ProjectAuthorityService= _
+  @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
   @Autowired var userService: UserService = _
   @Autowired var groupService: GroupService = _
 
   @RequestMapping(value = Array("roles"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def listSystemRoles() = authorityService.listAuthorities
+  @AddSelfLinks(methods = Array(GET), modelClass = classOf[ApplicationRole])
+  def listSystemRoles(request: HttpServletRequest) : CollectionWrapper[ItemWrapper[ApplicationRole]] = {
+      val builtRoles = authorityService.listAuthorities.map(s => ApplicationRole(s))
+      wrap(builtRoles) {
+        role => {
+          role.withLinksToSelf(WebPath(request) / role.name, GET, PUT)
+        }
+      }
+    }
 
   @RequestMapping(value = Array("projectRoles"), method = Array(RequestMethod.GET))
   @ResponseBody

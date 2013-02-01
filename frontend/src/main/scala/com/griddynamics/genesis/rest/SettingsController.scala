@@ -23,8 +23,9 @@
 
 package com.griddynamics.genesis.rest
 
+import annotations.AddSelfLinks
 import annotations.LinkTarget._
-import links.{LinkBuilder, WebPath, HrefBuilder}
+import links.{CollectionWrapper, LinkBuilder, WebPath, HrefBuilder}
 import org.springframework.web.bind.annotation._
 import org.springframework.web.bind.annotation.RequestMethod._
 import org.springframework.stereotype.Controller
@@ -71,7 +72,7 @@ class SettingsController extends RestApiExceptionsHandler {
        var result = List (
          LinkBuilder(path / "settings", COLLECTION, classOf[ConfigProperty], GET),
          LinkBuilder(path / "databags", COLLECTION, classOf[DataBag], GET),
-         LinkBuilder(path / "roles", COLLECTION, GET, POST),
+         LinkBuilder(path / "roles", COLLECTION, classOf[ApplicationRole], GET),
          LinkBuilder(path / "agents", COLLECTION, classOf[RemoteAgent], GET),
          LinkBuilder(path / "plugins", COLLECTION, classOf[Plugin], GET)
        )
@@ -86,7 +87,8 @@ class SettingsController extends RestApiExceptionsHandler {
 
     @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
     @ResponseBody
-    def listSettings(@RequestParam(value = "prefix", required = false) prefix: String) = {
+    @AddSelfLinks(methods = Array(GET, PUT), modelClass = classOf[ConfigProperty])
+    def listSettings(@RequestParam(value = "prefix", required = false) prefix: String, request: HttpServletRequest): CollectionWrapper[ConfigProperty] = {
       val configs = configService.
         listSettings(paramToOption(prefix)).
         filter(p => isVisible(p.name))

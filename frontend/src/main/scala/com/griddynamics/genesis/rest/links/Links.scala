@@ -22,8 +22,9 @@ case class WebPath(start: String, elements: List[String] = List()) {
 }
 
 object WebPath {
+  def apply(request: HttpServletRequest) = new WebPath(HrefBuilder.duplicate(request))
   implicit def webPathToString(path: WebPath) = path.toString
-  implicit def fromRequest(request: HttpServletRequest) = WebPath(request.getServletPath)
+  implicit def fromRequest(request: HttpServletRequest) = WebPath(HrefBuilder.duplicate(request))
 }
 
 object LinkBuilder {

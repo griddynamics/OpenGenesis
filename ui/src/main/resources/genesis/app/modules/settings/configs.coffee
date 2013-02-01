@@ -9,6 +9,8 @@ define ["genesis", "modules/status", "modules/validation", "backbone", "jquery",
   class Settings.Collection extends Backbone.Collection
     model: Settings.Model
     url: URL + "?prefix=genesis.system"
+    parse: (json) ->
+      json.items
 
   class Settings.Views.Main extends Backbone.View
     template: "app/templates/settings/system_configs.html"
