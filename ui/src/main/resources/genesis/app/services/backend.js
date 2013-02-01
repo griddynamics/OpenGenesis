@@ -138,7 +138,7 @@ function(genesis, $) {
         timeout: DEFAULT_TIMEOUT,
         processData: true
       }).done(function(roles) {
-        self._rolesListCache = roles;
+        self._rolesListCache = _(roles.items).pluck("name");
         def.resolve(self._rolesListCache);
       }).fail(function(jqXHR) {
         def.reject(jqXHR)

@@ -22,6 +22,7 @@
  */
 package com.griddynamics.genesis.rest
 
+import annotations.{AddSelfLinks, LinkTo, LinksTo}
 import annotations.LinkTarget._
 import filters.EnvFilter
 import links._
@@ -47,6 +48,7 @@ import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.spring.security.LinkSecurityBean
 import com.griddynamics.genesis.template.dsl.groovy.Reserved
+import com.griddynamics.genesis.model.EnvStatus
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
@@ -170,26 +172,27 @@ class EnvironmentsController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{envId}"), method = Array(RequestMethod.GET))
   @ResponseBody
+  @LinksTo(value = Array(
+    new LinkTo(path = "history", rel = COLLECTION, methods = Array(GET), modelClass = classOf[WorkflowHistory]),
+    new LinkTo(path = "workflows", rel = COLLECTION, methods = Array(GET), modelClass = classOf[Workflow]),
+    new LinkTo(path = "actions", rel = COLLECTION, methods = Array(GET), modelClass = classOf[Action])
+  ))
+  @AddSelfLinks(methods = Array(GET, PUT, DELETE), modelClass = classOf[EnvironmentDetails])
   def describeEnv(@PathVariable("projectId") projectId: Int,
                   @PathVariable("envId") envId: Int, request: HttpServletRequest) : ItemWrapper[EnvironmentDetails] = {
-    val wrapper: ItemWrapper[EnvironmentDetails] = genesisService.describeEnv(envId, projectId).
+    genesisService.describeEnv(envId, projectId).
       getOrElse(throw new ResourceNotFoundException("Environment [" + envId + "] was not found"))
-    implicit val req: HttpServletRequest = request
-    val top = WebPath(request)
-    wrapper.withLinksToSelf(GET, PUT, DELETE).withLinks(
-      LinkBuilder(top / "history", COLLECTION, classOf[WorkflowHistory], GET),
-      LinkBuilder(top / "actions", COLLECTION, POST) // TODO: GET not present now. User can only post there.
-    ).filtered()
   }
 
 
-  @RequestMapping(value = Array("{envId}/history"), method = Array(RequestMethod.GET), params = Array("page_offset", "page_length"))
+  @RequestMapping(value = Array("{envId}/history"), method = Array(RequestMethod.GET))
   @ResponseBody
+  @AddSelfLinks(methods = Array(GET), modelClass = classOf[WorkflowHistory])
   def workflowsHistory(@PathVariable("projectId") projectId: Int,
                        @PathVariable("envId") envId: Int,
-                       @RequestParam("page_offset") pageOffset: Int,
-                       @RequestParam("page_length") pageLength: Int,
-                       response : HttpServletResponse): WorkflowHistory = {
+                       @RequestParam(value = "page_offset", defaultValue = "0") pageOffset: Int,
+                       @RequestParam(value = "page_length", defaultValue = "1000") pageLength: Int,
+                       request: HttpServletRequest): ItemWrapper[WorkflowHistory] = {
     genesisService.workflowHistory(envId, projectId, pageOffset, pageLength).getOrElse(
         throw new ResourceNotFoundException("Environment [" + envId + "] was not found")
     )
@@ -221,8 +224,9 @@ class EnvironmentsController extends RestApiExceptionsHandler {
       SELF, classOf[Environment], POST)).filtered()
   }
 
-  @RequestMapping(value = Array("{envId}/actions"), method = Array(RequestMethod.POST))
+  @RequestMapping(value = Array("{envId}/actions"), method = Array(GET, POST))
   @ResponseBody
+  @deprecated(since = "2.0.0", message="This method is kept only for backward compatibility")
   def executeAction(@PathVariable("projectId") projectId: Int,
                     @PathVariable("envId") envId: Int,
                     request: HttpServletRequest) = {
@@ -248,7 +252,68 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     }
   }
 
-  @RequestMapping(value = Array("{envId}/actions/{workflow}"), method = Array(RequestMethod.GET))
+
+
+  @RequestMapping(value = Array("{envId}/actions/{actionName}"), method = Array(RequestMethod.POST))
+  @ResponseBody
+  def executeAction(@PathVariable("projectId") projectId: Int,
+                    @PathVariable("envId") envId: Int,
+                    @PathVariable("actionName") actionName: String,
+                    request: HttpServletRequest) = {
+    Actions.fromString(actionName) match {
+      case Some(Actions.Cancel) =>
+        genesisService.cancelWorkflow(envId, projectId)
+        Success(envId)
+      case Some(Actions.Reset) => genesisService.resetEnvStatus(envId, projectId)
+      case _ => throw new ResourceNotFoundException(s"Cannot find action ${actionName} for specified environment")
+    }
+  }
+
+  @RequestMapping(value = Array("{envId}/workflows/{workflowName}"), method = Array(RequestMethod.POST))
+  @ResponseBody
+  def executeWorkflow(@PathVariable("projectId") projectId: Int,
+                    @PathVariable("envId") envId: Int,
+                    @PathVariable("workflowName") workflowName: String,
+                    request: HttpServletRequest) = {
+    val requestMap = extractParamsMap(request)
+    val parameters = extractMapValue("parameters", requestMap)
+    genesisService.requestWorkflow(envId, projectId, workflowName, extractVariables(parameters), getCurrentUser)
+  }
+
+
+  @RequestMapping(value = Array("{envId}/workflows"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  @AddSelfLinks(methods = Array(GET), modelClass = classOf[Workflow])
+  def getWorkflows(@PathVariable("projectId") projectId: Int,
+                  @PathVariable("envId") envId: Int, request: HttpServletRequest) : CollectionWrapper[ItemWrapper[Workflow]] = {
+    val env = genesisService.describeEnv(envId, projectId).
+      getOrElse(throw new ResourceNotFoundException("Environment [" + envId + "] was not found"))
+    val filteredList: Seq[Workflow] = env.workflows.filter(workflow => {
+      workflow.name != env.createWorkflowName && EnvStatus.Destroyed.toString != env.status
+    })
+    wrap(filteredList) { workflow =>
+      workflow.withLinksToSelf(WebPath(request) / workflow.name, POST)
+    }
+  }
+
+  @RequestMapping(value = Array("{envId}/actions"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  @AddSelfLinks(methods = Array(GET), modelClass = classOf[Action])
+  def getActions(@PathVariable("projectId") projectId: Int,
+                   @PathVariable("envId") envId: Int, request: HttpServletRequest) : CollectionWrapper[ItemWrapper[Action]] = {
+    val env = genesisService.describeEnv(envId, projectId).
+      getOrElse(throw new ResourceNotFoundException("Environment [" + envId + "] was not found"))
+    val availableActions = EnvStatus.fromString(env.status) match {
+      case Some(EnvStatus.Busy) => Actions.Cancel :: Nil
+      case Some(EnvStatus.Broken) => Actions.Reset :: Nil
+      case _ => Nil
+    }
+    wrap(availableActions.map(v => Action(v.toString))) { action =>
+      action.withLinksToSelf(WebPath(request) / action.name, POST)
+    }
+  }
+
+  @RequestMapping(value = Array("{envId}/workflows/{workflow}"), method = Array(RequestMethod.GET))
   @ResponseBody
   def getWorkflow(@PathVariable("projectId") projectId: Int,
                   @PathVariable("envId") envId: Int,
@@ -302,4 +367,16 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     genesisService.removeTimeToLive(projectId, envId)
   }
 
+}
+
+object Actions extends Enumeration {
+  type Actions = Value
+  val Reset = Value(0, "reset")
+  val Cancel = Value(1, "cancel")
+
+  def fromString(input: String): Option[Actions] = try {
+    Some(Actions.withName(input))
+  } catch {
+    case e: NoSuchElementException => None
+  }
 }

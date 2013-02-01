@@ -23,9 +23,9 @@
 
 package com.griddynamics.genesis.rest
 
-import annotations.LinkTarget
+import annotations.{AddSelfLinks, LinkTarget}
 import links.CollectionWrapper._
-import links.{WebPath, LinkBuilder}
+import links.{ItemWrapper, WebPath, LinkBuilder}
 import links.HrefBuilder._
 import org.springframework.stereotype.Controller
 import org.springframework.beans.factory.annotation.Autowired
@@ -90,10 +90,9 @@ class UsersController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{username:.+}"), method=Array(RequestMethod.GET))
   @ResponseBody
-  def get(@PathVariable(value = "username") username: String, request: HttpServletRequest) = {
-    implicit val req = request
-    val user = find(username)
-    wrap(user).withLinksToSelf(GET, PUT, DELETE).filtered()
+  @AddSelfLinks(methods = Array(GET, PUT, DELETE), modelClass = classOf[User])
+  def get(@PathVariable(value = "username") username: String, request: HttpServletRequest): ItemWrapper[User] = {
+    find(username)
   }
 
   private def find(username: String) = userService.findByUsername(username).getOrElse(throw new ResourceNotFoundException("User[username = " + username + "] was not found"))
