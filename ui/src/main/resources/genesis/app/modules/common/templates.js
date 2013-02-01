@@ -35,7 +35,7 @@ function(genesis, Backbone) {
      },
 
      templatePath: function() {return "/templates/" + this.get("name") + "/v" + this.get("version") + "/" + this.workflow;},
-     actionPath: function() {return "/envs/" + this.instanceId + "/actions/" + this.workflow;}
+     actionPath: function() {return "/envs/" + this.instanceId + "/workflows/" + this.workflow;}
   });
 
 

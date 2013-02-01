@@ -4,7 +4,7 @@ define ["genesis", "backbone", "cs!modules/settings/users", "modules/status", "m
   class Groups.Model extends Backbone.Model
     urlRoot: URL
   class GroupUsers extends Backbone.Collection
-    initialize: (groupId) ->
+    initialize: (models, groupId) ->
       @groupId = groupId
 
     url: ->
@@ -111,7 +111,7 @@ define ["genesis", "backbone", "cs!modules/settings/users", "modules/status", "m
 
     initialize: (options) ->
       @group = options.group
-      @groupUsers = new GroupUsers(@group.id)
+      @groupUsers = new GroupUsers([], @group.id)
       @users = new Users.Collections.People()
       @groupRolesArray = []
       unless @group.isNew()
