@@ -32,17 +32,16 @@ class WorkflowDeclaration(dsClozures: Option[Closure[Unit]], dataSourceFactories
     val variableBuilders = variablesBlock match {
       case Some(block) =>
         val varsDecl = new VariableDeclaration(dsClozures, dataSourceFactories, projectId)
-        defaultEnvConfig.foreach {
-          varsDecl.getBuilders += new EnvConfigVariableBuilder(dsClozures, dataSourceFactories, projectId, _)
-        }
+        varsDecl.getBuilders ++= envConfigVarBuilder
         Delegate(block).to(varsDecl).getBuilders
-      case None => Seq[VariableBuilder]()
+      case None => envConfigVarBuilder
     }
 
     val vars = for(builder <- variableBuilders) yield builder.newVariable
     vars.toList
   }
 
+  def envConfigVarBuilder = defaultEnvConfig.toSeq.map(new EnvConfigVariableBuilder(dsClozures, dataSourceFactories, projectId, _))
 }
 
 class RequirementsHandler extends GroovyObjectSupport with Delegate {
