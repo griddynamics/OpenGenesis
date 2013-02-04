@@ -1,5 +1,16 @@
-define ["genesis", "modules/status", "services/backend", "modules/validation", "backbone", "jquery", "jvalidate", "fcbcomplete"], (genesis, status, backend, validation, Backbone, $) ->
+define [
+  "genesis",
+  "modules/status",
+  "services/backend",
+  "modules/validation",
+  "backbone",
+  "jquery",
+  "jvalidate",
+  "fcbcomplete"],
+(genesis, status, backend, validation, Backbone, $) ->
+
   Roles = genesis.module()
+
   LANG =
     ROLE_GENESIS_ADMIN: "System Administrator"
     "ROLE_GENESIS_ADMIN.description": "Have full control over genesis application"
@@ -12,16 +23,13 @@ define ["genesis", "modules/status", "services/backend", "modules/validation", "
     ROLE_GENESIS_PROJECT_USER: "Project User"
     "ROLE_GENESIS_PROJECT_USER.description": "Have access to project environments<br/> <br/>if environment security disabled, can create and execute actions against all project's environments, <br/>otherwise access is restricted to specific environments"
 
-  class Roles.Model extends Backbone.Model
+  class Roles.Model extends genesis.Backbone.Model
     idAttribute: "name"
+    linkType: backend.LinkTypes.Role
+
     initialize: (values, options) ->
       @projectId = options.projectId  if options.projectId
-
-    parse: (json) ->
-      if json.result
-        json.result
-      else
-        json
+      @_editLink = _(options.links).find(@linkType.edit)
 
     url: ->
       if @projectId
@@ -36,18 +44,17 @@ define ["genesis", "modules/status", "services/backend", "modules/validation", "
     initialize: (options) ->
       _.bind @render, this
       @collection = new Backbone.Collection()
-      rolesLoader = (if (options.projectId) then backend.AuthorityManager.projectRoles else backend.AuthorityManager.roles)
+      rolesLoader = (if (options.projectId) then `_.partial(backend.AuthorityManager.projectRoles, options.projectId)` else backend.AuthorityManager.roles)
       $.when(rolesLoader()).done (roles) =>
         modelOptions = (if (options.projectId) then projectId: options.projectId else {})
-        @roles = _(roles).map((item) ->
-          new Roles.Model(
-            name: item
-          , modelOptions)
+        @roles = _(roles.items).map((item) ->
+          new Roles.Model(name: item.name, `_.extend(modelOptions, {links: item.links})`)
         )
         @listView = new RolesList(
           collection: @collection
           el: @el
           projectId: options.projectId
+          readonly: _(@roles).any((role) -> not role.canEdit())
         )
         @currentView = @listView
         @reloadRoles()
@@ -83,7 +90,6 @@ define ["genesis", "modules/status", "services/backend", "modules/validation", "
         @reloadRoles()
         @render()
 
-
     render: ->
       @currentView.render()  if @currentView?
 
@@ -92,6 +98,7 @@ define ["genesis", "modules/status", "services/backend", "modules/validation", "
     initialize: (options) ->
       @collection.bind "reset", @render, this
       @projectId = options.projectId
+      @readonly = options.readonly || false
 
     render: ->
       $.when(genesis.fetchTemplate(@template)).done (tmpl) => #, this.collection.fetch()
@@ -99,7 +106,8 @@ define ["genesis", "modules/status", "services/backend", "modules/validation", "
           projectId: @projectId
           roles: @collection.toJSON()
           LANG: LANG,
-          utils: genesis.utils
+          utils: genesis.utils,
+          canEdit: not @readonly
         )
 
   class RoleEdit extends Backbone.View

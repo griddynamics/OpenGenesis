@@ -1,12 +1,23 @@
-define ["genesis", "modules/status", "modules/validation", "backbone", "jquery", "jvalidate"], (genesis, status, validation, Backbone, $) ->
-  Plugins = genesis.module()
-  class Plugins.Model extends Backbone.Model
+define [
+  "genesis",
+  "services/backend",
+  "modules/status",
+  "modules/validation",
+  "backbone",
+  "jquery",
+  "jvalidate"],
+(genesis, backend, status, validation, Backbone, $) ->
 
-  class Plugins.Collection extends Backbone.Collection
+  Plugins = genesis.module()
+
+  class Plugins.Model extends genesis.Backbone.Model
+    linkType: backend.LinkTypes.PluginDetails
+
+  class Plugins.Collection extends genesis.Backbone.Collection
     model: Plugins.Model
     url: "rest/plugins"
-    parse: (json) ->
-      json.items
+#    parse: (json) ->
+#      if json.items then json.items else json
 
   class Plugins.Views.Main extends Backbone.View
     template: "app/templates/settings/plugins.html"
@@ -99,7 +110,8 @@ define ["genesis", "modules/status", "modules/validation", "backbone", "jquery",
         )
         @$el.html tmpl(
           plugin: @plugin.toJSON()
-          settings: settings
+          settings: settings,
+          canSave: @plugin.canEdit(),
         )
         validation.bindValidation @plugin, @$("#edit-plugin-settings"), status.StatusPanel
 

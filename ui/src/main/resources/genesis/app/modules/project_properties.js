@@ -5,14 +5,13 @@ define([
   "modules/projects",
   "modules/project_properties/env_configurations",
   "modules/project_properties/credentials",
-  "modules/project_properties/other_settings",
   "modules/project_properties/servers",
   "cs!modules/settings/roles",
   "cs!modules/settings/databags",
   "modules/project_properties/template_repo"
 ],
 
-function(genesis, Backbone, backend, Projects, EnvConfigs, Credentials, OtherSettings, Servers, Roles, Databags, TemplateRepo) {
+function(genesis, Backbone, backend, Projects, EnvConfigs, Credentials, Servers, Roles, Databags, TemplateRepo) {
   var ProjectProperties = genesis.module();
 
   ProjectProperties.Views.Main = Backbone.View.extend({

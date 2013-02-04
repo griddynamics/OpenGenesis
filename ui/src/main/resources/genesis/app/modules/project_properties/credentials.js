@@ -1,39 +1,34 @@
 define([
   "genesis",
+  "services/backend",
   "modules/status",
   "modules/validation",
   "backbone",
   "jquery",
   "jvalidate"
 ],
-function(genesis, status, validation, Backbone, $) {
+function(genesis, backend, status, validation, Backbone, $) {
 
   var Credentials = genesis.module();
 
-  Credentials.Model = Backbone.Model.extend({
+  Credentials.Model = genesis.Backbone.Model.extend({
+    linkType: backend.LinkTypes.Credentials,
 
     urlRoot: function() {
       return "rest/projects/" + this.get("projectId") + "/credentials";
     }
   });
 
-  Credentials.Collection = Backbone.Collection.extend({
+  Credentials.Collection = genesis.Backbone.Collection.extend({
     model: Credentials.Model,
     projectId: null,
+    linkType: backend.LinkTypes.Credentials,
 
     initialize: function(elements, options) {
       this.projectId = options.projectId;
     },
 
-    url: function() { return "rest/projects/" + this.projectId + "/credentials"; },
-
-    parse: function(json) {
-      if (json.items) {
-        return json.items;
-      } else {
-        return json;
-      }
-    }
+    url: function() { return "rest/projects/" + this.projectId + "/credentials"; }
   });
 
   Credentials.Views.Main = Backbone.View.extend({
@@ -56,7 +51,7 @@ function(genesis, status, validation, Backbone, $) {
     },
 
     createCredentials: function() {
-      this.setCurrentView(new CreateView({el: this.el, projectId: this.projectId}));
+      this.setCurrentView(new CreateView({el: this.el, projectId: this.projectId, collection: this.collection}));
 
       var self = this;
       this.currentView.bind("back", function() {
@@ -120,7 +115,11 @@ function(genesis, status, validation, Backbone, $) {
     render: function() {
       var self = this;
       $.when(genesis.fetchTemplate(this.template)).done(function(tmpl) {
-        self.$el.html( tmpl({"credentials" : self.collection.toJSON()}));
+        self.$el.html( tmpl({
+          "credentials" : self.collection.toJSON(),
+          "canCreate": self.collection.canCreate(),
+          "accessRights": self.collection.itemAccessRights()
+        }));
         self.dialog = self.initConfirmationDialog();
         self.delegateEvents(self.events);
       });
@@ -154,7 +153,7 @@ function(genesis, status, validation, Backbone, $) {
         cloudProvider: this.$("input[name='cloudProvider']").val(),
         pairName: this.$("input[name='pairName']").val(),
         identity: this.$("input[name='identity']").val(),
-        credential: this.$("textarea[name='credentials']").val()
+        credential: this.$("textarea[name='credentials']").val(),
       });
 
       validation.bindValidation(credentials, this.$("#install-credentials"), this.status);
@@ -166,7 +165,9 @@ function(genesis, status, validation, Backbone, $) {
     render: function() {
       var self = this;
       $.when(genesis.fetchTemplate(this.template)).done(function(tmpl) {
-        self.$el.html( tmpl() );
+        self.$el.html(
+          tmpl({ canEdit: self.collection.canCreate() })
+        );
         self.$("textarea[name='credentials']").on("keyup", function() {
           var $this = $(this);
           if($this.css("height") !== "350px" && $this.val().indexOf("\n") != -1) {

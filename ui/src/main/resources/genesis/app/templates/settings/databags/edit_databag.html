@@ -4,7 +4,7 @@
   </div>
   <div class="panel">
     <div class="notification" style="display:none"></div>
-    <form id="edit-databag">
+    <form id="edit-databag" <% if (!canSave) { %> class="readonly" <% } %> >
       <table class="forform-table wide" >
         <tr>
           <td class="label-required label-column" style="width: 12%"><label for="name">* Name</label></td>

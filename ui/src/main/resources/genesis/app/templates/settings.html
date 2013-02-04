@@ -19,10 +19,10 @@
         <a href="javascript:void(0)" class="tab tab-selected" id="settings-panel-tab-header" rel="#config-panel"> <span> System settings </span></a>
         <% if (users) { %><a href="javascript:void(0)" id="user-panel-tab-header" class="tab" rel="#user-panel" ><span> Users </span></a><% } %>
         <% if (groups) { %><a href="javascript:void(0)" id="group-panel-tab-header" class="tab" rel="#group-panel" ><span> Groups </span></a><% } %>
-        <a href="javascript:void(0)" id="roles-panel-tab-header" class="tab" rel="#roles-panel" ><span> Roles </span></a>
-        <a href="javascript:void(0)" id="plugin-panel-tab-header" class="tab" rel="#plugin-panel" ><span> Plugins </span></a>
-        <a href="javascript:void(0)" id="databags-panel-tab-header" class="tab" rel="#databags-panel" ><span> Data bags </span></a>
-        <a href="javascript:void(0)" id="agents-panel-tab-header" class="tab" rel="#agents-panel" ><span> Agents </span></a>
+        <% if (roles) { %> <a href="javascript:void(0)" id="roles-panel-tab-header" class="tab" rel="#roles-panel" ><span> Roles </span></a> <% } %>
+        <% if (plugins) { %> <a href="javascript:void(0)" id="plugin-panel-tab-header" class="tab" rel="#plugin-panel" ><span> Plugins </span></a> <% } %>
+        <% if (databags) { %> <a href="javascript:void(0)" id="databags-panel-tab-header" class="tab" rel="#databags-panel" ><span> Data bags </span></a> <% } %>
+        <% if (agents) { %> <a href="javascript:void(0)" id="agents-panel-tab-header" class="tab" rel="#agents-panel" ><span> Agents </span></a> <% } %>
     </div>
     <div id="panel">
 

@@ -12,26 +12,26 @@ function(genesis, status, backend, Backbone, $, validation) {
 
   var Projects = genesis.module();
 
-  Projects.Model = Backbone.Model.extend({
-    parse: function(json){
-      if (json.result) {
-        return json.result
-      } else {
-        return json
-      }
+  Projects.Model = genesis.Backbone.Model.extend({
+    linkType: backend.LinkTypes.Project,
+    parseLinks: function(links) {
+      genesis.Backbone.Model.prototype.parseLinks.call(this, links);
+      this._propertiesLink = _(links).find(backend.LinkTypes.ProjectSettings.any);
+    },
+
+    canAccessProperties: function() {
+      return !_.isUndefined(this._propertiesLink);
     },
 
     urlRoot: "rest/projects"
   });
 
-  Projects.Collection = Backbone.Collection.extend({
+  Projects.Collection = genesis.Backbone.Collection.extend({
     model: Projects.Model,
-    url: "rest/projects",
-    parse: function(json) {
-      if (json.items)
-        return json.items
-      else
-        return json;
+    linkType: backend.LinkTypes.Project,
+
+    initialize: function(models, options) {
+      if (options.url) this.url = options.url;
     }
   });
 
@@ -40,11 +40,7 @@ function(genesis, status, backend, Backbone, $, validation) {
 
     initialize: function(options) {
       this.collection = options.collection;
-
-      var self = this;
-      this.collection.fetch().done(function() {
-        self.render();
-      });
+      this.collection.fetch().done(_.bind(this.render, this));
     },
 
     render: function(done) {
@@ -53,7 +49,7 @@ function(genesis, status, backend, Backbone, $, validation) {
         self.$el.html(
           tmpl({
             "projects" : self.collection.toJSON(),
-            "currentUser": genesis.app.currentUser,
+            "showCreateLink": self.collection.canCreate(),
             "utils": genesis.utils
           })
         );
@@ -75,7 +71,11 @@ function(genesis, status, backend, Backbone, $, validation) {
     initialize: function(options) {
       this.project = options.project;
 
-      this.project.fetch().done(_.bind(this.render, this));
+      if (this.project.id) {
+        this.project.fetch().done(_.bind(this.render, this));
+      } else {
+        this.render();
+      }
     },
 
     onSave: function() {
@@ -131,7 +131,10 @@ function(genesis, status, backend, Backbone, $, validation) {
     render: function(){
       var self = this;
       $.when(genesis.fetchTemplate(this.template)).done(function(tmpl) {
-        self.$el.html( tmpl({"project" : self.project.toJSON()}));
+        self.$el.html( tmpl({
+          "project" : self.project.toJSON(),
+          "readonly": !self.project.isNew() && !self.project.canEdit()
+        }));
         self.delegateEvents(self.events);
         self.status = new status.LocalStatus({el: self.$(".notification")});
         self.confirmationDialog = self.createConfirmationDialog(self.$("#dialog-delete-project"));

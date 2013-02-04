@@ -14,7 +14,7 @@ define([
 function(genesis, Backbone, status, property, access, roles, validation, backend, $) {
   var EnvConfigs = genesis.module();
 
-  EnvConfigs.Model = Backbone.Model.extend({
+  EnvConfigs.Model = genesis.Backbone.Model.extend({
     defaults: {
       description: ""
     },
@@ -27,13 +27,20 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
       return "rest/projects/" + this.projectId + "/configs"
     },
 
-    parse: function(original) {
-      return original.result ? original.result : original;
+    hasAccessRestrictions: function() {
+      return !_.isUndefined(this._accessLink);
+    },
+
+    parseLinks: function(links) {
+      this._editLink = _(links).find(backend.LinkTypes.EnvConfig.edit);
+      this._deleteLink = _(links).find(backend.LinkTypes.EnvConfig.delete);
+      this._accessLink = _(links).find(backend.LinkTypes.EnvConfigAccess.get);
     }
   });
 
-  EnvConfigs.Collection = Backbone.Collection.extend({
+  EnvConfigs.Collection = genesis.Backbone.Collection.extend({
     model: EnvConfigs.Model,
+    linkType: backend.LinkTypes.EnvConfig,
 
     initialize: function(options) {
        this.projectId = options.projectId;
@@ -41,14 +48,6 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
 
     url: function() {
        return "rest/projects/" + this.projectId + "/configs"
-    },
-
-    parse: function(json) {
-       if (json.items) {
-         return json.items;
-       } else {
-         return json;
-       }
     }
   });
 
@@ -104,7 +103,7 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
     },
 
     showEditView: function(model) {
-      this.currentView = new EditConfigView({model: model, el: this.el});
+      this.currentView = new EditConfigView({model: model, el: this.el, collection: this.collection});
       var self = this;
       this.currentView.bind("back", function() {
         self.currentView.unbind();
@@ -159,7 +158,12 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
     render: function() {
       var self = this;
       $.when(genesis.fetchTemplate(this.template), this.collection.fetch()).done(function(tmpl) {
-        self.$el.html(tmpl({"configs": self.collection.toJSON()}));
+        self.$el.html(tmpl({
+          "configs": self.collection.toJSON(),
+          "canCreate": self.collection.canCreate(),
+          "accessRights": self.collection.itemAccessRights()
+        }));
+
         self.dialog = self.dialog || self.initConfirmationDialog();
       });
     }
@@ -271,10 +275,10 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
         var attributes = self.model.get("items") || [];
         var items = _.chain(attributes).keys().map(function(key) { return new Item({name: key, value: attributes[key]}) }).value();
         var itemsCollection = new ItemsCollection(items);
-
         self.$el.html( tmpl({
           config: self.model.toJSON(),
-          access_security: genesis.app.currentConfiguration['environment_security_enabled']
+          canEdit: self.model.canEdit()|| self.collection.canCreate(),
+          access_security: self.model.hasAccessRestrictions()//genesis.app.currentConfiguration['environment_security_enabled']
         }) );
         self.propertyView = new property.Views.PropertyEditor({
           collection: itemsCollection,
