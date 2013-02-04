@@ -278,7 +278,7 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
         self.$el.html( tmpl({
           config: self.model.toJSON(),
           canEdit: self.model.canEdit()|| self.collection.canCreate(),
-          access_security: self.model.hasAccessRestrictions()//genesis.app.currentConfiguration['environment_security_enabled']
+          access_security: genesis.app.currentConfiguration['environment_security_enabled']
         }) );
         self.propertyView = new property.Views.PropertyEditor({
           collection: itemsCollection,

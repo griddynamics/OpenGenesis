@@ -35,7 +35,8 @@ class RootController {
     Map(
       "user" -> GenesisRestController.getCurrentUser,
       "configuration" -> Map(
-        "locale" -> (request.getLocale.getLanguage + "-" + request.getLocale.getCountry)
+        "locale" -> (request.getLocale.getLanguage + "-" + request.getLocale.getCountry),
+        "environment_security_enabled" -> envSecurityService.restrictionsEnabled
       ),
       "links" -> links
     )
