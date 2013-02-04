@@ -56,13 +56,9 @@ class RolesController extends RestApiExceptionsHandler {
   @ResponseBody
   @AddSelfLinks(methods = Array(GET), modelClass = classOf[ApplicationRole])
   def listSystemRoles(request: HttpServletRequest) : CollectionWrapper[ItemWrapper[ApplicationRole]] = {
-      val builtRoles = authorityService.listAuthorities.map(s => ApplicationRole(s))
-      wrap(builtRoles) {
-        role => {
-          role.withLinksToSelf(WebPath(request) / role.name, GET, PUT)
-        }
-      }
-    }
+    val builtRoles = authorityService.listAuthorities.map(s => ApplicationRole(s))
+    builtRoles.map { role => role.withLinksToSelf(request / role.name, GET, PUT) }
+  }
 
   @RequestMapping(value = Array("projectRoles"), method = Array(RequestMethod.GET))
   @ResponseBody

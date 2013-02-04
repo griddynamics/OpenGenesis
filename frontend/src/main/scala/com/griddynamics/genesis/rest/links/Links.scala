@@ -28,10 +28,13 @@ object WebPath {
 }
 
 object LinkBuilder {
+
   def apply(href: String, rel: LinkTarget, methods: RequestMethod*) =
     Link(href, rel.toRel, None, (methods.toList).map(_.toString.toLowerCase).toArray)
+
   def apply(href: String, rel: LinkTarget, modelClazz: Class[_], methods: RequestMethod*) =
     Link(href, rel.toRel, modelClazz, (methods.toList).map(_.toString.toLowerCase).toArray)
+
   implicit def toContentType(modelClazz: Class[_]): Some[String] = {
     Some(s"application/vnd.griddynamics.genesis.${modelClazz.getSimpleName}+json")
   }

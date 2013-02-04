@@ -4,7 +4,7 @@
   </div>
   <div class="panel">
     <div class="notification" style="display:none"></div>
-    <form id="edit-server-array">
+    <form id="edit-server-array" <% if (!canEdit) { %>class = "readonly" <% } %>>
       <table class="forform-table wide" >
         <tr>
           <td class="label-required label-column"><label for="name">* Name</label></td>

@@ -1,16 +1,20 @@
 <div id="top-panel">
     <div id="page-title"><img id="project-icon" src="assets/img/project32.png" alt="Project"><h1><%= project.name %></h1></div>
     <span id="tools-panel" >
-      <a id="project-settings" href="#project/<%= project.id %>/properties" class="button" style="display: none">
-        <span style=""> Project settings... </span>
-      </a>
+      <% if(canAccessProperties) { %>
+          <a id="project-settings" href="#project/<%= project.id %>/properties" class="button" >
+            <span style=""> Project settings... </span>
+          </a>
+      <% } %>
     </span>
 </div>
 <div id="content-wrapper">
 <div id="content">
     <div id="management-panel">
         <div id="buttons">
-            <a href="/project/<%= project.id %>/createEnvInst" id="create-env-button" class="button executable" > <span> Create new instance... </span> </a>
+            <% if (canCreateEnvs) { %>
+                <a href="/project/<%= project.id %>/createEnvInst" id="create-env-button" class="button executable" > <span> Create new instance... </span> </a>
+            <% } %>
         </div>
         <div id="right">
           <label for="filter-statuses">Filter <input id="filter-name" type="text" value="<%= filter.namePart %>" data-access-all="true"></label>

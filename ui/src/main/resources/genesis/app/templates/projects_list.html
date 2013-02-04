@@ -1,6 +1,6 @@
 <div id="top-panel" >
   <div id="page-title"><img id="prj-list-icon" src="assets/img/project-list.png" alt="List"><h1>Project list</h1></div>
-  <% if (currentUser.administrator) { %>
+  <% if (showCreateLink) { %>
     <a href="admin/create/project" class="button executable"> <span> Create project... </span> </a>
   <% } %>
 </div>

@@ -4,7 +4,7 @@
 <div  style="display: block; ">
   <div class="top-panel">
       <div class="page-title"><h2>Environment configurations</h2></div>
-      <a href="javascript:void(0)" class="button add-config executable"> <span> Add... </span> </a>
+      <% if (canCreate) {  %> <a href="javascript:void(0)" class="button add-config executable"> <span> Add... </span> </a> <% } %>
   </div>
 
   <div class="panel">
@@ -25,7 +25,7 @@
             <td ><%- config.description %></td>
             <td class="actions">
               <a href="javascript:void(0)" class="edit-config" data-config-id="<%= config.id %>">Edit</a>
-              <a href="javascript:void(0)" class="delete-config executable" data-config-id="<%= config.id %>">Delete</a>
+              <% if (accessRights[config.id].canDelete) { %><a href="javascript:void(0)" class="delete-config executable" data-config-id="<%= config.id %>">Delete</a> <% } %>
             </td>
           </tr>
           <% } %>

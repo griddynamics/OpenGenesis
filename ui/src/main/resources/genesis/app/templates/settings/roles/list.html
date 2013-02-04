@@ -1,4 +1,4 @@
-<div  style="display: block; ">
+<div  style="display: block; "  <% if (!canEdit) {%> class="readonly" <% } %> >
   <div class="top-panel">
     <div class="page-title"><h2><% if (projectId) { %> Project <% } else { %> System <% } %> Roles</h2></div>
   </div>

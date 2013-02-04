@@ -12,14 +12,16 @@ define [
   Agents = genesis.module()
 
   URL = "rest/agents"
-  class Agents.Model extends Backbone.Model
-    urlRoot: URL
 
-  class Agents.Collection extends Backbone.Collection
+  class Agents.Model extends genesis.Backbone.Model
+    urlRoot: URL
+    linkType: backend.LinkTypes.RemoteAgent
+
+  class Agents.Collection extends genesis.Backbone.Collection
     model: Agents.Model
     url: URL
-    parse: (json) ->
-      json.items
+    linkType: backend.LinkTypes.RemoteAgent
+
 
   class Agents.Views.Main extends Backbone.View
     events:
@@ -43,7 +45,7 @@ define [
       @showEditView(@collection.get(agentId));
 
     showEditView: (model) ->
-      @currentView = new Agents.Views.Edit({model: model, el: @el})
+      @currentView = new Agents.Views.Edit(model: model, collection: @collection, el: @el)
       self = this
       @currentView.bind "back", ->
         self.currentView.unbind()
@@ -103,7 +105,11 @@ define [
 
     render: =>
       $.when(genesis.fetchTemplate(@template), @collection.fetch()).done (tmpl) =>
-        @$el.html tmpl(agents: @collection.toJSON())
+        @$el.html tmpl(
+          agents: @collection.toJSON()
+          canCreate: @collection.canCreate()
+          accessRights: @collection.itemAccessRights()
+        )
         @dialog = @dialog or @initConfirmationDialog()
 
   class Agents.Views.Edit extends Backbone.View
@@ -133,6 +139,9 @@ define [
 
     render: ->
       $.when(genesis.fetchTemplate(@template), @model.fetch()).done (tmpl) =>
-        @$el.html tmpl({agent: @model.toJSON()})
+        @$el.html tmpl(
+          agent: @model.toJSON()
+          canEdit: @model.canEdit() or @collection.canCreate()
+        )
   Agents
 

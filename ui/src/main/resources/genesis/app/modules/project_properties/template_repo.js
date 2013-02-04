@@ -1,5 +1,6 @@
 define([
   "genesis",
+  "services/backend",
   "modules/status",
   "modules/validation",
   "backbone",
@@ -7,16 +8,21 @@ define([
   "jvalidate"
 ],
 
-function(genesis, status, validation, Backbone, $) {
+function(genesis, backend, status, validation, Backbone, $) {
   var TemplateRepo = genesis.module();
 
-  TemplateRepo.Model = Backbone.Model.extend({
+  TemplateRepo.Model = genesis.Backbone.Model.extend({
+    linkType: backend.LinkTypes.TemplateRepo,
+
     initialize: function(options) {this.set("projectId", options.projectId);},
 
     urlRoot: function() {
       return "rest/projects/" + this.get("projectId") + "/template/repository";
     },
 
+    parseLinks: function(links) {
+      this._editLink = _(links).find(this.linkType.edit);
+    }
   });
 
   TemplateRepo.Views.Main = Backbone.View.extend({
@@ -37,7 +43,7 @@ function(genesis, status, validation, Backbone, $) {
     },
 
     editable: function() {
-      return _.all(this.model.get("configuration"), function(cp){
+      return this.model.canEdit() && _.all(this.model.get("configuration"), function(cp){
         return !cp.readOnly
       });
     },
