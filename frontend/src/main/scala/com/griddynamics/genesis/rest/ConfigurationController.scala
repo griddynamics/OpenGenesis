@@ -80,7 +80,10 @@ class ConfigurationController extends RestApiExceptionsHandler{
   def get(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest): ItemWrapper[Configuration] = {
     val item: ItemWrapper[Configuration] =
       configRepository.get(projectId, id).getOrElse(throw new ResourceNotFoundException("Can not find environment configuration id = %d".format(id)))
-    item.withLinks(LinkBuilder(WebPath(request) / "access", LinkTarget.COLLECTION, classOf[Access], GET, PUT)).filtered()
+    if (envAuthService.restrictionsEnabled)
+      item.withLinks(LinkBuilder(WebPath(request) / "access", LinkTarget.COLLECTION, classOf[Access], GET, PUT)).filtered()
+    else
+      item
   }
 
   @ResponseBody

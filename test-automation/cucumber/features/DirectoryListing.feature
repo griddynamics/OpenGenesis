@@ -10,7 +10,7 @@ Feature: In order to better navigate on REST api I need to see top-level links f
     Examples:
       |url      |type                                 |rel       |methods|
       |/rest/projects|application/vnd.griddynamics.genesis.Project+json|collection|get   |
-      |/rest/settings|application/vnd.griddynamics.genesis.Link+json   |collection|get   |
+      |/rest/settings|application/vnd.griddynamics.genesis.SystemSettings+json   |collection|get   |
 
   Scenario Outline: System readonly should see links to projects and to settings
     When I successfully created user with parameters
@@ -27,7 +27,7 @@ Feature: In order to better navigate on REST api I need to see top-level links f
   Examples:
     |url      |type                                 |rel       |methods|
     |/rest/projects|application/vnd.griddynamics.genesis.Project+json|collection|get   |
-    |/rest/settings|application/vnd.griddynamics.genesis.Link+json   |collection|get   |
+    |/rest/settings|application/vnd.griddynamics.genesis.SystemSettings+json   |collection|get   |
 
   Scenario Outline: User without special privileges should see link to projects
     When I successfully created user with parameters
