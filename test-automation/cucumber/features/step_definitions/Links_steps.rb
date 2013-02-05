@@ -13,7 +13,7 @@ When /^User "(.+)" with password "(.*)" requests url "(.*)"$/ do |user, password
 end
 
 Then /^(?:I|He|She) get links as "(.*)", "(.*)", "(.*)", "(.*)"$/ do |url, type, rel, methods|
-  obj = @response_obj.find {|x| x["href"] == full_url(url)}
+  obj = @response_obj["links"].find {|x| x["href"] == full_url(url)}
   obj.should_not be_nil
   expected_methods = methods.split(",")
   expected_methods.each do |method|
@@ -24,7 +24,7 @@ Then /^(?:I|He|She) get links as "(.*)", "(.*)", "(.*)", "(.*)"$/ do |url, type,
 end
 
 Then /^(?:I|He|She) get no links as "(.*)"$/ do |url|
-  obj = @response_obj.find {|x| x["href"] == full_url(url)}
+  obj = @response_obj["links"].find {|x| x["href"] == full_url(url)}
   puts obj
   obj.should be_nil
 end

@@ -12,7 +12,7 @@ When /^I'm listing existing configurations in the project '(.+)'$/ do |project|
 end
 
 Then /^I should get a list of configurations, including '(.+)' for the project '(.+)'$/ do |name, project|
-  conf = @last_response.find {|c| c["name"] == name}
+  conf = @last_response["items"].find {|c| c["name"] == name}
   conf.should_not be_nil, "Expected to get config with name #{name} but got none"
 end
 
@@ -61,9 +61,10 @@ Given /User '(.+)' is a project user of a project '(.+)'/ do |username, project|
 
   project_resource project, "/roles/ROLE_GENESIS_PROJECT_USER" do |r|
     response = JSON.parse(r.get.body)
-    user = response["result"]["users"].find {|u| u == username}
+    user = response["users"].find {|u| u == username}
     if user.nil?
-      r.put({:users => [username], :groups => []})
+      resp = r.put({:users => [username], :groups => []})
+      resp.code.should eq(200), "Failed to assign user to genesis project user role. Response: #{resp}"
     end
   end
 end
@@ -79,9 +80,14 @@ When /^I remove permissions to configuration '(.+)' from user '(.+)' in project 
 end
 
 When /^I create an environment simple '(.+)' in project '(.+)' with configuration '(.+)'$/ do |env_name, project, config_name|
-  conf = find_config_in_project(config_name, project)
   @last_response = environments_resource project do |resource, id|
-    resource.post(create_environment(env_name, "Simple", "0.1").merge({:configId => conf["id"]}))
+    parameters = create_environment(env_name, "Simple", "0.1")
+    configurations = find_var_for_workflow_s(project, "Simple", "0.1", "create", "$envConfig")
+    configurations.should_not be_nil
+    conf_id = configurations["values"].key(config_name)
+    conf_id.should_not be_nil, "There must exist config for name #{config_name} in variables"
+    parameters[:variables] = parameters[:variables].merge({:$envConfig => conf_id})
+    resource.post(parameters)
   end
   @last_response.code.should eq(200), "Failed to create environment. Response: #{@last_response}"
 end
@@ -97,8 +103,7 @@ Then /^User '(.+)' should see environment '(.+)' in environments list in project
   r = resource("projects/#{project_id}/envs", :username => username, :password => username)
   result = r.get
   result.code.should eq(200), "User should be able to read environment info, but got following error instead: #{result}"
-
-  env_from_list = JSON.parse(result.body).find {|e| e["name"] == env_name}
+  env_from_list = r.find_by_name(env_name)
   env_from_list.should_not be_nil, "Failed to find env #{env_name} in envs list for user #{username}"
 end
 
@@ -118,19 +123,28 @@ end
 
 Then /^User '(.+)' should not see environment '(.+)' in environments list in the project '(.+)'$/ do |username, env_name, project|
   project_id = project_id(project)
-  r = resource("projects/#{project_id}/envs", :username => username, :password => username).get
-  r.code.should eq(200), "Failed to get envs for project #{project_id} via user account #{username}"
-  env = JSON.parse(r.body).find {|e| e["name"] == env_name }
+  r = resource("projects/#{project_id}/envs", :username => username, :password => username)
+  r.get.code.should eq(200), "Failed to get envs for project #{project_id} via user account #{username}"
+  env = r.find_by_name(env_name)
   env.should be_nil, "User can see account he doesn't have access to"
 end
 
+Then /^User '(.+)' can't see configuration '(.+)' in the project '(.+)' as a workflow parameter$/ do |username, configuration, project|
+  configurations = find_var_for_workflow(project, "Simple", "0.1", "create", "$envConfig", username, username)
+  puts configurations
+  configurations["values"].key(configuration).should be_nil, "User #{username} should not see config #{configuration}"
+end
 
 When /^User '(.+)' creates simple environment '(.+)' in the project '(.+)' with configuration '(.+)'$/ do |username, env_name, project, configuration|
-  conf = find_config_in_project(configuration, project)
   project_id = project_id(project)
-
+  configurations = find_var_for_workflow(project, "Simple", "0.1", "create", "$envConfig", username, username)
+  configurations.should_not be_nil
+  conf_id = configurations["values"].key(configuration)
+  conf_id.should_not be_nil, "There must exist config for name #{configuration} in variables"
+  parameters = create_environment(env_name, "Simple", "0.1")
+  parameters[:variables] = parameters[:variables].merge({:$envConfig => conf_id})
   r = resource("projects/#{project_id}/envs", :username => username, :password => username)
-  @last_response = r.post(create_environment(env_name, "Simple", "0.1").merge({:configId => conf["id"]}))
+  @last_response = r.post(parameters)
 end
 
 Then /^User gets (.+) http response code$/ do |code|

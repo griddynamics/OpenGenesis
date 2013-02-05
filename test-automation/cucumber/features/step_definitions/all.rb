@@ -6,7 +6,7 @@ Given /^Genesis is running$/ do
 end
 
   Given /^I am valid admin user$/ do
-  resource :whoami do |r|
+  resource "/" do |r|
     JSON.parse(r.get.body)["administrator"].should eq(true), "It should run as admin user"
   end
 end
@@ -33,7 +33,7 @@ Then /^Compound service error with code (\d+) and error "([^"]*)" should be pres
   end
 end
 Then /^User "([^"]*)" must be able to authenticate itself with password "([^"]*)"$/ do |user, password|
-  resource "whoami", :username => user, :password => password do |resource|
+  resource "/", :username => user, :password => password do |resource|
     r = resource.get
     r.code.should eq(200)
   end
