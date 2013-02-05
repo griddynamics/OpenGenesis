@@ -31,7 +31,9 @@ import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
 import java.sql.Timestamp
 import repository.{AbstractOrderingMapper, AbstractGenericRepository}
+import com.griddynamics.genesis.annotation.RemoteGateway
 
+@RemoteGateway("Genesis database access: ProjectRepository")
 class ProjectRepository extends AbstractGenericRepository[model.Project, api.Project](GenesisSchema.projects)
   with repository.ProjectRepository {
 

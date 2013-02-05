@@ -29,7 +29,9 @@ import model.{EnvStatus, GenesisSchema}
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.beans.factory.annotation.Autowired
+import com.griddynamics.genesis.annotation.RemoteGateway
 
+@RemoteGateway("Genesis database access: ConfigurationRepository")
 class ConfigurationRepositoryImpl extends AbstractGenericRepository[model.Configuration, api.Configuration](GenesisSchema.configuration) with ConfigurationRepository  {
 
   @Autowired var store: AttributeRepository = _

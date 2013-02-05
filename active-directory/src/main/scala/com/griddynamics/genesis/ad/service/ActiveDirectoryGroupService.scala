@@ -28,9 +28,11 @@ import com.griddynamics.genesis.util.Logging
 import com4j.typelibs.ado20.Fields
 import com.griddynamics.genesis.ad._
 import com.griddynamics.genesis.api.UserGroup
+import com.griddynamics.genesis.annotation.RemoteGateway
 
 trait ActiveDirectoryGroupService extends GroupService
 
+@RemoteGateway("Acrive directory access: group service")
 class ActiveDirectoryGroupServiceImpl(val namingContext: String,
                                       val pluginConfig: ActiveDirectoryPluginConfig,
                                       val template: CommandTemplate) extends AbstractActiveDirectoryService with ActiveDirectoryGroupService with Logging {
