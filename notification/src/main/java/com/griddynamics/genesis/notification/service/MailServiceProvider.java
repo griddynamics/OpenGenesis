@@ -23,6 +23,7 @@
 package com.griddynamics.genesis.notification.service;
 
 import com.griddynamics.genesis.configuration.MailServiceContext;
+import com.griddynamics.genesis.logging.RemoteGateway;
 import com.griddynamics.genesis.notification.plugin.EmailSenderConfiguration;
 import com.griddynamics.genesis.notification.plugin.NotificationPluginConfig;
 import com.griddynamics.genesis.notification.template.StringTemplateEngine;
@@ -67,7 +68,7 @@ public class MailServiceProvider implements MailServiceContext {
     }
 
     public EmailService getEmailService() {
-        return new SpringBasedEmailService(emailSenderConfiguration(), getTemplateEngine());
+        return RemoteGateway.apply(new SpringBasedEmailService(emailSenderConfiguration(), getTemplateEngine()), "Email notification sender");
     }
 
     public TemplateEngine getTemplateEngine() {
