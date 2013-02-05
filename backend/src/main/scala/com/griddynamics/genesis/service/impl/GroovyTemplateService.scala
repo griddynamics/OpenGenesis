@@ -283,8 +283,15 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
         val typedVal = convert(String.valueOf(value), variable)
 
         variable.validators.view.map { case (errorMsg, validator) =>
-          validator.setDelegate(new Expando())
+          validator.setDelegate(new Expando() {
+            // must throw exception on missing properties(instead of return null) for delegation to work
+            override def getProperty(name: String) = getProperties.containsKey(name) match {
+              case true => super.getProperty(name)
+              case _ => throw new MissingPropertyException(name, classOf[Expando])
+            }
+          })
           validator.setResolveStrategy(Closure.DELEGATE_FIRST)
+
           context.foreach {
             case (varName, varValue) => validator.setProperty(varName, plainValue(varValue))
           }
