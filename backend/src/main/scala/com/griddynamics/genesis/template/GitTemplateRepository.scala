@@ -34,7 +34,9 @@ import org.eclipse.jgit.treewalk.filter.TreeFilter
 import org.eclipse.jgit.revwalk.{RevCommit, RevWalk}
 import org.eclipse.jgit.lib.{ObjectId, Constants}
 import com.griddynamics.genesis.util.Logging
+import com.griddynamics.genesis.annotation.RemoteGateway
 
+@RemoteGateway("Git template repository")
 class GitTemplateRepository(uri : String,
                             credentials : Credentials,
                             branch : String,
