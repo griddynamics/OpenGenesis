@@ -28,8 +28,9 @@ import com.griddynamics.genesis.repository.AbstractGenericRepository
 import model.{GenesisSchema => GS}
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
+import com.griddynamics.genesis.annotation.RemoteGateway
 
-
+@RemoteGateway("Genesis database access: ServerRepository")
 class ServerRepository extends AbstractGenericRepository[model.Server, api.Server](GS.servers) with repository.ServerRepository {
 
   implicit def convert(entity: model.Server) = new api.Server(fromModelId(entity.id), entity.serverArrayId, entity.instanceId, entity.address, entity.credentialsId)

@@ -28,9 +28,11 @@ import com4j.typelibs.ado20.Fields
 import scala.None
 import com.griddynamics.genesis.ad._
 import com.griddynamics.genesis.api.User
+import com.griddynamics.genesis.annotation.RemoteGateway
 
 trait ActiveDirectoryUserService extends UserService
 
+@RemoteGateway("Acrive directory access: user service")
 class ActiveDirectoryUserServiceImpl(val namingContext: String,
                                      val pluginConfig: ActiveDirectoryPluginConfig,
                                      val template: CommandTemplate) extends AbstractActiveDirectoryService with ActiveDirectoryUserService with Logging {

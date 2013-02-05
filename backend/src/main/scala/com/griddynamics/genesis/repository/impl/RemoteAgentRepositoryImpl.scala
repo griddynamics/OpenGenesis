@@ -31,7 +31,9 @@ import java.sql.Timestamp
 import org.squeryl.PrimitiveTypeMode._
 import org.squeryl.dsl.ast.BinaryOperatorNodeLogicalBoolean
 import org.springframework.transaction.annotation.Transactional
+import com.griddynamics.genesis.annotation.RemoteGateway
 
+@RemoteGateway("Genesis database access: RemoteAgentRepository")
 class RemoteAgentRepositoryImpl extends AbstractGenericRepository[model.RemoteAgent, api.RemoteAgent](GenesisSchema.remoteAgents) with RemoteAgentRepository {
   implicit def convert(m: model.RemoteAgent): RemoteAgent =
     RemoteAgent(Some(m.id), m.host, m.port, m.tags.trim.toLowerCase.split(" "), Some(m.lastTimeAlive.getTime))

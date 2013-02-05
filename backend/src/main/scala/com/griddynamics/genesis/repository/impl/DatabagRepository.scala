@@ -30,7 +30,9 @@ import model.{GenesisSchema => GS}
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
 import org.squeryl.dsl.ast.BinaryOperatorNodeLogicalBoolean
+import com.griddynamics.genesis.annotation.RemoteGateway
 
+@RemoteGateway("Genesis database access: DatabagRepository")
 class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.DataBag](GS.dataBags)
   with repository.DatabagRepository {
 
