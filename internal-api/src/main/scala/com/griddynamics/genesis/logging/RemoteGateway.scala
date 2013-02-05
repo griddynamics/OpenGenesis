@@ -23,7 +23,7 @@
 
 import org.aopalliance.intercept.{MethodInvocation, MethodInterceptor}
 import org.springframework.aop.framework.ProxyFactory
-import com.griddynamics.genesis.util.Logging
+import com.griddynamics.genesis.util.{StringUtils, Logging}
 import com.griddynamics.genesis.annotation.GatewayCall
 import java.lang.reflect.Method
 
@@ -56,8 +56,9 @@ object RemoteGateway extends Logging {
 
 
   def callName[T](invocation: MethodInvocation): String = {
+    import StringUtils._
     val method: Method = invocation.getMethod
     val call = Option(method.getAnnotation(classOf[GatewayCall])).map(_.desc()).getOrElse(method.getName)
-    call
+    splitByCase(call).toLowerCase
   }
 }

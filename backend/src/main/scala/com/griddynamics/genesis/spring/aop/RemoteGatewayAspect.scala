@@ -21,7 +21,7 @@
  *   Description: Continuous Delivery Platform
  */ package com.griddynamics.genesis.spring.aop
 
-import com.griddynamics.genesis.util.Logging
+import com.griddynamics.genesis.util.{StringUtils, Logging}
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.{Around, Pointcut, Aspect}
 import com.griddynamics.genesis.annotation.{GatewayCall, RemoteGateway}
@@ -65,6 +65,6 @@ class RemoteGatewayAspect extends Logging {
       case m: MethodSignature => Option(m.getMethod.getAnnotation(classOf[GatewayCall])).map(_.desc()).getOrElse(m.getName)
       case m => m.getName
     }
-    (call, gatewayName)
+    (StringUtils.splitByCase(call).toLowerCase, gatewayName)
   }
 }
