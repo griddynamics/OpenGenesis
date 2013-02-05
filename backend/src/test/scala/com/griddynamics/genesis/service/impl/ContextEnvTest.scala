@@ -26,7 +26,7 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.util.IoUtil
 import org.springframework.core.convert.support.DefaultConversionService
-import com.griddynamics.genesis.service.{Builders, TemplateRepoService}
+import com.griddynamics.genesis.service.{EnvironmentService, Builders, TemplateRepoService}
 import com.griddynamics.genesis.template.{ListVarDSFactory, TemplateRepository}
 import org.junit.Test
 import com.griddynamics.genesis.core.{RegularWorkflow, GenesisFlowCoordinator}
@@ -63,6 +63,12 @@ class ContextEnvTest extends AssertionsForJUnit with MockitoSugar {
     repo
   }
 
+  val envService = {
+    val serv = mock[EnvironmentService]
+    when(serv.getDefault(Matchers.any())).thenReturn(Some(new api.Configuration(Some(0), "", 0, None, Map())))
+    serv
+  }
+
   val stepCoordinatorFactory = mock[StepCoordinatorFactory]
   val databagRepository = mock[DatabagRepository]
   val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/ContextEnv.genesis"))
@@ -70,7 +76,7 @@ class ContextEnvTest extends AssertionsForJUnit with MockitoSugar {
   Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
   val templateService = new GroovyTemplateService(templateRepoService,
     List(new DoNothingStepBuilderFactory), new DefaultConversionService,
-    Seq(new ListVarDSFactory, new DependentListVarDSFactory), databagRepository, configRepo, NullCacheManager)
+    Seq(new ListVarDSFactory, new DependentListVarDSFactory), databagRepository, envService, NullCacheManager)
 
   val TEST_ENV_ATTR = EntityAttr[String]("test_attr")
   val TEST_ENV_VAL = "test_attr_value"

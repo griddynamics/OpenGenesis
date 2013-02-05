@@ -36,7 +36,7 @@ import repository.{GenesisVersionRepository, SchemaCreator}
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import com.griddynamics.genesis.adapters.MSSQLServerWithPagination
-import service.{AgentsHealthService, impl}
+import service.{EnvironmentService, AgentsHealthService, impl}
 import service.impl._
 import org.springframework.beans.factory.InitializingBean
 import com.griddynamics.genesis.util.Logging
@@ -50,6 +50,8 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 
     @Autowired var projectAuthority: service.ProjectAuthorityService = _
 
+  @Autowired var envAccessService: service.EnvironmentAccessService = _
+
     @Bean def storeService: service.StoreService = new impl.StoreService
 
     @Bean def projectRepository: repository.ProjectRepository = new repository.impl.ProjectRepository
@@ -58,6 +60,7 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 
     @Bean def credentialsRepository: repository.CredentialsRepository = new repository.impl.CredentialsRepository
     @Bean def configurationRepository: repository.ConfigurationRepository = new repository.impl.ConfigurationRepositoryImpl
+    @Bean def environmentService: EnvironmentService = new EnvironmentServiceImpl(configurationRepository, envAccessService)
 
     @Bean def credentialsStoreService: service.CredentialsStoreService = new impl.CredentialsStoreService(credentialsRepository, projectRepository)
 

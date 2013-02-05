@@ -23,8 +23,8 @@
 
 import com.griddynamics.genesis.api.Configuration
 import com.griddynamics.genesis.cache.NullCacheManager
-import com.griddynamics.genesis.repository.{ConfigurationRepository, DatabagRepository}
-import com.griddynamics.genesis.service.{WorkflowDefinition, TemplateRepoService}
+import com.griddynamics.genesis.repository.DatabagRepository
+import com.griddynamics.genesis.service.{EnvironmentService, WorkflowDefinition, TemplateRepoService}
 import com.griddynamics.genesis.template.{VersionedTemplate, TemplateRepository}
 import org.junit.runner.RunWith
 import org.mockito.{Matchers, Mockito}
@@ -60,17 +60,17 @@ class Groovy$envConfigTest extends AssertionsForJUnit with MockitoSugar with Sho
     """
   val templateRepository = mock[TemplateRepository]
   val templateRepoService = mock[TemplateRepoService]
-  val configRepository = mock[ConfigurationRepository]
+  val envConfigService = mock[EnvironmentService]
 
   Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
 
   val defaultConfig = new Configuration(Some(1), "default", 1, None, items = Map(), instanceCount = Some(1))
 
-  Mockito.when(configRepository.findByName(Matchers.anyInt, Matchers.anyString)).thenReturn(Option(defaultConfig))
-  Mockito.when(configRepository.list(Matchers.anyInt)).thenReturn(Seq(defaultConfig))
+  Mockito.when(envConfigService.getDefault(Matchers.anyInt)).thenReturn(Option(defaultConfig))
+  Mockito.when(envConfigService.list(Matchers.anyInt)).thenReturn(Seq(defaultConfig))
 
   val templateService = new GroovyTemplateService(templateRepoService, List(), new DefaultConversionService,
-    Seq(), mock[DatabagRepository], configRepository, NullCacheManager)
+    Seq(), mock[DatabagRepository], envConfigService, NullCacheManager)
   Mockito.when(templateRepository.listSources()).thenReturn(Map(VersionedTemplate("1") -> body))
 
 

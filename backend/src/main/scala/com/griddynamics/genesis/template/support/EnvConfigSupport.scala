@@ -25,10 +25,10 @@ package com.griddynamics.genesis.template.support
 
 import com.griddynamics.genesis.api.Configuration
 import com.griddynamics.genesis.template.{DataSourceFactory, VarDataSource}
-import com.griddynamics.genesis.repository.ConfigurationRepository
 import com.griddynamics.genesis.template.dsl.groovy.{Reserved, DataSourceBuilder, VariableBuilder}
 import groovy.lang.Closure
 import collection.JavaConversions.mapAsJavaMap
+import com.griddynamics.genesis.service.EnvironmentService
 
 object EnvConfigSupport {
   val DS_MODE = "envConfigs"
@@ -36,36 +36,29 @@ object EnvConfigSupport {
   def asGroovyMap(c: Configuration):java.util.Map[String, _] = c.items + ("instanceCount" -> c.instanceCount.getOrElse(0))
 
   def dsBuilder(projectId: Int, dsFactories: Seq[DataSourceFactory]) =
-    new DataSourceBuilder(projectId, dsFactories.find(_.mode == "envConfigs")
-      .getOrElse(throw new IllegalStateException("Env Config datasource factory must be present!")), "envConfigs")
+    new DataSourceBuilder(projectId, dsFactories.find(_.mode == DS_MODE)
+      .getOrElse(throw new IllegalStateException("Env Config datasource factory must be present!")), DS_MODE)
 
   def fakeConfig(projectId: Int) = asGroovyMap(Configuration(Some(0), "Fake", projectId, None))
-
-  def getConfig(repository: ConfigurationRepository, projectId: Int, confId: Any) =
-    repository.get(projectId, Integer.valueOf(confId.toString)).map(asGroovyMap(_))
-      .getOrElse(mapAsJavaMap(Map[String, Any]()))
 }
 
 import EnvConfigSupport._
 
-class EnvConfigDataSource(repository: ConfigurationRepository) extends VarDataSource {
+class EnvConfigDataSource(service: EnvironmentService) extends VarDataSource {
   private var projId: Int = _
 
-  def getData = repository.list(projId).map(c => (c.id.getOrElse(c.name).toString, c.name)).toMap
+  def getData = service.list(projId).map(c => (c.id.getOrElse(c.name).toString, c.name)).toMap
 
   def config(map: Map[String, Any]) {  projId = map.get("projectId").map(_.asInstanceOf[Int]).getOrElse(0)}
 
-  override def default = repository.getDefaultConfig(projId).get.id
+  override def default = service.getDefault(projId).map(_.id).get
 }
 
 
-class EnvConfigDataSourceFactory(repository: ConfigurationRepository) extends DataSourceFactory {
+class EnvConfigDataSourceFactory(service: EnvironmentService) extends DataSourceFactory {
   val mode = DS_MODE
 
-  def newDataSource = new EnvConfigDataSource(repository)
-  def getEnvConfig(projectId: Int, configId: Int) = {
-    repository.get(projectId, configId)
-  }
+  def newDataSource = new EnvConfigDataSource(service)
 }
 
 class EnvConfigVariableBuilder(dsClosure: Option[Closure[Unit]],

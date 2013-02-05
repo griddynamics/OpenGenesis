@@ -49,7 +49,7 @@ class GroovyTemplateServiceContext {
         stepBuilderFactories ++ genericStepDefinitions.map(definition => new ReflectionBasedStepBuilderFactory(definition.name, definition.step)),
         new DefaultConversionService,
         varDataSourceFactories, storeServiceContext.databagRepository,
-        storeServiceContext.configurationRepository, cacheManager)
+        storeServiceContext.environmentService, cacheManager)
 }
 
 @Configuration

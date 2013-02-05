@@ -24,15 +24,14 @@ package com.griddynamics.genesis.service.impl
 
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import com.griddynamics.genesis.service.TemplateRepoService
+import com.griddynamics.genesis.service.{EnvironmentService, TemplateRepoService, ValidationError, VariableDescription}
 import com.griddynamics.genesis.template.{VersionedTemplate, ListVarDSFactory, TemplateRepository}
 import org.springframework.core.convert.support.DefaultConversionService
 import org.junit.Test
 import com.griddynamics.genesis.util.IoUtil
 import org.mockito.{Matchers, Mockito}
-import com.griddynamics.genesis.service.{ValidationError, VariableDescription}
 import com.griddynamics.genesis.plugin.{StepBuilder, GenesisStep}
-import com.griddynamics.genesis.repository.{ConfigurationRepository, DatabagRepository}
+import com.griddynamics.genesis.repository.DatabagRepository
 import com.griddynamics.genesis.api.{DataItem, DataBag}
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
 import com.griddynamics.genesis.cache.NullCacheManager
@@ -42,15 +41,15 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
     val bagRepository = mock[DatabagRepository]
     val templateRepoService = mock[TemplateRepoService]
     Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
-  val configRepo = mock[ConfigurationRepository]
+  val configService = mock[EnvironmentService]
 
-  Mockito.when(configRepo.findByName(Matchers.anyInt, Matchers.anyString)).thenReturn(None)
-  Mockito.when(configRepo.list(Matchers.anyInt)).thenReturn(Seq())
+  Mockito.when(configService.getDefault(Matchers.anyInt)).thenReturn(None)
+  Mockito.when(configService.list(Matchers.anyInt)).thenReturn(Seq())
 
     val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), new DefaultConversionService,
         Seq(new ListVarDSFactory, new DependentListVarDSFactory,
-        new DatabagDataSourceFactory(bagRepository)), bagRepository, configRepo, NullCacheManager)
+        new DatabagDataSourceFactory(bagRepository)), bagRepository, configService, NullCacheManager)
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/ProjectContextExample.genesis"))
 
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))

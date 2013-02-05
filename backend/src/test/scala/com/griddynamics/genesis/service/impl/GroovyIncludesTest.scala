@@ -24,14 +24,13 @@ package com.griddynamics.genesis.service.impl
 
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.junit.AssertionsForJUnit
-import com.griddynamics.genesis.service.TemplateRepoService
+import com.griddynamics.genesis.service.{EnvironmentService, TemplateRepoService}
 import com.griddynamics.genesis.template.{VersionedTemplate, TemplateRepository}
 import com.griddynamics.genesis.util.IoUtil
 import org.springframework.core.convert.support.DefaultConversionService
 import org.mockito.Mockito
 import org.junit.Test
 import com.griddynamics.genesis.cache.NullCacheManager
-import com.griddynamics.genesis.repository.ConfigurationRepository
 
 class GroovyIncludesTest extends AssertionsForJUnit with MockitoSugar  {
     val templateRepository = mock[TemplateRepository]
@@ -39,7 +38,7 @@ class GroovyIncludesTest extends AssertionsForJUnit with MockitoSugar  {
     Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
     val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), new DefaultConversionService,
-        Seq(), null, mock[ConfigurationRepository], NullCacheManager)
+        Seq(), null, mock[EnvironmentService], NullCacheManager)
     val bodyMain = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/Includes.genesis"))
     val bodyInc = "f = {x -> println(\"Test function call.\" + x)}; s = \"Test String value\"; i = 0"
 
