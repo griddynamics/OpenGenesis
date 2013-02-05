@@ -26,6 +26,7 @@ import java.util
 import com.griddynamics.genesis.model.ActionTrackingStatus
 import com.griddynamics.genesis.logging.LoggerWrapper
 import java.sql.Timestamp
+import com.griddynamics.genesis.util.StringUtils
 
 /* Marker trait for any particular action */
 trait Action {
@@ -55,13 +56,7 @@ trait ActionResult {
 }
 
 object DefaultDescription {
-  def toString(obj: AnyRef) = obj.getClass.getSimpleName.replaceAll(
-    String.format("%s|%s|%s", // PascalCaseName  -> Pascal Case Name
-      "(?<=[A-Z])(?=[A-Z][a-z])",
-      "(?<=[^A-Z])(?=[A-Z])",
-      "(?<=[A-Za-z])(?=[^A-Za-z])"
-    ),
-    " ")
+  def toString(obj: AnyRef) = StringUtils.splitByCase(obj.getClass.getSimpleName)
 }
 
 trait ActionFailed extends ActionResult {
