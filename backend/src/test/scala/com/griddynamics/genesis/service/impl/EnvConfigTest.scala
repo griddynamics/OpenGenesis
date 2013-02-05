@@ -26,14 +26,13 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.util.IoUtil
 import org.springframework.core.convert.support.DefaultConversionService
-import com.griddynamics.genesis.service.{Builders, TemplateRepoService}
+import com.griddynamics.genesis.service.{EnvironmentService, Builders, TemplateRepoService}
 import com.griddynamics.genesis.template.{ListVarDSFactory, TemplateRepository}
 import org.junit.Test
 import com.griddynamics.genesis.core.{RegularWorkflow, GenesisFlowCoordinator}
 import org.mockito.Mockito._
 import org.mockito.{Matchers, Mockito}
 import com.griddynamics.genesis.api
-import api.Success
 import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.model.WorkflowStepStatus._
 import com.griddynamics.genesis.plugin.StepCoordinatorFactory
@@ -60,12 +59,18 @@ class EnvConfigTest extends AssertionsForJUnit with MockitoSugar {
     storeService
   }
 
+
   val configRepo = {
     val repo = mock [ConfigurationRepository]
     when(repo.get(Matchers.any(), Matchers.any())).thenReturn(Some(envConfig))
-    when(repo.getDefaultConfig(Matchers.anyInt)).thenReturn(Success(envConfig))
-    when(repo.list(Matchers.anyInt)).thenReturn(Seq(envConfig))
     repo
+  }
+  val envService = {
+    val serv = mock [EnvironmentService]
+    when(serv.get(Matchers.any(), Matchers.any())).thenReturn(Some(envConfig))
+    when(serv.getDefault(Matchers.anyInt)).thenReturn(Some(envConfig))
+    when(serv.list(Matchers.anyInt)).thenReturn(Seq(envConfig))
+    serv
   }
 
   val stepCoordinatorFactory = mock[StepCoordinatorFactory]
@@ -75,7 +80,7 @@ class EnvConfigTest extends AssertionsForJUnit with MockitoSugar {
   Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
   val templateService = new GroovyTemplateService(templateRepoService,
     List(new DoNothingStepBuilderFactory), new DefaultConversionService,
-    Seq(new ListVarDSFactory, new DependentListVarDSFactory), databagRepository, configRepo, NullCacheManager)
+    Seq(new ListVarDSFactory, new DependentListVarDSFactory), databagRepository, envService, NullCacheManager)
 
   val TEST_ENV_ATTR = EntityAttr[String]("test_attr")
   val TEST_ENV_VAL = "test_attr_value"

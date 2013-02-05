@@ -5,11 +5,11 @@ import org.springframework.core.convert.support.DefaultConversionService
 import com.griddynamics.genesis.util.IoUtil
 import org.mockito.{Matchers, Mockito}
 import org.junit.Test
-import com.griddynamics.genesis.service.{TemplateRepoService, VariableDescription}
+import com.griddynamics.genesis.service.{EnvironmentService, TemplateRepoService, VariableDescription}
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.template.VersionedTemplate
-import com.griddynamics.genesis.repository.{ConfigurationRepository, DatabagRepository}
+import com.griddynamics.genesis.repository.DatabagRepository
 import com.griddynamics.genesis.cache.NullCacheManager
 
 class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
@@ -17,16 +17,17 @@ class DatasourcesTest  extends AssertionsForJUnit with MockitoSugar  {
     val templateRepository = mock[TemplateRepository]
     val databagRepository = mock[DatabagRepository]
     val templateRepoService = mock[TemplateRepoService]
-  val configRepo = mock[ConfigurationRepository]
+  val envService = mock[EnvironmentService]
 
   Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
-  Mockito.when(configRepo.findByName(Matchers.anyInt, Matchers.anyString)).thenReturn(None)
-  Mockito.when(configRepo.list(Matchers.anyInt)).thenReturn(Seq())
+
+  Mockito.when(envService.getDefault(Matchers.anyInt)).thenReturn(None)
+  Mockito.when(envService.list(Matchers.anyInt)).thenReturn(Seq())
 
   val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), new DefaultConversionService,
         Seq(new ListVarDSFactory, new DependentListVarDSFactory, new NoArgsDSFactory),
-    databagRepository, configRepo, NullCacheManager)
+    databagRepository, envService, NullCacheManager)
 
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/DataSources.genesis"))
     val bodyWithInlining = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/InlineDatasources.genesis"))

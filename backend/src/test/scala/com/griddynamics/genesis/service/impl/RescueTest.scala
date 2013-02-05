@@ -2,9 +2,9 @@ package com.griddynamics.genesis.service.impl
 
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import com.griddynamics.genesis.service.TemplateRepoService
+import com.griddynamics.genesis.service.{EnvironmentService, TemplateRepoService}
 import com.griddynamics.genesis.template.{VersionedTemplate, ListVarDSFactory, TemplateRepository}
-import com.griddynamics.genesis.repository.{ConfigurationRepository, DatabagRepository}
+import com.griddynamics.genesis.repository.DatabagRepository
 import org.springframework.core.convert.support.DefaultConversionService
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
 import com.griddynamics.genesis.util.IoUtil
@@ -20,7 +20,7 @@ class RescueTest extends AssertionsForJUnit with MockitoSugar {
     val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), new DefaultConversionService,
         Seq(new ListVarDSFactory, new DependentListVarDSFactory,
-        new DatabagDataSourceFactory(bagRepository)), bagRepository, mock[ConfigurationRepository], NullCacheManager)
+        new DatabagDataSourceFactory(bagRepository)), bagRepository, mock[EnvironmentService], NullCacheManager)
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/Rescue.genesis"))
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
 

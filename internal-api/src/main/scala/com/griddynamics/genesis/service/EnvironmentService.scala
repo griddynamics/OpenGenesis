@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,18 +20,16 @@
  *   Project:     Genesis
  *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.configuration
 
-import com.griddynamics.genesis.service.{EnvironmentService, CredentialsStoreService, StoreService}
-import com.griddynamics.genesis.repository.{DatabagRepository, ProjectRepository}
-import com.griddynamics.genesis.repository
+package com.griddynamics.genesis.service
 
-trait StoreServiceContext {
-  def storeService : StoreService
-  def projectRepository : ProjectRepository
-  def databagRepository: DatabagRepository
-  def credentialsStoreService: CredentialsStoreService
-  def configurationRepository: repository.ConfigurationRepository
-  def environmentService: EnvironmentService
+import com.griddynamics.genesis.api.Configuration
+
+/**
+   Environment configuration operations with integrated security rules
+ */
+trait EnvironmentService {
+  def getDefault(projectId: Int): Option[Configuration]
+  def list(projectId: Int): Iterable[Configuration]
+  def get(projectId: Int, configId: Int): Option[Configuration]
 }
-

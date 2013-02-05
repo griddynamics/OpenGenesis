@@ -33,7 +33,7 @@ import org.springframework.core.convert.support.DefaultConversionService
 import com.griddynamics.genesis.workflow.Step
 import com.griddynamics.genesis.template._
 import com.griddynamics.genesis.repository.{ConfigurationRepository, DatabagRepository}
-import com.griddynamics.genesis.service.TemplateRepoService
+import com.griddynamics.genesis.service.{EnvironmentService, TemplateRepoService}
 import com.griddynamics.genesis.cache.NullCacheManager
 
 case class DoNothingStep(name: String) extends Step {
@@ -53,17 +53,17 @@ class DoNothingStepBuilderFactory extends StepBuilderFactory {
 class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
     val templateRepository = mock[TemplateRepository]
     val databagRepo = mock[DatabagRepository]
-  val configRepo = mock[ConfigurationRepository]
+  val envService = mock[EnvironmentService]
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/ExampleEnv.genesis"))
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
     Mockito.when(templateRepository.getContent(VersionedTemplate("1") )).thenReturn(Some(body))
-  Mockito.when(configRepo.findByName(Matchers.anyInt, Matchers.anyString)).thenReturn(None)
-  Mockito.when(configRepo.list(Matchers.anyInt)).thenReturn(Seq())
+  Mockito.when(envService.getDefault(Matchers.anyInt)).thenReturn(None)
+  Mockito.when(envService.list(Matchers.anyInt)).thenReturn(Seq())
     val templateRepoService = mock[TemplateRepoService]
     Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
     val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), new DefaultConversionService,
-        Seq(), databagRepo, configRepo, NullCacheManager)
+        Seq(), databagRepo, envService, NullCacheManager)
 
     private def testTemplate = templateService.findTemplate(0, "TestEnv", "0.1").get
 
