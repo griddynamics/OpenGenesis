@@ -130,44 +130,48 @@ class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with Mock
 
     }
 
-    @Test def testEvaluationOneVariable() {
-        val script = "template {\n" +
-            "    name(\"erlang\")\n" +
-            "    version(\"0.1\")\n" +
-            "    createWorkflow(\"create\")\n" +
-            "    destroyWorkflow(\"destroy\")\n" +
-            "\n" +
-            "    workflow(\"create\") {\n" +
-            "        variables {\n" +
-            "            variable(\"nodesCount\").as(Integer)\n" +
-            "                .description(\"Erlang worker nodes count\")\n" +
-            "                .validator { it > 0 }\n" +
-            "\n" +
-            "            variable(\"test\").description(\"test\")\n" +
-            "        }\n" +
-            "        steps {\n" +
-            "            teststep {\n" +
-            "                phase = \"provision\"\n" +
-            "                text = nodesCount\n" +
-            "            }\n" +
-            "            teststep {\n" +
-            "                phase = \"install\"\n" +
-            "                precedingPhases = [\"provision\"]\n" +
-            "                text = \"erlang2\"\n" +
-            "            }\n" +
-            "        }\n" +
-            "    }\n" +
-            "\n    workflow(\"destroy\") {\n" +
-            "        steps {\n" +
-            "            teststep {\n" +
-            "                phase = \"undeploy\"\n" +
-            "                text = \"destroy\"\n" +
-            "            }\n" +
-            "        }\n" +
-            "    }\n" +
-            "}"
-        getTemplateDefinition(script).get
-    }
+  @Test def testEvaluationOneVariable() {
+    val script = "template {\n" +
+      "    name(\"erlang\")\n" +
+      "    version(\"0.1\")\n" +
+      "    createWorkflow(\"create\")\n" +
+      "    destroyWorkflow(\"destroy\")\n" +
+      "\n" +
+      "    workflow(\"create\") {\n" +
+      "        variables {\n" +
+      "            variable(\"nodesCount\").as(Integer)\n" +
+      "                .description(\"Erlang worker nodes count\")\n" +
+      "                .validator { it > 0 }\n" +
+      "\n" +
+      "            variable(\"test\").description(\"test\")\n" +
+      "        }\n" +
+      "        steps {\n" +
+      "            teststep {\n" +
+      "                phase = \"provision\"\n" +
+      "                text = nodesCount\n" +
+      "            }\n" +
+      "            teststep {\n" +
+      "                phase = \"install\"\n" +
+      "                precedingPhases = [\"provision\"]\n" +
+      "                text = \"erlang2\"\n" +
+      "            }\n" +
+      "        }\n" +
+      "    }\n" +
+      "\n    workflow(\"destroy\") {\n" +
+      "        steps {\n" +
+      "            teststep {\n" +
+      "                phase = \"undeploy\"\n" +
+      "                text = \"destroy\"\n" +
+      "            }\n" +
+      "        }\n" +
+      "    }\n" +
+      "}"
+    val template = getTemplateDefinition(script)
+    assert(template.isDefined)
+    val nodesCountVar = template.get.createWorkflow.variableDescriptions.find(_.name == "nodesCount")
+    assert(nodesCountVar.isDefined)
+    expectResult(None)(nodesCountVar.get.values)
+  }
 
 
     def getTemplateDefinition(script: String) = {

@@ -36,7 +36,7 @@
     var values = variable.values;
     var required = !variable.optional;
     var group = variable.group;
-    var select = typeof(values) !== "undefined" && _.size(values) || variable.dependsOn; %>
+    var select = typeof(values) !== "undefined" || variable.dependsOn; %>
 <div style="margin-top: 10px; <%= (i === variables.length - 1 ? 'margin-bottom: 10px' : '') %>">
     <label for="<%= group ? group : name %>" class="<%= (required ? 'label-required' : '') %>">
     <% if (required) { %>*&nbsp;<% } %> <%= group ? (i == 0 || group !== variables[i-1].group ? group : "") : variable.description %>
