@@ -60,7 +60,10 @@ class EnvironmentAccessService(storeService: service.StoreService, permissionSer
     ids.foreach( grantAccess(_, users, groups) )
   }
 
-  def hasAccessToConfig(projectId: Int, configId: Int, username: String, authorities: Iterable[String]): Boolean = {
+  private def sids(username: String, authorities: Iterable[String]): Seq[Sid] =
+    new PrincipalSid(username) +: (authorities.filter(_.startsWith("GROUP_")).map { g => new GrantedAuthoritySid(g) }.toSeq)
+
+  def hasAccessToAllConfigs(projectId: Int, username: String, authorities: Iterable[String]): Boolean = {
     if(!restrictionsEnabled) {
       return true
     }
@@ -68,16 +71,24 @@ class EnvironmentAccessService(storeService: service.StoreService, permissionSer
     if (authorities.exists(_ == GenesisRole.SystemAdmin.toString)) {
       return true
     }
-    val sids: Seq[Sid] = new PrincipalSid(username) +: (authorities.filter(_.startsWith("GROUP_")).map { g => new GrantedAuthoritySid(g) }.toSeq)
 
-    if(permissionService.getPermissions(new ObjectIdentityImpl(classOf[Project], projectId), sids).exists(_ == BasePermission.ADMINISTRATION)) {
+    if(permissionService.getPermissions(new ObjectIdentityImpl(classOf[Project], projectId), sids(username, authorities))
+      .exists(_ == BasePermission.ADMINISTRATION)) {
       return true
     }
+    false
+  }
 
-    val perms = permissionService.getPermissions(new ObjectIdentityImpl(classOf[Configuration], configId), sids)
+  def hasAccessToConfig(projectId: Int, configId: Int, username: String, authorities: Iterable[String]): Boolean = {
+    if (hasAccessToAllConfigs(projectId, username, authorities)) return true
+
+    val perms = permissionService.getPermissions(new ObjectIdentityImpl(classOf[Configuration], configId), sids(username, authorities))
 
     perms.exists(_ == BasePermission.READ )
   }
 
   def restrictionsEnabled = securityEnabled
+
+  def listAccessible(projectId: Int, username: String, authorities: Iterable[String]) =
+    permissionService.getPermittedIds(classOf[Configuration], username, authorities, Seq(BasePermission.READ))
 }

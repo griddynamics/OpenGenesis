@@ -37,7 +37,7 @@ import com.griddynamics.genesis.util.{TryingUtil, ScalaUtils, Logging}
 import org.codehaus.groovy.runtime.{InvokerHelper, MethodClosure}
 import service.ValidationError
 import com.griddynamics.genesis.plugin.GenesisStep
-import com.griddynamics.genesis.repository.{ConfigurationRepository, DatabagRepository}
+import com.griddynamics.genesis.repository.DatabagRepository
 import com.griddynamics.genesis.cache.{CacheConfig, CacheManager, Cache}
 import groovy.util.Expando
 import java.util.concurrent.TimeUnit
@@ -51,7 +51,7 @@ class GroovyTemplateService(val templateRepoService : TemplateRepoService,
                             val conversionService : ConversionService,
                             val dataSourceFactories : Seq[DataSourceFactory] = Seq(),
                             databagRepository: DatabagRepository,
-                            envConfigRepo: ConfigurationRepository,
+                            envConfigService: EnvironmentService,
                             val cacheManager: CacheManager) extends service.TemplateService with Logging with Cache {
 
     val CACHE_NAME = "GroovyTemplateService"
@@ -61,12 +61,12 @@ class GroovyTemplateService(val templateRepoService : TemplateRepoService,
     override def defaultTtl = TimeUnit.HOURS.toSeconds(24).toInt
 
     def findTemplate(projectId: Int, name: String, version: String, envConfId: Option[Int] = None) = {
-      val conf = envConfId.flatMap(envConfigRepo.get(projectId, _))
+      val conf = envConfId.flatMap(envConfigService.get(projectId, _))
       getTemplate(projectId, name, version, envConf = conf)
     }
 
   def findTemplate(env: Environment) = {
-    val envConf = envConfigRepo.get(env.projectId, env.configurationId)
+    val envConf = envConfigService.get(env.projectId, env.configurationId)
     getTemplate(env.projectId, env.templateName, env.templateVersion, envConf = envConf)
   }
     def getTemplate(projectId: Int, name: String, version: String, eval: Boolean = true, envConf: Option[Configuration] = None) : Option[TemplateDefinition] = {
@@ -135,8 +135,8 @@ class GroovyTemplateService(val templateRepoService : TemplateRepoService,
             case e: GroovyRuntimeException => throw new IllegalStateException("can't process template", e)
         }
         val templateBuilder = if (listOnly) new NameVersionDelegate else
-          new EnvTemplateBuilder(projectId, new EnvConfigDataSourceFactory(envConfigRepo) +: dataSourceFactories,
-            databagRepository,envConfigRepo, envConf, binding)
+          new EnvTemplateBuilder(projectId, new EnvConfigDataSourceFactory(envConfigService) +: dataSourceFactories,
+            databagRepository,envConfigService, envConf, binding)
         templateDecl.bodies.headOption.map { body => DslDelegate(body).to(templateBuilder).newTemplate(extName, extVersion, extProject) }
     }
 

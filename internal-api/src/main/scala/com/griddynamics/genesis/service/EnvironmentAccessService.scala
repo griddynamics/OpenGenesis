@@ -35,4 +35,8 @@ trait EnvironmentAccessService {
   def grantConfigAccess(configId: Int, users: Iterable[String], groups: Iterable[String])
 
   def hasAccessToConfig(projectId: Int, configId: Int, username: String, authorities: Iterable[String]): Boolean
+
+  def hasAccessToAllConfigs(projectId: Int, username: String, authorities: Iterable[String]): Boolean
+
+  def listAccessible(projectId: Int, username: String, authorities: Iterable[String]): Iterable[Int]
 }

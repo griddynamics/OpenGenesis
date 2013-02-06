@@ -28,9 +28,11 @@ import collection.mutable.ListBuffer
 import com.griddynamics.genesis.template._
 import java.lang.IllegalStateException
 import scala.Some
-import com.griddynamics.genesis.repository.{ConfigurationRepository, DatabagRepository}
+import com.griddynamics.genesis.repository.DatabagRepository
 import support.{EnvConfigSupport, UnifiedDatabagSupport, ProjectDatabagSupport, SystemWideContextSupport}
 import com.griddynamics.genesis.api.{Success, Configuration}
+import com.griddynamics.genesis.service.EnvironmentService
+import org.apache.commons.lang3.math.NumberUtils
 
 class EnvironmentTemplate(val name : String,
                           val version : String,
@@ -90,7 +92,7 @@ class NameVersionDelegate extends GroovyObjectSupport with Delegate {
 class EnvTemplateBuilder(val projectId: Int,
                          val dataSourceFactories : Seq[DataSourceFactory],
                          val databagRepository: DatabagRepository,
-                         envConfigRepo: ConfigurationRepository,
+                         envConfigService: EnvironmentService,
                          envConfigOpt: Option[Configuration],
                          binding: Binding) extends NameVersionDelegate with SystemWideContextSupport
                          with ProjectDatabagSupport with UnifiedDatabagSupport {
@@ -114,8 +116,8 @@ class EnvTemplateBuilder(val projectId: Int,
     }
 
   private def defaultEnvConfigId(name: String) = if (createWorkflowName == name)
-    envConfigRepo.getDefaultConfig(projectId) match {
-      case Success(c) => c.id
+    envConfigService.getDefault(projectId) match {
+      case Some(c) => c.id
       case _ => None
     }
   else None
@@ -157,7 +159,8 @@ class EnvTemplateBuilder(val projectId: Int,
 
   override def setProperty(property: String, newValue: Any) {
     (property, newValue) match {
-      case (Reserved.configRef, s: String) => envConfig = EnvConfigSupport.getConfig(envConfigRepo, projectId, s)
+      case (Reserved.configRef, s: String) if NumberUtils.isDigits(s) => envConfigService.get(projectId, s.toInt).foreach(
+        config => envConfig = EnvConfigSupport.asGroovyMap(config))
       case (Reserved.configRef, conf: AnyRef) => envConfig = conf
       case _ => // DO NOTHING HERE
     }
