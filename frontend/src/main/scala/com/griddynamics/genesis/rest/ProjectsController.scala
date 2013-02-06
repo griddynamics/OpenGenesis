@@ -140,7 +140,7 @@ class ProjectsController extends RestApiExceptionsHandler {
     val top = WebPath(request)
     wrap(getProject(projectId)).withLinks(
       LinkBuilder(top, SELF, classOf[Project], GET, PUT, DELETE),
-      LinkBuilder(top / "envs",  COLLECTION, classOf[Environment], GET, POST),
+      LinkBuilder(top / "envs",  COLLECTION, classOf[Environment], GET),
       LinkBuilder(top / "settings", COLLECTION, classOf[SystemSettings], GET)
     ).filtered()
   }
