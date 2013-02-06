@@ -27,7 +27,7 @@ import com.griddynamics.genesis.api.{Configuration, Failure, Success, ExtendedRe
 import com.griddynamics.genesis.model.Environment
 
 class VariableDescription(val name: String, val clazz : Class[_ <: Any], val description: String, val isOptional: Boolean = false,
-                          val defaultValue: String = null, val values: Map[String,String] = Map(), val dependsOn: Option[List[String]] = None,
+                          val defaultValue: String = null, val values: Option[Map[String,String]] = None, val dependsOn: Option[List[String]] = None,
                           val group: Option[String] = None)
 
 case class ValidationError(variableName: String, description: String)

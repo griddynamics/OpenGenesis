@@ -98,7 +98,7 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
 
     @Test def testDSConfig() {
         val listVariable: VariableDescription = createWorkflow.variableDescriptions.find(_.name == "projectList").getOrElse(fail("Variable projectList must be declared"))
-        assert(listVariable.values == Map("fred" -> "fred"))
+        expectResult(Some(Map("fred" -> "fred")))(listVariable.values)
     }
 
     @Test def testProjectDbSource() {
