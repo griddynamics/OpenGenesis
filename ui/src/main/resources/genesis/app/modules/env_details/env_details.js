@@ -38,9 +38,9 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       _(links).forEach(function(link) {
         if(backend.LinkTypes.EnvironmentDetails.edit(link)) {
           self.renameLink = link
-        } else if(backend.LinkTypes.ResetAction.edit(link)) {
+        } else if(backend.LinkTypes.ResetAction.any(link)) {
           self.resetStatusLink = link
-        } else if(backend.LinkTypes.CancelAction.edit(link)) {
+        } else if(backend.LinkTypes.CancelAction.any(link)) {
           self.cancelLink = link
         } else if(backend.LinkTypes.Workflow.any(link)) {
           self.workflowsLink = link
