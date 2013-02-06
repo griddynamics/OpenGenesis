@@ -116,7 +116,7 @@ class EnvConfigTest extends AssertionsForJUnit with MockitoSugar {
   @Test def envConfigAccessInVariable() {
     val vars = template.createWorkflow.partial(Map("$envConfig" -> envConfig.id.map(_.toString).getOrElse("-1")))
     expectResult(true)(vars.exists(_.name == "foo"))
-    expectResult(envConfigItems)(vars.find(_.name == "foo").get.values)
+    expectResult(Option(envConfigItems))(vars.find(_.name == "foo").get.values)
    }
 
 }

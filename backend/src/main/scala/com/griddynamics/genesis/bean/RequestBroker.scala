@@ -142,7 +142,7 @@ class RequestBrokerImpl(storeService: StoreService,
     def varsDesc(variables: Map[String, String], workflow: WorkflowDefinition) : Map[String, String] = {
         def findDataLabel(k: String, v: String, descriptions: Seq[VariableDescription]): Option[(String, String)] = {
             descriptions.find(_.name == k).flatMap(dsc => {
-                dsc.values.find(_._1 == v)
+                dsc.values.getOrElse(Map()).find(_._1 == v)
             })
         }
         for ((k, v) <- variables) yield {

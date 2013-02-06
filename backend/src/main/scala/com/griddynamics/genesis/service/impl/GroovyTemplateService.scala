@@ -306,9 +306,18 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
       }
     }
 
-    private def varDesc(v: VariableDetails, varDsDefault: Option[Any], varPossibleValues: Map[String, String], dependsOn: Option[List[String]]) =
+    private def varDesc(v: VariableDetails, resolvedVariables: Map[String, Any] = Map()) = {
+      val dependsOn = if (v.dependsOn.isEmpty) None else Some(v.dependsOn.toList)
+      val (varDsDefault, possibleValues) = v.valuesList.map(_.apply(resolvedVariables)) match {
+        case None => (v.defaultValue(), None)
+        // if datasource defines some default value but no list, then it should be rendered as input(not as select)
+        case Some((default@Some(_), values)) if values.isEmpty => (default, None)
+        case Some((default, values)) => (default, Option(values))
+      }
+
       new VariableDescription(v.name, v.clazz, v.description, v.isOptional, v.defaultValue().map(String.valueOf(_)).getOrElse(varDsDefault.map(String.valueOf(_)).getOrElse(null)),
-        varPossibleValues, dependsOn, v.group.map(_.description))
+        possibleValues, dependsOn, v.group.map(_.description))
+    }
 
     override def partial(variables: Map[String, Any]): Seq[VariableDescription] = {
         val appliedVars = variables.keys.toSet
@@ -321,12 +330,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
           (varName, convertedValue)
         }
 
-        for(v <- dependents) yield {
-          val defaultAndValues: (Option[Any], Map[String, String]) = v.valuesList.map { lambda => lambda.apply(resolvedVariables) }.getOrElse((v.defaultValue(), Map()))
-          val dependsOn = if (v.dependsOn.isEmpty) None else Some(v.dependsOn.toList)
-
-          varDesc(v, defaultAndValues._1, defaultAndValues._2, dependsOn)
-        }
+        for(v <- dependents) yield varDesc(v, resolvedVariables)
     }
 
   def validatePreconditions(variables: Map[String, Any], config: Configuration): ExtendedResult[_] = {
@@ -435,13 +439,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
           DslDelegate(it).to(new StepBodiesCollector(variables.filterKeys(Reserved.configRef != _), stepBuilderFactories)).buildSteps.toSeq
         }.getOrElse(Seq())
 
-    lazy val variableDescriptions = {
-        for (variable <- workflow.variables()) yield {
-            val dependsOn = if (variable.dependsOn.isEmpty) None else Some(variable.dependsOn.toList)
-            val defaultAndValues: (Option[Any], Map[String, String]) = variable.valuesList.map(_.apply(Map())).getOrElse((variable.defaultValue(), Map()))
-            varDesc(variable, defaultAndValues._1, defaultAndValues._2, dependsOn)
-        }
-    }
+    lazy val variableDescriptions = for (variable <- workflow.variables()) yield varDesc(variable)
 
     val name = workflow.name
 }

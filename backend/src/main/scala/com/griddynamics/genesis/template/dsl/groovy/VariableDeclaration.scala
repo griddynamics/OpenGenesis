@@ -86,9 +86,13 @@ class GroupDeclaration(val parentBuilders: ListBuffer[VariableBuilder],
 
 case class GroupDetails(id: Int, description: String, required: Boolean = false)
 
+object VariableDetails {
+  type ValuesListType = Option[(Map[String,Any] => (Option[Any], Map[String,String]))]
+}
+
 class VariableDetails(val name : String, val clazz : Class[_ <: AnyRef], val description : String,
                       val validators : Seq[(String, Closure[Boolean])], val isOptional: Boolean = false, val defaultValue: () => Option[Any],
-                      val valuesList: Option[(Map[String,Any] => (Option[Any], Map[String,String]))] = None, val dependsOn: Seq[String],
+                      val valuesList: VariableDetails.ValuesListType = None, val dependsOn: Seq[String],
                       val group: Option[GroupDetails] = None)
 
 class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
@@ -184,7 +188,7 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
       this.inlineDataSource = Some(ds)
     }
 
-    def valuesList: Option[(Map[String, Any] => (Option[Any], Map[String,String]))] = {
+    def valuesList: VariableDetails.ValuesListType = {
         if (useOneOf) {
             import collection.JavaConversions._
             oneOf.setDelegate(dsObj)
