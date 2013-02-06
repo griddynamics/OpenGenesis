@@ -212,6 +212,13 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     )
   }
 
+  private def hasAccessToConfigs(projectId: Int) = {
+    val user = getCurrentUser
+    val authorities = getCurrentUserAuthorities
+    envAuthService.hasAccessToAllConfigs(projectId, user, authorities) ||
+    envAuthService.listAccessible(projectId, user, authorities).nonEmpty
+  }
+
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
   @ResponseBody
   @PostFilter("not(@environmentSecurity.restrictionsEnabled()) " +
@@ -225,6 +232,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     import WebPath._
     import LinkBuilder.{apply => link}
 
+    val envOperations = Seq(GET) ++ (if (hasAccessToConfigs(projectId)) Seq(POST) else Seq())
     val environments: Seq[Environment] = filter match {
       case EnvFilter(statuses@_*) => genesisService.listEnvs(projectId, Option(statuses.map(_.toString)), Option(ordering))
       case "" => genesisService.listEnvs(projectId, ordering = Option(ordering))
@@ -238,7 +246,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
       ).filtered()
     )
 
-    wrapped.withLinks(link(request, SELF, classOf[Environment], POST)).filtered()
+    wrapped.withLinks(link(request, SELF, classOf[Environment], envOperations: _*)).filtered()
   }
 
   @RequestMapping(value = Array("{envId}/actions"), method = Array(POST))
