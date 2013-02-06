@@ -194,7 +194,7 @@ function (genesis, backend, poller, status, EnvStatus, Backbone, $) {
       this.poll = new Environments.Collection({}, {project: this.project});
       this.poll.bind('reset', this.checkForUpdates, this);
 
-      poller.PollingManager.start(this.poll);
+      poller.PollingManager.start(this.poll, {noninterruptible: true});
       this.expanded = [];
     },
 
