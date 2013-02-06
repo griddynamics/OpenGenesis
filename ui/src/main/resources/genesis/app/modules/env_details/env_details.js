@@ -94,7 +94,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
     initialize: function (options) {
       this.details = new EnvironmentDetails.Model({"id": options.envId, projectId: options.projectId});
 
-      poller.PollingManager.start(this.details);
+      poller.PollingManager.start(this.details, {noninterruptible: true});
 
       this.details.bind("change:status", this.updateControlButtons, this);
       this.details.bind("change:vms", this.renderVirtualMachines, this);
