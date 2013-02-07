@@ -349,11 +349,14 @@ function(genesis, jQuery, Backbone, _, backend, status, Projects, Environments, 
     }
 
     var $loadingSpinner = $("#page-view-loading");
+    var $overlay = $("#overlay");
     genesis.app.bind("page-view-loading-started", function() {
       $loadingSpinner.show();
+      $overlay.show();
     });
     genesis.app.bind("page-view-loading-completed", function() {
       $loadingSpinner.hide();
+      $overlay.hide();
     });
   });
 
