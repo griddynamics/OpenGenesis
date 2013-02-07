@@ -476,6 +476,16 @@ div.system-settings {
     background-color: rgb(242,242,242);
 }
 
+#overlay {
+    position: fixed;
+    top: 42px;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    z-index: 1000;
+    background-color: rgba(33, 33,33,0.5);
+}
+
 #breadcrumbs a {
     font-size: 14px;
 }
