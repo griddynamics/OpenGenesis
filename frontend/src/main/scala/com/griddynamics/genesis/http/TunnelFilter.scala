@@ -47,7 +47,7 @@ sealed trait Tunnel {
     def readTimeout: Int
 }
 
-abstract class TunnelFilter(override val uriMatches: String*) extends Filter with Tunnel with Logging {
+abstract class TunnelFilter(override val uriMatches: Array[String]) extends Filter with Tunnel with Logging {
 
     var backendHost: String = _
     var connectTimeout: Int = 5000
