@@ -51,7 +51,7 @@ public class NotificationActionExecutor extends AbstractSimpleSyncActionExecutor
         JavaMailSenderImpl result = new JavaMailSenderImpl();
         result.setHost(configuration.getSmtpHost());
         result.setPort(configuration.getSmtpPort());
-        if (configuration.getSmtpUsername() != null) {
+        if (configuration.hasAuth()) {
             result.setUsername(configuration.getSmtpUsername());
             result.setPassword(configuration.getSmtpPassword());
         }
