@@ -122,6 +122,10 @@ public class EmailSenderConfiguration {
         this.useSSL = useSSL;
     }
 
+    public boolean hasAuth() {
+        return smtpUsername != null && !smtpUsername.trim().isEmpty();
+    }
+
     @Override
     public String toString() {
         return "EmailSenderConfiguration{" +
