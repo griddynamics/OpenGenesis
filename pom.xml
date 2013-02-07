@@ -82,6 +82,7 @@
         <commons-httpclient.version>3.1</commons-httpclient.version>
         <license.header>src/main/resources/license/header.txt</license.header>
 
+        <metrics.version>2.2.0</metrics.version>
     </properties>
 
     <modules>
@@ -716,6 +717,26 @@
                 <groupId>org.quartz-scheduler</groupId>
                 <artifactId>quartz</artifactId>
                 <version>2.1.6</version>
+            </dependency>
+            <dependency>
+                <groupId>com.yammer.metrics</groupId>
+                <artifactId>metrics-core</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.yammer.metrics</groupId>
+                <artifactId>metrics-servlet</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.yammer.metrics</groupId>
+                <artifactId>metrics-web</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.yammer.metrics</groupId>
+                <artifactId>metrics-jetty</artifactId>
+                <version>${metrics.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

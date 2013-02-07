@@ -41,13 +41,14 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 sealed trait Tunnel {
     def backendHost: String
-    def uriMatch: String
+    def uriMatches: Array[String]
     def doServe(request: HttpServletRequest, response: CatchCodeWrapper)
     def connectTimeout: Int
     def readTimeout: Int
 }
 
-abstract class TunnelFilter(override val uriMatch: String) extends Filter with Tunnel with Logging {
+abstract class TunnelFilter(override val uriMatches: String*) extends Filter with Tunnel with Logging {
+
     var backendHost: String = _
     var connectTimeout: Int = 5000
     var readTimeout: Int = 5000
@@ -71,7 +72,7 @@ abstract class TunnelFilter(override val uriMatch: String) extends Filter with T
     }
 
     def serve(request: HttpServletRequest, response: CatchCodeWrapper) {
-        if (request.getRequestURI.startsWith(uriMatch)) {
+        if (uriMatches.exists(request.getRequestURI.startsWith(_))) {
           TunnelFilter.withTimings(doServe(request, response))
           response.getOutputStream.flush()
         } else {

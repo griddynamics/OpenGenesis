@@ -28,13 +28,15 @@ import com.griddynamics.genesis.resources.ResourceFilter
 import com.griddynamics.genesis.service.ConfigService
 import com.griddynamics.genesis.service.GenesisSystemProperties._
 import com.griddynamics.genesis.util.{RichLogger, Logging}
+import com.yammer.metrics.jetty.InstrumentedSelectChannelConnector
+import com.yammer.metrics.reporting.AdminServlet
+import com.yammer.metrics.web.DefaultWebappMetricsFilter
 import java.lang.System
 import java.lang.System.{getProperty => gp}
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 import org.apache.commons.lang3.SystemUtils
 import org.eclipse.jetty.server.Server
-import org.eclipse.jetty.server.nio.SelectChannelConnector
 import org.eclipse.jetty.servlet.{FilterHolder, ServletHolder, ServletContextHandler}
 import org.eclipse.jetty.servlets.GzipFilter
 import org.springframework.context.support.ClassPathXmlApplicationContext
@@ -89,6 +91,12 @@ object GenesisFrontend extends Logging {
         context.setContextPath("/")
         servletContext.setAttribute(ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE, webAppContext)
 
+        val metricsFilter = new DefaultWebappMetricsFilter()
+        context.addFilter(new FilterHolder(metricsFilter), "/*", 0)
+
+        val adminServlet = new AdminServlet()
+        context.addServlet(new ServletHolder(adminServlet), "/metrics/*")
+
         if (! isFrontend) {
             val gzipFilterHolder = new FilterHolder(new GzipFilter)
             gzipFilterHolder.setName("gzipFilter")
@@ -110,7 +118,7 @@ object GenesisFrontend extends Logging {
         }
 
         if (isFrontend) {
-            val proxyFilter = new TunnelFilter("/rest") with UrlConnectionTunnel
+            val proxyFilter = new TunnelFilter("/rest", "/metrics") with UrlConnectionTunnel
             val proxyHolder = new FilterHolder(proxyFilter)
             proxyHolder.setInitParameter(TunnelFilter.BACKEND_PARAMETER, helper.getFileProperty(SERVICE_BACKEND_URL, ""))
             proxyHolder.setInitParameter(TunnelFilter.READ_TIMEOUT, helper.getFileProperty(FRONTEND_READ_TIMEOUT, "5000"))
@@ -124,10 +132,9 @@ object GenesisFrontend extends Logging {
         log.debug("Using frontend configuration: %s", frontendConfig)
         holder.setInitParameter("contextConfigLocation", frontendConfig)
         context.addServlet(holder, "/")
-        val httpConnector = new SelectChannelConnector()
+        val httpConnector = new InstrumentedSelectChannelConnector(port)
         httpConnector.setMaxIdleTime(requestIdleTime)
         httpConnector.setHost(host)
-        httpConnector.setPort(port)
 
         httpConnector.setRequestHeaderSize(16 * 1024)   // authorization negotiate can contain lots of data
         httpConnector.setResponseHeaderSize(16 * 1024)  // http://serverfault.com/questions/362280/apache-bad-request-size-of-a-request-header-field-exceeds-server-limit-with-ke
