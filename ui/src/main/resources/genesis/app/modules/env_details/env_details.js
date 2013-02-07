@@ -469,15 +469,18 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
         }
 
       }
+      genesis.app.trigger("page-view-loading-started");
       var execution = backend.WorkflowManager.executeWorkflow(this.projectId, this.envId, this.workflow.name, this.workflowParams());
 
       var view = this;
       $.when(execution).then(
         function success() {
+          genesis.app.trigger("page-view-loading-completed");
           view.trigger("workflow-started", view.workflow);
           view.$el.dialog("close");
         },
         function fail(response) {
+          genesis.app.trigger("page-view-loading-completed");
           var json = {};
           try {
             json = JSON.parse(response.responseText);
