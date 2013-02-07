@@ -88,7 +88,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     }
 
     if(!envAuthService.hasAccessToConfig(projectId, config.id.get, getCurrentUser, getCurrentUserAuthorities)) {
-      throw new AccessDeniedException("User doesn't have access to configuration id=%s".format(config))
+      throw new AccessDeniedException(s"User doesn't have access to configuration id=${config.id.get}")
     }
 
     val user = mode match {

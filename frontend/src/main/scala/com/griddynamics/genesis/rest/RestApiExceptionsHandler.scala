@@ -31,6 +31,7 @@ import org.springframework.validation.{ObjectError, FieldError}
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.{ResponseStatus, ExceptionHandler}
 import org.springframework.web.context.request.WebRequest
+import org.springframework.security.access.AccessDeniedException
 
 trait RestApiExceptionsHandler extends Logging {
     implicit val formats = net.liftweb.json.DefaultFormats
@@ -89,6 +90,13 @@ trait RestApiExceptionsHandler extends Logging {
       response.getWriter.write(Serialization.write(
         new Failure(variablesErrors = fieldErrors.toMap, compoundServiceErrors = servErrors))
       )
+    }
+
+    @ExceptionHandler(value = Array(classOf[AccessDeniedException]))
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    def handleForbidden()(response: HttpServletResponse, exception: AccessDeniedException) {
+       response.setContentType(MediaType.APPLICATION_JSON_VALUE)
+       response.getWriter.write(Serialization.write(Failure(compoundServiceErrors = Seq(exception.getMessage))))
     }
 
     @ExceptionHandler(value = Array(classOf[Exception]))
