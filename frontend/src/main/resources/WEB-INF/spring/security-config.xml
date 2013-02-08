@@ -208,9 +208,13 @@
                     or hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"
         />
 
-        <!-- this is 'partial apply' call. If only admins are allowed to use it, then with envirinment secutiry enabled, users without project
-             admin role are unable to call additional workflows on environments (when these workflows use dependent variables) -->
-        <s:intercept-url pattern="/rest/projects/*/templates/**" method="POST"    access="hasRole('ROLE_GENESIS_ADMIN') or
+        <!--
+             This is 'partial apply' call. If only admins are allowed to use it, then with envirinment secutiry enabled, users without project
+             admin role are unable to call additional workflows on environments (when these workflows use dependent variables) - the same situation
+             with readonly admin. Let's assume than this call is not change anything, and basically every user that is granted with access to
+             environment creation can also do a partial apply.
+        -->
+        <s:intercept-url pattern="/rest/projects/*/templates/**" method="POST"    access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY') or
                     hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'read') or
                     hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"
         />
