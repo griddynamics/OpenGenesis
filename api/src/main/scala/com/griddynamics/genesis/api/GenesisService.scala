@@ -24,12 +24,8 @@ package com.griddynamics.genesis.api
 
 import java.util.Date
 
-trait GenesisService {
+trait GenesisService extends TemplateRestService {
   def updateEnvironmentName(i: Int, projectId: Int, value: String): ExtendedResult[Int]
-
-  def queryVariables(projectId: Int, templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]): Option[Seq[Variable]]
-
-  def getTemplate(projectId: Int, templateName: String, templateVersion: String): Option[Template]
 
   def getLogs(envId: Int, stepId: Int, includeActions: Boolean): Seq[StepLogEntry]
 
@@ -42,8 +38,6 @@ trait GenesisService {
   def describeEnv(envId: Int, projectId: Int): Option[EnvironmentDetails]
 
   def workflowHistory(envId: Int, projectId: Int, pageOffset: Int, pageLength: Int): Option[WorkflowHistory]
-
-  def listTemplates(projectId: Int): Seq[Template]
 
   def createEnv(projectId: Int, envName: String, creator: String, templateName: String,
                 templateVersion: String, variables: Map[String, String], config: Configuration, timeToLive: Option[Long]): ExtendedResult[Int]
@@ -59,10 +53,6 @@ trait GenesisService {
   def isEnvExists(envId: Int, projectId: Int): Boolean
 
   def getStepLog(stepId: Int): Seq[ActionTracking]
-
-  def getWorkflow(projectId: Int, templateName: String, templateVersion: String, workflowName: String): ExtendedResult[Workflow]
-
-  def getWorkflow(projectId: Int, envId: Int, workflowName: String): ExtendedResult[Workflow]
 
   def stepExists(stepId: Int, envId: Int): Boolean
 

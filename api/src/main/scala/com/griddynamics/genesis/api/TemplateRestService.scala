@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
+/**
+ *   Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
  *   This library is free software; you can redistribute it and/or modify it under the terms of
@@ -18,22 +18,20 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *   Project:     Genesis
- *   Description:  Continuous Delivery Platform
- */
+ *   Description: Continuous Delivery Platform
+ */ package com.griddynamics.genesis.api
 
-package com.griddynamics.genesis.template.support
+trait TemplateRestService {
+
+  def queryVariables(projectId: Int, configId: Int, templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]): ExtendedResult[Seq[Variable]]
+
+  def getTemplate(projectId: Int, templateName: String, templateVersion: String): Option[TemplateExcerpt]
+
+  def listTemplates(projectId: Int): Seq[TemplateExcerpt]
+
+  def getWorkflow(projectId: Int, configId: Int, templateName: String, templateVersion: String, workflowName: String): ExtendedResult[Workflow]
+
+  def getWorkflow(projectId: Int, envId: Int, workflowName: String): ExtendedResult[Workflow]
 
 
-import com.griddynamics.genesis.api.Configuration
-
-object EnvConfigSupport {
-  import collection.JavaConversions.mapAsJavaMap
-  def asGroovyMap(c: Configuration):java.util.Map[String, _] = c.items + ("instanceCount" -> c.instanceCount.getOrElse(0)) //todo REMOVE
-}
-
-trait EnvConfigSupport {
-  def configuration: Configuration
-
-  import scala.collection.JavaConversions._
-  def get$envConfig: java.util.Map[_ <: String, Any] = configuration.items + ("instanceCount" -> configuration.instanceCount.getOrElse(0))
 }

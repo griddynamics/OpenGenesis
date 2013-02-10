@@ -193,9 +193,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
 
       $.when(template.fetch())
         .done(function() {
-          var workflow = _(template.get('workflows')).find(function (item) {
-            return item.name === workflowName;
-          });
+          var workflow = _(template.get('workflows')).find(function (item) { return item === workflowName; });
 
           if (workflow) {
             var wmodel = new gtemplates.WorkflowModel({
@@ -209,8 +207,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
               });
 
             $.when(wmodel.fetch()).done(function(){
-              self.executeWorkflowDialog.showFor(self.details.get("projectId"), wmodel.get("result"), self.details.get("id"),
-              self.details.get('templateName'), self.details.get('templateVersion'));
+              self.executeWorkflowDialog.showFor(self.details, wmodel);
             }).fail(function(jqXHR){
               genesis.app.trigger("page-view-loading-completed");
               status.StatusPanel.error(jqXHR);
@@ -446,12 +443,13 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       this.$el.id = "#workflowParametersDialog";
     },
 
-    showFor: function(projectId, workflow, envId, templateName, templateVersion) {
+    showFor: function(envDetails, workflow) {
       this.workflow = workflow;
-      this.envId = envId;
-      this.projectId = projectId;
-      this.templateName = templateName;
-      this.templateVersion = templateVersion;
+      this.envId = envDetails.get("id");
+      this.projectId = envDetails.get("projectId");
+      this.templateName = envDetails.get('templateName');
+      this.templateVersion = envDetails.get('templateVersion');
+      this.configurationId = envDetails.get('configurationId');
       this.render();
     },
 
@@ -462,7 +460,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
     },
 
     runWorkflow: function() {
-      if (this.workflow.variables.length > 0) {
+      if (this.workflow.get('variables').length > 0) {
         if (!$('#workflow-parameters-form').valid()) {
           this.trigger("workflow-validation-errors");
           return;
@@ -470,13 +468,13 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
 
       }
       genesis.app.trigger("page-view-loading-started");
-      var execution = backend.WorkflowManager.executeWorkflow(this.projectId, this.envId, this.workflow.name, this.workflowParams());
+      var execution = backend.WorkflowManager.executeWorkflow(this.projectId, this.envId, this.workflow.get('name'), this.workflowParams());
 
       var view = this;
       $.when(execution).then(
         function success() {
           genesis.app.trigger("page-view-loading-completed");
-          view.trigger("workflow-started", view.workflow);
+          view.trigger("workflow-started", view.workflow.toJSON());
           view.$el.dialog("close");
         },
         function fail(response) {
@@ -493,7 +491,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
               json.compoundServiceErrors,
               _.values(json.serviceErrors)
             );
-            view.trigger("workflow-starting-error", view.workflow, errors);
+            view.trigger("workflow-starting-error", view.workflow.toJSON(), errors);
             view.$el.dialog("close");
           } else {
             view.trigger("workflow-validation-errors");
@@ -510,20 +508,21 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       $.when(genesis.fetchTemplate(this.template)).done(function (tmpl) {
 
         genesis.app.trigger("page-view-loading-completed");
-        view.$el.html(tmpl({noVariables: view.workflow.variables.length == 0, workflowName: view.workflow.name}));
+        view.$el.html(tmpl({noVariables: view.workflow.get('variables').length == 0, workflowName: view.workflow.get('name')}));
 
         var inputsView = new variablesmodule.Views.InputControlsView({
           el: view.$('#workflow_vars'),
-          variables: view.workflow.variables,
+          variables: view.workflow.get('variables'),
           projectId: view.projectId,
-          workflow: view.workflow.name,
+          workflow: view.workflow,
+          configurationId: view.configurationId,
           template: new Backbone.Model({name: view.templateName, version: view.templateVersion})
         });
 
         inputsView.render(function() {
           view.$el.dialog({
-            title: 'Execute ' + view.workflow.name,
-            width: _.size(view.workflow.variables) > 0 ? 1052 : 400,
+            title: 'Execute ' + view.workflow.get('name'),
+            width: _.size(view.workflow.get('variables')) > 0 ? 1052 : 400,
             autoOpen: true,
             buttons: {
               "Run": function() {
@@ -551,7 +550,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
     },
 
     /* override */ variablesModel: function() {
-       return this.workflow.variables;
+       return this.workflow.get('variables');
     }
 
   });

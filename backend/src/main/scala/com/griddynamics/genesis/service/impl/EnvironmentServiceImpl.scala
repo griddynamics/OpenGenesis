@@ -59,11 +59,12 @@ class EnvironmentServiceImpl(repository: ConfigurationRepository, accessService:
 
   def list(projectId: Int) = {
     val allConfigs = repository.list(projectId)
-    if (hasAccessToAllEnvs(projectId)) allConfigs else {
-      val permittedIds = accessService.listAccessible(projectId, getCurrentUser, getCurrentUserAuthorities)
-      allConfigs.filter {
-        case c => c.id.map(cid => permittedIds.exists(_ == cid)).getOrElse(false)
-      }
+    if (!hasAccessToAllEnvs(projectId)) {
+      val permittedIds = accessService.listAccessible(projectId, getCurrentUser, getCurrentUserAuthorities).toSet
+
+      allConfigs.filter { _.id.map (permittedIds.contains).getOrElse(false) }
+    } else {
+      allConfigs
     }
   }
 

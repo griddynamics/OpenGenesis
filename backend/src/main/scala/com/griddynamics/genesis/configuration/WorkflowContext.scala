@@ -34,7 +34,6 @@ import com.griddynamics.genesis.workflow.{StepResult, Step}
 import com.griddynamics.genesis.service.RemoteAgentsService
 import com.typesafe.config.{ConfigSyntax, ConfigParseOptions, Config, ConfigFactory}
 import org.springframework.core.io.Resource
-import com.griddynamics.genesis.scheduler.SchedulingService
 
 trait WorkflowContext {
     def requestBroker: RequestBroker
@@ -68,7 +67,6 @@ class DefaultWorkflowContext extends WorkflowContext {
       new RequestDispatcherImpl(
         WorkflowConfig(beatPeriodMs, flowTimeOutMs, remoteExecutorWaitTimeout),
         storeService = storeServiceContext.storeService,
-        configRepo = storeServiceContext.configurationRepository,
         templateService = templateServiceContext.templateService,
         executorService = executorService,
         stepCoordinatorFactory = stepCoordinatorFactory, actorSystem = actorSystem,

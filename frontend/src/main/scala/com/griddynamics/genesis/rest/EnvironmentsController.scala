@@ -47,7 +47,6 @@ import org.apache.commons.lang3.StringEscapeUtils
 import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.spring.security.LinkSecurityBean
-import com.griddynamics.genesis.template.dsl.groovy.Reserved
 import com.griddynamics.genesis.model.EnvStatus
 
 @Controller
@@ -73,7 +72,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     val templateName = extractValue("templateName", paramsMap)
     val templateVersion = extractValue("templateVersion", paramsMap)
     val variables = extractVariables(paramsMap)
-    val config =  variables.get(Reserved.configRef).map { cid =>
+    val config =  extractOption("configId", paramsMap).map { cid =>
       configRepository.get(projectId, cid.toInt).getOrElse(throw new ResourceNotFoundException("Failed to find config with id = %s in project %d".format(cid, projectId)))
     }.getOrElse {
       configRepository.getDefaultConfig(projectId) match {

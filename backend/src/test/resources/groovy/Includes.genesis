@@ -13,7 +13,6 @@ template {
         f("Included from create." + s)
     }
 
-
     workflow("destroy") {
         f("Included from destroy." + i)
     }

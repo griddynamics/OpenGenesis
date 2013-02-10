@@ -5,10 +5,9 @@ import groovy.lang.{MissingPropertyException, Closure, GroovyObjectSupport}
 import collection.mutable.ListBuffer
 import com.griddynamics.genesis.util.ScalaUtils
 import java.lang.reflect.Method
-import com.griddynamics.genesis.template.support.EnvConfigSupport
 
 class DataSourceDeclaration(val projectId: Int, dsFactories: Seq[DataSourceFactory]) extends GroovyObjectSupport with Delegate {
-    val builders = ListBuffer[DataSourceBuilder](EnvConfigSupport.dsBuilder(projectId, dsFactories))
+    val builders = new ListBuffer[DataSourceBuilder]
 
     override def invokeMethod(name: String, args: AnyRef) = {
         val factory = dsFactories.find(ds => ds.mode == name).getOrElse(
@@ -40,7 +39,7 @@ class DataSourceBuilder(val projectId: Int, val factory : DataSourceFactory, val
         conf.put(name, args)
     }
 
-    def newDS = (name, {val ds = factory.newDataSource; ds.config(conf.toMap + ("projectId" -> projectId)); ds})
+    def newDS:(String, VarDataSource) = (name, {val ds = factory.newDataSource; ds.config(conf.toMap + ("projectId" -> projectId)); ds})
 }
 
 
@@ -114,7 +113,7 @@ class InlineDataSource( builder: DataSourceBuilder,
   def config(map: Map[String, Any]) {
     for (config <- configDeclaration) {
       map.foreach {
-        case (key, value) => config.setProperty(key, value)
+        case (key, value) => config.setProperty(key, value)    //todo: wtf  . why is it propagated
       }
     }
   }
@@ -142,9 +141,7 @@ class InlineDataSource( builder: DataSourceBuilder,
         knownVars.find(_.name == property) match {
           case Some(variable) =>
             links += property
-            if (Reserved.configRef.contains(property)) EnvConfigSupport.fakeConfig(builder.projectId)
-            else fakeValue(variable.getClazz())
-
+            fakeValue(variable.getClazz())
           case None => super.getProperty(property)
         }
     }

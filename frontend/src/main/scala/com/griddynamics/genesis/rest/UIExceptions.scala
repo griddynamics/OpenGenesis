@@ -28,9 +28,7 @@ class InvalidInputException(val msg: Option[String] = None) extends RuntimeExcep
   def this(msg: String) = this(Some(msg))
 }
 
-class MissingParameterException(s : String) extends RuntimeException {
-    val paramName = s
-}
+class MissingParameterException(val paramName : String) extends RuntimeException
 
 /**
  * @param msg mandatory explanation of what wasn't found

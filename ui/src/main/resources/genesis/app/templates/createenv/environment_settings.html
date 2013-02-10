@@ -8,23 +8,39 @@
                 <input type="text" id="envName" name="envName" class="required" >
             </div>
             <div style="clear: both"></div>
-
+            <% if (configs.length) { %>
             <div style="margin-top: 10px; margin-bottom: 10px;">
-                <label for="time-to-live" class="label" >Automatically destroy</label>
+                <label for="configuration" class="label-required" >*&nbsp; Environment</label>
                 <div class="value">
-                   <select id="time-to-live" name="timeToLive">
-                       <option value="">do not destroy</option>
-                       <option value="60">in 1 hour</option>
-                       <option value="240">in 4 hours</option>
-                       <option value="480">in 8 hours</option>
-                       <option value="1440">in 24 hours</option>
-                       <option value="10080">in 1 week</option>
-                   </select>
+                    <select id="configuration" name="configId" >
+                        <option value="">Please select</option>
+                        <% for (var i = 0, count = configs.length; i < count; i++) { var config = configs[i]; %>
+                        <option value="<%- config.id %>"><%- config.name %></option>
+                        <% } %>
+
+                    </select>
                 </div>
             </div>
+            <div style="clear: both"></div>
+            <% } %>
            <div style="clear: both"></div>
-            <div id="workflow_vars"/>
+           <div id="workflow_vars" class="create-parameters"></div>
+           <div style="margin-top: 10px; margin-bottom: 10px; display: none" class="create-parameters">
+                <label for="time-to-live" class="label" >Automatically destroy in</label>
+                <div class="value">
+                    <select id="time-to-live" name="timeToLive">
+                        <option value="">never</option>
+                        <option value="60">1 hour</option>
+                        <option value="240">4 hours</option>
+                        <option value="480">8 hours</option>
+                        <option value="1440">1 day</option>
+                        <option value="10080">1 week</option>
+                    </select>
+                </div>
+            </div>
+           <div id="validation-error" style="display: none"></div>
         </div>
+        <br class="clear"/>
         <div class="form-notice">All fields marked with * are required</div>
         <br class="clear"/>
     </form>
