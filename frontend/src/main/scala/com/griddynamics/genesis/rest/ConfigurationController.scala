@@ -69,7 +69,7 @@ class ConfigurationController extends RestApiExceptionsHandler{
            request: HttpServletRequest): CollectionWrapper[ItemWrapper[Configuration]] = {
     def wrapConfig(config: Configuration) = {
        val top: WebPath = WebPath(request)
-       wrap(config).withLinks(LinkBuilder(top / config.id.get.toString, LinkTarget.SELF, classOf[Configuration], GET, PUT, DELETE)).filtered()
+       config.withLinks(LinkBuilder(top / config.id.get.toString, LinkTarget.SELF, classOf[Configuration], GET, PUT, DELETE)).filtered()
     }
     configRepository.list(projectId, ordering).map(wrapConfig(_))
   }

@@ -324,8 +324,13 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
           );
           return;
         }
+
+        var allowedConfigs = configs.filter(function(i) {
+          var self = _(i.get('links')).find( function(i) { return i.rel === 'self' });
+          return _(self.methods).contains("put");
+        });
         view.$el.html(tmpl({
-          configs: configs.toJSON()
+          configs: _(allowedConfigs).map(function(i) { return i.toJSON() })
         }));
 
       });
