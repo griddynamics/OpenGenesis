@@ -15,7 +15,7 @@ function(genesis, status, $, _, Backbone) {
     this.parentsOf = {}; // [name -> list of parents ] map
     this.childrenOf = {}; // [name -> list of dependents] map
     this.variables = variables;
-
+    this.roots = [];
     var graph = this;
 
     _(variables).each(function(item) {
@@ -26,6 +26,8 @@ function(genesis, status, $, _, Backbone) {
           graph.childrenOf[parent] = graph.childrenOf[parent] || [];
           graph.childrenOf[parent].push(item.name);
         });
+      } else {
+        graph.roots.push(item);
       }
     });
   };
@@ -74,16 +76,26 @@ function(genesis, status, $, _, Backbone) {
 
     allButLeafs: function() {  //returns all nodes that have children in graph
       return _.keys(this.childrenOf);
+    },
+
+    roots: function() {
+      return this.roots;
     }
+
   };
 
-  function partialApply(url, variables) {
+  function partialApply(url, variables, configurationId) {
     return $.ajax({
       type: "POST",
       url: url,
-      data: JSON.stringify({variables: variables}),
+      data: JSON.stringify({
+        variables: variables,
+        configurationId: configurationId ? configurationId: null
+      }),
       dataType: "json",
       contentType : 'application/json'
+    }).pipe(function(ajax) {
+        return ajax.result ? ajax.result : ajax;
     })
   }
 
@@ -136,16 +148,19 @@ function(genesis, status, $, _, Backbone) {
     htmltemplate: "app/templates/common/variables.html",
 
     initialize: function (options) {
+      this.workflow = options.workflow;
       this.variables = options.variables;
       this.graph = new DependencyGraph(this.variables);
+      this.configurationId = options.configurationId;
 
       var templateUrl = "rest/projects/" +
         options.projectId + "/templates/" +
         options.template.get("name") + "/v" +
-        options.template.get("version") + "/" + options.workflow;
+        options.template.get("version") + "/" + options.workflow.get('name');
 
-      this.applyVariables = function(variables) {
-        return partialApply(templateUrl, variables)
+
+      this.applyVariables = function(variables, configurationId) {
+        return partialApply(templateUrl, variables, configurationId)
       }
     },
 
@@ -203,6 +218,52 @@ function(genesis, status, $, _, Backbone) {
       });
     },
 
+    updateConfigurationId: function(newValue) {
+      var self = this;
+      this.configurationId = newValue;
+      genesis.app.trigger("page-view-loading-started");
+
+      var resolvedVariables = _(this.graph.all()).filter(function(name) {
+        var $input = self.$('#' + escapeCss(name));
+        return $input.attr('disabled') !== 'disabled';
+      });
+      var nameValueMap = self._collectValueObject(resolvedVariables);
+
+      self.applyVariables(nameValueMap, self.configurationId).done(function (data) {
+        var invalidVars = [];
+        var successfullyProcessed = [];
+        _(data).each(function(variable){
+          var $input = self.$("#" + escapeCss(variable.name));
+          var isValid = true;
+          if (self._isMultiValue(variable)) {
+            var previousValue = nameValueMap[variable.name];
+            if(!variable.values.hasOwnProperty(previousValue)) { //if old value doesn't conform to new values map
+              var descendants = self.graph.allDescendants(variable.name);
+              invalidVars = _.union(invalidVars, descendants); // all descendants concerned to be invalid
+              _.intersection(successfullyProcessed, descendants).forEach(function(i) { self._disable("#" + escapeCss(i)) });
+              isValid = false;
+            }
+
+            if (!_(invalidVars).contains(variable.name)) {
+              $input.find("option").remove();
+              self._buildOptions($input, variable.values, null);
+              successfullyProcessed.push(variable.name)
+            } else {
+              self._disable($input)
+            }
+          }
+          if(nameValueMap.hasOwnProperty(variable.name) && isValid) {
+            $input.val(nameValueMap[variable.name])
+          }
+        });
+        self.trigger("configuration-success");
+      }).fail(function(e){
+        self.trigger("configuration-error", e);
+      }).always(function() {
+        genesis.app.trigger("page-view-loading-completed");
+      });
+    },
+
     _linkDependencies: function () {
       this.undelegateEvents();
 
@@ -220,7 +281,7 @@ function(genesis, status, $, _, Backbone) {
           var resolvedVariables = _.difference(graph.all(), descendants);
           var nameValueMap = self._collectValueObject(resolvedVariables);
 
-          self.applyVariables(nameValueMap).done(function (data) {
+          self.applyVariables(nameValueMap, self.configurationId).done(function (data) {
             _(data).each(function (variable) {
               self._enableChecked(variable);
               if (descendants.contains(variable.name) && self._isMultiValue(variable)) {
@@ -245,6 +306,7 @@ function(genesis, status, $, _, Backbone) {
       });
 
       this.delegateEvents(events);
+      self.trigger("configuration-success");
     }
   });
 

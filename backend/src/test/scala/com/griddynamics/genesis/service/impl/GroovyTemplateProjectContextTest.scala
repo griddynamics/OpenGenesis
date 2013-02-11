@@ -24,41 +24,42 @@ package com.griddynamics.genesis.service.impl
 
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
-import com.griddynamics.genesis.service.{EnvironmentService, TemplateRepoService, ValidationError, VariableDescription}
-import com.griddynamics.genesis.template.{VersionedTemplate, ListVarDSFactory, TemplateRepository}
+import com.griddynamics.genesis.service.VariableDescription
+import com.griddynamics.genesis.template.ListVarDSFactory
 import org.springframework.core.convert.support.DefaultConversionService
 import org.junit.Test
 import com.griddynamics.genesis.util.IoUtil
 import org.mockito.{Matchers, Mockito}
-import com.griddynamics.genesis.plugin.{StepBuilder, GenesisStep}
-import com.griddynamics.genesis.repository.DatabagRepository
-import com.griddynamics.genesis.api.{DataItem, DataBag}
+import com.griddynamics.genesis.plugin.StepBuilder
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
 import com.griddynamics.genesis.cache.NullCacheManager
+import org.mockito.Mockito._
+import com.griddynamics.genesis.service.ValidationError
+import com.griddynamics.genesis.template.VersionedTemplate
+import com.griddynamics.genesis.api.DataItem
+import com.griddynamics.genesis.api.DataBag
+import com.griddynamics.genesis.plugin.GenesisStep
+import com.griddynamics.genesis.api
 
-class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSugar {
-    val templateRepository = mock[TemplateRepository]
-    val bagRepository = mock[DatabagRepository]
-    val templateRepoService = mock[TemplateRepoService]
-    Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
-  val configService = mock[EnvironmentService]
+class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniverse {
 
   Mockito.when(configService.getDefault(Matchers.anyInt)).thenReturn(None)
   Mockito.when(configService.list(Matchers.anyInt)).thenReturn(Seq())
+  when(configService.get(Matchers.any(), Matchers.any())).thenReturn(Some(new api.Configuration(Some(0), "", 0, None, Map())))
 
-    val templateService = new GroovyTemplateService(templateRepoService,
+  val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), new DefaultConversionService,
         Seq(new ListVarDSFactory, new DependentListVarDSFactory,
-        new DatabagDataSourceFactory(bagRepository)), bagRepository, configService, NullCacheManager)
+        new DatabagDataSourceFactory(databagRepository)), databagRepository, configService, NullCacheManager)
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/ProjectContextExample.genesis"))
 
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
-    Mockito.when(bagRepository.findByName("foo", Some(0))).thenReturn(Some(testDatabag))
-    Mockito.when(bagRepository.findByName("bar", None)).thenReturn(Some(systemDatabag))
-    Mockito.when(bagRepository.findByName("foo", None)).thenReturn(Some(altDatabag))
-    Mockito.when(bagRepository.findByTags(Seq("bar"), None)).thenReturn(Seq(systemDatabag))
-    Mockito.when(bagRepository.findByTags(Seq("foo"), Some(0))).thenReturn(Seq(testDatabag))
-    val createWorkflow = templateService.findTemplate(0, "Projects", "0.1").get.createWorkflow
+    Mockito.when(databagRepository.findByName("foo", Some(0))).thenReturn(Some(testDatabag))
+    Mockito.when(databagRepository.findByName("bar", None)).thenReturn(Some(systemDatabag))
+    Mockito.when(databagRepository.findByName("foo", None)).thenReturn(Some(altDatabag))
+    Mockito.when(databagRepository.findByTags(Seq("bar"), None)).thenReturn(Seq(systemDatabag))
+    Mockito.when(databagRepository.findByTags(Seq("foo"), Some(0))).thenReturn(Seq(testDatabag))
+    val createWorkflow = templateService.findTemplate(0, "Projects", "0.1", 1).get.createWorkflow
 
     def testDatabag : DataBag = {
         val db = DataBag(Some(0), "foo", Seq("foo"), Some(0), Seq(

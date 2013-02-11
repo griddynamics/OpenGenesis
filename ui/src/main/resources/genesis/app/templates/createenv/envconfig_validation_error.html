@@ -1,0 +1,15 @@
+<div style="margin-top: 10px;margin-bottom: 10px;">
+    <label>
+    </label>
+    <div class="value">
+        <div class="template-processing-error-border">
+            <div style="margin-left: 20px; padding-bottom: 10px" class="template-processing-error-header-2">Workflow cannot be started because some requirements were not met:</div>
+            <ul>
+                <% for (var i = 0; i < error.compoundServiceErrors.length; i++) { %>
+                <li><%- error.compoundServiceErrors[i] %></li>
+                <% } %>
+            </ul>
+        </div>
+    </div>
+    <div style="clear: both"></div>
+</div>

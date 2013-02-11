@@ -6,9 +6,10 @@ import collection.mutable.ListBuffer
 import reflect.BeanProperty
 import groovy.util.Expando
 
-class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFactories : Seq[DataSourceFactory],
+class VariableDeclaration(dsObjSupport: Option[Closure[Unit]],
+                          dataSourceFactories : Seq[DataSourceFactory],
                           projectId: Int) extends GroovyObjectSupport with Delegate {
-    protected val builders = new ListBuffer[VariableBuilder]
+  protected val builders = new ListBuffer[VariableBuilder]
 
 //  val declaration = new DataSourceDeclaration(projectId, dataSourceFactories)
   override def delegationStrategy = Closure.DELEGATE_FIRST
@@ -27,7 +28,8 @@ class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFac
     newValue match {
       case cl: Closure[_] =>
         builders += Delegate(cl).to(new DSAwareVariableBuilder(builders, dataSourceFactories, projectId, None, property, dsObjSupport))
-      case _ => super.setProperty(property, newValue)
+      case _ =>
+        super.setProperty(property, newValue)
     }
   }
 
@@ -38,9 +40,11 @@ class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFac
     }
 
   import collection.JavaConversions.mapAsScalaMap
-  def group(params: java.util.Map[String, Any], variables : Closure[Unit]) =
-     builders ++= Delegate(variables).to(new GroupDeclaration(builders, dsObjSupport, dataSourceFactories, projectId,
-       groupDetails(params.toMap, variables.hashCode))).getBuilders
+  def group(params: java.util.Map[String, Any], variables : Closure[Unit]) = {
+    val details = groupDetails(params.toMap, variables.hashCode)
+    val groupDeclaration = new GroupDeclaration(builders, dsObjSupport, dataSourceFactories, projectId, details)
+    builders ++= Delegate(variables).to(groupDeclaration).getBuilders
+  }
 
 
   private def groupDetails(params: Map[String, Any], id: Int) = (params.get("description"), params.getOrElse("required", false)) match {
@@ -53,10 +57,11 @@ class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFac
   }
 }
 
-class GroupDeclaration(val parentBuilders: ListBuffer[VariableBuilder],
+class GroupDeclaration(parentBuilders: ListBuffer[VariableBuilder],
                        dsObjSupport: Option[Closure[Unit]],
                        dataSourceFactories : Seq[DataSourceFactory],
-                       projectId: Int, group: GroupDetails) extends VariableDeclaration(dsObjSupport, dataSourceFactories, projectId) {
+                       projectId: Int,
+                       group: GroupDetails) extends VariableDeclaration(dsObjSupport, dataSourceFactories, projectId) {
 
   override def group(params: java.util.Map[String, Any], variables: Closure[Unit]): ListBuffer[VariableBuilder] = {
       throw new IllegalArgumentException("Nested groups are not supported!")
@@ -65,8 +70,8 @@ class GroupDeclaration(val parentBuilders: ListBuffer[VariableBuilder],
   override def setProperty(property: String, newValue: Any) {
     newValue match {
       case cl: Closure[_] =>
-        builders += Delegate(cl).to(new DSAwareVariableBuilder(parentBuilders ++ builders, dataSourceFactories,
-          projectId, Option(group), property, dsObjSupport))
+        val builder = new DSAwareVariableBuilder(parentBuilders ++ builders, dataSourceFactories,  projectId, Option(group), property, dsObjSupport)
+        builders += Delegate(cl).to(builder)
       case _ => super.setProperty(property, newValue)
     }
   }

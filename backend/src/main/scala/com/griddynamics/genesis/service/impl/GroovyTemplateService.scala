@@ -23,28 +23,26 @@
 package com.griddynamics.genesis.service.impl
 
 import collection.mutable
-import com.griddynamics.genesis.service
-import groovy.lang._
 import collection.mutable.ListBuffer
-import service._
-import org.springframework.core.convert.ConversionService
-import java.lang.IllegalStateException
-import com.griddynamics.genesis.template.dsl.groovy._
-import com.griddynamics.genesis.template._
-import com.griddynamics.genesis.workflow.Step
-import com.griddynamics.genesis.plugin.{StepBuilder, StepBuilderFactory}
-import com.griddynamics.genesis.util.{TryingUtil, ScalaUtils, Logging}
-import org.codehaus.groovy.runtime.{InvokerHelper, MethodClosure}
-import service.ValidationError
-import com.griddynamics.genesis.plugin.GenesisStep
-import com.griddynamics.genesis.repository.DatabagRepository
-import com.griddynamics.genesis.cache.{CacheConfig, CacheManager, Cache}
-import groovy.util.Expando
-import java.util.concurrent.TimeUnit
-import com.griddynamics.genesis.template.dsl.groovy.{Delegate => DslDelegate}
 import com.griddynamics.genesis.api.{ExtendedResult, Configuration, Failure, Success}
+import com.griddynamics.genesis.cache.{CacheConfig, CacheManager, Cache}
 import com.griddynamics.genesis.model.{Environment, EntityAttr, EntityWithAttrs}
-import support.{EnvConfigDataSourceFactory, EnvConfigSupport}
+import com.griddynamics.genesis.plugin.GenesisStep
+import com.griddynamics.genesis.plugin.{StepBuilder, StepBuilderFactory}
+import com.griddynamics.genesis.repository.DatabagRepository
+import com.griddynamics.genesis.service
+import com.griddynamics.genesis.service._
+import com.griddynamics.genesis.template._
+import com.griddynamics.genesis.template.dsl.groovy._
+import com.griddynamics.genesis.template.dsl.groovy.{Delegate => DslDelegate}
+import com.griddynamics.genesis.util.{TryingUtil, ScalaUtils, Logging}
+import com.griddynamics.genesis.workflow.Step
+import groovy.lang._
+import groovy.util.Expando
+import java.lang.IllegalStateException
+import java.util.concurrent.TimeUnit
+import org.codehaus.groovy.runtime.{InvokerHelper, MethodClosure}
+import org.springframework.core.convert.ConversionService
 
 class GroovyTemplateService(val templateRepoService : TemplateRepoService,
                             val stepBuilderFactories : Seq[StepBuilderFactory],
@@ -54,107 +52,111 @@ class GroovyTemplateService(val templateRepoService : TemplateRepoService,
                             envConfigService: EnvironmentService,
                             val cacheManager: CacheManager) extends service.TemplateService with Logging with Cache {
 
-    val CACHE_NAME = "GroovyTemplateService"
+  val CACHE_NAME = "GroovyTemplateService"
 
-    private def templateRepo(projectId: Int) = templateRepoService.get(projectId)
+  private def templateRepo(projectId: Int) = templateRepoService.get(projectId)
 
-    override def defaultTtl = TimeUnit.HOURS.toSeconds(24).toInt
+  override def defaultTtl = TimeUnit.HOURS.toSeconds(24).toInt
 
-    def findTemplate(projectId: Int, name: String, version: String, envConfId: Option[Int] = None) = {
-      val conf = envConfId.flatMap(envConfigService.get(projectId, _))
-      getTemplate(projectId, name, version, envConf = conf)
-    }
-
-  def findTemplate(env: Environment) = {
-    val envConf = envConfigService.get(env.projectId, env.configurationId)
-    getTemplate(env.projectId, env.templateName, env.templateVersion, envConf = envConf)
+  def findTemplate(projectId: Int, templateName: String, templateVersion: String, envConfId: Int): Option[TemplateDefinition] = {
+    val config = envConfigService.get(projectId, envConfId).getOrElse (
+      throw new IllegalArgumentException (s"Couldn't find configuration $envConfId in projectId $projectId ")
+    )
+    getTemplate(projectId, templateName, templateVersion, envConf = config)
   }
-    def getTemplate(projectId: Int, name: String, version: String, eval: Boolean = true, envConf: Option[Configuration] = None) : Option[TemplateDefinition] = {
-        val body = getTemplateBody(name, version, projectId)
-        body.flatMap(evaluateTemplate(projectId, _, None, None, None, listOnly = !eval, envConf = envConf).map(et =>
-            new GroovyTemplateDefinition(et, conversionService, stepBuilderFactories)
-        ))
+
+  def findTemplate(env: Environment) =
+    findTemplate(env.projectId, env.templateName, env.templateVersion, env.configurationId)
+
+  def getTemplate(projectId: Int, name: String, version: String, envConf: Configuration) : Option[TemplateDefinition] = {
+    val body = templateRawContent(projectId, name, version)
+    body.flatMap(fullDefinition(_, projectId, envConf).map(et =>
+      new GroovyTemplateDefinition(et, conversionService, stepBuilderFactories)
+    ))
+  }
+
+  override def descTemplate(projectId: Int, name: String, version: String) = {
+    for (
+      body <- templateRawContent(projectId, name, version);
+      definition <- highLevelDefinition(body)
+    ) yield {
+      new TemplateDescription(name, version, definition.createWorkflow, definition.destroyWorkflow, definition.workflows.map(_.name), body)
     }
+  }
 
-    override def descTemplate(projectId: Int, name: String, version: String) = {
-      for (
-        body <- getTemplateBody(name, version, projectId);
-        definition <- evaluateTemplate(projectId, body, None, None, None, listOnly = true)
-      ) yield {
-        new TemplateDescription(name, version, definition.createWorkflow, definition.destroyWorkflow, definition.workflows.map(_.name))
-      }
-    }
-
-
-  def getTemplateBody(name: String, version: String, projectId: Int): Option[String] = {
-    val ref = Option(fromCache(CACHE_NAME, TmplCacheKey(name, version, projectId)) { null.asInstanceOf[VersionedTemplate] })
-    val bodyOpt = ref match {
+  def templateRawContent(projectId: Int, name: String, version: String): Option[String] = {
+    val key = TmplCacheKey(name, version, projectId)
+    val ref = fromCache(CACHE_NAME, key) { null.asInstanceOf[VersionedTemplate] }
+    Option(ref) match {
       case Some(verTmpl) => templateRepo(projectId).getContent(verTmpl)
-      case None => templatesMap(projectId).get(name, version)
+      case None => templatesMap(projectId).get(name, version).map(_.rawBody)
     }
-    bodyOpt
   }
 
-  def listTemplates(projectId: Int) = templatesMap(projectId).keys.toSeq
+  def listTemplates(projectId: Int) = templatesMap(projectId).values.toSeq
 
-    private def templatesMap(projectId: Int) = {
-        val sources = templateRepo(projectId).listSources()
-        (for ((version, body) <- sources) yield try {
-            val template = evaluateTemplate(projectId, body, None, None, None, listOnly = true)
-
-            template.foreach(t => {
-              val key = TmplCacheKey(t.name, t.version, projectId)
-              val value = new VersionedTemplate(version.name)
-              cacheManager.createCacheIfAbsent(CacheConfig(CACHE_NAME, defaultTtl, maxEntries))
-              cacheManager.putInCache(CACHE_NAME, key, value) //todo (RB): we assume repo is not using vsc versions
-            })
-
-            template.map(t => ((t.name, t.version), body))
-       } catch {
-            case t: Throwable => {
-                log.error(t, "Error in template name or version: %s", t)
-                None
-            }
-        }).flatten.toMap        
+  private def templatesMap(projectId: Int) = {
+    def putInCache(template: EnvironmentTemplate, version: VersionedTemplate) {
+      val key = TmplCacheKey(template.name, template.version, projectId)
+      val value = new VersionedTemplate(version.name)
+      cacheManager.createCacheIfAbsent(CacheConfig(CACHE_NAME, defaultTtl, maxEntries))
+      cacheManager.putInCache(CACHE_NAME, key, value) //todo (RB): we assume repo is not using vsc versions
     }
 
-    def evaluateTemplate(projectId: Int, body : String, extName: Option[String], extVersion: Option[String],
-                         extProject : Option[String], listOnly : Boolean = false, envConf: Option[Configuration] = None) = {
-        val templateDecl = new BlockDeclaration
-        val methodClosure = new MethodClosure(templateDecl, "declare")
+    def templateDescription(template: EnvironmentTemplate, body: String): TemplateDescription = {
+      new TemplateDescription(template.name, template.version, template.createWorkflow, template.destroyWorkflow, template.workflows.map(_.name), body)
+    }
 
-        val binding = new Binding
-        binding.setVariable("template", methodClosure)
-        binding.setVariable("include", new MethodClosure(templateDecl, "include"))
+    val sources = templateRepo(projectId).listSources()
 
-        try {
-            val groovyShell = new GroovyShell(binding)
-            groovyShell.evaluate(body)
-            if (!listOnly) evaluateIncludes(projectId, templateDecl.includes, groovyShell)
-        } catch {
-            case e: GroovyRuntimeException => throw new IllegalStateException("can't process template", e)
+    (for ((version, body) <- sources) yield try {
+        for(template <- highLevelDefinition(body)) yield {
+          putInCache(template, version)
+          ((template.name, template.version), templateDescription(template, body))
         }
-        val templateBuilder = if (listOnly) new NameVersionDelegate else
-          new EnvTemplateBuilder(projectId, new EnvConfigDataSourceFactory(envConfigService) +: dataSourceFactories,
-            databagRepository,envConfigService, envConf, binding)
-        templateDecl.bodies.headOption.map { body => DslDelegate(body).to(templateBuilder).newTemplate(extName, extVersion, extProject) }
-    }
+      } catch {
+        case t: Exception => {
+            log.error(t, "Error in template name or version: %s", t)
+            None
+        }
+    }).flatten.toMap
+  }
 
-    private def getBody(projectId: Int, name: String) = templateRepo(projectId).listSources
-        .find(_._1.name.toUpperCase.endsWith(name.toUpperCase)).map(_._2)
+  private def highLevelDefinition(body: String): Option[EnvironmentTemplate] = {
+    buildTemplate(body, new NameVersionDelegate, None)
+  }
 
-    private def evaluateIncludes(projectId: Int, includes: Seq[String], groovyShell: GroovyShell) {
-        includes.foreach(i => {
-            getBody(projectId, i).foreach(b => {
-                groovyShell.evaluate(b)
-            })
-        })
-    }
+  private def fullDefinition(body: String, projectId: Int, envConf: Configuration): Option[EnvironmentTemplate] = {
+    val builder = new EnvTemplateBuilder(projectId, dataSourceFactories, databagRepository, envConf)
+    buildTemplate(body, builder, Some(projectId))
+  }
 
-    def templateRawContent(projectId: Int, name: String, version: String) = {
-        val map = templatesMap(projectId)
-        map.get(name, version)
+  private def buildTemplate(body: String, builder: TemplateBuilder with DslDelegate with GroovyObjectSupport, projectId: Option[Int]): Option[EnvironmentTemplate] = {
+    val templateDecl = new BlockDeclaration
+    val methodClosure = new MethodClosure(templateDecl, "declare")
+
+    val binding = new Binding
+    binding.setVariable("template", methodClosure)
+    binding.setVariable("include", new MethodClosure(templateDecl, "include"))
+
+    try {
+      val groovyShell = new GroovyShell(binding)
+      groovyShell.evaluate(body)
+      projectId.foreach (evaluateIncludes(_, templateDecl.includes, groovyShell))
+    } catch {
+      case e: GroovyRuntimeException => throw new IllegalStateException("can't process template", e)
     }
+    templateDecl.bodies.headOption.map { body => DslDelegate(body).to(builder).newTemplate() }
+  }
+
+  private def getBody(projectId: Int, name: String) = templateRepo(projectId).
+    listSources().
+    collectFirst { case (nameVersion, body) if nameVersion.name.toUpperCase.endsWith(name.toUpperCase) => body }
+
+  private def evaluateIncludes(projectId: Int, includes: Seq[String], groovyShell: GroovyShell) {
+    for(include <- includes;
+          body  <- getBody(projectId, include)) groovyShell.evaluate(body)
+  }
 
   def clearCache(projectId: Int) {
     if (cacheManager.cacheExists(CACHE_NAME))
@@ -198,18 +200,18 @@ class StepBodiesCollector(variables: Map[String, AnyRef],
 trait ContextAccess extends ((scala.collection.Map[String, Any]) => Any)
 
 object UninitializedStepDetails extends Step {
-    override def stepDescription = "..."
+  override def stepDescription = "..."
 }
 
 class GroovyAttrEntityWrapper(entity: EntityWithAttrs) extends GroovyObjectSupport {
   override def getProperty(property: String) = try {
     entity.get(EntityAttr(property)).getOrElse(InvokerHelper.getProperty(entity, property))
-  }  catch {
-      case e: MissingPropertyException => null
+  } catch {
+    case e: MissingPropertyException => null
   }
 }
 
-class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport with StepBuilder with DslDelegate {
+class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport with StepBuilder with DslDelegate with Logging {
 
   override def delegationStrategy = Closure.DELEGATE_FIRST
 
@@ -238,6 +240,7 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
 
 
     override def setProperty(property: String, value: Any) {
+        log.trace(s"Deferred step building: setting ${stepBuilder.getClass}.$property = $value")
         (property, value) match {
             case ("skip", v: Closure[_]) => throw new RuntimeException("Skip cannot be a deferred object. Don't use syntax skip = {...}")
             case (_, value: Closure[_]) =>
@@ -335,8 +338,8 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
 
   def validatePreconditions(variables: Map[String, Any], config: Configuration): ExtendedResult[_] = {
     val errors = workflow.preconditions.map { case (validationFailureMessage, checkClosure) =>
-      checkClosure.setProperty(Reserved.configRef, EnvConfigSupport.asGroovyMap(config))
-      variables.map{ case(key,value) => checkClosure.setProperty(key, value) }
+//      checkClosure.setProperty(Reserved.configRef, EnvConfigSupport.asGroovyMap(config)) TODO: should it be removed completely?
+      checkClosure.setDelegate(new ScopeHolder(variables))
       if (!checkClosure.call()) Some(validationFailureMessage) else None
     }.flatten.toSeq
 
@@ -346,16 +349,12 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
       Success(None)
   }
   
-  def validate(variables: Map[String, Any], config: Option[Configuration] = None) = { //todo: (RB) configuration shouldn't be OPTION
-    import EnvConfigSupport._
+  def validate(variables: Map[String, Any]) = {
     def isValueProvided(variable: VariableDetails) = variables.contains(variable.name)
 
     val varDetails = workflow.variables()
-    val envConfigContext: Map[String, Any] = Map(
-      Reserved.configRef -> config.map { asGroovyMap(_) }.getOrElse(java.util.Collections.emptyMap[String, String]())
-    )
 
-    val context = envConfigContext ++ (for (variable <- varDetails.filter(_.name != Reserved.configRef)) yield {
+    val context = (for (variable <- varDetails) yield {
       (variable.name, variables.get(variable.name).map(v =>
         try {
           convert(String.valueOf(v), variable)

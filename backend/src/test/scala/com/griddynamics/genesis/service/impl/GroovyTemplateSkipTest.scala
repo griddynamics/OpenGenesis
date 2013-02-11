@@ -23,36 +23,36 @@
 
 package com.griddynamics.genesis.service.impl
 
-import com.griddynamics.genesis.service.{EnvironmentService, TemplateRepoService, WorkflowDefinition, TemplateDefinition}
-import com.griddynamics.genesis.template.{VersionedTemplate, ListVarDSFactory, TemplateRepository}
-import com.griddynamics.genesis.repository.{ConfigurationRepository, DatabagRepository}
+import com.griddynamics.genesis.service.{WorkflowDefinition, TemplateDefinition}
+import com.griddynamics.genesis.template.ListVarDSFactory
 import org.springframework.core.convert.support.DefaultConversionService
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
 import com.griddynamics.genesis.util.IoUtil
-import org.mockito.Mockito
+import org.mockito.{Matchers, Mockito}
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.api.ExtendedResult
 import com.griddynamics.genesis.cache.NullCacheManager
+import org.mockito.Mockito._
+import com.griddynamics.genesis.template.VersionedTemplate
+import com.griddynamics.genesis.api
 
-class GroovyTemplateSkipTest  extends AssertionsForJUnit with MockitoSugar {
-    val templateRepository = mock[TemplateRepository]
-    val bagRepository = mock[DatabagRepository]
-    val templateRepoService = mock[TemplateRepoService]
-    Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
+class GroovyTemplateSkipTest  extends AssertionsForJUnit with MockitoSugar with DSLTestUniverse {
     val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), new DefaultConversionService,
-        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new DatabagDataSourceFactory(bagRepository)),
-      bagRepository, mock[EnvironmentService], NullCacheManager)
+        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new DatabagDataSourceFactory(databagRepository)),
+      databagRepository, configService, NullCacheManager)
+
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/SkipExample.genesis"))
 
     Mockito.when(templateRepository.listSources()).thenReturn(Map(VersionedTemplate("1") -> body))
-    Mockito.when(bagRepository.findByName("foo")).thenReturn(None)
+    Mockito.when(databagRepository.findByName("foo")).thenReturn(None)
+    when(configService.get(Matchers.any(), Matchers.any())).thenReturn(Some(new api.Configuration(Some(0), "", 0, None, Map())))
 
     @Test
     def testSkipStep() {
-        val definition: TemplateDefinition = templateService.findTemplate(0, "SkipExample", "0.1").get
+        val definition: TemplateDefinition = templateService.findTemplate(0, "SkipExample", "0.1", 0).get
         assert(definition != null)
         val workflow: ExtendedResult[WorkflowDefinition] = definition.getValidWorkflow(definition.createWorkflow.name)
     }

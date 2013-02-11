@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
+/**
+ *   Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
  *   This library is free software; you can redistribute it and/or modify it under the terms of
@@ -18,22 +18,26 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *   Project:     Genesis
- *   Description:  Continuous Delivery Platform
- */
+ *   Description: Continuous Delivery Platform
+ */ package com.griddynamics.genesis.service.impl
 
-package com.griddynamics.genesis.template.support
+import org.scalatest.mock.MockitoSugar
+import com.griddynamics.genesis.template.TemplateRepository
+import com.griddynamics.genesis.service.{EnvironmentService, TemplateRepoService}
+import com.griddynamics.genesis.repository.DatabagRepository
+import org.mockito.Mockito
+import com.griddynamics.genesis.model.{EnvStatus, Environment}
+import java.sql.Timestamp
+import java.util.Date
 
+trait DSLTestUniverse extends MockitoSugar{
+  val templateRepository = mock[TemplateRepository]
+  val templateRepoService = mock[TemplateRepoService]
+  val databagRepository = mock[DatabagRepository]
 
-import com.griddynamics.genesis.api.Configuration
+  Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
+  val configService = mock[EnvironmentService]
 
-object EnvConfigSupport {
-  import collection.JavaConversions.mapAsJavaMap
-  def asGroovyMap(c: Configuration):java.util.Map[String, _] = c.items + ("instanceCount" -> c.instanceCount.getOrElse(0)) //todo REMOVE
-}
+  val dummyEnv = new Environment("test_env", EnvStatus.Ready, "creator", new Timestamp(new Date().getTime), None, None, "", "", 0, 0)
 
-trait EnvConfigSupport {
-  def configuration: Configuration
-
-  import scala.collection.JavaConversions._
-  def get$envConfig: java.util.Map[_ <: String, Any] = configuration.items + ("instanceCount" -> configuration.instanceCount.getOrElse(0))
 }
