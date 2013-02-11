@@ -738,6 +738,11 @@
                 <artifactId>metrics-jetty</artifactId>
                 <version>${metrics.version}</version>
             </dependency>
+            <dependency>
+                <groupId>nl.grons</groupId>
+                <artifactId>metrics-scala_2.10</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
