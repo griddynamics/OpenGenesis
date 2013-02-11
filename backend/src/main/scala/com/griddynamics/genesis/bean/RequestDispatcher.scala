@@ -33,7 +33,6 @@ import com.griddynamics.genesis.plugin.{StepBuilder, Cancel, StepCoordinatorFact
 import com.griddynamics.genesis.model.EnvStatus
 import com.griddynamics.genesis.model.WorkflowStatus._
 import com.griddynamics.genesis.util.Logging
-import com.griddynamics.genesis.repository.ConfigurationRepository
 import java.sql.Timestamp
 import com.griddynamics.genesis.configuration.WorkflowConfig
 
@@ -49,7 +48,6 @@ trait RequestDispatcher {
 
 class RequestDispatcherImpl(workflowConfig: WorkflowConfig,
                             storeService: StoreService,
-                            configRepo: ConfigurationRepository,
                             templateService: TemplateService,
                             executorService: ExecutorService,
                             stepCoordinatorFactory: StepCoordinatorFactory,
@@ -132,7 +130,7 @@ class RequestDispatcherImpl(workflowConfig: WorkflowConfig,
 
     def regularCoordinator(envId: Int, projectId: Int, flowSteps: Seq[StepBuilder], rescueSteps: Seq[StepBuilder]) =
         new TypedFlowCoordinatorImpl(
-            new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService, configRepo,
+            new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService,
                 stepCoordinatorFactory, rescueSteps) with RegularWorkflow,
             workflowConfig, executorService, actorSystem, remoteAgentService
 
@@ -140,7 +138,7 @@ class RequestDispatcherImpl(workflowConfig: WorkflowConfig,
 
     def destroyingCoordinator(envId: Int, projectId: Int, flowSteps: Seq[StepBuilder], rescueSteps: Seq[StepBuilder]) =
         new TypedFlowCoordinatorImpl(
-            new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService, configRepo,
+            new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService,
                 stepCoordinatorFactory, rescueSteps) with DestroyWorkflow,
             workflowConfig, executorService, actorSystem, remoteAgentService
 

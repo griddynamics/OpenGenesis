@@ -223,14 +223,15 @@ function(genesis, jQuery, Backbone, _, backend, status, Projects, Environments, 
 
       var userProjects = new Projects.Collection([], {url: projectsUrlRoot.href });
 
-      userProjects.fetch().done(function() {
-        var projectsDropdownTmpl = _.template($("#project-dropdown-list-tmpl").html());
+      var projectsDropdownTmpl = _.template($("#project-dropdown-list-tmpl").html());
 
-        userProjects.bind("all", function () {
-          $(".project-list").html(projectsDropdownTmpl({
-            projects: userProjects.toJSON()
-          }));
-        });
+      userProjects.bind("all", function () {
+        $(".project-list").html(projectsDropdownTmpl({
+          projects: userProjects.toJSON()
+        }));
+      });
+
+      userProjects.fetch().done(function() {
 
         genesis.app.bind("projects-changed", function() {
           userProjects.fetch();

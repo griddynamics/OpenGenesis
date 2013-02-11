@@ -3,10 +3,11 @@ package com.griddynamics.genesis.template.dsl.groovy
 import groovy.lang.{GroovyObjectSupport, Closure}
 import collection.mutable
 import com.griddynamics.genesis.template.DataSourceFactory
-import com.griddynamics.genesis.template.support.EnvConfigVariableBuilder
 
-class WorkflowDeclaration(dsClozures: Option[Closure[Unit]], dataSourceFactories: Seq[DataSourceFactory], projectId: Int,
-                          defaultEnvConfig: Option[Int] = None) extends Delegate {
+class WorkflowDeclaration(dsClozures: Option[Closure[Unit]],
+                          dataSourceFactories: Seq[DataSourceFactory],
+                          projectId: Int) extends Delegate {
+
     var variablesBlock : Option[Closure[Unit]] = None
     var stepsBlock : Option[Closure[Unit]] = None
     var rescueBlock: Option[Closure[Unit]] = None
@@ -32,16 +33,14 @@ class WorkflowDeclaration(dsClozures: Option[Closure[Unit]], dataSourceFactories
     val variableBuilders = variablesBlock match {
       case Some(block) =>
         val varsDecl = new VariableDeclaration(dsClozures, dataSourceFactories, projectId)
-        varsDecl.getBuilders ++= envConfigVarBuilder
         Delegate(block).to(varsDecl).getBuilders
-      case None => envConfigVarBuilder
+      case None => Seq[VariableBuilder]()
     }
 
     val vars = for(builder <- variableBuilders) yield builder.newVariable
     vars.toList
   }
 
-  def envConfigVarBuilder = defaultEnvConfig.toSeq.map(new EnvConfigVariableBuilder(dsClozures, dataSourceFactories, projectId, _))
 }
 
 class RequirementsHandler extends GroovyObjectSupport with Delegate {

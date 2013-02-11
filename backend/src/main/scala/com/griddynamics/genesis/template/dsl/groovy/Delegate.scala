@@ -22,7 +22,8 @@
  */
 package com.griddynamics.genesis.template.dsl.groovy
 
-import groovy.lang.Closure
+import groovy.lang.{GroovyObjectSupport, Closure}
+import com.griddynamics.genesis.util.ScalaUtils
 
 trait Delegate {
   def delegationStrategy = Closure.OWNER_FIRST
@@ -43,4 +44,13 @@ private[groovy] class ClosureWrapper(cl: Closure[_]) {
 
 object Delegate {
   def apply(closure: Closure[_]) = new ClosureWrapper(closure)
+}
+
+class ScopeHolder(val map: Map[String, Any]) extends GroovyObjectSupport with Delegate {
+  override def delegationStrategy: Int = Closure.DELEGATE_ONLY
+
+  override def getProperty(property: String): AnyRef = {
+    val result = map.get(property).getOrElse(super.getProperty(property))
+    ScalaUtils.toAnyRef(result)
+  }
 }

@@ -29,27 +29,25 @@ import javax.servlet.http.HttpServletRequest
 import java.security.Principal
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.service.{ConversionException, TemplateService}
-import com.griddynamics.genesis.api.{Failure, GenesisService}
+import com.griddynamics.genesis.api.{ExtendedResult, Workflow, Configuration, Failure, GenesisService}
 import com.griddynamics.genesis.util.Logging
+import com.griddynamics.genesis.service
 
 @Controller
-@RequestMapping(Array("/rest"))
+@RequestMapping(Array("/rest/projects/{projectId}/templates"))
 class GenesisRestController extends RestApiExceptionsHandler with Logging {
 
     import com.griddynamics.genesis.rest.GenesisRestController._
 
     @Autowired var genesisService: GenesisService = _
     @Autowired var templateService: TemplateService = _
+    @Autowired var configurationService: service.EnvironmentService = _
 
-    @RequestMapping(value = Array("projects/{projectId}/templates"), method = Array(RequestMethod.GET))
+    @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
     @ResponseBody
-    def listTemplates(@PathVariable("projectId")  projectId: Int,
-                      @RequestParam(required = false) project: String, @RequestParam(required = false) tag: String) =
-      paramToOption(project) match {
-        case _ => genesisService.listTemplates(projectId).map(template =>  Map("name" -> template.name, "version" -> template.version))
-    }
+    def listTemplates(@PathVariable("projectId")  projectId: Int) = genesisService.listTemplates(projectId)
 
-    @RequestMapping(value = Array("projects/{projectId}/templates/{templateName}/v{templateVersion:.+}"), method = Array(RequestMethod.GET))
+    @RequestMapping(value = Array("{templateName}/v{templateVersion:.+}"), method = Array(RequestMethod.GET))
     @ResponseBody
     def getTemplate(@PathVariable("projectId") projectId: Int,
                     @PathVariable("templateName") templateName: String,
@@ -70,14 +68,18 @@ class GenesisRestController extends RestApiExceptionsHandler with Logging {
       result.getOrElse(throw new ResourceNotFoundException("Template not found"))
     }
 
-    @RequestMapping(value = Array("projects/{projectId}/templates/{templateName}/v{templateVersion:.+}/{name}"), method = Array(RequestMethod.GET))
+    @RequestMapping(value = Array("{templateName}/v{templateVersion:.+}/{name}"), method = Array(RequestMethod.GET))
     @ResponseBody
     def getWorkflow(@PathVariable("projectId") projectId: Int,
                     @PathVariable("templateName") templateName: String,
                     @PathVariable("templateVersion") templateVersion: String,
-                    @PathVariable("name") name: String) = {
+                    @PathVariable("name")name: String,
+                    @RequestParam(value = "configurationId", required = false) configId: java.lang.Integer): ExtendedResult[Workflow] = {
+        val configuration: Int = Option(configId).map(_.toInt).getOrElse(
+          getConfigId(projectId, "configurationId")
+        )
         try {
-            genesisService.getWorkflow(projectId, templateName, templateVersion, name)
+            genesisService.getWorkflow(projectId, configuration, templateName, templateVersion, name)
         } catch {
             case e: Exception =>
                 log.error(e, "Failed to get template %s version %s", templateName, templateVersion)
@@ -85,7 +87,15 @@ class GenesisRestController extends RestApiExceptionsHandler with Logging {
         }
     }
 
-    @RequestMapping(value = Array("projects/{projectId}/templates/{templateName}/v{templateVersion:.+}/{workflow}"), method = Array(RequestMethod.POST))
+
+    private def getConfigId(projectId: Int, paramName: String): Int = {
+      defaultConfig(projectId) match {
+        case Left(x) => x.id.get
+        case Right(message) => throw new MissingParameterException("configurationId")
+      }
+    }
+
+    @RequestMapping(value = Array("{templateName}/v{templateVersion:.+}/{workflow}"), method = Array(RequestMethod.POST))
     @ResponseBody
     def partialApply(@PathVariable("projectId") projectId: Int,
                      @PathVariable("templateName") templateName: String,
@@ -94,14 +104,21 @@ class GenesisRestController extends RestApiExceptionsHandler with Logging {
                      request: HttpServletRequest) = {
         val paramsMap: Map[String, Any] = GenesisRestController.extractParamsMap(request)
         val variables = GenesisRestController.extractVariables(paramsMap)
+        val configId = extractOption("configurationId", paramsMap).map(_.toInt).getOrElse(getConfigId(projectId, "configurationId"))
         try {
-            genesisService.queryVariables(projectId, templateName, templateVersion, workflow, variables).getOrElse(
-                throw new ResourceNotFoundException("No variables were found for [template = %s (v%s), workflow = %s]".format(templateName, templateVersion, workflow))
-            )
+            genesisService.queryVariables(projectId, configId, templateName, templateVersion, workflow, variables)
         } catch {
             case e: ConversionException => log.error(e, "Conversion error"); Failure(variablesErrors = Map(e.fieldId -> e.message))
             case x: Exception => log.error(x, "Unknown error"); Failure(compoundServiceErrors = Seq(x.getMessage))
         }
+    }
+
+    private def defaultConfig(projectId: Int): Either[Configuration, String] = {
+      configurationService.list(projectId) match {
+        case head :: Nil => Left(head)
+        case Nil => Right("No environment configurations are available to be used as default")
+        case _ => Right("More than one environment configuration available. Exact choice should be provided")
+      }
     }
 }
 

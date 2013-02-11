@@ -48,22 +48,19 @@ abstract class GenesisFlowCoordinator(envId: Int,
                                       projectId: Int,
                                       flowSteps: Seq[StepBuilder],
                                       storeService: StoreService,
-                                      configRepo: ConfigurationRepository,
                                       stepCoordinatorFactory: StepCoordinatorFactory,
                                       rescueSteps: Seq[StepBuilder] = Seq())
-    extends GenesisFlowCoordinatorBase(envId, projectId, flowSteps, storeService, configRepo, stepCoordinatorFactory, rescueSteps)
+    extends GenesisFlowCoordinatorBase(envId, projectId, flowSteps, storeService, stepCoordinatorFactory, rescueSteps)
     with StepIgnore with StepRestart with StepExecutionContextHolder
 
 abstract class GenesisFlowCoordinatorBase(val envId: Int,
                                           val projectId: Int,
                                           val flowSteps: Seq[StepBuilder],
                                           val storeService: StoreService,
-                                          val configurationRepository: ConfigurationRepository,
                                           val stepCoordinatorFactory: StepCoordinatorFactory,
                                           val rescueSteps: Seq[StepBuilder] = Seq())
     extends FlowCoordinator with Logging {
 
-    var config: api.Configuration = _
     var env: Environment = _
     var servers: Seq[EnvResource] = _
 
@@ -85,7 +82,6 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
         env = iEnv
         servers = iServers
         workflow = iWorkflow
-        config = configurationRepository.get(projectId, env.configurationId).get
 
         workflow = storeService.findWorkflow(workflow.id).get
         workflow.stepsCount = stepsToStart.size
@@ -254,8 +250,7 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
 
     override def buildStep(builder: StepBuilder) = safe {
         builder match {
-            case proxy: StepBuilderProxy =>  proxy.newStep(globals, Reserved.instanceRef -> env.copy,
-              Reserved.configRef -> EnvConfigSupport.asGroovyMap(config))
+            case proxy: StepBuilderProxy =>  proxy.newStep(globals, Reserved.instanceRef -> env.copy) //TODO: NOTE!!!! Reserved.configRef -> EnvConfigSupport.asGroovyMap(config) was here
             case _ => builder.newStep
         }
     }

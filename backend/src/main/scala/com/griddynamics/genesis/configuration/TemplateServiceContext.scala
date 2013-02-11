@@ -32,7 +32,7 @@ import com.griddynamics.genesis.spring.ApplicationContextAware
 import com.griddynamics.genesis.service.TemplateService
 import javax.annotation.Resource
 import com.griddynamics.genesis.template.{DependentListFactory, ListVarDSFactory, DataSourceFactory}
-import com.griddynamics.genesis.template.support.{EnvConfigDataSourceFactory, DatabagDataSourceFactory}
+import com.griddynamics.genesis.template.support.{DatabagDataSourceFactory}
 import com.griddynamics.genesis.cache.CacheManager
 
 @Configuration

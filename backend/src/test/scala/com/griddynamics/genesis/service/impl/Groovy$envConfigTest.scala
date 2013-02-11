@@ -24,10 +24,10 @@
 import com.griddynamics.genesis.api.Configuration
 import com.griddynamics.genesis.cache.NullCacheManager
 import com.griddynamics.genesis.repository.DatabagRepository
-import com.griddynamics.genesis.service.{EnvironmentService, WorkflowDefinition, TemplateRepoService}
-import com.griddynamics.genesis.template.{VersionedTemplate, TemplateRepository}
+import com.griddynamics.genesis.service.WorkflowDefinition
+import com.griddynamics.genesis.template.VersionedTemplate
 import org.junit.runner.RunWith
-import org.mockito.{Matchers, Mockito}
+import org.mockito.Mockito
 import org.scalatest.FunSpec
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.matchers.ShouldMatchers
@@ -35,7 +35,7 @@ import org.scalatest.mock.MockitoSugar
 import org.springframework.core.convert.support.DefaultConversionService
 
 @RunWith(classOf[org.scalatest.junit.JUnitRunner])
-class Groovy$envConfigTest extends AssertionsForJUnit with MockitoSugar with ShouldMatchers with FunSpec {
+class Groovy$envConfigTest extends AssertionsForJUnit with MockitoSugar with ShouldMatchers with FunSpec with DSLTestUniverse {
   val body =
     """
       template {
@@ -58,48 +58,40 @@ class Groovy$envConfigTest extends AssertionsForJUnit with MockitoSugar with Sho
           workflow("destroy") { steps { } }
       }
     """
-  val templateRepository = mock[TemplateRepository]
-  val templateRepoService = mock[TemplateRepoService]
-  val envConfigService = mock[EnvironmentService]
 
-  Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
 
-  val defaultConfig = new Configuration(Some(1), "default", 1, None, items = Map(), instanceCount = Some(1))
-
-  Mockito.when(envConfigService.getDefault(Matchers.anyInt)).thenReturn(Option(defaultConfig))
-  Mockito.when(envConfigService.list(Matchers.anyInt)).thenReturn(Seq(defaultConfig))
-
-  val templateService = new GroovyTemplateService(templateRepoService, List(), new DefaultConversionService,
-    Seq(), mock[DatabagRepository], envConfigService, NullCacheManager)
   Mockito.when(templateRepository.listSources()).thenReturn(Map(VersionedTemplate("1") -> body))
 
+  val templateService = new GroovyTemplateService(templateRepoService, List(), new DefaultConversionService,
+    Seq(), mock[DatabagRepository], configService, NullCacheManager)
 
   describe("$envConfig access from variable validation") {
     it("should find no validation errors if env config has required property") {
-      val template = templateService.findTemplate(0, "envConfigTest", "0.1").get
+      val VALID_CONFIG_ID = 1
+      val withItems = new Configuration(Some(VALID_CONFIG_ID), "default", 1, None, items = Map("test_settings" -> "true"), instanceCount = Some(1))
+      Mockito.when(configService.get(0, VALID_CONFIG_ID)).thenReturn(Some(withItems))
+
+
+      val template = templateService.findTemplate(0, "envConfigTest", "0.1", VALID_CONFIG_ID).get
       val workflow = template.getWorkflow("create").get
 
-      val errors = workflow.validate(Map("test" -> "aaa"), Some(defaultConfig.copy(items = Map("test_settings" -> "true"))))
+      val errors = workflow.validate(Map("test" -> "aaa"))
 
       errors should have size 0
     }
 
     it("should find 1 validation error if env config hasn't got required properties") {
-      val template = templateService.findTemplate(0, "envConfigTest", "0.1").get
+      val NO_ITEMS_CONFIG_ID = 2
+      val withNoItems = new Configuration(Some(NO_ITEMS_CONFIG_ID), "default", 1, None, items = Map(), instanceCount = Some(1))
+      Mockito.when(configService.get(0, NO_ITEMS_CONFIG_ID)).thenReturn(Some(withNoItems))
+
+      val template = templateService.findTemplate(0, "envConfigTest", "0.1", NO_ITEMS_CONFIG_ID).get
       val workflow: WorkflowDefinition = template.getWorkflow("create").get
 
-      val errors = workflow.validate(Map("test" -> "aaa"), Some(defaultConfig.copy(items = Map())))
+      val errors = workflow.validate(Map("test" -> "aaa"))
 
       errors should have size 1
       errors.head.variableName should be  === "test"
     }
-
-    it("should throw no exceptions if Config context is not provided"){
-      val template = templateService.findTemplate(0, "envConfigTest", "0.1").get
-      val workflow = template.getWorkflow("create").get
-
-      workflow.validate(Map("test" -> "aaa"), config = None)
-    }
   }
-
 }

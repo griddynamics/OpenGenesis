@@ -5,6 +5,8 @@ import scala.collection.JavaConversions._
 import groovy.lang.GroovyObjectSupport
 import groovy.util.Expando
 import java.util
+import com.griddynamics.genesis.service.EnvironmentService
+import com.griddynamics.genesis.api.Configuration
 
 trait SystemWideContextSupport {
 
@@ -21,6 +23,7 @@ trait ProjectDatabagSupport extends SystemWideContextSupport {
   def get$project = projectContext
 }
 
+
 trait UnifiedDatabagSupport {
     def projectId: Int
     def databagRepository: DatabagRepository
@@ -28,7 +31,7 @@ trait UnifiedDatabagSupport {
     lazy val project = new SystemContext(databagRepository, Some(projectId))
     def get$databags = new GroovyObjectSupport() {
         def getAt(property: String) = {
-            import scala.collection.JavaConversions.mapAsScalaMap
+
             new BagWrapper(system.databag(property) ++ project.databag(property))
         }
     }
