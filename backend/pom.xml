@@ -143,6 +143,10 @@
             <artifactId>aspectjtools</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>nl.grons</groupId>
+            <artifactId>metrics-scala_2.10</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

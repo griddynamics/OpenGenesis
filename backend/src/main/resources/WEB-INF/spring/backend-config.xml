@@ -158,7 +158,9 @@
         <constructor-arg name="storeService" ref="storeService"/>
     </bean>
 
-    <bean id="gatewayLoggingAspect" class="com.griddynamics.genesis.spring.aop.RemoteGatewayAspect"/>
+    <bean id="gatewayLoggingAspect" class="com.griddynamics.genesis.spring.aop.RemoteGatewayAspect">
+        <constructor-arg name="metricsOn" value="${genesis.system.gateway.metrics:false}" />
+    </bean>
 
     <context:component-scan base-package="com.griddynamics.genesis.configuration" />
 </beans>
