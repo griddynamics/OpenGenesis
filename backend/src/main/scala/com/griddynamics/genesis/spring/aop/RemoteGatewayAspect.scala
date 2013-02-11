@@ -26,9 +26,11 @@ import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.{Around, Pointcut, Aspect}
 import com.griddynamics.genesis.annotation.{GatewayCall, RemoteGateway}
 import org.aspectj.lang.reflect.MethodSignature
+import com.yammer.metrics.scala.Instrumented
+import java.util.concurrent.TimeUnit
 
 @Aspect
-class RemoteGatewayAspect extends Logging {
+class RemoteGatewayAspect(metricsOn : Boolean) extends Logging with Instrumented {
 
   val isTraceEnabled = log.isTraceEnabled
 
@@ -42,7 +44,7 @@ class RemoteGatewayAspect extends Logging {
   def publicGatewayMethod() {}
 
   @Around(value = "publicGatewayMethod()")
-  def processGatewayCalls(joinPoint: ProceedingJoinPoint) = {
+  def processGatewayCalls(joinPoint: ProceedingJoinPoint) = timeMetrics(joinPoint) {
     try {
       val result = joinPoint.proceed()
       if(isTraceEnabled) {
@@ -58,6 +60,7 @@ class RemoteGatewayAspect extends Logging {
     }
   }
 
+  def timeMetrics[A](joinPoint: ProceedingJoinPoint)( f: => A): A = if (metricsOn) timer(joinPoint).time {f} else f
 
   private def callMarkers(joinPoint: ProceedingJoinPoint): (String, String) = {
     val gatewayName = joinPoint.getTarget.getClass.getAnnotation(classOf[RemoteGateway]).value()
@@ -66,5 +69,10 @@ class RemoteGatewayAspect extends Logging {
       case m => m.getName
     }
     (StringUtils.splitByCase(call).toLowerCase, gatewayName)
+  }
+
+  private def timer(joinPoint: ProceedingJoinPoint) = {
+    val (call, gatewayName) = callMarkers(joinPoint)
+    metrics.timer(call, gatewayName, TimeUnit.MILLISECONDS)
   }
 }
