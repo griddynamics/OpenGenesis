@@ -80,15 +80,11 @@ When /^I remove permissions to configuration '(.+)' from user '(.+)' in project 
 end
 
 When /^I create an environment simple '(.+)' in project '(.+)' with configuration '(.+)'$/ do |env_name, project, config_name|
+  conf = find_config_in_project(config_name, project)
   @last_response = environments_resource project do |resource, id|
-    parameters = create_environment(env_name, "Simple", "0.1")
-    configurations = find_var_for_workflow_s(project, "Simple", "0.1", "create", "$envConfig")
-    configurations.should_not be_nil
-    conf_id = configurations["values"].key(config_name)
-    conf_id.should_not be_nil, "There must exist config for name #{config_name} in variables"
-    parameters[:variables] = parameters[:variables].merge({:$envConfig => conf_id})
-    resource.post(parameters)
+    resource.post(create_environment(env_name, "Simple", "0.1").merge({:configId => conf["id"]}))
   end
+
   @last_response.code.should eq(200), "Failed to create environment. Response: #{@last_response}"
 end
 
@@ -136,15 +132,11 @@ Then /^User '(.+)' can't see configuration '(.+)' in the project '(.+)' as a wor
 end
 
 When /^User '(.+)' creates simple environment '(.+)' in the project '(.+)' with configuration '(.+)'$/ do |username, env_name, project, configuration|
+  conf = find_config_in_project(configuration, project)
   project_id = project_id(project)
-  configurations = find_var_for_workflow(project, "Simple", "0.1", "create", "$envConfig", username, username)
-  configurations.should_not be_nil
-  conf_id = configurations["values"].key(configuration)
-  conf_id.should_not be_nil, "There must exist config for name #{configuration} in variables"
-  parameters = create_environment(env_name, "Simple", "0.1")
-  parameters[:variables] = parameters[:variables].merge({:$envConfig => conf_id})
+
   r = resource("projects/#{project_id}/envs", :username => username, :password => username)
-  @last_response = r.post(parameters)
+  @last_response = r.post(create_environment(env_name, "Simple", "0.1").merge({:configId => conf["id"]}))
 end
 
 Then /^User gets (.+) http response code$/ do |code|
