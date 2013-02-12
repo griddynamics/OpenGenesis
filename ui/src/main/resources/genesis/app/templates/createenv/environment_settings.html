@@ -12,7 +12,7 @@
             <div style="margin-top: 10px; margin-bottom: 10px;">
                 <label for="configuration" class="label-required" >*&nbsp; Environment</label>
                 <div class="value">
-                    <select id="configuration" name="configId" >
+                    <select id="configuration" name="configId" class="required">
                         <option value="">Please select</option>
                         <% for (var i = 0, count = configs.length; i < count; i++) { var config = configs[i]; %>
                         <option value="<%- config.id %>"><%- config.name %></option>
