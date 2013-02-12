@@ -47,6 +47,8 @@ import org.springframework.web.filter.DelegatingFilterProxy
 import org.springframework.web.servlet.DispatcherServlet
 import scala.collection.JavaConversions._
 import service.impl.HousekeepingService
+import collection.mutable.ListBuffer
+import org.eclipse.jetty.server.nio.SelectChannelConnector
 
 object GenesisFrontend extends Logging {
     def main(args: Array[String]): Unit = try {
@@ -68,18 +70,15 @@ object GenesisFrontend extends Logging {
         val helper = new PropertyHelper(genesisProperties, appContext)
         helper.validateProperties(log)
 
-        val requestIdleTime: Int = helper.getFileProperty(MAX_IDLE, 5000)
-
         if (!isFrontend) {
           val houseKeepingService = appContext.getBean(classOf[HousekeepingService])
           doHousekeeping(houseKeepingService)
           installShutdownHook(houseKeepingService, helper)
         }
 
-        val host = helper.getPropWithFallback(BIND_HOST, "0.0.0.0")
-        val port = helper.getPropWithFallback(BIND_PORT, 8080)
         val resourceRoots = helper.getPropWithFallback(WEB_RESOURCE_ROOTS, "classpath:genesis/")
         val debugMode = helper.getPropWithFallback(CLIENT_DEBUG_MODE, "false")
+        val metrics = helper.getPropWithFallback(METRICS, true)
         val server = new Server()
 
         val webAppContext = new GenericWebApplicationContext
@@ -91,11 +90,7 @@ object GenesisFrontend extends Logging {
         context.setContextPath("/")
         servletContext.setAttribute(ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE, webAppContext)
 
-        val metricsFilter = new DefaultWebappMetricsFilter()
-        context.addFilter(new FilterHolder(metricsFilter), "/*", 0)
-
-        val adminServlet = new AdminServlet()
-        context.addServlet(new ServletHolder(adminServlet), "/metrics/*")
+        if (metrics) addMetrics(context)
 
         if (! isFrontend) {
             val gzipFilterHolder = new FilterHolder(new GzipFilter)
@@ -118,7 +113,9 @@ object GenesisFrontend extends Logging {
         }
 
         if (isFrontend) {
-            val proxyFilter = new TunnelFilter(Array("/rest", "/metrics")) with UrlConnectionTunnel
+          val filteredUris = ListBuffer("/rest")
+          if (metrics) filteredUris += "/metrics"
+            val proxyFilter = new TunnelFilter(filteredUris.toArray) with UrlConnectionTunnel
             val proxyHolder = new FilterHolder(proxyFilter)
             proxyHolder.setInitParameter(TunnelFilter.BACKEND_PARAMETER, helper.getFileProperty(SERVICE_BACKEND_URL, ""))
             proxyHolder.setInitParameter(TunnelFilter.READ_TIMEOUT, helper.getFileProperty(FRONTEND_READ_TIMEOUT, "5000"))
@@ -132,17 +129,8 @@ object GenesisFrontend extends Logging {
         log.debug("Using frontend configuration: %s", frontendConfig)
         holder.setInitParameter("contextConfigLocation", frontendConfig)
         context.addServlet(holder, "/")
-        val httpConnector = new InstrumentedSelectChannelConnector(port)
-        httpConnector.setMaxIdleTime(requestIdleTime)
-        httpConnector.setHost(host)
 
-        httpConnector.setRequestHeaderSize(16 * 1024)   // authorization negotiate can contain lots of data
-        httpConnector.setResponseHeaderSize(16 * 1024)  // http://serverfault.com/questions/362280/apache-bad-request-size-of-a-request-header-field-exceeds-server-limit-with-ke
-
-        if (SystemUtils.IS_OS_WINDOWS)
-            httpConnector.setReuseAddress(false)
-
-        server.addConnector(httpConnector)
+        server.addConnector(httpConnector(helper, metrics))
         server.setHandler(context)
         server.setStopAtShutdown(true)
 
@@ -159,6 +147,34 @@ object GenesisFrontend extends Logging {
       }
     }
 
+
+  def httpConnector(helper: PropertyHelper, metrics: Boolean) = {
+    val host = helper.getPropWithFallback(BIND_HOST, "0.0.0.0")
+    val port = helper.getPropWithFallback(BIND_PORT, 8080)
+    val requestIdleTime: Int = helper.getFileProperty(MAX_IDLE, 5000)
+
+    val httpConnector = if (metrics) new InstrumentedSelectChannelConnector(port) else {
+      val connector = new SelectChannelConnector()
+      connector.setPort(port)
+      connector
+    }
+    httpConnector.setMaxIdleTime(requestIdleTime)
+    httpConnector.setHost(host)
+    httpConnector.setRequestHeaderSize(16 * 1024) // authorization negotiate can contain lots of data
+    httpConnector.setResponseHeaderSize(16 * 1024) // http://serverfault.com/questions/362280/apache-bad-request-size-of-a-request-header-field-exceeds-server-limit-with-ke
+
+    if (SystemUtils.IS_OS_WINDOWS)
+      httpConnector.setReuseAddress(false)
+    httpConnector
+  }
+
+  def addMetrics(context: ServletContextHandler) {
+    val metricsFilter = new DefaultWebappMetricsFilter()
+    context.addFilter(new FilterHolder(metricsFilter), "/*", 0)
+
+    val adminServlet = new AdminServlet()
+    context.addServlet(new ServletHolder(adminServlet), "/metrics/*")
+  }
 
   def installShutdownHook(houseKeepingService: HousekeepingService, helper: PropertyHelper) {
     Runtime.getRuntime.addShutdownHook(new Thread() {

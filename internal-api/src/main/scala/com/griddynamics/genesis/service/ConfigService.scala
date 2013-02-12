@@ -63,4 +63,5 @@ object GenesisSystemProperties {
   val CLIENT_DEBUG_MODE = "genesis.web.client.debug"
   val LOGOUT_ENABLED = "genesis.web.logout.enabled"
   val AUTH_MODE = "genesis.system.auth.mode"
+  val METRICS = "genesis.system.metrics"
 }
