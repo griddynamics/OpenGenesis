@@ -78,7 +78,7 @@ object GenesisFrontend extends Logging {
 
         val resourceRoots = helper.getPropWithFallback(WEB_RESOURCE_ROOTS, "classpath:genesis/")
         val debugMode = helper.getPropWithFallback(CLIENT_DEBUG_MODE, "false")
-        val metrics = helper.getPropWithFallback(METRICS, true)
+        val metrics = !isFrontend && helper.getPropWithFallback(METRICS, true)
         val server = new Server()
 
         val webAppContext = new GenericWebApplicationContext
