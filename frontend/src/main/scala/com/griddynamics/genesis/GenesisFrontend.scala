@@ -78,7 +78,8 @@ object GenesisFrontend extends Logging {
 
         val resourceRoots = helper.getPropWithFallback(WEB_RESOURCE_ROOTS, "classpath:genesis/")
         val debugMode = helper.getPropWithFallback(CLIENT_DEBUG_MODE, "false")
-        val metrics = !isFrontend && helper.getPropWithFallback(METRICS, true)
+        val metrics = helper.getPropWithFallback(METRICS, true)
+        val metricsAdd = !isFrontend && metrics
         val server = new Server()
 
         val webAppContext = new GenericWebApplicationContext
@@ -90,7 +91,7 @@ object GenesisFrontend extends Logging {
         context.setContextPath("/")
         servletContext.setAttribute(ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE, webAppContext)
 
-        if (metrics) addMetrics(context)
+        if (metricsAdd) addMetrics(context)
 
         if (! isFrontend) {
             val gzipFilterHolder = new FilterHolder(new GzipFilter)
@@ -130,7 +131,7 @@ object GenesisFrontend extends Logging {
         holder.setInitParameter("contextConfigLocation", frontendConfig)
         context.addServlet(holder, "/")
 
-        server.addConnector(httpConnector(helper, metrics))
+        server.addConnector(httpConnector(helper, metricsAdd))
         server.setHandler(context)
         server.setStopAtShutdown(true)
 
