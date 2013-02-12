@@ -23,7 +23,7 @@
 
 import com.yammer.metrics.core.HealthCheck
 import java.lang.String
-import java.sql.{ResultSet, Statement, SQLException}
+import java.sql.{Connection, ResultSet, Statement, SQLException}
 import javax.sql.DataSource
 import scala.util.control.Exception._
 import org.springframework.context.annotation.Configuration
@@ -46,11 +46,12 @@ class DatabaseHealthCheckContext {
 class DatabaseHealthCheck(dataSource: DataSource) extends HealthCheck("database health check") {
   def check() = {
     val query: String = "SELECT 1"
-    val conn = dataSource.getConnection
 
+    var conn: Connection = null
     var stmt: Statement = null
     var rset: ResultSet = null
     try {
+      conn = dataSource.getConnection
       stmt = conn.createStatement
       stmt.setQueryTimeout(2)
       rset = stmt.executeQuery(query)
