@@ -34,18 +34,10 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
     },
 
     parseLinks: function(links) {
-      var self = this;
-      _(links).forEach(function(link) {
-        if(backend.LinkTypes.EnvironmentDetails.edit(link)) {
-          self.renameLink = link
-        } else if(backend.LinkTypes.ResetAction.any(link)) {
-          self.resetStatusLink = link
-        } else if(backend.LinkTypes.CancelAction.any(link)) {
-          self.cancelLink = link
-        } else if(backend.LinkTypes.Workflow.any(link)) {
-          self.workflowsLink = link
-        }
-      });
+      this.renameLink = _(links).find(backend.LinkTypes.EnvironmentDetails.edit);
+      this.resetStatusLink = _(links).find(backend.LinkTypes.ResetAction.any);
+      this.cancelLink = _(links).find(backend.LinkTypes.CancelAction.any);
+      this.workflowsLink = _(links).find(backend.LinkTypes.Workflow.any);
     },
 
     canRename: function() {
@@ -229,7 +221,6 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       this.$(".action-button")
         .toggleClass("disabled", activeExecution)
         .toggle(status !== "Destroyed");
-
       this.$("#resetBtn")
         .toggle(this.details.canResetStatus());
     },

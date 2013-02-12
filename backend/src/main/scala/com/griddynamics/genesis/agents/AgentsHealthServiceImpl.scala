@@ -34,6 +34,7 @@ import com.griddynamics.genesis.util.Logging
 import akka.actor.SupervisorStrategy.Resume
 import akka.util.Timeout
 import com.griddynamics.genesis.api.AgentStatus.AgentStatus
+import com.yammer.metrics.HealthChecks
 
 class AgentsHealthServiceImpl(actorSystem: ActorSystem, configService: ConfigService)
   extends AgentsHealthService with Logging{
@@ -77,11 +78,15 @@ class AgentsHealthServiceImpl(actorSystem: ActorSystem, configService: ConfigSer
 
   def stopTracking(agent: RemoteAgent) {
     tracker ! StopTracking(agent)
+    HealthChecks.defaultRegistry().unregister(healthCheckName(agent))
   }
 
   def startTracking(agent: RemoteAgent) {
     tracker ! StartTracking(agent)
+    HealthChecks.register(new RemoteAgentHealthCheck(this, agent, healthCheckName(agent)))
   }
+
+  private def healthCheckName(agent: RemoteAgent) = s"agent status ${agent.id.get}"
 }
 
 
