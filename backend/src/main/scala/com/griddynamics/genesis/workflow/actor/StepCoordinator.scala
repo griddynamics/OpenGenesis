@@ -167,40 +167,21 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
     }
 
   import context.system
-  private def executorActor(asyncExecutor: AsyncActionExecutor) = asyncExecutor.action match {
-    case r: RemoteAgentExec if r.tag.nonEmpty => remoteExecutor(r.tag, asyncExecutor.action)
+  private def executorActor(asyncExecutor: AsyncActionExecutor): ActorRef = asyncExecutor.action match {
+    case r: RemoteAgentExec if r.tag.nonEmpty =>
+      system.actorOf(Props(remoteExecutor(r.tag, asyncExecutor.action)))
     case _ =>
       system.actorOf(Props(new actor.ActionExecutor(asyncExecutor, self, beatSource)))
    }
 
-  import akka.pattern.ask
   private val TIMEOUT_REMOTE_ACTOR = Timeout(config.remoteExecutorWaitTimeout  seconds)
 
-  private def remoteExecutor(tag: String, action: Action) = try {
-    // TODO: is it possible to start single action on several agents?
-    val agent = remoteAgentService.findByTags(Seq(tag)).headOption.getOrElse(
-       throw new IllegalArgumentException("Could not find agent for tag: " + tag)
-    )
-    val remoteFront = AgentGateway.resolve(agent)
-    implicit val timeout = TIMEOUT_REMOTE_ACTOR
+  private def remoteExecutor(tag: String, action: Action): AgentCommunicatingActor = {
     val logger = action match {
       case al: ActionWithLog => al.logger
       case _ => LoggerWrapper.logger()
     }
-    val futureRemote = remoteFront ? RemoteTask(action, self, logger)
-    log.debug("Waiting for remote executor... ")
-    Await.result(futureRemote, timeout.duration).asInstanceOf[ActorRef]
-  } catch {
-    case t: Throwable => logThrowable(action, t, "remoteExecutor")
-    self ! ExecutorThrowable(action, t)
-    self
-  }
-
-  private def logThrowable(action: Action, t: Throwable, method: String, signal: Signal = null) {
-    val signalMsg = if(signal != null) " and signal '%s'".format(signal) else ""
-    log.warn(t, "Throwable while %s for action '%s'%s", method, action, signalMsg)
-    LoggerWrapper.writeActionLog(action.uuid, "Throwable while %s%s: %s".format(method, signalMsg, t.getMessage))
-    LoggerWrapper.writeActionLog(action.uuid, "Stack trace:\n %s".format(ExceptionUtils.getStackTrace(t)))
+    new AgentCommunicatingActor(self, action, tag, remoteAgentService, logger, TIMEOUT_REMOTE_ACTOR.duration)
   }
 }
 
