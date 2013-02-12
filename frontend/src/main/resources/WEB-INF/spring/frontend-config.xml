@@ -80,4 +80,7 @@
     <bean class="com.griddynamics.genesis.rest.RemoteAgentController"/>
 
     <bean class="com.griddynamics.genesis.rest.RootController"/>
+
+    <bean class="com.griddynamics.genesis.rest.MetricsController"/>
+
 </beans>

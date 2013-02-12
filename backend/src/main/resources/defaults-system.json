@@ -22,5 +22,9 @@
   "genesis.system.flow.executor.sync.threads.max": {"default": 5,"description":"Maximum number of simultaneously executing synchronous actions",
    "restartRequired": true,
     "validation": {"Must be positive integer value": "int_positive"}
+   },
+  "genesis.system.metrics": {"default": "true","description": "Gathering of system metrics: on if true, off otherwise",
+   "restartRequired": true,
+    "validation": {"Must be true or false": "true|false"}
    }
 }
