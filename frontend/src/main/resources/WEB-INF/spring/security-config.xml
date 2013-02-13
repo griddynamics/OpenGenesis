@@ -240,7 +240,7 @@
         <s:intercept-url pattern="/rest/projects/*" method="PUT"    access="hasRole('ROLE_GENESIS_ADMIN') or
                             hasPermission( #urlId('/rest/projects/{id}', #url), 'com.griddynamics.genesis.api.Project', 'administration')" />
 
-        <s:intercept-url pattern="/rest/metrics*" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')"/>
+        <s:intercept-url pattern="/rest/metrics*" access="hasRole('ROLE_GENESIS_ADMIN')"/>
 
         <s:intercept-url pattern="/rest/**" access="isAuthenticated()" />
 
