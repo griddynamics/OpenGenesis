@@ -32,7 +32,7 @@ import com.griddynamics.genesis.annotation.RemoteGateway
 
 trait ActiveDirectoryUserService extends UserService
 
-@RemoteGateway("Acrive directory access: user service")
+@RemoteGateway("Active directory access: user service")
 class ActiveDirectoryUserServiceImpl(val namingContext: String,
                                      val pluginConfig: ActiveDirectoryPluginConfig,
                                      val template: CommandTemplate) extends AbstractActiveDirectoryService with ActiveDirectoryUserService with Logging {
