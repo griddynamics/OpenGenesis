@@ -24,4 +24,8 @@ package com.griddynamics.genesis.workflow.message
 
 import com.griddynamics.genesis.workflow.Signal
 
-private[workflow] case class Beat (signal: Signal)
+private[workflow] case class Beat(signal: Signal)
+
+private[workflow] case object Ping
+
+private[workflow] case object Pong
