@@ -32,7 +32,7 @@ import com.griddynamics.genesis.annotation.RemoteGateway
 
 trait ActiveDirectoryGroupService extends GroupService
 
-@RemoteGateway("Acrive directory access: group service")
+@RemoteGateway("Active directory access: group service")
 class ActiveDirectoryGroupServiceImpl(val namingContext: String,
                                       val pluginConfig: ActiveDirectoryPluginConfig,
                                       val template: CommandTemplate) extends AbstractActiveDirectoryService with ActiveDirectoryGroupService with Logging {
