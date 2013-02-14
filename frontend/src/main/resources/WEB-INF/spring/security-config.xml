@@ -194,18 +194,21 @@
         />
 
         <s:intercept-url pattern="/rest/projects/*/configs/**" method="GET" access="
-            hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY') or
-            hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"/>
+            hasRole('ROLE_GENESIS_ADMIN') or
+            hasRole('ROLE_GENESIS_READONLY') or
+            hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration') or
+            hasPermission( #urlId('/rest/projects/.*/configs/{id}.*', #url), 'com.griddynamics.genesis.api.Configuration', 'read')"
+        />
 
         <s:intercept-url pattern="/rest/projects/*/configs/**" access="
             hasRole('ROLE_GENESIS_ADMIN') or
-            hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration') or
-            hasPermission( #urlId('/rest/projects/.*/configs/{id}.*', #url), 'com.griddynamics.genesis.api.Configuration', 'read')
+            hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')
         "/>
 
-        <s:intercept-url pattern="/rest/projects/*/templates*" method="GET"    access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')
-                    or hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'read')
-                    or hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"
+        <s:intercept-url pattern="/rest/projects/*/templates*" method="GET"    access="
+            hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')
+            or hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'read')
+            or hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"
         />
 
         <!--
