@@ -58,4 +58,6 @@ object Environment {
   val DeploymentAttr = EntityAttr[Seq[DeploymentAttribute]]("deployment")
 
 }
+
+@SerialVersionUID(8586431731087756517L)
 case class DeploymentAttribute(key: String, value: String, desc: String)
