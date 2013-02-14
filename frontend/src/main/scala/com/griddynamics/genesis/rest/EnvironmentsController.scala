@@ -37,7 +37,7 @@ import com.griddynamics.genesis.http.TunnelFilter
 import org.springframework.web.bind.annotation._
 import org.springframework.web.bind.annotation.RequestMethod._
 import org.springframework.beans.factory.annotation.{Autowired, Value}
-import com.griddynamics.genesis.service.EnvironmentAccessService
+import com.griddynamics.genesis.service.{EnvironmentService, EnvironmentAccessService}
 import org.springframework.security.access.prepost.PostFilter
 import org.springframework.http.{HttpHeaders, MediaType}
 import java.util.{Date, TimeZone, Locale}
@@ -59,7 +59,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @Autowired var envAuthService: EnvironmentAccessService = _
   @Autowired var configRepository: ConfigurationRepository = _
   @Autowired implicit var linkSecurity: LinkSecurityBean = _
-
+  @Autowired var envConfigService: EnvironmentService = _
 
   @Value("${genesis.system.server.mode:frontend}")
   var mode = ""
@@ -212,10 +212,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   }
 
   private def hasAccessToConfigs(projectId: Int) = {
-    val user = getCurrentUser
-    val authorities = getCurrentUserAuthorities
-    envAuthService.hasAccessToAllConfigs(projectId, user, authorities) ||
-    envAuthService.listAccessible(projectId, user, authorities).nonEmpty
+    envConfigService.list(projectId).nonEmpty
   }
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
