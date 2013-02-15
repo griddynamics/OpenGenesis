@@ -27,7 +27,9 @@ import com.griddynamics.genesis.model
 import model.GenesisEntity
 import org.springframework.transaction.annotation.Transactional
 import org.squeryl._
+import com.griddynamics.genesis.annotation.RemoteGateway
 
+@RemoteGateway
 abstract class AbstractGenericRepository[Model <: KeyedEntity[GenesisEntity.Id], Api](val table: Table[Model])
   extends Repository[Api]{
 
