@@ -39,18 +39,21 @@ class ActiveDirectoryUserServiceImpl(val namingContext: String,
 
   override def isReadOnly = true
 
-  object UserMapper extends FieldsMapper[User] with MappingUtils {
+  object UserMapper extends FieldsMapper[Option[User]] with MappingUtils {
     protected val config = pluginConfig
 
     def mapFromFields(fields: Fields) = {
-      User(
-        getAccountName(fields),
-        getStringField("mail", fields).getOrElse(""),
-        getStringField("givenName", fields).getOrElse(""),
-        getStringField("sn", fields).getOrElse(""),
-        None,
-        None,
-        None
+      val accountName = getOptionalAccountName(fields)
+      accountName.map (
+        User(
+          _,
+          getStringField("mail", fields).getOrElse(""),
+          getStringField("givenName", fields).getOrElse(""),
+          getStringField("sn", fields).getOrElse(""),
+          None,
+          None,
+          None
+        )
       )
     }
 
@@ -62,7 +65,7 @@ class ActiveDirectoryUserServiceImpl(val namingContext: String,
   def getWithCredentials(username: String) = throw new UnsupportedOperationException
 
   def findByUsername(username: String) =
-    template.query(Query("(sAMAccountName=%s)".format(normalize(username))), UserMapper).headOption
+    template.query(Query("(sAMAccountName=%s)".format(normalize(username))), UserMapper).flatten.headOption
 
   def findByUsernames(userNames: Iterable[String]): Set[User] = {
     if (userNames.isEmpty)
@@ -71,7 +74,7 @@ class ActiveDirectoryUserServiceImpl(val namingContext: String,
     val filter = "(|%s)".format(
       userNames.map { username => "(sAMAccountName=%s)".format(normalize(username)) }.mkString
     )
-    template.query(Query(filter), UserMapper).toSet
+    template.query(Query(filter), UserMapper).flatten.toSet
   }
 
   def search(usernameLike: String) = {
@@ -82,7 +85,7 @@ class ActiveDirectoryUserServiceImpl(val namingContext: String,
       } else
         "(|(sAMAccountName=%1$s)(sn=%1$s)(givenName=%1$s))".format(escape(usernameLike))
 
-    template.query(Query(filter), UserMapper).toList
+    template.query(Query(filter), UserMapper).flatten.toList
   }
 
   def doesUserExist(userName: String) = findByUsername(userName).isDefined
@@ -90,5 +93,5 @@ class ActiveDirectoryUserServiceImpl(val namingContext: String,
   def doUsersExist(userNames: Iterable[String]) =
     findByUsernames(userNames).map(_.username.toLowerCase).toSet == userNames.map(_.toLowerCase).toSet
 
-  def list = template.query(Query("(*)"), UserMapper)
+  def list = template.query(Query("(*)"), UserMapper).flatten
 }
