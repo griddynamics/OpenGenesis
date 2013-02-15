@@ -109,6 +109,13 @@ trait MappingUtils {
     name.get(1).split('=')(1).toUpperCase
   }
 
+  protected def getOptionalAccountName(fields: Fields): Option[String] = {
+    val username = getStringField("sAMAccountName", fields)
+    username.map { name =>
+      if (config.useDomain) getDomain(fields) + "\\" + name else name
+    }
+  }
+
   protected def getAccountName(fields: Fields): String = {
     val username = getStringField("sAMAccountName", fields) getOrElse {
       throw new IllegalArgumentException("AD attribute 'sAMAccountName' is empty")
