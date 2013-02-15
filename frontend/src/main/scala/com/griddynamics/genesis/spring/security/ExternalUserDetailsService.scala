@@ -32,7 +32,7 @@ import org.springframework.security.authentication.{AbstractAuthenticationToken,
 import org.springframework.security.core.{GrantedAuthority, Authentication}
 import com.griddynamics.genesis.util.Logging
 import org.springframework.security.core.authority.SimpleGrantedAuthority
-
+import GenesisRole._
 
 class ExternalUserDetailsService(authorityService: AuthorityService, projectAuthorityService: ProjectAuthorityService, adminUsername: String)
   extends UserDetailsService with GroupBasedRoleService {
@@ -44,14 +44,14 @@ class ExternalUserDetailsService(authorityService: AuthorityService, projectAuth
         if (username.toUpperCase != adminUsername.toUpperCase) {
             var authorities = (
               authorityService.getUserAuthorities(username) ++
-                (if (projectAuthorityService.isUserProjectAdmin(username, groupNames)) List(GenesisRole.ProjectAdmin.toString) else List())
+                (if (projectAuthorityService.isUserProjectAdmin(username, groupNames)) List(ProjectAdmin.toString) else List())
               )
-            if (authorities.contains(GenesisRole.SystemAdmin.toString) || authorities.contains(GenesisRole.ReadonlySystemAdmin.toString)) {
-              authorities = GenesisRole.GenesisUser.toString :: authorities
+            if (authorities.contains(SystemAdmin.toString) || authorities.contains(ReadonlySystemAdmin.toString)) {
+              authorities = GenesisUser.toString :: authorities
             }
             new User(username, username, RoleBasedAuthority(authorities.distinct))
         } else {
-            new User(adminUsername, "", Arrays.asList(RoleBasedAuthority(GenesisRole.GenesisUser), RoleBasedAuthority(GenesisRole.SystemAdmin)))
+            new User(adminUsername, "", Arrays.asList(RoleBasedAuthority(GenesisUser), RoleBasedAuthority(SystemAdmin)))
         }
     }
 
@@ -66,18 +66,28 @@ trait GroupBasedRoleService extends UserDetailsService {
 
 class ExternalUserAuthenticationProvider(details: ExternalUserDetailsService) extends AuthenticationProvider with Logging {
 
-    def authenticate(authentication: Authentication) = {
-        val authRequest: ExternalAuthentication = authentication.asInstanceOf[ExternalAuthentication]
-        val user = details.loadUserByUsername(authRequest.username, authRequest.assignedGroups)
-        val additionalGroups = authRequest.assignedGroups.flatMap(details.getRolesByGroupName(_)).toList ++ user.getAuthorities
-        if(!additionalGroups.exists( gr => gr.getAuthority == GenesisRole.GenesisUser.toString || gr.getAuthority == GenesisRole.SystemAdmin.toString
-          || gr.getAuthority == GenesisRole.ReadonlySystemAdmin.toString)) {
-            throw new UsernameNotFoundException("User %s doesn't have required role [%s]".format(authRequest.username, GenesisRole.GenesisUser))
-        }
-        new ExternalAuthentication(user, additionalGroups.toList)
-    }
+  private val ALLOWED_ROLES = Seq(GenesisUser, SystemAdmin, ReadonlySystemAdmin).map(_.toString)
 
-    def supports(authentication: Class[_]) = classOf[ExternalAuthentication].isAssignableFrom(authentication)
+  def authenticate(authentication: Authentication) = {
+    val authRequest: ExternalAuthentication = authentication.asInstanceOf[ExternalAuthentication]
+    val assignedGroups = authRequest.assignedGroups
+    val username = authRequest.username
+    val user = details.loadUserByUsername(username, assignedGroups)
+    val additionalGroups = getAdditionalGroups(user, assignedGroups)
+    if(!additionalGroups.exists( gr => ALLOWED_ROLES.contains(gr.getAuthority)))
+      throw new UsernameNotFoundException(s"User $username doesn't have required role [$GenesisUser]")
+    new ExternalAuthentication(user, additionalGroups.toList)
+  }
+
+  def supports(authentication: Class[_]) = classOf[ExternalAuthentication].isAssignableFrom(authentication)
+
+  private def getAdditionalGroups(user: User, assignedGroups: Iterable[String]) = {
+    lazy val groupRoles = assignedGroups.flatMap(details.getRolesByGroupName(_))
+    // in case of user is system admin there's no need of any more roles(avoid loading roles from DB)
+    (if(isSysAdmin(user)) Seq() else groupRoles) ++ user.getAuthorities
+  }
+
+  private def isSysAdmin(user: User) = user.getAuthorities.exists(_.getAuthority == SystemAdmin.toString)
 }
 
 class ExternalAuthentication(val username: String, val assignedGroups: List[String] = List(),
