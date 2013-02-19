@@ -23,14 +23,27 @@
 
 package com.griddynamics.genesis.rest
 
+import annotations.AddSelfLinks
+import annotations.LinkTarget._
+import links.{CollectionWrapper, LinkBuilder, WebPath, HrefBuilder}
 import org.springframework.web.bind.annotation._
+import org.springframework.web.bind.annotation.RequestMethod._
 import org.springframework.stereotype.Controller
 import com.griddynamics.genesis.service.ConfigService
 import com.griddynamics.genesis.service.GenesisSystemProperties.{PREFIX, PLUGIN_PREFIX}
 import com.griddynamics.genesis.rest.GenesisRestController.{extractParamsMap, paramToOption}
 import javax.servlet.http.HttpServletRequest
-import com.griddynamics.genesis.api.{ConfigProperty, ConfigPropertyType, ExtendedResult, Failure, Success}
+import com.griddynamics.genesis.api._
 import org.springframework.beans.factory.annotation.Autowired
+import HrefBuilder._
+import com.griddynamics.genesis.spring.security.LinkSecurityBean
+import com.griddynamics.genesis.api.ConfigProperty
+import com.griddynamics.genesis.api.Failure
+import scala.Some
+import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.users.UserService
+import com.griddynamics.genesis.groups.GroupService
+
 
 @Controller
 @RequestMapping(value = Array("/rest/settings"))
@@ -39,14 +52,43 @@ class SettingsController extends RestApiExceptionsHandler {
     import ConfigPasswordHelper._
 
     @Autowired var configService: ConfigService = _
+    @Autowired implicit var linkSecurity: LinkSecurityBean = _
+    @Autowired var userService: UserService = _
+    @Autowired var groupService: GroupService = _
 
     private val VISIBLE_PREFIXES = Seq(PREFIX, PLUGIN_PREFIX)
 
     private def isVisible(key: String) = VISIBLE_PREFIXES.map(key.startsWith(_)).reduce(_ || _)
 
+    @RequestMapping(value = Array("root"), method = Array(RequestMethod.GET)) //TODO: mapping will be changed
+    @ResponseBody
+    def root(request: HttpServletRequest): SystemSettings = {
+      new SystemSettings(linkSecurity.filter(collectLinks(request)).toArray)
+    }
+
+    def collectLinks(request: HttpServletRequest): Array[Link] = {
+       implicit val req: HttpServletRequest = request
+       val path: WebPath = WebPath(absolutePath("/rest"))
+       var result = List (
+         LinkBuilder(path / "settings", COLLECTION, classOf[ConfigProperty], GET),
+         LinkBuilder(path / "databags", COLLECTION, classOf[DataBag], GET),
+         LinkBuilder(path / "roles", COLLECTION, classOf[ApplicationRole], GET),
+         LinkBuilder(path / "agents", COLLECTION, classOf[RemoteAgent], GET),
+         LinkBuilder(path / "plugins", COLLECTION, classOf[Plugin], GET)
+       )
+       if (! userService.isReadOnly) {
+         result = LinkBuilder(path / "users", COLLECTION, classOf[User], GET) :: result
+       }
+       if (! groupService.isReadOnly) {
+         result = LinkBuilder(path / "groups", COLLECTION, classOf[UserGroup], GET) :: result
+       }
+       result.toArray
+    }
+
     @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
     @ResponseBody
-    def listSettings(@RequestParam(value = "prefix", required = false) prefix: String) = {
+    @AddSelfLinks(methods = Array(GET, PUT), modelClass = classOf[ConfigProperty])
+    def listSettings(@RequestParam(value = "prefix", required = false) prefix: String, request: HttpServletRequest): CollectionWrapper[ConfigProperty] = {
       val configs = configService.
         listSettings(paramToOption(prefix)).
         filter(p => isVisible(p.name))
@@ -88,7 +130,7 @@ class SettingsController extends RestApiExceptionsHandler {
           }
         } catch {
             case e: ResourceNotFoundException => Failure(compoundServiceErrors = Seq(e.msg), isNotFound = true)
-            case ex => Failure(compoundServiceErrors = Seq(ex.getMessage))
+            case ex: Throwable => Failure(compoundServiceErrors = Seq(ex.getMessage))
         }
     }
 

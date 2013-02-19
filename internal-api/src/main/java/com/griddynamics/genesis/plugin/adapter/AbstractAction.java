@@ -60,5 +60,4 @@ public abstract class AbstractAction implements Action {
     public String getUUID() {
         return uuid;
     }
-
 }

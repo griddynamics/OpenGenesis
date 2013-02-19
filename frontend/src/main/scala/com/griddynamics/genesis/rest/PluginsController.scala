@@ -22,12 +22,20 @@
  */
 package com.griddynamics.genesis.rest
 
+import annotations.LinkTarget._
+import links._
+import HrefBuilder._
+import CollectionWrapper._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
+import org.springframework.web.bind.annotation.RequestMethod._
 import javax.servlet.http.HttpServletRequest
-import com.griddynamics.genesis.api.{ConfigPropertyType, PluginDetails, Plugin}
+import com.griddynamics.genesis.api.ConfigPropertyType
 import com.griddynamics.genesis.plugin.PluginRepository
 import org.springframework.beans.factory.annotation.Autowired
+import com.griddynamics.genesis.api.PluginDetails
+import com.griddynamics.genesis.api.Plugin
+import com.griddynamics.genesis.spring.security.LinkSecurityBean
 
 @Controller
 @RequestMapping(value = Array("/rest/plugins"))
@@ -36,16 +44,24 @@ class PluginsController extends RestApiExceptionsHandler  {
   import ConfigPasswordHelper._
 
   @Autowired var repository: PluginRepository = _
+  @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
-  def listPlugins: List[Plugin] = repository.listPlugins.toList
+  def listPlugins(request: HttpServletRequest): CollectionWrapper[ItemWrapper[Plugin]] = {
+    implicit val req = request
+    wrapCollection(repository.listPlugins.toList.map(plugin => {
+       val top = WebPath(request)
+       wrap(plugin).withLinks(LinkBuilder(top / plugin.id, SELF, classOf[Plugin], GET, PUT)).filtered()
+    })).withLinksToSelf(classOf[Plugin], GET).filtered()
+  }
 
   @RequestMapping(value = Array("{pluginId}"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def getPluginDescription(@PathVariable("pluginId") pluginId: String): PluginDetails ={
+  def getPluginDescription(@PathVariable("pluginId") pluginId: String, request: HttpServletRequest): ItemWrapper[PluginDetails] ={
     val plugin = repository.getPlugin(pluginId).getOrElse(throw new ResourceNotFoundException("Plugin [id = " + pluginId + "] was not found"))
-    plugin.copy(configuration = hidePasswords(plugin.configuration))
+    wrap(plugin.copy(configuration = hidePasswords(plugin.configuration))).
+      withLinks(LinkBuilder(request, SELF, classOf[PluginDetails], GET, PUT)).filtered()
   }
 
   @RequestMapping(value = Array("{pluginId}"), method = Array(RequestMethod.PUT))

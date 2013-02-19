@@ -7,7 +7,9 @@
   <div class="tab-title">
       <a href="javascript:void(0)" class="back"><img src="assets/img/back.png">Back to server arrays</a>
       <h2 >Server array: <%- array.name %></h2>
-      <a href="javascript:void(0);" class="button executable" id="add-server"> <span> Add... </span> </a>
+      <% if (canCreate) { %>
+        <a href="javascript:void(0);" class="button executable" id="add-server"> <span> Add... </span> </a>
+      <% } %>
       <div class="clear"></div>
   </div>
 
@@ -25,11 +27,15 @@
         </tr>
         </thead>
         <tbody>
-        <% for(var i = 0, count = servers.length; i < count; i++) { var server = servers[i]; %>
+        <% for (var i = 0, count = servers.length; i < count; i++) { var server = servers[i]; %>
         <tr>
           <td class="first"><a href="javascript: void(0)" class="show-server" data-server-id="<%= server.id %>"> <%- server.instanceId %> </a></td>
           <td><%= server.address %> </td>
-          <td class="actions"><a href="javascript:void(0)" class="delete-server executable" data-server-id="<%= server.id %>">Delete</a>
+          <td class="actions">
+            <% if (accessRights[server.id].canDelete) { %>
+              <a href="javascript:void(0)" class="delete-server executable" data-server-id="<%= server.id %>">Delete</a>
+            <% } %>
+          </td>
         </tr>
         <% } %>
         </tbody>

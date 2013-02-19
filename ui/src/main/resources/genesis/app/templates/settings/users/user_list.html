@@ -4,7 +4,7 @@
 <div  style="display: block; ">
   <div class="top-panel">
       <div class="page-title"><h2>Users</h2></div>
-      <a href="javascript:void(0)" class="button add-user executable"> <span> Add... </span> </a>
+      <% if (canCreate) { %> <a href="javascript:void(0)" class="button add-user executable"> <span> Add... </span> </a>  <% } %>
   </div>
 
   <div class="panel">
@@ -28,7 +28,7 @@
             <td><%= user.firstName + ' ' + user.lastName %></td>
             <td class="actions">
               <a href="javascript:void(0)" class="edit-user" data-index="<%= user.username %>">Edit</a>
-              <a href="javascript:void(0)" class="delete-user executable" data-index="<%= user.username %>">Delete</a>
+                <% if ( accessRights[user.username].canDelete ) { %>  <a href="javascript:void(0)" class="delete-user executable" data-index="<%= user.username %>">Delete</a> <% } %>
             </td>
           </tr>
           <% } %>

@@ -43,14 +43,17 @@ public class StringTemplateEngine implements TemplateEngine {
     String result;
     ST template = group.getInstanceOf(templateName);
     if (template != null) {
-      //Have no idea why for (String attr : template.getAttributes().keySet()) produce compilation error in java compiler 7 with target=1.6
-      for (Object attr : template.getAttributes().keySet()) {
-          String attrStr = attr.toString();
-          template.add(attrStr, params.get(attrStr) == null ? "" : params.get(attrStr));
-      }
-      result = template.render();
+        //Have no idea why for (String attr : template.getAttributes().keySet()) produce compilation error in java compiler 7 with target=1.6
+        Map<String, Object> attributes = template.getAttributes();
+        if(attributes != null) {
+            for (Object attr : attributes.keySet()) {
+              String attrStr = attr.toString();
+              template.add(attrStr, params.get(attrStr) == null ? "" : params.get(attrStr));
+            }
+        }
+        result = template.render();
     } else {
-      throw new IllegalArgumentException(String.format("Template %s is not found at path %s", templateName, path));
+        throw new IllegalArgumentException(String.format("Template %s is not found at path %s", templateName, path));
     }
     return result;
   }

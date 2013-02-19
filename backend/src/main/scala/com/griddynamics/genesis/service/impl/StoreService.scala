@@ -29,14 +29,15 @@ import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.model.EnvStatus._
 import com.griddynamics.genesis.common.Mistake
 import com.griddynamics.genesis.common.Mistake.throwableToLeft
-import org.springframework.transaction.annotation.{Isolation, Propagation, Transactional}
+import org.springframework.transaction.annotation.{Propagation, Transactional}
 import org.squeryl.{StaleUpdateException, Query, Table}
 import java.sql.Timestamp
 import com.griddynamics.genesis.model.WorkflowStepStatus._
 import com.griddynamics.genesis.util.Logging
-import com.griddynamics.genesis.repository.{AbstractOrderingMapper, ConfigurationRepository}
-import com.griddynamics.genesis.api.{Directions, Ordering}
+import com.griddynamics.genesis.repository.AbstractOrderingMapper
+import com.griddynamics.genesis.api.Ordering
 import collection.mutable
+import com.griddynamics.genesis.annotation.RemoteGateway
 
 object EnvOrdering {
   val ID = "id"
@@ -44,6 +45,7 @@ object EnvOrdering {
 }
 
 //TODO think about ids as vars
+@RemoteGateway("Genesis database access: StoreService")
 class StoreService extends service.StoreService with Logging {
 
   import StoreService._
@@ -63,7 +65,8 @@ class StoreService extends service.StoreService with Logging {
 
   @Transactional(readOnly = true)
   def listEnvs(projectId: Int, statusFilter: Option[Seq[EnvStatus]] = None, ordering: Option[Ordering] = None): Seq[Environment] = {
-    val filterId = statusFilter.flatten(_.map(_.id))
+    //TODO: change Option[Seq] to just Seq[]
+    val filterId = statusFilter.toSeq.flatten(_.map(_.id))
     val envsWithAttrs = join(GS.envs, GS.envAttrs.leftOuter)((env, attrs) =>
       where((if (statusFilter.nonEmpty) env.status.id in filterId else 1===1) and
         env.projectId === projectId)

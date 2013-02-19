@@ -22,22 +22,14 @@
  */
 package com.griddynamics.genesis.notification.plugin;
 
+import com.griddynamics.genesis.notification.service.MailServiceProvider;
 import com.griddynamics.genesis.plugin.PluginConfigurationContext;
 import com.griddynamics.genesis.plugin.api.GenesisPlugin;
-import org.apache.commons.lang.StringUtils;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.mail.MailSender;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import scala.Option;
-import scala.collection.JavaConversions;
-import scala.collection.immutable.Map;
-
-import java.util.Properties;
+import org.springframework.context.annotation.Primary;
 
 @Configuration
 @GenesisPlugin(id = "notification", description = "Sends basic notification to given emails")
@@ -46,13 +38,19 @@ public class NotificationPluginContext {
   @Autowired private PluginConfigurationContext pluginConfiguration;
 
   @Bean
+  @Primary
+  public MailServiceProvider mailServiceProvider() {
+      return new MailServiceProvider(NotificationPluginConfig.id, pluginConfiguration);
+  }
+
+  @Bean
   public NotificationStepBuilderFactory notificationStepBuilderFactory() {
     return new NotificationStepBuilderFactory();
   }
 
   @Bean
   public NotificationStepCoordinatorFactory notificationStepCoordinatorFactory() {
-    return new NotificationStepCoordinatorFactory(NotificationPluginConfig.id, pluginConfiguration);
+    return new NotificationStepCoordinatorFactory(NotificationPluginConfig.id, pluginConfiguration, mailServiceProvider());
   }
 
 

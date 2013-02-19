@@ -70,6 +70,18 @@ function(genesis, $) {
         data: JSON.stringify({environment:{name: envName}}),
         timeout: DEFAULT_TIMEOUT
       })
+    },
+
+    expandLifeTime: function(env, newTtl) {
+      return $.ajax({
+        url: env.url() + "/timeToLive",
+        type: newTtl ? "PUT" : "DELETE",
+        contentType : 'application/json',
+        dataType: "json",
+        data: JSON.stringify({value: newTtl}),
+        timeout: DEFAULT_TIMEOUT
+      });
+
     }
   };
 
@@ -93,7 +105,7 @@ function(genesis, $) {
 
     whoami: function() {
       return $.ajax({
-        url: "rest/whoami",
+        url: "rest/",
         dataType: "json",
         type: "GET",
         timeout: DEFAULT_TIMEOUT
@@ -135,27 +147,14 @@ function(genesis, $) {
       return def.promise();
     },
 
-    projectRoles: function() {
-      var def = new $.Deferred();
-      if (this._projectRolesListCache) {
-        return def.resolve(this._projectRolesListCache);
-      }
-
-      var self = this;
-      $.ajax({
-        url: "rest/projectRoles",
+    projectRoles: function(projectId) {
+      return $.ajax({
+        url: "rest/projects/" + projectId + "/roles",
         dataType: "json",
         type: "GET",
         timeout: DEFAULT_TIMEOUT,
         processData: true
-      }).done(function(roles) {
-          self._projectRolesListCache = _(roles).pluck("name");
-          def.resolve(self._projectRolesListCache);
-        }).fail(function(jqXHR) {
-          def.reject(jqXHR)
-        });
-
-      return def.promise();
+      });
     },
 
     saveUserRoles: function(username, roles) {
@@ -231,15 +230,78 @@ function(genesis, $) {
       });
     },
 
-    version: function() {
+    coreDetails: function() {
+      return $.getJSON("core-details.json");
+    },
+
+    distributionDetails: function() {
       return $.ajax({
-        url: "/rest/build-info",
+        url: "distribution-details.json",
         dataType: "json",
         type: "GET",
         timeout: DEFAULT_TIMEOUT,
-        processData: false
+        processData: false,
+        suppressErrors: true
       })
     }
+  };
+
+
+  function _type(name) {
+    var type = "application/vnd.griddynamics.genesis." + name + "+json";
+    this.name = type;
+
+    this.get =  function(link) {
+      return link.type == type && _(link.methods).contains("get")
+    };
+
+    this.edit = function(link) {
+      return link.type == type && _(link.methods).contains("put")
+    };
+
+    this.delete = function(link) {
+      return link.type == type && _(link.methods).contains("delete")
+    };
+
+    this.create = function(link) {
+      return link.type == type && _(link.methods).contains("post")
+    };
+
+    this.any = function(link) {
+      return link.type == type;
+    }
+  }
+
+  backend.LinkTypes = {
+    SystemSettings: new _type("SystemSettings"),
+    Project: new _type("Project"),
+    Environment: new _type("Environment"),
+    EnvironmentDetails: new _type("EnvironmentDetails"),
+    ProjectSettings: new _type("SystemSettings"),//todo:!!!!
+
+    Workflow: new _type("Workflow"),
+
+    ConfigProperty: new _type("ConfigProperty"),
+    User: new _type("User"),
+    UserGroup: new _type("UserGroup"),
+    Role: new _type("ApplicationRole"),
+    Plugin: new _type("Plugin"),
+    PluginDetails: new _type("PluginDetails"),
+    DataBag: new _type("DataBag"),
+    RemoteAgent: new _type("RemoteAgent"),
+
+    Credentials: new _type("Credentials"),
+
+    ServerArray: new _type("ServerArray"),
+    Server: new _type("Server"),
+
+    TemplateRepo: new _type("TemplateRepo"),
+    EnvConfig: new _type("Configuration"),
+    EnvConfigAccess: new _type("Access"),
+
+    ResetAction: new _type("ResetAction$"),
+    CancelAction: new _type("CancelAction$")
+
   };
 
   return backend;

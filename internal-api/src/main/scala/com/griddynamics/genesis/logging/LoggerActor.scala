@@ -24,11 +24,11 @@ package com.griddynamics.genesis.logging
 
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.service.StoreService
-import akka.actor.{Props, ActorSystem, ActorRef, Actor}
+import akka.actor._
 import java.sql.Timestamp
 
 class LoggerActor(val service: StoreService) extends Actor with Logging {
-  protected def receive = {
+  override def receive = {
     case Log(id, message, timestamp) => {
       service.writeLog(id, message, timestamp)
     }
@@ -49,16 +49,8 @@ trait InternalLogger {
    }
 }
 
-object LoggerWrapper extends Logging {
-  var logger: ActorRef = _
-
-  def start(storeService: StoreService) {
-    val system: ActorSystem = ActorSystem()
-    logger = system.actorOf(Props(new LoggerActor(storeService)))
-  }
-
-  private def now = new Timestamp(System.currentTimeMillis())
-
+class LoggerWrapper(logger: ActorRef) extends java.io.Serializable {
+  import LoggerWrapper.now
   def writeActionLog(actionUUID: String, message: String, timestamp: Timestamp = now) {
     logger ! ActionBasedLog(actionUUID, message, timestamp)
   }
@@ -66,4 +58,25 @@ object LoggerWrapper extends Logging {
   def writeStepLog(id: Int, message: String, timestamp: Timestamp = now) {
     logger ! Log(id, message, timestamp)
   }
+}
+
+object LoggerWrapper extends Logging {
+  private var instance: LoggerWrapper = _
+  private val ACTOR_NAME = "LoggerActor"
+
+  private def now = new Timestamp(System.currentTimeMillis())
+
+  def start(system: ActorSystem, storeService: StoreService) {
+    instance = new LoggerWrapper(system.actorOf(Props(new LoggerActor(storeService)), ACTOR_NAME))
+  }
+
+  def writeActionLog(actionUUID: String, message: String, timestamp: Timestamp = now) {
+    instance.writeActionLog(actionUUID, message, timestamp)
+  }
+
+  def writeStepLog(id: Int, message: String, timestamp: Timestamp = now) {
+    instance.writeStepLog(id, message, timestamp)
+  }
+
+  def logger() = instance
 }

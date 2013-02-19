@@ -2,7 +2,7 @@
     <div class="page-title"><h1><%= !project.name ? 'Create new project' : 'Edit main settings' %></h1></div>
 </div>
 
-<div id="tab-panel">
+<div id="tab-panel" <% if (readonly) { %> class="readonly" <% } %>>
     <div id="panel">
         <div id="panel-tab-1">
           <div class="notification" style="display: none">   </div>

@@ -24,9 +24,10 @@ package com.griddynamics.genesis.service
 
 import com.griddynamics.genesis.plugin.StepBuilder
 import com.griddynamics.genesis.api.{Configuration, Failure, Success, ExtendedResult}
+import com.griddynamics.genesis.model.Environment
 
 class VariableDescription(val name: String, val clazz : Class[_ <: Any], val description: String, val isOptional: Boolean = false,
-                          val defaultValue: String = null, val values: Map[String,String] = Map(), val dependsOn: Option[List[String]] = None,
+                          val defaultValue: String = null, val values: Option[Map[String,String]] = None, val dependsOn: Option[List[String]] = None,
                           val group: Option[String] = None)
 
 case class ValidationError(variableName: String, description: String)
@@ -54,7 +55,7 @@ trait WorkflowDefinition {
 
     def embody(variables: Map[String, String], envId: Option[Int] = None, projectId: Option[Int] = None): Builders
 
-    def validate(variables: Map[String, Any]): Seq[ValidationError]
+    def validate(variables: Map[String, Any]) : Seq[ValidationError]
 
     def validatePreconditions(variables: Map[String, Any], config: Configuration): ExtendedResult[_]
 
@@ -65,13 +66,15 @@ case class Builders(regular: Seq[StepBuilder], onError: Seq[StepBuilder] = Seq()
     def apply(index: Int) = regular(index)
 }
 
-case class TemplateDescription (name: String, version: String, createWorkflow: String, destroyWorkflow: String, workflows: Seq[String])
+case class TemplateDescription(name: String, version: String, createWorkflow: String, destroyWorkflow: String, workflows: Seq[String], rawBody: String)
 
 trait TemplateService {
-    def listTemplates(projectId: Int): Seq[(String, String)] // (name, version)
-    def findTemplate(projectId: Int, templateName: String, templateVersion: String): Option[TemplateDefinition]
-
+    def listTemplates(projectId: Int): Seq[TemplateDescription]
     def descTemplate(projectId: Int, templateName: String, templateVersion: String): Option[TemplateDescription]
+
+    def findTemplate(projectId: Int, templateName: String, templateVersion: String, envConfId: Int): Option[TemplateDefinition]
+    def findTemplate(env: Environment): Option[TemplateDefinition]
+
     def templateRawContent(projectId: Int, name: String, version: String): Option[String]
     def clearCache(projectId: Int) //TODO: remove this
 }

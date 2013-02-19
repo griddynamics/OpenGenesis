@@ -32,7 +32,7 @@ import com.griddynamics.genesis.spring.ApplicationContextAware
 import com.griddynamics.genesis.service.TemplateService
 import javax.annotation.Resource
 import com.griddynamics.genesis.template.{DependentListFactory, ListVarDSFactory, DataSourceFactory}
-import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
+import com.griddynamics.genesis.template.support.{DatabagDataSourceFactory}
 import com.griddynamics.genesis.cache.CacheManager
 
 @Configuration
@@ -48,7 +48,8 @@ class GroovyTemplateServiceContext {
         templateRepositoryContext.templateRepository,
         stepBuilderFactories ++ genericStepDefinitions.map(definition => new ReflectionBasedStepBuilderFactory(definition.name, definition.step)),
         new DefaultConversionService,
-        varDataSourceFactories, storeServiceContext.databagRepository, cacheManager)
+        varDataSourceFactories, storeServiceContext.databagRepository,
+        storeServiceContext.environmentService, cacheManager)
 }
 
 @Configuration

@@ -22,15 +22,18 @@
  */
 package com.griddynamics.genesis.rest
 
+import com.griddynamics.genesis.api.Failure
+import com.griddynamics.genesis.util.Logging
 import javax.servlet.http.HttpServletResponse
-import org.springframework.web.bind.annotation.{ResponseStatus, ExceptionHandler}
 import net.liftweb.json.{Serialization, MappingException}
 import org.springframework.http.{MediaType, HttpStatus}
-import com.griddynamics.genesis.api.Failure
-import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.validation.{ObjectError, FieldError}
+import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.web.bind.annotation.{ResponseStatus, ExceptionHandler}
+import org.springframework.web.context.request.WebRequest
+import org.springframework.security.access.AccessDeniedException
 
-trait RestApiExceptionsHandler {
+trait RestApiExceptionsHandler extends Logging {
     implicit val formats = net.liftweb.json.DefaultFormats
 
     @ExceptionHandler(value = Array(classOf[InvalidInputException]))
@@ -87,6 +90,28 @@ trait RestApiExceptionsHandler {
       response.getWriter.write(Serialization.write(
         new Failure(variablesErrors = fieldErrors.toMap, compoundServiceErrors = servErrors))
       )
+    }
+
+    @ExceptionHandler(value = Array(classOf[AccessDeniedException]))
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    def handleForbidden()(response: HttpServletResponse, exception: AccessDeniedException) {
+       response.setContentType(MediaType.APPLICATION_JSON_VALUE)
+       response.getWriter.write(Serialization.write(Failure(compoundServiceErrors = Seq(exception.getMessage))))
+    }
+
+    @ExceptionHandler(value = Array(classOf[Exception]))
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    def handleOtherExceptions(request: WebRequest, response : HttpServletResponse, exception: Exception) {
+      log.error(exception, exception.getMessage)
+
+      val acceptMediaTypes = MediaType.parseMediaTypes(request.getHeader("Accept"))
+
+      if(acceptMediaTypes.contains(MediaType.APPLICATION_JSON)){
+        response.setContentType(MediaType.APPLICATION_JSON.toString)
+        response.getWriter.write("{\"error\": \"%s\"}".format(exception.getMessage))
+      } else {
+        response.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error occurred")
+      }
     }
 
 }

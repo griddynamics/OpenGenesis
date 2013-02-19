@@ -23,9 +23,17 @@
 
 package com.griddynamics.genesis.template.support
 
+
 import com.griddynamics.genesis.api.Configuration
 
 object EnvConfigSupport {
-   import collection.JavaConversions.mapAsJavaMap
-   def asGroovyMap(c: Configuration):java.util.Map[String, _] = c.items + ("instanceCount" -> c.instanceCount.getOrElse(0))
+  import collection.JavaConversions.mapAsJavaMap
+  def asGroovyMap(c: Configuration):java.util.Map[String, _] = c.items + ("instanceCount" -> c.instanceCount.getOrElse(0)) //todo REMOVE
+}
+
+trait EnvConfigSupport {
+  def configuration: Configuration
+
+  import scala.collection.JavaConversions._
+  def get$envConfig: java.util.Map[_ <: String, Any] = configuration.items + ("instanceCount" -> configuration.instanceCount.getOrElse(0))
 }

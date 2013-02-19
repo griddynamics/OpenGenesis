@@ -23,21 +23,28 @@
 
 package com.griddynamics.genesis.rest
 
+import annotations.LinkTarget
+import links.CollectionWrapper._
+import links.{WebPath, LinkBuilder}
+import links.HrefBuilder._
 import org.springframework.stereotype.Controller
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.groups.GroupService
 import javax.servlet.http.HttpServletRequest
 import GenesisRestController._
 import org.springframework.web.bind.annotation._
+import org.springframework.web.bind.annotation.RequestMethod._
 import com.griddynamics.genesis.api.{ExtendedResult, UserGroup}
 import com.griddynamics.genesis.spring.ApplicationContextAware
 import javax.validation.Valid
+import com.griddynamics.genesis.spring.security.LinkSecurityBean
 
 @Controller
 @RequestMapping(Array("/rest/groups"))
 class GroupController extends RestApiExceptionsHandler with ApplicationContextAware {
 
   @Autowired var groupService: GroupService = _
+  @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
   @RequestMapping(method = Array(RequestMethod.GET), params = Array("available"))
   @ResponseBody
@@ -45,12 +52,24 @@ class GroupController extends RestApiExceptionsHandler with ApplicationContextAw
 
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
-  def list() = groupService.list
+  def list(request: HttpServletRequest) = {
+    implicit val req = request
+    val top = WebPath(request)
+    def wrapGroup(group: UserGroup) = {
+      wrap(group).withLinks(LinkBuilder(top / group.id.get.toString, LinkTarget.SELF, classOf[UserGroup], GET, PUT, DELETE)).filtered()
+    }
+    wrapCollection(groupService.list.map(wrapGroup(_))).withLinksToSelf(classOf[UserGroup], GET, POST).filtered()
+  }
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def get(@PathVariable(value = "id") id: Int) =
-    groupService.get(id).getOrElse(throw new ResourceNotFoundException("Group [id = %d] was not found".format(id)))
+  def get(@PathVariable(value = "id") id: Int, request: HttpServletRequest) = {
+    val group = find(id)
+    implicit val req = request
+    wrap(group).withLinksToSelf(GET, PUT, DELETE).filtered()
+  }
+
+  private def find(id: Int) = groupService.get(id).getOrElse(throw new ResourceNotFoundException("Group [id = %d] was not found".format(id)))
 
   @RequestMapping(method = Array(RequestMethod.GET), params = Array("tag"))
   @ResponseBody
@@ -65,7 +84,7 @@ class GroupController extends RestApiExceptionsHandler with ApplicationContextAw
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.PUT))
   @ResponseBody
   def update(@PathVariable(value = "id") id: Int, @Valid @RequestBody request: UserGroup) = {
-    val group = get(id).copy(
+    val group = find(id).copy(
       name = request.name,
       description = request.description,
       mailingList = request.mailingList,
@@ -76,7 +95,7 @@ class GroupController extends RestApiExceptionsHandler with ApplicationContextAw
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
-  def delete(@PathVariable(value = "id") id: Int) = groupService.delete(get(id))
+  def delete(@PathVariable(value = "id") id: Int) = groupService.delete(find(id))
 
   @RequestMapping(value = Array("{id}/users"), method = Array(RequestMethod.GET))
   @ResponseBody
@@ -104,5 +123,5 @@ class GroupController extends RestApiExceptionsHandler with ApplicationContextAw
     }
   }
 
-  def withGroup(id: Int)(block: UserGroup => ExtendedResult[_]) = block(get(id))
+  def withGroup(id: Int)(block: UserGroup => ExtendedResult[_]) = block(find(id))
 }

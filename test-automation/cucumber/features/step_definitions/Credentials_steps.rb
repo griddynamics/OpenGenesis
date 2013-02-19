@@ -28,6 +28,6 @@ end
 Then /^The credentials should be deleted successfully from project '(.+)'$/ do |project|
   credentials_resource project do |r, id|
       cred = JSON.parse(r.get.body)
-      cred.size.should eq(0), "There should'nt be any credentials in project #{project}, but there is #{cred.size} credentials defined"
+      cred["items"].size.should eq(0), "There should'nt be any credentials in project #{project}, but there is #{cred.size} credentials defined"
   end
 end

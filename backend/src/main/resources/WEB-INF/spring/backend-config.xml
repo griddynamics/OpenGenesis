@@ -44,7 +44,7 @@
         <property name="validator" ref="validator"/>
     </bean>
 
-    <!--<aop:aspectj-autoproxy proxy-target-class="true"/>-->
+    <aop:aspectj-autoproxy proxy-target-class="false"/>
 
     <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
         <property name="propertiesArray">
@@ -66,7 +66,6 @@
     </bean>
 
     <bean id="buildInformation" class="org.springframework.beans.factory.config.PropertiesFactoryBean" primary="false" >
-        <qualifier value="buildInfo" />
         <property name="singleton" value="true"/>
         <property name="locations">
             <list>
@@ -157,6 +156,10 @@
     <bean id="environmentSecurity" class="com.griddynamics.genesis.service.impl.EnvironmentAccessService">
         <constructor-arg name="permissionService" ref="permissionService"/>
         <constructor-arg name="storeService" ref="storeService"/>
+    </bean>
+
+    <bean id="gatewayLoggingAspect" class="com.griddynamics.genesis.spring.aop.RemoteGatewayAspect">
+        <constructor-arg name="metricsOn" value="${genesis.system.metrics:true}" />
     </bean>
 
     <context:component-scan base-package="com.griddynamics.genesis.configuration" />

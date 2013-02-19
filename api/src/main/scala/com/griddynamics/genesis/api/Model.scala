@@ -81,12 +81,16 @@ case class EnvironmentDetails(envId: Int,
                               currentWorkflowFinishedActionsCount: Int,
                               workflowCompleted: Option[Double],
                               attributes: Map[String, Attribute] = Map(),
-                              configuration: String)
+                              configuration: String,
+                              configurationId: Option[Int],
+                              timeToLive: Option[Long])
 
 case class Variable(name : String, `type`: String, description : String, optional: Boolean = false, defaultValue: String = null,
-                    values:Map[String,String] = Map(), dependsOn: Option[List[String]] = None, group : Option[String] = None)
+                    values:Option[Map[String,String]] = None, dependsOn: Option[List[String]] = None, group : Option[String] = None)
 
 case class Template(name : String, version : String, createWorkflow : Workflow, workflows : Seq[Workflow])
+
+case class TemplateExcerpt(name: String, version: String, createWorkflow: String, destroyWorkflow: String, workflows: Seq[String])
 
 case class Workflow(name : String, variables : Seq[Variable])
 
@@ -138,13 +142,15 @@ sealed abstract class ExtendedResult[+S]() extends Product with Serializable {
 
   def get: S
 
+  final def getOrElse[B >: S](default: => B): B =
+    if (isSuccess) this.get else default
+
   def isSuccess: Boolean
 }
 
 final case class Success[+S](result: S) extends ExtendedResult[S] {
   def get = result
-
-  val isSuccess = true
+  override val isSuccess = true
 }
 
 final case class Failure(serviceErrors : Map[String, String] = Map(),
@@ -155,7 +161,7 @@ final case class Failure(serviceErrors : Map[String, String] = Map(),
                          stackTrace: Option[String] = None) extends ExtendedResult[Nothing] {
   def get = throw new NoSuchElementException("Failure.get")
 
-  val isSuccess = false
+  override val isSuccess = false
 }
 
 case class User( @Size(min = 2, max = 32) @Pattern(regexp = "[a-z0-9.\\-_]*", message = "{validation.invalid.name}")
@@ -279,3 +285,59 @@ case class StepLogEntry(timestamp: Timestamp, message: String) {
 
   override def toString = toString(Locale.getDefault, TimeZone.getDefault)
 }
+
+case class RemoteAgent(id: Option[Int],
+                       @NotBlank
+                       @Pattern(message = "{validation.invalid.host}",
+                           regexp="^(?:(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]))|(?:(([a-zA-Z]|[a-zA-Z0-9][a-zA-Z0-9\\-]*[a-zA-Z0-9])\\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\\-]*[A-Za-z0-9]))$")
+                       hostname: String,
+                       @Min(1) @Max(32767) port: Int,
+                       @ValidSeq tags: Seq[String],
+                       lastTimeAlive: Option[Long],
+                       status: Option[AgentStatus.AgentStatus] = None,
+                       stats: Option[JobStats] = None
+                      )
+
+
+object AgentStatus extends Enumeration {
+  type AgentStatus = Value
+  val Connected = Value(0, "Connected")
+  val Active = Value(1, "Active")
+  val Disconnected = Value(2, "Disconnected")
+  val Unavailable = Value(3, "Unavailable")
+  val Error = Value(4, "Error")
+}
+
+case class JobStats(runningJobs: Int, totalJobs: Int)
+
+case class Link(href: String, rel: String, `type`: Option[String], methods: Array[String] = Array())  {
+  def disassemble: Array[Link] = methods.map(m => new Link(href, rel, `type`, Array(m)))
+  def remove(method: String) = new Link(href, rel, `type`, methods.filter(_ != method))
+}
+
+object Links {
+  def merge(links: Array[Link]) = {
+    val groupedByHref = links.groupBy(_.href)
+
+    def assembleLinkList(linksList: Array[Link], href: String): Link = {
+      val firstLink = linksList(0)
+      val methods = linksList.map(_.methods).flatten
+      Link(href, firstLink.rel, firstLink.`type`, methods)
+    }
+
+    groupedByHref.map {
+      case (href, linksList) =>  assembleLinkList(linksList, href)
+    }
+  }
+}
+
+case class SystemSettings(links: Array[Link])
+
+case class ApplicationRole(name: String)
+
+case class Access(users: Array[User], groups: Array[String])
+
+case class Action(name: String)
+
+object CancelAction extends Action("cancel")
+object ResetAction extends Action("reset")

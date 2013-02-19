@@ -2,10 +2,12 @@ package com.griddynamics.genesis.template.dsl.groovy
 
 import groovy.lang.{GroovyObjectSupport, Closure}
 import collection.mutable
-import java.util.Random
 import com.griddynamics.genesis.template.DataSourceFactory
 
-class WorkflowDeclaration(dsClozures: Option[Closure[Unit]], dataSourceFactories: Seq[DataSourceFactory], projectId: Int) extends Delegate {
+class WorkflowDeclaration(dsClozures: Option[Closure[Unit]],
+                          dataSourceFactories: Seq[DataSourceFactory],
+                          projectId: Int) extends Delegate {
+
     var variablesBlock : Option[Closure[Unit]] = None
     var stepsBlock : Option[Closure[Unit]] = None
     var rescueBlock: Option[Closure[Unit]] = None
@@ -27,16 +29,18 @@ class WorkflowDeclaration(dsClozures: Option[Closure[Unit]], dataSourceFactories
         rescueBlock = Some(rescBlock)
     }
 
-    def variables = {
-        val variableBuilders = variablesBlock match {
-            case Some(block) =>
-                  Delegate(block).to(new VariableDeclaration(dsClozures, dataSourceFactories, projectId)).getBuilders
-            case None => Seq[VariableBuilder]()
-        }
-
-        val vars = for(builder <- variableBuilders) yield builder.newVariable
-        vars.toList
+  def variables = {
+    val variableBuilders = variablesBlock match {
+      case Some(block) =>
+        val varsDecl = new VariableDeclaration(dsClozures, dataSourceFactories, projectId)
+        Delegate(block).to(varsDecl).getBuilders
+      case None => Seq[VariableBuilder]()
     }
+
+    val vars = for(builder <- variableBuilders) yield builder.newVariable
+    vars.toList
+  }
+
 }
 
 class RequirementsHandler extends GroovyObjectSupport with Delegate {

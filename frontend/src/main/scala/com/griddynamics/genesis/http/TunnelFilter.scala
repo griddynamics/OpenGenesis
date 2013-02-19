@@ -37,16 +37,18 @@ import com.griddynamics.genesis.resources.ResourceFilter
 import org.jboss.netty.buffer.{ChannelBuffer, ChannelBuffers}
 import java.util.concurrent.{CountDownLatch, TimeUnit, Executors}
 import java.util.zip.GZIPInputStream
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
 sealed trait Tunnel {
     def backendHost: String
-    def uriMatch: String
+    def uriMatches: Array[String]
     def doServe(request: HttpServletRequest, response: CatchCodeWrapper)
     def connectTimeout: Int
     def readTimeout: Int
 }
 
-abstract class TunnelFilter(override val uriMatch: String) extends Filter with Tunnel with Logging {
+abstract class TunnelFilter(override val uriMatches: Array[String]) extends Filter with Tunnel with Logging {
+
     var backendHost: String = _
     var connectTimeout: Int = 5000
     var readTimeout: Int = 5000
@@ -70,7 +72,7 @@ abstract class TunnelFilter(override val uriMatch: String) extends Filter with T
     }
 
     def serve(request: HttpServletRequest, response: CatchCodeWrapper) {
-        if (request.getRequestURI.startsWith(uriMatch)) {
+        if (uriMatches.exists(request.getRequestURI.startsWith(_))) {
           TunnelFilter.withTimings(doServe(request, response))
           response.getOutputStream.flush()
         } else {
@@ -88,6 +90,7 @@ object TunnelFilter extends Logging {
     val SEC_HEADER_NAME = "X-On-Behalf-of"
     val AUTH_HEADER_NAME = "X-Authorities"
     val TUNNELED_HEADER_NAME = "X-Tunneled-By"
+    val FORWARDED_HEADER = "X-Forwarded-By"
     val SEPARATOR_CHAR = ","
     def currentUser = {
         val context: SecurityContext = SecurityContextHolder.getContext
@@ -108,7 +111,6 @@ object TunnelFilter extends Logging {
     }
 
     def authorities = {
-        import collection.JavaConversions._
         val context: SecurityContext = SecurityContextHolder.getContext
         if (context != null && context.getAuthentication != null)
             context.getAuthentication.getAuthorities
@@ -160,6 +162,7 @@ trait NettyTunnel extends Tunnel with Logging {
         if (req.getContentType != null)
             request.setHeader(HttpHeaders.Names.CONTENT_TYPE, req.getContentType)
         request.setHeader(TunnelFilter.SEC_HEADER_NAME, TunnelFilter.currentUser)
+        request.setHeader(TunnelFilter.FORWARDED_HEADER, ServletUriComponentsBuilder.fromContextPath(req).build().toString)
         request.setMethod(HttpMethod.valueOf(req.getMethod))
         val input = Iterator.continually(req.getInputStream.read).takeWhile(-1 != _).map(_.toByte).toArray
         val buffer = ChannelBuffers.copiedBuffer(input)
@@ -257,6 +260,8 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
         }
         connection.addRequestProperty(TunnelFilter.SEC_HEADER_NAME, TunnelFilter.currentUser)
         connection.addRequestProperty(TunnelFilter.AUTH_HEADER_NAME, TunnelFilter.authorities.mkString(TunnelFilter.SEPARATOR_CHAR))
+        connection.addRequestProperty(TunnelFilter.FORWARDED_HEADER,
+          ServletUriComponentsBuilder.fromContextPath(request).build().toString)
         connection.addRequestProperty("Connection", "close") //no keep-alive
         connection.setConnectTimeout(connectTimeout)
         connection.setReadTimeout(readTimeout)
@@ -276,12 +281,16 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
               connection.getInputStream
             } catch {
               //on codes >= 400 connection.getInputStream throws error, but all data are in connection.errorStream
-              case e => connection.getErrorStream
+              case e: Throwable => connection.getErrorStream
             }
             //I have no idea why there is nulls for header names, but we have to check it
-            for(entry <- connection.getHeaderFields if (entry._1 != null && entry._1 != "Connection"
-              && entry._1 != "Set-Cookie")) {
-                response.addHeader(entry._1, entry._2(0))
+            for { (name, values) <- connection.getHeaderFields if (name != null && name != "Connection" && name != "Set-Cookie") } {
+              values match {
+                case null => log.warn(s"Suspicious response from backend(${connection.getURL}): header $name has null as a value")
+                  response.addHeader(name, "")
+                case list if list.isEmpty => response.addHeader(name, "")
+                case list => list.foreach(response.addHeader(name, _))
+              }
             }
             response.addHeader(TunnelFilter.TUNNELED_HEADER_NAME, "UrlConnection")
             response.setHeader("Content-Encoding", "identity")
@@ -295,11 +304,11 @@ trait UrlConnectionTunnel extends Tunnel with Logging {
             try {
                 stream.close()
             } catch {
-                case e => log.debug("Error when re-closing stream")
+                case e: Throwable => log.debug("Error when re-closing stream")
             }
             localOut.flush()
         } catch {
-            case e => {
+            case e: Throwable => {
                 log.error(e, "Error when tunneling request")
                 response.resetBuffer()
                 response.sendError(503, "Error reading remote answer")

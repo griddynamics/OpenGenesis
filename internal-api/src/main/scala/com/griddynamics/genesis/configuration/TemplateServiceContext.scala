@@ -24,7 +24,7 @@ package com.griddynamics.genesis.configuration
 
 import com.griddynamics.genesis.service.TemplateService
 
-trait TemplateServiceContext {
+trait   TemplateServiceContext {
     def templateService: TemplateService
 }
 

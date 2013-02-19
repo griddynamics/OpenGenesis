@@ -33,10 +33,13 @@ import akka.actor._
 import com.griddynamics.genesis.common.Mistake
 import scala.Left
 import scala.Right
+import com.griddynamics.genesis.service.RemoteAgentsService
+import com.griddynamics.genesis.configuration.WorkflowConfig
 
 class FlowCoordinator(unsafeFlowCoordinator: workflow.FlowCoordinator,
                       executorService: ExecutorService,
-                      beatSource: BeatSource, flowTimeOutMs: Long) extends Actor
+                      remoteAgentService: RemoteAgentsService,
+                      beatSource: BeatSource, config: WorkflowConfig) extends Actor
 with FlowActor with Logging {
     val safeFlowCoordinator = new SafeFlowCoordinator(unsafeFlowCoordinator)
 
@@ -45,10 +48,10 @@ with FlowActor with Logging {
     val stepCoordinators = mutable.Set[ActorRef]()
     val finalCoordinators = mutable.Set[ActorRef]()
 
-    protected def receive = {
+    override def receive = {
         case Start => {
             log.debug("Starting flow '%s'", safeFlowCoordinator.flowDescription)
-            beatSource.subscribeOnce(self, Beat(TimeOut()), flowTimeOutMs)
+            beatSource.subscribeOnce(self, Beat(TimeOut()), config.flowTimeOutMs)
             processFlowInstruction(safeFlowCoordinator.onFlowStart())
         }
         case Beat(signal) if signal != Success() => {
@@ -141,7 +144,7 @@ with FlowActor with Logging {
 
     def startCoordinator(coordinator: workflow.StepCoordinator, rescue: Boolean = false) {
         log.debug("Starting coordinator %s", coordinator.getClass.getName)
-        val stepCoordinatorActor = context.actorOf(Props(new StepCoordinator(coordinator, self, executorService, beatSource, rescue)))
+        val stepCoordinatorActor = context.actorOf(Props(new StepCoordinator(coordinator, self, executorService, remoteAgentService, beatSource, config, rescue)))
         if (rescue)
             finalCoordinators += stepCoordinatorActor
         else
@@ -157,7 +160,7 @@ class SafeFlowCoordinator(unsafeFlowCoordinator: workflow.FlowCoordinator)
         try {
             unsafeFlowCoordinator.flowDescription
         } catch {
-            case t => {
+            case t: Throwable => {
                 val systemName = unsafeFlowCoordinator.getClass.getName + "@" +
                     java.lang.System.identityHashCode(unsafeFlowCoordinator)
                 log.warn(t, "Throwable while flowDescription for flow coordinator %s", systemName)
@@ -169,7 +172,7 @@ class SafeFlowCoordinator(unsafeFlowCoordinator: workflow.FlowCoordinator)
         try {
             unsafeFlowCoordinator.onStepFinish(result)
         } catch {
-            case t => {
+            case t: Throwable => {
                 log.warn(t, "Throwable while onStepFinish for flow '%s' and step result '%s'",
                     flowDescription, result)
                 Left(Fail(Mistake(t)))
@@ -181,7 +184,7 @@ class SafeFlowCoordinator(unsafeFlowCoordinator: workflow.FlowCoordinator)
             unsafeFlowCoordinator.onFlowFinish(signal)
         }
         catch {
-            case t => log.warn(t, "Throwable while onFlowFinish for flow '%s' and signal '%s'",
+            case t: Throwable => log.warn(t, "Throwable while onFlowFinish for flow '%s' and signal '%s'",
                 flowDescription, signal)
         }
     }
@@ -190,7 +193,7 @@ class SafeFlowCoordinator(unsafeFlowCoordinator: workflow.FlowCoordinator)
         try {
             unsafeFlowCoordinator.onFlowStart()
         } catch {
-            case t => {
+            case t: Throwable => {
                 log.warn(t, "Throwable while onFlowStart for flow '%s'", flowDescription)
                 Left(Fail(Mistake(t)))
             }
@@ -208,16 +211,16 @@ trait TypedFlowCoordinator {
 }
 
 class TypedFlowCoordinatorImpl(flowCoordinator: workflow.FlowCoordinator,
-                               beatPeriodMs: Long, flowTimeOutMs: Long,
-                               executorService: ExecutorService) extends TypedFlowCoordinator
-with Logging {
+                               workflowConfig: WorkflowConfig,
+                               executorService: ExecutorService, actorSystem: ActorSystem, remoteAgentService: RemoteAgentsService)
+  extends TypedFlowCoordinator with Logging {
     val beatSource : BeatSource = {
-      val system = ActorSystem()
-      val props: TypedProps[BeatSource] = TypedProps(classOf[BeatSource], {new BeatSourceImpl(beatPeriodMs)})
-      TypedActor(system).typedActorOf(props)
+      val props: TypedProps[BeatSource] = TypedProps(classOf[BeatSource], {new BeatSourceImpl(workflowConfig.beatPeriodMs)})
+      TypedActor(actorSystem).typedActorOf(props)
     }
 
-    val flowCoordinatorActor = ActorSystem().actorOf(Props(new FlowCoordinator(flowCoordinator, executorService, beatSource, flowTimeOutMs)))
+    val flowCoordinatorActor = actorSystem.actorOf(Props(new FlowCoordinator(flowCoordinator, executorService, remoteAgentService, beatSource, workflowConfig)))
+
     def start() {
         beatSource.start()
         flowCoordinatorActor ! Start

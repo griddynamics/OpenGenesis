@@ -22,7 +22,7 @@
  */
 package com.griddynamics.genesis.notification.plugin;
 
-interface NotificationPluginConfig {
+public interface NotificationPluginConfig {
 
   public static final String id = "notification";
   public static final String senderName = "genesis.plugin.notification.sender.name";

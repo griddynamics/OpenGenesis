@@ -26,15 +26,15 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import org.junit.Test
 import com.griddynamics.genesis.util.IoUtil
-import org.mockito.Mockito
+import org.mockito.{Matchers, Mockito}
 import com.griddynamics.genesis.plugin._
 import reflect.BeanProperty
 import org.springframework.core.convert.support.DefaultConversionService
 import com.griddynamics.genesis.workflow.Step
-import com.griddynamics.genesis.template._
-import com.griddynamics.genesis.repository.DatabagRepository
-import com.griddynamics.genesis.service.TemplateRepoService
 import com.griddynamics.genesis.cache.NullCacheManager
+import org.mockito.Mockito._
+import com.griddynamics.genesis.template.VersionedTemplate
+import com.griddynamics.genesis.api
 
 case class DoNothingStep(name: String) extends Step {
   override def stepDescription = "Best step ever!"
@@ -50,19 +50,20 @@ class DoNothingStepBuilderFactory extends StepBuilderFactory {
     }
 }
 
-class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
-    val templateRepository = mock[TemplateRepository]
-    val databagRepo = mock[DatabagRepository]
+class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniverse {
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/ExampleEnv.genesis"))
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
     Mockito.when(templateRepository.getContent(VersionedTemplate("1") )).thenReturn(Some(body))
-    val templateRepoService = mock[TemplateRepoService]
-    Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
-    val templateService = new GroovyTemplateService(templateRepoService,
-        List(new DoNothingStepBuilderFactory), new DefaultConversionService,
-        Seq(), databagRepo, NullCacheManager)
 
-    private def testTemplate = templateService.findTemplate(0, "TestEnv", "0.1").get
+    Mockito.when(configService.getDefault(Matchers.anyInt)).thenReturn(None)
+    Mockito.when(configService.list(Matchers.anyInt)).thenReturn(Seq())
+    when(configService.get(Matchers.any(), Matchers.any())).thenReturn(Some(new api.Configuration(Some(0), "", 0, None, Map())))
+
+  val templateService = new GroovyTemplateService(templateRepoService,
+        List(new DoNothingStepBuilderFactory), new DefaultConversionService,
+        Seq(), databagRepository, configService, NullCacheManager)
+
+    private def testTemplate = templateService.findTemplate(0, "TestEnv", "0.1", 1).get
 
     @Test def testEmbody() {
         val res = testTemplate.createWorkflow.embody(Map("nodesCount" -> "666", "test" -> "test"))
@@ -103,7 +104,8 @@ class GroovyTemplateServiceTest extends AssertionsForJUnit with MockitoSugar {
     @Test def testListTemplates() {
         val res = templateService.listTemplates(0)
         assert(res.size === 1)
-        assert(res.head === ("TestEnv", "0.1"))
+        assert(res.head.name === "TestEnv")
+        assert(res.head.version === "0.1")
     }
 
     @Test def testDescribeTemplate() {

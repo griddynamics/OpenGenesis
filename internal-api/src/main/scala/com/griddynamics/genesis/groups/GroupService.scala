@@ -34,6 +34,8 @@ trait GroupService extends CRUDService[UserGroup, String]{
     @Transactional(readOnly = true)
     def findByName(name: String) : Option[UserGroup]
     @Transactional(readOnly = true)
+    def findByNames(names: Iterable[String]) : Set[UserGroup]
+    @Transactional(readOnly = true)
     def users(name: Int) : Seq[User]
     @Transactional(readOnly = false)
     def addUserToGroup(id: Int, username: String) : ExtendedResult[_]
@@ -50,12 +52,14 @@ trait GroupService extends CRUDService[UserGroup, String]{
     @Transactional(readOnly = true)
     def doesGroupExist(groupName: String): Boolean
     @Transactional(readOnly = true)
-    def doGroupsExist(groupNames: Seq[String]): Boolean
+    def doGroupsExist(groupNames: Iterable[String]): Boolean
     def isReadOnly = false
 }
 
 class GroupServiceStub extends GroupService {
     def findByName(name: String) = throw new UnsupportedOperationException
+
+    def findByNames(names: Iterable[String]) = throw new UnsupportedOperationException
 
     def users(name: Int) = throw new UnsupportedOperationException
 
@@ -73,7 +77,7 @@ class GroupServiceStub extends GroupService {
 
     def doesGroupExist(groupName: String) = throw new UnsupportedOperationException
 
-    def doGroupsExist(groupNames: Seq[String]) = throw new UnsupportedOperationException
+    def doGroupsExist(groupNames: Iterable[String]) = throw new UnsupportedOperationException
 
     def list = throw new UnsupportedOperationException
 

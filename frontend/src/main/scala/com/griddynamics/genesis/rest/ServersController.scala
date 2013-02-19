@@ -22,18 +22,21 @@
  */
 package com.griddynamics.genesis.rest
 
+import annotations.{LinkTo, LinksTo, AddSelfLinks, LinkTarget}
+import links.CollectionWrapper._
+import links.{CollectionWrapper, ItemWrapper, WebPath, LinkBuilder}
+import links.HrefBuilder._
+import org.springframework.web.bind.annotation.RequestMethod._
 import org.springframework.web.bind.annotation._
 import org.springframework.stereotype.Controller
-import scala.Array
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.service.{CredentialsStoreService, ServersLoanService, ServersService}
 import com.griddynamics.genesis.rest.GenesisRestController._
 import com.griddynamics.genesis.api
-import api.{ServerArray, ServerDescription, ExtendedResult}
-import scala.Some
-import com.griddynamics.genesis.service.impl.ProjectService
+import api.{Server, ServerArray, ServerDescription, ExtendedResult}
 import org.springframework.beans.factory.annotation.Autowired
 import javax.validation.Valid
+import com.griddynamics.genesis.spring.security.LinkSecurityBean
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/server-arrays"))
@@ -42,6 +45,7 @@ class ServersController extends RestApiExceptionsHandler {
   @Autowired var service: ServersService = _
   @Autowired var loanService: ServersLoanService = _
   @Autowired var credService: CredentialsStoreService =_
+  @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
@@ -51,26 +55,34 @@ class ServersController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
   @ResponseBody
-  def list(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = {
-    service.list(projectId)
+  @AddSelfLinks(methods = Array(GET, POST), modelClass = classOf[ServerArray])
+  def list(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) : CollectionWrapper[ItemWrapper[ServerArray]] = {
+    implicit val req = request
+    wrap(service.list(projectId)) { serverArray =>
+      wrap(serverArray).withLinksToSelf(WebPath(request) / serverArray.id, PUT, DELETE, GET)
+    }
   }
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def get(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int) = {
-    service.get(projectId, id).getOrElse(throw new ResourceNotFoundException("Server array wasn't found in project"))
+  @AddSelfLinks(methods = Array(GET, PUT, DELETE), modelClass = classOf[ServerArray])
+  @LinksTo(value = Array(new LinkTo(path = "servers", methods = Array(GET, POST), modelClass = classOf[Server])))
+  def get(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) : ItemWrapper[ServerArray] = {
+    find(projectId, id)
   }
+
+  private def find(projectId: Int, id: Int) = service.get(projectId, id).getOrElse(throw new ResourceNotFoundException("Server array wasn't found in project"))
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
   def delete(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, request: HttpServletRequest) = {
-    service.delete(get(projectId, id))
+    service.delete(find(projectId, id))
   }
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.PUT))
   @ResponseBody
   def updateServerArray(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, @Valid @RequestBody request: ServerArray) = {
-    val array = get(projectId, id).copy(
+    val array = find(projectId, id).copy(
       name = request.name,
       description = request.description
     )
@@ -89,10 +101,12 @@ class ServersController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{arrayId}/servers"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def getServersInArray(@PathVariable("projectId") projectId: Int, @PathVariable("arrayId") arrayId: Int): Seq[api.Server] = {
+  @AddSelfLinks(methods = Array(GET, POST), modelClass = classOf[Server])
+  def getServersInArray(@PathVariable("projectId") projectId: Int, @PathVariable("arrayId") arrayId: Int, request: HttpServletRequest):  CollectionWrapper[ItemWrapper[Server]] = {
     assertArrayBelongsToProject(projectId, arrayId)
-
-    service.getServers(arrayId)
+    wrap(service.getServers(arrayId)) { server => {
+      server.withLinksToSelf(WebPath(request) / server.id,  GET, PUT, DELETE)
+    }}
   }
 
   @RequestMapping(value = Array("{arrayId}/servers/{serverId}"), method = Array(RequestMethod.DELETE))
@@ -106,10 +120,11 @@ class ServersController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{arrayId}/servers/{serverId}"), method = Array(RequestMethod.GET))
   @ResponseBody
+  @AddSelfLinks(methods = Array(GET, PUT, DELETE), modelClass = classOf[ServerDescription])
   def getServerDescription(@PathVariable("projectId") projectId: Int,
                    @PathVariable("arrayId") arrayId: Int,
                    @PathVariable("serverId") serverId: Int,
-                   request: HttpServletRequest): ServerDescription = {
+                   request: HttpServletRequest): ItemWrapper[ServerDescription] = {
     assertArrayBelongsToProject(projectId, arrayId)
     val server = service.getServer(arrayId, serverId).getOrElse(throw new ResourceNotFoundException("Couldn't find server in the array"))
     val envs = loanService.debtorEnvironments(server)

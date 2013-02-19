@@ -37,10 +37,9 @@ class DataSourceBuilder(val projectId: Int, val factory : DataSourceFactory, val
 
   override def setProperty(name: String, args: AnyRef) {
         conf.put(name, args)
-        super.setProperty(name, args)
     }
 
-    def newDS = (name, {val ds = factory.newDataSource; ds.config(conf.toMap + ("projectId" -> projectId)); ds})
+    def newDS:(String, VarDataSource) = (name, {val ds = factory.newDataSource; ds.config(conf.toMap + ("projectId" -> projectId)); ds})
 }
 
 
@@ -57,7 +56,7 @@ class DSObjectSupport(val dsMap: Map[String, DataSourceBuilder]) extends GroovyO
 
      def default(name: String): Option[Any] = dataSource(name).flatMap(_._2.default)
 
-     def getData(name: String, args: List[Any]): Map[String,String] = {
+     def getData(name: String, args: List[Any]): Map[String, String] = {
          dataSource(name) match {
              case Some(src) => args match {
                  case Nil => src._2.getData
@@ -113,11 +112,13 @@ class InlineDataSource( builder: DataSourceBuilder,
 
   def config(map: Map[String, Any]) {
     for (config <- configDeclaration) {
-      map.foreach { case (key, value) => config.setProperty(key, value) }
+      map.foreach {
+        case (key, value) => config.setProperty(key, value)    //todo: wtf  . why is it propagated
+      }
     }
   }
 
-  lazy val dependancyVars: Seq[String] =
+  lazy val dependencyVars: Seq[String] =
     configDeclaration.map { closure => Delegate(closure).to(new DependencyRefCollector(knownVariables)).links }.getOrElse(Seq())
 
   private[this] class DependencyRefCollector(knownVars: Seq[VariableBuilder]) extends GroovyObjectSupport with Delegate {
@@ -126,25 +127,24 @@ class InlineDataSource( builder: DataSourceBuilder,
 
     val links = new ListBuffer[String]
 
-      private[this] def fakeValue(clazz: Class[_]): AnyRef = {
-        if( clazz == classOf[String]) {
-          ""
-        } else if(clazz.isAssignableFrom(classOf[Number])) {
-          Int.box(0)
-        } else {
-          null
-        }
-      }
-
-      override def getProperty(property: String) = {
-        knownVars.find(_.name == property) match {
-          case Some(variable) => {
-            links += property
-            fakeValue(variable.getClazz())
-          }
-          case None => super.getProperty(property)
-        }
+    private[this] def fakeValue(clazz: Class[_]): AnyRef = {
+      if( clazz == classOf[String]) {
+        ""
+      } else if(clazz.isAssignableFrom(classOf[Number])) {
+        Int.box(0)
+      } else {
+        null
       }
     }
+
+    override def getProperty(property: String) = {
+        knownVars.find(_.name == property) match {
+          case Some(variable) =>
+            links += property
+            fakeValue(variable.getClazz())
+          case None => super.getProperty(property)
+        }
+    }
+  }
 
 }

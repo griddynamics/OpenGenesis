@@ -46,6 +46,7 @@
         <s:intercept-url pattern="/favicon.ico" access="permitAll" />
         <s:intercept-url pattern="/login.html" access="permitAll" />
         <s:intercept-url pattern="/*.html" access="isAuthenticated()" />
+        <s:intercept-url pattern="/*.json" access="isAuthenticated()" />
         <s:intercept-url pattern="/app/**/*.js" access="permitAll" />
         <s:intercept-url pattern="/app/**/*.coffee" access="permitAll" />
         <s:intercept-url pattern="/app/**/*.html" access="permitAll" />
@@ -53,6 +54,7 @@
         <s:intercept-url pattern="/assets/img/**" access="permitAll" />
         <s:intercept-url pattern="/assets/js/**" access="permitAll" />
 
+        <s:intercept-url pattern="/rest" access="isAuthenticated()" />
         <s:intercept-url pattern="/rest/groups*"  method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_PROJECT_ADMIN') or hasRole('ROLE_GENESIS_READONLY')" />
         <s:intercept-url pattern="/rest/users*"   method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_PROJECT_ADMIN') or hasRole('ROLE_GENESIS_READONLY')" />
 
@@ -76,6 +78,10 @@
         <s:intercept-url pattern="/rest/databags/**" method="GET" access="hasRole('ROLE_GENESIS_ADMIN')  or hasRole('ROLE_GENESIS_READONLY')" />
         <s:intercept-url pattern="/rest/databags/**" access="hasRole('ROLE_GENESIS_ADMIN')" />
 
+        <s:intercept-url pattern="/rest/agents"  method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')" />
+        <s:intercept-url pattern="/rest/agents/**"  method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')" />
+        <s:intercept-url pattern="/rest/agents/**"  access="hasRole('ROLE_GENESIS_ADMIN')" />
+
         <s:intercept-url pattern="/rest/projects" method="GET" access="isAuthenticated()"/>
         <s:intercept-url pattern="/rest/projects/" method="GET" access="isAuthenticated()"/>
 
@@ -83,11 +89,12 @@
                 hasPermission( #urlId('/rest/projects/{id}/.*', #url), 'com.griddynamics.genesis.api.Project', 'read') or
                 hasPermission( #urlId('/rest/projects/{id}/.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"/>
 
-        <s:intercept-url pattern="/rest/projects/*/envs" method="POST" access="
-                not(@environmentSecurity.restrictionsEnabled()) or
-                hasRole('ROLE_GENESIS_ADMIN') or
-                hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration') or
-                hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'read')"
+        <s:intercept-url pattern="/rest/projects/*/settings" method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY') or
+                    hasPermission( #urlId('/rest/projects/{id}/.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"  />
+
+        <s:intercept-url pattern="/rest/projects/*/envs" method="POST" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY') or
+                    hasPermission( #urlId('/rest/projects/{id}/.*', #url), 'com.griddynamics.genesis.api.Project', 'read') or
+                    hasPermission( #urlId('/rest/projects/{id}/.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"
         />
 
         <s:intercept-url pattern="/rest/projects/*/envs*" method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY') or
@@ -97,6 +104,9 @@
                     hasPermission( #urlId('/rest/projects/{id}/.*', #url), 'com.griddynamics.genesis.api.Project', 'read') or
                     hasPermission( #urlId('/rest/projects/{id}/.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"/>
 
+
+        <s:intercept-url pattern="/rest/projects/*/roles" method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY') or
+                    hasPermission( #urlId('/rest/projects/{id}/.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"  />
 
         <s:intercept-url pattern="/rest/projects/*/roles/**" method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY') or
                     hasPermission( #urlId('/rest/projects/{id}/.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"  />
@@ -110,69 +120,104 @@
                 or
                 hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')
              )"
-                />
+        />
+
         <s:intercept-url pattern="/rest/projects/*/envs/*/access" access="
              @environmentSecurity.restrictionsEnabled() and (
                 hasRole('ROLE_GENESIS_ADMIN')
                 or
                 hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')
              )"
-                />
+        />
+
+        <s:intercept-url pattern="/rest/projects/*/envs/*/actions" method="GET" access="
+             hasRole('ROLE_GENESIS_ADMIN') or hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration') or
+                (
+                    not(@environmentSecurity.restrictionsEnabled())
+                        and
+                    hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'read')
+                ) or (
+                    @environmentSecurity.restrictionsEnabled()
+                       and
+                    hasPermission( #urlId('/rest/projects/.*/envs/{id}.*', #url), 'com.griddynamics.genesis.api.Environment', 'read')
+                )"
+        />
+
+        <s:intercept-url pattern="/rest/projects/*/envs/*/workflows" method="GET" access="
+             hasRole('ROLE_GENESIS_ADMIN') or hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration') or
+                (
+                    not(@environmentSecurity.restrictionsEnabled())
+                        and
+                    hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'read')
+                ) or (
+                    @environmentSecurity.restrictionsEnabled()
+                       and
+                    hasPermission( #urlId('/rest/projects/.*/envs/{id}.*', #url), 'com.griddynamics.genesis.api.Environment', 'read')
+                )"
+        />
 
         <s:intercept-url pattern="/rest/projects/*/envs/**" method="GET" access="
-             hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY') or (
+             hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY') or hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration') or
                 (
-                    hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')
-                       or
-                    hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'read')
-                ) and (
                     not(@environmentSecurity.restrictionsEnabled())
-                       or
-                    hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')
-                       or
+                        and
+                    hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'read')
+                ) or (
+                    @environmentSecurity.restrictionsEnabled()
+                       and
                     hasPermission( #urlId('/rest/projects/.*/envs/{id}.*', #url), 'com.griddynamics.genesis.api.Environment', 'read')
-                ))"
+                )"
         />
+
         <s:intercept-url pattern="/rest/projects/*/envs/**" access="
-             hasRole('ROLE_GENESIS_ADMIN')  or (
+                hasRole('ROLE_GENESIS_ADMIN') or hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration') or
                 (
-                    hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')
-                       or
-                    hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'read')
-                ) and (
                     not(@environmentSecurity.restrictionsEnabled())
-                       or
-                    hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')
-                       or
+                        and
+                    hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'read')
+                ) or (
+                    @environmentSecurity.restrictionsEnabled()
+                       and
                     hasPermission( #urlId('/rest/projects/.*/envs/{id}.*', #url), 'com.griddynamics.genesis.api.Environment', 'read')
-                ))"
-                />
+                )"
+        />
 
-
-        <s:intercept-url pattern="/rest/projects/*/configs" method="GET" access="
+        <s:intercept-url pattern="/rest/projects/*/configs*" method="GET" access="
             hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY') or
             hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration') or
             hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'read')"
         />
 
-        <s:intercept-url pattern="/rest/projects/*/configs/**" method="GET" access="
-            hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY') or
-            hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"
-                />
-
-        <s:intercept-url pattern="/rest/projects/*/configs/**" access="
+        <s:intercept-url pattern="/rest/projects/*/configs*" method="POST" access="
             hasRole('ROLE_GENESIS_ADMIN') or
             hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"
         />
 
-        <s:intercept-url pattern="/rest/projects/*/templates*" method="GET"    access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')
-                    or hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'read')
-                    or hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"
+        <s:intercept-url pattern="/rest/projects/*/configs/**" method="GET" access="
+            hasRole('ROLE_GENESIS_ADMIN') or
+            hasRole('ROLE_GENESIS_READONLY') or
+            hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration') or
+            hasPermission( #urlId('/rest/projects/.*/configs/{id}.*', #url), 'com.griddynamics.genesis.api.Configuration', 'read')"
         />
 
-        <!-- this is 'partial apply' call. If only admins are allowed to use it, then with envirinment secutiry enabled, users without project
-             admin role are unable to call additional workflows on environments (when these workflows use dependent variables) -->
-        <s:intercept-url pattern="/rest/projects/*/templates/**" method="POST"    access="hasRole('ROLE_GENESIS_ADMIN') or
+        <s:intercept-url pattern="/rest/projects/*/configs/**" access="
+            hasRole('ROLE_GENESIS_ADMIN') or
+            hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')
+        "/>
+
+        <s:intercept-url pattern="/rest/projects/*/templates*" method="GET"    access="
+            hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')
+            or hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'read')
+            or hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"
+        />
+
+        <!--
+             This is 'partial apply' call. If only admins are allowed to use it, then with envirinment secutiry enabled, users without project
+             admin role are unable to call additional workflows on environments (when these workflows use dependent variables) - the same situation
+             with readonly admin. Let's assume than this call is not change anything, and basically every user that is granted with access to
+             environment creation can also do a partial apply.
+        -->
+        <s:intercept-url pattern="/rest/projects/*/templates/**" method="POST"    access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY') or
                     hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'read') or
                     hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"
         />
@@ -194,10 +239,16 @@
 
         <s:intercept-url pattern="/rest/projects/*" method="DELETE" access="hasRole('ROLE_GENESIS_ADMIN')"/>
         <s:intercept-url pattern="/rest/projects*"  method="POST"   access="hasRole('ROLE_GENESIS_ADMIN')"/>
+        <s:intercept-url pattern="/rest/projects/"  method="POST"   access="hasRole('ROLE_GENESIS_ADMIN')"/>
         <s:intercept-url pattern="/rest/projects/*" method="PUT"    access="hasRole('ROLE_GENESIS_ADMIN') or
                             hasPermission( #urlId('/rest/projects/{id}', #url), 'com.griddynamics.genesis.api.Project', 'administration')" />
 
+        <s:intercept-url pattern="/rest/metrics*" access="hasRole('ROLE_GENESIS_ADMIN')"/>
+
         <s:intercept-url pattern="/rest/**" access="isAuthenticated()" />
+
+        <s:intercept-url pattern="/metrics*"  method="GET"   access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')"/>
+        <s:intercept-url pattern="/metrics/**"  method="GET"   access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')"/>
 
         <s:intercept-url pattern="/**" access="denyAll" />
 

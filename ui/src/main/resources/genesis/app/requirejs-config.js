@@ -21,6 +21,7 @@ require.config({
     backbone: "../assets/js/libs/backbone",
     prettify: "../assets/js/libs/prettify",
     multiselect: "../assets/js/plugins/jquery/jquery.multiselect",
+    momentjs: "../assets/js/libs/moment",
     'coffee-script': "../assets/js/libs/coffee-script",
 
     tmplloader: "../assets/js/plugins/templateloader",

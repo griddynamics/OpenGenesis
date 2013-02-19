@@ -39,7 +39,7 @@ class SingleCredentialServiceContext extends CredentialServiceContext {
         InputUtil.resourceAsString(defaultVmCredentialResource)
       } catch {
         //assume it's plain text password
-        case e => defaultVmCredentialResource.getFilename
+        case e: Throwable => defaultVmCredentialResource.getFilename
 
       }
     }

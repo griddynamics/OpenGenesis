@@ -71,7 +71,7 @@ module ModelHelpers
     config = resource "/settings?prefix=#{name}" do |r|
       r.get
     end
-    JSON.parse(config.body)[0]
+    JSON.parse(config.body)["items"][0]
   end
 
   def genesis_settings_value(name)
@@ -94,6 +94,26 @@ module ModelHelpers
   def find_config_in_project(name, project)
     configuration_resource project do |r|
       r.find_by_name(name)
+    end
+  end
+
+  def find_var_for_workflow(project, template, template_version, workflow_name, variable_name, user, password)
+    project_id = project_id(project)
+    result = resource "projects/#{project_id}/templates/#{template}/v#{template_version}/#{workflow_name}", {:username => user, :password => password} do |resource|
+      resp = JSON.parse(resource.get.body)
+      config_var = resp["result"]["variables"].find {|v| v["name"] == variable_name }
+      config_var.should_not be_nil, "There must be a variable with name $envConfig"
+      config_var
+    end
+    result
+  end
+
+  def find_var_for_workflow_s(project, template, template_version, workflow_name, variable_name)
+    project_resource project, "templates/#{template}/v#{template_version}/#{workflow_name}" do |resource, id|
+      resp = JSON.parse(resource.get.body)
+      config_var = resp["result"]["variables"].find {|v| v["name"] == variable_name }
+      config_var.should_not be_nil, "There must be a variable with name $envConfig"
+      config_var
     end
   end
 
@@ -166,6 +186,17 @@ class GenesisWorld
   def initialize
     yaml = YAML::load(File.open(File.dirname(__FILE__) + "/../../config.yml"))
     @config = yaml["genesis"]
+  end
+
+  def full_url(partial)
+    host = @config["host"]
+    port = @config["port"]
+    format = if port == 80
+      ""
+             else
+      ":#{port}"
+             end
+    "http://#{host}#{format}#{partial}"
   end
 end
 

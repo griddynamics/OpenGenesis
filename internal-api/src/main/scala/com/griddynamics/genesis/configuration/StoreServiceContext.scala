@@ -22,15 +22,16 @@
  */
 package com.griddynamics.genesis.configuration
 
-import com.griddynamics.genesis.service.{CredentialsStoreService, StoreService}
+import com.griddynamics.genesis.service.{EnvironmentService, CredentialsStoreService, StoreService}
 import com.griddynamics.genesis.repository.{DatabagRepository, ProjectRepository}
 import com.griddynamics.genesis.repository
 
 trait StoreServiceContext {
-    def storeService : StoreService
-    def projectRepository : ProjectRepository
-    def databagRepository: DatabagRepository
-    def credentialsStoreService: CredentialsStoreService
-    def configurationRepository: repository.ConfigurationRepository
+  def storeService : StoreService
+  def projectRepository : ProjectRepository
+  def databagRepository: DatabagRepository
+  def credentialsStoreService: CredentialsStoreService
+  def configurationRepository: repository.ConfigurationRepository
+  def environmentService: EnvironmentService
 }
 

@@ -23,22 +23,31 @@
 package com.griddynamics.genesis.workflow.actor
 
 import scala.collection.mutable
+import scala.concurrent.duration._
 import com.griddynamics.genesis.workflow
 import com.griddynamics.genesis.workflow.message._
 import java.util.concurrent.ExecutorService
 import akka.actor.{Props, PoisonPill, ActorRef, Actor}
 import com.griddynamics.genesis.workflow._
-import workflow.action.{DelayedExecutorInterrupt, ExecutorInterrupt}
+import workflow.action.{ExecutorThrowable, DelayedExecutorInterrupt, ExecutorInterrupt}
 import scala.Some
 import workflow.signal.{Rescue, Fail, Success}
 import workflow.step.{CoordinatorThrowable, CoordinatorInterrupt}
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.common.Mistake
+import com.griddynamics.genesis.service.RemoteAgentsService
+import com.griddynamics.genesis.logging.LoggerWrapper
+import org.apache.commons.lang.exception.ExceptionUtils
+import com.griddynamics.genesis.configuration.WorkflowConfig
+import com.griddynamics.genesis.agents.AgentGateway
+import concurrent.Await
+import akka.util.Timeout
 
 class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
                       supervisor: ActorRef,
                       executorService: ExecutorService,
-                      beatSource: BeatSource,
+                      remoteAgentService: RemoteAgentsService,
+                      beatSource: BeatSource, config: WorkflowConfig,
                       isRescue: Boolean  = false) extends Actor with FlowActor with Logging {
     val safeStepCoordinator = new SafeStepCoordinator(unsafeStepCoordinator)
 
@@ -50,7 +59,7 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
     private val regularExecutors = mutable.Set[ActorRef]()
     val signalExecutors = mutable.Set[ActorRef]()
 
-    protected def receive = {
+    override def receive = {
         case Start => {
             log.debug("Starting step '%s'", safeStepCoordinator.step)
 
@@ -152,11 +161,28 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
             case e: SyncActionExecutor =>
                 new SyncActionExecutorAdapter(e, executorService)
         }
-
-        val actionExecutionActor = context.system.actorOf(Props(new actor.ActionExecutor(asyncExecutor, self, beatSource)))
-        actionExecutionActor ! Start
-        executorsPool += actionExecutionActor
+      val actionExecutionActor = executorActor(asyncExecutor)
+      actionExecutionActor ! Start
+      executorsPool += actionExecutionActor
     }
+
+  import context.system
+  private def executorActor(asyncExecutor: AsyncActionExecutor): ActorRef = asyncExecutor.action match {
+    case r: RemoteAgentExec if r.tag.nonEmpty =>
+      system.actorOf(Props(remoteExecutor(r.tag, asyncExecutor.action)))
+    case _ =>
+      system.actorOf(Props(new actor.ActionExecutor(asyncExecutor, self, beatSource)))
+   }
+
+  private val TIMEOUT_REMOTE_ACTOR = Timeout(config.remoteExecutorWaitTimeout  seconds)
+
+  private def remoteExecutor(tag: String, action: Action): AgentCommunicatingActor = {
+    val logger = action match {
+      case al: ActionWithLog => al.logger
+      case _ => LoggerWrapper.logger()
+    }
+    new AgentCommunicatingActor(self, action, tag, remoteAgentService, logger, TIMEOUT_REMOTE_ACTOR.duration)
+  }
 }
 
 class SafeStepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator)
@@ -170,7 +196,7 @@ class SafeStepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator)
         try {
             unsafeStepCoordinator.onStepStart()
         } catch {
-            case t => {
+            case t: Throwable => {
                 log.warn(t, "Throwable while onStepStart for step '%s'", step)
                 exceptionalResult = Some(CoordinatorThrowable(step, t))
                 this.onStepInterrupt(Fail(Mistake(t)))
@@ -181,7 +207,7 @@ class SafeStepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator)
         try {
             unsafeStepCoordinator.onStepInterrupt(signal)
         } catch {
-            case t => {
+            case t: Throwable => {
                 log.warn(t, "Throwable while onStepInterrupt for step '%s' and signal '%s'",
                     step, signal)
                 Seq()
@@ -192,7 +218,7 @@ class SafeStepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator)
         try {
             unsafeStepCoordinator.onActionFinish(actionResult)
         } catch {
-            case t => {
+            case t: Throwable => {
                 log.warn(t, "Throwable while onActionFinish for step '%s' and action result '%s'",
                     step, actionResult)
 
@@ -207,7 +233,7 @@ class SafeStepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator)
         try {
             exceptionalResult.getOrElse { unsafeStepCoordinator.getStepResult() }
         } catch {
-            case t => {
+            case t: Throwable => {
                 log.warn(t, "Throwable while getStepResult for step '%s'", step)
                 CoordinatorThrowable(step, t)
             }

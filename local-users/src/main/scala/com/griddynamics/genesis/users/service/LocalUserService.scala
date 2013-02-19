@@ -47,7 +47,7 @@ class LocalUserService(val repository: LocalUserRepository) extends UserService 
   override def findByUsername(username: String) = repository.findByUsername(username)
 
   @Transactional(readOnly = true)
-  def findByUsernames(userNames: Seq[String]) = repository.findByUsernames(userNames)
+  def findByUsernames(userNames: Iterable[String]) = repository.findByUsernames(userNames)
 
   @Transactional(readOnly = true)
   def list = repository.list
@@ -59,7 +59,7 @@ class LocalUserService(val repository: LocalUserRepository) extends UserService 
   def doesUserExist(userName: String) = findByUsername(userName).isDefined
 
   @Transactional(readOnly = true)
-  def doUsersExist(userNames: Seq[String]) = userNames.forall { doesUserExist(_) }
+  def doUsersExist(userNames: Iterable[String]) = userNames.forall { doesUserExist(_) }
 
   @Transactional(readOnly = false)
   override def create(user: User) = {

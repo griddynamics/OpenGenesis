@@ -22,129 +22,143 @@
  */
 package com.griddynamics.genesis.service.impl
 
-import scala.collection.mutable
-import com.griddynamics.genesis.service
-import groovy.lang._
+import collection.mutable
 import collection.mutable.ListBuffer
-import service._
-import org.springframework.core.convert.ConversionService
-import java.lang.IllegalStateException
-import com.griddynamics.genesis.template.dsl.groovy._
-import com.griddynamics.genesis.template._
-import com.griddynamics.genesis.workflow.Step
-import com.griddynamics.genesis.plugin.{StepBuilder, StepBuilderFactory}
-import com.griddynamics.genesis.util.{TryingUtil, ScalaUtils, Logging}
-import org.codehaus.groovy.runtime.{InvokerHelper, MethodClosure}
-import service.ValidationError
-import com.griddynamics.genesis.plugin.GenesisStep
-import com.griddynamics.genesis.repository.DatabagRepository
-import com.griddynamics.genesis.cache.{CacheConfig, CacheManager, Cache}
-import groovy.util.Expando
-import java.util.concurrent.TimeUnit
-import com.griddynamics.genesis.template.dsl.groovy.{Delegate => DslDelegate}
 import com.griddynamics.genesis.api.{ExtendedResult, Configuration, Failure, Success}
-import com.griddynamics.genesis.model.{EntityAttr, EntityWithAttrs}
-import support.EnvConfigSupport
+import com.griddynamics.genesis.cache.{CacheConfig, CacheManager, Cache}
+import com.griddynamics.genesis.model.{Environment, EntityAttr, EntityWithAttrs}
+import com.griddynamics.genesis.plugin.GenesisStep
+import com.griddynamics.genesis.plugin.{StepBuilder, StepBuilderFactory}
+import com.griddynamics.genesis.repository.DatabagRepository
+import com.griddynamics.genesis.service
+import com.griddynamics.genesis.service._
+import com.griddynamics.genesis.template._
+import com.griddynamics.genesis.template.dsl.groovy._
+import com.griddynamics.genesis.template.dsl.groovy.{Delegate => DslDelegate}
+import com.griddynamics.genesis.util.{TryingUtil, ScalaUtils, Logging}
+import com.griddynamics.genesis.workflow.Step
+import groovy.lang._
+import groovy.util.Expando
+import java.lang.IllegalStateException
+import java.util.concurrent.TimeUnit
+import org.codehaus.groovy.runtime.{InvokerHelper, MethodClosure}
+import org.springframework.core.convert.ConversionService
+import com.griddynamics.genesis.annotation.RemoteGateway
 
+@RemoteGateway("groovy template service")
 class GroovyTemplateService(val templateRepoService : TemplateRepoService,
                             val stepBuilderFactories : Seq[StepBuilderFactory],
                             val conversionService : ConversionService,
                             val dataSourceFactories : Seq[DataSourceFactory] = Seq(),
                             databagRepository: DatabagRepository,
+                            envConfigService: EnvironmentService,
                             val cacheManager: CacheManager) extends service.TemplateService with Logging with Cache {
 
-    val CACHE_NAME = "GroovyTemplateService"
+  val CACHE_NAME = "GroovyTemplateService"
 
-    private def templateRepo(projectId: Int) = templateRepoService.get(projectId)
+  private def templateRepo(projectId: Int) = templateRepoService.get(projectId)
 
-    override def defaultTtl = TimeUnit.HOURS.toSeconds(24).toInt
+  override def defaultTtl = TimeUnit.HOURS.toSeconds(24).toInt
 
-    def findTemplate(projectId: Int, name: String, version: String) = getTemplate(projectId, name, version)
-
-    def getTemplate(projectId: Int, name: String, version: String, eval: Boolean = true) : Option[TemplateDefinition] = {
-        val body = getTemplateBody(name, version, projectId)
-        body.flatMap(evaluateTemplate(projectId, _, None, None, None, listOnly = !eval).map(et =>
-            new GroovyTemplateDefinition(et, conversionService, stepBuilderFactories)
-        ))
-    }
-
-    override def descTemplate(projectId: Int, name: String, version: String) = {
-      for (
-        body <- getTemplateBody(name, version, projectId);
-        definition <- evaluateTemplate(projectId, body, None, None, None, listOnly = true)
-      ) yield {
-        new TemplateDescription(name, version, definition.createWorkflow, definition.destroyWorkflow, definition.workflows.map(_.name))
-      }
-    }
-
-
-  def getTemplateBody(name: String, version: String, projectId: Int): Option[String] = {
-    val ref = Option(fromCache(CACHE_NAME, TmplCacheKey(name, version, projectId)) { null.asInstanceOf[VersionedTemplate] })
-    val bodyOpt = ref match {
-      case Some(verTmpl) => templateRepo(projectId).getContent(verTmpl)
-      case None => templatesMap(projectId).get(name, version)
-    }
-    bodyOpt
+  def findTemplate(projectId: Int, templateName: String, templateVersion: String, envConfId: Int): Option[TemplateDefinition] = {
+    val config = envConfigService.get(projectId, envConfId).getOrElse (
+      throw new IllegalArgumentException (s"Couldn't find configuration $envConfId in projectId $projectId ")
+    )
+    getTemplate(projectId, templateName, templateVersion, envConf = config)
   }
 
-  def listTemplates(projectId: Int) = templatesMap(projectId).keys.toSeq
+  def findTemplate(env: Environment) =
+    findTemplate(env.projectId, env.templateName, env.templateVersion, env.configurationId)
 
-    private def templatesMap(projectId: Int) = {
-        val sources = templateRepo(projectId).listSources()
-        (for ((version, body) <- sources) yield try {
-            val template = evaluateTemplate(projectId, body, None, None, None, true)
+  def getTemplate(projectId: Int, name: String, version: String, envConf: Configuration) : Option[TemplateDefinition] = {
+    val body = templateRawContent(projectId, name, version)
+    body.flatMap(fullDefinition(_, projectId, envConf).map(et =>
+      new GroovyTemplateDefinition(et, conversionService, stepBuilderFactories)
+    ))
+  }
 
-            template.foreach(t => {
-              val key = TmplCacheKey(t.name, t.version, projectId)
-              val value = new VersionedTemplate(version.name)
-              cacheManager.createCacheIfAbsent(CacheConfig(CACHE_NAME, defaultTtl, maxEntries))
-              cacheManager.putInCache(CACHE_NAME, key, value) //todo (RB): we assume repo is not using vsc versions
-            })
+  override def descTemplate(projectId: Int, name: String, version: String) = {
+    for (
+      body <- templateRawContent(projectId, name, version);
+      definition <- highLevelDefinition(body)
+    ) yield {
+      new TemplateDescription(name, version, definition.createWorkflow, definition.destroyWorkflow, definition.workflows.map(_.name), body)
+    }
+  }
 
-            template.map(t => ((t.name, t.version), body))
-       } catch {
-            case t: Throwable => {
-                log.error(t, "Error in template name or version: %s", t)
-                None
-            }
-        }).flatten.toMap        
+  def templateRawContent(projectId: Int, name: String, version: String): Option[String] = {
+    val key = TmplCacheKey(name, version, projectId)
+    val ref = fromCache(CACHE_NAME, key) { null.asInstanceOf[VersionedTemplate] }
+    Option(ref) match {
+      case Some(verTmpl) => templateRepo(projectId).getContent(verTmpl)
+      case None => templatesMap(projectId).get(name, version).map(_.rawBody)
+    }
+  }
+
+  def listTemplates(projectId: Int) = templatesMap(projectId).values.toSeq
+
+  private def templatesMap(projectId: Int) = {
+    def putInCache(template: EnvironmentTemplate, version: VersionedTemplate) {
+      val key = TmplCacheKey(template.name, template.version, projectId)
+      val value = new VersionedTemplate(version.name)
+      cacheManager.createCacheIfAbsent(CacheConfig(CACHE_NAME, defaultTtl, maxEntries))
+      cacheManager.putInCache(CACHE_NAME, key, value) //todo (RB): we assume repo is not using vsc versions
     }
 
-    def evaluateTemplate(projectId: Int, body : String, extName: Option[String], extVersion: Option[String],
-                         extProject : Option[String], listOnly : Boolean = false) = {
-        val templateDecl = new BlockDeclaration
-        val methodClosure = new MethodClosure(templateDecl, "declare")
+    def templateDescription(template: EnvironmentTemplate, body: String): TemplateDescription = {
+      new TemplateDescription(template.name, template.version, template.createWorkflow, template.destroyWorkflow, template.workflows.map(_.name), body)
+    }
 
-        val binding = new Binding
-        binding.setVariable("template", methodClosure)
-        binding.setVariable("include", new MethodClosure(templateDecl, "include"))
+    val sources = templateRepo(projectId).listSources()
 
-        try {
-            val groovyShell = new GroovyShell(binding)
-            groovyShell.evaluate(body)
-            if(!listOnly) evaluateIncludes(projectId, templateDecl.includes, groovyShell)
-        } catch {
-            case e: GroovyRuntimeException => throw new IllegalStateException("can't process template", e)
+    (for ((version, body) <- sources) yield try {
+        for(template <- highLevelDefinition(body)) yield {
+          putInCache(template, version)
+          ((template.name, template.version), templateDescription(template, body))
         }
-        val templateBuilder = if (listOnly) new NameVersionDelegate else new EnvTemplateBuilder(projectId, dataSourceFactories, databagRepository)
-        templateDecl.bodies.headOption.map { body => DslDelegate(body).to(templateBuilder).newTemplate(extName, extVersion, extProject) }
-    }
+      } catch {
+        case t: Exception => {
+            log.error(t, "Error in template name or version: %s", t)
+            None
+        }
+    }).flatten.toMap
+  }
 
-    private def getBody(projectId: Int, name: String) = templateRepo(projectId).listSources
-        .find(_._1.name.toUpperCase.endsWith(name.toUpperCase)).map(_._2)
+  private def highLevelDefinition(body: String): Option[EnvironmentTemplate] = {
+    buildTemplate(body, new NameVersionDelegate, None)
+  }
 
-    private def evaluateIncludes(projectId: Int, includes: Seq[String], groovyShell: GroovyShell) {
-        includes.foreach(i => {
-            getBody(projectId, i).foreach(b => {
-                groovyShell.evaluate(b)
-            })
-        })
-    }
+  private def fullDefinition(body: String, projectId: Int, envConf: Configuration): Option[EnvironmentTemplate] = {
+    val builder = new EnvTemplateBuilder(projectId, dataSourceFactories, databagRepository, envConf)
+    buildTemplate(body, builder, Some(projectId))
+  }
 
-    def templateRawContent(projectId: Int, name: String, version: String) = {
-        val map = templatesMap(projectId)
-        map.get(name, version)
+  private def buildTemplate(body: String, builder: TemplateBuilder with DslDelegate with GroovyObjectSupport, projectId: Option[Int]): Option[EnvironmentTemplate] = {
+    val templateDecl = new BlockDeclaration
+    val methodClosure = new MethodClosure(templateDecl, "declare")
+
+    val binding = new Binding
+    binding.setVariable("template", methodClosure)
+    binding.setVariable("include", new MethodClosure(templateDecl, "include"))
+
+    try {
+      val groovyShell = new GroovyShell(binding)
+      groovyShell.evaluate(body)
+      projectId.foreach (evaluateIncludes(_, templateDecl.includes, groovyShell))
+    } catch {
+      case e: GroovyRuntimeException => throw new IllegalStateException("can't process template", e)
     }
+    templateDecl.bodies.headOption.map { body => DslDelegate(body).to(builder).newTemplate() }
+  }
+
+  private def getBody(projectId: Int, name: String) = templateRepo(projectId).
+    listSources().
+    collectFirst { case (nameVersion, body) if nameVersion.name.toUpperCase.endsWith(name.toUpperCase) => body }
+
+  private def evaluateIncludes(projectId: Int, includes: Seq[String], groovyShell: GroovyShell) {
+    for(include <- includes;
+          body  <- getBody(projectId, include)) groovyShell.evaluate(body)
+  }
 
   def clearCache(projectId: Int) {
     if (cacheManager.cacheExists(CACHE_NAME))
@@ -188,18 +202,18 @@ class StepBodiesCollector(variables: Map[String, AnyRef],
 trait ContextAccess extends ((scala.collection.Map[String, Any]) => Any)
 
 object UninitializedStepDetails extends Step {
-    override def stepDescription = "..."
+  override def stepDescription = "..."
 }
 
 class GroovyAttrEntityWrapper(entity: EntityWithAttrs) extends GroovyObjectSupport {
   override def getProperty(property: String) = try {
     entity.get(EntityAttr(property)).getOrElse(InvokerHelper.getProperty(entity, property))
-  }  catch {
-      case e: MissingPropertyException => null
+  } catch {
+    case e: MissingPropertyException => null
   }
 }
 
-class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport with StepBuilder with DslDelegate {
+class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport with StepBuilder with DslDelegate with Logging {
 
   override def delegationStrategy = Closure.DELEGATE_FIRST
 
@@ -228,6 +242,7 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
 
 
     override def setProperty(property: String, value: Any) {
+        log.trace(s"Deferred step building: setting ${stepBuilder.getClass}.$property = $value")
         (property, value) match {
             case ("skip", v: Closure[_]) => throw new RuntimeException("Skip cannot be a deferred object. Don't use syntax skip = {...}")
             case (_, value: Closure[_]) =>
@@ -273,7 +288,19 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
         val typedVal = convert(String.valueOf(value), variable)
 
         variable.validators.view.map { case (errorMsg, validator) =>
-          context.foreach { case (varName, varValue) => validator.setProperty(varName, plainValue(varValue)) }
+          validator.setDelegate(new Expando() {
+            // must throw exception on missing properties(instead of return null) for delegation to work
+            override def getProperty(name: String) = getProperties.containsKey(name) match {
+              case true => super.getProperty(name)
+              case _ => throw new MissingPropertyException(name, classOf[Expando])
+            }
+          })
+          validator.setResolveStrategy(Closure.DELEGATE_FIRST)
+
+          context.foreach {
+            case (varName, varValue) => validator.setProperty(varName, plainValue(varValue))
+          }
+
           if (!validator.call(typedVal))
             Some(ValidationError(variable.name, errorMsg))
           else
@@ -284,9 +311,18 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
       }
     }
 
-    private def varDesc(v: VariableDetails, varDsDefault: Option[Any], varPossibleValues: Map[String, String], dependsOn: Option[List[String]]) =
+    private def varDesc(v: VariableDetails, resolvedVariables: Map[String, Any] = Map()) = {
+      val dependsOn = if (v.dependsOn.isEmpty) None else Some(v.dependsOn.toList)
+      val (varDsDefault, possibleValues) = v.valuesList.map(_.apply(resolvedVariables)) match {
+        case None => (v.defaultValue(), None)
+        // if datasource defines some default value but no list, then it should be rendered as input(not as select)
+        case Some((default@Some(_), values)) if values.isEmpty => (default, None)
+        case Some((default, values)) => (default, Option(values))
+      }
+
       new VariableDescription(v.name, v.clazz, v.description, v.isOptional, v.defaultValue().map(String.valueOf(_)).getOrElse(varDsDefault.map(String.valueOf(_)).getOrElse(null)),
-        varPossibleValues, dependsOn, v.group.map(_.description))
+        possibleValues, dependsOn, v.group.map(_.description))
+    }
 
     override def partial(variables: Map[String, Any]): Seq[VariableDescription] = {
         val appliedVars = variables.keys.toSet
@@ -299,18 +335,13 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
           (varName, convertedValue)
         }
 
-        for(v <- dependents) yield {
-          val defaultAndValues: (Option[Any], Map[String, String]) = v.valuesList.map { lambda => lambda.apply(resolvedVariables) }.getOrElse((v.defaultValue(), Map()))
-          val dependsOn = if (v.dependsOn.isEmpty) None else Some(v.dependsOn.toList)
-
-          varDesc(v, defaultAndValues._1, defaultAndValues._2, dependsOn)
-        }
+        for(v <- dependents) yield varDesc(v, resolvedVariables)
     }
 
   def validatePreconditions(variables: Map[String, Any], config: Configuration): ExtendedResult[_] = {
     val errors = workflow.preconditions.map { case (validationFailureMessage, checkClosure) =>
-      checkClosure.setProperty(Reserved.configRef, EnvConfigSupport.asGroovyMap(config))
-      variables.map{ case(key,value) => checkClosure.setProperty(key, value) }
+//      checkClosure.setProperty(Reserved.configRef, EnvConfigSupport.asGroovyMap(config)) TODO: should it be removed completely?
+      checkClosure.setDelegate(new ScopeHolder(variables))
       if (!checkClosure.call()) Some(validationFailureMessage) else None
     }.flatten.toSeq
 
@@ -321,50 +352,57 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
   }
   
   def validate(variables: Map[String, Any]) = {
+    def isValueProvided(variable: VariableDetails) = variables.contains(variable.name)
+
     val varDetails = workflow.variables()
-    val context = for (variable <- varDetails) yield {
+
+    val context = (for (variable <- varDetails) yield {
       (variable.name, variables.get(variable.name).map(v =>
         try {
           convert(String.valueOf(v), variable)
         } catch {
-          case e => null
+          case e: Throwable => null //todo: Some(null) ???
         }
       ))
-    }
-    val groupVars = varDetails.groupBy(_.group).collect{case (Some(g), v) => (g,v)}
+    })
+
+    val groupVars: Map[GroupDetails, List[VariableDetails]] = varDetails.groupBy(_.group).collect{case (Some(g), v) => (g,v)}
+
     val groupErrors = groupVars.map {
-      case (group, vars) => vars.count(v => variables.contains(v.name)) match {
+      case (group, vars) => vars.count(isValueProvided(_)) match {
         case 0 if group.required => Seq(ValidationError(vars.head.name, "%s is required: please select non-empty value".format(group.description)))
         case 1 => Seq()
-        case _ => vars.collect {
-          case v if variables.get(v.name).isDefined => ValidationError(v.name,
-            "No more than one variable in group '%s' could have value".format(group.description))
+        case _ => vars.collect { case v if isValueProvided(v)=>
+          ValidationError(v.name, "No more than one variable in group '%s' could have value".format(group.description))
         }
       }
     }.flatten
-    val res = for (variable <- varDetails) yield variables.get(variable.name) match {
-      case None => variable.group.map(groupVars(_).map(_.name).intersect(variables.keys.toSeq)) match {
-        // if some other variable from the same group has value, then don't validate this default
-        case Some(x) if x.nonEmpty => Seq()
-        case _ => variable.defaultValue() match {
-          case Some(s) => convertAndValidate(String.valueOf(s), variable, context.toMap)
-          case None =>  if (variable.isOptional)
-            Seq()
-          else
-            Seq(ValidationError(variable.name, "This field is required"))
-        }
-      }
-      case Some(value) => convertAndValidate(value, variable, context.toMap)
-    }
 
-    (groupErrors ++ res.flatten).toSeq
+    val variablesErrors = (for (variable <- varDetails) yield {
+      variables.get(variable.name) match {
+        case None =>
+          variable.group.map { groupVars(_).map(_.name).intersect(variables.keys.toSeq) } match {
+            // if some other variable from the same group has value, then don't validate this default
+            case Some(x) if x.nonEmpty => Seq()
+
+            case _ => variable.defaultValue() match {
+              case Some(s) => convertAndValidate(String.valueOf(s), variable, context.toMap) //validate default
+              case None if variable.isOptional => Seq()
+              case None => Seq(ValidationError(variable.name, "This field is required"))
+            }
+          }
+        case Some(value) => convertAndValidate(value, variable, context.toMap)
+      }
+    }).flatten
+
+    (groupErrors ++ variablesErrors).toSeq
   }
 
     def convert(value: String, variable: VariableDetails): AnyRef = {
       try {
         conversionService.convert(value, variable.clazz)
       } catch {
-        case _ => {
+        case _: Throwable => {
             val className = variable.clazz.getName
             throw new ConversionException(variable.name, "Conversion failed. Expected type is %s".format(className.substring(className.lastIndexOf('.') + 1)))
         }
@@ -399,16 +437,10 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
 
     def createSteps(generator: Option[Closure[Unit]], variables: Map[String, AnyRef]): Seq[StepBuilderProxy] =
         generator.map { it =>
-          DslDelegate(it).to(new StepBodiesCollector(variables, stepBuilderFactories)).buildSteps.toSeq
+          DslDelegate(it).to(new StepBodiesCollector(variables.filterKeys(Reserved.configRef != _), stepBuilderFactories)).buildSteps.toSeq
         }.getOrElse(Seq())
 
-    lazy val variableDescriptions = {
-        for (variable <- workflow.variables()) yield {
-            val dependsOn = if (variable.dependsOn.isEmpty) None else Some(variable.dependsOn.toList)
-            val defaultAndValues: (Option[Any], Map[String, String]) = variable.valuesList.map(_.apply(Map())).getOrElse((variable.defaultValue(), Map()))
-            varDesc(variable, defaultAndValues._1, defaultAndValues._2, dependsOn)
-        }
-    }
+    lazy val variableDescriptions = for (variable <- workflow.variables()) yield varDesc(variable)
 
     val name = workflow.name
 }

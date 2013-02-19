@@ -81,17 +81,25 @@ function (Backbone, _) {
           poller.stop({silent: true});
         }
         else {
-          poller.timeoutId = window.setTimeout(function () {
-            run(poller);
-          }, poller.options.delay);
+          reschedule(poller);
         }
       },
       error: function () {
         poller.trigger('error');
-        poller.stop({silent: true});
+        if (poller.options.noninterruptible === true) {
+          reschedule(poller);
+        } else {
+          poller.stop({silent: true});
+        }
       }
     });
     poller.xhr = poller.model.fetch(options);
+  }
+
+  function reschedule(poller) {
+    poller.timeoutId = window.setTimeout(function () {
+      run(poller);
+    }, poller.options.delay);
   }
 
   /**

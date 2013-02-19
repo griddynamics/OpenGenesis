@@ -26,14 +26,16 @@ import com.griddynamics.genesis.{model, repository}
 import org.springframework.transaction.annotation.Transactional
 import model.{GenesisSchema => GS, GenesisVersion}
 import org.squeryl.PrimitiveTypeMode._
+import com.griddynamics.genesis.annotation.RemoteGateway
 
+@RemoteGateway("Genesis database access: GenesisVersionRepository")
 class GenesisVersionRepository extends repository.GenesisVersionRepository {
   @Transactional(readOnly = true)
   def get = from(GS.genesisVersion)(v => select(v)).single
 
   @Transactional
   def set(version: GenesisVersion) {
-    GS.genesisVersion.deleteWhere(v => true)
+    GS.genesisVersion.deleteWhere(v => 1 === 1)
     GS.genesisVersion.insert(version)
   }
 }

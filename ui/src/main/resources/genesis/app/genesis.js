@@ -50,7 +50,13 @@ function($, _, Backbone, formats, tmpls) {
     }
   });
 
+  $.ajaxSetup({
+    cache: false,
+    timeout: 30000
+  });
+
   var genesis = {
+
     fetchTemplate: function(path, done) {
       done = done || function(){};
 
@@ -167,16 +173,95 @@ function($, _, Backbone, formats, tmpls) {
       },
 
       formatUserLabel: function(user) {
-        var hasFirstName = user.firstName !== null && !_.isUndefined(user.firstName);
-        var hasLastName = user.lastName !== null && !_.isUndefined(user.lastName);
-
-        if (!hasFirstName && !hasLastName)
+        if (!user.firstName && !user.lastName)
           return user.username;
 
         return (user.firstName + " " + user.lastName).trim();
       }
     }
   };
+
+  genesis.Backbone = {};
+
+  var fakeType = {
+    edit: function() { return false },
+    create: function() { return false },
+    delete: function() { return false },
+    any: function() { return false }
+  };
+
+  genesis.Backbone.Model = Backbone.Model.extend({
+    linkType: fakeType,
+
+    clone : function() {
+      var cloned = Backbone.Model.prototype.clone.call(this);
+      cloned._editLink = this._editLink;
+      cloned._deleteLink = this._deleteLink;
+      return cloned;
+    },
+
+    parse: function(json) {
+      if (json.result) {
+        return json.result;
+      } else {
+        this.parseLinks(json.links || []);
+        return json;
+      }
+    },
+
+    parseLinks: function(links) {
+      this._editLink = _(links).find(this.linkType.edit);
+      this._deleteLink = _(links).find(this.linkType.delete);
+    },
+
+    canEdit: function() {
+      return !_.isUndefined(this._editLink)
+    },
+
+    canDelete: function() {
+      return !_.isUndefined(this._deleteLink);
+    }
+  });
+
+  genesis.Backbone.Collection = Backbone.Collection.extend({
+    linkType: fakeType,
+
+    parse: function(json) {
+      if(json.items) {
+        this.parseLinks(json.links || []);
+        return json.items;
+      } else {
+        return json;
+      }
+    },
+
+    parseLinks: function(links) {
+      this._createLink = _(links).find(this.linkType.create);
+    },
+
+    canCreate: function(){
+      return !_.isUndefined(this._createLink)
+    },
+
+    clone:function() {
+      var cloned = Backbone.Collection.prototype.clone.call(this);
+      cloned._createLink = this._createLink;
+      return cloned;
+    },
+
+    itemAccessRights: function(){
+      return this.chain()
+        .map(function (item) {
+          return {
+            id: item.id,
+            canEdit: item.canEdit(),
+            canDelete: item.canDelete()
+          }})
+        .groupBy("id")
+        .pairs().map(function(arr) { return [arr[0], _(arr[1]).first()]; }).object()
+        .value()
+    }
+  });
 
   return genesis;
 });
