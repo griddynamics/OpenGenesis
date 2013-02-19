@@ -29,7 +29,9 @@ import model.{EnvStatus, GenesisSchema}
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.beans.factory.annotation.Autowired
+import com.griddynamics.genesis.annotation.RemoteGateway
 
+@RemoteGateway("Genesis database access: ConfigurationRepository")
 class ConfigurationRepositoryImpl extends AbstractGenericRepository[model.Configuration, api.Configuration](GenesisSchema.configuration) with ConfigurationRepository  {
 
   @Autowired var store: AttributeRepository = _
@@ -92,12 +94,11 @@ class ConfigurationRepositoryImpl extends AbstractGenericRepository[model.Config
 
   @Transactional(readOnly = true)
   def getDefaultConfig(projectId: Int): ExtendedResult[api.Configuration] = {
-    val configs = listModels(projectId)
-    if(configs.size == 1) {
-      val config = configs.head
+    val configs = listModels(projectId, Option(Ordering.asc(ConfigurationOrdering.ID)))
+    configs.headOption.map{ config =>
       Success(convertWithAttrs(config))
-    } else {
-      Failure(compoundServiceErrors = Seq("%d environment configurations found in project id = %d. configId parameter should be provided".format(configs.size, projectId)))
+    } getOrElse {
+      Failure(compoundServiceErrors = Seq(s"${configs.size} environment configurations found in project id = ${projectId}. configId parameter should be provided."))
     }
   }
 
@@ -112,11 +113,12 @@ class ConfigurationRepositoryImpl extends AbstractGenericRepository[model.Config
     import ConfigurationOrdering._
 
     protected def mapFieldsAstField(m: model.Configuration) = Map(
-      NAME -> m.name.~
+      NAME -> m.name.~, ID -> m.id
     )
   }
 }
 
 object ConfigurationOrdering {
   val NAME = "name"
+  val ID = "id"
 }

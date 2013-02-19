@@ -22,21 +22,29 @@
  */
 package com.griddynamics.genesis.rest
 
+import annotations.LinkTarget
+import links._
+import HrefBuilder._
+import CollectionWrapper._
+import links.WebPath
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
+import org.springframework.web.bind.annotation.RequestMethod._
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.service.DataBagService
 import scala.Array
 import org.springframework.beans.factory.annotation.Autowired
+import javax.validation.Valid
+import com.griddynamics.genesis.spring.security.LinkSecurityBean
 import com.griddynamics.genesis.api.DataBag
 import scala.Some
-import javax.validation.Valid
 
 @Controller
 @RequestMapping(value = Array("/rest/databags"))
 class DatabagController extends RestApiExceptionsHandler {
 
   @Autowired var service: DataBagService = _
+  @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
   @RequestMapping(method = Array(RequestMethod.POST))
   @ResponseBody
@@ -49,17 +57,31 @@ class DatabagController extends RestApiExceptionsHandler {
   @RequestMapping(value = Array("{databagId}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
   def deleteDataBag(@PathVariable("databagId") id: Int) = {
-    val bag = getDataBag(id)
+    val bag = findDataBag(id)
     service.delete(bag)
   }
 
   @RequestMapping(value = Array("{databagId}"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def getDataBag(@PathVariable("databagId") id: Int) = {
+  def getDataBag(@PathVariable("databagId") id: Int, request: HttpServletRequest) = {
+    implicit val req: HttpServletRequest = request
+    wrap(findDataBag(id)).withLinksToSelf(GET, PUT, DELETE).filtered()
+  }
+
+  def findDataBag(id: Int): DataBag = {
     service.get(id).getOrElse(throw new ResourceNotFoundException("Couldn't find databag"))
   }
 
   @RequestMapping(method = Array(RequestMethod.GET))
   @ResponseBody
-  def listDataBags(request: HttpServletRequest) = service.list
+  def listDataBags(request: HttpServletRequest) = {
+    implicit val req: HttpServletRequest = request
+    val top = WebPath(req)
+    wrapCollection(
+      service.list.map(databag => {
+        val wrappedItem: ItemWrapper[DataBag] = wrap(databag)
+        wrappedItem.withLinks(LinkBuilder(top / databag.id.get.toString, LinkTarget.SELF, classOf[DataBag], GET, PUT, DELETE)).filtered()
+      })
+    ).withLinksToSelf(classOf[DataBag], GET, POST).filtered()
+  }
 }

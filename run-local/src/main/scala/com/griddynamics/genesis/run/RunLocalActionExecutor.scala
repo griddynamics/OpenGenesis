@@ -22,26 +22,28 @@
  */
 package com.griddynamics.genesis.run
 
-import com.griddynamics.genesis.workflow.{ActionResult, Action, Signal, SyncActionExecutor}
+import com.griddynamics.genesis.workflow._
 import java.io.File
 import com.griddynamics.genesis.model.ActionTrackingStatus._
 
-class RunLocalActionExecutor(val action: RunLocalShell, stepId: Int, shellService: LocalShellExecutionService) extends SyncActionExecutor {
+class RunLocalActionExecutor(val action: RunLocalShell, shellService: LocalShellExecutionService) extends SyncActionExecutor {
 
   def cleanUp(signal: Signal) {}
 
   def startSync() = {
-    val result = shellService.exec(action.shell, action.command, action.outputDirectory, Some(action.uuid))
+    val result = shellService.exec(action.shell, action.command, action.outputDirectory, Option(action))
     new RunLocalResult(action, result)
   }
 }
 
-case class RunLocalShell(shell: String, command: String, expectedExitCode: Int, outputDirectory: Option[File]) extends Action
+case class RunLocalShell(shell: String, command: String, expectedExitCode: Int, outputDirectory: Option[File],
+                         remoteAgentTag: Option[String] = None) extends ActionWithLog with RemoteAgentExec {
+  def tag = remoteAgentTag.getOrElse("")
+}
 
-class RunLocalResult(val action: RunLocalShell, val response: ExecResponse) extends ActionResult {
+case class RunLocalResult(action: RunLocalShell, response: ExecResponse) extends ActionResult {
     override def outcome = if (response.exitCode == action.expectedExitCode)
         Succeed
     else
         Failed
-
 }

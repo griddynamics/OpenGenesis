@@ -25,8 +25,12 @@ package com.griddynamics.genesis.users
 import com.griddynamics.genesis.common.CRUDService
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.api.User
+import org.springframework.beans.factory.annotation.Value
 
 trait UserService extends CRUDService[User, String] {
+
+  @Value("genesis.system.admin.email") var adminEmail: String =_
+
   @Transactional(readOnly = true)
   override def get(key: String) = findByUsername(key)
 
@@ -37,7 +41,7 @@ trait UserService extends CRUDService[User, String] {
   def findByUsername(username: String): Option[User]
 
   @Transactional(readOnly = true)
-  def findByUsernames(userNames: Seq[String]): Seq[User]
+  def findByUsernames(userNames: Iterable[String]): Set[User]
 
   @Transactional(readOnly = true)
   def search(usernameLike: String): List[User]
@@ -46,7 +50,7 @@ trait UserService extends CRUDService[User, String] {
   def doesUserExist(userName: String): Boolean
 
   @Transactional(readOnly = true)
-  def doUsersExist(userNames: Seq[String]): Boolean
+  def doUsersExist(userNames: Iterable[String]): Boolean
 
   def isReadOnly = false
 }
@@ -56,13 +60,13 @@ class UserServiceStub extends UserService {
 
   def findByUsername(username: String) = throw new UnsupportedOperationException
 
-  def findByUsernames(userNames: Seq[String]) = throw new UnsupportedOperationException
+  def findByUsernames(userNames: Iterable[String]) = throw new UnsupportedOperationException
 
   def search(usernameLike: String) = throw new UnsupportedOperationException
 
   def doesUserExist(userName: String) = throw new UnsupportedOperationException
 
-  def doUsersExist(userNames: Seq[String]) = throw new UnsupportedOperationException
+  def doUsersExist(userNames: Iterable[String]) = throw new UnsupportedOperationException
 
   def list = throw new UnsupportedOperationException
 

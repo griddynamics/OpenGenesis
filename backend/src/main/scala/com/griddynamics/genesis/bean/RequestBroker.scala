@@ -62,9 +62,16 @@ class RequestBrokerImpl(storeService: StoreService,
             case _ =>
         }
 
-        val twf = templateService.findTemplate(projectId, templateName, templateVersion) match  {
-            case None => return Failure(compoundVariablesErrors = Seq("Template %s with version %s not found".format(templateName, templateVersion)), isNotFound = true)
-            case Some(template) => template.getWorkflow(template.createWorkflow.name) match {
+      val configId = config.id.getOrElse {
+        return Failure(compoundServiceErrors = Seq("Configuration must have id provided to create new env"))
+      }
+
+      val tmplOption = templateService.findTemplate(projectId, templateName, templateVersion, configId)
+        val twf = tmplOption match  {
+          case None => return Failure(
+            compoundVariablesErrors = Seq("Template %s with version %s not found".format(templateName, templateVersion)),
+            isNotFound = true)
+          case Some(template) => template.getWorkflow(template.createWorkflow.name) match {
                 case Some(w) => w
                 case None => return Failure(isNotFound = true)
             }
@@ -109,7 +116,7 @@ class RequestBrokerImpl(storeService: StoreService,
             })
         }})
 
-    private def getTemplate(env: Environment) = templateService.findTemplate(env.projectId, env.templateName, env.templateVersion) match {
+    private def getTemplate(env: Environment) = templateService.findTemplate(env) match {
         case Some(t) => Success(t)
         case None => Failure(compoundVariablesErrors = Seq("Template used to create instance %s is not found".format(env.name)))
     }
@@ -137,7 +144,7 @@ class RequestBrokerImpl(storeService: StoreService,
     def varsDesc(variables: Map[String, String], workflow: WorkflowDefinition) : Map[String, String] = {
         def findDataLabel(k: String, v: String, descriptions: Seq[VariableDescription]): Option[(String, String)] = {
             descriptions.find(_.name == k).flatMap(dsc => {
-                dsc.values.find(_._1 == v)
+                dsc.values.getOrElse(Map()).find(_._1 == v)
             })
         }
         for ((k, v) <- variables) yield {

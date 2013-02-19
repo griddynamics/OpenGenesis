@@ -1,7 +1,7 @@
 define([
   "genesis",
   "backbone",
-  "modules/environments"  //todo: dependency smell
+  "modules/env_details/env_details"  //todo: dependency smell
 ],
 
 function(genesis, Backbone, Environments) {
@@ -77,14 +77,12 @@ function(genesis, Backbone, Environments) {
       this.render(locationList)
     },
 
-    environmentsDetails: function(projectId, envName) {
+    environmentsDetails: function(projectId, envId) {
       var locationList = [_homeLocation, this._project(projectId)];
       var view = this;
-      var environments = new Environments.Collection({}, {project: this.projectRepository.get(projectId)});
-      $.when(environments.fetch()).done(function () {
-        if (environments.get(envName)) {
-          locationList.push(_locationItem(Backbone.history.fragment, environments.get(envName).get('name')));
-        }
+      var environment = new Environments.Model({id: envId, projectId: projectId});
+      $.when(environment.fetch()).done(function () {
+        locationList.push(_locationItem(Backbone.history.fragment, environment.get('name')));
         view.render(locationList)
       });
     },

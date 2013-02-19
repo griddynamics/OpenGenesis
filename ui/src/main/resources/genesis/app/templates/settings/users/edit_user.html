@@ -7,7 +7,7 @@
     <div id="panel">
         <div id="panel-tab-1">
           <div class="notification" style="display: none;"></div>
-            <form id="user-attributes">
+            <form id="user-attributes" <% if (!canEdit) { %> class="readonly" <% } %>>
                 <table class="forform-table">
                     <tr>
                         <td style="width:12%;"><span class="label-required">* User name</span></td>
@@ -54,11 +54,11 @@
                     </tr>
                     <% } %>
                 </table>
+                <div class="form-notice">All fields marked with * are required</div>
+                <br class="clear"/>
+                <div class="stepbutton"><a href="javascript:void(0)" class="save button executable"> <span> Save </span> </a>
+                    <a href="javascript:void(0)" class="button back" id="ready"> <span> Cancel </span> </a></div>
             </form>
-            <div class="form-notice">All fields marked with * are required</div>
-            <br class="clear"/>
-            <div class="stepbutton"><a href="javascript:void(0)" class="save button executable"> <span> Save </span> </a>
-                <a href="javascript:void(0)" class="button back" id="ready"> <span> Cancel </span> </a></div>
         </div>
     </div>
 </div>

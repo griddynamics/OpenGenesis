@@ -52,7 +52,7 @@
         </div>
 
         <div id="rw-settings-panel" class="tab-content opened rw-settings-panel">
-            <form id="edit-system-settings">
+            <form id="edit-system-settings" <% if (!canEdit) { %> class="readonly" <% } %> >
                 <table class="main-table key-value-table settings">
                     <thead>
                     <tr id="table-title">

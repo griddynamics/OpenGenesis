@@ -38,18 +38,16 @@ function (genesis, status, backend, roles, Backbone, $, _) {
     initialize: function(options){
       this.accessConfiguration = options.accessConfiguration;
       var self = this;
-      if (genesis.app.currentConfiguration['environment_security_enabled']) {
-        backend.AuthorityManager.haveAdministratorRights(options.projectId).done(function(isAdmin) {
-          if (isAdmin) {
-            options.tabHeader.show();
-            $.when(self.accessConfiguration.fetch()).done(
-              _.bind(self.render, self)
-            ).fail(function(){
-                status.StatusPanel.error("Failed to load permissions!")
-            });
-          }
-        });
-      }
+      backend.AuthorityManager.haveAdministratorRights(options.projectId).done(function(isAdmin) {
+        if (isAdmin) {
+          options.tabHeader.show();
+          $.when(self.accessConfiguration.fetch()).done(
+            _.bind(self.render, self)
+          ).fail(function(){
+              status.StatusPanel.error("Failed to load permissions!")
+          });
+        }
+      });
     },
 
     modifyAccess: function() {

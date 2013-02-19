@@ -24,14 +24,27 @@ function(genesis, Backbone) {
   });
 
   var WorkflowDesc = Backbone.Model.extend({
-     initialize: function(model, options) {
-       this.projectId = options.projectId;
-       this.workflow = options.workflow;
-     },
+    initialize: function (model, options) {
+      this.projectId = options.projectId;
+      this.workflow = options.workflow;
+      this.instanceId = options.instanceId;
+    },
 
-     url : function() {
-       return "rest/projects/" + this.projectId + "/templates/" + this.get("name") + "/v" + this.get("version") + "/" + this.workflow;
-     }
+    url: function () {
+      return "rest/projects/" + this.projectId + (this.instanceId ? this.actionPath() : this.templatePath());
+    },
+
+    templatePath: function () {
+      return "/templates/" + this.get("name") + "/v" + this.get("version") + "/" + this.workflow;
+    },
+
+    actionPath: function () {
+      return "/envs/" + this.instanceId + "/workflows/" + this.workflow;
+    },
+
+    parse: function(json) {
+      return json.result ? json.result : json
+    }
   });
 
 

@@ -1,20 +1,36 @@
-define ["genesis", "backbone", "cs!modules/settings/users", "modules/status", "modules/validation", "services/backend", "jquery", "jvalidate"], (genesis, Backbone, Users, status, validation, backend, $) ->
+define [
+  "genesis",
+  "backbone",
+  "cs!modules/settings/users",
+  "modules/status",
+  "modules/validation",
+  "services/backend",
+  "jquery",
+  "jvalidate"],
+(genesis, Backbone, Users, status, validation, backend, $) ->
   Groups = genesis.module()
   URL = "rest/groups"
-  class Groups.Model extends Backbone.Model
+
+  class Groups.Model extends genesis.Backbone.Model
     urlRoot: URL
+    linkType: backend.LinkTypes.UserGroup
+
   class GroupUsers extends Backbone.Collection
-    initialize: (groupId) ->
+    initialize: (models, groupId) ->
       @groupId = groupId
 
     url: ->
       URL + "/" + @groupId + "/users"
+
+  class GroupCollection extends Users.Collections.Groups
+    model: Groups.Model
 
   EmptyGroup = new Groups.Model(
     name: ""
     description: ""
     mailingList: ""
   )
+
   class Groups.Views.Main extends Backbone.View
     events:
       "click .create-group": "createGroup"
@@ -23,7 +39,7 @@ define ["genesis", "backbone", "cs!modules/settings/users", "modules/status", "m
 
     initialize: ->
       _.bind @render, this
-      @collection = new Users.Collections.Groups()
+      @collection = new GroupCollection()
       @collection.fetch().done =>
         @listView = new GroupsList(
           collection: @collection
@@ -41,6 +57,7 @@ define ["genesis", "backbone", "cs!modules/settings/users", "modules/status", "m
     createGroup: ->
       @currentView = new GroupsEdit(
         group: EmptyGroup.clone()
+        groupCollection: @collection
         el: @el
       )
       @currentView.bind "back", =>
@@ -54,7 +71,8 @@ define ["genesis", "backbone", "cs!modules/settings/users", "modules/status", "m
       groupId = event.currentTarget.getAttribute("data-index")
       group = @listView.collection.get(groupId)
       @currentView = new GroupsEdit(
-        group: group
+        group: group,
+        groupCollection: @listView.collection,
         el: @el
       )
       @currentView.bind "back", =>
@@ -98,7 +116,11 @@ define ["genesis", "backbone", "cs!modules/settings/users", "modules/status", "m
     template: "app/templates/settings/groups/group_list.html"
     render: =>
       $.when(genesis.fetchTemplate(@template), @collection.fetch()).done (tmpl) =>
-        @$el.html tmpl(groups: @collection.toJSON())
+        @$el.html tmpl(
+          groups: @collection.toJSON()
+          canCreate: @collection.canCreate()
+          accessRights: @collection.itemAccessRights()
+        )
 
   class GroupsEdit extends Backbone.View
     template: "app/templates/settings/groups/edit_group.html"
@@ -108,9 +130,11 @@ define ["genesis", "backbone", "cs!modules/settings/users", "modules/status", "m
 
     initialize: (options) ->
       @group = options.group
-      @groupUsers = new GroupUsers(@group.id)
+      @groupUsers = new GroupUsers([], @group.id)
       @users = new Users.Collections.People()
       @groupRolesArray = []
+      @groupCollection = options.groupCollection
+
       unless @group.isNew()
         $.when(@groupUsers.fetch(), @users.fetch(), backend.AuthorityManager.getGroupRoles(@group.get("name"))).done (a, b, groupRoles) =>
           @groupRolesArray = groupRoles[0]
@@ -126,8 +150,9 @@ define ["genesis", "backbone", "cs!modules/settings/users", "modules/status", "m
           group: @group.toJSON()
           users: @users.toJSON()
           usersInGroup: usersInGroupMap
-          roles: rolesArray
+          roles: _(rolesArray.items).pluck("name")
           groupRoles: groupRolesMap
+          canEdit: @group.canEdit() or @groupCollection.canCreate()
         )
         @status = new status.LocalStatus(el: @$(".notification"))
         validation.bindValidation @group, @$("#group-attributes"), @status

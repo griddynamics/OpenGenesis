@@ -52,7 +52,6 @@ class ScalaReflectionUtilsTest {
   @Ignore("type parameters check are not imlemented yet")
   def newInstanceShouldRespectTypeParameters() {
     val instance = ScalaReflectionUtils.newInstance(classOf[OptionsTestCase], Map("opt" -> Some("not a number")))
-    instance
   }
 
   @Test def newInstanceShouldUseDefaultValues() {

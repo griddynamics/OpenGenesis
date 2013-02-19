@@ -24,6 +24,7 @@ package com.griddynamics.genesis.run
 
 import org.springframework.context.annotation.{Configuration, Bean}
 import com.griddynamics.genesis.plugin._
+import com.griddynamics.genesis.workflow.ActionToExecutor
 
 @Configuration
 class RunLocalPluginContext {
@@ -34,7 +35,11 @@ class RunLocalPluginContext {
 
   @Bean def runLocalCoordinatorFactory = new RunLocalStepCoordinatorFactory(shellExecutionService)
 
-  @Bean def runLocalStepBuilderFactory: StepBuilderFactory = new RunLocalStepBuilderFactory
+  @Bean def runLocalStep: StepDefinition = new StepDefinition("execLocal", classOf[RunLocalStep])
+
+  @Bean def runLocalActionToExec: ActionToExecutor = ActionToExecutor {
+    case a: RunLocalShell => new RunLocalActionExecutor(a, shellExecutionService)
+  }
 }
 
 

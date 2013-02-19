@@ -23,55 +23,57 @@
 
 package com.griddynamics.genesis.service.impl
 
-import com.griddynamics.genesis.service.TemplateRepoService
-import com.griddynamics.genesis.template.{VersionedTemplate, ListVarDSFactory, TemplateRepository}
+import com.griddynamics.genesis.template.ListVarDSFactory
 import org.springframework.core.convert.support.DefaultConversionService
 import org.junit.Test
 import com.griddynamics.genesis.util.IoUtil
-import com.griddynamics.genesis.repository.DatabagRepository
 import com.griddynamics.genesis.template.support.DatabagDataSourceFactory
 import org.scalatest.mock.MockitoSugar
-import org.mockito.Mockito
+import org.mockito.{Matchers, Mockito}
 import org.scalatest.junit.AssertionsForJUnit
 import com.griddynamics.genesis.cache.NullCacheManager
+import org.mockito.Mockito._
+import com.griddynamics.genesis.template.VersionedTemplate
+import com.griddynamics.genesis.api
 
-class VarGroupsTest extends AssertionsForJUnit with MockitoSugar {
-    val templateRepository = mock[TemplateRepository]
-    val bagRepository = mock[DatabagRepository]
-    val templateRepoService = mock[TemplateRepoService]
-    Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
+class VarGroupsTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniverse {
+    Mockito.when(configService.getDefault(Matchers.anyInt)).thenReturn(None)
+    Mockito.when(configService.list(Matchers.anyInt)).thenReturn(Seq())
+    when(configService.get(Matchers.any(), Matchers.any())).thenReturn(Some(new api.Configuration(Some(0), "", 0, None, Map())))
+
     val templateService = new GroovyTemplateService(templateRepoService,
         List(new DoNothingStepBuilderFactory), new DefaultConversionService,
-        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new DatabagDataSourceFactory(bagRepository)), bagRepository, NullCacheManager)
+        Seq(new ListVarDSFactory, new DependentListVarDSFactory, new DatabagDataSourceFactory(databagRepository)),
+      databagRepository, configService, NullCacheManager)
     val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/VarGroups.genesis"))
 
     Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
-    val createWorkflow = templateService.findTemplate(0, "VariableGroups", "0.1").get.createWorkflow
+    val createWorkflow = templateService.findTemplate(0, "VariableGroups", "0.1", 0).get.createWorkflow
 
     @Test
     def testSimpleGroup() {
-      expect(None)(createWorkflow.variableDescriptions.find(_.name == "a").get.group)
-      expect(Some("testGroup"))(createWorkflow.variableDescriptions.find(_.name == "b").get.group)
-      expect(Some("testGroup"))(createWorkflow.variableDescriptions.find(_.name == "c").get.group)
+      expectResult(None)(createWorkflow.variableDescriptions.find(_.name == "a").get.group)
+      expectResult(Some("testGroup"))(createWorkflow.variableDescriptions.find(_.name == "b").get.group)
+      expectResult(Some("testGroup"))(createWorkflow.variableDescriptions.find(_.name == "c").get.group)
     }
 
     @Test
     def testValidateSuccess() {
-      expect(Seq())(createWorkflow.validate(Map("a" -> 1, "b" -> true, "y" -> 3, "x" -> "s")))
+      expectResult(Seq())(createWorkflow.validate(Map("a" -> 1, "b" -> true, "y" -> 3, "x" -> "s")))
     }
 
     @Test
     def testValidateFail() {
       val errors = createWorkflow.validate(Map("a" -> 1, "b" -> false, "c" -> 3, "y" -> 0))
-      expect(2)(errors.size)
-      expect("b")(errors.head.variableName)
-      expect("No more than one variable in group 'testGroup' could have value")(errors.head.description)
-      expect("c")(errors.tail.head.variableName)
+      expectResult(2)(errors.size)
+      expectResult("b")(errors.head.variableName)
+      expectResult("No more than one variable in group 'testGroup' could have value")(errors.head.description)
+      expectResult("c")(errors.tail.head.variableName)
      }
 
     @Test
     def testValidateRequiredFail() {
       val errors = createWorkflow.validate(Map("a" -> 1))
-      expect(1)(errors.size)
+      expectResult(1)(errors.size)
     }
 }

@@ -23,8 +23,12 @@
 
 package com.griddynamics.genesis.rest
 
-import scala.Array
+import annotations.AddSelfLinks
+import links.{WebPath, ItemWrapper, CollectionWrapper}
+import links.CollectionWrapper._
+import links.WebPath._
 import org.springframework.web.bind.annotation.{PathVariable, ResponseBody, RequestMethod, RequestMapping}
+import org.springframework.web.bind.annotation.RequestMethod._
 import javax.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Controller
 import GenesisRestController._
@@ -33,22 +37,28 @@ import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.groups.GroupService
 import com.griddynamics.genesis.api._
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.validation.Validation
+import com.griddynamics.genesis.validation.Validation._
 import com.griddynamics.genesis.api.Failure
+import com.griddynamics.genesis.spring.security.LinkSecurityBean
 
 @Controller
 @RequestMapping(Array("/rest"))
 class RolesController extends RestApiExceptionsHandler {
 
   @Autowired var authorityService: AuthorityService = _
-  @Autowired var  projectAuthorityService: ProjectAuthorityService= _
+  @Autowired var projectAuthorityService: ProjectAuthorityService= _
+  @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
   @Autowired var userService: UserService = _
   @Autowired var groupService: GroupService = _
 
   @RequestMapping(value = Array("roles"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def listSystemRoles() = authorityService.listAuthorities
+  @AddSelfLinks(methods = Array(GET), modelClass = classOf[ApplicationRole])
+  def listSystemRoles(request: HttpServletRequest) : CollectionWrapper[ItemWrapper[ApplicationRole]] = {
+    val builtRoles = authorityService.listAuthorities.map(s => ApplicationRole(s))
+    builtRoles.map { role => role.withLinksToSelf(request / role.name, GET, PUT).filtered() }
+  }
 
   @RequestMapping(value = Array("projectRoles"), method = Array(RequestMethod.GET))
   @ResponseBody
@@ -56,24 +66,30 @@ class RolesController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("users/{username}/roles"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def userRoles(@PathVariable("username")username: String): List[String] = validUser(username) { authorityService.getUserAuthorities(username) }
+  def userRoles(@PathVariable("username")username: String): List[String] = authorityService.getUserAuthorities(username)
 
   @RequestMapping(value = Array("users/{username}/roles"), method = Array(RequestMethod.PUT))
   @ResponseBody
-  def updateUserRoles(@PathVariable("username")username: String, request: HttpServletRequest) = validUser(username) {
+  def updateUserRoles(@PathVariable("username")username: String, request: HttpServletRequest) = {
     val roles = GenesisRestController.extractParamsList(request)
-    authorityService.grantAuthoritiesToUser(username, roles)
+    if (username.matches(validADUserName))
+      authorityService.grantAuthoritiesToUser(username, roles)
+    else
+      Failure(compoundServiceErrors = List(ADUserNameErrorMessage.format(username)))
   }
 
   @RequestMapping(value = Array("groups/{groupName}/roles"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def groupRoles(@PathVariable("groupName") groupName: String): List[String] = validGroup(groupName) { authorityService.getGroupAuthorities(groupName) }
+  def groupRoles(@PathVariable("groupName") groupName: String): List[String] = authorityService.getGroupAuthorities(groupName)
 
   @RequestMapping(value = Array("groups/{groupName}/roles"), method = Array(RequestMethod.PUT))
   @ResponseBody
-  def updateGroupRoles(@PathVariable("groupName") groupName: String, request: HttpServletRequest) = validGroup(groupName) {
+  def updateGroupRoles(@PathVariable("groupName") groupName: String, request: HttpServletRequest): ExtendedResult[_] = {
     val roles = GenesisRestController.extractParamsList(request)
-    authorityService.grantAuthoritiesToGroup(groupName, roles)
+    if (groupName.matches(validADGroupName))
+      authorityService.grantAuthoritiesToGroup(groupName, roles)
+    else
+      Failure(compoundServiceErrors = List(ADGroupNameErrorMessage.format(groupName)))
   }
 
   @RequestMapping(value = Array("roles/{roleName}"), method = Array(RequestMethod.GET))
@@ -103,7 +119,6 @@ class RolesController extends RestApiExceptionsHandler {
     val groups = extractListValue("groups", grantsMap)
     val users = extractListValue("users", grantsMap)
 
-    import Validation._
     val invalidUsers = users.filterNot(_.matches(validADUserName))
     val invalidGroups = groups.filterNot(_.matches(validADGroupName))
 
@@ -113,37 +128,18 @@ class RolesController extends RestApiExceptionsHandler {
       )
     }
 
-    validUsers(users) {
-      validGroups (groups) {
-        authorityService.updateAuthority(roleName, groups.distinct, users.distinct)
-      }
-    }
+    val nonExistentUsers = users.map(_.toLowerCase).toSet -- userService.findByUsernames(users).map(_.username.toLowerCase)
+    val nonExistentGroups = groups.map(_.toLowerCase).toSet -- groupService.findByNames(groups).map(_.name.toLowerCase)
+
+    authorityService.updateAuthority(roleName, groups.distinct, users.distinct)
+
+    Success(
+      Map(
+        "nonExistentUsers" -> nonExistentUsers,
+        "nonExistentGroups" -> nonExistentGroups
+      )
+    )
   }
 
-  private def validUser[A](username: String)(block: => A): A = {
-    if (!userService.doesUserExist(username)) {
-      throw new ResourceNotFoundException("User [username=" + username + "] was not found")
-    }
-    block
-  }
-  private def validUsers[A](usernames: Seq[String])(block: => ExtendedResult[_]): ExtendedResult[_] = {
-    if (usernames.nonEmpty && !userService.doUsersExist(usernames)) {
-      throw new ResourceNotFoundException("List of users contains unknown usernames")
-    }
-    block
-  }
-
-  private def validGroup[A](groupName: String)(block: => A): A = {
-    if (!groupService.doesGroupExist(groupName)) {
-      throw new ResourceNotFoundException("Group [name = " + groupName + "] was not found")
-    }
-    block
-  }
-  private def validGroups[A](groupNames: Seq[String])(block: => ExtendedResult[_]): ExtendedResult[_] = {
-    if(groupNames.nonEmpty && !groupService.doGroupsExist(groupNames)) {
-      throw new ResourceNotFoundException("List of groups contains unknown  groups")
-    }
-    block
-  }
 }
 

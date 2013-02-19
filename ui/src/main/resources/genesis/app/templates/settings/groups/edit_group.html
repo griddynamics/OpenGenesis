@@ -7,7 +7,7 @@
     <div class="panel">
         <div id="panel-tab-1">
             <div class="notification" style="display: none"/>
-            <form id="group-attributes">
+            <form id="group-attributes" <% if (!canEdit) { %> class="readonly" <% } %>>
                 <table class="forform-table">
                     <tr>
                         <td style="width:12%; min-width: 110px;" class="label-column"><label for="group-name" class="label-required">* Group name</label></td>
@@ -52,11 +52,11 @@
                     </tr>
                     <% } %>
                 </table>
-            </form>
-            <div class="form-notice">All fields marked with * are required</div>
-            <br class="clear"/>
-            <div class="stepbutton"><a href="javascript:void(0)" class="save button executable"> <span> Save </span> </a>
+                <br class="clear"/>
+                <div class="form-notice">All fields marked with * are required</div>
+                <div class="stepbutton"><a href="javascript:void(0)" class="save button executable"> <span> Save </span> </a>
                 <a href="javascript:void(0)" class="button back" id="ready"> <span> Cancel </span> </a></div>
+            </form>
         </div>
     </div>
 </div>

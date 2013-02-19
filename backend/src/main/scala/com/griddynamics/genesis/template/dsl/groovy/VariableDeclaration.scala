@@ -6,12 +6,12 @@ import collection.mutable.ListBuffer
 import reflect.BeanProperty
 import groovy.util.Expando
 
-class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFactories : Seq[DataSourceFactory],
+class VariableDeclaration(dsObjSupport: Option[Closure[Unit]],
+                          dataSourceFactories : Seq[DataSourceFactory],
                           projectId: Int) extends GroovyObjectSupport with Delegate {
-    protected val builders = new ListBuffer[VariableBuilder]
+  protected val builders = new ListBuffer[VariableBuilder]
 
 //  val declaration = new DataSourceDeclaration(projectId, dataSourceFactories)
-
   override def delegationStrategy = Closure.DELEGATE_FIRST
 
   override def invokeMethod(name: String, args: AnyRef) = {
@@ -28,7 +28,8 @@ class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFac
     newValue match {
       case cl: Closure[_] =>
         builders += Delegate(cl).to(new DSAwareVariableBuilder(builders, dataSourceFactories, projectId, None, property, dsObjSupport))
-      case _ => super.setProperty(property, newValue)
+      case _ =>
+        super.setProperty(property, newValue)
     }
   }
 
@@ -39,9 +40,11 @@ class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFac
     }
 
   import collection.JavaConversions.mapAsScalaMap
-  def group(params: java.util.Map[String, Any], variables : Closure[Unit]) =
-     builders ++= Delegate(variables).to(new GroupDeclaration(builders, dsObjSupport, dataSourceFactories, projectId,
-       groupDetails(params.toMap, variables.hashCode))).getBuilders
+  def group(params: java.util.Map[String, Any], variables : Closure[Unit]) = {
+    val details = groupDetails(params.toMap, variables.hashCode)
+    val groupDeclaration = new GroupDeclaration(builders, dsObjSupport, dataSourceFactories, projectId, details)
+    builders ++= Delegate(variables).to(groupDeclaration).getBuilders
+  }
 
 
   private def groupDetails(params: Map[String, Any], id: Int) = (params.get("description"), params.getOrElse("required", false)) match {
@@ -54,10 +57,11 @@ class VariableDeclaration(val dsObjSupport: Option[Closure[Unit]], dataSourceFac
   }
 }
 
-class GroupDeclaration(val parentBuilders: ListBuffer[VariableBuilder],
+class GroupDeclaration(parentBuilders: ListBuffer[VariableBuilder],
                        dsObjSupport: Option[Closure[Unit]],
                        dataSourceFactories : Seq[DataSourceFactory],
-                       projectId: Int, group: GroupDetails) extends VariableDeclaration(dsObjSupport, dataSourceFactories, projectId) {
+                       projectId: Int,
+                       group: GroupDetails) extends VariableDeclaration(dsObjSupport, dataSourceFactories, projectId) {
 
   override def group(params: java.util.Map[String, Any], variables: Closure[Unit]): ListBuffer[VariableBuilder] = {
       throw new IllegalArgumentException("Nested groups are not supported!")
@@ -66,7 +70,8 @@ class GroupDeclaration(val parentBuilders: ListBuffer[VariableBuilder],
   override def setProperty(property: String, newValue: Any) {
     newValue match {
       case cl: Closure[_] =>
-        builders += Delegate(cl).to(new DSAwareVariableBuilder(parentBuilders ++ builders, dataSourceFactories, projectId, Option(group), property, dsObjSupport))
+        val builder = new DSAwareVariableBuilder(parentBuilders ++ builders, dataSourceFactories,  projectId, Option(group), property, dsObjSupport)
+        builders += Delegate(cl).to(builder)
       case _ => super.setProperty(property, newValue)
     }
   }
@@ -86,16 +91,22 @@ class GroupDeclaration(val parentBuilders: ListBuffer[VariableBuilder],
 
 case class GroupDetails(id: Int, description: String, required: Boolean = false)
 
+object VariableDetails {
+  type ValuesListType = Option[(Map[String,Any] => (Option[Any], Map[String,String]))]
+}
+
 class VariableDetails(val name : String, val clazz : Class[_ <: AnyRef], val description : String,
                       val validators : Seq[(String, Closure[Boolean])], val isOptional: Boolean = false, val defaultValue: () => Option[Any],
-                      val valuesList: Option[(Map[String,Any] => (Option[Any], Map[String,String]))] = None, val dependsOn: Seq[String],
+                      val valuesList: VariableDetails.ValuesListType = None, val dependsOn: Seq[String],
                       val group: Option[GroupDetails] = None)
 
 class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
-                      val dataSourceFactories: Seq[DataSourceFactory], val projectId: Int, val group: Option[GroupDetails] = None) extends GroovyObjectSupport {
+                      val dataSourceFactories: Seq[DataSourceFactory],
+                      val projectId: Int,
+                      val group: Option[GroupDetails] = None) extends GroovyObjectSupport {
     @BeanProperty var description : String = _
     @BeanProperty var clazz : Class[_ <: AnyRef] = classOf[String]
-    @BeanProperty var defaultValue: Any = _
+    private var defaultVal: Any = _
     @BeanProperty var isOptional: Boolean = false
 
     var validators = new collection.mutable.LinkedHashMap[String, Closure[Boolean]]
@@ -108,11 +119,10 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
     var inlineDataSource: Option[InlineDataSource] = None
 
     lazy val dsObj = {
-        dsClosure.map(closure => {
-            val dsBuilders = Delegate(closure).to(new DataSourceDeclaration(projectId, dataSourceFactories)).builders
-            val map = (for (builder <- dsBuilders) yield (builder.name, builder)).toMap
-            new DSObjectSupport(map)
-        })
+      val dsDecl = new DataSourceDeclaration(projectId, dataSourceFactories)
+      dsClosure.foreach(Delegate(_).to(dsDecl))
+      val map = (for (builder <- dsDecl.builders) yield (builder.name, builder)).toMap
+      Option(new DSObjectSupport(map))
     }
 
     def as(value : Class[_ <: AnyRef]) = {
@@ -136,12 +146,15 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
         this
     }
 
-    def optional(v: Any) = {
+    def optional() = {
       isOptional = true
-      defaultValue = v
       this
     }
 
+  def defaultValue(v: Any) = {
+     this.defaultVal = v
+    this
+  }
     def dependsOn(varName: String) = {
         if (useOneOf) {
             throw new IllegalArgumentException("dependsOn cannot be used with oneOf")
@@ -173,19 +186,19 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
     }
 
     def inlineDataSource(ds: InlineDataSource) {
-      val vars = ds.dependancyVars
+      val vars = ds.dependencyVars
       if (!vars.isEmpty) {
         this.dependsOn(vars.toArray)
       }
       this.inlineDataSource = Some(ds)
     }
 
-    def valuesList: Option[(Map[String, Any] => (Option[Any], Map[String,String]))] = {
+    def valuesList: VariableDetails.ValuesListType = {
         if (useOneOf) {
             import collection.JavaConversions._
             oneOf.setDelegate(dsObj)
 
-            val getValues = { _: Any => (Option(defaultValue), oneOf.call().toMap) }
+            val getValues = { _: Any => (Option(defaultVal), oneOf.call().toMap) }
 
             validator(new Closure[Boolean](this.oneOf) {
                 def doCall(args: Array[Any]): Boolean = {
@@ -200,18 +213,18 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
 
           validators.put("Invalid value", new Closure[Boolean](new Expando()) {
             def doCall(args: Array[Any]): Boolean = {
-              val deps = inlineDS.dependancyVars
+              val deps = inlineDS.dependencyVars
               inlineDS.config(deps.map { it => (it, this.getProperty(it)) }.toMap)
               inlineDS.hasValue( args(0) )
             }
           })
 
           val func = { params: Map[String, Any] =>
-            if (params.nonEmpty || inlineDS.dependancyVars.isEmpty) {
+            if (params.nonEmpty || inlineDS.dependencyVars.isEmpty) {
               inlineDS.config(parents.map(variable => (variable, params(variable))).toMap)
               (inlineDS.default, inlineDS.getData)
             } else {
-              (Option(defaultValue), Map[String, String]())
+              (Option(defaultVal), Map[String, String]())
             }
           }
 
@@ -219,7 +232,8 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
         } else {
            dataSourceRef.flatMap(ds => Option({params : Map[String, Any] => {
                val p = parents.toList.map(params.get(_)).flatten
-               dsObj.map(dso => {(dso.default(ds), dso.getData(ds, p))}).getOrElse(throw new IllegalStateException("No datasource configuration found, though variable %s tries to read from datasource".format(name)))
+               dsObj.map(dso => {(dso.default(ds), dso.getData(ds, p))})
+                 .getOrElse(throw new IllegalStateException("No datasource configuration found, though variable %s tries to read from datasource".format(name)))
            }}))
         }
     }
@@ -227,8 +241,8 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
     def newVariable = {
       val values = valuesList
       val default = () => {
-         if (defaultValue != null) {
-             Option(defaultValue)
+         if (defaultVal != null) {
+             Option(defaultVal)
          } else if (inlineDataSource.isDefined){
              val inlineDS = inlineDataSource.get
              inlineDS.default
@@ -239,21 +253,21 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
       new VariableDetails(name, clazz, description, validators.toSeq, isOptional, default, values, parents.toList, group)
     }
 
-    override def setProperty(property: String, arg: AnyRef) {
-       if (super.getMetaClass.hasProperty(this, property) != null) {
-           super.setProperty(property, arg)
-       } else {
-           props.put(property, arg)
-       }
+  override def setProperty(property: String, arg: AnyRef) {
+    if (super.getMetaClass.hasProperty(this, property) != null || Reserved.configRef == property) {
+      super.setProperty(property, arg)
+    } else {
+      props.put(property, arg)
     }
+  }
 
-    override def getProperty(property: String): AnyRef = {
-        if (super.getMetaClass.hasProperty(this, property) != null) {
-            super.getProperty(property)
-        } else {
-            props.get(property).getOrElse(throw new MissingPropertyException(property, this.getClass))
-       }
+  override def getProperty(property: String): AnyRef = {
+    if (super.getMetaClass.hasProperty(this, property) != null || Reserved.configRef == property) {
+      super.getProperty(property)
+    } else {
+      props.get(property).getOrElse(throw new MissingPropertyException(property, this.getClass))
     }
+  }
 }
 
 

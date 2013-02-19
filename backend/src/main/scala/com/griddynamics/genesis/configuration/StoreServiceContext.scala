@@ -31,26 +31,36 @@ import org.springframework.jdbc.datasource.{DataSourceUtils, DataSourceTransacti
 import org.squeryl.adapters.{PostgreSqlAdapter, MySQLAdapter, H2Adapter}
 import com.griddynamics.genesis.repository
 import com.griddynamics.genesis.service
+import repository.impl.RemoteAgentRepositoryImpl
 import repository.{GenesisVersionRepository, SchemaCreator}
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import com.griddynamics.genesis.adapters.MSSQLServerWithPagination
-import service.impl
+import service.{EnvironmentService, AgentsHealthService, impl}
 import service.impl._
 import org.springframework.beans.factory.InitializingBean
 import com.griddynamics.genesis.util.Logging
+import org.springframework.beans.factory.annotation.Autowired
+import java.sql.SQLException
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
+
+    @Autowired var healthService: AgentsHealthService = _
+
+    @Autowired var projectAuthority: service.ProjectAuthorityService = _
+
+  @Autowired var envAccessService: service.EnvironmentAccessService = _
 
     @Bean def storeService: service.StoreService = new impl.StoreService
 
     @Bean def projectRepository: repository.ProjectRepository = new repository.impl.ProjectRepository
 
-    @Bean def projectService: ProjectService = new ProjectServiceImpl(projectRepository, storeService)
+    @Bean def projectService: ProjectService = new ProjectServiceImpl(projectRepository, storeService, projectAuthority)
 
     @Bean def credentialsRepository: repository.CredentialsRepository = new repository.impl.CredentialsRepository
     @Bean def configurationRepository: repository.ConfigurationRepository = new repository.impl.ConfigurationRepositoryImpl
+    @Bean def environmentService: EnvironmentService = new EnvironmentServiceImpl(configurationRepository, envAccessService)
 
     @Bean def credentialsStoreService: service.CredentialsStoreService = new impl.CredentialsStoreService(credentialsRepository, projectRepository)
 
@@ -63,6 +73,9 @@ class JdbcStoreServiceContext extends StoreServiceContext {
     @Bean def databagRepository: repository.DatabagRepository = new repository.impl.DatabagRepository
 
     @Bean def databagService: service.DataBagService = new impl.DataBagServiceImpl(databagRepository)
+
+    @Bean def agentsRepository: repository.RemoteAgentRepository = new RemoteAgentRepositoryImpl
+    @Bean def agentsService: service.RemoteAgentsService = new RemoteAgentsServiceImpl(agentsRepository, healthService)
 }
 
 class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager,
@@ -115,34 +128,48 @@ object SquerylConfigurator {
 class SquerylTransactionManager(dataSource : DataSource,
                                 defaultIsolationLevel : Int,
                                 databaseAdapter : DatabaseAdapter,
-                                logSql: Boolean) extends DataSourceTransactionManager {
+                                logSql: Boolean) extends DataSourceTransactionManager with Logging {
     setDataSource(dataSource)
 
     override def afterPropertiesSet() {
-        super.afterPropertiesSet()
-        SessionFactory.externalTransactionManagementAdapter = Some(() => {
-            if(Session.hasCurrentSession) {
-                Session.currentSessionOption.get
-            }
-            else {
-                val connection = DataSourceUtils.getConnection(getDataSource)
-                connection.setTransactionIsolation(defaultIsolationLevel)
+      super.afterPropertiesSet()
+      val transactionManagementAdapter = Some(() => {
+        SquerylTransactionManager.currentSession.get orElse {
+          log.debug("Requesting a new session")
+          val connection = DataSourceUtils.getConnection(getDataSource)
+          connection.setTransactionIsolation(defaultIsolationLevel)
+          val session = new Session(connection, databaseAdapter, None) with Logging {
 
-                val session = new Session(connection, databaseAdapter, None) {
-                    override def cleanup = {
-                        super.cleanup
-                        unbindFromCurrentThread
-                    }
-                }
-                if (logSql) session.setLogger(msg => println(msg))
-                session.bindToCurrentThread
-                session
+            override def cleanup {
+              super.cleanup
+              unbindFromCurrentThread
+              SquerylTransactionManager.currentSession.remove()
+              //unfortunately without it connections are hanging
+              try {
+                this.connection.close()
+              } catch {
+                case e: SQLException => log.error("Error closing database connection", e)
+              }
             }
-        })
+
+          }
+          if (logSql) session.setLogger(msg => println(msg))
+          session.bindToCurrentThread
+          SquerylTransactionManager.currentSession.set(Some(session))
+          Some(session)
+        }
+      })
+      SessionFactory.externalTransactionManagementAdapter = transactionManagementAdapter
     }
 
     override def doCleanupAfterCompletion(transaction: AnyRef) {
         super.doCleanupAfterCompletion(transaction)
         Session.cleanupResources //clean up resources when done, following the doc
     }
+}
+
+object SquerylTransactionManager {
+  val currentSession: ThreadLocal[Option[Session]] = new ThreadLocal[Option[Session]]() {
+    override def initialValue() = None
+  }
 }

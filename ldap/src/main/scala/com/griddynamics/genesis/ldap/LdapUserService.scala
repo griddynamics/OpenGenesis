@@ -101,12 +101,12 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
   def findByUsername(username: String): Option[User] =
     find(config.stripDomain(username), includeCredentials = false)
 
-  def findByUsernames(userNames: Seq[String]): Seq[User] = {
+  def findByUsernames(userNames: Iterable[String]): Set[User] = {
     val filter = "(&(%s)(|%s))".format(
       config.usersServiceFilter,
       userNames.map { username => "(%s)".format(usernameFilter(config.stripDomain(username))) }.mkString
     )
-    search(filter, UserContextMapper(includeGroups = false, includeCredentials = false))
+    search(filter, UserContextMapper(includeGroups = false, includeCredentials = false)).toSet
   }
 
   def search(pattern: String): List[User] = {
@@ -127,7 +127,7 @@ class LdapUserServiceImpl(val config: LdapPluginConfig,
   def doesUserExist(userName: String): Boolean =
     findByUsername(config.stripDomain(userName)).isDefined
 
-  def doUsersExist(userNames: Seq[String]): Boolean =
+  def doUsersExist(userNames: Iterable[String]): Boolean =
     findByUsernames(userNames).map(_.username.toLowerCase).toSet == userNames.map(_.toLowerCase).toSet
 
   def list: List[User] =

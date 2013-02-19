@@ -29,7 +29,9 @@ import com.griddynamics.genesis.model.Authority
 import com.griddynamics.genesis.model.GenesisSchema.{userAuthorities, groupAuthorities}
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.users.GenesisRole._
+import com.griddynamics.genesis.annotation.RemoteGateway
 
+@RemoteGateway("Genesis database access: authority service")
 class DefaultAuthorityService(permissionService: PermissionService) extends AuthorityService {
 
   val listAuthorities = List(SystemAdmin.toString, ReadonlySystemAdmin.toString, GenesisUser.toString)
@@ -50,7 +52,6 @@ class DefaultAuthorityService(permissionService: PermissionService) extends Auth
 
     val grantedAuths = auths.map(new Authority(groupName, _))
     groupAuthorities.insert(grantedAuths)
-
     Success(groupName)
   }
 
@@ -83,7 +84,8 @@ class DefaultAuthorityService(permissionService: PermissionService) extends Auth
     where(item.principalName in (groups.map(_.name))).select(item.authority)
   ).distinct.toList
 
-  private def withValidRoles[A](auths: List[String])(block: => ExtendedResult[A]) = {
+
+  private  def withValidRoles[A](auths: List[String])(block: => ExtendedResult[A]) = {
     val unknownRoles: List[String] = auths.diff(listAuthorities)
     if(unknownRoles.isEmpty) {
       block

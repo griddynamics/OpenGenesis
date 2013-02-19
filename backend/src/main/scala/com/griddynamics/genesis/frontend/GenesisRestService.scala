@@ -25,19 +25,24 @@ package com.griddynamics.genesis.frontend
 import GenesisRestService._
 import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.bean.RequestBroker
-import com.griddynamics.genesis.{model, service}
 import com.griddynamics.genesis.model.{Workflow, EnvStatus}
 import com.griddynamics.genesis.repository.ConfigurationRepository
+import com.griddynamics.genesis.scheduler.DestructionService
 import com.griddynamics.genesis.service._
 import com.griddynamics.genesis.validation.Validation._
+import com.griddynamics.genesis.{model, service}
+import java.util.Date
+import com.griddynamics.genesis.util.Logging
+import com.griddynamics.genesis.template.dsl.groovy.Reserved
+import org.apache.commons.lang3.math.NumberUtils
 
 class GenesisRestService(storeService: StoreService,
                          templateService: TemplateService,
                          computeService: ComputeService,
                          broker: RequestBroker,
                          envAccessService: EnvironmentAccessService,
-                         configurationRepository: ConfigurationRepository) extends GenesisService {
-
+                         configurationRepository: ConfigurationRepository,
+                         destructionService: DestructionService) extends GenesisService with Logging {
 
     def listEnvs(projectId: Int, statusFilter: Option[Seq[String]] = None, ordering: Option[Ordering] = None) = {
       val filterOpt = statusFilter.map(_.map(EnvStatus.withName(_)))
@@ -50,10 +55,10 @@ class GenesisRestService(storeService: StoreService,
     def countEnvs(projectId: Int) : Int = storeService.countEnvs(projectId)
 
     def listTemplates(projectId: Int) =
-        for {(name, version) <- templateService.listTemplates(projectId)} yield Template(name, version, null, Seq())
+        for {t <- templateService.listTemplates(projectId)} yield TemplateExcerpt(t.name, t.version, t.createWorkflow, t.destroyWorkflow, t.workflows)
 
     def createEnv(projectId: Int, envName: String, creator: String, templateName: String,
-                  templateVersion: String, variables: Map[String, String], config: Configuration) = {
+                  templateVersion: String, variables: Map[String, String], config: Configuration, timeToLive: Option[Long]) = {
         val result = broker.createEnv(projectId, envName, creator, templateName, templateVersion, variables, config)
 
         result match {
@@ -62,6 +67,11 @@ class GenesisRestService(storeService: StoreService,
               val (users, groups) = envAccessService.getConfigAccessGrantees(cId)
               envAccessService.grantAccess(envId, users, groups)
             }
+            timeToLive.foreach { ttl =>
+              val destroyDate = new Date(System.currentTimeMillis() + ttl)
+              destructionService.scheduleDestruction(projectId, envId, destroyDate)
+            }
+
             Success(envId)
           }
           case other => other
@@ -69,11 +79,30 @@ class GenesisRestService(storeService: StoreService,
     }
 
     def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String], startedBy: String) = {
-        broker.destroyEnv(envId, projectId, variables, startedBy)
+      val result = broker.destroyEnv(envId, projectId, variables, startedBy)
+      if(result.isSuccess) {
+        destructionService.removeScheduledDestruction(projectId, envId)
+      }
+      result
     }
 
     def requestWorkflow(envId: Int, projectId: Int, workflowName: String, variables: Map[String, String], startedBy: String) = {
-        broker.requestWorkflow(envId, projectId, workflowName, variables, startedBy)
+        val result = broker.requestWorkflow(envId, projectId, workflowName, variables, startedBy)
+
+        if (result.isSuccess && isDestroyWorkflow(envId, projectId, workflowName)) {
+          destructionService.removeScheduledDestruction(projectId, envId)
+        }
+
+        result
+    }
+
+    private def isDestroyWorkflow(envId: Int, projectId: Int, workflowName: String): Boolean = {
+      val definition = for {
+        env <- storeService.findEnv(envId, projectId)
+        template <- templateService.findTemplate(env)}
+      yield template.destroyWorkflow
+
+      definition.map(_.name == workflowName).getOrElse(false)
     }
 
     def cancelWorkflow(envId: Int, projectId: Int) {
@@ -91,17 +120,18 @@ class GenesisRestService(storeService: StoreService,
     def describeEnv(envId: Int, projectId: Int) = {
         storeService.findEnvWithWorkflow(envId, projectId) match {
             case Some((env, flow)) =>
-                templateService.descTemplate(env.projectId, env.templateName, env.templateVersion).map {
+                templateService.descTemplate(env.projectId, env.templateName, env.templateVersion).map { template =>
                     envDesc(
                         env,
                         storeService.listVms(env),
                         storeService.listServers(env),
-                        _,
+                        template,
                         computeService,
                         storeService.countWorkflows(env),
                         storeService.countFinishedActionsForCurrentWorkflow(env),
                         stepsCompleted(flow),
-                        configurationRepository.get(projectId, env.configurationId)
+                        configurationRepository.get(projectId, env.configurationId),
+                        destructionService.destructionDate(env, template.destroyWorkflow)
                     )
                 }
             case None => None
@@ -123,29 +153,40 @@ class GenesisRestService(storeService: StoreService,
     def getLogs(envId: Int, actionUUID: String): Seq[StepLogEntry] =
       storeService.getLogs(actionUUID).map { entry => StepLogEntry(entry.timestamp, entry.message) }
 
-    def queryVariables(projectId: Int, templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]) = {
-        templateService.findTemplate(projectId, templateName, templateVersion).flatMap {t => {
-                t.getWorkflow(workflow).map(workflow => {
-                    workflow.partial(variables).map(varDesc(_))
-                })
-            }
-        }
+    def queryVariables(projectId: Int, envConfigId: Int, templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]): ExtendedResult[Seq[Variable]] = {
+        val tmpl = templateService.findTemplate(projectId, templateName, templateVersion, envConfigId).getOrElse(
+          return Failure(isNotFound = true, compoundServiceErrors = Seq("Template wasn't found"))
+        )
+        tmpl.getValidWorkflow(workflow).map(workflow => workflow.partial(variables).map(varDesc(_)))
     }
 
-    def getTemplate(projectId: Int, templateName: String, templateVersion: String) =
-    templateService.findTemplate(projectId, templateName, templateVersion).map(templateDesc(templateName, templateVersion, _))
+    def getTemplate(projectId: Int, templateName: String, templateVersion: String) = templateService.
+        descTemplate(projectId, templateName, templateVersion).
+        map (
+          t => new TemplateExcerpt(t.name, t.version, t.createWorkflow, t.destroyWorkflow, t.workflows)
+        )
 
     def getStepLog(stepId: Int) = storeService.getActionLog(stepId).map { action =>
       new ActionTracking(action.actionUUID, action.actionName, action.description, action.started.getTime, action.finished.map(_.getTime), action.status.toString)
     }
 
-    def getWorkflow (projectId: Int, templateName: String, templateVersion: String, workflowName: String) : ExtendedResult[com.griddynamics.genesis.api.Workflow] =  {
-        templateService.findTemplate(projectId, templateName, templateVersion).map(_.getValidWorkflow(workflowName)) match {
+    def getWorkflow(projectId: Int, envConfigId: Int, templateName: String, templateVersion: String, workflowName: String) : ExtendedResult[com.griddynamics.genesis.api.Workflow] =  {
+        templateService.findTemplate(projectId, templateName, templateVersion, envConfigId).map(_.getValidWorkflow(workflowName)) match {
             case Some(x) => x.map(workflowDesc(_))
             case _ => Failure(isNotFound = true)
         }
     }
 
+  def getWorkflow(projectId: Int, envId: Int, workflowName: String) : ExtendedResult[com.griddynamics.genesis.api.Workflow] = {
+    val env = storeService.findEnv(envId, projectId).getOrElse {
+      return Failure(isNotFound = true, compoundServiceErrors = Seq(s"Couldn't find instance $envId in project $projectId"))
+    }
+    templateService.findTemplate(env).map(_.getValidWorkflow(workflowName)) match {
+      case Some(x) => x.map(workflowDesc(_))
+      case _ => Failure(isNotFound = true)
+    }
+
+  }
     def updateEnvironmentName(envId: Int, projectId: Int, newName: String) = {
        validateNewName(envId, projectId, newName).map(name => storeService.updateEnvName(envId, name))
     }
@@ -161,6 +202,36 @@ class GenesisRestService(storeService: StoreService,
     }
 
   def stepExists(stepId: Int, envId: Int) = storeService.stepExists(stepId, envId)
+
+  def updateTimeToLive(projectId: Int, envId: Int, timeToLiveMillis: Long): ExtendedResult[Date] = {
+    val env = storeService.findEnv(envId, projectId).getOrElse {
+      return Failure(isNotFound = true, compoundServiceErrors = Seq(s"Couldn't find instance $envId in project $projectId"))
+    }
+
+    try {
+      val destructionDate = new Date(System.currentTimeMillis() + timeToLiveMillis)
+      destructionService.scheduleDestruction(env.projectId, env.id, destructionDate)
+      Success(destructionDate)
+    } catch {
+      case e: Exception =>
+        log.error(e, s"Failed to update time to live for environment $envId")
+        Failure(compoundServiceErrors = Seq(s"Failed to update time to live. Cause: ${e.getMessage}"))
+    }
+  }
+
+  def removeTimeToLive(projectId: Int, envId: Int): ExtendedResult[Boolean] = {
+    val env = storeService.findEnv(envId, projectId).getOrElse {
+      return Failure(isNotFound = true, compoundServiceErrors = Seq(s"Couldn't find environment $envId in project $projectId"))
+    }
+    try {
+      destructionService.removeScheduledDestruction(env.projectId, env.id)
+      Success(true)
+    } catch {
+      case e: Exception =>
+        log.error(e, s"Failed to remove time to live from environment $envId")
+        Failure(compoundServiceErrors = Seq(s"Failed to remove time to live. Cause: ${e.getMessage}"))
+    }
+  }
 
 }
 
@@ -184,9 +255,13 @@ object GenesisRestService {
         Template(name, version, createWorkflow, workflows)
     }
 
-    def workflowDesc(workflow: service.WorkflowDefinition) = {
-        val vars = for (variable <- workflow.variableDescriptions) yield varDesc(variable)
-        Workflow(workflow.name, vars)
+    private def workflowDesc(workflow: service.WorkflowDefinition) = {
+      val allVars = workflow.variableDescriptions
+      val appliedVars = workflow.partial(allVars.collect{
+        case v if v.defaultValue != null => v.name -> v.defaultValue
+      }.toMap).map(v => v.name -> v).toMap
+      val vars = for (variable <- allVars) yield varDesc(appliedVars.getOrElse(variable.name, variable))
+      Workflow(workflow.name, vars)
     }
 
     def envDesc(env: model.Environment,
@@ -197,7 +272,8 @@ object GenesisRestService {
                 historyCount: Int,
                 currentWorkflowFinishedActionsCount: Int,
                 workflowCompleted: Option[Double],
-                config: Option[Configuration]) = {
+                config: Option[Configuration],
+                destructionTime: Option[Date]) = {
 
         val workflows = template.workflows.map (Workflow(_, Seq()))
 
@@ -225,7 +301,9 @@ object GenesisRestService {
             currentWorkflowFinishedActionsCount,
             workflowCompleted,
             attrDesc(env.deploymentAttrs),
-            config.map(_.name).getOrElse("*deleted*")
+            config.map(_.name).getOrElse("*deleted*"),
+            config.flatMap(_.id),
+            timeToLive = destructionTime.map( _.getTime - System.currentTimeMillis() ).map(t => if (t < 0) 0 else t)
         )
     }
 
@@ -292,5 +370,5 @@ object GenesisRestService {
       attrDesc(env.deploymentAttrs), configNames.getOrElse(env.configurationId, "*deleted*"))
 
   private def varDesc(v : VariableDescription) = Variable(v.name, v.clazz.getSimpleName, v.description, v.isOptional,
-    v.defaultValue, v.values.toMap, v.dependsOn, v.group)
+    v.defaultValue, v.values, v.dependsOn, v.group)
 }

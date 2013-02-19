@@ -22,12 +22,12 @@
           <option value="<%= group %>" class="selected"><%- group %></option>
         <% } %>
       </select>
+      <% if (showButtons) { %>
+        <div class="stepbutton">
+            <a href="javascript:void(0)" class="save button executable"> <span> Save </span> </a>
+            <a href="javascript:void(0)" class="button back" id="ready"> <span> Cancel </span> </a>
+        </div>
+      <% } %>
     </form>
-    <% if (showButtons) { %>
-      <div class="stepbutton">
-        <a href="javascript:void(0)" class="save button executable"> <span> Save </span> </a>
-        <a href="javascript:void(0)" class="button back" id="ready"> <span> Cancel </span> </a>
-      </div>
-   <% } %>
   </div>
 </div>

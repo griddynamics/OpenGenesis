@@ -34,7 +34,9 @@ function (genesis, backend, poller, status, EnvStatus, Backbone, $) {
       $.jStorage.set(genesis.app.currentUser.user + "_envFilter", FILTER_DEFAULTS);
   };
 
-  Environments.Collection = Backbone.Collection.extend({
+  Environments.Collection = genesis.Backbone.Collection.extend({
+    linkType: backend.LinkTypes.Environment,
+
     initialize: function (model, options) {
       if(!options.project) {
         throw new Error("Project parameter must be provided");
@@ -90,29 +92,29 @@ function (genesis, backend, poller, status, EnvStatus, Backbone, $) {
       }
       return _(filtered).invoke("toJSON");
     }
-
   });
 
   Environments.Views.List = Backbone.View.extend({
 
     template: "app/templates/environments_overview.html",
-    subviews: [],
-
-    initialize: function () {
-      this.project = this.collection.project;
-    },
-
-    onClose: function () {
-      _(this.subviews).each(function (view) {
-        view.close()
-      });
-    },
 
     events: {
       "keyup #filter-name": "nameFilterChanged",
       "multiselectclick #filter-statuses": "statusFilterChanged",
       "multiselectcheckall #filter-statuses": "statusFilterChanged",
       "multiselectuncheckall #filter-statuses": "statusFilterChanged"
+    },
+
+    initialize: function () {
+      this.project = this.collection.project;
+      this.subviews = []
+
+    },
+
+    onClose: function () {
+      _(this.subviews).each(function (view) {
+        view.close()
+      });
     },
 
     nameFilterChanged: function() {
@@ -153,13 +155,14 @@ function (genesis, backend, poller, status, EnvStatus, Backbone, $) {
       var view = this;
       $.when(
         genesis.fetchTemplate(this.template),
-        backend.AuthorityManager.haveAdministratorRights(this.project.id),
         this.collection.fetch()
-      ).done(function (tmpl, isAdmin) {
-        view.$el.html(tmpl({ "project": view.project.toJSON(), "filter": view.collection.getFilter() }));
-        if(isAdmin) {
-          view.$("#project-settings").show();
-        }
+      ).done(function (tmpl) {
+        view.$el.html(tmpl({
+          "project": view.project.toJSON(),
+          "filter": view.collection.getFilter(),
+          "canAccessProperties": view.project.canAccessProperties(),
+          "canCreateEnvs": view.collection.canCreate()
+        }));
 
         view.$("#filter-statuses").multiselect({
           noneSelectedText: "no statuses selected",
@@ -191,7 +194,7 @@ function (genesis, backend, poller, status, EnvStatus, Backbone, $) {
       this.poll = new Environments.Collection({}, {project: this.project});
       this.poll.bind('reset', this.checkForUpdates, this);
 
-      poller.PollingManager.start(this.poll);
+      poller.PollingManager.start(this.poll, {noninterruptible: true});
       this.expanded = [];
     },
 
@@ -204,7 +207,6 @@ function (genesis, backend, poller, status, EnvStatus, Backbone, $) {
     },
 
     toggle: function(event) {
-      var view = this;
       var $element = $(event.currentTarget).parent();
       $(event.currentTarget).toggleClass('expanded');
       var config = $element.attr('data-config');

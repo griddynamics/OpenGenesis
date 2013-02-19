@@ -18,7 +18,7 @@ end
 
 Then /^I should get a list of settings, including '(.+)'$/ do |prop_name|
   @last_response.code.should eq(200)
-  prop = @last_response.find {|c| c["name"] == prop_name}
+  prop = @last_response["items"].find {|c| c["name"] == prop_name}
   prop.should_not be_nil, "Expected to get property with name #{prop_name} but got none"
 end
 

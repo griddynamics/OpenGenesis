@@ -134,7 +134,7 @@ object ScalaReflectionUtils {
         val value: Option[Any] = try {
           Option(companionClass.getMethod("apply$default$%d".format(index + 1)).invoke(companionObject)) //this looks really fragile
         } catch {
-          case _ => None
+          case _: Throwable => None
         }
         value.map((name, _))
     }.flatten

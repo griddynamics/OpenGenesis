@@ -43,6 +43,10 @@
     <aop:aspectj-autoproxy proxy-target-class="true"/>
      <!--Aspects-->
     <bean class="com.griddynamics.genesis.spring.aop.ProjectBoundaryCheckingAspect"   />
+    <bean class="com.griddynamics.genesis.spring.aop.LinksToAspect"   />
+
+    <!-- MVC local beans -->
+    <bean class="com.griddynamics.genesis.spring.security.LinkSecurityBean"/>
 
     <!-- Controllers -->
     <bean class="com.griddynamics.genesis.rest.ProjectsController"/>
@@ -69,9 +73,14 @@
 
     <bean class="com.griddynamics.genesis.rest.DatabagController"/>
 
-    <bean class="com.griddynamics.genesis.rest.WhoamiController"/>
-
     <bean class="com.griddynamics.genesis.rest.TemplateRepoController"/>
 
     <bean class="com.griddynamics.genesis.rest.ConfigurationController"/>
+
+    <bean class="com.griddynamics.genesis.rest.RemoteAgentController"/>
+
+    <bean class="com.griddynamics.genesis.rest.RootController"/>
+
+    <bean class="com.griddynamics.genesis.rest.MetricsController"/>
+
 </beans>

@@ -25,15 +25,18 @@ package com.griddynamics.genesis.service.impl
 import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import org.junit.Test
-import org.mockito.Mockito
+import org.mockito.{Matchers, Mockito}
 import org.springframework.core.convert.support.DefaultConversionService
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.template.dsl.groovy.WorkflowDeclaration
 import scala.Array
-import com.griddynamics.genesis.service.TemplateRepoService
-import com.griddynamics.genesis.template.{VersionedTemplate, TemplateRepository}
+import com.griddynamics.genesis.service.{EnvironmentService, TemplateRepoService}
+import com.griddynamics.genesis.template.TemplateRepository
 import com.griddynamics.genesis.repository.DatabagRepository
 import com.griddynamics.genesis.cache.NullCacheManager
+import org.mockito.Mockito._
+import com.griddynamics.genesis.template.VersionedTemplate
+import com.griddynamics.genesis.api
 
 class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with MockitoSugar {
 
@@ -130,44 +133,48 @@ class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with Mock
 
     }
 
-    @Test def testEvaluationOneVariable() {
-        val script = "template {\n" +
-            "    name(\"erlang\")\n" +
-            "    version(\"0.1\")\n" +
-            "    createWorkflow(\"create\")\n" +
-            "    destroyWorkflow(\"destroy\")\n" +
-            "\n" +
-            "    workflow(\"create\") {\n" +
-            "        variables {\n" +
-            "            variable(\"nodesCount\").as(Integer)\n" +
-            "                .description(\"Erlang worker nodes count\")\n" +
-            "                .validator { it > 0 }\n" +
-            "\n" +
-            "            variable(\"test\").description(\"test\")\n" +
-            "        }\n" +
-            "        steps {\n" +
-            "            teststep {\n" +
-            "                phase = \"provision\"\n" +
-            "                text = nodesCount\n" +
-            "            }\n" +
-            "            teststep {\n" +
-            "                phase = \"install\"\n" +
-            "                precedingPhases = [\"provision\"]\n" +
-            "                text = \"erlang2\"\n" +
-            "            }\n" +
-            "        }\n" +
-            "    }\n" +
-            "\n    workflow(\"destroy\") {\n" +
-            "        steps {\n" +
-            "            teststep {\n" +
-            "                phase = \"undeploy\"\n" +
-            "                text = \"destroy\"\n" +
-            "            }\n" +
-            "        }\n" +
-            "    }\n" +
-            "}"
-        getTemplateDefinition(script).get
-    }
+  @Test def testEvaluationOneVariable() {
+    val script = """template {
+          name("erlang")
+          version("0.1")
+          createWorkflow("create")
+          destroyWorkflow("destroy")
+
+          workflow("create") {
+              variables {
+                  variable("nodesCount").as(Integer)
+                      .description("Erlang worker nodes count")
+                      .validator { it > 0 }
+
+                  variable("test").description("test")
+              }
+              steps {
+                  teststep {
+                      phase = "provision"
+                      text = nodesCount
+                  }
+                  teststep {
+                      phase = "install"
+                      precedingPhases = ["provision"]
+                      text = "erlang2"
+                  }
+              }
+          }
+          workflow("destroy") {
+              steps {
+                  teststep {
+                      phase = "undeploy"
+                      text = "destroy"
+                  }
+              }
+          }
+      }"""
+    val template = getTemplateDefinition(script)
+    assert(template.isDefined)
+    val nodesCountVar = template.get.createWorkflow.variableDescriptions.find(_.name == "nodesCount")
+    assert(nodesCountVar.isDefined)
+    expectResult(None)(nodesCountVar.get.values)
+  }
 
 
     def getTemplateDefinition(script: String) = {
@@ -178,14 +185,17 @@ class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with Mock
         Mockito.when(templateRepository.getContent(VersionedTemplate("1") )).thenReturn(Some(script))
         Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
 
+        val configService  = mock[EnvironmentService]
+        when(configService.get(Matchers.any(), Matchers.any())).thenReturn(Some(new api.Configuration(Some(0), "", 0, None, Map())))
+
         val templateService = new GroovyTemplateService(templateRepoService,
             List(
               new DoNothingStepBuilderFactory
             ),
-           new DefaultConversionService, Seq(), bagRepository, NullCacheManager)
+           new DefaultConversionService, Seq(), bagRepository, configService, NullCacheManager)
 
         templateService.listTemplates(0).headOption match {
-            case Some((name, version)) => templateService.findTemplate(0, name, version)
+            case Some(t) => templateService.findTemplate(0, t.name, t.version, 0)
             case None => None
         }
     }

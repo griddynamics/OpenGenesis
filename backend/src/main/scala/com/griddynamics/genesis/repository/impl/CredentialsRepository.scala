@@ -31,7 +31,9 @@ import model.GenesisSchema
 import org.springframework.transaction.annotation.Transactional
 import scala.Option
 import org.squeryl.PrimitiveTypeMode._
+import com.griddynamics.genesis.annotation.RemoteGateway
 
+@RemoteGateway("Genesis database access: CredentialsRepository")
 class CredentialsRepository extends AbstractGenericRepository[model.Credentials, api.Credentials](GenesisSchema.credentials)
   with repository.CredentialsRepository {
 

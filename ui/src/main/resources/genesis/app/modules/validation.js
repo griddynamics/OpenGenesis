@@ -15,14 +15,18 @@ function(genesis, Backbone, status) {
       serviceErrors: []
     };
 
-    if (jqXHR.status == 400) {
-      var parsedMsg = JSON.parse(jqXHR.responseText);
+    if (jqXHR.status < 500) {
+      try {
+        var parsedMsg = JSON.parse(jqXHR.responseText);
 
-      errorMsg.varErrors = _.extend(parsedMsg.variablesErrors || {}, parsedMsg.serviceErrors || {});
-      errorMsg.serviceErrors = _.union(parsedMsg.compoundServiceErrors || [], parsedMsg.compoundVariablesErrors || []);
+        errorMsg.varErrors = _.extend(parsedMsg.variablesErrors || {}, parsedMsg.serviceErrors || {});
+        errorMsg.serviceErrors = _.union(parsedMsg.compoundServiceErrors || [], parsedMsg.compoundVariablesErrors || []);
 
-      if(_.isEmpty(errorMsg.serviceErrors) && !_.isEmpty(errorMsg.varErrors)) {
-        errorMsg.serviceErrors.push("Validation failure")
+        if(_.isEmpty(errorMsg.serviceErrors) && !_.isEmpty(errorMsg.varErrors)) {
+          errorMsg.serviceErrors.push("Validation failure")
+        }
+      } catch(e) {
+        // do nothing
       }
     } else if (jqXHR.status == 500) {
       errorMsg.serviceErrors.push("Internal server error. Please contact administrator.");

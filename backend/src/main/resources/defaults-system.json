@@ -11,6 +11,8 @@
   },
   "genesis.system.default.vm.identity" : {"default": "not-set", "description": "Default login to virtual machines provisioned by Genesis", "restartRequired": true},
   "genesis.system.default.vm.credential" : {"default": "not-set", "description": "Path to default credential file (PEM RSA private key file for ssh) to login to virtual machines provisioned by Genesis", "restartRequired": true},
+  "genesis.system.agent.poll.period": {"default":30,"description":"Agents health check period in secs", "restartRequired": true},
+  "genesis.system.remote.executor.wait.timeout": {"default": 10,"description":"Timeout (in seconds) to wait for remote actor returned by agent", "restartRequired": true},
   "genesis.system.beat.period.ms": {"default":1000,"description":"Workflow execution actors heartbeats period in milliseconds", "restartRequired": true,
     "validation": {"Must be integer value >= 0": "int_nonnegative"}
   },
@@ -20,5 +22,9 @@
   "genesis.system.flow.executor.sync.threads.max": {"default": 5,"description":"Maximum number of simultaneously executing synchronous actions",
    "restartRequired": true,
     "validation": {"Must be positive integer value": "int_positive"}
+   },
+  "genesis.system.metrics": {"default": "true","description": "Gathering of system metrics: on if true, off otherwise",
+   "restartRequired": true,
+    "validation": {"Must be true or false": "true|false"}
    }
 }

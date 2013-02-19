@@ -15,7 +15,7 @@
     var splitDetails = function(item) {
       var detailsRegExp = /([^\{]*)(.*)/g;
 
-      var details = detailsRegExp.exec(item.replace("\n", " "));
+      var details = detailsRegExp.exec(item.replace("\\n", " "));
       if(details == null && $.browser.mozilla) {
         details = detailsRegExp.exec(item);
       }

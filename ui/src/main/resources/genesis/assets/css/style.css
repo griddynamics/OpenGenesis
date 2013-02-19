@@ -476,6 +476,16 @@ div.system-settings {
     background-color: rgb(242,242,242);
 }
 
+#overlay {
+    position: fixed;
+    top: 42px;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    z-index: 1003;
+    background-color: rgba(33, 33,33,0.5);
+}
+
 #breadcrumbs a {
     font-size: 14px;
 }
@@ -1233,6 +1243,12 @@ table.main-table tr:hover, table.intab tr:hover{
 	line-height:22px;
 }
 
+#panel table.main-table span.agent-stats{
+    font-weight:normal;
+    color: #848484;
+    padding-left: 1em;
+}
+
 table .pre {
     white-space: pre;
     font-weight: normal;
@@ -1343,10 +1359,10 @@ table .pre {
     background-color: #fff;
 }
 
-.show-sources:hover .ui-icon {
+.show-sources:hover .ui-icon, .postpone-destruction:hover .ui-icon {
     background-image: url(jqueryui/images/ui-icons_222222_256x240.png);
 }
-.show-sources.ui-state-default {
+.show-sources.ui-state-default, .postpone-destruction.ui-state-default {
     border:none;
     cursor: pointer;
 }

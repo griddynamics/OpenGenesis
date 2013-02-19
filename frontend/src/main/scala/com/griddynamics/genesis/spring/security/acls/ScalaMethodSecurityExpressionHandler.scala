@@ -26,6 +26,7 @@ import org.springframework.security.access.expression.method.DefaultMethodSecuri
 import org.springframework.expression.{EvaluationContext, Expression}
 import org.springframework.security.access.expression.{SecurityExpressionRoot, ExpressionUtils}
 import org.springframework.security.access.PermissionCacheOptimizer
+import com.griddynamics.genesis.rest.links.{ItemWrapper, CollectionWrapper}
 
 class ScalaMethodSecurityExpressionHandler extends DefaultMethodSecurityExpressionHandler {
 
@@ -33,20 +34,24 @@ class ScalaMethodSecurityExpressionHandler extends DefaultMethodSecurityExpressi
 
   override def filter(filterTarget: Any, filterExpression: Expression, ctx: EvaluationContext) = {
     filterTarget match {
-      case seq: Iterable[_] => filterScalaCollection(seq, filterExpression, ctx)
+      case seq: Iterable[AnyRef] => filterScalaCollection(seq, filterExpression, ctx)
+      case wrapper: CollectionWrapper[AnyRef] => wrapper.withItems(filterScalaCollection(wrapper.items, filterExpression, ctx))
       case _ => super.filter(filterTarget, filterExpression, ctx)
     }
   }
 
-  def filterScalaCollection(filterTarget: Iterable[_], filterExpression: Expression, ctx: EvaluationContext) = {
+  def filterScalaCollection(filterTarget: Iterable[AnyRef], filterExpression: Expression, ctx: EvaluationContext) = {
     import scala.collection.JavaConversions._
 
     val rootObject = ctx.getRootObject.getValue.asInstanceOf[SecurityExpressionRoot]
     permissionCacheOptimizer.foreach { _.cachePermissionsFor(rootObject.getAuthentication, filterTarget) }
 
     val accessor = rootObject.asInstanceOf[{ def setFilterObject(o: AnyRef) }]
-    filterTarget.filter { filterObject =>
-      accessor.setFilterObject(filterObject.asInstanceOf[AnyRef])
+    filterTarget filter { filterObject =>
+      filterObject match {
+        case wrapper: ItemWrapper[AnyRef] => accessor.setFilterObject(wrapper.item)
+        case item => accessor.setFilterObject(item)
+      }
       ExpressionUtils.evaluateAsBoolean(filterExpression, ctx)
     }
   }

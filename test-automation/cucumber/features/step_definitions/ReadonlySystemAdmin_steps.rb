@@ -6,8 +6,9 @@ end
 
 Then /^Role "(.+)" must be in response$/ do  |role|
   parsed = JSON.parse(@last_response.body)
-  parsed.class.should eq(Array)
-  parsed.should include(role)
+  parsed.class.should eq(Hash)
+  found = parsed['items'].find{|x| x["name"] == role}
+  found.should_not be_nil, "Role #{role} must be present"
 end
 
 When /^User "([^"]*)" should have role "([^"]*)"$/ do |user, role|

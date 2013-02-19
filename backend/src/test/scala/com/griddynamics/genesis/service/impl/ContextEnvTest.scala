@@ -26,8 +26,8 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.util.IoUtil
 import org.springframework.core.convert.support.DefaultConversionService
-import com.griddynamics.genesis.service.{Builders, TemplateRepoService}
-import com.griddynamics.genesis.template.{ListVarDSFactory, TemplateRepository}
+import com.griddynamics.genesis.service.Builders
+import com.griddynamics.genesis.template.ListVarDSFactory
 import org.junit.Test
 import com.griddynamics.genesis.core.{RegularWorkflow, GenesisFlowCoordinator}
 import org.mockito.Mockito._
@@ -36,17 +36,16 @@ import com.griddynamics.genesis.api
 import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.model.WorkflowStepStatus._
 import com.griddynamics.genesis.plugin.StepCoordinatorFactory
-import com.griddynamics.genesis.repository.{ConfigurationRepository, DatabagRepository}
 import java.sql.Timestamp
 import java.util.Date
 import com.griddynamics.genesis.template.VersionedTemplate
 import com.griddynamics.genesis.plugin.GenesisStep
 import com.griddynamics.genesis.cache.NullCacheManager
 
-class ContextEnvTest extends AssertionsForJUnit with MockitoSugar {
-  val templateRepository = mock[TemplateRepository]
-  val templateRepoService = mock[TemplateRepoService]
+class ContextEnvTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniverse {
+
   val env = new Environment("test_env", EnvStatus.Ready, "creator", new Timestamp(new Date().getTime), None, None, "", "", 0, 0)
+
   val storeService = {
     val storeService = mock[StoreService]
     when(storeService.startWorkflow(Matchers.any(), Matchers.any())).thenReturn((env, mock[Workflow], List()))
@@ -57,63 +56,50 @@ class ContextEnvTest extends AssertionsForJUnit with MockitoSugar {
     storeService
   }
 
-  val configRepo = {
-    val repo = mock [ConfigurationRepository]
-    when(repo.get(Matchers.any(), Matchers.any())).thenReturn(Some(new api.Configuration(Some(0), "", 0, None, Map())))
-    repo
-  }
+  when(configService.getDefault(Matchers.any())).thenReturn(Some(new api.Configuration(Some(0), "", 0, None, Map())))
+  when(configService.get(Matchers.any(), Matchers.any())).thenReturn(Some(new api.Configuration(Some(0), "", 0, None, Map())))
 
   val stepCoordinatorFactory = mock[StepCoordinatorFactory]
-  val databagRepository = mock[DatabagRepository]
   val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/ContextEnv.genesis"))
   Mockito.when(templateRepository.listSources).thenReturn(Map(VersionedTemplate("1") -> body))
-  Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
+
   val templateService = new GroovyTemplateService(templateRepoService,
     List(new DoNothingStepBuilderFactory), new DefaultConversionService,
-    Seq(new ListVarDSFactory, new DependentListVarDSFactory), databagRepository, NullCacheManager)
+    Seq(new ListVarDSFactory, new DependentListVarDSFactory), databagRepository, configService, NullCacheManager)
 
   val TEST_ENV_ATTR = EntityAttr[String]("test_attr")
   val TEST_ENV_VAL = "test_attr_value"
 
-  private lazy val template = templateService.findTemplate(0, "ContextWithEnv", "0.1").get
+  private lazy val template = templateService.findTemplate(0, "ContextWithEnv", "0.1", 1).get
 
   private def flowCoordinator(stepBuilders: Builders) = new GenesisFlowCoordinator(0, 0, stepBuilders.regular,
-    storeService, configRepo, stepCoordinatorFactory, stepBuilders.onError) with RegularWorkflow
+    storeService, stepCoordinatorFactory, stepBuilders.onError) with RegularWorkflow
 
   @Test def contextEnvAccess() {
-
-    flowCoordinator(template.createWorkflow.embody(Map())).onFlowStart match {
+    flowCoordinator(template.createWorkflow.embody(Map())).onFlowStart() match {
       case Right(head :: _) => {
         assert (head.step.asInstanceOf[GenesisStep].actualStep.asInstanceOf[DoNothingStep].name === env.name)
       }
       case _ => fail ("create flow coordinator expected to return first step execution coordinator")
-
     }
    }
 
   @Test def contextEnvAttrAccess() {
     env(TEST_ENV_ATTR) = TEST_ENV_VAL
-
-    flowCoordinator(template.destroyWorkflow.embody(Map())).onFlowStart match {
+    flowCoordinator(template.destroyWorkflow.embody(Map())).onFlowStart() match {
       case Right(head :: _) => {
         assert (head.step.asInstanceOf[GenesisStep].actualStep.asInstanceOf[DoNothingStep].name === env(TEST_ENV_ATTR))
       }
       case _ => fail ("destroy flow coordinator expected to return first step execution coordinator")
-
     }
-
    }
 
   @Test def contextEnvPropMissing() {
-
     flowCoordinator(template.getValidWorkflow("test").get.embody(Map())).onFlowStart match {
       case Right(head :: _) => {
         assert (head.step.asInstanceOf[GenesisStep].actualStep.asInstanceOf[DoNothingStep].name === null)
       }
       case _ => fail ("test flow coordinator expected to return first step execution coordinator")
-
     }
-
    }
-
 }

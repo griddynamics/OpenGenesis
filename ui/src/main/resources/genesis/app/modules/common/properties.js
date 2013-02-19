@@ -40,7 +40,7 @@ function(genesis, Backbone) {
 
     onChange: function(event) {
       var cid = event.currentTarget.getAttribute("data-cid");
-      this.collection.getByCid(cid).set("dirty", true);
+      this.collection.get(cid).set("dirty", true);
       this.$("tr[data-cid='" + cid + "']").addClass('changed');
     },
 
@@ -52,7 +52,7 @@ function(genesis, Backbone) {
     onDeletePair: function(event) {
       this.pullCollection();
       var cid = event.currentTarget.getAttribute("data-cid");
-      var element = this.collection.getByCid(cid);
+      var element = this.collection.get(cid);
       if (element.get("isNew")) {
         this.collection.remove([element]);
       } else {

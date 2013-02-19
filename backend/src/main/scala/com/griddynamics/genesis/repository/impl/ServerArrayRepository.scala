@@ -29,7 +29,9 @@ import repository.AbstractGenericRepository
 
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
+import com.griddynamics.genesis.annotation.RemoteGateway
 
+@RemoteGateway("Genesis database access: ServerArrayRepository")
 class ServerArrayRepository extends AbstractGenericRepository[model.ServerArray, api.ServerArray](GS.serverArrays) with repository.ServerArrayRepository {
 
   val availableServerArrays = from(table, GS.projects) { (array, project) =>

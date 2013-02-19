@@ -23,12 +23,12 @@
 package com.griddynamics.genesis.workflow.actor
 
 import com.griddynamics.genesis.workflow.message._
-import akka.actor.{Actor, Scheduler, TypedActor, ActorRef}
+import akka.actor.{TypedActor, ActorRef}
 import java.util.concurrent.TimeUnit
 import collection.mutable
-import actors.Scheduler
-import akka.util.{FiniteDuration, Duration}
 import com.griddynamics.genesis.util.Logging
+import scala.concurrent.duration._
+import concurrent.ExecutionContext
 
 trait BeatSource {
   def start()
@@ -51,11 +51,11 @@ trait BeatSource {
 class BeatSourceImpl(beatPeriodMs: Long) extends BeatSource with Logging {
   val subscribeMap: mutable.Map[ActorRef, Beat] = mutable.WeakHashMap()
   var subscribeOnceMap: mutable.Map[ActorRef, (Beat, Long)] = mutable.WeakHashMap()
-
   def start() {
     val duration: FiniteDuration = Duration(beatPeriodMs, TimeUnit.MILLISECONDS)
-    val receiver = this
     val scheduler = TypedActor.context.system.scheduler
+    val receiver = TypedActor.self[BeatSource]
+    implicit val ec: ExecutionContext = TypedActor.context.dispatcher
     scheduler.schedule(duration, duration, new Runnable {
       def run() {
          receiver.beat()

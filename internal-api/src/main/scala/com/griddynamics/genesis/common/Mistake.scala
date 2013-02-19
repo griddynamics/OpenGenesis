@@ -45,7 +45,7 @@ object Mistake {
         try {
             Right(block)
         } catch {
-            case t => Left(Mistake(t))
+            case t: Throwable => Left(Mistake(t))
         }
     }
 }

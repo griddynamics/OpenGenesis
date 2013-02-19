@@ -26,10 +26,10 @@ template {
 
     workflow("create") {
         variables {
-            variable("projectKey").optional(defaultValue = $project.databag["foo"].key2)
+            variable("projectKey").optional().defaultValue($project.databag["foo"].key2)
             variable("projectList").dataSource("ds2").optional()
-            variable("projectdb").oneOf({projectDatabags}).optional(defaultValue = "foo")
-            variable("sysdb").oneOf({systemDatabags}).optional(defautValue = "bar")
+            variable("projectdb").oneOf({projectDatabags}).optional().defaultValue("foo")
+            variable("sysdb").oneOf({systemDatabags}).optional().defaultValue("bar")
         }
 
         steps {
