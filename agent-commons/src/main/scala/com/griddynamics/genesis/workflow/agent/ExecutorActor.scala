@@ -77,6 +77,9 @@ class ExecutorActor(unsafeExecutor: AsyncActionExecutor,
         log.debug("Signal %s cannot be processed with executor %s right now", signal, safeExecutor)
       }
     }
+
+    case Ping => sender ! Pong
+
   }
 
   def finish() {

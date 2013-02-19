@@ -36,7 +36,7 @@ import com.griddynamics.genesis.api._
 import org.springframework.security.access.prepost.PostFilter
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.validation.Validation
-import com.griddynamics.genesis.service.{StoreService, EnvironmentAccessService}
+import com.griddynamics.genesis.service.{EnvironmentService, StoreService, EnvironmentAccessService}
 import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.api.Failure
 import scala.Some
@@ -54,6 +54,7 @@ class ConfigurationController extends RestApiExceptionsHandler{
   @Autowired var storeService: StoreService = _
   @Autowired var userService: UserService = _
   @Autowired var groupService: GroupService = _
+  @Autowired var envConfigService: EnvironmentService = _
   @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
 
@@ -67,9 +68,20 @@ class ConfigurationController extends RestApiExceptionsHandler{
   def list(@PathVariable("projectId") projectId: Int,
            @RequestParam(value = "sorting", required = false, defaultValue = "name") ordering: Ordering,
            request: HttpServletRequest): CollectionWrapper[ItemWrapper[Configuration]] = {
+    val permitedConfigs = envConfigService.list(projectId).map(_.id.get).toSet
+    val createEnvPath = WebPath(absolutePath("/rest")(request)) / "projects" / projectId / "envs"
+
     def wrapConfig(config: Configuration) = {
-       val top: WebPath = WebPath(request)
-       config.withLinks(LinkBuilder(top / config.id.get.toString, LinkTarget.SELF, classOf[Configuration], GET, PUT, DELETE)).filtered()
+      val id = config.id.get
+      val createLink = if (permitedConfigs.contains(id))
+        Seq(LinkBuilder(createEnvPath, LinkTarget.ACTION, classOf[Environment], POST))
+      else
+        Seq()
+
+      val top = WebPath(request)
+      config.withLinks(
+        LinkBuilder(top / id.toString, LinkTarget.SELF, classOf[Configuration], GET, PUT, DELETE), createLink: _*
+      ).filtered()
     }
     configRepository.list(projectId, ordering).map(wrapConfig(_))
   }

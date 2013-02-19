@@ -21,17 +21,22 @@
  *   Description: Continuous Delivery Platform
  */ package com.griddynamics.genesis.workflow.actor
 
-import akka.actor.{PoisonPill, Kill, Actor, ActorRef}
+import akka.actor.{PoisonPill, Actor, ActorRef}
 import akka.util.Timeout
 import com.griddynamics.genesis.agents.AgentGateway
 import com.griddynamics.genesis.logging.LoggerWrapper
+import com.griddynamics.genesis.plugin.Cancel
 import com.griddynamics.genesis.service.RemoteAgentsService
 import com.griddynamics.genesis.util.Logging
-import com.griddynamics.genesis.workflow.message.{Beat, Start}
+import com.griddynamics.genesis.workflow.message.{Pong, Ping, Beat, Start}
 import com.griddynamics.genesis.workflow.{ActionResult, RemoteTask, ActionFailed, Action}
+import java.util.Date
 import scala.concurrent.duration.FiniteDuration
 
-case class ResolvingRemoteActorError(action: Action, override val desc: String) extends ActionFailed {
+case class ResolvingRemoteActorError(action: Action, override val desc: String) extends ActionFailed
+
+case class RemoteAgentTimeout(action: Action) extends ActionFailed {
+  override def desc = "Remote agent became unreachable"
 }
 
 class AgentCommunicatingActor(superVisor: ActorRef,
@@ -40,10 +45,15 @@ class AgentCommunicatingActor(superVisor: ActorRef,
                               agentService: RemoteAgentsService,
                               logger: LoggerWrapper,
                               timeout: FiniteDuration) extends Actor with Logging{
+
   import context.dispatcher
 
-  var executor: ActorRef = _
+  var executor: ActorRef = context.system.deadLetters
   val scheduler = context.system.scheduler
+  var lastPongReceived: Date = new Date()
+
+  case object CheckStatus
+  case object CheckStatusTimeout
 
   override def receive = {
 
@@ -75,7 +85,13 @@ class AgentCommunicatingActor(superVisor: ActorRef,
       log.trace("Received remote agent executor for an action. Sending Start command")
       this.executor = executor
       this.executor ! Start
+
       context.become(executorWatcher)
+
+      this.executor ! Ping
+      scheduler.schedule(timeout, timeout) {
+        self ! CheckStatus
+      }
   }
 
   val executorWatcher: Receive = {
@@ -83,10 +99,25 @@ class AgentCommunicatingActor(superVisor: ActorRef,
       log.trace("Got action result from remote executing agent")
       superVisor ! r
       self ! PoisonPill
+
+    case CheckStatusTimeout =>
+      executor ! Beat(Cancel()) //just in case
+      superVisor ! RemoteAgentTimeout(action)
+      self ! PoisonPill
+
+    case CheckStatus =>
+      if (System.currentTimeMillis() - this.lastPongReceived.getTime < (timeout.toMillis * 2))
+        this.executor ! Ping
+      else
+        self ! CheckStatusTimeout
+
+    case Pong =>
+      this.lastPongReceived = new Date()
+
     case beat: Beat => executor ! beat
+
     case Timeout => /* ignore */
-    case t =>
-      log.error(s"Remote agent watcher received unexpected message $t")
+    case t => log.error(s" Remote agent watcher received unexpected message $t")
   }
 
 }
