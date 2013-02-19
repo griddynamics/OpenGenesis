@@ -28,7 +28,7 @@ import com.griddynamics.genesis.resources.ResourceFilter
 import com.griddynamics.genesis.service.ConfigService
 import com.griddynamics.genesis.service.GenesisSystemProperties._
 import com.griddynamics.genesis.util.{RichLogger, Logging}
-import com.yammer.metrics.jetty.InstrumentedSelectChannelConnector
+import com.yammer.metrics.jetty.{InstrumentedSslSelectChannelConnector, InstrumentedSelectChannelConnector}
 import com.yammer.metrics.reporting.AdminServlet
 import com.yammer.metrics.web.DefaultWebappMetricsFilter
 import java.lang.System
@@ -36,7 +36,7 @@ import java.lang.System.{getProperty => gp}
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 import org.apache.commons.lang3.SystemUtils
-import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.server.{Connector, Server}
 import org.eclipse.jetty.servlet.{FilterHolder, ServletHolder, ServletContextHandler}
 import org.eclipse.jetty.servlets.GzipFilter
 import org.springframework.context.support.ClassPathXmlApplicationContext
@@ -48,7 +48,10 @@ import org.springframework.web.servlet.DispatcherServlet
 import scala.collection.JavaConversions._
 import service.impl.HousekeepingService
 import collection.mutable.ListBuffer
-import org.eclipse.jetty.server.nio.SelectChannelConnector
+import org.eclipse.jetty.server.nio.{AbstractNIOConnector, SelectChannelConnector}
+import org.eclipse.jetty.server.ssl.SslSelectChannelConnector
+import javax.servlet.DispatcherType
+import org.eclipse.jetty.util.ssl.SslContextFactory
 
 object GenesisFrontend extends Logging {
     def main(args: Array[String]): Unit = try {
@@ -97,12 +100,12 @@ object GenesisFrontend extends Logging {
             val gzipFilterHolder = new FilterHolder(new GzipFilter)
             gzipFilterHolder.setName("gzipFilter")
             gzipFilterHolder.setInitParameter("mimeTypes", "text/html,text/plain,text/xml,application/xhtml+xml,text/css,application/javascript,image/svg+xml")
-            context.addFilter(gzipFilterHolder, "/*", 0)
+            context.addFilter(gzipFilterHolder, "/*", java.util.EnumSet.of(DispatcherType.REQUEST))
         }
 
         val securityFilterHolder = new FilterHolder(new DelegatingFilterProxy)
         securityFilterHolder.setName("springSecurityFilterChain")
-        context.addFilter(securityFilterHolder, "/*", 0)
+        context.addFilter(securityFilterHolder, "/*", java.util.EnumSet.of(DispatcherType.REQUEST))
         context.setInitParameter(LOGOUT_ENABLED, logoutEnabled.toString)
 
         if (! isBackend) {
@@ -110,7 +113,7 @@ object GenesisFrontend extends Logging {
             resourceHolder.setName("resourceFilter")
             resourceHolder.setInitParameter("resourceRoots", resourceRoots)
             resourceHolder.setInitParameter("debugMode", debugMode)
-            context.addFilter(resourceHolder, "/*", 0)
+            context.addFilter(resourceHolder, "/*", java.util.EnumSet.of(DispatcherType.REQUEST))
         }
 
         if (isFrontend) {
@@ -122,7 +125,7 @@ object GenesisFrontend extends Logging {
             proxyHolder.setInitParameter(TunnelFilter.READ_TIMEOUT, helper.getFileProperty(FRONTEND_READ_TIMEOUT, "5000"))
             proxyHolder.setInitParameter(TunnelFilter.CONNECT_TIMEOUT, helper.getFileProperty(FRONTEND_CONNECT_TIMEOUT, "5000"))
             proxyHolder.setName("tunnelFilter")
-            context.addFilter(proxyHolder, "/*", 0)
+            context.addFilter(proxyHolder, "/*", java.util.EnumSet.of(DispatcherType.REQUEST))
         }
 
         val holder = new ServletHolder(new DispatcherServlet)
@@ -131,7 +134,26 @@ object GenesisFrontend extends Logging {
         holder.setInitParameter("contextConfigLocation", frontendConfig)
         context.addServlet(holder, "/")
 
-        server.addConnector(httpConnector(helper, metricsAdd))
+        val httpPort = helper.getPropWithFallback(BIND_PORT, 8080)
+        val httpsPort = helper.getPropWithFallback(HTTPS_PORT, 8443)
+        val useHttps = helper.getPropWithFallback(USE_HTTPS, false)
+        val useHttp = helper.getPropWithFallback(USE_HTTP, true)
+        val keyStorePath = helper.getPropWithFallback(SSL_KEYSTORE, ".keystore")
+        val keyStorePass = helper.getPropWithFallback(SSL_KEYSTORE_PASSWORD, "")
+
+        log.debug(s"Following connectors are enabled with configuration: HTTP: ${useHttp}, HTTPS: ${useHttps}")
+
+        val connectors = (useHttp, useHttps) match {
+          case (true, true) => httpConnector(httpPort, metricsAdd) :: httpsConnector(httpsPort, metricsAdd, keyStorePath, keyStorePass) :: Nil
+          case (true, _) => httpConnector(httpPort, metricsAdd) :: Nil
+          case (_, true) => httpsConnector(httpsPort, metricsAdd, keyStorePath, keyStorePass) :: Nil
+          case (_, _) => {
+            throw new IllegalArgumentException("You must enable either HTTP or HTTPS or both to run Genesis")
+          }
+        }
+
+        connectors.map(c => server.addConnector(configureConnector(helper, c)))
+
         server.setHandler(context)
         server.setStopAtShutdown(true)
 
@@ -149,16 +171,30 @@ object GenesisFrontend extends Logging {
     }
 
 
-  def httpConnector(helper: PropertyHelper, metrics: Boolean) = {
-    val host = helper.getPropWithFallback(BIND_HOST, "0.0.0.0")
-    val port = helper.getPropWithFallback(BIND_PORT, 8080)
-    val requestIdleTime: Int = helper.getFileProperty(MAX_IDLE, 5000)
-
-    val httpConnector = if (metrics) new InstrumentedSelectChannelConnector(port) else {
+  def httpConnector(httpPort: Int, metricsAdd: Boolean) = {
+    if (metricsAdd) new InstrumentedSelectChannelConnector(httpPort)
+    else {
       val connector = new SelectChannelConnector()
-      connector.setPort(port)
+      connector.setPort(httpPort)
       connector
     }
+  }
+
+  def httpsConnector(httpPort: Int, metricsAdd: Boolean, keyStorePath: String, keyStorePass: String) = {
+    val factory = new SslContextFactory(keyStorePath)
+    factory.setKeyStorePassword(keyStorePass)
+    if (metricsAdd) new InstrumentedSslSelectChannelConnector(factory, httpPort)
+    else {
+      val connector = new SslSelectChannelConnector(factory)
+      connector.setPort(httpPort)
+      connector
+    }
+  }
+
+  def configureConnector(helper: PropertyHelper, httpConnector: AbstractNIOConnector) : Connector = {
+    val host = helper.getPropWithFallback(BIND_HOST, "0.0.0.0")
+    val requestIdleTime: Int = helper.getFileProperty(MAX_IDLE, 5000)
+
     httpConnector.setMaxIdleTime(requestIdleTime)
     httpConnector.setHost(host)
     httpConnector.setRequestHeaderSize(16 * 1024) // authorization negotiate can contain lots of data
@@ -171,7 +207,7 @@ object GenesisFrontend extends Logging {
 
   def addMetrics(context: ServletContextHandler) {
     val metricsFilter = new DefaultWebappMetricsFilter()
-    context.addFilter(new FilterHolder(metricsFilter), "/*", 0)
+    context.addFilter(new FilterHolder(metricsFilter), "/*", java.util.EnumSet.of(DispatcherType.REQUEST))
 
     val adminServlet = new AdminServlet()
     context.addServlet(new ServletHolder(adminServlet), "/metrics/*")
