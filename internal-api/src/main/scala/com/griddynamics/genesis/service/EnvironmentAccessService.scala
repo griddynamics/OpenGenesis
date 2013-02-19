@@ -38,5 +38,5 @@ trait EnvironmentAccessService {
 
   def hasAccessToAllConfigs(projectId: Int, username: String, authorities: Iterable[String]): Boolean
 
-  def listAccessible(projectId: Int, username: String, authorities: Iterable[String]): Iterable[Int]
+  def listAccessibleConfigurations(username: String, authorities: Iterable[String]): Iterable[Int]
 }

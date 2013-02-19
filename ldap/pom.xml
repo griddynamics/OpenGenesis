@@ -23,9 +23,7 @@
       Description:  Continuous Delivery Platform
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>parent</artifactId>
         <groupId>com.griddynamics.genesis</groupId>
@@ -44,7 +42,7 @@
         <ldap.server.port>10389</ldap.server.port>
         <ldap.server.rootDn>dc=example,dc=com</ldap.server.rootDn>
         <genesis.plugin.ldap.server.url>ldap://127.0.0.1:${ldap.server.port}</genesis.plugin.ldap.server.url>
-        <genesis.plugin.ldap.domain></genesis.plugin.ldap.domain>
+        <genesis.plugin.ldap.domain />
         <genesis.plugin.ldap.base>${ldap.server.rootDn}</genesis.plugin.ldap.base>
         <genesis.plugin.ldap.manager.dn>uid=developer1,ou=people,dc=example,dc=com</genesis.plugin.ldap.manager.dn>
         <genesis.plugin.ldap.manager.password>developer1pswd</genesis.plugin.ldap.manager.password>
