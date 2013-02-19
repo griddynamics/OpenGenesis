@@ -43,7 +43,9 @@ import java.lang.IllegalStateException
 import java.util.concurrent.TimeUnit
 import org.codehaus.groovy.runtime.{InvokerHelper, MethodClosure}
 import org.springframework.core.convert.ConversionService
+import com.griddynamics.genesis.annotation.RemoteGateway
 
+@RemoteGateway("groovy template service")
 class GroovyTemplateService(val templateRepoService : TemplateRepoService,
                             val stepBuilderFactories : Seq[StepBuilderFactory],
                             val conversionService : ConversionService,

@@ -89,6 +89,6 @@ class EnvironmentAccessService(storeService: service.StoreService, permissionSer
 
   def restrictionsEnabled = securityEnabled
 
-  def listAccessible(projectId: Int, username: String, authorities: Iterable[String]) =
+  def listAccessibleConfigurations(username: String, authorities: Iterable[String]) =
     permissionService.getPermittedIds(classOf[Configuration], username, authorities, Seq(BasePermission.READ))
 }

@@ -29,7 +29,9 @@ import com.griddynamics.genesis.model.Authority
 import com.griddynamics.genesis.model.GenesisSchema.{userAuthorities, groupAuthorities}
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.users.GenesisRole._
+import com.griddynamics.genesis.annotation.RemoteGateway
 
+@RemoteGateway("Genesis database access: authority service")
 class DefaultAuthorityService(permissionService: PermissionService) extends AuthorityService {
 
   val listAuthorities = List(SystemAdmin.toString, ReadonlySystemAdmin.toString, GenesisUser.toString)
