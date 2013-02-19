@@ -14,5 +14,9 @@
         "Must be true or false" : "true|false"
       }
     },
-    "genesis.system.auth.mode": { "default": "default", "description": "Genesis Authentication Schema", "restartRequired": true}
+    "genesis.system.auth.mode": { "default": "default", "description": "Genesis Authentication Schema", "restartRequired": true},
+    "genesis.system.use.http" : {"default" : true, "description" : "Enable HTTP connector", "restartRequired" : true},
+    "genesis.system.use.https" : {"default" : false, "description" : "Enable HTTPS connector", "restartRequired" : true},
+    "genesis.system.https.keystore" : {"default" : ".keystore", "description" : "Path to Java keystore file for HTTPS connector", "restartRequired" : true},
+    "genesis.system.https.keystore.password" : {"default" : "default", "description" : "Password for Java keystore file for HTTPS connector", "type": "password", "restartRequired" : true}
 }
