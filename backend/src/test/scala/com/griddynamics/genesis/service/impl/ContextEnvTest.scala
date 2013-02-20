@@ -48,11 +48,11 @@ class ContextEnvTest extends AssertionsForJUnit with MockitoSugar with DSLTestUn
 
   val storeService = {
     val storeService = mock[StoreService]
-    when(storeService.startWorkflow(Matchers.any(), Matchers.any())).thenReturn((env, mock[Workflow], List()))
+    when(storeService.startWorkflow(Matchers.any(), Matchers.any())).thenReturn((env, dummyWorkflow, List()))
     when(storeService.insertWorkflowStep(Matchers.any())).thenReturn(
       new WorkflowStep(workflowId = 0, phase = "", status = Requested, details = "", started = None, finished = None )
     )
-    when(storeService.findWorkflow(Matchers.anyInt())).thenReturn(Option(mock[Workflow]))
+    when(storeService.findWorkflow(Matchers.anyInt())).thenReturn(Option(dummyWorkflow))
     storeService
   }
 

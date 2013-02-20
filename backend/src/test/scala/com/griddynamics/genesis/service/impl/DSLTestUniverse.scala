@@ -26,7 +26,7 @@ import com.griddynamics.genesis.template.TemplateRepository
 import com.griddynamics.genesis.service.{EnvironmentService, TemplateRepoService}
 import com.griddynamics.genesis.repository.DatabagRepository
 import org.mockito.Mockito
-import com.griddynamics.genesis.model.{EnvStatus, Environment}
+import com.griddynamics.genesis.model.{VariablesField, WorkflowStatus, Workflow, EnvStatus, Environment}
 import java.sql.Timestamp
 import java.util.Date
 
@@ -39,5 +39,6 @@ trait DSLTestUniverse extends MockitoSugar{
   val configService = mock[EnvironmentService]
 
   val dummyEnv = new Environment("test_env", EnvStatus.Ready, "creator", new Timestamp(new Date().getTime), None, None, "", "", 0, 0)
+  val dummyWorkflow = new Workflow(1, "provision", "genesis", WorkflowStatus.Requested, 2, 0, new VariablesField("test"), new VariablesField("test"), None, None )
 
 }
