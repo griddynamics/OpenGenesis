@@ -1,0 +1,11 @@
+<div class="pagination" style="margin-top: 15px; margin-bottom: 15px;" >
+    <a href="javascript:void(0)" class="back" ><img src="assets/img/back.png" alt="Back link"/>Back to action history list</a>
+    <div class="clear"></div>
+</div>
+<div class="clear" style="padding-bottom: 5px;"></div>
+<% if (workflow.id) { %>
+    <div class="page-title"><h2><strong style="text-transform: capitalize;">'<%- workflow.name %>'</strong> execution result details</h2></div>
+<% } %>
+<div class="workflow-section" data-workflow-id="<%= workflow.id %>">
+    <div class="notification" style="display:none"></div>
+</div>

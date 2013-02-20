@@ -147,6 +147,17 @@ class GenesisRestService(storeService: StoreService,
         )
     }
 
+    def workflowHistory(envId: Int, projectId: Int, workflowId: Int): Option[WorkflowDetails] = {
+      for (env <- storeService.findEnv(envId, projectId);
+         flow <- storeService.findWorkflow(workflowId)
+         if flow.envId == env.id
+      ) yield {
+        val steps = storeService.listWorkflowSteps(flow)
+        new WorkflowDetails(flow.id, flow.name, flow.status.toString, flow.startedBy, flow.displayVariables, stepsCompleted(Some(flow)),
+          stepDesc(steps), flow.executionStarted.map (_.getTime), flow.executionFinished.map (_.getTime))
+      }
+    }
+
     def getLogs(envId: Int,  stepId: Int, includeActions: Boolean) : Seq[StepLogEntry] =
       storeService.getLogs(stepId, includeActions).map { entry => StepLogEntry(entry.timestamp, entry.message) }
 

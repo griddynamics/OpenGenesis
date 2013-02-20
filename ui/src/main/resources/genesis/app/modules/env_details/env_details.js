@@ -85,7 +85,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
 
     initialize: function (options) {
       this.details = new EnvironmentDetails.Model({"id": options.envId, projectId: options.projectId});
-
+      this.workflowId = options.workflowId;
       poller.PollingManager.start(this.details, {noninterruptible: true});
 
       this.details.bind("change:status", this.updateControlButtons, this);
@@ -268,7 +268,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
 
     renderWorkflowList: function () {
       if (this.workflowHistory == null) {
-        this.workflowHistory = new EnvHistory.View({model: this.details, collection: this.historyCollection, el: "#panel-tab-3"});
+        this.workflowHistory = new EnvHistory.View({model: this.details, collection: this.historyCollection, el: "#panel-tab-3", workflowId: this.workflowId});
         this.workflowHistory.render();
       }
     },
@@ -307,7 +307,9 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
 
           view.updateControlButtons();
           view._renderAllSubViews();
-
+          if (view.workflowId) {
+            view.$("#tab3").click()
+          }
           view.confirmationDialog = view.createConfirmationDialog(view.$("#dialog-confirm"));
           view.resetEnvStatusDialog = view.createResetEnvStatusDialog(view.$("#dialog-reset"));
           view.envRenameDialog = view.createRenameDialog(view.$("#env-rename"));
