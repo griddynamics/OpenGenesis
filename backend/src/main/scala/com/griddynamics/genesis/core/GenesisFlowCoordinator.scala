@@ -26,7 +26,6 @@ import scala.collection.mutable
 import com.griddynamics.genesis.plugin._
 import com.griddynamics.genesis.workflow._
 import com.griddynamics.genesis.service.StoreService
-import com.griddynamics.genesis.api
 import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.model.EnvStatus._
 import com.griddynamics.genesis.common.Mistake
@@ -40,9 +39,8 @@ import com.griddynamics.genesis.plugin.GenesisStepResult
 import com.griddynamics.genesis.workflow.signal.Success
 import com.griddynamics.genesis.plugin.GenesisStep
 import com.griddynamics.genesis.workflow.signal.Fail
-import com.griddynamics.genesis.repository.ConfigurationRepository
 import com.griddynamics.genesis.template.dsl.groovy.Reserved
-import com.griddynamics.genesis.template.support.EnvConfigSupport
+import java.util.Date
 
 abstract class GenesisFlowCoordinator(envId: Int,
                                       projectId: Int,
@@ -236,21 +234,30 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
     val globals = mutable.Map[String, AnyRef]()
     val pluginContext = mutable.Map[String,Any]()
 
-    def createStepExecutionContext(step: GenesisStep) =
+    def createStepExecutionContext(step: GenesisStep) = {
+        import scala.collection.JavaConversions
+        globals("$workflow") = JavaConversions.mapAsJavaMap(
+          Map(
+            "startedBy" -> workflow.startedBy,
+            "started" -> workflow.executionStarted.map(t => new Date(t.getTime)).getOrElse(new Date()))
+        )
         new StepExecutionContextImpl(step, env.copy(), servers.map(_.copy()), workflow.copy(), pluginContext)
+    }
 
     abstract override def onStepFinish(result: GenesisStepResult) = {
         handleEnvState(result)
         handleVmsState(result)
         if(!result.isStepFailed) {
             exportToContext(result)
+        } else {
+          globals("$failedStep") = result.step.title.getOrElse(result.step.actualStep.getClass.getSimpleName)
         }
         super.onStepFinish(result)
     }
 
     override def buildStep(builder: StepBuilder) = safe {
         builder match {
-            case proxy: StepBuilderProxy =>  proxy.newStep(globals, Reserved.instanceRef -> env.copy) //TODO: NOTE!!!! Reserved.configRef -> EnvConfigSupport.asGroovyMap(config) was here
+            case proxy: StepBuilderProxy =>  proxy.newStep(globals, Reserved.instanceRef -> env.copy)
             case _ => builder.newStep
         }
     }
