@@ -14,17 +14,33 @@
         </tr>
       </thead>
       <tbody>
-      <% if (projects.length > 0) { %>
+      <% if (!_.isEmpty(projectGroups)) { %>
 
-        <% for (var i = 0, count = projects.length; i < count; i++) { var project = projects[i]; %>
+        <% _.each (projectGroups, function(group) { var projects = group.projects; %>
         <tr>
-            <td class="first name" ><a href="#project/<%= project.id %>"><img class="project-icon" src="assets/img/project24.png"><%- project.name %></a></td>
+            <td colspan="4" class="project_group">
+                <div>
+                    <h3><%- group.favorite ? 'Favorite' : 'All'  %> projects</h3>
+                </div>
+            </td>
+        </tr>
+       <% for (var i = 0, count = projects.length; i < count; i++) { var project = projects[i]; %>
+        <tr>
+            <td class="name" >
+                <a data-proj-id="<%= project.id %>" href="#" class="fav-prj">
+                    <img class="project-fav-icon" src="<%= group.favorite ? 'assets/img/star.png' : 'assets/img/star-gray.png' %>"/>
+                </a>
+                <a href="#project/<%= project.id %>">
+                    <img class="project-icon" src="assets/img/project24.png">
+                    <%- project.name %>
+                </a>
+            </td>
             <td class="name"><%- project.projectManager %> </td>
             <td class="multiline-description details-cell"><%- project.description %></td>
             <td><span class="time"><%= utils.formatDateTime(project.creationTime) %></span> by <span class="username"><%- project.creator %></span></td>
         </tr>
         <% } %>
-
+       <% }); %>
       <% } else { %>
         <tr><td colspan="4"> <div class="wide information-panel"><p> No projects available </p></div></td></tr>
       <% } %>

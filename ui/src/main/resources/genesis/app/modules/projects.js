@@ -5,7 +5,8 @@ define([
   "backbone",
   "jquery",
   "modules/validation",
-  "jvalidate"
+  "jvalidate",
+  "jstorage"
 ],
 
 function(genesis, status, backend, Backbone, $, validation) {
@@ -38,17 +39,64 @@ function(genesis, status, backend, Backbone, $, validation) {
   Projects.Views.ProjectsOverview = Backbone.View.extend({
     template: "app/templates/projects_list.html",
 
+    events: {
+      "click .fav-prj": "toggleFavorite",
+    },
+
     initialize: function(options) {
       this.collection = options.collection;
       this.collection.fetch().done(_.bind(this.render, this));
+      this.favProjects = this.getFavProjectIds();
+    },
+
+    toggleFavorite: function(event) {
+      var $link = $(event.currentTarget);
+      var prjId = $link.data('proj-id');
+      var favorite = this.toggleFavProject(prjId);
+      var $img = $link.children('img');
+      $img.attr('src', favorite ? 'assets/img/star.png' : 'assets/img/star-gray.png');
+    },
+
+    getFavProjectIds: function() {
+      return $.jStorage.get(genesis.app.currentUser.user + "_favProjects", []);
+    },
+
+    setFavProjectIds: function(projectIds) {
+      this.favProjects = projectIds;
+      $.jStorage.set(genesis.app.currentUser.user + "_favProjects", projectIds);
+    },
+
+    toggleFavProject: function(projectId) {
+      var favPrjIds = this.favProjects;
+      var favorite = !_.contains(favPrjIds, projectId)
+      if (favorite) {
+        favPrjIds.push(projectId);
+      } else {
+        favPrjIds = _.without(favPrjIds, projectId);
+      }
+      this.setFavProjectIds(favPrjIds);
+      return favorite;
     },
 
     render: function(done) {
       var self = this;
+      var projects = self.collection;
+      var favPrjIds = self.favProjects;
+      var groups = projects.groupBy(function(prj) {
+        return _.contains(favPrjIds, prj.id);
+      });
+      var favModels = groups[true];
+      var allModels = groups[false];
+      var toJson = function(c) {
+        return _.map(c, function(m) {return m.toJSON()});
+      };
+      var projGroups = [];
+      if (favModels) { projGroups.push({favorite: true, projects: toJson(favModels)}); }
+      if (allModels) { projGroups.push({favorite: false, projects: toJson(allModels)}); }
       $.when(genesis.fetchTemplate(this.template)).done(function(tmpl) {
         self.$el.html(
           tmpl({
-            "projects" : self.collection.toJSON(),
+            "projectGroups" : projGroups,
             "showCreateLink": self.collection.canCreate(),
             "utils": genesis.utils
           })
