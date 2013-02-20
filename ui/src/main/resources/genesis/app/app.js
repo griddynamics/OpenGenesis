@@ -33,6 +33,7 @@ function(genesis, jQuery, Backbone, _, backend, status, Projects, Environments, 
       "": "index",
       "project/:projectId" : "environments",
       "project/:projectId/inst/:envId": "environmentDetails",
+      "project/:projectId/inst/:envId/workflow/:wfId": "workflowDetails",
       "project/:projectId/createEnvInst": "createEnvironment",
       "project/:projectId/properties": "projectProperties",
       "admin/create/project": "createProject",
@@ -88,6 +89,11 @@ function(genesis, jQuery, Backbone, _, backend, status, Projects, Environments, 
       } else {
         genesis.app.trigger("server-communication-error", "Requested project wasn't found", "/")
       }
+    },
+
+    workflowDetails: function(projectId, envId, workflowId) {
+      genesis.app.trigger("page-view-loading-started");
+      this.setCurrentView(new EnvironmentDetails.Views.Details({projectId: projectId, envId : envId, el: this.$viewDiv(), workflowId: parseInt(workflowId)}));
     },
 
     environmentDetails: function(projectId, envId) {

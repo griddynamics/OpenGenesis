@@ -47,7 +47,7 @@ import org.apache.commons.lang3.StringEscapeUtils
 import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.spring.security.LinkSecurityBean
-import com.griddynamics.genesis.model.EnvStatus
+import com.griddynamics.genesis.model.{WorkflowStatus, EnvStatus}
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
@@ -209,6 +209,25 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     genesisService.workflowHistory(envId, projectId, pageOffset, pageLength).getOrElse(
         throw new ResourceNotFoundException(s"Environment $envId was not found")
     )
+  }
+
+
+
+  @RequestMapping(value = Array("{envId}/history/{workflowId}"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  @AddSelfLinks(methods = Array(GET), modelClass = classOf[WorkflowDetails])
+  def workflowHistory(@PathVariable("projectId") projectId: Int,
+                      @PathVariable("envId") envId: Int,
+                      @PathVariable("workflowId") workflowId: Int,
+                      request: HttpServletRequest): ItemWrapper[WorkflowDetails] = {
+    val details = genesisService.workflowHistory(envId, projectId, workflowId).getOrElse(
+      throw new ResourceNotFoundException(s"Workflow $workflowId wasn't found for environment id = $envId in project $projectId")
+    )
+    if(details.status == WorkflowStatus.Executing.toString) {
+      throw new InvalidInputException("Only finished workflow history can be requested")
+    }
+
+    details
   }
 
   private def hasAccessToConfigs(projectId: Int) = {

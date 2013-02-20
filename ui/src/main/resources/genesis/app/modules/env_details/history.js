@@ -1,12 +1,13 @@
 define([
   "genesis",
   "backbone",
+  "modules/status",
   "jquery",
   "jqueryui",
   "jvalidate"
 ],
 
-function (genesis, Backbone, $) {
+function (genesis, Backbone, status, $) {
   var EnvironmentHistory = genesis.module();
 
   /**
@@ -14,7 +15,19 @@ function (genesis, Backbone, $) {
    */
   var PAGE_SIZE = 10;
 
-  var WorkflowHistoryModel = Backbone.Model.extend({});
+  var WorkflowHistoryModel = Backbone.Model.extend({
+    initialize: function(attrs, options) {
+      this.projectId = options.projectId;
+      this.envId = options.envId;
+      this.workflowId = options.workflowId;
+    },
+
+    url: function() {
+      return "rest/projects/" + this.projectId + "/envs/" + this.envId + "/history/" + this.workflowId;
+    }
+
+
+  });
 
   EnvironmentHistory.Collection = Backbone.Collection.extend({
 
@@ -145,8 +158,10 @@ function (genesis, Backbone, $) {
     },
 
     initialize: function(options) {
+      var opt = options || {};
+
       this.actionViews = {};
-      this.expanded = (options || {}).expanded || false;
+      this.expanded = opt.expanded || false;
     },
 
     toggleStepActionsView: function(event) {
@@ -157,8 +172,8 @@ function (genesis, Backbone, $) {
 
       if (!$details.is(":visible")) {
         var logsCollection = new StepLogCollection([], {
-          "projectId": this.model.collection.projectId,
-          "envId": this.model.collection.envId,
+          "projectId": this.model.projectId || this.model.collection.projectId,
+          "envId": this.model.envId  || this.model.collection.envId,
           "stepId": stepId
         });
 
@@ -208,8 +223,8 @@ function (genesis, Backbone, $) {
 
         self.$el.html(tmpl({
           workflow: self.model.toJSON(),
-          projectId: self.model.collection.projectId,
-          envId: self.model.collection.envId,
+          projectId: self.model.projectId || self.model.collection.projectId,
+          envId: self.model.envId || self.model.collection.envId,
           expand: self.expanded,
           expandedStepsHtml: htmls,
           utils: genesis.utils
@@ -220,6 +235,48 @@ function (genesis, Backbone, $) {
           self.actionViews[stepId].refresh();
         });
       });
+    }
+  });
+
+  var SingleWorkflowView = Backbone.View.extend({
+    template: "app/templates/env_details/workflow_details.html",
+
+    events: {
+      "click .back": "back"
+    },
+
+    initialize: function () {
+      this.render()
+    },
+
+    render: function () {
+      var view = this;
+      $.when(
+        genesis.fetchTemplate(this.template),
+        genesis.fetchTemplate(new WorkflowHistoryView().template)
+      ).done(function (tmpl) {
+
+        $.when(view.model.fetch()).done(function() {
+          view.$el.html(tmpl({ workflow: view.model.toJSON() }));
+          var subview = new WorkflowHistoryView({
+            expanded: true,
+            model: view.model,
+            el: view.$('div.workflow-section[data-workflow-id="' + view.model.id + '"]')
+          });
+
+          subview.render();
+        }).fail(function(error) {
+          if(error.status === 400) {
+            view.$el.html(tmpl({ workflow: view.model }));
+            var panel = new status.LocalStatus({ el: self.$(".notification")});
+            panel.error(JSON.parse(error.responseText).error)
+          }
+        })
+      });
+    },
+
+    back: function() {
+      this.trigger("close-view");
     }
 
   });
@@ -232,8 +289,25 @@ function (genesis, Backbone, $) {
       "click .previous-page": "previousPage"
     },
 
-    initialize: function () {
+    initialize: function (options) {
       this.workflowViews = {};
+      this.workflowId = options.workflowId;
+      if(this.workflowId) {
+        var workflow = new WorkflowHistoryModel({}, {workflowId: this.workflowId, projectId: this.collection.projectId, envId: this.collection.envId});
+        var view = new SingleWorkflowView({el: this.el, model: workflow });
+        var self = this;
+        view.bind("close-view", function() {
+          genesis.app.router.navigate("project/" + self.collection.projectId + "/inst/" + self.collection.envId, {trigger: false})
+          view.unbind();
+          view.undelegateEvents();
+          self.buildListView();
+        })
+      } else {
+        this.buildListView();
+      }
+    },
+
+    buildListView: function(){
       this.collection.fetch();
       this.collection.bind("reset", this.render, this);
       this.model.bind("change", function() {

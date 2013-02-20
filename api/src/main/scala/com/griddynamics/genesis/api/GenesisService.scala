@@ -39,6 +39,8 @@ trait GenesisService extends TemplateRestService {
 
   def workflowHistory(envId: Int, projectId: Int, pageOffset: Int, pageLength: Int): Option[WorkflowHistory]
 
+  def workflowHistory(envId: Int, projectId: Int, workflowId: Int): Option[WorkflowDetails]
+
   def createEnv(projectId: Int, envName: String, creator: String, templateName: String,
                 templateVersion: String, variables: Map[String, String], config: Configuration, timeToLive: Option[Long]): ExtendedResult[Int]
 

@@ -50,6 +50,7 @@ function(genesis, Backbone, Environments) {
       router.bind("route:projectProperties", this.projectProperties);
       router.bind("route:environments", this.environments);
       router.bind("route:environmentDetails", this.environmentsDetails);
+      router.bind("route:workflowDetails", this.environmentsDetails);
       router.bind("route:createEnvironment", this.createEnvironment);
       router.bind("route:listSettings", this.settings);
       router.bind("route:createProject", this.createProject);

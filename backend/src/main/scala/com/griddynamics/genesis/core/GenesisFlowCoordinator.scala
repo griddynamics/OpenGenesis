@@ -240,6 +240,9 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
 
     globals("$workflow") = scala.collection.JavaConversions.mapAsJavaMap(
       Map(
+        "id" -> workflow.id,
+        "envId" -> workflow.envId,
+        "projectId" -> projectId,
         "startedBy" -> workflow.startedBy,
         "started" -> workflow.executionStarted.map(t => new Date(t.getTime)).getOrElse(new Date()))
     )
