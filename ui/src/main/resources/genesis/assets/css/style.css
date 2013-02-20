@@ -334,6 +334,12 @@ table th{
     margin-right: 5px;
 }
 
+.project-fav-icon {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+}
+
 #page-view-loading {
     position: fixed;
     top: 50%;
@@ -1067,6 +1073,10 @@ table.main-table.attempts td {
 }
 
 table.main-table.attempts td.config_group {
+    background-color: #E8E8E8;
+}
+
+table.main-table.attempts td.project_group {
     background-color: #E8E8E8;
 }
 
