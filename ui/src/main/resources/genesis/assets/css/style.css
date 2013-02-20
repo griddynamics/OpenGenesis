@@ -1025,6 +1025,10 @@ td.subtable{
 	color: rgb(195,54,47);
 }
 
+#wrapper #wrapper-content #tab-panel #panel #panel-tab-3 .workflow .workflow-actions span.warning{
+    color: rgb(170, 170, 50);
+}
+
 #wrapper #wrapper-content #tab-panel #panel #panel-tab-3 .workflow .workflow-actions a{
 	margin-right:20px;
 }

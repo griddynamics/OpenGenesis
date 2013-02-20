@@ -50,6 +50,7 @@ object WorkflowStatus extends Enumeration {
     val Succeed = Value(3, "Successful")
     val Canceled = Value(4, "Canceled")
     val Suspended = Value(5, "Suspended")
+    val Warning = Value(6, "Warning")
 }
 
 object VmStatus extends Enumeration {

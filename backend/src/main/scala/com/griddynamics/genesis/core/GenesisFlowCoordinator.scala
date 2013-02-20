@@ -36,9 +36,8 @@ import com.griddynamics.genesis.service.impl.StepBuilderProxy
 import com.griddynamics.genesis.plugin.Cancel
 import com.griddynamics.genesis.workflow.step.{CoordinatorInterrupt, ActionStepResult, CoordinatorThrowable}
 import com.griddynamics.genesis.plugin.GenesisStepResult
-import com.griddynamics.genesis.workflow.signal.Success
+import com.griddynamics.genesis.workflow.signal.{Success, Fail}
 import com.griddynamics.genesis.plugin.GenesisStep
-import com.griddynamics.genesis.workflow.signal.Fail
 import com.griddynamics.genesis.template.dsl.groovy.Reserved
 import java.util.Date
 
@@ -100,7 +99,10 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
     def onFlowFinish(signal: Signal) {
         import WorkflowStatus._
         val (workflowStatus, envStatus) = signal match {
-            case Success() => (Succeed, onFlowFinishSuccess)
+            case Success() => workflow.status match {
+              case WorkflowStatus.Warning => (Warning, onFlowFinishSuccess)
+              case _ => (Succeed, onFlowFinishSuccess)
+            }
             case Cancel() => (Canceled, EnvStatus.Broken)
             case _ => (Failed, EnvStatus.Broken)
         }
@@ -120,8 +122,11 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
 
     //TODO remove workflow.stepsFinished
     def onStepFinish(result: GenesisStepResult): Either[Signal, Seq[StepCoordinator]] = {
+        log.debug(s"Result is ${result}")
         workflow = storeService.findWorkflow(workflow.id).get
         workflow.stepsFinished += 1
+        if (result.isStepFailed && result.step.ignoreFail)
+          workflow.status = WorkflowStatus.Warning
         storeService.updateWorkflow(workflow)
         finishedSteps = finishedSteps :+ result.step
         createReachableStepCoordinators()

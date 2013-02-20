@@ -2,6 +2,7 @@
 
     var failStatuses = _(["Failed", "Canceled", "Suspended"]);
     var runningStatuses = _(["Requested", "Running"]);
+    var warningStatus = "Warning";
 
     var stepStatusMap = {
         'Requested': 'not-executed-step',
@@ -43,7 +44,7 @@
   </span>
   Duration: <span class="duration"> <%= utils.timeDuration(workflow.executionStartedTimestamp, workflow.executionFinishedTimestamp) %></span>
 
-  <span class="status-section">Status: <span class=<%= (failStatuses.indexOf(workflow.status) != -1 ? "bad" : "normal") %> > <%= workflow.status %></span></span>
+  <span class="status-section">Status: <span class=<%= (failStatuses.indexOf(workflow.status) != -1 ? "bad" : warningStatus === workflow.status ? "warning" : "normal") %> > <%= workflow.status %></span></span>
 </div>
 <div class="clear"></div>
 </div>
