@@ -234,13 +234,19 @@ trait StepExecutionContextHolder extends GenesisFlowCoordinatorBase {
     val globals = mutable.Map[String, AnyRef]()
     val pluginContext = mutable.Map[String,Any]()
 
-    def createStepExecutionContext(step: GenesisStep) = {
-        import scala.collection.JavaConversions
-        globals("$workflow") = JavaConversions.mapAsJavaMap(
-          Map(
-            "startedBy" -> workflow.startedBy,
-            "started" -> workflow.executionStarted.map(t => new Date(t.getTime)).getOrElse(new Date()))
-        )
+
+  override def onFlowStart() = {
+    val result = super.onFlowStart()
+
+    globals("$workflow") = scala.collection.JavaConversions.mapAsJavaMap(
+      Map(
+        "startedBy" -> workflow.startedBy,
+        "started" -> workflow.executionStarted.map(t => new Date(t.getTime)).getOrElse(new Date()))
+    )
+    result
+  }
+
+  def createStepExecutionContext(step: GenesisStep) = {
         new StepExecutionContextImpl(step, env.copy(), servers.map(_.copy()), workflow.copy(), pluginContext)
     }
 

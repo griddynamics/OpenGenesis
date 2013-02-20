@@ -31,7 +31,7 @@ import org.junit.Test
 import com.griddynamics.genesis.core.{RegularWorkflow, GenesisFlowCoordinator}
 import org.mockito.Mockito._
 import org.mockito.{Matchers, Mockito}
-import com.griddynamics.genesis.model.{WorkflowStep, Workflow, Environment}
+import com.griddynamics.genesis.model.{VariablesField, WorkflowStatus, WorkflowStep, Workflow, Environment}
 import com.griddynamics.genesis.model.WorkflowStepStatus._
 import com.griddynamics.genesis.workflow.{Step, StepResult}
 import com.griddynamics.genesis.plugin.{GenesisStep, GenesisStepResult, StepCoordinatorFactory}
@@ -42,11 +42,12 @@ class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar  wi
 
   val storeService = {
     val storeService = mock[StoreService]
-    when(storeService.startWorkflow(Matchers.any(), Matchers.any())).thenReturn((mock[Environment], mock[Workflow], List()))
+
+    when(storeService.startWorkflow(Matchers.any(), Matchers.any())).thenReturn((mock[Environment], dummyWorkflow, List()))
     when(storeService.insertWorkflowStep(Matchers.any())).thenReturn(
       new WorkflowStep(workflowId = IdGen.generate, phase = "", status = Requested, details = "", started = None, finished = None )
     )
-    when(storeService.findWorkflow(Matchers.anyInt())).thenReturn(Option(mock[Workflow]))
+    when(storeService.findWorkflow(Matchers.anyInt())).thenReturn(Option(dummyWorkflow))
     storeService
   }
 
