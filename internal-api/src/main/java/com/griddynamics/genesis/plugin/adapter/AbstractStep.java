@@ -33,4 +33,8 @@ public abstract class AbstractStep implements Step {
     public void $init$() {
         Step$class.$init$(this);
     }
+
+    public boolean ignoreFail() {
+        return Step$class.ignoreFail(this);
+    }
 }
