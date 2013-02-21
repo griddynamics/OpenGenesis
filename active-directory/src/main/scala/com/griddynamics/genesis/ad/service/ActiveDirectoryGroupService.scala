@@ -52,7 +52,7 @@ class ActiveDirectoryGroupServiceImpl(val namingContext: String,
       )
   }
 
-  case class Query(override val filter: String)
+  case class Query(filter: String)
     extends Command(namingContext, "(&(%s)(sAMAccountType=268435456))".format(filter), "distinguishedName,sAMAccountName,description,mail", "subTree")
 
   def findByName(name: String) =
