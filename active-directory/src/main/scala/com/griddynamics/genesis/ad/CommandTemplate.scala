@@ -75,8 +75,8 @@ class CommandTemplate(pool: ActiveDirectoryConnectionPool) extends Logging {
 
 }
 
-class Command(val namingContext: String, val filter: String, val attrsToReturn: String, val searchScope: String) {
-  def toText: String = "<LDAP://%s>;%s;%s;%s".format(namingContext, filter, attrsToReturn, searchScope)
+class Command(namingContext: String, filter: String, attrsToReturn: String, searchScope: String) {
+  def toText: String = s"<LDAP://$namingContext>;$filter;$attrsToReturn;$searchScope"
 }
 
 trait FieldsMapper[T] {

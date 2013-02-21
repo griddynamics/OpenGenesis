@@ -149,7 +149,7 @@ function(genesis, jQuery, Backbone, _, backend, status, Projects, Environments, 
               if(_.isFunction(url)){
                 url();
               } else {
-                genesis.app.router.navigate(url, {trigger: true});
+                if (genesis.app.router) genesis.app.router.navigate(url, {trigger: true});
               }
             }
           }

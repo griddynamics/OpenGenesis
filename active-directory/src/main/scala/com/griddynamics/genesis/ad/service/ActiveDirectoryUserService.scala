@@ -59,7 +59,7 @@ class ActiveDirectoryUserServiceImpl(val namingContext: String,
 
   }
 
-  case class Query(override val filter: String)
+  case class Query(filter: String)
     extends Command(namingContext, "(&(%s)(sAMAccountType=805306368))".format(filter), "distinguishedName,sAMAccountName,sn,givenName,mail", "subTree")
 
   def getWithCredentials(username: String) = throw new UnsupportedOperationException
