@@ -25,7 +25,7 @@ package com.griddynamics.genesis.chefsolo.context
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.{Bean, Configuration}
 import com.griddynamics.genesis.chefsolo.step.ChefsoloStepBuilderFactory
-import com.griddynamics.genesis.configuration.{ComputeServiceContext, CredentialServiceContext, StoreServiceContext}
+import com.griddynamics.genesis.configuration.{SshServiceContext, ComputeServiceContext, CredentialServiceContext, StoreServiceContext}
 import com.griddynamics.genesis.util.InputUtil
 import com.griddynamics.genesis.plugin.PluginConfigurationContext
 import com.griddynamics.genesis.chefsolo.action.{PrepareNodeAction, PrepareSoloAction}
@@ -51,6 +51,7 @@ class ChefsoloContextImpl {
   @Autowired var credentialServiceContext: CredentialServiceContext = _
 
   @Autowired var computeContext: ComputeServiceContext = _
+  @Autowired var sshContext: SshServiceContext = _
   @Autowired var execPluginContext: ExecPluginContext = _
   @Autowired var pluginConfiguration: PluginConfigurationContext = _
 
@@ -58,7 +59,7 @@ class ChefsoloContextImpl {
   
   @Bean def chefSoloCoordinatorFactory =  new ChefsoloCoordinatorFactory({() => {
           new ChefSoloExecutionContextImpl(
-            computeContext.sshService,
+            sshContext.sshService,
             credentialServiceContext.credentialService,
             execPluginContext,
             computeContext.compService)

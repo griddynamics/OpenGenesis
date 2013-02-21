@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,41 +20,29 @@
  *   Project:     Genesis
  *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.executors.provision
 
-import com.griddynamics.genesis.util.Logging
-import com.griddynamics.genesis.model.{IpAddresses, VmStatus}
-import com.griddynamics.genesis.actions.provision._
-import com.griddynamics.genesis.workflow._
-import com.griddynamics.genesis.service.{StoreService, ComputeService}
+package com.griddynamics.genesis.jclouds
 
-class CommonCheckPublicIpExecutor(val action: CheckPublicIpAction,
-                                  computeService: ComputeService,
-                                  storeService: StoreService,
-                                  val timeoutMillis : Long) extends SimpleAsyncActionExecutor with AsyncTimeoutAwareActionExecutor with Logging {
-  def getResult() : Option[ActionResult] = {
-    val vm = action.vm
-    log.debug("Checking public ip of vm: '%s'", action.vm)
-    val pubIp = computeService.getIpAddresses(action.vm).flatMap(ips => ips.publicIp orElse ips.privateIp)
-    pubIp.foreach { ip =>
-      vm.setIp(ip)
-      storeService.updateServer(vm)
+import org.springframework.stereotype.Component
+import com.griddynamics.genesis.model.{VirtualMachine, Environment}
+import org.jclouds.compute.options.TemplateOptions
+import org.jclouds.openstack.nova.v2_0.compute.options.NovaTemplateOptions
+import java.util.Properties
+
+@Component
+class NovaCreationStrategyProvider extends JCloudsVmCreationStrategyProvider {
+
+  val name = "openstack-nova"
+
+  val computeProperties = new Properties
+
+  def createVmCreationStrategy(nodeNamePrefix: String, computeContext: org.jclouds.compute.ComputeServiceContext) =
+    new DefaultVmCreationStrategy(nodeNamePrefix, computeContext) {
+
+      override protected def templateOptions(env: Environment, vm: VirtualMachine): TemplateOptions = {
+        super.templateOptions(env, vm).asInstanceOf[NovaTemplateOptions]
+          .keyPairName(vm.keyPair.getOrElse(throw new IllegalArgumentException("VM keypair property should be specified")))
+      }
+
     }
-    pubIp.map(_ => PublicIpCheckCompleted(action))
-  }
-
-  def startAsync() {}
-
-  def getResultOnTimeout = {
-    action.vm.status = VmStatus.Failed
-    storeService.updateServer(action.vm)
-    PublicIpCheckFailed(action, action.vm)
-  }
 }
-
-
-
-
-
-
-

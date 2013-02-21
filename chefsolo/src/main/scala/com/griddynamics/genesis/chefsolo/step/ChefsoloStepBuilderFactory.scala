@@ -25,8 +25,8 @@ package com.griddynamics.genesis.chefsolo.step
 import com.griddynamics.genesis.plugin.{StepBuilder, StepBuilderFactory}
 import reflect.BeanProperty
 import java.util.{Collections, Map => JMap, List => JList}
-import com.griddynamics.genesis.util.JsonUtil
 import collection.JavaConversions._
+import com.griddynamics.genesis.json.utils.JsonUtil
 
 
 class ChefsoloStepBuilderFactory extends StepBuilderFactory {

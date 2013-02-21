@@ -4,7 +4,9 @@ import ChefNodeInitializer._
 import com.griddynamics.genesis.exec.ExecNodeInitializer._
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.JsonAST.{JObject, JField, JString, JArray}
-import com.griddynamics.genesis.util.{JsonUtil, Logging}
+import com.griddynamics.genesis.json.utils.JsonUtil
+import com.griddynamics.genesis.chef.{ChefVmAttrs, ChefService}
+import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.exec.ExecDetails
 import com.griddynamics.genesis.service.SshService
 import com.griddynamics.genesis.workflow.{Signal, SyncActionExecutor}

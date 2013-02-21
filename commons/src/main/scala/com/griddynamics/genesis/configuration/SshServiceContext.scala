@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,16 +20,12 @@
  *   Project:     Genesis
  *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.service
 
-import org.jclouds.ssh.SshClient
-import com.griddynamics.genesis.model.{EnvResource, Environment}
+package com.griddynamics.genesis.configuration
 
-trait SshService {
-  def sshClient(env : Environment,  server : EnvResource) : SshClient
+import com.griddynamics.genesis.service.SshService
 
-  //todo this is workaround until proper CredentialService is implemented
-  @Deprecated
-  def sshClient(server : EnvResource, credentials: Option[Credentials]) : SshClient
+trait SshServiceContext {
+    def sshService: SshService
 }
 

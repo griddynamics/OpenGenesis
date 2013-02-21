@@ -22,7 +22,7 @@
  */
 package com.griddynamics.genesis.jclouds
 
-import org.jclouds.gogrid.{GoGridAsyncClient, GoGridClient}
+import org.jclouds.gogrid.GoGridApiMetadata
 import com.griddynamics.genesis.model.{VirtualMachine, Environment}
 import com.google.common.collect.Iterables
 import org.jclouds.gogrid.domain.{Ip, IpType, JobState, PowerCommand}
@@ -65,12 +65,12 @@ class IpStackWrapper() extends Logging {
 }
 
 class GoGridVmCreationStrategy(nodeNamePrefix: String, computeContext: ComputeServiceContext, ipWrapper: IpStackWrapper) extends DefaultVmCreationStrategy(nodeNamePrefix, computeContext) {
-    val restContext = computeContext.getProviderSpecificContext[GoGridClient, GoGridAsyncClient]
+    val restContext = computeContext.unwrap(GoGridApiMetadata.CONTEXT_TOKEN)
     val client = restContext.getApi
     val jobServices = client.getJobServices
 
     private def isServerLatestJobCompleted(instanceName : String) = {
-        val jobOptions = new GetJobListOptions.Builder().latestJobForObjectByName(instanceName)
+        val jobOptions = GetJobListOptions.Builder.latestJobForObjectByName(instanceName)
         val latestJob = Iterables.getOnlyElement(jobServices.getJobList(jobOptions))
         JobState.SUCCEEDED == latestJob.getCurrentState
     }
