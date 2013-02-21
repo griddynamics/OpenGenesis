@@ -28,7 +28,7 @@ import com.griddynamics.genesis.model.{EnvResource, GenesisEntity, Environment}
 case class GenesisStep(id: GenesisEntity.Id,
                        phase: String,
                        precedingPhases: Set[String],
-                       ignoreFail: Boolean,
+                       override val ignoreFail: Boolean,
                        retryCount: Int,
                        actualStep: Step,
                        exportTo: Map[String, String] = Map(),

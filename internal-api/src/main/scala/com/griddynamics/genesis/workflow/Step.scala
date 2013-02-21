@@ -24,6 +24,7 @@ package com.griddynamics.genesis.workflow
 
 trait Step {
   def stepDescription = toString
+  def ignoreFail = false
 }
 
 trait StepResult {
