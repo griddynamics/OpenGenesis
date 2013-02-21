@@ -28,6 +28,7 @@ import com.griddynamics.genesis.notification.plugin.EmailSenderConfiguration;
 import com.griddynamics.genesis.notification.plugin.NotificationPluginConfig;
 import com.griddynamics.genesis.notification.template.StringTemplateEngine;
 import com.griddynamics.genesis.notification.template.TemplateEngine;
+import com.griddynamics.genesis.notification.template.VelocityTemplateEngine;
 import com.griddynamics.genesis.plugin.PluginConfigurationContext;
 import com.griddynamics.genesis.service.EmailService;
 import scala.collection.JavaConversions;
@@ -74,7 +75,7 @@ public class MailServiceProvider implements MailServiceContext {
     public TemplateEngine getTemplateEngine() {
         String templateFolder = getConfig().get(NotificationPluginConfig.templateFolder);
         TemplateEngine templateEngine;
-        templateEngine = new StringTemplateEngine(templateFolder);
+        templateEngine = new VelocityTemplateEngine(templateFolder);
         return templateEngine;
     }
 }
