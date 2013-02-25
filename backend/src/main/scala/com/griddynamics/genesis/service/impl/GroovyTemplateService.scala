@@ -44,6 +44,9 @@ import java.util.concurrent.TimeUnit
 import org.codehaus.groovy.runtime.{InvokerHelper, MethodClosure}
 import org.springframework.core.convert.ConversionService
 import com.griddynamics.genesis.annotation.RemoteGateway
+import org.codehaus.groovy.control.CompilerConfiguration
+import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer
+import transformations.{Context, ContextASTTransformation}
 
 @RemoteGateway("groovy template service")
 class GroovyTemplateService(val templateRepoService : TemplateRepoService,
@@ -142,7 +145,9 @@ class GroovyTemplateService(val templateRepoService : TemplateRepoService,
     binding.setVariable("include", new MethodClosure(templateDecl, "include"))
 
     try {
-      val groovyShell = new GroovyShell(binding)
+      val compilerConfiguration = new CompilerConfiguration()
+      compilerConfiguration.addCompilationCustomizers(new ASTTransformationCustomizer(classOf[Context]))
+      val groovyShell = new GroovyShell(binding, compilerConfiguration)
       groovyShell.evaluate(body)
       projectId.foreach (evaluateIncludes(_, templateDecl.includes, groovyShell))
     } catch {
