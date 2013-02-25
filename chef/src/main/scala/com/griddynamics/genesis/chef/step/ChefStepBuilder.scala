@@ -22,11 +22,11 @@
  */
 package com.griddynamics.genesis.chef.step
 
-import com.griddynamics.genesis.util.JsonUtil
 import com.griddynamics.genesis.plugin.{StepBuilder, StepBuilderFactory}
 import collection.{JavaConversions => JC}
 import java.util.{Collections, List => JList, Map => JMap}
 import reflect.BeanProperty
+import com.griddynamics.genesis.json.utils.JsonUtil
 
 class ChefRunStepBuilderFactory extends StepBuilderFactory {
     val stepName = "chefrun"

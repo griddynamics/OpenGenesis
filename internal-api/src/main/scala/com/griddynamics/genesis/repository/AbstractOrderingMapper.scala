@@ -22,9 +22,9 @@
  */
 package com.griddynamics.genesis.repository
 
-import com.griddynamics.genesis.{api, model}
+import com.griddynamics.genesis.api
 import api.Directions
-import model.GenesisEntity
+import com.griddynamics.genesis.model.GenesisEntity
 import org.squeryl.PrimitiveTypeMode._
 import org.squeryl.dsl.ast.TypedExpressionNode
 import org.squeryl.KeyedEntity

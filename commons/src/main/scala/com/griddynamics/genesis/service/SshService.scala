@@ -20,21 +20,15 @@
  *   Project:     Genesis
  *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.util
+package com.griddynamics.genesis.service
 
-import net.liftweb.json.Printer._
-import net.liftweb.json.JsonAST._
-import com.google.gson.Gson
-import net.liftweb.json.JsonParser
+import org.jclouds.ssh.SshClient
+import com.griddynamics.genesis.model.{EnvResource, Environment}
 
-object JsonUtil {
-    def toString(jobject : JValue) = {
-        pretty(render(jobject))
-    }
+trait SshService {
+  def sshClient(env : Environment,  server : EnvResource) : SshClient
 
-    def toJson(jmap : java.util.Map[Any,Any]) = {
-        val gson = new Gson()
-        val jstring = gson.toJson(jmap)
-        JsonParser.parse(jstring).asInstanceOf[JObject]
-    }
+  //todo this is workaround until proper CredentialService is implemented
+  @Deprecated
+  def sshClient(server : EnvResource, credentials: Option[Credentials]) : SshClient
 }

@@ -25,7 +25,7 @@ package com.griddynamics.genesis.chef
 import coordinator.ChefStepCoordinatorFactory
 import executor._
 import com.griddynamics.genesis.util.InputUtil
-import com.griddynamics.genesis.configuration.{StoreServiceContext, ComputeServiceContext}
+import com.griddynamics.genesis.configuration.{SshServiceContext, StoreServiceContext}
 import com.griddynamics.genesis.exec.ExecPluginContext
 import com.griddynamics.genesis.plugin.api.GenesisPlugin
 import com.griddynamics.genesis.service.{StoreService, SshService, Credentials}
@@ -37,7 +37,7 @@ import com.griddynamics.genesis.cache.{CacheConfig, CacheManager, Cache}
 import org.springframework.beans.factory.annotation.Autowired
 import javax.annotation.PostConstruct
 import java.util.concurrent.TimeUnit
-import com.griddynamics.genesis.crypto.BasicCrypto
+import com.griddynamics.genesis.crypto.JCloudsCrypto._
 import com.griddynamics.genesis.actions.json.PreprocessingJsonAction
 import com.griddynamics.genesis.executors.json.PreprocessJsonActionExecutor
 
@@ -74,7 +74,7 @@ class ChefPluginContextImpl extends Cache {
 
     import ChefPluginContextImpl._
 
-    @Autowired var computeServiceContext: ComputeServiceContext = _
+    @Autowired var sshServiceContext: SshServiceContext = _
     @Autowired var storeServiceContext: StoreServiceContext = _
     @Autowired var execPluginContext: ExecPluginContext = _
 
@@ -92,7 +92,7 @@ class ChefPluginContextImpl extends Cache {
     def chefClient(config: ChefPluginConfig) = {
       val key = ChefCacheKey(config.chefEndpoint, config.chefIdentity, config.chefCredentialResource)
       fromCache(ChefPluginContextImpl.CacheRegion, key) {
-        new ChefRestClient(config.chefEndpoint, config.chefIdentity, BasicCrypto.privateKey(config.chefCredential))
+        new ChefRestClient(config.chefEndpoint, config.chefIdentity, privateKey(config.chefCredential))
       }
     }
 
@@ -102,7 +102,7 @@ class ChefPluginContextImpl extends Cache {
         val configSnapshot = new ChefPluginConfig(pluginConfiguration.configuration(Plugin.id))
 
         new ChefExecutionContextImpl(
-          computeServiceContext.sshService,
+          sshServiceContext.sshService,
           chefService(configSnapshot),
           storeServiceContext.storeService,
           configSnapshot

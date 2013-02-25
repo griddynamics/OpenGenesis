@@ -1,3 +1,4 @@
+com.griddynamics.genesis.jclouds.NovaCreationStrategyProvider
 com.griddynamics.genesis.jclouds.Ec2VmCreationStrategyProvider
 com.griddynamics.genesis.jclouds.GoGridVmCreationStrategyProvider
 com.griddynamics.genesis.jclouds.JCloudsPluginContextImpl

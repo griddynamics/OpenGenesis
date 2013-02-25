@@ -27,7 +27,7 @@ import java.text.SimpleDateFormat
 import com.sun.jersey.api.client.ClientRequest
 import com.sun.jersey.api.client.filter.ClientFilter
 import org.apache.commons.codec.binary.Base64.encodeBase64String
-import com.griddynamics.genesis.crypto.BasicCrypto
+import com.griddynamics.genesis.crypto.JCloudsCrypto._
 import java.util.{TimeZone, Date, Locale}
 import net.liftweb.json.Serialization
 
@@ -87,7 +87,7 @@ class ChefMixlibAuthFilter(userIdentity: String, privateKey: PrivateKey) extends
     }
 
     encodeBase64String(
-      BasicCrypto.digestSHA1(normalizePath(path))
+      digestSHA1(normalizePath(path))
     )
   }
 
@@ -100,11 +100,11 @@ class ChefMixlibAuthFilter(userIdentity: String, privateKey: PrivateKey) extends
         case b: String => b
         case b => Serialization.write(b)
       }
-      encodeBase64String(BasicCrypto.digestSHA1(string))
+      encodeBase64String(digestSHA1(string))
     } else {
       EmptyBodyHash
     }
   }
 
-  def encryptSignature(toSign: String): String = BasicCrypto.encryptRSA(privateKey, toSign)
+  def encryptSignature(toSign: String): String = encryptRSA(privateKey, toSign)
 }

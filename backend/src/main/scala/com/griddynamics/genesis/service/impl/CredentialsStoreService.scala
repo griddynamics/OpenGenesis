@@ -30,7 +30,6 @@ import com.griddynamics.genesis.validation.Validation._
 import org.springframework.transaction.annotation.Transactional
 
 import java.util.UUID
-import com.griddynamics.genesis.crypto.BasicCrypto
 import org.springframework.beans.factory.annotation.Value
 import javax.crypto.spec.SecretKeySpec
 import com.griddynamics.genesis.repository.{ProjectRepository, CredentialsRepository}

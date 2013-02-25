@@ -26,12 +26,14 @@ import com.griddynamics.genesis.model.{VirtualMachine, Environment}
 import collection.JavaConversions.asScalaSet
 import org.jclouds.ec2.compute.options.EC2TemplateOptions
 import com.griddynamics.genesis.util.Logging
-import org.jclouds.compute.domain.NodeState
+import org.jclouds.compute.domain.NodeMetadata
 import com.griddynamics.executors.provision.VmMetadataFuture
 import org.jclouds.compute.ComputeServiceContext
 import java.util.Properties
 import org.springframework.stereotype.Component
 import org.jclouds.ec2.reference.EC2Constants
+import org.jclouds.compute.options.TemplateOptions
+import org.jclouds.openstack.nova.v2_0.compute.options.NovaTemplateOptions
 
 
 trait JCloudsVmCreationStrategyProvider {
@@ -55,7 +57,7 @@ class DefaultVmCreationStrategy(nodeNamePrefix: String, pluginContext: ComputeSe
     def getMetadata: Option[String] = {
       val node = Option(computeService.getNodeMetadata(instanceId))
       log.debug("Requested node metadata: '%s'", node)
-      node.filter(_.getState == NodeState.RUNNING).map(_.getId)
+      node.filter(_.getStatus == NodeMetadata.Status.RUNNING).map(_.getId)
     }
   }
 
@@ -76,8 +78,8 @@ class DefaultVmCreationStrategy(nodeNamePrefix: String, pluginContext: ComputeSe
   }
 
   protected def group(env: Environment, vm: VirtualMachine) = {
-    "%s.%s.%s".format(nodeNamePrefix, java.lang.System.currentTimeMillis() / 1000,
-      env.templateName.take(APP_NAME_MAXLEN)).take(VM_GROUP_MAXLEN)
+    "%s-%s-%s".format(nodeNamePrefix, java.lang.System.currentTimeMillis() / 1000,
+      env.templateName.take(APP_NAME_MAXLEN)).take(VM_GROUP_MAXLEN).toLowerCase
   }
 
   protected def templateOptions(env: Environment, vm: VirtualMachine) = {
@@ -95,7 +97,7 @@ object DefaultVmCreationStrategy {
 object DefaultVmCreationStrategyProvider extends JCloudsVmCreationStrategyProvider {
 
   def createVmCreationStrategy(nodeNamePrefix: String, computeService: ComputeServiceContext) =
-    new DefaultVmCreationStrategy(nodeNamePrefix, computeService);
+    new DefaultVmCreationStrategy(nodeNamePrefix, computeService)
 
   val name = "default"
 
@@ -129,4 +131,4 @@ class Ec2VmCreationStrategyProvider extends JCloudsVmCreationStrategyProvider {
         vm.securityGroup.getOrElse(throw new IllegalArgumentException("VM security property should be specified for provisioning in amazon"))
     }
   }
-};
+}
