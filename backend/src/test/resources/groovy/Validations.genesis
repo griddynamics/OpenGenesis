@@ -19,9 +19,9 @@ template {
             ]).optional()
             foo = {
                 description = "Foo variable"
-                validator = [
+                validator(
                     "Foo message" : {foo == 0}
-                ]
+                )
                 clazz = Integer
                 isOptional = true
             }
