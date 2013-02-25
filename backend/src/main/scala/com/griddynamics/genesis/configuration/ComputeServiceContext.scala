@@ -24,13 +24,11 @@ package com.griddynamics.genesis.configuration
 
 import org.springframework.context.annotation.Configuration
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.service.{ComputeService, SshService}
+import com.griddynamics.genesis.service.ComputeService
 
 @Configuration
 class DefaultComputeServiceContext extends ComputeServiceContext {
     @Autowired var computeService: ComputeService = _
-    @Autowired(required = false) var sshServ: SshService = _ // FIXME: change SshService => RemoteService
 
     def compService = computeService
-    def sshService = sshServ
 }

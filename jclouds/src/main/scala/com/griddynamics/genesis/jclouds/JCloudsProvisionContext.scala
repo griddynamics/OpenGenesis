@@ -35,9 +35,9 @@ import java.util.{List => JList}
 import collection.JavaConversions._
 import com.griddynamics.genesis.service._
 import com.griddynamics.genesis.plugin.api.GenesisPlugin
-import com.griddynamics.genesis.configuration.{ClientBootstrapContext, StoreServiceContext, CredentialServiceContext}
+import com.griddynamics.genesis.configuration.{SshServiceContext, ClientBootstrapContext, StoreServiceContext, CredentialServiceContext}
 import com.griddynamics.genesis.cache.{CacheConfig, CacheManager, Cache}
-import org.jclouds.compute.{ComputeServiceContextFactory, ComputeServiceContext}
+import org.jclouds.compute.ComputeServiceContext
 import org.jclouds.ssh.jsch.config.JschSshClientModule
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule
 import com.griddynamics.genesis.plugin.PluginConfigurationContext
@@ -47,7 +47,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import javax.annotation.PostConstruct
 import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.model.{IpAddresses, VirtualMachine}
-import org.jclouds.ec2.reference.EC2Constants
+import org.jclouds.ContextBuilder
 
 trait JCloudsProvisionContext extends ProvisionContext[JCloudsProvisionVm] {
   def cloudProvider: String
@@ -83,7 +83,7 @@ object Account {
 
 @Configuration
 @GenesisPlugin(id = "jclouds", description = "Default cloud account settings")
-class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache {
+class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache with SshServiceContext {
 
   val computeContextRegion = "computeServiceContexts"
 
@@ -121,7 +121,7 @@ class JCloudsPluginContextImpl extends JCloudsComputeContextProvider with Cache 
       storeServiceContext.storeService,
       computeService,
       sshService,
-      providersMap,
+      strategyProvider,
       clientBootstrapContext,
       configService,
       pluginConfig,
@@ -157,7 +157,6 @@ class JCloudsComputeContextProvider {
     val settings = Settings(provider, endpoint, identity, credential, specificOverrides)
 
     fromCache(computeContextRegion, settings) {
-      val contextFactory = new ComputeServiceContextFactory
       val overrides = strategyProvider(settings.provider).computeProperties.clone.asInstanceOf[java.util.Properties]
       endpoint.foreach { overrides(PROPERTY_ENDPOINT) = _ }
 
@@ -166,8 +165,12 @@ class JCloudsComputeContextProvider {
         overrides.setProperty(property._1, property._2)
       }
 
-      contextFactory.createContext(settings.provider, settings.identity, settings.credentials,
-        Set(new JschSshClientModule, new SLF4JLoggingModule), overrides)
+      ContextBuilder
+        .newBuilder(settings.provider)
+        .credentials(settings.identity, settings.credentials)
+        .modules(Set(new JschSshClientModule, new SLF4JLoggingModule))
+        .overrides(overrides)
+        .buildView(classOf[ComputeServiceContext])
     }
   }
 
@@ -186,7 +189,7 @@ class JCloudsComputeContextProvider {
 class JCloudsProvisionContextImpl(override val storeService: StoreService,
                               computeService: ComputeService,
                               sshService: SshService,
-                              strategies: Map[String, JCloudsVmCreationStrategyProvider],
+                              strategies: (String) => JCloudsVmCreationStrategyProvider,
                               bootstrapContext: ClientBootstrapContext,
                               configService: ConfigService,
                               settings: Map[String, String],

@@ -20,41 +20,21 @@
  *   Project:     Genesis
  *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.executors.provision
+package com.griddynamics.genesis.json.utils
 
-import com.griddynamics.genesis.util.Logging
-import com.griddynamics.genesis.model.{IpAddresses, VmStatus}
-import com.griddynamics.genesis.actions.provision._
-import com.griddynamics.genesis.workflow._
-import com.griddynamics.genesis.service.{StoreService, ComputeService}
+import net.liftweb.json.Printer._
+import net.liftweb.json.JsonAST._
+import com.google.gson.Gson
+import net.liftweb.json.JsonParser
 
-class CommonCheckPublicIpExecutor(val action: CheckPublicIpAction,
-                                  computeService: ComputeService,
-                                  storeService: StoreService,
-                                  val timeoutMillis : Long) extends SimpleAsyncActionExecutor with AsyncTimeoutAwareActionExecutor with Logging {
-  def getResult() : Option[ActionResult] = {
-    val vm = action.vm
-    log.debug("Checking public ip of vm: '%s'", action.vm)
-    val pubIp = computeService.getIpAddresses(action.vm).flatMap(ips => ips.publicIp orElse ips.privateIp)
-    pubIp.foreach { ip =>
-      vm.setIp(ip)
-      storeService.updateServer(vm)
+object JsonUtil {
+    def toString(jobject : JValue) = {
+        pretty(render(jobject))
     }
-    pubIp.map(_ => PublicIpCheckCompleted(action))
-  }
 
-  def startAsync() {}
-
-  def getResultOnTimeout = {
-    action.vm.status = VmStatus.Failed
-    storeService.updateServer(action.vm)
-    PublicIpCheckFailed(action, action.vm)
-  }
+    def toJson(jmap : java.util.Map[Any,Any]) = {
+        val gson = new Gson()
+        val jstring = gson.toJson(jmap)
+        JsonParser.parse(jstring).asInstanceOf[JObject]
+    }
 }
-
-
-
-
-
-
-

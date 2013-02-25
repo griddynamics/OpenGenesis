@@ -23,8 +23,7 @@
 package com.griddynamics.genesis.repository
 
 import org.squeryl.PrimitiveTypeMode._
-import com.griddynamics.genesis.model
-import model.GenesisEntity
+import com.griddynamics.genesis.model.GenesisEntity
 import org.springframework.transaction.annotation.Transactional
 import org.squeryl._
 import com.griddynamics.genesis.annotation.RemoteGateway

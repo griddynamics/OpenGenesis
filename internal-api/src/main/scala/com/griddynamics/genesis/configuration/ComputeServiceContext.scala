@@ -22,12 +22,10 @@
  */
 package com.griddynamics.genesis.configuration
 
-import com.griddynamics.genesis.service.{ComputeService, SshService}
+import com.griddynamics.genesis.service.ComputeService
 
 trait ComputeServiceContext {
 
-    def compService: ComputeService
-
-    def sshService: SshService
+  def compService: ComputeService
 
 }

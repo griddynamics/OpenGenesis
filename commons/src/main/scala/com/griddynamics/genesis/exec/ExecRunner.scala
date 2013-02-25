@@ -51,7 +51,7 @@ class ExecRunner(val action: RunExec, sshService: SshService) extends AsyncActio
       case false => getExecStatus() match {
         case Some(status) => Some(ExecFinished(action, Some(status)))
         case None =>
-          log.debug("Failed to retrive exec status for exex details %s", action.execDetails)
+          log.debug("Failed to retrive exec status for exec details %s", action.execDetails)
           Some(ExecFinished(action, None))
       }
     }
