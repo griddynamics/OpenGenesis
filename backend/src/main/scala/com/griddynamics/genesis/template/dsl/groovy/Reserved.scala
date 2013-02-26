@@ -27,4 +27,5 @@ object Reserved {
   val configRef =  "$envConfig"
   val projectRef = "$project"
   val databagsRef = "$databags"
+  val contextRef = "$context"
 }
