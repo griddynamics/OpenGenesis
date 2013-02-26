@@ -6,6 +6,7 @@ import org.codehaus.groovy.control.{CompilePhase, SourceUnit}
 import com.griddynamics.genesis.util.Logging
 import expr._
 import stmt.ExpressionStatement
+import org.codehaus.groovy.syntax.{Types, Token}
 
 @GroovyASTTransformation(phase = CompilePhase.SEMANTIC_ANALYSIS)
 class ContextASTTransformation extends ASTTransformation with Logging {
@@ -16,44 +17,16 @@ class ContextASTTransformation extends ASTTransformation with Logging {
   }
 }
 
-class VariableToClosureReplace(val name: String, val node: ModuleNode) extends CodeVisitorSupport with Logging {
-
-  override def visitBinaryExpression(expression: BinaryExpression) {
-    val rightExpression = expression.getRightExpression
-    if (rightExpression.isInstanceOf[PropertyExpression]) {
-      val propertyExpression = rightExpression.asInstanceOf[PropertyExpression]
-      if (isAppropriateExpression(propertyExpression)){
-        log.debug(s"Found appropriate assignment to ${name} variable in expression ${expression.getText}")
-        expression.setRightExpression(buildClosure(propertyExpression))
-      } else {
-        log.debug(s"Not transforming ${propertyExpression.getText}")
-      }
+class PropertyFinder(val name: String) extends CodeVisitorSupport with Logging {
+  var findings: Int = 0
+  override def visitPropertyExpression(expression: PropertyExpression) {
+    if (isAppropriateExpression(expression)) {
+      findings += 1
     }
   }
 
-
-  private def buildClosure(top: PropertyExpression) : ClosureExpression = {
-    val block = new ExpressionStatement(stripLeader(top))
-    val expression: ClosureExpression = new ClosureExpression(null, block)
-    expression.setVariableScope(new VariableScope())
-    expression
-  }
-
-
-  private def stripLeader(top: PropertyExpression): Expression = {
-    val (_, expressions) = getLatestPropertyExpression(top)
-    expressions match {
-      case x :: xs => {
-        val newVariable = new VariableExpression(x.asInstanceOf[ConstantExpression].getValue.toString)
-        val newTop = xs.fold(newVariable)((acc, e) => new PropertyExpression(acc, e))
-        log.debug(s"Shortened expression ${top.getText} to form ${newTop.getText}")
-        newTop
-      }
-      case _ => {
-        log.debug("Expression list was empty. No transformation applied")
-        top
-      }
-    }
+  def isFound() = {
+    findings > 0
   }
 
   private def isAppropriateExpression(top: PropertyExpression): Boolean = {
@@ -71,5 +44,32 @@ class VariableToClosureReplace(val name: String, val node: ModuleNode) extends C
       originalExpression = originalExpression.getObjectExpression.asInstanceOf[PropertyExpression]
     }
     (originalExpression, originalExpression.getProperty :: expressions)
+  }
+}
+
+class VariableToClosureReplace(val name: String, val node: ModuleNode) extends CodeVisitorSupport with Logging {
+
+  override def visitBinaryExpression(expression: BinaryExpression) {
+    val rightExpression = expression.getRightExpression
+    if (expression.getOperation.getMeaning == Types.EQUAL) {
+      if (! rightExpression.isInstanceOf[ClosureExpression] && rightExpression.getText.contains(name)) {
+        log.debug(s"Right expression contains at least one inclusion of token ${name}")
+        val visitor = new PropertyFinder(name)
+        rightExpression.visit(visitor)
+        if (visitor.isFound()) {
+          log.debug(s"Found at least one appropriate usage of variable ${name}. Wrapping expression ${rightExpression.getText} with closure")
+          expression.setRightExpression(wrapWithClosure(rightExpression))
+        }
+      }
+    }
+  }
+
+
+  private def wrapWithClosure(top: Expression) : ClosureExpression = {
+    val block = new ExpressionStatement(top)
+    val expression: ClosureExpression = new ClosureExpression(null, block)
+    expression.setVariableScope(new VariableScope())
+    log.debug(s"Closure: ${expression.getText}")
+    expression
   }
 }

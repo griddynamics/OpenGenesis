@@ -253,8 +253,9 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
             case (_, value: Closure[_]) =>
                 contextDependentProperties(property) = new ContextAccess {
                     def apply(v1: collection.Map[String, Any]) = {
-                        import scala.collection.JavaConversions._
-                        value.setDelegate(new Expando(v1))
+                      import scala.collection.JavaConversions._
+                      val v2: Map[String, Expando] = Map(Reserved.contextRef -> new Expando(v1))
+                        value.setDelegate(new Expando(v2))
                         value.call()
                     }
                 }
