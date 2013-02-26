@@ -12,7 +12,10 @@
  "genesis.plugin.jclouds.port.check.timeout.secs" : {"default": 180, "description": "check ssh port timeout",
     "validation": {"Must be integer value >= 0": "int_nonnegative"}
  },
- "genesis.plugin.jclouds.public.ip.check.timeout.secs" : {"default": 30, "description": "ping timeout",
+ "genesis.plugin.jclouds.ssh.port.check.timeout.secs" : {"default": 20, "description": "check ssh connection timeout",
+    "validation": {"Must be integer value >= 0": "int_nonnegative"}
+ },
+  "genesis.plugin.jclouds.public.ip.check.timeout.secs" : {"default": 30, "description": "ping timeout",
     "validation": {"Must be integer value >= 0": "int_nonnegative"}
  }
 }

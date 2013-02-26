@@ -107,10 +107,6 @@
             <artifactId>akka-typed-actor</artifactId>
         </dependency>-->
         <dependency>
-            <groupId>com.jcraft</groupId>
-            <artifactId>jsch</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.griddynamics.genesis</groupId>
             <artifactId>api</artifactId>
             <version>${project.version}</version>

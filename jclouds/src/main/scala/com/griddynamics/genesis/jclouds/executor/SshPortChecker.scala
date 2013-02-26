@@ -33,7 +33,7 @@ class SshPortChecker(val action: CheckSshPortAction,
                      val computeService: ComputeService,
                      sshService: SshService,
                      val storeService: StoreService,
-                     val timeoutMillis: Long = 180 * 1000) extends AsyncTimeoutAwareActionExecutor with CommonSshPortChecker {
+                     val timeoutMillis: Long = 20 * 1000) extends AsyncTimeoutAwareActionExecutor with CommonSshPortChecker {
   def sshClient = sshService.sshClient(action.env, action.vm)
 
   override def getResult() = {
