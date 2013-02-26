@@ -63,7 +63,8 @@ private object Plugin {
   val Credential = "genesis.plugin.jclouds.credential"
   val NodeNamePrefix = "genesis.plugin.jclouds.nodename.prefix"
 
-  val PortCheckoutTimeout = "genesis.plugin.jclouds.port.check.timeout.secs"
+  val PortCheckTimeout = "genesis.plugin.jclouds.port.check.timeout.secs"
+  val SshPortCheckTimeout = "genesis.plugin.jclouds.ssh.port.check.timeout.secs"
   val ProvisionTimeout = "genesis.plugin.jclouds.provision.vm.timeout.secs"
   val PublicIpCheckoutTimeout = "genesis.plugin.jclouds.public.ip.check.timeout.secs"
 }
@@ -196,7 +197,8 @@ class JCloudsProvisionContextImpl(override val storeService: StoreService,
                               contextProvider: JCloudsComputeContextProvider) extends JCloudsProvisionContext {
 
   val provisionVmTimeout = configService.get(Plugin.ProvisionTimeout, 180) * 1000
-  val portCheckTimeout = configService.get(Plugin.PortCheckoutTimeout, 180) * 1000
+  val portCheckTimeout = configService.get(Plugin.PortCheckTimeout, 180) * 1000
+  val sshPortCheckTimeout = configService.get(Plugin.SshPortCheckTimeout, 20) * 1000
   val ipCheckTimeout = configService.get(Plugin.PublicIpCheckoutTimeout, 30) * 1000
 
   override val computeSettings = settings.filterKeys(_ != Plugin.NodeNamePrefix)
@@ -221,7 +223,7 @@ class JCloudsProvisionContextImpl(override val storeService: StoreService,
     new CommonPortTestExecutor(action, computeService, storeService, bootstrapContext.clientBootstrap, portCheckTimeout) with DurationLimitedActionExecutor
 
   def sshPortCheckActionExecutor(action: CheckSshPortAction) =
-    new SshPortChecker(action, computeService, sshService, storeService, portCheckTimeout) with DurationLimitedActionExecutor
+    new SshPortChecker(action, computeService, sshService, storeService, sshPortCheckTimeout) with DurationLimitedActionExecutor
 
   def publicIpCheckActionExecutor(action: CheckPublicIpAction) =
     new CommonCheckPublicIpExecutor(action, computeService, storeService, ipCheckTimeout)
