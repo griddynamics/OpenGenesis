@@ -44,6 +44,9 @@ import java.util.concurrent.TimeUnit
 import org.codehaus.groovy.runtime.{InvokerHelper, MethodClosure}
 import org.springframework.core.convert.ConversionService
 import com.griddynamics.genesis.annotation.RemoteGateway
+import org.codehaus.groovy.control.CompilerConfiguration
+import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer
+import transformations.{Context, ContextASTTransformation}
 
 @RemoteGateway("groovy template service")
 class GroovyTemplateService(val templateRepoService : TemplateRepoService,
@@ -142,7 +145,9 @@ class GroovyTemplateService(val templateRepoService : TemplateRepoService,
     binding.setVariable("include", new MethodClosure(templateDecl, "include"))
 
     try {
-      val groovyShell = new GroovyShell(binding)
+      val compilerConfiguration = new CompilerConfiguration()
+      compilerConfiguration.addCompilationCustomizers(new ASTTransformationCustomizer(classOf[Context]))
+      val groovyShell = new GroovyShell(binding, compilerConfiguration)
       groovyShell.evaluate(body)
       projectId.foreach (evaluateIncludes(_, templateDecl.includes, groovyShell))
     } catch {
@@ -248,8 +253,9 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
             case (_, value: Closure[_]) =>
                 contextDependentProperties(property) = new ContextAccess {
                     def apply(v1: collection.Map[String, Any]) = {
-                        import scala.collection.JavaConversions._
-                        value.setDelegate(new Expando(v1))
+                      import scala.collection.JavaConversions._
+                      val v2: Map[String, Expando] = Map(Reserved.contextRef -> new Expando(v1))
+                        value.setDelegate(new Expando(v2))
                         value.call()
                     }
                 }
