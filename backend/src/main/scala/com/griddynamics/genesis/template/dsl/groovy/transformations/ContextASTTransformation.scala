@@ -69,7 +69,6 @@ class VariableToClosureReplace(val name: String, val node: ModuleNode) extends C
     val block = new ExpressionStatement(top)
     val expression: ClosureExpression = new ClosureExpression(null, block)
     expression.setVariableScope(new VariableScope())
-    log.debug(s"Closure: ${expression.getText}")
     expression
   }
 }
