@@ -31,6 +31,7 @@ import org.jclouds.ssh.{SshClient, SshException}
 import org.jclouds.rest.AuthorizationException
 import com.griddynamics.genesis.util.shell.command.echo
 import com.griddynamics.genesis.model.{VirtualMachine, VmStatus}
+import com.griddynamics.genesis.logging.LoggerWrapper
 
 trait CommonSshPortChecker extends AsyncTimeoutAwareActionExecutor with Logging {
   def sshClient: SshClient
@@ -55,6 +56,7 @@ trait CommonSshPortChecker extends AsyncTimeoutAwareActionExecutor with Logging 
 
       case ae : AuthorizationException =>
         log.debug("Ssh auth failed: %s", ae.getMessage)
+        LoggerWrapper.writeActionLog(action.uuid, ae.getMessage)
         log.trace(ae, "Ssh auth failed trace")
         None
     }
