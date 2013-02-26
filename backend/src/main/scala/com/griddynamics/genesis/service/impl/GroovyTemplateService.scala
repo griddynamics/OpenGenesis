@@ -254,9 +254,16 @@ class StepBuilderProxy(stepBuilder: StepBuilder) extends GroovyObjectSupport wit
                 contextDependentProperties(property) = new ContextAccess {
                     def apply(v1: collection.Map[String, Any]) = {
                       import scala.collection.JavaConversions._
-                      val v2: Map[String, Expando] = Map(Reserved.contextRef -> new Expando(v1))
-                        value.setDelegate(new Expando(v2))
-                        value.call()
+                      value.setDelegate(new Expando(v1){
+                        override def getProperty(name: String) : AnyRef = {
+                           if (name == Reserved.contextRef) {
+                             this
+                           } else {
+                             super.getProperty(name)
+                           }
+                        }
+                      })
+                      value.call()
                     }
                 }
             case (_, value: ContextAccess) =>
