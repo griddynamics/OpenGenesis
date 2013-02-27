@@ -41,7 +41,7 @@ template {
         steps {
             teststep {
                 phase = "phase"
-                text =  {$envConfig.test}
+                text =  $envConfig.test
             }
         }
     }
@@ -50,7 +50,7 @@ template {
         steps {
             teststep {
                 phase = "phase2"
-                text =  {$envConfig['test_attr']}
+                text =  $envConfig['test_attr']
             }
         }
     }
