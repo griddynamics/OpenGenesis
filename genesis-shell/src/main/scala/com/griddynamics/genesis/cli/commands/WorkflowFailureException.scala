@@ -19,20 +19,6 @@
  *
  *   Project:     Genesis
  *   Description: Continuous Delivery Platform
- */
-package com.griddynamics.genesis.configuration
+ */ package com.griddynamics.genesis.cli.commands
 
-import org.springframework.context.annotation.{Bean, Configuration}
-import akka.actor.ActorSystem
-import com.griddynamics.genesis.agents.AgentsHealthServiceImpl
-import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.service.{ConfigService, AgentsHealthService}
-
-@Configuration
-class AgentTrackerContext {
-
-  @Autowired var actorSystem: ActorSystem = _
-  @Autowired var configService: ConfigService = _
-
-  @Bean def healthService: AgentsHealthService = new AgentsHealthServiceImpl(actorSystem, configService)
-}
+class WorkflowFailureException extends RuntimeException

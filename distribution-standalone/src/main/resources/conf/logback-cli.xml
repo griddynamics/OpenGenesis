@@ -1,0 +1,15 @@
+<configuration>
+  <property name="pattern" value="%d{yyyy-MM-dd HH:mm:ss} %-40logger{40} %-5level - %msg%n"/>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+      <pattern>${pattern}</pattern>
+    </encoder>
+  </appender>
+
+  <root level="ERROR">
+    <appender-ref ref="STDOUT"/>
+  </root>
+
+  <logger name="com.griddynamics" level="WARN"/>
+</configuration>

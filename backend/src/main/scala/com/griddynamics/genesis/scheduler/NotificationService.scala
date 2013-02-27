@@ -25,7 +25,7 @@ import com.griddynamics.genesis.configuration.MailServiceContext
 import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.model.Environment
 import com.griddynamics.genesis.util.Logging
-import com.griddynamics.genesis.service.impl.ProjectService
+import com.griddynamics.genesis.service.ProjectService
 import scala.collection.JavaConversions._
 import org.springframework.beans.factory.annotation.Autowired
 

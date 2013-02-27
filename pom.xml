@@ -102,6 +102,7 @@
         <module>nexus</module>
         <module>run-local</module>
         <module>ui</module>
+        <module>genesis-shell</module>
         <module>all-dependencies</module>
         <module>agent-commons</module>
         <module>agent-run-local</module>
@@ -271,7 +272,11 @@
                 <artifactId>agent-commons</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
+	          <dependency>
+                <artifactId>genesis-shell</artifactId>
+                <groupId>com.griddynamics.genesis</groupId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>commons-cli</groupId>
                 <artifactId>commons-cli</artifactId>
@@ -754,6 +759,11 @@
                 <groupId>nl.grons</groupId>
                 <artifactId>metrics-scala_2.10</artifactId>
                 <version>${metrics.version}</version>
+            </dependency>
+            <dependency>
+       	        <groupId>args4j</groupId>
+	            <artifactId>args4j</artifactId>
+	            <version>2.0.16</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

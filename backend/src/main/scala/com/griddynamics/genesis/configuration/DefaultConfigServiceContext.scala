@@ -33,6 +33,46 @@ import com.griddynamics.genesis.api.ConfigPropertyType
 import com.typesafe.config._
 import com.griddynamics.genesis.validation.{RegexValidator, ConfigValueValidator}
 
+@Configuration
+class DefaultConfigServiceContext extends ConfigServiceContext {
+
+  @Autowired private var dbConfig : org.apache.commons.configuration.Configuration = _
+  @Autowired @Qualifier("override") private var filePropsOverride: PropertiesFactoryBean = _
+  @Autowired(required = false) private var validators: java.util.Map[String, ConfigValueValidator] = mapAsJavaMap(Map())
+
+  private val defaults = ConfigFactory.load("defaults-system").withFallback(ConfigFactory.load("genesis-plugin")).
+    root.toMap.filterKeys(_.startsWith("genesis.")).mapValues {
+    case co: ConfigObject => new GenesisSettingMetadata(co.toConfig)
+  }
+  lazy val overrideConfig = ConfigurationConverter.getConfiguration(filePropsOverride.getObject)
+
+  private  lazy val config = {
+    ConfigurationUtils.enableRuntimeExceptions(dbConfig)
+    val compConfig = new CompositeConfiguration
+    overrideConfig match {
+      // allow comma to be used inside string property values in file
+      case ac: AbstractConfiguration => ac.setDelimiterParsingDisabled(true)
+      case _ =>
+    }
+    // read file properties overrides first
+    compConfig.addConfiguration(overrideConfig)
+    // then read DB, write to DB only
+    compConfig.addConfiguration(dbConfig, true)
+    // then read file properties defaults
+    compConfig.addConfiguration(new MapConfiguration(defaults.map{
+      case (k, v) => k -> v.default
+    }))
+    ConfigurationUtils.enableRuntimeExceptions(compConfig)
+    // allow comma to be used inside string property values in DB
+    compConfig.setDelimiterParsingDisabled(true)
+    compConfig
+  }
+
+  @Bean def configService: ConfigService = new impl.DefaultConfigService(config, dbConfig, overrideConfig, defaults,
+    validators.toMap, new RegexValidator)
+}
+
+
 class GenesisSettingMetadata(c: Config) {
   val default = c.getString("default")
   val description = getStringOption("description")
@@ -62,41 +102,3 @@ object GenesisSettingMetadata {
   def apply(default: String) = new GenesisSettingMetadata(ConfigValueFactory.fromMap(Map("default" -> default)).toConfig)
 }
 
-@Configuration
-class DefaultConfigServiceContext extends ConfigServiceContext {
-
-  @Autowired private var dbConfig : org.apache.commons.configuration.Configuration = _
-  @Autowired @Qualifier("override") private var filePropsOverride: PropertiesFactoryBean = _
-  @Autowired(required = false) private var validators: java.util.Map[String, ConfigValueValidator] = mapAsJavaMap(Map())
-
-  private val defaults = ConfigFactory.load("defaults-system").withFallback(ConfigFactory.load("genesis-plugin")).
-    root.toMap.filterKeys(_.startsWith("genesis")).mapValues {
-    case co: ConfigObject => new GenesisSettingMetadata(co.toConfig)
-  }
-  lazy val overrideConfig = ConfigurationConverter.getConfiguration(filePropsOverride.getObject)
-
-  private  lazy val config = {
-    ConfigurationUtils.enableRuntimeExceptions(dbConfig)
-    val compConfig = new CompositeConfiguration
-    overrideConfig match {
-      // allow comma to be used inside string property values in file
-      case ac: AbstractConfiguration => ac.setDelimiterParsingDisabled(true)
-      case _ =>
-    }
-    // read file properties overrides first
-    compConfig.addConfiguration(overrideConfig)
-    // then read DB, write to DB only
-    compConfig.addConfiguration(dbConfig, true)
-    // then read file properties defaults
-    compConfig.addConfiguration(new MapConfiguration(defaults.map{
-      case (k, v) => k -> v.default
-    }))
-    ConfigurationUtils.enableRuntimeExceptions(compConfig)
-    // allow comma to be used inside string property values in DB
-    compConfig.setDelimiterParsingDisabled(true)
-    compConfig
-  }
-
-  @Bean def configService: ConfigService = new impl.DefaultConfigService(config, dbConfig, overrideConfig, defaults,
-  validators.toMap, new RegexValidator)
-}
