@@ -11,7 +11,7 @@ template {
         steps {
             teststep {
                 phase = "phase"
-                text =  {$env.name}
+                text =  $env.name
             }
         }
     }
@@ -20,7 +20,7 @@ template {
         steps {
             teststep {
                 phase = "phase"
-                text =  {$env.noSuchProperty}
+                text =  $env.noSuchProperty
             }
         }
     }
@@ -29,7 +29,7 @@ template {
         steps {
             teststep {
                 phase = "phase2"
-                text =  {$env['test_attr']}
+                text =  $env['test_attr']
             }
         }
     }
