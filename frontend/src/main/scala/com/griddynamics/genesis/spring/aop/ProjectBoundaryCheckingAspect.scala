@@ -23,7 +23,7 @@
 package com.griddynamics.genesis.spring.aop
 
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.service.impl.ProjectService
+import com.griddynamics.genesis.service.ProjectService
 import org.aspectj.lang.annotation.{Pointcut, Before, Aspect}
 import com.griddynamics.genesis.rest.ResourceNotFoundException
 import org.aspectj.lang.JoinPoint

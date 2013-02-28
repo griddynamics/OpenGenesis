@@ -37,14 +37,9 @@
                            http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.0.xsd">
     <context:annotation-config/>
 
-    <bean id="validator"
-          class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean"/>
-
-    <bean class="org.springframework.validation.beanvalidation.MethodValidationPostProcessor">
-        <property name="validator" ref="validator"/>
-    </bean>
-
     <aop:aspectj-autoproxy proxy-target-class="false"/>
+
+    <bean id="validator" class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean"/>
 
     <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
         <property name="propertiesArray">
@@ -137,8 +132,6 @@
         <constructor-arg name="configService" ref="configService"/>
     </bean>
 
-    <bean id="housekeeping" class="com.griddynamics.genesis.service.impl.DefaultHousekeepingService"/>
-
     <bean id="attributeRepository" class="com.griddynamics.genesis.repository.impl.AttributeRepositoryImpl"/>
 
     <bean id="authorityService" class="com.griddynamics.genesis.service.impl.DefaultAuthorityService">
@@ -153,14 +146,18 @@
         <constructor-arg name="permissionService" ref="permissionService"/>
     </bean>
 
-    <bean id="environmentSecurity" class="com.griddynamics.genesis.service.impl.EnvironmentAccessService">
-        <constructor-arg name="permissionService" ref="permissionService"/>
-        <constructor-arg name="storeService" ref="storeService"/>
-    </bean>
-
-    <bean id="gatewayLoggingAspect" class="com.griddynamics.genesis.spring.aop.RemoteGatewayAspect">
-        <constructor-arg name="metricsOn" value="${genesis.system.metrics:true}" />
-    </bean>
-
     <context:component-scan base-package="com.griddynamics.genesis.configuration" />
+
+    <beans profile="server">
+        <bean id="gatewayLoggingAspect" class="com.griddynamics.genesis.spring.aop.RemoteGatewayAspect" >
+            <constructor-arg name="metricsOn" value="${genesis.system.metrics:true}" />
+        </bean>
+
+        <bean id="housekeeping" class="com.griddynamics.genesis.service.impl.DefaultHousekeepingService"/>
+
+        <bean class="org.springframework.validation.beanvalidation.MethodValidationPostProcessor">
+            <property name="validator" ref="validator"/>
+        </bean>
+
+    </beans>
 </beans>

@@ -26,13 +26,14 @@ import java.lang.String
 import java.sql.{Connection, ResultSet, Statement, SQLException}
 import javax.sql.DataSource
 import scala.util.control.Exception._
-import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.{Profile, Configuration}
 import org.springframework.beans.factory.annotation.Autowired
 import org.apache.commons.dbcp.BasicDataSource
 import javax.annotation.PostConstruct
 import com.yammer.metrics.HealthChecks
 
 @Configuration
+@Profile(Array("server"))
 class DatabaseHealthCheckContext {
 
   @Autowired var dataSource: BasicDataSource  = _
