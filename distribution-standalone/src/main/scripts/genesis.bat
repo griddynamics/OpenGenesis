@@ -1,5 +1,5 @@
 @rem .
-@rem Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
+@rem Copyright (c) 2010-2013 Grid Dynamics Consulting Services, Inc, All Rights Reserved
 @rem .
 
 @echo off

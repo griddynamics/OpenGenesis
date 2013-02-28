@@ -22,27 +22,24 @@
  */
 package com.griddynamics.genesis.service.impl
 
-import com.griddynamics.genesis.common.CRUDService
 import com.griddynamics.genesis.validation.Validation
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.validation.Validation._
-import com.griddynamics.genesis.api.{Success, Project, Ordering}
+import com.griddynamics.genesis.api.{Configuration, Success, Project, Ordering}
 import com.griddynamics.genesis.service
 import com.griddynamics.genesis.model.EnvStatus
-import com.griddynamics.genesis.repository
-import repository.ProjectRepository
+import com.griddynamics.genesis.repository.{ConfigurationRepository, ProjectRepository}
 import com.griddynamics.genesis.users.GenesisRole
+import com.griddynamics.genesis.service.ProjectService
 
-trait ProjectService extends CRUDService[Project, Int] {
 
-  def orderedList(ordering: Ordering): Seq[Project]
-
-  def getProjects(ids: Iterable[Int], ordering: Option[Ordering] = None): Iterable[Project]
-
-  def getProjectAdmins(projectId: Int): Seq[String]
-}
-
-class ProjectServiceImpl(repository: ProjectRepository, storeService: service.StoreService, authorityService: service.ProjectAuthorityService) extends ProjectService with Validation[Project] {
+class ProjectServiceImpl(
+    repository: ProjectRepository,
+    storeService: service.StoreService,
+    authorityService: service.ProjectAuthorityService,
+    configurationRepository: ConfigurationRepository)
+  extends ProjectService
+  with Validation[Project] {
 
   protected def validateCreation(project: Project) =
       must(project, "Project with name '" + project.name + "' already exists") {
@@ -68,7 +65,12 @@ class ProjectServiceImpl(repository: ProjectRepository, storeService: service.St
 
   @Transactional
   override def create(project: Project) = {
-    validCreate(project, repository.save(_))
+    val result = validCreate(project, repository.save(_))
+
+    result.map { pr =>
+      configurationRepository.save(new Configuration(None, "Default", pr.id.get, None))
+      pr
+    }
   }
 
   @Transactional

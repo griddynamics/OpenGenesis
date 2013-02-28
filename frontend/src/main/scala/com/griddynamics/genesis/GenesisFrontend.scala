@@ -68,8 +68,14 @@ object GenesisFrontend extends Logging {
           Seq("classpath:/WEB-INF/spring/backend-config.xml", securityConfig)
 
         log.debug("Using contexts %s", contexts)
+        val profiles = Option(System.getProperty("spring.profiles.active"))
 
+        profiles match {
+          case Some(p) if (!p.trim().isEmpty) => System.setProperty("spring.profiles.active", p + ", server")
+          case _ => System.setProperty("spring.profiles.active", "server")
+        }
         val appContext = new ClassPathXmlApplicationContext(contexts:_*)
+        appContext.getEnvironment.setActiveProfiles("server")
         val helper = new PropertyHelper(genesisProperties, appContext)
         helper.validateProperties(log)
 

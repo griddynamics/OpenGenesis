@@ -111,7 +111,7 @@
                 </exclusion>
                 <exclusion>
                     <groupId>net.liftweb</groupId>
-                    <artifactId>lift-json_2.9.0</artifactId>
+                    <artifactId>${net.liftweb.lift-json.id}</artifactId>
                 </exclusion>
                 <exclusion>
                     <groupId>com.jcraft</groupId>

@@ -36,8 +36,8 @@ import repository.{GenesisVersionRepository, SchemaCreator}
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import com.griddynamics.genesis.adapters.MSSQLServerWithPagination
-import service.{EnvironmentService, AgentsHealthService, impl}
-import service.impl._
+import com.griddynamics.genesis.service.{ProjectService, EnvironmentService, AgentsHealthService, impl}
+import com.griddynamics.genesis.service.impl._
 import org.springframework.beans.factory.InitializingBean
 import com.griddynamics.genesis.util.Logging
 import org.springframework.beans.factory.annotation.Autowired
@@ -46,21 +46,21 @@ import java.sql.SQLException
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
 
-    @Autowired var healthService: AgentsHealthService = _
-
     @Autowired var projectAuthority: service.ProjectAuthorityService = _
 
-  @Autowired var envAccessService: service.EnvironmentAccessService = _
+    @Autowired var permissionService: PermissionService = _
+
+    @Bean def environmentSecurity: service.EnvironmentAccessService = new impl.EnvironmentAccessService(storeService, permissionService)
 
     @Bean def storeService: service.StoreService = new impl.StoreService
 
     @Bean def projectRepository: repository.ProjectRepository = new repository.impl.ProjectRepository
 
-    @Bean def projectService: ProjectService = new ProjectServiceImpl(projectRepository, storeService, projectAuthority)
+    @Bean def projectService: ProjectService = new ProjectServiceImpl(projectRepository, storeService, projectAuthority, configurationRepository)
 
     @Bean def credentialsRepository: repository.CredentialsRepository = new repository.impl.CredentialsRepository
     @Bean def configurationRepository: repository.ConfigurationRepository = new repository.impl.ConfigurationRepositoryImpl
-    @Bean def environmentService: EnvironmentService = new EnvironmentServiceImpl(configurationRepository, envAccessService)
+    @Bean def environmentService: EnvironmentService = new EnvironmentServiceImpl(configurationRepository, environmentSecurity)
 
     @Bean def credentialsStoreService: service.CredentialsStoreService = new impl.CredentialsStoreService(credentialsRepository, projectRepository)
 
@@ -74,8 +74,6 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 
     @Bean def databagService: service.DataBagService = new impl.DataBagServiceImpl(databagRepository)
 
-    @Bean def agentsRepository: repository.RemoteAgentRepository = new RemoteAgentRepositoryImpl
-    @Bean def agentsService: service.RemoteAgentsService = new RemoteAgentsServiceImpl(agentsRepository, healthService)
 }
 
 class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager,

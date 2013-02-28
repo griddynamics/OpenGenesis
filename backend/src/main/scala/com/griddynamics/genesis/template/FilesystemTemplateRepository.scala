@@ -34,7 +34,8 @@ class FilesystemTemplateRepository(filesystemFolder: String, wildcard: String) e
     
     var sources: Map[VersionedTemplate, String] = Map()
     var lastModifiedHash = "0"
-    
+    val genesisHome = Option(System.getProperty("genesis_home"))
+
     def listSources() = {
         if (sources.isEmpty || lastModifiedHash != lastModification) {
             sources = readSources()
@@ -47,7 +48,14 @@ class FilesystemTemplateRepository(filesystemFolder: String, wildcard: String) e
 
 
     def files: Array[File] = {
-        val topDir = new File(filesystemFolder)
+        var topDir = new File(filesystemFolder)
+
+        if (!topDir.exists() && genesisHome.isDefined) {
+          val relativePath = new File(new File(genesisHome.get), filesystemFolder)
+          if (relativePath.exists() && relativePath.isDirectory) {
+            topDir = relativePath
+          }
+        }
 
         if (!topDir.exists || !topDir.isDirectory)
           throw new IllegalArgumentException("Given template directory doesn't exist (%s)".format(topDir.getPath))

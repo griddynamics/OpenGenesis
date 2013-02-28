@@ -9,7 +9,7 @@ import HrefBuilder._
 import CollectionWrapper._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
-import com.griddynamics.genesis.service.impl.ProjectService
+import com.griddynamics.genesis.service.ProjectService
 import com.griddynamics.genesis.api._
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.Authentication
@@ -124,14 +124,7 @@ class ProjectsController extends RestApiExceptionsHandler {
       description = attr.description.map(_.trim)
     )
 
-    val result = projectService.create(project)
-    result match {
-      case r@Success(pr) => {
-        configurationRepository.save(new Configuration(None, "Default", pr.id.get, None))
-        r
-      }
-      case r => r
-    }
+    projectService.create(project)
   }
 
   @RequestMapping(value = Array("{projectId}"), method = Array(RequestMethod.GET))

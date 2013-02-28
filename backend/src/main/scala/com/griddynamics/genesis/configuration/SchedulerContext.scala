@@ -21,7 +21,7 @@
  *   Description: Continuous Delivery Platform
  */ package com.griddynamics.genesis.configuration
 
-import org.springframework.context.annotation.{Bean, Configuration}
+import org.springframework.context.annotation.{Profile, Bean, Configuration}
 import com.griddynamics.genesis.scheduler.{SchedulingServiceImpl, EnvDestructionService, NotificationService, SchedulingService, DestructionService}
 import org.springframework.scheduling.quartz.SchedulerFactoryBean
 import org.springframework.beans.factory.annotation.{Value, Autowired}
@@ -29,15 +29,17 @@ import javax.sql.DataSource
 import org.quartz.spi.JobFactory
 import com.griddynamics.genesis.scheduler.jobs.WorkflowJobFactory
 import com.griddynamics.genesis.bean.RequestBroker
-import com.griddynamics.genesis.service.impl.ProjectService
+import com.griddynamics.genesis.service.ProjectService
 import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.util.Logging
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
-import java.util.Properties
+import java.util.{Date, Properties}
 import javax.annotation.PostConstruct
+import com.griddynamics.genesis.model.Environment
 
 
 @Configuration
+@Profile(Array("server"))
 class SchedulerContext extends Logging {
 
   @Autowired var dataSource: DataSource = _
@@ -101,5 +103,20 @@ class SchedulerContext extends Logging {
     map.foreach { case (key, value) => props.setProperty(key, value) }
     props
   }
+}
 
+
+
+@Configuration
+@Profile(Array("genesis-cli"))
+class SchedulerStubContext extends Logging {
+  @Bean def destructionService: DestructionService = new DestructionService {
+    def scheduleDestruction(projectId: Int, envId: Int, date: Date) {}
+
+    def removeScheduledDestruction(projectId: Int, envId: Int) {}
+
+    def destructionDate(env: Environment, destroyWorfklow: String) = None
+
+    def destructionDate(env: Environment) = None
+  }
 }
