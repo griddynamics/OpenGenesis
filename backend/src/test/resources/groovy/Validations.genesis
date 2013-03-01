@@ -14,13 +14,13 @@ template {
             variable("b").description("B variable").as(Integer).validator {it > 10}
             variable("c").description("C variable").as(Integer).validator([
                     "C error message" : {
-                        b > 20 && it > 6
+                        $vars.b > 20 && it > 6
                     }
             ]).optional()
             foo = {
                 description = "Foo variable"
                 validator(
-                    "Foo message" : {foo == 0}
+                    "Foo message" : {$vars.foo == 0}
                 )
                 clazz = Integer
                 isOptional = true

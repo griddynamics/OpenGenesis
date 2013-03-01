@@ -5,6 +5,7 @@ import groovy.lang.{MissingPropertyException, Closure, GroovyObjectSupport}
 import collection.mutable.ListBuffer
 import com.griddynamics.genesis.util.ScalaUtils
 import java.lang.reflect.Method
+import com.griddynamics.genesis.template.support.VariablesSupport
 
 class DataSourceDeclaration(val projectId: Int, dsFactories: Seq[DataSourceFactory]) extends GroovyObjectSupport with Delegate {
     val builders = new ListBuffer[DataSourceBuilder]
@@ -85,12 +86,20 @@ class DSObjectSupport(val dsMap: Map[String, DataSourceBuilder]) extends GroovyO
      def dataSource(name: String) : Option[(String, VarDataSource)] = dsMap.get(name).map(_.newDS)
  }
 
+class ConfigScopeHolder(val variables: Map[String, Any], builder: DataSourceBuilder) extends ScopeHolder(variables) with VariablesSupport {
+  override def delegationStrategy: Int = Closure.DELEGATE_FIRST
+
+  override def setProperty(prop: String, newVal: AnyRef) {
+   builder.setProperty(prop, newVal)
+  }
+}
 
 class InlineDataSource( builder: DataSourceBuilder,
                         configDeclaration: Option[Closure[_]],
                         knownVariables: Seq[VariableBuilder] ) extends VarDataSource {
 
   private lazy val datasource = configuredBuilder.newDS._2
+  private var configHolder = new ConfigScopeHolder(new DependencyRefCollector(knownVariables).variables, builder)
 
   def getData = configuredBuilder.conf.get("lazy") match {
     case Some(true) => Map()
@@ -108,20 +117,16 @@ class InlineDataSource( builder: DataSourceBuilder,
   override def hasValue(value: Any) = datasource.hasValue(value)
 
   private[this] def configuredBuilder =
-    configDeclaration.map { it => Delegate(it).to(builder) }.getOrElse(builder)
+    configDeclaration.map { it => {Delegate(it).to(configHolder); builder} }.getOrElse(builder)
 
   def config(map: Map[String, Any]) {
-    for (config <- configDeclaration) {
-      map.foreach {
-        case (key, value) => config.setProperty(key, value)    //todo: wtf  . why is it propagated
-      }
-    }
+    configHolder = new ConfigScopeHolder(map, builder)
   }
 
   lazy val dependencyVars: Seq[String] =
     configDeclaration.map { closure => Delegate(closure).to(new DependencyRefCollector(knownVariables)).links }.getOrElse(Seq())
 
-  private[this] class DependencyRefCollector(knownVars: Seq[VariableBuilder]) extends GroovyObjectSupport with Delegate {
+  private[this] class DependencyRefCollector(knownVars: Seq[VariableBuilder]) extends GroovyObjectSupport with Delegate with VariablesSupport {
 
     override def delegationStrategy = Closure.DELEGATE_FIRST
 
@@ -137,14 +142,17 @@ class InlineDataSource( builder: DataSourceBuilder,
       }
     }
 
-    override def getProperty(property: String) = {
-        knownVars.find(_.name == property) match {
-          case Some(variable) =>
-            links += property
-            fakeValue(variable.getClazz())
-          case None => super.getProperty(property)
-        }
-    }
-  }
+    def variables = knownVars.map {
+      case v => (v.name, fakeValue(v.getClazz()))
+    }.toMap
 
+    override def get$vars = new java.util.HashMap[String, Any](super.get$vars) {
+      override def get(key: Any) = {
+        links += key.toString
+        super.get(key)
+      }
+    }
+
+    override def setProperty(name: String, value: AnyRef) {} // ignore setting properties
+  }
 }
