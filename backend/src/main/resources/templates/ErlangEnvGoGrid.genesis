@@ -15,7 +15,7 @@ template {
                 roleName = "erlangNode"
                 hardwareId = "1"
                 imageId = "5825"
-                quantity = nodesCount
+                quantity = $vars.nodesCount
                 retryCount = 3
             }
             chefrun {
@@ -48,7 +48,7 @@ template {
                 roleName = "erlangNode"
                 hardwareId = "1"
                 imageId = "5825"
-                quantity = nodesCount
+                quantity = $vars.nodesCount
             }
             chefrun {
                 phase = "install"
