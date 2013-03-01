@@ -50,7 +50,7 @@ function(genesis, Backbone, Environments) {
       router.bind("route:projectProperties", this.projectProperties);
       router.bind("route:environments", this.environments);
       router.bind("route:environmentDetails", this.environmentsDetails);
-      router.bind("route:workflowDetails", this.environmentsDetails);
+      router.bind("route:workflowDetails", this.workflowDetails);
       router.bind("route:createEnvironment", this.createEnvironment);
       router.bind("route:listSettings", this.settings);
       router.bind("route:createProject", this.createProject);
@@ -78,12 +78,25 @@ function(genesis, Backbone, Environments) {
       this.render(locationList)
     },
 
-    environmentsDetails: function(projectId, envId) {
-      var locationList = [_homeLocation, this._project(projectId)];
-      var view = this;
-      var environment = new Environments.Model({id: envId, projectId: projectId});
+    environmentsDetails: function(projectId, envId, workflowId) {
+      var locationList = [_homeLocation, this._project(projectId)]
+        , view = this
+        , environment = new Environments.Model({id: envId, projectId: projectId});
+
       $.when(environment.fetch()).done(function () {
         locationList.push(_locationItem(Backbone.history.fragment, environment.get('name')));
+        view.render(locationList)
+      });
+    },
+
+    workflowDetails: function(projectId, envId, workflowId) {
+      var locationList = [_homeLocation, this._project(projectId)]
+        , view = this
+        , environment = new Environments.Model({id: envId, projectId: projectId});
+
+      $.when(environment.fetch()).done(function () {
+        locationList.push(_locationItem("/project/" + projectId + "/inst/" + envId, environment.get('name')));
+        locationList.push(_locationItem(Backbone.history.fragment, "Execution details"));
         view.render(locationList)
       });
     },

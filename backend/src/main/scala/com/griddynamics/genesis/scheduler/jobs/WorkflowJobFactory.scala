@@ -22,7 +22,7 @@ class WorkflowJobFactory(broker: RequestBroker, storeService: StoreService, noti
       else
         jobClass.newInstance()
     } catch {
-      case e: Exception => throw new SchedulerException(s"Scheduler job factory could'nt instantiating job class '${jobClass.getName}'", e)
+      case e: Exception => throw new SchedulerException(s"Scheduler job factory couldn't instantiate job class '${jobClass.getName}'", e)
     }
   }
 }
