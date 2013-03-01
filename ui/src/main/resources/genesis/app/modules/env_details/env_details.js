@@ -57,6 +57,49 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
     }
   });
 
+  EnvironmentDetails.Views.SingleWorkflowView = Backbone.View.extend({
+    template: "app/templates/env_details/workflow_details.html",
+
+    initialize: function (options) {
+      this.model = new EnvHistory.WorkflowHistoryModel({}, {workflowId: options.workflowId, projectId: options.projectId, envId: options.envId});
+    },
+
+    render: function () {
+      var view = this;
+      $.when(
+          genesis.fetchTemplate(this.template),
+          genesis.fetchTemplate(new EnvHistory.WorkflowHistoryView().template)
+        ).done(function (tmpl) {
+
+          $.when(view.model.fetch()).done(function() {
+            view.$el.html(tmpl({ workflow: view.model.toJSON() }));
+            var subview = new EnvHistory.WorkflowHistoryView({
+              expanded: true,
+              model: view.model,
+              el: view.$('div.workflow-section[data-workflow-id="' + view.model.id + '"]')
+            });
+
+            var failedSteps = _.chain(view.model.get("steps")).
+              filter(function(i){ return i.status == "Failed" }).
+              map(function(i) { return parseInt(i.stepId) }).
+              value();
+            subview.render(function() {
+              _(failedSteps).each(function(stepId) {
+                subview.showStepActions(stepId)
+              });
+            });
+          }).fail(function(error) {
+              if(error.status === 400) {
+                view.$el.html(tmpl({ workflow: view.model }));
+                var panel = new status.LocalStatus({ el: self.$(".notification")});
+                panel.error(JSON.parse(error.responseText).error)
+              }
+            })
+        });
+    }
+  });
+
+
   EnvironmentDetails.Views.Details = Backbone.View.extend({
     template: "app/templates/env_details.html",
 

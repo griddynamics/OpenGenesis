@@ -15,7 +15,7 @@ function (genesis, Backbone, status, $) {
    */
   var PAGE_SIZE = 10;
 
-  var WorkflowHistoryModel = Backbone.Model.extend({
+  EnvironmentHistory.WorkflowHistoryModel = Backbone.Model.extend({
     initialize: function(attrs, options) {
       this.projectId = options.projectId;
       this.envId = options.envId;
@@ -31,7 +31,7 @@ function (genesis, Backbone, status, $) {
 
   EnvironmentHistory.Collection = Backbone.Collection.extend({
 
-    model: WorkflowHistoryModel,
+    model: EnvironmentHistory.WorkflowHistoryModel,
 
     initialize: function(models, options) {
       this.pageOffset = 0;
@@ -148,7 +148,7 @@ function (genesis, Backbone, status, $) {
     }
   });
 
-  var WorkflowHistoryView = Backbone.View.extend({
+  EnvironmentHistory.WorkflowHistoryView = Backbone.View.extend({
     template: "app/templates/env_details/workflow_history.html",
 
     events: {
@@ -165,28 +165,37 @@ function (genesis, Backbone, status, $) {
     },
 
     toggleStepActionsView: function(event) {
-      var $currentTarget = $(event.currentTarget),
-        $details = $($currentTarget.attr("data-actions-rel")),
-        stepId = parseInt($currentTarget.attr("data-step-id")),
-        stepStatus = $currentTarget.attr("data-step-status");
+      var $currentTarget = $(event.currentTarget)
+        , $details = $($currentTarget.attr("data-actions-rel"))
+        , stepId = parseInt($currentTarget.attr("data-step-id"));
 
       if (!$details.is(":visible")) {
-        var logsCollection = new StepLogCollection([], {
-          "projectId": this.model.projectId || this.model.collection.projectId,
-          "envId": this.model.envId  || this.model.collection.envId,
-          "stepId": stepId
-        });
-
-        this.actionViews[stepId] = new StepLogView({
-          el: $details.children(".subtable"),
-          collection: logsCollection,
-          isStepFinished: !(stepStatus === "Requested" || stepStatus === "Running")
-        });
+        this.showStepActions(stepId, $details);
       } else {
         delete this.actionViews[stepId];
+        $details.hide();
       }
+    },
 
-      $details.toggle();
+    showStepActions: function(stepId, $details) {
+      var $currentTarget = this.$("[data-step-id = " + stepId + "]")
+        , stepStatus = $currentTarget.attr("data-step-status");
+
+      $details = $details || $($currentTarget.attr("data-actions-rel"));
+
+      var logsCollection = new StepLogCollection([], {
+        "projectId": this.model.projectId || this.model.collection.projectId,
+        "envId": this.model.envId  || this.model.collection.envId,
+        "stepId": stepId
+      });
+
+      this.actionViews[stepId] = new StepLogView({
+        el: $details.children(".subtable"),
+        collection: logsCollection,
+        isStepFinished: !(stepStatus === "Requested" || stepStatus === "Running")
+      });
+
+      $details.show();
     },
 
     toggle: function(event) {
@@ -213,7 +222,7 @@ function (genesis, Backbone, status, $) {
       $element.toggle();
     },
 
-    render: function() {
+    render: function(callback) {
       var self = this;
       $.when(genesis.fetchTemplate(this.template)).done(function (tmpl) {
         var htmls = _.chain(self.actionViews).keys().reduce(function(memo, item) {   //real hardcore!
@@ -234,52 +243,12 @@ function (genesis, Backbone, status, $) {
           self.actionViews[stepId].setElement(self.$("#step-"+ stepId + "-actions .subtable"));
           self.actionViews[stepId].refresh();
         });
+
+        if(callback) callback();
       });
     }
   });
 
-  var SingleWorkflowView = Backbone.View.extend({
-    template: "app/templates/env_details/workflow_details.html",
-
-    events: {
-      "click .back": "back"
-    },
-
-    initialize: function () {
-      this.render()
-    },
-
-    render: function () {
-      var view = this;
-      $.when(
-        genesis.fetchTemplate(this.template),
-        genesis.fetchTemplate(new WorkflowHistoryView().template)
-      ).done(function (tmpl) {
-
-        $.when(view.model.fetch()).done(function() {
-          view.$el.html(tmpl({ workflow: view.model.toJSON() }));
-          var subview = new WorkflowHistoryView({
-            expanded: true,
-            model: view.model,
-            el: view.$('div.workflow-section[data-workflow-id="' + view.model.id + '"]')
-          });
-
-          subview.render();
-        }).fail(function(error) {
-          if(error.status === 400) {
-            view.$el.html(tmpl({ workflow: view.model }));
-            var panel = new status.LocalStatus({ el: self.$(".notification")});
-            panel.error(JSON.parse(error.responseText).error)
-          }
-        })
-      });
-    },
-
-    back: function() {
-      this.trigger("close-view");
-    }
-
-  });
 
   EnvironmentHistory.View = Backbone.View.extend({
     template: "app/templates/env_details/env_history.html",
@@ -291,23 +260,7 @@ function (genesis, Backbone, status, $) {
 
     initialize: function (options) {
       this.workflowViews = {};
-      this.workflowId = options.workflowId;
-      if(this.workflowId) {
-        var workflow = new WorkflowHistoryModel({}, {workflowId: this.workflowId, projectId: this.collection.projectId, envId: this.collection.envId});
-        var view = new SingleWorkflowView({el: this.el, model: workflow });
-        var self = this;
-        view.bind("close-view", function() {
-          genesis.app.router.navigate("project/" + self.collection.projectId + "/inst/" + self.collection.envId, {trigger: false})
-          view.unbind();
-          view.undelegateEvents();
-          self.buildListView();
-        })
-      } else {
-        this.buildListView();
-      }
-    },
 
-    buildListView: function(){
       this.collection.fetch();
       this.collection.bind("reset", this.render, this);
       this.model.bind("change", function() {
@@ -341,7 +294,7 @@ function (genesis, Backbone, status, $) {
 
       $.when(
         genesis.fetchTemplate(this.template),
-        genesis.fetchTemplate(new WorkflowHistoryView().template)
+        genesis.fetchTemplate(new EnvironmentHistory.WorkflowHistoryView().template)
       ).done(function (tmpl) {
           var pageInfo = histories.pageInfo();
 
@@ -352,7 +305,7 @@ function (genesis, Backbone, status, $) {
           }));
 
           histories.each(function(workflow, index) {
-            var workflowView = view.workflowViews[workflow.id] || new WorkflowHistoryView({
+            var workflowView = view.workflowViews[workflow.id] || new EnvironmentHistory.WorkflowHistoryView({
               expanded: index === 0 && pageInfo.page === 1
             });
 
