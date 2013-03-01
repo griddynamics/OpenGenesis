@@ -211,13 +211,7 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
         } else if (inlineDataSource.isDefined) {
           val inlineDS = inlineDataSource.get
 
-          validators.put("Invalid value", new Closure[Boolean](new Expando()) {
-            def doCall(args: Array[Any]): Boolean = {
-              val deps = inlineDS.dependencyVars
-              inlineDS.config(deps.map { it => (it, this.getProperty(it)) }.toMap)
-              inlineDS.hasValue( args(0) )
-            }
-          })
+          validators.put("Invalid value", new HasValueValidator(inlineDS))
 
           val func = { params: Map[String, Any] =>
             if (params.nonEmpty || inlineDS.dependencyVars.isEmpty) {
@@ -252,22 +246,6 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
       }
       new VariableDetails(name, clazz, description, validators.toSeq, isOptional, default, values, parents.toList, group)
     }
-
-  override def setProperty(property: String, arg: AnyRef) {
-    if (super.getMetaClass.hasProperty(this, property) != null || Reserved.configRef == property) {
-      super.setProperty(property, arg)
-    } else {
-      props.put(property, arg)
-    }
-  }
-
-  override def getProperty(property: String): AnyRef = {
-    if (super.getMetaClass.hasProperty(this, property) != null || Reserved.configRef == property) {
-      super.getProperty(property)
-    } else {
-      props.get(property).getOrElse(throw new MissingPropertyException(property, this.getClass))
-    }
-  }
 }
 
 
@@ -310,4 +288,17 @@ class DSAwareVariableBuilder(knownVars: ListBuffer[VariableBuilder],
   }
 }
 
+class HasValueValidator(inlineDS: InlineDataSource) extends Closure[Boolean](new Expando()) {
 
+  def doCall(args: Array[Any]): Boolean = {
+    val deps = inlineDS.dependencyVars
+    inlineDS.config(deps.map {
+      it => (it, this.getVarValue(it))
+    }.toMap)
+    inlineDS.hasValue( args(0) )
+  }
+
+  private def getVarValue(name: String) = this.getProperty(Reserved.varsRef) match {
+    case  map: java.util.Map[String, Any] => map.get(name)
+  }
+}

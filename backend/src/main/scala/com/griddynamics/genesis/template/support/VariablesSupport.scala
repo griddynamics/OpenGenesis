@@ -1,5 +1,5 @@
-/**
- *   Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
+/*
+ * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
  *   This library is free software; you can redistribute it and/or modify it under the terms of
@@ -18,15 +18,12 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *   Project:     Genesis
- *   Description: Continuous Delivery Platform
+ *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.template.dsl.groovy
 
-object Reserved {
-  val instanceRef = "$env"
-  val configRef =  "$envConfig"
-  val projectRef = "$project"
-  val databagsRef = "$databags"
-  val contextRef = "$context"
-  val varsRef = "$vars"
+package com.griddynamics.genesis.template.support
+
+trait VariablesSupport {
+  def variables: Map[String, Any]
+  def get$vars = collection.JavaConversions.mapAsJavaMap(variables)
 }

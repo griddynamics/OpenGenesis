@@ -76,4 +76,11 @@ class VarGroupsTest extends AssertionsForJUnit with MockitoSugar with DSLTestUni
       val errors = createWorkflow.validate(Map("a" -> 1))
       expectResult(1)(errors.size)
     }
+
+    @Test def testEmbody() {
+        val res = createWorkflow.embody(Map("a" -> "1", "b" -> "false"))
+        expectResult(1)(res.regular.size)
+        expectResult("phase1")(res.regular.head.phase)
+        expectResult("test input: false")(res.apply(0).getDetails.asInstanceOf[DoNothingStep].name)
+    }
 }
