@@ -1,11 +1,28 @@
-<div class="pagination" style="margin-top: 15px; margin-bottom: 15px;" >
-    <a href="javascript:void(0)" class="back" ><img src="assets/img/back.png" alt="Back link"/>Back to action history list</a>
+<div id="top-panel">
+    <div id="page-title">
+        <img id="env-icon" src="assets/img/workflow32.png" alt="Env">
+        <h1 class="envname"><%= workflow.name %></h1>
+    </div>
+    <div id="env-ops" style="float: right;">
+        <div id="title-right">
+        </div>
+    </div>
     <div class="clear"></div>
 </div>
-<div class="clear" style="padding-bottom: 5px;"></div>
-<% if (workflow.id) { %>
-    <div class="page-title"><h2><strong style="text-transform: capitalize;">'<%- workflow.name %>'</strong> execution result details</h2></div>
-<% } %>
-<div class="workflow-section" data-workflow-id="<%= workflow.id %>">
-    <div class="notification" style="display:none"></div>
+<div id="tab-panel">
+    <div id="tabs" data-tabpanel="header">
+        <a href="javascript:void(0);" class="tab tab-selected" id="tab1" rel="#panel-tab-3"> <span> Workflow details </span> </a>
+    </div>
+    <div id="panel">
+        <div id="panel-tab-3" class="tab-content opened">
+
+            <div class="clear" style="padding-bottom: 5px;"></div>
+            <div class="workflow-section" data-workflow-id="<%= workflow.id %>">
+                <div class="notification" style="display:none"></div>
+            </div>
+        </div>
+    </div>
 </div>
+
+
+
