@@ -51,7 +51,7 @@ template {
         steps {
             teststep {
                 phase = "phase1"
-                text =   "test input: " + b
+                text =   "test input: " + $vars.b
             }
         }
     }

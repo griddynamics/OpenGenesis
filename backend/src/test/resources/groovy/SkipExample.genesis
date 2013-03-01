@@ -14,7 +14,7 @@ template {
             teststep {
                 phase = "phase1"
                 text =   "test input"
-                skip = a > 1
+                skip = $vars.a > 1
             }
         }
         onError {

@@ -46,7 +46,8 @@ import org.springframework.core.convert.ConversionService
 import com.griddynamics.genesis.annotation.RemoteGateway
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer
-import transformations.{Context, ContextASTTransformation}
+import support.VariablesSupport
+import transformations.Context
 
 @RemoteGateway("groovy template service")
 class GroovyTemplateService(val templateRepoService : TemplateRepoService,
@@ -174,9 +175,9 @@ class GroovyTemplateService(val templateRepoService : TemplateRepoService,
   }
 }
 
-class StepBodiesCollector(variables: Map[String, AnyRef],
+class StepBodiesCollector(val variables: Map[String, AnyRef],
                           stepBuilderFactories : Seq[StepBuilderFactory])
-    extends GroovyObjectSupport with DslDelegate {
+    extends GroovyObjectSupport with DslDelegate with VariablesSupport {
 
     val closures = (for (factory <- stepBuilderFactories) yield {
         (factory.stepName, (ListBuffer[Closure[Unit]](), factory))
@@ -191,10 +192,6 @@ class StepBodiesCollector(variables: Map[String, AnyRef],
         }
 
         null
-    }
-
-    override def getProperty(property: String) = {
-        variables.getOrElse(property, super.getProperty(property))
     }
 
     def buildSteps = {
@@ -301,18 +298,16 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
         val typedVal = convert(String.valueOf(value), variable)
 
         variable.validators.view.map { case (errorMsg, validator) =>
-          validator.setDelegate(new Expando() {
-            // must throw exception on missing properties(instead of return null) for delegation to work
-            override def getProperty(name: String) = getProperties.containsKey(name) match {
+          validator.setDelegate(new Expando() with VariablesSupport {
+           // must throw exception on missing properties(instead of return null) for delegation to work
+            override def getProperty(name: String) = if (name != Reserved.varsRef) getProperties.containsKey(name) match {
               case true => super.getProperty(name)
               case _ => throw new MissingPropertyException(name, classOf[Expando])
-            }
+            } else get$vars
+
+            def variables = context.mapValues{plainValue(_)}
           })
           validator.setResolveStrategy(Closure.DELEGATE_FIRST)
-
-          context.foreach {
-            case (varName, varValue) => validator.setProperty(varName, plainValue(varValue))
-          }
 
           if (!validator.call(typedVal))
             Some(ValidationError(variable.name, errorMsg))
@@ -340,7 +335,10 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
     override def partial(variables: Map[String, Any]): Seq[VariableDescription] = {
         val appliedVars = variables.keys.toSet
 
-        val dependents = workflow.variables().filter(p => p.dependsOn.toSet.subsetOf(appliedVars))
+        val dependents = workflow.variables().filter(
+          p =>
+            p.dependsOn.toSet.subsetOf(appliedVars)
+        )
 
         val resolvedVariables = variables.map { case (varName, varValue) =>
           val variableDetails = workflow.variables().find(_.name == varName).getOrElse(throw new RuntimeException("No such variable: " + varName))
@@ -448,7 +446,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
         Builders(regularSteps, rescueSteps)
     }
 
-    def createSteps(generator: Option[Closure[Unit]], variables: Map[String, AnyRef]): Seq[StepBuilderProxy] =
+    private def createSteps(generator: Option[Closure[Unit]], variables: Map[String, AnyRef]): Seq[StepBuilderProxy] =
         generator.map { it =>
           DslDelegate(it).to(new StepBodiesCollector(variables.filterKeys(Reserved.configRef != _), stepBuilderFactories)).buildSteps.toSeq
         }.getOrElse(Seq())

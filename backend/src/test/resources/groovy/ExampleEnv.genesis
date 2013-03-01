@@ -19,7 +19,7 @@ template {
         steps {
             teststep {
                 phase = "provision"
-                text = nodesCount.toString()
+                text = $vars.nodesCount.toString()
             }
             teststep {
                 phase = "install"

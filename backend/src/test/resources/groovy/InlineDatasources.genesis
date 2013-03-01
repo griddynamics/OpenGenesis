@@ -13,7 +13,7 @@ template {
                description = "This has dependency on key"
 
                dataSource = staticList {
-                  values = [ key ]
+                  values = [ $vars.key ]
                }
             }
 
