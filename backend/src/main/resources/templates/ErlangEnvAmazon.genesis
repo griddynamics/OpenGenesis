@@ -15,7 +15,7 @@ template {
                 roleName = "erlangNode"
                 hardwareId = "m1.small"
                 imageId = "eu-west-1/ami-359ea941"
-                quantity = nodesCount
+                quantity = $vars.nodesCount
                 retryCount = 3
 	            	keyPair = "genesis"
 		            securityGroup = "genesis"
@@ -51,7 +51,7 @@ template {
                 roleName = "erlangNode"
                 hardwareId = "m1.small"
                 imageId = "eu-west-1/ami-359ea941"
-                quantity = nodesCount
+                quantity = $vars.nodesCount
             }
             chefrun {
                 phase = "install"
