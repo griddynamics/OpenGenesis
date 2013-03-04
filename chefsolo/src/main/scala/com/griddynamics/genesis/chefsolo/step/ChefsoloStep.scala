@@ -34,9 +34,9 @@ case class ChefsoloRunStep(rolesList: List[String],
                            dependsOn: Array[String],
                            jattrs: JObject = JObject(List()),
                            cookbookUrl: String,
-                           templateUrl: Option[String]) extends ChefsoloStep with RoleStep {
+                           templateUrl: Option[String],
+                           isGlobal: Boolean) extends ChefsoloStep with RoleStep {
   def roles = rolesList.toSet
-  def isGlobal = false
 
   override val stepDescription = new Describer("Chefsolo recipe execution").param("cookbooks", cookbookUrl).describe
 }
