@@ -34,13 +34,14 @@ class ChefsoloStepBuilderFactory extends StepBuilderFactory {
 
   def newStepBuilder = {
     new StepBuilder() {
+      @BeanProperty var isGlobal: Boolean = _
       @BeanProperty var dependsOn: Array[String] = _
       @BeanProperty var roles: JList[String] = Collections.emptyList()
       @BeanProperty var jattrs : JMap[Any, Any] = Collections.emptyMap()
       @BeanProperty var cookbooks: String = _
       @BeanProperty var templates: String = _
 
-      def getDetails = new ChefsoloRunStep(roles.toList, dependsOn, JsonUtil.toJson(jattrs), cookbooks, Option(templates))
+      def getDetails = new ChefsoloRunStep(roles.toList, dependsOn, JsonUtil.toJson(jattrs), cookbooks, Option(templates), isGlobal)
     }
   }
 }
