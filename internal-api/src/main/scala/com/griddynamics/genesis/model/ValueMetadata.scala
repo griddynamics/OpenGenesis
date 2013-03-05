@@ -2,30 +2,19 @@ package com.griddynamics.genesis.model
 
 import com.typesafe.config.{ConfigValue, ConfigException, Config}
 import collection.JavaConversions._
+import scala.util.control.Exception._
 
 
 class ValueMetadata(c: Config) {
-  import ValueMetadata._
   val default = c.getString("default")
   val description = getStringOption("description")
 
   def getValidation = getMap("validation").mapValues(_.unwrapped.toString)
 
-  protected def getStringOption(key: String) = ValueMetadata.get(key, (config, key) => Option(config.getString(key)), None)(c)
+  protected def getStringOption(key: String): Option[String] = failing(classOf[ConfigException]) { Option(c.getString(key)) }
 
-  protected def getBoolean(key: String) = get(key, (config, key) => config.getBoolean(key), false)(c)
+  protected def getBoolean(key: String): Boolean = failAsValue(classOf[ConfigException])(false) { c.getBoolean(key) }
 
-  protected def getMap(key: String): Map[String, ConfigValue] = get(key, (config, key) => config.getObject(key).toMap, Map[String, ConfigValue]())(c)
-}
-
-object ValueMetadata {
-  def get[T](key: String, getter: (Config, String) => T, default: T)(implicit c: Config) = try {
-    getter(c, key)
-  } catch {
-    case m: ConfigException.Missing => default
-    case n: ConfigException.Null => default
-  }
-
-  def getStringOption(key: String)(implicit c: Config) = ValueMetadata.get(key, (config, key) => Option(config.getString(key)), None)(c)
-  def getBoolean(key: String)(implicit c: Config) = get(key, (config, key) => config.getBoolean(key), false)(c)
+  protected def getMap(key: String): Map[String, ConfigValue] =
+    failAsValue(classOf[ConfigException])(Map.empty[String, ConfigValue]) { c.getObject(key).toMap }
 }
