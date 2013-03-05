@@ -25,25 +25,28 @@ package com.griddynamics.genesis.build
 import org.springframework.context.annotation.{Configuration, Bean}
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.plugin.PluginRegistry
+import scala.Array
 
 
 trait BuildContext {
-    def buildProvider(provider: String) : Option[BuildProvider]
+  def buildProvider(provider: String) : Option[BuildProvider]
 }
 
 @Configuration
 class BuildPluginContextImpl {
 
-    @Autowired var pluginRegistry: PluginRegistry = _
+  @Autowired var pluginRegistry: PluginRegistry = _
+  // non-plugin build providers
+  @Autowired var otherBuildProviders: Array[BuildProvider] = _
 
-    @Bean def bootstrapStepBuilderFactory = new BuildStepBuilderFactory()
+  @Bean def bootstrapStepBuilderFactory = new BuildStepBuilderFactory()
 
-    @Bean def bootstrapStepCoordinatorFactory = new BuildStepCoordinatorFactory(() =>
-      new BuildContext {
-        val plugins = pluginRegistry.getPlugins(classOf[BuildProvider])
+  @Bean def bootstrapStepCoordinatorFactory = new BuildStepCoordinatorFactory(() =>
+    new BuildContext {
+      val plugins = pluginRegistry.getPlugins(classOf[BuildProvider])
 
-        def buildProvider(provider: String) =
-          plugins.values.find { _.mode == provider }
-      }
-    );
+      def buildProvider(provider: String) =
+        (plugins.values ++ otherBuildProviders).find(_.mode == provider )
+    }
+  )
 }
