@@ -32,6 +32,7 @@ import collection.JavaConversions.{mapAsJavaMap, mapAsScalaMap}
 import com.griddynamics.genesis.api.ConfigPropertyType
 import com.typesafe.config._
 import com.griddynamics.genesis.validation.{RegexValidator, ConfigValueValidator}
+import com.griddynamics.genesis.model.ValueMetadata
 
 @Configuration
 class DefaultConfigServiceContext extends ConfigServiceContext {
@@ -73,29 +74,14 @@ class DefaultConfigServiceContext extends ConfigServiceContext {
 }
 
 
-class GenesisSettingMetadata(c: Config) {
-  val default = c.getString("default")
-  val description = getStringOption("description")
+class GenesisSettingMetadata(c: Config) extends ValueMetadata(c) {
   val propType = getStringOption("type").map(x => ConfigPropertyType.withName(x)).getOrElse(ConfigPropertyType.TEXT)
   val restartRequired = getBoolean("restartRequired")
 
-  def getValidation = getMap("validation").mapValues(_.unwrapped.toString) +
-    ("Value Length must be less than 128 characters" -> "default_length")
-
   def isImportant = getBoolean("important")
 
-  private def get[T](key: String, getter: String => T, default: T) = try {
-    getter(key)
-  } catch {
-    case m: ConfigException.Missing => default
-    case n: ConfigException.Null => default
-  }
-
-  private def getStringOption(key: String) = get(key, k => Option(c.getString(k)), None)
-
-  private def getBoolean(key: String) = get(key, c.getBoolean(_), false)
-
-  private def getMap(key: String) = get(key, k => c.getObject(k).toMap, Map[String, ConfigValue]())
+  override def getValidation = super.getValidation +
+    ("Value Length must be less than 128 characters" -> "default_length")
 }
 
 object GenesisSettingMetadata {
