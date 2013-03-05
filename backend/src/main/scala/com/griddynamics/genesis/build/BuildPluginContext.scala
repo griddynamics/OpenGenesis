@@ -37,7 +37,7 @@ class BuildPluginContextImpl {
 
   @Autowired var pluginRegistry: PluginRegistry = _
   // non-plugin build providers
-  @Autowired var otherBuildProviders: Array[BuildProvider] = _
+  @Autowired(required = false) var otherBuildProviders: Array[BuildProvider] = Array()
 
   @Bean def bootstrapStepBuilderFactory = new BuildStepBuilderFactory()
 
