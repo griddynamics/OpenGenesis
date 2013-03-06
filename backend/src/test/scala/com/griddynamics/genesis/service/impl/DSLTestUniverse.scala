@@ -23,7 +23,7 @@
 
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.template.TemplateRepository
-import com.griddynamics.genesis.service.{EnvironmentService, TemplateRepoService}
+import com.griddynamics.genesis.service.{EnvironmentConfigurationService, TemplateRepoService}
 import com.griddynamics.genesis.repository.DatabagRepository
 import org.mockito.Mockito
 import com.griddynamics.genesis.model.{VariablesField, WorkflowStatus, Workflow, EnvStatus, Environment}
@@ -36,7 +36,7 @@ trait DSLTestUniverse extends MockitoSugar{
   val databagRepository = mock[DatabagRepository]
 
   Mockito.when(templateRepoService.get(0)).thenReturn(templateRepository)
-  val configService = mock[EnvironmentService]
+  val configService = mock[EnvironmentConfigurationService]
 
   val dummyEnv = new Environment("test_env", EnvStatus.Ready, "creator", new Timestamp(new Date().getTime), None, None, "", "", 0, 0)
   val dummyWorkflow = new Workflow(1, "provision", "genesis", WorkflowStatus.Requested, 2, 0, new VariablesField("test"), new VariablesField("test"), None, None )

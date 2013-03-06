@@ -46,8 +46,27 @@ function(genesis, $) {
         timeout: DEFAULT_TIMEOUT,
         processData: false
       });
+    },
+
+    scheduleWorkflow: function(projectId, envId, workflow, variables, date) {
+      return $.ajax({
+        url: 'rest/projects/' + projectId + '/envs/' + envId + '/jobs',
+        dataType: "json",
+        contentType : 'application/json',
+        type: "POST",
+        data: JSON.stringify({
+          workflow: workflow,
+          executionDate: date,
+          parameters: variables
+        }),
+        timeout: DEFAULT_TIMEOUT,
+        processData: false
+      });
+
     }
   };
+
+
 
   backend.EnvironmentManager = {
     resetEnvStatus: function(projectId, environmentId) {

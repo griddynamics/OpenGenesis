@@ -36,7 +36,7 @@ import com.griddynamics.genesis.api._
 import org.springframework.security.access.prepost.PostFilter
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.validation.Validation
-import com.griddynamics.genesis.service.{EnvironmentService, StoreService, EnvironmentAccessService}
+import com.griddynamics.genesis.service.{EnvironmentConfigurationService, StoreService, EnvironmentAccessService}
 import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.api.Failure
 import scala.Some
@@ -54,7 +54,7 @@ class ConfigurationController extends RestApiExceptionsHandler{
   @Autowired var storeService: StoreService = _
   @Autowired var userService: UserService = _
   @Autowired var groupService: GroupService = _
-  @Autowired var envConfigService: EnvironmentService = _
+  @Autowired var envConfigService: EnvironmentConfigurationService = _
   @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
 

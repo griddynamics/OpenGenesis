@@ -11,7 +11,8 @@ define([
   "jquery",
   "momentjs",
   "jqueryui",
-  "jvalidate"
+  "jvalidate",
+  "datetimepicker"
 ],
 
 function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtemplates, EnvStatus, Backbone, $) {
@@ -118,6 +119,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
 
     events: {
       "click #tab3": "renderWorkflowList",
+      "click .schedule-button:not(.disabled)": "executeWorkflow",
       "click .action-button:not(.disabled)": "executeWorkflow",
       "click .cancel-button:not(.disabled)": "cancelWorkflow",
       "click .reset-button:not(.disabled)": "resetEnvStatus",
@@ -127,6 +129,10 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
     },
 
     initialize: function (options) {
+      function capitalise(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+      }
+
       this.details = new EnvironmentDetails.Model({"id": options.envId, projectId: options.projectId});
       this.workflowId = options.workflowId;
       poller.PollingManager.start(this.details, {noninterruptible: true});
@@ -138,6 +144,9 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       this.details.bind("change:attributes change:modificationTime change:timeToLiveStr", this.renderAttributes, this);
       this.details.bind("change:name", this.onRename, this);
       this.executeWorkflowDialog = new ExecuteWorkflowDialog().
+        bind('workflow-scheduled', function(workflow) {
+          status.StatusPanel.information("'" + capitalise(workflow.name) + "' execution was scheduled successfully");
+        }).
         bind('workflow-started', function(workflow) {
           status.StatusPanel.information("Workflow '" + workflow.name + "' execution started");
         }).
@@ -211,6 +220,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
 
     executeWorkflow: function (e) {
       var workflowName = e.currentTarget.rel;
+      var scheduling = $(e.currentTarget).attr("data-scheduling") || false
 
       genesis.app.trigger("page-view-loading-started");
 
@@ -242,7 +252,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
               });
 
             $.when(wmodel.fetch()).done(function(){
-              self.executeWorkflowDialog.showFor(self.details, wmodel);
+              self.executeWorkflowDialog.showFor(self.details, wmodel, scheduling);
             }).fail(function(jqXHR){
               genesis.app.trigger("page-view-loading-completed");
               status.StatusPanel.error(jqXHR);
@@ -260,6 +270,8 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       this.$(".cancel-button")
         .toggleClass("disabled", !this.details.canCancelWorkflow())
         .toggle(status !== "Destroyed");
+
+      this.$(".button-group.action").toggle(status !== "Destroyed")
 
       this.$(".action-button")
         .toggleClass("disabled", activeExecution)
@@ -473,13 +485,15 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
   });
 
   var ExecuteWorkflowDialog = variablesmodule.Views.AbstractWorkflowParamsView.extend({
-    template: "app/templates/environment_variables.html",
+    template: "app/templates/env_details/environment_variables.html",
 
     initialize: function() {
+      this.scheduling = true;
       this.$el.id = "#workflowParametersDialog";
     },
 
-    showFor: function(envDetails, workflow) {
+    showFor: function(envDetails, workflow, scheduling) {
+      this.scheduling = scheduling;
       this.workflow = workflow;
       this.envId = envDetails.get("id");
       this.projectId = envDetails.get("projectId");
@@ -495,6 +509,10 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       this.remove();
     },
 
+    executionDate: function() {
+      return new Date(this.$("#executionDate").val()).getTime()
+    },
+
     runWorkflow: function() {
       if (this.workflow.get('variables').length > 0) {
         if (!$('#workflow-parameters-form').valid()) {
@@ -504,13 +522,19 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
 
       }
       genesis.app.trigger("page-view-loading-started");
-      var execution = backend.WorkflowManager.executeWorkflow(this.projectId, this.envId, this.workflow.get('name'), this.workflowParams());
+      var execution = !this.scheduling ?
+        backend.WorkflowManager.executeWorkflow(this.projectId, this.envId, this.workflow.get('name'), this.workflowParams()) :
+        backend.WorkflowManager.scheduleWorkflow(this.projectId, this.envId, this.workflow.get('name'), this.workflowParams(), this.executionDate());
 
       var view = this;
       $.when(execution).then(
         function success() {
           genesis.app.trigger("page-view-loading-completed");
-          view.trigger("workflow-started", view.workflow.toJSON());
+          if(view.scheduling) {
+            view.trigger("workflow-scheduled", view.workflow.toJSON());
+          } else {
+            view.trigger("workflow-started", view.workflow.toJSON());
+          }
           view.$el.dialog("close");
         },
         function fail(response) {
@@ -532,7 +556,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
           } else {
             view.trigger("workflow-validation-errors");
             var validator = $('#workflow-parameters-form').validate();
-            validator.showErrors(json.variablesErrors);
+              validator.showErrors(json.variablesErrors);
           }
         }
       );
@@ -544,7 +568,21 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       $.when(genesis.fetchTemplate(this.template)).done(function (tmpl) {
 
         genesis.app.trigger("page-view-loading-completed");
-        view.$el.html(tmpl({noVariables: view.workflow.get('variables').length == 0, workflowName: view.workflow.get('name')}));
+        view.$el.html(tmpl({
+          noVariables: view.workflow.get('variables').length == 0,
+          workflowName: view.workflow.get('name'),
+          scheduling: view.scheduling
+        }));
+
+        if(view.scheduling) {
+          var date = new Date();
+          date.setHours(0);
+          date.setMinutes(0);
+          date.setMilliseconds(0);
+          view.$("#executionDate").datetimepicker({
+            minDate: date
+          });
+        }
 
         var inputsView = new variablesmodule.Views.InputControlsView({
           el: view.$('#workflow_vars'),
@@ -556,30 +594,30 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
         });
 
         inputsView.render(function() {
+          var runButton = view.scheduling ? "Schedule" : "Run";
+          var buttons = {};
+          buttons[runButton] = function() {
+            var $thisButton = $(this).parent().find("button:contains('" + runButton + "')"),
+              disabled = $thisButton.button( "option", "disabled" );
+            if(!disabled) {
+              $thisButton.button("disable");
+
+              view.unbind("workflow-validation-errors");
+              view.bind("workflow-validation-errors", function() {
+                $thisButton.button("enable");
+              });
+
+              view.runWorkflow();
+            }
+          };
+          buttons["Cancel"] = function () {
+            $(this).dialog( "close" );
+          }
           view.$el.dialog({
-            title: 'Execute ' + view.workflow.get('name'),
+            title: (view.scheduling ? 'Schedule ' : 'Execute ') + view.workflow.get('name'),
             width: _.size(view.workflow.get('variables')) > 0 ? 1052 : 400,
             autoOpen: true,
-            buttons: {
-              "Run": function() {
-                var $thisButton = $(this).parent().find("button:contains('Run')"),
-                  disabled = $thisButton.button( "option", "disabled" );
-                if(!disabled) {
-                  $thisButton.button("disable");
-
-                  view.unbind("workflow-validation-errors");
-                  view.bind("workflow-validation-errors", function() {
-                    $thisButton.button("enable");
-                  });
-
-                  view.runWorkflow();
-                }
-              },
-
-              "Cancel": function () {
-                $(this).dialog( "close" );
-              }
-            }
+            buttons: buttons
           });
         });
       });
