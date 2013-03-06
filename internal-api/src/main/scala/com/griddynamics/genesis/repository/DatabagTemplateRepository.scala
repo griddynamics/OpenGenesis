@@ -7,3 +7,9 @@ trait DatabagTemplateRepository {
    def list(scope: String): List[DatabagTemplate] = list.filter(scope == _.scope)
    def get(id: String) = list.find(_.id == id)
 }
+
+object DatabagTemplateRepository {
+  val ProjectScope = "project"
+  val SystemScope = "system"
+  val EnvironmentScope = "environment"
+}
