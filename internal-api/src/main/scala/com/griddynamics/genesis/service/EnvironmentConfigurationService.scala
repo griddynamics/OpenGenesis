@@ -28,7 +28,7 @@ import com.griddynamics.genesis.api.Configuration
 /**
    Environment configuration operations with integrated security rules
  */
-trait EnvironmentService {
+trait EnvironmentConfigurationService {
   def getDefault(projectId: Int): Option[Configuration]
   def list(projectId: Int): Iterable[Configuration]
   def get(projectId: Int, configId: Int): Option[Configuration]

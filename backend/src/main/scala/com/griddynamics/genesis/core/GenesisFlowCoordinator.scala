@@ -40,6 +40,7 @@ import com.griddynamics.genesis.workflow.signal.{Success, Fail}
 import com.griddynamics.genesis.plugin.GenesisStep
 import com.griddynamics.genesis.template.dsl.groovy.Reserved
 import java.util.Date
+import com.griddynamics.genesis.scheduler.JobServiceProvider
 
 abstract class GenesisFlowCoordinator(envId: Int,
                                       projectId: Int,
@@ -354,6 +355,14 @@ trait RegularWorkflow { this: GenesisFlowCoordinatorBase =>
     override val onFlowFinishSuccess = EnvStatus.Ready
 }
 
-trait DestroyWorkflow { this: GenesisFlowCoordinatorBase =>
+trait DestroyWorkflow extends FlowCoordinator { self: GenesisFlowCoordinatorBase with JobServiceProvider =>
     override val onFlowFinishSuccess = EnvStatus.Destroyed
+
+    abstract override def onFlowFinish(signal: Signal) {
+      super.onFlowFinish(signal)
+      signal match {
+        case Success() => self.jobService.removeAllScheduledJobs(self.projectId, self.envId)
+        case _ => /* no nothing */
+      }
+    }
 }

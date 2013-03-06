@@ -35,6 +35,7 @@ import com.griddynamics.genesis.model.WorkflowStatus._
 import com.griddynamics.genesis.util.Logging
 import java.sql.Timestamp
 import com.griddynamics.genesis.configuration.WorkflowConfig
+import com.griddynamics.genesis.scheduler.{JobServiceProvider, EnvironmentJobService}
 
 trait RequestDispatcher {
     def createEnv(envName: Int, projectId: Int)
@@ -52,7 +53,8 @@ class RequestDispatcherImpl(workflowConfig: WorkflowConfig,
                             executorService: ExecutorService,
                             stepCoordinatorFactory: StepCoordinatorFactory,
                             actorSystem: ActorSystem,
-                            remoteAgentService: RemoteAgentsService) extends RequestDispatcher with Logging {
+                            remoteAgentService: RemoteAgentsService,
+                            envJobService: EnvironmentJobService) extends RequestDispatcher with Logging {
 
     val coordinators = mutable.Map[(Int, Int), TypedFlowCoordinator]()
 
@@ -139,7 +141,9 @@ class RequestDispatcherImpl(workflowConfig: WorkflowConfig,
     def destroyingCoordinator(envId: Int, projectId: Int, flowSteps: Seq[StepBuilder], rescueSteps: Seq[StepBuilder]) =
         new TypedFlowCoordinatorImpl(
             new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService,
-                stepCoordinatorFactory, rescueSteps) with DestroyWorkflow,
+                stepCoordinatorFactory, rescueSteps) with DestroyWorkflow with JobServiceProvider {
+              def jobService = envJobService
+            } ,
             workflowConfig, executorService, actorSystem, remoteAgentService
 
         )

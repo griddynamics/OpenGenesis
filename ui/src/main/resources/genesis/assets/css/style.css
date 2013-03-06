@@ -106,6 +106,50 @@ a.button.reset-button {
     cursor: default;
 }
 
+
+.button-group {
+    display: inline-block;
+}
+
+.button-group .dropdown-toggle span {
+    width: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
+   border-left:none;
+}
+
+.button-group .dropdown-toggle .caret {
+    margin-left: 0;
+    margin-top: 5px;
+    border-top: 4px solid rgb(0, 0, 0);
+    opacity: 0.5;
+}
+
+.button-group > .action-button {
+    margin-right: -1px !important;
+}
+
+.button-group > .action-button span {
+    margin-right: -3px !important;
+    border-right: 1px solid #aaa !important;
+}
+
+.button-group > .dropdown-menu {
+    margin-top: 3px !important;
+}
+
+.button-group.dropdown:hover .caret {
+    opacity: 0.5 ;
+}
+
+.button-group.dropdown .dropdown-toggle:hover .caret, .button-group.dropdown.open .caret {
+    opacity: 1;
+}
+
+.button-group > .dropdown-menu a {
+    margin: 0 !important;
+}
+
 .ellipsis {
     white-space: nowrap;
     word-wrap: normal;
@@ -412,6 +456,7 @@ table th{
     border-bottom-left-radius: 3px;
     border-bottom-right-radius: 3px;
     font-weight: bold;
+    z-index: 1001;
 }
 
 #header #header-content #userinfo{
@@ -565,9 +610,15 @@ div.system-settings {
 	color: rgb(48,128,48);
 }
 
-#wrapper #top-panel #workflow-triggers, #wrapper #top-panel #misc-operations, #wrapper #top-panel #env-status-section {
+#wrapper #top-panel #env-status-section {
     float: right;
-    margin-left: 20px;
+    margin-left: 0px;
+    padding-top: 12px;
+}
+
+#wrapper #top-panel #workflow-triggers, #wrapper #top-panel #misc-operations {
+    float: right;
+    margin-left: 40px;
     padding-top: 12px;
 }
 
@@ -1577,6 +1628,14 @@ table .pre {
    max-width: 15px;
    margin-top: 5px;
    margin-left: 0px;
+}
+
+#workflow-parameters-form.compact label  {
+    width: 35%
+}
+
+#workflow-parameters-form.compact .value, #workflow-parameters-form.compact label.error {
+    width: 60%;
 }
 
 .information-panel {

@@ -29,7 +29,7 @@ import com.griddynamics.genesis.repository.ConfigurationRepository
 import org.springframework.security.core.context.SecurityContextHolder
 import java.security.Principal
 
-class EnvironmentServiceImpl(repository: ConfigurationRepository, accessService: service.EnvironmentAccessService) extends service.EnvironmentService {
+class EnvironmentConfigurationServiceImpl(repository: ConfigurationRepository, accessService: service.EnvironmentAccessService) extends service.EnvironmentConfigurationService {
 
   private def getAuth = SecurityContextHolder.getContext.getAuthentication
 

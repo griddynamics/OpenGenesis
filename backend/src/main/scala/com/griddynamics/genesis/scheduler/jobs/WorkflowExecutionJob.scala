@@ -27,7 +27,7 @@ class WorkflowExecutionJob(broker: RequestBroker, storeService: StoreService) ex
   private def requestWorkflow(details: WorkflowExecution, env: Environment): ExtendedResult[Int] = {
     log.debug(s"Requesting automatic execution of ${details.workflow} workflow for env ${env.name} in project id = ${env.projectId}")
 
-    val result = broker.requestWorkflow(details.envId, details.projectId, details.workflow, Map(), "Scheduled execution")
+    val result = broker.requestWorkflow(details.envId, details.projectId, details.workflow, details.variables, "Scheduler / " + details.requestedBy)
     if (!result.isSuccess) {
       throw new RuntimeException("Scheduled workflow executor failed to start workflow. RequestBroker request result = " + result)
     }

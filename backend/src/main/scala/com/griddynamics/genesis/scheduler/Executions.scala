@@ -21,16 +21,18 @@
  *   Description: Continuous Delivery Platform
  */ package com.griddynamics.genesis.scheduler
 
-import org.quartz.{Job, JobDataMap, JobKey, TriggerKey}
+import org.quartz.{JobDetail, Job, JobDataMap, JobKey, TriggerKey}
 import com.griddynamics.genesis.scheduler.jobs.{NotificationJob, DestructionStatusCheckJob, WorkflowExecutionJob}
 import java.util.Date
+import com.griddynamics.genesis.model.VariablesField
 
 object GroupIdentity {
   def forEnv(envId: Int) = "execution-group-for-env-" + envId
+
+  def workflowForEnv(envId: Int, workflow: String) = s"execution-group-for-env-$envId-$workflow"
 }
 
 sealed trait ExecutionId {
-  def projectId: Int
   def envId: Int
   def id: String
 
@@ -38,22 +40,55 @@ sealed trait ExecutionId {
   final def jobKey: JobKey = new JobKey(id, GroupIdentity.forEnv(envId))
 }
 
+object Execution {
+  def apply(details: JobDetail): Execution = {
+    val jobClass = details.getJobClass
+    if(jobClass.isAssignableFrom(classOf[WorkflowExecutionJob])) {
+      new WorkflowExecution(details.getJobDataMap)
+    } else if (jobClass.isAssignableFrom(classOf[NotificationJob])) {
+      new ExpireNotification(details.getJobDataMap)
+    } else if (jobClass.isAssignableFrom(classOf[DestructionStatusCheckJob])) {
+      new DestructionCheck(details.getJobDataMap)
+    } else {
+      throw new IllegalArgumentException(s"Job class ${details.getJobClass} is not supported")
+    }
+  }
+}
+
 sealed trait Execution extends ExecutionId {
+  def projectId: Int
   def toJobDataMap: JobDataMap
   def jobClass: Class[_ <: Job]
 }
 
-case class WorkflowExecution(workflow: String, envId: Int, projectId: Int) extends Execution {
+sealed class WorkflowExecutionId(val envId: Int, val workflow: String) extends ExecutionId {
+  def id = s"execution-$workflow-env-$envId"
+}
 
-  val id = s"execution-$workflow-env-$envId"
+case class WorkflowExecution(
+    override val workflow: String,
+    override val envId: Int,
+    projectId: Int,
+    requestedBy: String,
+    variables: Map[String, String])
+  extends WorkflowExecutionId(envId, workflow)
+  with Execution {
 
-  def this(jobDataMap: JobDataMap) = this(jobDataMap.getString("workflowName"), jobDataMap.getInt("envId"), jobDataMap.getInt("projectId"))
+  def this(jobDataMap: JobDataMap) = this(
+    jobDataMap.getString("workflowName"),
+    jobDataMap.getInt("envId"),
+    jobDataMap.getInt("projectId"),
+    jobDataMap.getString("requestedBy"),
+    VariablesField.unmarshal(jobDataMap.getString("variables"))
+  )
 
   def toJobDataMap = {
     val data = new JobDataMap()
     data.put("envId", envId)
     data.put("workflowName", workflow)
     data.put("projectId", projectId )
+    data.put("requestedBy", requestedBy)
+    data.put("variables", VariablesField.marshal(variables))
     data
   }
 
@@ -64,7 +99,12 @@ case class WorkflowExecution(workflow: String, envId: Int, projectId: Int) exten
 //  val id = "destruction-env-" + envId
 //}
 
-case class ExpireNotification(envId: Int, projectId: Int, destroyDate: Date) extends Execution {
+sealed class ExpireNotificationId(val envId: Int) extends ExecutionId {
+  val id = s"env-expire-notification-$envId"
+}
+
+case class ExpireNotification(override val envId: Int, projectId: Int, destroyDate: Date) extends ExpireNotificationId(envId) with Execution {
+
   def this(jobDataMap: JobDataMap) = this(jobDataMap.getInt("envId"), jobDataMap.getInt("projectId"), new Date(jobDataMap.getLong("destroyDate")))
 
   def toJobDataMap = {
@@ -75,15 +115,17 @@ case class ExpireNotification(envId: Int, projectId: Int, destroyDate: Date) ext
     data
   }
 
-  val id = s"env-expire-notification-$envId"
-
   def jobClass = classOf[NotificationJob]
 }
 
-case class DestructionCheck(envId: Int, projectId: Int, destructionTrigger: String) extends Execution {
-  def this(jobDataMap: JobDataMap) = this(jobDataMap.getInt("envId"), jobDataMap.getInt("projectId"), jobDataMap.getString("destructionTriggerName"))
+sealed class DestructionCheckId(val envId: Int) extends ExecutionId {
+  def id = s"env-destruction-check-$envId"
+}
 
-  val id = s"env-destruction-check-$envId"
+case class DestructionCheck(override val envId: Int, projectId: Int, destructionTrigger: String)
+  extends DestructionCheckId(envId) with Execution {
+
+  def this(jobDataMap: JobDataMap) = this(jobDataMap.getInt("envId"), jobDataMap.getInt("projectId"), jobDataMap.getString("destructionTriggerName"))
 
   def toJobDataMap = {
     val data = new JobDataMap()

@@ -21,6 +21,7 @@ require.config({
     backbone: "../assets/js/libs/backbone",
     prettify: "../assets/js/libs/prettify",
     multiselect: "../assets/js/plugins/jquery/jquery.multiselect",
+    datetimepicker: "../assets/js/plugins/jquery/date.time.picker",
     momentjs: "../assets/js/libs/moment",
     'coffee-script': "../assets/js/libs/coffee-script",
 
@@ -59,6 +60,10 @@ require.config({
       "deps" : ["jquery"]
     },
     "multiselect": {
+      "deps": ["jqueryui"]
+    },
+
+    "datetimepicker": {
       "deps": ["jqueryui"]
     },
     underscore: {

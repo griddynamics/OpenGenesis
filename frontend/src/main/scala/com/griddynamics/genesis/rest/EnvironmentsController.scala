@@ -27,7 +27,6 @@ import annotations.LinkTarget._
 import filters.EnvFilter
 import links._
 import HrefBuilder._
-import links.ItemWrapper
 import links.WebPath
 import CollectionWrapper._
 import org.springframework.stereotype.Controller
@@ -37,7 +36,7 @@ import com.griddynamics.genesis.http.TunnelFilter
 import org.springframework.web.bind.annotation._
 import org.springframework.web.bind.annotation.RequestMethod._
 import org.springframework.beans.factory.annotation.{Autowired, Value}
-import com.griddynamics.genesis.service.{EnvironmentService, EnvironmentAccessService}
+import com.griddynamics.genesis.service.{EnvironmentConfigurationService, EnvironmentAccessService}
 import org.springframework.security.access.prepost.PostFilter
 import org.springframework.http.{HttpHeaders, MediaType}
 import java.util.{Date, TimeZone, Locale}
@@ -48,6 +47,9 @@ import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.spring.security.LinkSecurityBean
 import com.griddynamics.genesis.model.{WorkflowStatus, EnvStatus}
+import com.griddynamics.genesis.api._
+import com.griddynamics.genesis.rest.links.ItemWrapper
+import com.griddynamics.genesis.scheduler.EnvironmentJobService
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
@@ -59,7 +61,8 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @Autowired var envAuthService: EnvironmentAccessService = _
   @Autowired var configRepository: ConfigurationRepository = _
   @Autowired implicit var linkSecurity: LinkSecurityBean = _
-  @Autowired var envConfigService: EnvironmentService = _
+  @Autowired var envConfigService: EnvironmentConfigurationService = _
+  @Autowired var schedulingService: EnvironmentJobService = _
 
   @Value("${genesis.system.server.mode:frontend}")
   var mode = ""
@@ -392,7 +395,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     val paramsMap = GenesisRestController.extractParamsMap(request)
     try {
       val timeToLive = TimeUnit.MINUTES.toMillis(extractValue("value", paramsMap).toLong)
-      genesisService.updateTimeToLive(projectId, envId, timeToLive)
+      genesisService.updateTimeToLive(projectId, envId, timeToLive, getCurrentUser)
     } catch {
       case e: NumberFormatException => throw new InvalidInputException("Value should be numeric")
     }
