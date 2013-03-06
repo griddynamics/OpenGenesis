@@ -24,7 +24,7 @@ package com.griddynamics.genesis.configuration
 
 import com.griddynamics.genesis.frontend.GenesisRestService
 import com.griddynamics.genesis.repository.ConfigurationRepository
-import com.griddynamics.genesis.scheduler.DestructionService
+import com.griddynamics.genesis.scheduler.EnvironmentJobService
 import com.griddynamics.genesis.service.EnvironmentAccessService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.{Bean, Configuration}
@@ -37,7 +37,7 @@ class RestServiceContext {
     @Autowired var workflowContext : WorkflowContext = _
     @Autowired var envAccessService: EnvironmentAccessService = _
     @Autowired var configurationRepository: ConfigurationRepository = _
-    @Autowired var envDestructionService: DestructionService = _
+    @Autowired var envJobService: EnvironmentJobService = _
 
     @Bean def genesisRestService = new GenesisRestService(storeServiceContext.storeService,
                                                           templateServiceContext.templateService,
@@ -45,5 +45,5 @@ class RestServiceContext {
                                                           workflowContext.requestBroker,
                                                           envAccessService,
                                                           configurationRepository,
-                                                          envDestructionService)
+                                                          envJobService)
 }

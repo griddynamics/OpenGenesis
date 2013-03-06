@@ -37,9 +37,22 @@
         </div>
         <div id="workflow-triggers">
             <% if (environment.status !== "Destroyed") { %>
-                <a href="javascript:void(0)" class="button cancel-button executable" rel="Cancel"> <span> Cancel </span> </a>
+                <a href="javascript:void(0)" class="button cancel-button executable" rel="Cancel" style="margin-left: 2px;"> <span> Cancel </span> </a>
                 <% for(var i = 0, count = actions.length; i < count; i++) { var action = actions[i]; %>
-                    <a href="javascript:void(0)" class="button action-button executable" rel="<%= action.name %>"> <span> <%= action.name %> </span> </a>
+                    <div class="button-group dropdown action" style=" margin-right: 2px; " >
+                        <a href="javascript:void(0)" class="button dropdown-toggle" rel="<%= action.name %>" data-toggle="dropdown">
+                            <span>
+                                <b class="caret"></b>
+                            </span>
+                        </a>
+                        <a href="javascript:void(0)" class="button action-button executable" rel="<%= action.name %>" style="">
+                            <span> <%= action.name %> </span>
+                        </a>
+                        <ul class="dropdown-menu" >
+                            <li class="action-button"><a href="javascript: void(0)" rel="<%= action.name %>" class="action-button" >Run...</a></li>
+                            <li><a href="javascript: void(0)"   rel="<%= action.name %>" class="schedule-button" data-scheduling="true">Schedule... </a></li>
+                        </ul>
+                    </div>
                 <% } %>
             <% } %>
         </div>

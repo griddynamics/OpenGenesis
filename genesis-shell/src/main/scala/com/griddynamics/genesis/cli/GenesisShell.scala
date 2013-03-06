@@ -22,7 +22,7 @@
  */ package com.griddynamics.genesis.cli
 
 import com.griddynamics.genesis.api.{Configuration, Project, GenesisService}
-import com.griddynamics.genesis.service.{StoreService, ProjectService, EnvironmentService}
+import com.griddynamics.genesis.service.{StoreService, ProjectService, EnvironmentConfigurationService}
 import java.util.Date
 import org.kohsuke.args4j.{ExampleMode, CmdLineException, CmdLineParser}
 import org.springframework.context.support.ClassPathXmlApplicationContext
@@ -30,7 +30,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder
 import scala.annotation.meta.field
 import com.griddynamics.genesis.cli.commands.{WorkflowFailureException, DescribeCommand, ListInstancesCommand, ListTemplatesCommand, ExecuteCommand, DestroyCommand, CreateCommand}
-import java.io.{PrintWriter, StringReader, ByteArrayOutputStream, StringWriter}
+import java.io.{PrintWriter, ByteArrayOutputStream, StringWriter}
 
 
 object GenesisShell {
@@ -38,7 +38,7 @@ object GenesisShell {
 
   var service: GenesisService = _
   var projectService: ProjectService = _
-  var configurationService: EnvironmentService = _
+  var configurationService: EnvironmentConfigurationService = _
   var storeService: StoreService = _
 
   var defaultProjectId: Int = _
@@ -175,7 +175,7 @@ object GenesisShell {
 
     this.service = appContext.getBean(classOf[GenesisService])
     this.projectService = appContext.getBean(classOf[ProjectService])
-    this.configurationService = appContext.getBean(classOf[EnvironmentService])
+    this.configurationService = appContext.getBean(classOf[EnvironmentConfigurationService])
     this.storeService = appContext.getBean(classOf[StoreService])
 
     val project = cliProject()

@@ -34,6 +34,7 @@ import com.griddynamics.genesis.workflow.{StepResult, Step}
 import com.griddynamics.genesis.service.RemoteAgentsService
 import com.typesafe.config.{ConfigSyntax, ConfigParseOptions, Config, ConfigFactory}
 import org.springframework.core.io.Resource
+import com.griddynamics.genesis.scheduler.EnvironmentJobService
 
 trait WorkflowContext {
     def requestBroker: RequestBroker
@@ -52,6 +53,7 @@ class DefaultWorkflowContext extends WorkflowContext {
     @Autowired var storeServiceContext: StoreServiceContext = _
     @Autowired var templateServiceContext: TemplateServiceContext = _
     @Autowired var remoteAgentService: RemoteAgentsService = _
+    @Autowired var envJobService: EnvironmentJobService = _
 
     private val defaultConfigs: Config = ConfigFactory.load()
     private def overrides: Config = ConfigFactory.parseFile(backendProperties.getFile, ConfigParseOptions.defaults().setSyntax(ConfigSyntax.PROPERTIES))
@@ -70,7 +72,8 @@ class DefaultWorkflowContext extends WorkflowContext {
         templateService = templateServiceContext.templateService,
         executorService = executorService,
         stepCoordinatorFactory = stepCoordinatorFactory, actorSystem = actorSystem,
-        remoteAgentService = remoteAgentService)
+        remoteAgentService = remoteAgentService,
+        envJobService = envJobService)
     }
 
     // this executor service is used to 'asynchronously' execute SyncActionExecutors,

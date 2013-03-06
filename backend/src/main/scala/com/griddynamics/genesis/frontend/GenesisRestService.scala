@@ -27,14 +27,12 @@ import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.bean.RequestBroker
 import com.griddynamics.genesis.model.{Workflow, EnvStatus}
 import com.griddynamics.genesis.repository.ConfigurationRepository
-import com.griddynamics.genesis.scheduler.DestructionService
+import com.griddynamics.genesis.scheduler.EnvironmentJobService
 import com.griddynamics.genesis.service._
 import com.griddynamics.genesis.validation.Validation._
 import com.griddynamics.genesis.{model, service}
 import java.util.Date
 import com.griddynamics.genesis.util.Logging
-import com.griddynamics.genesis.template.dsl.groovy.Reserved
-import org.apache.commons.lang3.math.NumberUtils
 
 class GenesisRestService(storeService: StoreService,
                          templateService: TemplateService,
@@ -42,7 +40,7 @@ class GenesisRestService(storeService: StoreService,
                          broker: RequestBroker,
                          envAccessService: EnvironmentAccessService,
                          configurationRepository: ConfigurationRepository,
-                         destructionService: DestructionService) extends GenesisService with Logging {
+                         jobService: EnvironmentJobService) extends GenesisService with Logging {
 
     def listEnvs(projectId: Int, statusFilter: Option[Seq[String]] = None, ordering: Option[Ordering] = None) = {
       val filterOpt = statusFilter.map(_.map(EnvStatus.withName(_)))
@@ -69,7 +67,7 @@ class GenesisRestService(storeService: StoreService,
             }
             timeToLive.foreach { ttl =>
               val destroyDate = new Date(System.currentTimeMillis() + ttl)
-              destructionService.scheduleDestruction(projectId, envId, destroyDate)
+              jobService.scheduleDestruction(projectId, envId, destroyDate, creator)
             }
 
             Success(envId)
@@ -79,38 +77,19 @@ class GenesisRestService(storeService: StoreService,
     }
 
     def destroyEnv(envId: Int, projectId: Int, variables: Map[String, String], startedBy: String) = {
-      val result = broker.destroyEnv(envId, projectId, variables, startedBy)
-      if(result.isSuccess) {
-        destructionService.removeScheduledDestruction(projectId, envId)
-      }
-      result
+      broker.destroyEnv(envId, projectId, variables, startedBy)
     }
 
     def requestWorkflow(envId: Int, projectId: Int, workflowName: String, variables: Map[String, String], startedBy: String) = {
-        val result = broker.requestWorkflow(envId, projectId, workflowName, variables, startedBy)
-
-        if (result.isSuccess && isDestroyWorkflow(envId, projectId, workflowName)) {
-          destructionService.removeScheduledDestruction(projectId, envId)
-        }
-
-        result
-    }
-
-    private def isDestroyWorkflow(envId: Int, projectId: Int, workflowName: String): Boolean = {
-      val definition = for {
-        env <- storeService.findEnv(envId, projectId)
-        template <- templateService.findTemplate(env)}
-      yield template.destroyWorkflow
-
-      definition.map(_.name == workflowName).getOrElse(false)
+      broker.requestWorkflow(envId, projectId, workflowName, variables, startedBy)
     }
 
     def cancelWorkflow(envId: Int, projectId: Int) {
-        broker.cancelWorkflow(envId, projectId)
+      broker.cancelWorkflow(envId, projectId)
     }
 
     def resetEnvStatus(envId: Int, projectId: Int) = {
-        broker.resetEnvStatus(envId, projectId)
+      broker.resetEnvStatus(envId, projectId)
     }
 
     def isEnvExists(envId: Int, projectId: Int): Boolean = {
@@ -131,7 +110,7 @@ class GenesisRestService(storeService: StoreService,
                         storeService.countFinishedActionsForCurrentWorkflow(env),
                         stepsCompleted(flow),
                         configurationRepository.get(projectId, env.configurationId),
-                        destructionService.destructionDate(env, template.destroyWorkflow)
+                        jobService.executionDate(env, template.destroyWorkflow)
                     )
                 }
             case None => None
@@ -214,14 +193,14 @@ class GenesisRestService(storeService: StoreService,
 
   def stepExists(stepId: Int, envId: Int) = storeService.stepExists(stepId, envId)
 
-  def updateTimeToLive(projectId: Int, envId: Int, timeToLiveMillis: Long): ExtendedResult[Date] = {
+  def updateTimeToLive(projectId: Int, envId: Int, timeToLiveMillis: Long, requestedBy: String): ExtendedResult[Date] = {
     val env = storeService.findEnv(envId, projectId).getOrElse {
       return Failure(isNotFound = true, compoundServiceErrors = Seq(s"Couldn't find instance $envId in project $projectId"))
     }
 
     try {
       val destructionDate = new Date(System.currentTimeMillis() + timeToLiveMillis)
-      destructionService.scheduleDestruction(env.projectId, env.id, destructionDate)
+      jobService.scheduleDestruction(env.projectId, env.id, destructionDate, requestedBy)
       Success(destructionDate)
     } catch {
       case e: Exception =>
@@ -235,7 +214,7 @@ class GenesisRestService(storeService: StoreService,
       return Failure(isNotFound = true, compoundServiceErrors = Seq(s"Couldn't find environment $envId in project $projectId"))
     }
     try {
-      destructionService.removeScheduledDestruction(env.projectId, env.id)
+      jobService.removeScheduledDestruction(env.projectId, env.id)
       Success(true)
     } catch {
       case e: Exception =>

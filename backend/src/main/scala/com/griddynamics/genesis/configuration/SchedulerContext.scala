@@ -22,20 +22,21 @@
  */ package com.griddynamics.genesis.configuration
 
 import org.springframework.context.annotation.{Profile, Bean, Configuration}
-import com.griddynamics.genesis.scheduler.{SchedulingServiceImpl, EnvDestructionService, NotificationService, SchedulingService, DestructionService}
+import com.griddynamics.genesis.scheduler.{SchedulingServiceImpl, EnvironmentJobServiceImpl, NotificationService, SchedulingService, EnvironmentJobService}
 import org.springframework.scheduling.quartz.SchedulerFactoryBean
 import org.springframework.beans.factory.annotation.{Value, Autowired}
 import javax.sql.DataSource
 import org.quartz.spi.JobFactory
 import com.griddynamics.genesis.scheduler.jobs.WorkflowJobFactory
 import com.griddynamics.genesis.bean.RequestBroker
-import com.griddynamics.genesis.service.ProjectService
+import com.griddynamics.genesis.service.{EnvironmentConfigurationService, ProjectService}
 import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.util.Logging
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
 import java.util.{Date, Properties}
 import javax.annotation.PostConstruct
 import com.griddynamics.genesis.model.Environment
+import com.griddynamics.genesis.api.Success
 
 
 @Configuration
@@ -50,6 +51,7 @@ class SchedulerContext extends Logging {
   @Autowired var templateService: TemplateServiceContext = _
   @Autowired var projectService: ProjectService = _
   @Autowired var userService: UserService = _
+  @Autowired var envConfigService: EnvironmentConfigurationService = _
 
   @Value("${genesis.web.admin.username:NOT-SET}") var adminUserName: String = _
   @Value("${genesis.web.admin.email:NOT-SET}") var adminEmail: String = _
@@ -63,7 +65,12 @@ class SchedulerContext extends Logging {
 
   @Bean def jobFactory: JobFactory = new WorkflowJobFactory(requestBroker, storeService.storeService, notificationService)
 
-  @Bean def destructionService: DestructionService = new EnvDestructionService(schedulingService, storeService.storeService, templateService.templateService)
+  @Bean def envJobService: EnvironmentJobService = new EnvironmentJobServiceImpl (
+    schedulingService,
+    storeService.storeService,
+    templateService.templateService,
+    envConfigService
+  )
 
   @Bean def schedulingService: SchedulingService = new SchedulingServiceImpl(scheduler.getObject)
 
@@ -109,14 +116,23 @@ class SchedulerContext extends Logging {
 
 @Configuration
 @Profile(Array("genesis-cli"))
-class SchedulerStubContext extends Logging {
-  @Bean def destructionService: DestructionService = new DestructionService {
-    def scheduleDestruction(projectId: Int, envId: Int, date: Date) {}
+class SchedulerStubContext {
+  @Bean def envJobService: EnvironmentJobService = new EnvironmentJobService {
 
     def removeScheduledDestruction(projectId: Int, envId: Int) {}
 
-    def destructionDate(env: Environment, destroyWorfklow: String) = None
+    def executionDate(env: Environment, destroyWorfklow: String) = None
 
     def destructionDate(env: Environment) = None
+
+    def scheduleDestruction(projectId: Int, envId: Int, date: Date, requestedBy: String) = Success(date)
+
+    def removeAllScheduledJobs(projectId: Int, envId: Int) {}
+
+    def listScheduledJobs(projectId: Int, envId: Int) = Seq()
+
+    def removeJob(projectId: Int, envId: Int, jobId: String) {}
+
+    def scheduleExecution(projectId: Int, envId: Int, workflow: String, parameters: Map[String, String], date: Date, requestedBy: String) = Success(date)
   }
 }

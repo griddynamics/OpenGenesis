@@ -5,7 +5,7 @@ import scala.collection.JavaConversions._
 import groovy.lang.GroovyObjectSupport
 import groovy.util.Expando
 import java.util
-import com.griddynamics.genesis.service.EnvironmentService
+import com.griddynamics.genesis.service.EnvironmentConfigurationService
 import com.griddynamics.genesis.api.Configuration
 
 trait SystemWideContextSupport {

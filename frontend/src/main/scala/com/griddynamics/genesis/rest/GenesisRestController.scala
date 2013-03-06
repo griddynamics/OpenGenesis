@@ -41,7 +41,7 @@ class GenesisRestController extends RestApiExceptionsHandler with Logging {
 
     @Autowired var genesisService: GenesisService = _
     @Autowired var templateService: TemplateService = _
-    @Autowired var configurationService: service.EnvironmentService = _
+    @Autowired var configurationService: service.EnvironmentConfigurationService = _
 
     @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
     @ResponseBody

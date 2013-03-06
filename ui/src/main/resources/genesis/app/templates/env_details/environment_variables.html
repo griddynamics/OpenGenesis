@@ -1,0 +1,37 @@
+<!--todo: move to css-->
+    <% if(noVariables) { %>
+        <div style="padding-top:5px">
+            <% if (scheduling) { %>
+            <form id="workflow-parameters-form" action=""  style="width: 100%; overflow-x:hidden" class="compact">
+                <div style="margin-top: 10px; margin-bottom: 10px">
+                    <label for="executionDate" class="label-required" >
+                        *&nbsp; Execution date
+                    </label>
+                    <div class="value" >
+                        <input id="executionDate" name="executionDate" size="18" class="required"  type="text">
+                    </div>
+                    <div style="clear: both"></div>
+                </div>
+            </form>
+            <% }  else {%>
+                Are you sure you want to run <em class="workflow-name"><%= workflowName %></em> workflow?
+            <% } %>
+        </div>
+    <% } else { %>
+    <form id="workflow-parameters-form" action=""  style="width: 100%; overflow-x:hidden">
+        <div id="workflow_vars" />
+        <% if (scheduling) { %>
+        <div style="margin-top: 10px; margin-bottom: 10px">
+            <label for="executionDate" class="label-required">
+                *&nbsp; Execution date
+            </label>
+            <div class="value">
+                <input id="executionDate" name="executionDate"  size="18" class="required"  type="text">
+            </div>
+            <div style="clear: both"></div>
+        </div>
+        <% } %>
+    </form>
+
+    <% } %>
+

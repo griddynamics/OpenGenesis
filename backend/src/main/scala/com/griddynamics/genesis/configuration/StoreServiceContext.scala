@@ -31,12 +31,11 @@ import org.springframework.jdbc.datasource.{DataSourceUtils, DataSourceTransacti
 import org.squeryl.adapters.{PostgreSqlAdapter, MySQLAdapter, H2Adapter}
 import com.griddynamics.genesis.repository
 import com.griddynamics.genesis.service
-import repository.impl.RemoteAgentRepositoryImpl
 import repository.{GenesisVersionRepository, SchemaCreator}
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import com.griddynamics.genesis.adapters.MSSQLServerWithPagination
-import com.griddynamics.genesis.service.{ProjectService, EnvironmentService, AgentsHealthService, impl}
+import com.griddynamics.genesis.service.{ProjectService, EnvironmentConfigurationService, impl}
 import com.griddynamics.genesis.service.impl._
 import org.springframework.beans.factory.InitializingBean
 import com.griddynamics.genesis.util.Logging
@@ -60,7 +59,7 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 
     @Bean def credentialsRepository: repository.CredentialsRepository = new repository.impl.CredentialsRepository
     @Bean def configurationRepository: repository.ConfigurationRepository = new repository.impl.ConfigurationRepositoryImpl
-    @Bean def environmentService: EnvironmentService = new EnvironmentServiceImpl(configurationRepository, environmentSecurity)
+    @Bean def environmentService: EnvironmentConfigurationService = new EnvironmentConfigurationServiceImpl(configurationRepository, environmentSecurity)
 
     @Bean def credentialsStoreService: service.CredentialsStoreService = new impl.CredentialsStoreService(credentialsRepository, projectRepository)
 

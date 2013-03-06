@@ -55,7 +55,7 @@ class GroovyTemplateService(val templateRepoService : TemplateRepoService,
                             val conversionService : ConversionService,
                             val dataSourceFactories : Seq[DataSourceFactory] = Seq(),
                             databagRepository: DatabagRepository,
-                            envConfigService: EnvironmentService,
+                            envConfigService: EnvironmentConfigurationService,
                             val cacheManager: CacheManager) extends service.TemplateService with Logging with Cache {
 
   val CACHE_NAME = "GroovyTemplateService"

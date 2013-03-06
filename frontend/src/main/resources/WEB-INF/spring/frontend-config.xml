@@ -61,6 +61,8 @@
 
     <bean class="com.griddynamics.genesis.rest.EnvironmentsController"/>
 
+    <bean class="com.griddynamics.genesis.rest.EnvironmentJobsController"/>
+
     <bean class="com.griddynamics.genesis.rest.GenesisRestController"/>
 
     <bean class="com.griddynamics.genesis.rest.CredentialsController"/>

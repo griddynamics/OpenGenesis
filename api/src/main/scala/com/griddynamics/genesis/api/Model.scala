@@ -308,6 +308,17 @@ object AgentStatus extends Enumeration {
   val Error = Value(4, "Error")
 }
 
+case class ScheduledJobDetails (
+    id: String,
+    projectId: Int,
+    envId: Int,
+    envName: String,
+    date: Long,
+    workflow: String,
+    variables: Map[String, String],
+    scheduledBy: String
+)
+
 case class JobStats(runningJobs: Int, totalJobs: Int)
 
 case class Link(href: String, rel: String, `type`: Option[String], methods: Array[String] = Array())  {
