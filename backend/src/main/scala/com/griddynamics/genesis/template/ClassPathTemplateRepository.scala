@@ -32,71 +32,19 @@ import com.griddynamics.genesis.util.InputUtil
 class ClassPathTemplateRepository(classLoader : ClassLoader,
                                   wildcard : String,
                                   charset : String)
-    extends TemplateRepository {
-
+    extends ClasspathStorage(classLoader, wildcard, charset) with TemplateRepository {
     import ClassPathTemplateRepository._
-
     def this() = this(ClassLoader.getSystemClassLoader, "*.genesis", "UTF-8")
-
-    val fileSelector = new WildcardFileSelector(wildcard)
-
-    val dirs : Seq[FileObject] = classLoader match {
-        case ucl : URLClassLoader => {
-            ucl.getURLs.flatMap(url => {
-                val file = vfsManager.resolveFile(url.toString)
-
-                file.getName.getExtension.toLowerCase match {
-                    case "jar" => jarClassPath(file)
-                    case _ => Seq(file)
-                }
-            })
-        }
-        case _ => Seq()
-    }
-
     def listSources() = {
-        val files = dirs.flatMap(_.findFiles(fileSelector))
         files.map(sourcePair(_, charset)).toMap
     }
 }
 
 object ClassPathTemplateRepository {
-    val vfsManager = VFS.getManager
-
     def sourcePair(file : FileObject, charset : String) = {
         val content = file.getContent.getInputStream
         val pair = TemplateRepository.sourcePair(InputUtil.streamAsString(content, charset))
         (VersionedTemplate(file.getName.getBaseName, pair._1), pair._2)
-    }
-
-    def fileToJar(url : URL) = {
-        val jarUrl = new URL("jar", url.getHost, url.getFile)
-        vfsManager.resolveFile(jarUrl.toString)
-    }
-
-    def jarClassPath(url : URL) : Seq[String] = {
-        try {
-            val manifest = (new JarFile(new File(url.toURI))).getManifest
-            val attributes = manifest.getMainAttributes
-            Option(attributes.getValue("Class-Path")) match {
-              case None => Seq()
-              case Some(c) => c.split(" ")
-            }
-        }
-        catch {
-            case _: Throwable => Seq()
-        }
-    }
-
-    def jarClassPath(file : FileObject) : Seq[FileObject] = {
-        val url = file.getURL
-        val parent = file.getParent
-        val classPath = jarClassPath(url)
-
-        val classPathFiles = classPath.map(cpe => parent.resolveFile(cpe))
-                                      .filter(_.exists()).map(_.getURL)
-
-        (url +: classPathFiles).map(fileToJar(_))
     }
 }
 

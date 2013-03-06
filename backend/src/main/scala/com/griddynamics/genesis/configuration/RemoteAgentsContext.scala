@@ -22,7 +22,7 @@
  */
 package com.griddynamics.genesis.configuration
 
-import org.springframework.context.annotation.{Profile, Bean, Configuration}
+import org.springframework.context.annotation.{Scope, Profile, Bean, Configuration}
 import akka.actor.ActorSystem
 import com.griddynamics.genesis.agents.AgentsHealthServiceImpl
 import org.springframework.beans.factory.annotation.Autowired
@@ -35,12 +35,8 @@ import com.griddynamics.genesis.service.impl.RemoteAgentsServiceImpl
 
 @Configuration
 class AgentServiceContext {
-
-  @Autowired var healthService: AgentsHealthService = _
-
   @Bean def agentsRepository: repository.RemoteAgentRepository = new RemoteAgentRepositoryImpl
-  @Bean def agentsService: service.RemoteAgentsService = new RemoteAgentsServiceImpl(agentsRepository, healthService)
-
+  @Bean def agentsService(@Autowired healthService: AgentsHealthService): service.RemoteAgentsService = new RemoteAgentsServiceImpl(agentsRepository, healthService)
 }
 
 @Configuration

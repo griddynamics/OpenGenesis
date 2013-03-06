@@ -1,19 +1,30 @@
 package com.griddynamics.genesis.repository.impl
 
-import com.griddynamics.genesis.repository.DatabagTemplateRepository
 import com.griddynamics.genesis.model.{ValueMetadata, DatabagTemplate}
-import com.typesafe.config.{ConfigException, Config}
+import com.typesafe.config.{ConfigFactory, ConfigException, Config}
 import scala.util.control.Exception._
+import com.griddynamics.genesis.repository.DatabagTemplateRepository
+import com.griddynamics.genesis.template.{Storage, ClasspathStorage, FilesystemStorage}
 
-/*class DatabagTemplateRepositoryImpl extends DatabagTemplateRepository {
-  def list = List()
+class DatabagTemplateRepositoryImpl(val path: String, val wildcard: String) extends DatabagTemplateRepository {
+  val defaultClassloader = this.getClass.getClassLoader
+  val storages: List[Storage[_]] =
+    List(new FilesystemStorage(path, wildcard), new ClasspathStorage(defaultClassloader, wildcard, "UTF8"))
+  def list = {
+    val result: List[DatabagTemplate] = storages.foldLeft(List.empty[DatabagTemplate])((acc, storage) => {
+      if (acc.isEmpty) acc ++ getTemplates(storage) else List.empty[DatabagTemplate]
+    })
+    result
+  }
+
+  private def getTemplates[U](storage: Storage[U]) = {
+    failAsValue(classOf[IllegalArgumentException])(List()) { storage.files.map(file => {
+      val config = ConfigFactory.parseString(storage.content(file))
+      DatabagTemplateReader.read(config)
+    })
+    }
+  }
 }
-
-class FileSystemTemplateStorage(val path: String, val wildcard: String) {
-
-}
-
-class ClassPathTemplateStorage(val path: String, val wildcard: String) */
 
 object DatabagTemplateReader {
   val databagKey = "properties"

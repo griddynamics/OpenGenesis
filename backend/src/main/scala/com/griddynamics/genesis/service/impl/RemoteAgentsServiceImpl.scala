@@ -29,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.repository.RemoteAgentRepository
 
 
-class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, health: AgentsHealthService) extends RemoteAgentsService {
+class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: AgentsHealthService) extends RemoteAgentsService {
 
     repository.list.map { health.startTracking(_) }
 
