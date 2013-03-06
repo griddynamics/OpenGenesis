@@ -341,3 +341,6 @@ case class Action(name: String)
 
 object CancelAction extends Action("cancel")
 object ResetAction extends Action("reset")
+
+case class DatabagTemplate(id: String, name: String, defaultName: Option[String],
+                           tags: Seq[String], properties: Seq[DataItem])

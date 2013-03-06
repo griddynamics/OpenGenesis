@@ -30,40 +30,24 @@ import com.griddynamics.genesis.util.Logging
 import org.apache.commons.codec.digest.DigestUtils
 
 
-class FilesystemTemplateRepository(filesystemFolder: String, wildcard: String) extends TemplateRepository with Logging {
-    
-    var sources: Map[VersionedTemplate, String] = Map()
-    var lastModifiedHash = "0"
-    val genesisHome = Option(System.getProperty("genesis_home"))
+class FilesystemTemplateRepository(filesystemFolder: String, wildcard: String) extends
+    FilesystemStorage(filesystemFolder, wildcard)
+    with TemplateRepository with Logging {
 
-    def listSources() = {
-        if (sources.isEmpty || lastModifiedHash != lastModification) {
-            sources = readSources()
-            lastModifiedHash = lastModification
-        }
-        sources
+  var sources: Map[VersionedTemplate, String] = Map()
+  var lastModifiedHash = "0"
+
+  def listSources() = {
+    if (sources.isEmpty || lastModifiedHash != lastModification) {
+      sources = readSources()
+      lastModifiedHash = lastModification
     }
-    
-    private def readSources() = files.map(f => (VersionedTemplate(f.getAbsolutePath, f.lastModified.toString), Source.fromFile(f).getLines().mkString("\n"))).toMap
+    sources
+  }
+
+  private def readSources() = files.map(f => (VersionedTemplate(f.getAbsolutePath, f.lastModified.toString), content(f))).toMap
 
 
-    def files: Array[File] = {
-        var topDir = new File(filesystemFolder)
 
-        if (!topDir.exists() && genesisHome.isDefined) {
-          val relativePath = new File(new File(genesisHome.get), filesystemFolder)
-          if (relativePath.exists() && relativePath.isDirectory) {
-            topDir = relativePath
-          }
-        }
-
-        if (!topDir.exists || !topDir.isDirectory)
-          throw new IllegalArgumentException("Given template directory doesn't exist (%s)".format(topDir.getPath))
-
-        topDir.listFiles(new FilenameFilter {
-            def accept(dir: File, name: String) = FilenameUtils.wildcardMatch(name, wildcard, TemplateRepository.wildCardIOCase)
-        })
-    }
-
-    private def lastModification: String = DigestUtils.sha256Hex(files.map(_.lastModified()).mkString(""))
+  private def lastModification: String = DigestUtils.sha256Hex(files.map(_.lastModified()).mkString(""))
 }

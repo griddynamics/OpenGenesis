@@ -13,7 +13,7 @@ class DatabagTemplateReaderTest extends AssertionsForJUnit with MockitoSugar wit
 
   describe("Databag template reader") {
     it("Should read a test template") {
-      val withName = ConfigFactory.load("databags/test.json", ConfigParseOptions.defaults(), ConfigResolveOptions.noSystem())
+      val withName = ConfigFactory.load("databags/test.dbtemplate", ConfigParseOptions.defaults(), ConfigResolveOptions.noSystem())
       val template1 = DatabagTemplateReader.read(withName)
       template1.name should equal("Test databag template")
       template1.id should equal("1")
@@ -31,7 +31,7 @@ class DatabagTemplateReaderTest extends AssertionsForJUnit with MockitoSugar wit
     }
 
     it("Should read a test template without default name and tags") {
-      val withoutName = ConfigFactory.load("databags/test-no-name.json", ConfigParseOptions.defaults(), ConfigResolveOptions.noSystem())
+      val withoutName = ConfigFactory.load("databags/test-no-name.dbtemplate", ConfigParseOptions.defaults(), ConfigResolveOptions.noSystem())
       val template2 = DatabagTemplateReader.read(withoutName)
       template2.id should equal("2")
       template2.defaultName should equal(None)
