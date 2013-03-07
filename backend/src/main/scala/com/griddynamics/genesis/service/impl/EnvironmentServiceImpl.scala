@@ -24,12 +24,19 @@
 package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.service
-import com.griddynamics.genesis.api.Configuration
-import com.griddynamics.genesis.repository.ConfigurationRepository
+import com.griddynamics.genesis.api._
+import com.griddynamics.genesis.repository.{DatabagTemplateRepository, ConfigurationRepository}
 import org.springframework.security.core.context.SecurityContextHolder
 import java.security.Principal
+import com.griddynamics.genesis.validation.{Validation, ConfigValueValidator}
+import com.griddynamics.genesis.api.Configuration
+import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.api.Failure
+import scala.Some
 
-class EnvironmentServiceImpl(repository: ConfigurationRepository, accessService: service.EnvironmentAccessService) extends service.EnvironmentService {
+class EnvironmentServiceImpl(repository: ConfigurationRepository, accessService: service.EnvironmentAccessService,
+                             override val templates: DatabagTemplateRepository, override val validations: Map[String, ConfigValueValidator])
+  extends service.EnvironmentService with TemplateValidator with Validation[Configuration] {
 
   private def getAuth = SecurityContextHolder.getContext.getAuthentication
 
@@ -71,4 +78,32 @@ class EnvironmentServiceImpl(repository: ConfigurationRepository, accessService:
   def get(projectId: Int, configId: Int) = repository.get(projectId, configId).map(checkAccess(projectId, _))
   .getOrElse(None)
 
+  protected def validateUpdate(c: Configuration) = {
+    commonValidation(c)
+  }
+
+  protected def validateCreation(c: Configuration) = {
+    commonValidation(c)
+  }
+
+  protected def commonValidation(c: Configuration) = {
+    valid(c) ++ validAccordingToTemplate(c).flatMap({case s: TemplateBased => Success(c)})
+  }
+
+  private def valid(config: Configuration): ExtendedResult[Configuration] = {
+    val exist = repository.findByName(config.projectId, config.name)
+    exist match {
+      case None => Success(config)
+      case Some(c) if c.id.isDefined && config.id == c.id => Success(config)
+      case _ => Failure(compoundServiceErrors = Seq("Environment configuration with name %s already exists in project".format(config.name)))
+    }
+  }
+
+  def save(c: Configuration) = {
+    validCreate(c, c => repository.save(c))
+  }
+
+  def update(c: Configuration) = {
+    validUpdate(c, c => repository.save(c))
+  }
 }

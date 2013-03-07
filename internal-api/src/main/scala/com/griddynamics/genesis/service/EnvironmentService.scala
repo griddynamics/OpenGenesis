@@ -23,7 +23,7 @@
 
 package com.griddynamics.genesis.service
 
-import com.griddynamics.genesis.api.Configuration
+import com.griddynamics.genesis.api.{ExtendedResult, Configuration}
 
 /**
    Environment configuration operations with integrated security rules
@@ -32,4 +32,6 @@ trait EnvironmentService {
   def getDefault(projectId: Int): Option[Configuration]
   def list(projectId: Int): Iterable[Configuration]
   def get(projectId: Int, configId: Int): Option[Configuration]
+  def save(c: Configuration): ExtendedResult[Configuration]
+  def update(c: Configuration): ExtendedResult[Configuration]
 }

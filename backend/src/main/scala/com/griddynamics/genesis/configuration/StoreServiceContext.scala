@@ -32,7 +32,7 @@ import org.squeryl.adapters.{PostgreSqlAdapter, MySQLAdapter, H2Adapter}
 import com.griddynamics.genesis.repository
 import com.griddynamics.genesis.service
 import repository.impl.RemoteAgentRepositoryImpl
-import repository.{GenesisVersionRepository, SchemaCreator}
+import repository.{DatabagTemplateRepository, GenesisVersionRepository, SchemaCreator}
 import org.springframework.transaction.support.TransactionTemplate
 import org.springframework.transaction.PlatformTransactionManager
 import com.griddynamics.genesis.adapters.MSSQLServerWithPagination
@@ -42,6 +42,9 @@ import org.springframework.beans.factory.InitializingBean
 import com.griddynamics.genesis.util.Logging
 import org.springframework.beans.factory.annotation.Autowired
 import java.sql.SQLException
+import com.griddynamics.genesis.validation.ConfigValueValidator
+import collection.JavaConversions._
+import scala.Some
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
@@ -49,6 +52,10 @@ class JdbcStoreServiceContext extends StoreServiceContext {
     @Autowired var projectAuthority: service.ProjectAuthorityService = _
 
     @Autowired var permissionService: PermissionService = _
+
+    @Autowired var databagTemplateRepository: DatabagTemplateRepository = _
+
+    @Autowired(required = false) private var validators: java.util.Map[String, ConfigValueValidator] = mapAsJavaMap(Map())
 
     @Bean def environmentSecurity: service.EnvironmentAccessService = new impl.EnvironmentAccessService(storeService, permissionService)
 
@@ -60,19 +67,14 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 
     @Bean def credentialsRepository: repository.CredentialsRepository = new repository.impl.CredentialsRepository
     @Bean def configurationRepository: repository.ConfigurationRepository = new repository.impl.ConfigurationRepositoryImpl
-    @Bean def environmentService: EnvironmentService = new EnvironmentServiceImpl(configurationRepository, environmentSecurity)
-
+    @Bean def environmentService: EnvironmentService = new EnvironmentServiceImpl(configurationRepository, environmentSecurity, databagTemplateRepository, validators.toMap)
     @Bean def credentialsStoreService: service.CredentialsStoreService = new impl.CredentialsStoreService(credentialsRepository, projectRepository)
-
     @Bean def serversArrayRepository: repository.ServerArrayRepository = new repository.impl.ServerArrayRepository()
     @Bean def serversRepository: repository.ServerRepository = new repository.impl.ServerRepository()
-
     @Bean def serversService: service.ServersService = new ServersServiceImpl(serversArrayRepository, serversRepository)
     @Bean def serversLoanService: service.ServersLoanService = new ServersLoanServiceImpl(storeService, credentialsRepository)
-
     @Bean def databagRepository: repository.DatabagRepository = new repository.impl.DatabagRepository
-
-    @Bean def databagService: service.DataBagService = new impl.DataBagServiceImpl(databagRepository)
+    @Bean def databagService: service.DataBagService = new impl.DataBagServiceImpl(databagRepository, databagTemplateRepository, validators.toMap)
 
 }
 

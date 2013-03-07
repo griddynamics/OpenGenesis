@@ -28,7 +28,6 @@ import java.sql.Timestamp
 import util.{TimeZone, Locale}
 import java.text.DateFormat
 
-
 trait Identifiable[T] {
   def id: T
 }
@@ -44,7 +43,10 @@ case class Configuration( id: Option[Int],
                           description: Option[String],
                           @ValidStringMap(key_min = 1, key_max = 256, value_min = 0, value_max = 256)
                           items: Map[String, String] = Map(),
-                          instanceCount: Option[Int] = None) extends Identifiable[Option[Int]] with ProjectBound
+                          instanceCount: Option[Int] = None,
+                          override val templateId: Option[String] = None) extends Identifiable[Option[Int]] with ProjectBound with TemplateBased {
+  def itemsMap = items
+}
 
 case class Environment(id: Int,
                        name : String,
@@ -227,7 +229,12 @@ case class DataBag( id: Option[Int],
                     @Size(min = 1, max = 128) @NotBlank name: String,
                     tags: Seq[String],
                     projectId: Option[Int] = None,
-                    @ValidSeq items: Seq[DataItem] = Seq() )
+                    templateId: Option[String] = None,
+                    @ValidSeq items: Seq[DataItem] = Seq() ) extends TemplateBased {
+  def itemsMap = {
+    items.map(item => (item.name, item.value)).toMap
+  }
+}
 
 case class Plugin(id: String, description: Option[String])
 
@@ -344,3 +351,8 @@ object ResetAction extends Action("reset")
 
 case class DatabagTemplate(id: String, name: String, defaultName: Option[String],
                            tags: Seq[String], properties: Seq[DataItem])
+
+trait TemplateBased {
+  def templateId: Option[String]
+  def itemsMap: Map[String, String]
+}

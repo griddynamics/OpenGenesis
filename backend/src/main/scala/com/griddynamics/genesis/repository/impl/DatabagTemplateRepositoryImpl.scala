@@ -1,6 +1,6 @@
 package com.griddynamics.genesis.repository.impl
 
-import com.griddynamics.genesis.model.{ValueMetadata, DatabagTemplate}
+import com.griddynamics.genesis.model.{TemplateProperty, ValueMetadata, DatabagTemplate}
 import com.typesafe.config.{ConfigFactory, ConfigException, Config}
 import scala.util.control.Exception._
 import com.griddynamics.genesis.repository.DatabagTemplateRepository
@@ -42,11 +42,11 @@ object DatabagTemplateReader {
       Option(getString(defaultKey)), getString(scopeKey, ""), tags, readProperties(c.getConfig(databagKey)))
   }
 
-  private def readProperties(config: Config): Map[String, ValueMetadata] = {
+  private def readProperties(config: Config): Map[String, TemplateProperty] = {
     import collection.JavaConversions._
     config.root().keysIterator.map(key => (key -> {
       val value: Config = config.getConfig(key)
-      new ValueMetadata(value)
+      new TemplateProperty(value)
     })).toMap
   }
 }
