@@ -53,8 +53,7 @@ class RequestDispatcherImpl(workflowConfig: WorkflowConfig,
                             executorService: ExecutorService,
                             stepCoordinatorFactory: StepCoordinatorFactory,
                             actorSystem: ActorSystem,
-                            remoteAgentService: RemoteAgentsService,
-                            envJobService: EnvironmentJobService) extends RequestDispatcher with Logging {
+                            remoteAgentService: RemoteAgentsService) extends RequestDispatcher with Logging {
 
     val coordinators = mutable.Map[(Int, Int), TypedFlowCoordinator]()
 
@@ -141,9 +140,7 @@ class RequestDispatcherImpl(workflowConfig: WorkflowConfig,
     def destroyingCoordinator(envId: Int, projectId: Int, flowSteps: Seq[StepBuilder], rescueSteps: Seq[StepBuilder]) =
         new TypedFlowCoordinatorImpl(
             new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService,
-                stepCoordinatorFactory, rescueSteps) with DestroyWorkflow with JobServiceProvider {
-              def jobService = envJobService
-            } ,
+                stepCoordinatorFactory, rescueSteps) with DestroyWorkflow ,
             workflowConfig, executorService, actorSystem, remoteAgentService
 
         )

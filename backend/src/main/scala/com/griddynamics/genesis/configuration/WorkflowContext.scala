@@ -32,7 +32,6 @@ import com.griddynamics.genesis.workflow.TrivialStepExecutor
 import com.griddynamics.genesis.core.TrivialStepCoordinatorFactory
 import com.griddynamics.genesis.workflow.{StepResult, Step}
 import org.springframework.core.io.Resource
-import com.griddynamics.genesis.scheduler.EnvironmentJobService
 import com.griddynamics.genesis.service.RemoteAgentsService
 
 trait WorkflowContext {
@@ -52,7 +51,6 @@ class DefaultWorkflowContext extends WorkflowContext {
     @Autowired var storeServiceContext: StoreServiceContext = _
     @Autowired var templateServiceContext: TemplateServiceContext = _
     @Autowired var remoteAgentService: RemoteAgentsService = _
-    @Autowired var envJobService: EnvironmentJobService = _
     @Autowired var actorSystem: ActorSystem = _
 
     @Bean def requestDispatcher: RequestDispatcher = {
@@ -67,8 +65,7 @@ class DefaultWorkflowContext extends WorkflowContext {
         templateService = templateServiceContext.templateService,
         executorService = executorService,
         stepCoordinatorFactory = stepCoordinatorFactory, actorSystem = actorSystem,
-        remoteAgentService = remoteAgentService,
-        envJobService = envJobService)
+        remoteAgentService = remoteAgentService)
     }
 
     // this executor service is used to 'asynchronously' execute SyncActionExecutors,
