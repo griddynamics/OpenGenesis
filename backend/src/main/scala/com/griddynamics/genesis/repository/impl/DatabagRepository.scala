@@ -40,7 +40,7 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
 
   implicit def convert(entity: model.DataBag) = {
     val tags: Seq[String] = if (entity.tags.trim.isEmpty) List() else List(entity.tags.trim.toLowerCase.split(" "): _*)
-    new api.DataBag(fromModelId(entity.id), entity.name, tags, entity.projectId)
+    new api.DataBag(fromModelId(entity.id), entity.name, tags, entity.projectId, entity.templateId)
   }
 
   implicit def convert(dto: DataBag) = {

@@ -101,14 +101,12 @@ class ConfigurationController extends RestApiExceptionsHandler{
   @ResponseBody
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
   def create(@PathVariable("projectId") projectId: Int, @Valid @RequestBody config: Configuration) =
-    valid(config.copy(id = None, projectId = projectId)).map(configRepository.save(_))
+    envConfigService.save(config.copy(id = None, projectId = projectId))
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.PUT))
   @ResponseBody
   def update(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int, @Valid @RequestBody config: Configuration) =
-    valid(config.copy(id = Some(id), projectId = projectId)).map { c =>
-      configRepository.save(c)
-    }
+    envConfigService.update(config.copy(id = Some(id), projectId = projectId))
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
@@ -126,16 +124,6 @@ class ConfigurationController extends RestApiExceptionsHandler{
       Success(id)
     } else {
       Failure(compoundServiceErrors = Seq("Environment configuration was not found"))
-    }
-  }
-
-
-  private def valid(config: Configuration): ExtendedResult[Configuration] = {
-    val exist = configRepository.findByName(config.projectId, config.name)
-    exist match {
-      case None => Success(config)
-      case Some(c) if c.id.isDefined && config.id == c.id => Success(config)
-      case _ => Failure(compoundServiceErrors = Seq("Environment configuration with name %s already exists in project".format(config.name)))
     }
   }
 

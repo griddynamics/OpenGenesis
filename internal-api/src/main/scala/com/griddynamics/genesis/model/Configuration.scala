@@ -22,4 +22,4 @@
  */
 package com.griddynamics.genesis.model
 
-case class Configuration(name: String, projectId: GenesisEntity.Id, description: Option[String]) extends GenesisEntity with ProjectBoundEntity
+case class Configuration(name: String, projectId: GenesisEntity.Id, description: Option[String], templateId: Option[String] = None) extends GenesisEntity with ProjectBoundEntity

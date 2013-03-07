@@ -22,7 +22,7 @@
  */
 package com.griddynamics.genesis.model
 
-class DataBag(val name: String, val tags: String, val projectId: Option[Int]= None) extends GenesisEntity{
+class DataBag(val name: String, val tags: String, val projectId: Option[Int]= None, val templateId: Option[String] = None) extends GenesisEntity{
     def this() = this("", "", Some(0))
 }
 
