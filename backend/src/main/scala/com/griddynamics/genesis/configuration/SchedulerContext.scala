@@ -37,6 +37,7 @@ import java.util.{Date, Properties}
 import javax.annotation.PostConstruct
 import com.griddynamics.genesis.model.Environment
 import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.core.events.{EnvDestroyed, WorkflowEventsBus}
 
 
 @Configuration
@@ -60,6 +61,10 @@ class SchedulerContext extends Logging {
   def afterPropertiesSet() {
     if (adminUserName != "NOT-SET" && adminEmail == "NOT-SET") {
       log.warn(s"Property 'genesis.web.admin.email' is not set. This means that admin '$adminUserName' won't be able to receive email notifications")
+    }
+
+    WorkflowEventsBus.subscribe {
+      case EnvDestroyed(projectId, envId) => envJobService.removeAllScheduledJobs(projectId, envId)
     }
   }
 
