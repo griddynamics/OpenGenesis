@@ -30,15 +30,19 @@ import scala.Array
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.rest.GenesisRestController._
 import java.util.Date
-import com.griddynamics.genesis.rest.links.CollectionWrapper
-import com.griddynamics.genesis.api.{Failure, Success, ExtendedResult, ScheduledJobDetails}
+import com.griddynamics.genesis.rest.links.{ItemWrapper, WebPath, LinkBuilder, CollectionWrapper}
+import com.griddynamics.genesis.api.{ExtendedResult, Failure, Success, ScheduledJobDetails}
 import java.util.concurrent.TimeUnit
+import com.griddynamics.genesis.rest.annotations.{LinkTarget, AddSelfLinks}
+import org.springframework.web.bind.annotation.RequestMethod._
+import com.griddynamics.genesis.spring.security.LinkSecurityBean
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
 class EnvironmentJobsController {
   @Autowired var envConfigService: EnvironmentConfigurationService = _
   @Autowired var schedulingService: EnvironmentJobService = _
+  @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
   @RequestMapping(value = Array("{envId}/jobs"), method = Array(RequestMethod.POST))
   @ResponseBody
@@ -62,10 +66,13 @@ class EnvironmentJobsController {
 
   @RequestMapping(value = Array("{envId}/jobs"), method = Array(RequestMethod.GET))
   @ResponseBody
+  @AddSelfLinks(methods = Array(GET, POST), modelClass = classOf[ScheduledJobDetails])
   def scheduledJobs(@PathVariable("projectId") projectId: Int,
                     @PathVariable("envId") envId: Int,
-                    request: HttpServletRequest): CollectionWrapper[ScheduledJobDetails] = {
-    schedulingService.listScheduledJobs(projectId, envId)
+                    request: HttpServletRequest): CollectionWrapper[ItemWrapper[ScheduledJobDetails]] = {
+    import CollectionWrapper._
+    schedulingService.listScheduledJobs(projectId, envId).map( job =>
+      job.withLinks(LinkBuilder(WebPath(request) / job.id, LinkTarget.SELF, classOf[ScheduledJobDetails], PUT, DELETE)).filtered())
   }
 
   @RequestMapping(value = Array("{envId}/jobs/{jobId}"), method = Array(RequestMethod.DELETE))
