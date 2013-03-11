@@ -177,7 +177,8 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @LinksTo(value = Array(
     new LinkTo(path = "history", rel = COLLECTION, methods = Array(GET), modelClass = classOf[WorkflowHistory]),
     new LinkTo(path = "workflows", rel = COLLECTION, methods = Array(GET), modelClass = classOf[Workflow]),
-    new LinkTo(path = "actions", rel = COLLECTION, methods = Array(GET), modelClass = classOf[Action])
+    new LinkTo(path = "actions", rel = COLLECTION, methods = Array(GET), modelClass = classOf[Action]),
+    new LinkTo(path = "jobs", rel = COLLECTION, methods = Array(GET), modelClass = classOf[ScheduledJobDetails])
   ))
   @AddSelfLinks(methods = Array(GET, PUT, DELETE), modelClass = classOf[EnvironmentDetails])
   def describeEnv(@PathVariable("projectId") projectId: Int,
