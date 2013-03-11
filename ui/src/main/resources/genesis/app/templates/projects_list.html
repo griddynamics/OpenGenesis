@@ -27,7 +27,7 @@
        <% for (var i = 0, count = projects.length; i < count; i++) { var project = projects[i]; %>
         <tr>
             <td class="name" >
-                <a data-proj-id="<%= project.id %>" href="#" class="fav-prj">
+                <a data-proj-id="<%= project.id %>" href="javascript:void(0)" class="fav-prj" >
                     <img class="project-fav-icon" src="<%= group.favorite ? 'assets/img/star.png' : 'assets/img/star-gray.png' %>"/>
                 </a>
                 <a href="#project/<%= project.id %>">
