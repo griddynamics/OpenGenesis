@@ -62,7 +62,7 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
     val createWorkflow = templateService.findTemplate(0, "Projects", "0.1", 1).get.createWorkflow
 
     def testDatabag : DataBag = {
-        val db = DataBag(Some(0), "foo", Seq("foo"), Some(0), Seq(
+        val db = DataBag(Some(0), "foo", Seq("foo"), Some(0), None, Seq(
             DataItem(Some(0), "key1", "fred", None),
             DataItem(Some(0), "key2", "barney", None),
             DataItem(Some(0), "key3", "wilma", None),
@@ -73,7 +73,7 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
     }
 
     def systemDatabag : DataBag = {
-        val db = DataBag(Some(0), "bar", Seq("bar"), None, Seq(
+        val db = DataBag(Some(0), "bar", Seq("bar"), None, None, Seq(
             DataItem(Some(0), "key1", "barney", None),
             DataItem(Some(0), "key2", "wilma", None),
             DataItem(Some(0), "key3", "fred", None)
@@ -82,7 +82,7 @@ class GroovyTemplateProjectContextTest extends AssertionsForJUnit with MockitoSu
     }
 
     def altDatabag : DataBag = {
-        val db = DataBag(Some(0), "foo", Seq("foo"), None, Seq(
+        val db = DataBag(Some(0), "foo", Seq("foo"), None, None, Seq(
             DataItem(Some(0), "key1", "barney", None),
             DataItem(Some(0), "key2", "wilma", None),
             DataItem(Some(0), "key3", "fred", None),

@@ -2,12 +2,21 @@ package com.griddynamics.genesis.service.impl
 
 import com.griddynamics.genesis.service.DataBagService
 import org.springframework.transaction.annotation.Transactional
-import com.griddynamics.genesis.repository.DatabagRepository
-import com.griddynamics.genesis.validation.Validation
+import com.griddynamics.genesis.repository.{DatabagTemplateRepository, DatabagRepository}
+import com.griddynamics.genesis.validation.{ConfigValueValidator, Validation}
 import com.griddynamics.genesis.validation.Validation._
-import com.griddynamics.genesis.api.{ExtendedResult, DataBag, Failure, Success}
+import com.griddynamics.genesis.api._
+import scala.Some
+import com.griddynamics.genesis.model.{TemplateProperty, DatabagTemplate}
+import com.griddynamics.genesis.api.DataBag
+import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.api.Failure
+import scala.Some
 
-class DataBagServiceImpl(repository: DatabagRepository) extends DataBagService with Validation[DataBag] {
+class DataBagServiceImpl(repository: DatabagRepository,
+                         override val templates: DatabagTemplateRepository,
+                         override val validations: Map[String, ConfigValueValidator]) extends DataBagService with
+  Validation[DataBag] with TemplateValidator {
 
   @Transactional(readOnly = true)
   def list = repository.list
@@ -48,7 +57,11 @@ class DataBagServiceImpl(repository: DatabagRepository) extends DataBagService w
 
   def commonValidate (bag: DataBag): ExtendedResult[DataBag] = {
     mustNotHaveDuplicateItems(bag) ++
-      mustSatisfyLengthConstraints(bag, bag.tags.mkString(" "), "tags")(0, 510)
+      mustSatisfyLengthConstraints(bag, bag.tags.mkString(" "), "tags")(0, 510) ++
+      validAccordingToTemplate(bag) match {
+      case Success(_) => Success(bag)
+      case a: Failure => a
+    }
   }
 
   protected def validateCreation(bag: DataBag) = {
@@ -66,4 +79,5 @@ class DataBagServiceImpl(repository: DatabagRepository) extends DataBagService w
       Success(bag)
     }
   }
+
 }

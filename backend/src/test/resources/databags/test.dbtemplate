@@ -6,6 +6,6 @@
   "default-tags": ["foo", "bar", "baz"],
   "properties": {
     "some-long-key": {"description": "This is a long key", "default": 1234,  "validation": {"Must be integer value >= 0": "int_nonnegative"}},
-    "other-long-key": {"description": "This is an other key", "default": "aaa", "required": true}
+    "other-long-key": {"description": "This is an other key", "default": "aaa", "required" : true}
   }
 }

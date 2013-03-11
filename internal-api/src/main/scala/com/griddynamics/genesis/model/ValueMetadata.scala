@@ -18,3 +18,8 @@ class ValueMetadata(c: Config) {
   protected def getMap(key: String): Map[String, ConfigValue] =
     failAsValue(classOf[ConfigException])(Map.empty[String, ConfigValue]) { c.getObject(key).toMap }
 }
+
+class TemplateProperty(c: Config) extends ValueMetadata(c) {
+  val required = getBoolean("required")
+  override def toString = getValidation.toString()
+}
