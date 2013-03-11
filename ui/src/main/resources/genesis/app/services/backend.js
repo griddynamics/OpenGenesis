@@ -313,7 +313,7 @@ function(genesis, $) {
 
     ServerArray: new _type("ServerArray"),
     Server: new _type("Server"),
-
+    EnvScheduledJob: new _type("ScheduledJobDetails"),
     TemplateRepo: new _type("TemplateRepo"),
     EnvConfig: new _type("Configuration"),
     EnvConfigAccess: new _type("Access"),

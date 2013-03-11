@@ -25,8 +25,12 @@
                     <%- job.scheduledBy %>
                 </td>
                 <td class="actions">
-                    <a class="job-update" href="javascript: void(0)" data-job-id="<%- job.id %>" >Update</a>
-                    <a class="job-remove" href="javascript: void(0)" data-job-id="<%- job.id %>" >Delete</a>
+                    <% if (accessRights[job.id].canEdit) { %>
+                        <a class="job-update" href="javascript: void(0)" data-job-id="<%- job.id %>" >Update</a>
+                   <% } %>
+                    <% if (accessRights[job.id].canDelete) { %>
+                        <a class="job-remove" href="javascript: void(0)" data-job-id="<%- job.id %>" >Delete</a>
+                    <% } %>
                 </td>
             </tr>
             <tr class="no-hover-white">

@@ -58,7 +58,15 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
     }
   });
 
+  var ScheduledJob = genesis.Backbone.Model.extend({
+    linkType: backend.LinkTypes.EnvScheduledJob
+  });
+
   var EnvJobs = genesis.Backbone.Collection.extend({
+    linkType: backend.LinkTypes.EnvScheduledJob,
+
+    model: ScheduledJob,
+
     initialize: function(atts, options) {
       this.projectId = options.projectId;
       this.envId = options.envId;
@@ -735,7 +743,8 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
          self.$el.html(tmpl({
            jobs: _(self.collection.sortBy(function(i) { return i.get('date') })).map(function(i) { return i.toJSON(); }),
            moment: moment,
-           utils: genesis.utils
+           utils: genesis.utils,
+           accessRights: self.collection.itemAccessRights()
          }));
        }
       });
