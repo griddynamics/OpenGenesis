@@ -152,7 +152,7 @@ function(genesis, status, $, _, Backbone) {
       this.variables = options.variables;
       this.graph = new DependencyGraph(this.variables);
       this.configurationId = options.configurationId;
-
+      this.variableValues = options.variableValues;
       var templateUrl = "rest/projects/" +
         options.projectId + "/templates/" +
         options.template.get("name") + "/v" +
@@ -213,7 +213,17 @@ function(genesis, status, $, _, Backbone) {
       $.when(genesis.fetchTemplate(this.htmltemplate)).done(function (varTmpl) {
         self.$el.html(varTmpl({variables: self.variables}));
         self._linkDependencies();
-
+        var resolvedVars = _.keys(self.variableValues);
+        if(resolvedVars.length > 0) {
+          _(resolvedVars).forEach(function(v){
+            var $input = self.$("#" + escapeCss(v));
+            $input.removeAttr("disabled");
+            if($input.hasClass("group")) {
+              self.$("input[type='radio'][data-var-name='" + escapeCss(v) + "']").attr("checked", "checked")
+            }
+          });
+          self._applyResolvedVariables(self.variableValues);
+        }
         if (callback) callback();
       });
     },
@@ -228,19 +238,26 @@ function(genesis, status, $, _, Backbone) {
         return $input.attr('disabled') !== 'disabled';
       });
       var nameValueMap = self._collectValueObject(resolvedVariables);
+      this._applyResolvedVariables(nameValueMap);
+    },
 
-      self.applyVariables(nameValueMap, self.configurationId).done(function (data) {
+    _applyResolvedVariables: function(nameValueMap) {
+      var self = this;
+
+      this.applyVariables(nameValueMap, self.configurationId).done(function (data) {
         var invalidVars = [];
         var successfullyProcessed = [];
-        _(data).each(function(variable){
+          _(data).each(function (variable) {
           var $input = self.$("#" + escapeCss(variable.name));
           var isValid = true;
           if (self._isMultiValue(variable)) {
             var previousValue = nameValueMap[variable.name];
-            if(!variable.values.hasOwnProperty(previousValue)) { //if old value doesn't conform to new values map
+            if (!variable.values.hasOwnProperty(previousValue)) { //if old value doesn't conform to new values map
               var descendants = self.graph.allDescendants(variable.name);
               invalidVars = _.union(invalidVars, descendants); // all descendants concerned to be invalid
-              _.intersection(successfullyProcessed, descendants).forEach(function(i) { self._disable("#" + escapeCss(i)) });
+              _.intersection(successfullyProcessed, descendants).forEach(function (i) {
+                self._disable("#" + escapeCss(i))
+              });
               isValid = false;
             }
 
@@ -252,14 +269,14 @@ function(genesis, status, $, _, Backbone) {
               self._disable($input)
             }
           }
-          if(nameValueMap.hasOwnProperty(variable.name) && isValid) {
+          if (nameValueMap.hasOwnProperty(variable.name) && isValid) {
             $input.val(nameValueMap[variable.name])
           }
         });
         self.trigger("configuration-success");
-      }).fail(function(e){
+      }).fail(function (e) {
         self.trigger("configuration-error", e);
-      }).always(function() {
+      }).always(function () {
         genesis.app.trigger("page-view-loading-completed");
       });
     },

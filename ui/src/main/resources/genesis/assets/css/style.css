@@ -315,6 +315,17 @@ table.intab th{
 	border-bottom: 1px solid rgb(200,200,200);
 }
 
+table.intab.plain-table th {
+    background: none;
+    border-top: none;
+    border-right: none !important;
+    border-left: none !important;
+}
+table.intab.plain-table td {
+    border:none !important;
+    text-align: left !important;
+}
+
 table#details td.first{
 	width: 15%;
 	text-align:right;
@@ -859,13 +870,13 @@ img.toggle {
     margin: 2px 5px 2px 5px;
 }
 
-.workflow h3.toggle, .step-details-expander a.toggle, .config_group h3.toggle {
+.workflow h3.toggle, .step-details-expander a.toggle, .config_group h3.toggle, .job-details.toggle {
     margin-top: 3px;
     padding-left: 12px;
     background: url(../img/arrow-left.png) no-repeat left;
 }
 
-.workflow h3.expanded, .step-details-expander a.expanded, .config_group h3.expanded {
+.workflow h3.expanded, .step-details-expander a.expanded, .config_group h3.expanded, .job-details.expanded {
     margin-top: 3px;
     padding-left: 15px;
     background: url(../img/arrow-down.png) no-repeat left;
@@ -1059,6 +1070,15 @@ td.subtable{
     text-overflow: ellipsis;
 }
 
+.workflow-variables.compact {
+    background-color: white;
+    min-height: 5px;
+}
+
+.workflow-variables.compact dl {
+    padding: 0px !important;
+    background-color: white;
+}
 .workflow-actions .status-section {
     display: inline-block;
     min-width: 100px;
@@ -1303,6 +1323,9 @@ table.main-table tr:hover, table.intab tr:hover{
     background-color: #f5f5ff;
 }
 
+table.intab tr.no-hover-white {
+    background-color: white !important;
+}
 #panel table.main-table span{
 	font-weight:bold;
 	line-height:22px;
