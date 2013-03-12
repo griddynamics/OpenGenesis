@@ -18,7 +18,7 @@ class DatabagTemplateServiceImpl(val repository: DatabagTemplateRepository) exte
   def scopes = Set(DatabagTemplateRepository.SystemScope, DatabagTemplateRepository.ProjectScope, DatabagTemplateRepository.EnvironmentScope)
 
   def convert(template: model.DatabagTemplate) : api.DatabagTemplate = {
-    new api.DatabagTemplate(template.id, template.name, template.defaultName, template.tags.split(",").toSeq,
+    new api.DatabagTemplate(template.id, template.name, template.defaultName, template.scope, template.tags.split(",").toSeq,
       template.values.map({case (key,value) =>
         new api.DataItem(None, key, value.default, None)}).toSeq)
   }

@@ -12,7 +12,7 @@ class DatabagTemplateRepositoryImpl(val path: String, val wildcard: String) exte
     List(new FilesystemStorage(path, wildcard), new ClasspathStorage(defaultClassloader, wildcard, "UTF8"))
   def list = {
     val result: List[DatabagTemplate] = storages.foldLeft(List.empty[DatabagTemplate])((acc, storage) => {
-      if (acc.isEmpty) acc ++ getTemplates(storage) else List.empty[DatabagTemplate]
+      acc ++ (if (acc.isEmpty) getTemplates(storage) else List.empty[DatabagTemplate])
     })
     result
   }
