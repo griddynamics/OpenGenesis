@@ -9,6 +9,7 @@ When /^I create databag "(.+)" with values$/ do |databag_name, table|
     resource.post({:name => databag_name, :values => databag_values})
   end
 end
+
 When /^I can delete databag "([^"]*)"$/ do |db_name|
   resource :databags do |resource|
     db = resource.find_by_name(db_name)
