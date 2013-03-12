@@ -6,6 +6,17 @@
   <link rel="stylesheet" type="text/css" href="assets/css/index.css"/>
   <script data-main="app/requirejs-config" src="assets/js/libs/require.js"></script>
   <title>Genesis</title>
+  <script type="text/javascript">
+    (function checkIEVersion() {
+      var userAgent = navigator.userAgent;
+      var match = userAgent.match('MSIE (.)');
+      if(match && match.length > 1) {
+        var version = parseInt(match[1]);
+        var docMode = document.documentMode;
+        if (version < 9 || docMode && (docMode < 9)) window.location = 'ie_version_error.html';
+      }
+    }) ();
+    </script>
 </head>
 
 <body>
