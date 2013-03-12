@@ -1,0 +1,10 @@
+{
+  "id": "1-project",
+  "name": "Project level template",
+  "scope": "project",
+  "default-tags": ["foo", "bar"],
+  "properties": {
+    "validated": {"description": "This is a long key", "default": 1234,  "validation": {"Must be integer value >= 0": "int_nonnegative"}},
+    "required": {"description": "This is an other key", "default": "aaa", "required": true}
+  }
+}

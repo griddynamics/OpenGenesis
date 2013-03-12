@@ -85,4 +85,5 @@
 
     <bean class="com.griddynamics.genesis.rest.MetricsController"/>
 
+    <bean class="com.griddynamics.genesis.rest.DatabagTemplatesController"/>
 </beans>
