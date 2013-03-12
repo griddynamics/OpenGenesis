@@ -152,7 +152,7 @@ function(genesis, status, $, _, Backbone) {
       this.variables = options.variables;
       this.graph = new DependencyGraph(this.variables);
       this.configurationId = options.configurationId;
-      this.variableValues = options.variableValues;
+      this.variableValues = options.variableValues || {};
       var templateUrl = "rest/projects/" +
         options.projectId + "/templates/" +
         options.template.get("name") + "/v" +
