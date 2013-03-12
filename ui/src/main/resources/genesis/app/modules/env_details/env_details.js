@@ -297,8 +297,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       var status = this.details.get('status'),
           activeExecution = (status === "Busy");
       this.$(".cancel-button")
-        .toggleClass("disabled", !this.details.canCancelWorkflow())
-        .toggle(status !== "Destroyed");
+        .toggle(status !== "Destroyed" && this.details.canCancelWorkflow());
 
       this.$(".button-group.action").toggle(status !== "Destroyed")
 
@@ -388,6 +387,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
           }));
 
           view.$(".rename-button").toggle(view.details.canRename());
+          view.$(".cancel-button").toggle(view.details.canCancelWorkflow());
 
           view.updateControlButtons();
           view._renderAllSubViews();
