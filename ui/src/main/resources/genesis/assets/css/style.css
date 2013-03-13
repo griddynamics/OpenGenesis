@@ -1244,7 +1244,7 @@ input[type = 'text'], select {
     margin-right: 10px;
 }
 
-#tab-panel #panel table.main-table input {
+#tab-panel #panel table.main-table input,  #tab-panel #panel table.main-table select.name-input{
     width: 98%;
     margin-bottom: 2px !important;
 }

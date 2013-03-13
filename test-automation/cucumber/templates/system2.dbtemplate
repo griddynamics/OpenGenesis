@@ -2,7 +2,8 @@
   "id": "2-system",
   "name": "Another system level template",
   "scope": "system",
-  "tags": ["foo", "bar"],
+  "default-tags": ["hesiod", "sophocles"],
+  "databag-name": "homer",
   "properties": {
     "validated-key": {"description": "This is a long key", "default": 234,  "validation": {"Must be integer value >= 0": "int_nonnegative"}},
     "required-key": {"description": "This is an other key", "default": "bbb", "required": true}

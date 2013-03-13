@@ -2,11 +2,12 @@ define([
   "genesis",
   "backbone",
   "modules/status",
-  "jvalidate"
+  "jvalidate",
+  "jquery"
 
 ],
 
-function(genesis, Backbone, status) {
+function(genesis, Backbone, status, jvalidate, $) {
   var ValidationHandler = genesis.module();
 
   function parse(jqXHR) {
@@ -41,16 +42,31 @@ function(genesis, Backbone, status) {
     return errorMsg;
   }
 
+  function filter(errors) {
+    var offendingKeys = _.filter(_.keys(errors.varErrors), function(key) {return $('input[name= ' + key + ']')});
+    var newVarErrors = _.pick(errors.varErrors, function() {
+      _.without(_.keys(errors.varErrors), offendingKeys);
+    });
+    var movedErrors = _.map(_.pairs(_.pick(errors.varErrors, offendingKeys)), function(pair) {
+      return 'Key "' + pair[0] + '": ' + pair[1];
+    });
+    errors.varErrors  = newVarErrors;
+    errors.serviceErrors = _.union(errors.serviceErrors, movedErrors);
+    return errors;
+  }
+
   ValidationHandler.unbindValidation = function (bbmodel, $form) {
     bbmodel.unbind("error", null, $form);
   };
 
-  ValidationHandler.bindValidation = function(bbmodel, $form, statusPanel){
+  ValidationHandler.bindValidation = function(bbmodel, $form, statusPanel, doFilter){
 
     bbmodel.bind("error", function(savedModel, jqXHR){
       var errors = parse(jqXHR);
+      if (doFilter) {
+        errors = filter(errors);
+      }
       $form.validate().showErrors(errors.varErrors);
-
       if(statusPanel) {
         statusPanel.error(errors.serviceErrors)
       }

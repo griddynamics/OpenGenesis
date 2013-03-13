@@ -36,10 +36,10 @@ class ConfigurationRepositoryImpl extends AbstractGenericRepository[model.Config
 
   @Autowired var store: AttributeRepository = _
 
-  implicit def convert(m: model.Configuration) = new api.Configuration(fromModelId(m.id), m.name, m.projectId, m.description)
+  implicit def convert(m: model.Configuration) = new api.Configuration(fromModelId(m.id), m.name, m.projectId, m.description, Map(), None, m.templateId)
 
   implicit def convert(dto: Configuration) = {
-    val m = new model.Configuration(dto.name, dto.projectId, dto.description)
+    val m = new model.Configuration(dto.name, dto.projectId, dto.description, dto.templateId)
     m.id = toModelId(dto.id)
     m
   }

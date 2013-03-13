@@ -319,7 +319,8 @@ function(genesis, $) {
     EnvConfigAccess: new _type("Access"),
 
     ResetAction: new _type("ResetAction$"),
-    CancelAction: new _type("CancelAction$")
+    CancelAction: new _type("CancelAction$"),
+    DataBagTemplate: new _type("DatabagTemplate")
 
   };
 

@@ -4,6 +4,7 @@ define([
     "modules/status",
     "modules/common/properties",
     "modules/project_properties/env_configurations/access",
+    "cs!modules/common/databag_templates",
     "cs!modules/settings/roles",
     "modules/validation",
     "services/backend",
@@ -11,7 +12,7 @@ define([
     "jvalidate"
 ],
 
-function(genesis, Backbone, status, property, access, roles, validation, backend, $) {
+function(genesis, Backbone, status, property, access, templates, roles, validation, backend, $) {
   var EnvConfigs = genesis.module();
 
   EnvConfigs.Model = genesis.Backbone.Model.extend({
@@ -65,6 +66,7 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
   EnvConfigs.Views.Main = Backbone.View.extend({
     events: {
       "click .add-config": "createConfig",
+      "click .add-config-from-template": "selectTemplate",
       "click .edit-config": "editConfig"
     },
 
@@ -80,8 +82,42 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
       this.collection.fetch().done(function() {
         self.listView = new ConfigsList({collection: self.collection, el: self.el});
         self.currentView = self.listView;
+        self.selectTemplateDialog = new templates.SelectTemplateDialog({
+          $el: $("#select-template-dialog"),
+          collection: new templates.Collection({scope: "environment"})
+        });
         self.render();
       });
+    },
+
+    selectTemplate: function() {
+      var self = this;
+      if (this.selectTemplateDialog) {
+        this.selectTemplateDialog.bind('databag-template-selected', function(val) {
+          self.createFromTemplate(val)
+        }).show();
+      }
+    },
+
+    createFromTemplate: function(templateId) {
+      var created = new templates.Model({
+        scope: "environment",
+        id: templateId
+      });
+      var self = this;
+      $.when(created.fetch()).done(function(obj) {
+        var prefilled = _.reduce(obj.properties, function(memo, element) {
+          memo[element.name] = element.value;
+          return memo;
+        }, {})
+        self.showEditView(new EnvConfigs.Model({
+            description: "Created from template",
+            projectId: self.projectId,
+            templateId: templateId,
+            items: prefilled
+          }
+        )
+        )});
     },
 
     createConfig: function() {
@@ -222,9 +258,10 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
       config.set({
         name: this.$("input[name='name']").val().trim(),
         description: this.$("textarea[name='description']").val().trim(),
+        templateId: this.$("input[name='templateId']").val(),
         items: attributesMap
       }, {silent: true});
-      validation.bindValidation(config, this.$("#edit-config"), this.status);
+      validation.bindValidation(config, this.$("#edit-config"), this.status, true);
 
       var self = this,
           isNew = this.model.isNew();
@@ -282,7 +319,11 @@ function(genesis, Backbone, status, property, access, roles, validation, backend
         }) );
         self.propertyView = new property.Views.PropertyEditor({
           collection: itemsCollection,
-          el: self.$("#properties")
+          el: self.$("#properties"),
+          dbtemplate: new templates.Model({
+            scope: "environment",
+            id: self.model.get("templateId")
+          })
         });
 
         self.status = new status.LocalStatus({el: self.$(".notification")});
