@@ -96,7 +96,7 @@ function(genesis, Backbone, Environments) {
 
       $.when(environment.fetch()).done(function () {
         locationList.push(_locationItem("/project/" + projectId + "/inst/" + envId, environment.get('name')));
-        locationList.push(_locationItem(Backbone.history.fragment, "Execution details"));
+        locationList.push(_locationItem(Backbone.history.fragment, "Workflow details"));
         view.render(locationList)
       });
     },
