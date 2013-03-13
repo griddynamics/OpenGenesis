@@ -216,11 +216,6 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
         agent.port is (dbType("int")),
         agent.tags is (dbType("varchar(512)"))
     ))
-
-    on(failedJobDetails)(jd => declare(
-        jd.id is (primaryKey, autoIncremented),
-        jd.failureDescription is (dbType("text"))
-    ))
 }
 
 trait GenesisSchemaCustom extends GenesisSchema {
@@ -228,5 +223,11 @@ trait GenesisSchemaCustom extends GenesisSchema {
     on(workflows)(workflow => declare(
         workflow.variables is (dbType("varchar(4096)")),
         workflow.displayVariables is (dbType("text"))
+    ))
+
+    on(failedJobDetails)(jd => declare(
+        jd.id is (primaryKey, autoIncremented),
+        jd.variables is (dbType("varchar(4096)")),
+        jd.failureDescription is (dbType("text"))
     ))
 }

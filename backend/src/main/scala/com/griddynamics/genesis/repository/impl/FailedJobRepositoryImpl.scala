@@ -27,6 +27,7 @@ import com.griddynamics.genesis.model.{GenesisSchema => GS, GenesisEntity, Varia
 import com.griddynamics.genesis.api.ScheduledJobDetails
 import org.squeryl.PrimitiveTypeMode._
 import org.springframework.transaction.annotation.Transactional
+import java.sql.Timestamp
 
 trait FailedJobRepository {
   def list(envId: Int): Iterable[api.ScheduledJobDetails]
@@ -37,12 +38,12 @@ trait FailedJobRepository {
 class FailedJobRepositoryImpl extends AbstractGenericRepository[model.FailedJobDetails, api.ScheduledJobDetails](GS.failedJobDetails) with FailedJobRepository {
   implicit def convert(model: FailedJobDetails) = {
     import VariablesField.variablesFieldToMap
-    new api.ScheduledJobDetails(model.id.toString, model.projectId, model.envId, model.executionDate, model.workflow, model.variables, model.scheduledBy, Some(model.failureDescription))
+    new api.ScheduledJobDetails(model.id.toString, model.projectId, model.envId, model.executionDate.getTime, model.workflow, model.variables, model.scheduledBy, Some(model.failureDescription))
   }
 
 
   implicit def convert(dto: ScheduledJobDetails) = {
-    new FailedJobDetails(dto.id, dto.projectId, dto.envId, dto.date, dto.workflow, dto.variables, dto.scheduledBy, dto.failureDescription.getOrElse("N/A"))
+    new FailedJobDetails(dto.id, dto.projectId, dto.envId, new Timestamp(dto.date), dto.workflow, dto.variables, dto.scheduledBy, dto.failureDescription.getOrElse("N/A"))
   }
 
   @Transactional
