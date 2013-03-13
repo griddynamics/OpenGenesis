@@ -74,6 +74,16 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
 
     url: function(){
       return "rest/projects/" + this.projectId + "/envs/" + this.envId + "/jobs";
+    },
+
+    clone: function() {
+      return new this.constructor(this.models, {projectId: this.projectId, envId: this.envId});
+    }
+  });
+
+  var FailedEnvJobs = EnvJobs.extend({
+    url: function() {
+      return "rest/projects/" + this.projectId + "/envs/" + this.envId + "/failedJobs";
     }
   });
 
@@ -86,36 +96,32 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
 
     render: function () {
       var view = this;
-      $.when(
-          genesis.fetchTemplate(this.template),
-          genesis.fetchTemplate(new EnvHistory.WorkflowHistoryView().template)
-        ).done(function (tmpl) {
+      $.when(genesis.fetchTemplate(this.template), genesis.fetchTemplate(new EnvHistory.WorkflowHistoryView().template)).done(function (tmpl) {
+        $.when(view.model.fetch()).done(function() {
+          view.$el.html(tmpl({ workflow: view.model.toJSON() }));
+          var subview = new EnvHistory.WorkflowHistoryView({
+            expanded: true,
+            model: view.model,
+            el: view.$('div.workflow-section[data-workflow-id="' + view.model.id + '"]')
+          });
 
-          $.when(view.model.fetch()).done(function() {
-            view.$el.html(tmpl({ workflow: view.model.toJSON() }));
-            var subview = new EnvHistory.WorkflowHistoryView({
-              expanded: true,
-              model: view.model,
-              el: view.$('div.workflow-section[data-workflow-id="' + view.model.id + '"]')
+          var failedSteps = _.chain(view.model.get("steps")).
+            filter(function(i){ return i.status == "Failed" }).
+            map(function(i) { return parseInt(i.stepId) }).
+            value();
+          subview.render(function() {
+            _(failedSteps).each(function(stepId) {
+              subview.showStepActions(stepId)
             });
-
-            var failedSteps = _.chain(view.model.get("steps")).
-              filter(function(i){ return i.status == "Failed" }).
-              map(function(i) { return parseInt(i.stepId) }).
-              value();
-            subview.render(function() {
-              _(failedSteps).each(function(stepId) {
-                subview.showStepActions(stepId)
-              });
-            });
-          }).fail(function(error) {
-              if(error.status === 400) {
-                view.$el.html(tmpl({ workflow: view.model }));
-                var panel = new status.LocalStatus({ el: self.$(".notification")});
-                panel.error(JSON.parse(error.responseText).error)
-              }
-            })
-        });
+          });
+        }).fail(function(error) {
+          if(error.status === 400) {
+            view.$el.html(tmpl({ workflow: view.model }));
+            var panel = new status.LocalStatus({ el: self.$(".notification")});
+            panel.error(JSON.parse(error.responseText).error)
+          }
+        })
+      });
     }
   });
 
@@ -201,6 +207,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       }
 
       genesis.utils.nullSafeClose(this.scheduledJobsView);
+      genesis.utils.nullSafeClose(this.failedJobsView);
       genesis.utils.nullSafeClose(this.workflowHistory);
       genesis.utils.nullSafeClose(this.sourcesView);
       genesis.utils.nullSafeClose(this.accessView);
@@ -410,6 +417,15 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
             view.executeWorkflow(job.get('workflow'), job.get("date"), job.get('variables'));
           });
 
+          view.failedJobsView = new ScheduledJobsView({
+            el: view.$("#failed-executions"),
+            collection: new FailedEnvJobs({}, {projectId: view.details.get("projectId"), envId: view.details.id}),
+            $confirmDialog: view.$("#record-removal-confirm"),
+            error: true
+          });
+
+          view.failedJobsView.render();
+
         }).fail(function() {
           genesis.app.trigger("server-communication-error",
             "Failed to get instance details<br/><br/> Please contact administrator.",
@@ -507,7 +523,8 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
             $.when(backend.EnvironmentManager.expandLifeTime(view.details, ttl)).done(function() {
               $(dialog).dialog("close");
               status.StatusPanel.information(ttl ? "Instance lifespan was updated" : "Instance lifespan was set to 'unlimited'");
-              view.details.set("timeToLive", ttl * 1000)
+              view.details.set("timeToLive", ttl * 1000);
+              view.envJobs.fetch();
             }).fail(function(jqxhr) {
               status.StatusPanel.error(jqxhr);
             }).always(function() {
@@ -694,8 +711,19 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
           }
         }
       });
+      this.error = options.error || false;
       this.collection.bind("reset", this.render, this);
-      this.collection.fetch()
+      this.collection.fetch();
+
+      this.collectionPoll = this.collection.clone({projectId: this.collection.projectId, envId: this.collection.envId});
+      poller.PollingManager.start(this.collectionPoll, { noninterruptible: true,  delay: 30000 });
+      var self = this;
+
+      this.collectionPoll.bind("reset", function(e) {
+        if(self.collectionPoll.length != self.collection.length) {
+          self.collection.fetch()
+        }
+      });
     },
 
     updateJob: function(e) {
@@ -713,7 +741,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       buttons["Yes"] = function() {
         $.when(job.destroy()).done(function() {
           self.collection.fetch();
-          status.StatusPanel.information("Job was successfully removed");
+          status.StatusPanel.information("Record was successfully removed");
         }).fail(function(jqxhr) {
           status.StatusPanel.error(jqxhr);
         }).always(function(){
@@ -731,7 +759,8 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
     },
 
     onClose: function(){
-      this.removeConfigDlg && this.removeConfigDlg.dialog('destroy')
+      this.removeConfigDlg && this.removeConfigDlg.dialog('destroy');
+      poller.PollingManager.stop(this.collectionPoll);
     },
 
     render: function() {
@@ -741,10 +770,11 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
          self.$el.html("")
        } else {
          self.$el.html(tmpl({
-           jobs: _(self.collection.sortBy(function(i) { return i.get('date') })).map(function(i) { return i.toJSON(); }),
+           jobs: _(self.collection.sortBy(function(i) { return self.error ? -i.get('date') : i.get('date') })).map(function(i) { return i.toJSON(); }),
            moment: moment,
            utils: genesis.utils,
-           accessRights: self.collection.itemAccessRights()
+           accessRights: self.collection.itemAccessRights(),
+           error: self.error
          }));
        }
       });

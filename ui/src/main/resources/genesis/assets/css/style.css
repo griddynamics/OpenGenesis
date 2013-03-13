@@ -1072,7 +1072,7 @@ td.subtable{
 
 .workflow-variables.compact {
     background-color: white;
-    min-height: 5px;
+    /*min-height: 5px;*/
 }
 
 .workflow-variables.compact dl {

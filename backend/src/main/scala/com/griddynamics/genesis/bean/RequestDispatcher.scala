@@ -35,7 +35,6 @@ import com.griddynamics.genesis.model.WorkflowStatus._
 import com.griddynamics.genesis.util.Logging
 import java.sql.Timestamp
 import com.griddynamics.genesis.configuration.WorkflowConfig
-import com.griddynamics.genesis.scheduler.{JobServiceProvider, EnvironmentJobService}
 
 trait RequestDispatcher {
     def createEnv(envName: Int, projectId: Int)

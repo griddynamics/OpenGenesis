@@ -24,7 +24,7 @@
 import org.springframework.web.bind.annotation.{PathVariable, ResponseBody, RequestMethod, RequestMapping}
 import org.springframework.stereotype.Controller
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.service.EnvironmentConfigurationService
+import com.griddynamics.genesis.service.{ExecutedJobsService, EnvironmentConfigurationService}
 import com.griddynamics.genesis.scheduler.EnvironmentJobService
 import scala.Array
 import javax.servlet.http.HttpServletRequest
@@ -42,6 +42,7 @@ import com.griddynamics.genesis.spring.security.LinkSecurityBean
 class EnvironmentJobsController {
   @Autowired var envConfigService: EnvironmentConfigurationService = _
   @Autowired var schedulingService: EnvironmentJobService = _
+  @Autowired var executedJobs: ExecutedJobsService = _
   @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
   @RequestMapping(value = Array("{envId}/jobs"), method = Array(RequestMethod.POST))
@@ -84,6 +85,30 @@ class EnvironmentJobsController {
     try {
       schedulingService.removeJob(projectId, envId, jobId)
       Success(jobId)
+    } catch {
+      case e: Exception => Failure(compoundServiceErrors = Seq(e.getMessage))
+    }
+  }
+
+  @RequestMapping(value = Array("{envId}/failedJobs"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  @AddSelfLinks(methods = Array(GET), modelClass = classOf[ScheduledJobDetails])
+  def failedJobs(@PathVariable("projectId") projectId: Int,
+                    @PathVariable("envId") envId: Int,
+                    request: HttpServletRequest): CollectionWrapper[ItemWrapper[ScheduledJobDetails]] = {
+    import CollectionWrapper._
+    executedJobs.listFailedJobs(envId).map( job =>
+      job.withLinks(LinkBuilder(WebPath(request) / job.id, LinkTarget.SELF, classOf[ScheduledJobDetails], DELETE)).filtered())
+  }
+
+  @RequestMapping(value = Array("{envId}/failedJobs/{jobId}"), method = Array(RequestMethod.DELETE))
+  @ResponseBody
+  def removeFailedJob(@PathVariable("projectId") projectId: Int,
+                @PathVariable("envId") envId: Int,
+                @PathVariable("jobId") jobId: Int,
+                request: HttpServletRequest): ExtendedResult[_] = {
+    try {
+      executedJobs.removeJobRecord(envId, jobId)
     } catch {
       case e: Exception => Failure(compoundServiceErrors = Seq(e.getMessage))
     }
