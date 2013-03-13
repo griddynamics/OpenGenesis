@@ -22,14 +22,14 @@
  */ package com.griddynamics.genesis.configuration
 
 import org.springframework.context.annotation.{Profile, Bean, Configuration}
-import com.griddynamics.genesis.scheduler.{SchedulingServiceImpl, EnvironmentJobServiceImpl, NotificationService, SchedulingService, EnvironmentJobService}
+import com.griddynamics.genesis.scheduler.{ExecutedJobsServiceImpl, FailedJobsListener, SchedulingServiceImpl, EnvironmentJobServiceImpl, NotificationService, SchedulingService, EnvironmentJobService}
 import org.springframework.scheduling.quartz.SchedulerFactoryBean
 import org.springframework.beans.factory.annotation.{Value, Autowired}
 import javax.sql.DataSource
 import org.quartz.spi.JobFactory
 import com.griddynamics.genesis.scheduler.jobs.WorkflowJobFactory
 import com.griddynamics.genesis.bean.RequestBroker
-import com.griddynamics.genesis.service.{EnvironmentConfigurationService, ProjectService}
+import com.griddynamics.genesis.service.{ExecutedJobsService, EnvironmentConfigurationService, ProjectService}
 import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.util.Logging
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
@@ -38,6 +38,7 @@ import javax.annotation.PostConstruct
 import com.griddynamics.genesis.model.Environment
 import com.griddynamics.genesis.api.Success
 import com.griddynamics.genesis.core.events.{EnvDestroyed, WorkflowEventsBus}
+import com.griddynamics.genesis.repository.impl.{FailedJobRepositoryImpl, FailedJobRepository}
 
 
 @Configuration
@@ -68,6 +69,8 @@ class SchedulerContext extends Logging {
     }
   }
 
+  @Bean def failedJobRepository: FailedJobRepository = new FailedJobRepositoryImpl
+
   @Bean def jobFactory: JobFactory = new WorkflowJobFactory(requestBroker, storeService.storeService, notificationService)
 
   @Bean def envJobService: EnvironmentJobService = new EnvironmentJobServiceImpl (
@@ -85,6 +88,9 @@ class SchedulerContext extends Logging {
     userService = userService,
     projectService = projectService )
 
+  @Bean def jobListener = new FailedJobsListener(failedJobRepository)
+
+  @Bean def executedJobsService: ExecutedJobsService = new ExecutedJobsServiceImpl(failedJobRepository)
 
   @Bean def scheduler: SchedulerFactoryBean = {
     val factory = new SchedulerFactoryBean()
@@ -107,6 +113,7 @@ class SchedulerContext extends Logging {
     factory.setOverwriteExistingJobs(true)
     factory.setStartupDelay(50)
     factory.setApplicationContextSchedulerContextKey("applicationContext")
+    factory.setGlobalJobListeners(Array(jobListener))
     factory
   }
 

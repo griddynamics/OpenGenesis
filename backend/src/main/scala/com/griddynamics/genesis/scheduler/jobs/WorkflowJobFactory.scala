@@ -14,7 +14,7 @@ class WorkflowJobFactory(broker: RequestBroker, storeService: StoreService, noti
 
     try {
       if (jobClass == classOf[WorkflowExecutionJob])
-        new WorkflowExecutionJob(broker, storeService)
+        new WorkflowExecutionJob(broker, storeService, notificationService)
       else if (jobClass == classOf[DestructionStatusCheckJob])
         new DestructionStatusCheckJob(storeService, notificationService)
       else if (jobClass == classOf[NotificationJob])
