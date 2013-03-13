@@ -21,11 +21,13 @@
  *   Description: Continuous Delivery Platform
  */ package com.griddynamics.genesis.model
 
+import java.sql.Timestamp
+
 class FailedJobDetails (
     val jobId: String,
     val projectId: Int,
     val envId: Int,
-    val executionDate: Long,
+    val executionDate: Timestamp,
     val workflow: String,
     val variables: VariablesField,
     val scheduledBy: String,
