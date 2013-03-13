@@ -31,10 +31,6 @@ import com.griddynamics.genesis.api.{Configuration, ScheduledJobDetails, Success
 import com.griddynamics.genesis.bean.RequestBrokerImpl
 import com.griddynamics.genesis.util.Logging
 
-trait JobServiceProvider {
-  def jobService: EnvironmentJobService
-}
-
 trait EnvironmentJobService {
   def scheduleDestruction(projectId: Int, envId: Int, date: Date, requestedBy: String)
   def destructionDate(env: Environment): Option[Date]
@@ -102,7 +98,8 @@ class EnvironmentJobServiceImpl(scheduler: SchedulingService,
 
   @Transactional
   def removeAllScheduledJobs(projectId: Int, envId: Int) {
-    scheduler.removeAllScheduledJobs(projectId, envId)
+    val jobs = listScheduledJobs(projectId, envId)
+    jobs.foreach { j => removeJob(projectId, envId, j.id) }
   }
 
   @Transactional
@@ -175,15 +172,15 @@ class EnvironmentJobServiceImpl(scheduler: SchedulingService,
     }
 
     val s = scheduler.listJobs(projectId, envId)
-    val details = s.collect { case (date, execution: WorkflowExecution) => new ScheduledJobDetails(
+    val details = s.collect { case (date, execution: WorkflowExecution) if date != null => new ScheduledJobDetails(
       id = execution.id,
       projectId = projectId,
       envId = env.id,
-      envName = env.name,
       date = date.getTime,
       workflow = execution.workflow,
       variables = execution.variables,
-      scheduledBy = execution.requestedBy
+      scheduledBy = execution.requestedBy,
+      failureDescription = None
     )}
     details
   }

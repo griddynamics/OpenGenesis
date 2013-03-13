@@ -1,7 +1,13 @@
 <div id="job-removal-confirm" style="display:none">
     Are you sure you want to remove this scheduled job?
 </div>
-<div style="margin-top:30px"><h4>Scheduled executions</h4></div>
+<div style="margin-top:30px"><h4>
+    <% if (error) { %>
+        <label style="color: #B94A48">Failed scheduled executions</label>
+    <% } else { %>
+        Scheduled executions
+    <% } %>
+</h4></div>
 <div id="scheduled-jobs">
     <table class="main-table intab plain-table ">
         <thead>
@@ -14,38 +20,56 @@
         </thead>
         <tbody>
         <% for (var i = 0; i < jobs.length; i++) { var job = jobs[i] %>
-            <tr>
+            <tr <% if (job.failureDescription) { %> style="background-color: #FFF3F3" <% } %>>
                 <td class="first">
                     <a href="javascript: void(0)" class="job-details toggle"
                         data-job-id="<%- job.id %>" rel="#variables-<%- job.id %>">
-                        Workflow '<%- job.workflow %>'
+                         Workflow '<%- job.workflow %>'
                     </a></td>
-                <td class="first"> <%= moment(job.date).format('lll') %> &nbsp;&nbsp;&nbsp;/ &nbsp;&nbsp;&nbsp; <%- moment(job.date).fromNow() %></td>
+                <td class="first"> <%= moment(job.date).format('lll') %> </td>
                 <td>
                     <%- job.scheduledBy %>
                 </td>
                 <td class="actions">
-                    <% if (accessRights[job.id].canEdit) { %>
-                        <a class="job-update" href="javascript: void(0)" data-job-id="<%- job.id %>" >Update</a>
-                   <% } %>
-                    <% if (accessRights[job.id].canDelete) { %>
-                        <a class="job-remove" href="javascript: void(0)" data-job-id="<%- job.id %>" >Delete</a>
+                    <% if (error) { %>
+                        <% if (accessRights[job.id].canDelete) { %>
+                        <a class="job-remove" href="javascript: void(0)" data-job-id="<%- job.id %>" >Clear</a>
+                        <% } %>
+                    <% } else { %>
+                        <% if (accessRights[job.id].canEdit) { %>
+                            <a class="job-update" href="javascript: void(0)" data-job-id="<%- job.id %>" >Update</a>
+                        <% } %>
+                        <% if (accessRights[job.id].canDelete) { %>
+                            <a class="job-remove" href="javascript: void(0)" data-job-id="<%- job.id %>" >Remove</a>
+                        <% } %>
                     <% } %>
                 </td>
             </tr>
-            <tr class="no-hover-white">
+            <tr class="no-hover-white" style="background-color: #FFF3F3">
                 <td colspan="4" >
-                    <div class="workflow-variables compact"  id="variables-<%- job.id %>" style="display: none">
-                        <% if (job.variables && _.keys(job.variables).length > 0) { %>
-                            <% _.chain(job.variables).keys().each(function(key) { %>
-                            <dl>
-                                <dt><%= key %></dt>
-                                <dd><%= job.variables[key] %></dd>
+                    <div class="workflow-variables compact"  id="variables-<%- job.id %>" style="background-color: #FFF3F3;display: none">
+                        <% if (job.failureDescription) { %>
+                            <dl style="color: #B94A48">
+                                <dt>Error</dt>
+                                <dd  class="multiline-description" ><%= job.failureDescription %></dd>
                             </dl>
-                            <% }) %>
-                        <% } else { %>
-                            <strong>No variables requred</strong>
                         <% } %>
+                        <dl>
+                            <dt>Parameters</dt>
+                            <dd>
+                                <% if (job.variables && _.keys(job.variables).length > 0) { %>
+                                <% _.chain(job.variables).keys().each(function(key) { %>
+                                <dl>
+                                    <dt><%= key %></dt>
+                                    <dd><%= job.variables[key] %></dd>
+                                </dl>
+                                <% }) %>
+                                <% } else { %>
+                                <strong>No variables requred</strong>
+                                <% } %>
+
+                            </dd>
+                        </dl>
                     </div>
                 </td>
             </tr>

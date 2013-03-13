@@ -319,11 +319,11 @@ case class ScheduledJobDetails (
     id: String,
     projectId: Int,
     envId: Int,
-    envName: String,
     date: Long,
     workflow: String,
     variables: Map[String, String],
-    scheduledBy: String
+    scheduledBy: String,
+    failureDescription: Option[String]
 )
 
 case class JobStats(runningJobs: Int, totalJobs: Int)
