@@ -36,7 +36,7 @@ trait TemplateValidator {
       case (_, value) => value.required
     }).keys.filterNot(name => bag.itemsMap.find({case (k,v) => k == name}).isDefined)
     val left = requiredKeys.foldLeft(Success(bag).asInstanceOf[ExtendedResult[TemplateBased]])((acc, item) => acc ++
-      Failure(serviceErrors = Map(item -> s"Required key $item not found in databag")))
+      Failure(serviceErrors = Map(item -> s"Required key '$item' not found in databag")))
     left
   }
 }

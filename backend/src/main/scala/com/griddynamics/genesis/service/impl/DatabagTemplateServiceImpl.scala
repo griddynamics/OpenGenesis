@@ -20,6 +20,6 @@ class DatabagTemplateServiceImpl(val repository: DatabagTemplateRepository) exte
   def convert(template: model.DatabagTemplate) : api.DatabagTemplate = {
     new api.DatabagTemplate(template.id, template.name, template.defaultName, template.scope, template.tags.split(",").toSeq,
       template.values.map({case (key,value) =>
-        new api.DataItem(None, key, value.default, None)}).toSeq)
+        new api.ItemTemplate(key, value.default, value.required)}).toSeq)
   }
 }

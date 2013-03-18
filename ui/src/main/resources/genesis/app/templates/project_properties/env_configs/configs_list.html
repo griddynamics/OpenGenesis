@@ -4,7 +4,12 @@
 <div  style="display: block; ">
   <div class="top-panel">
       <div class="page-title"><h2>Environment configurations</h2></div>
-      <% if (canCreate) {  %> <a href="javascript:void(0)" class="button add-config executable"> <span> Add... </span> </a> <% } %>
+      <% if (canCreate) {  %>
+        <div>
+            <a href="javascript:void(0)" class="button add-config executable"> <span> Add... </span> </a>
+            <a href="javascript:void(0)" class="button add-config-from-template executable" style="margin-right: 2px"> <span> Add from template... </span> </a>
+        </div>
+      <% } %>
   </div>
 
   <div class="panel">

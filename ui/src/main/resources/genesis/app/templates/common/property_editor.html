@@ -1,8 +1,15 @@
 <div>
-  <div class="key-value-button executable" id="add-pair-link">
+  <div class="key-value-button executable" id="add-pair-link" style="float:left">
     <img src="assets/img/add-small.png" class="icon" alt="Add new property"/>
     <a href="javascript:void(0)">Add new key-value</a>
   </div>
+    <% if (hasKeys) { %>
+      <div class="key-value-button executable" id="add-predefined" style="float: right">
+          <img src="assets/img/add-small.png" class="icon" alt="Add predefined key"/>
+          <a href="javascript:void(0)">Add predefined key</a>
+      </div>
+    <% } %>
+   <br class="clear"/>
 
   <% if (properties.length > 0) { %>
     <table class="main-table properties" style="margin: 10px 0">
@@ -10,7 +17,15 @@
       <% var classes = property.isNew ? 'added' : property.removed ? 'removed' : property.dirty ? 'changed' : ''; %>
       <tr data-cid="<%= cid %>" class="<%= classes %>">
         <td>
-          <input name="items.[<%= i %>].name" id="name-input-<%= cid %>" type="text" class="name-input" value="<%- property.name %>" data-cid="<%= cid %>"/>
+          <% if (property.variants && property.variants.length > 0) { %>
+            <select name="items.[<%= i %>].name" id="name-input-<%= cid %>" class="name-input" data-cid="<%= cid %>">
+                <% for (var j = 0; j < property.variants.length; j++) { var item = property.variants[j]; %>
+                    <option value="<%- item %>"><%- item %></option>
+                <% } %>
+            </select>
+          <% } else { %>
+            <input name="items.[<%= i %>].name" id="name-input-<%= cid %>" type="text" class="name-input" value="<%- property.name %>" data-cid="<%= cid %>"/>
+          <% } %>
         </td>
         <td>
           <input name="items.[<%= i %>].value" id="value-input-<%= cid %>" type="text" class="value-input" value="<%- property.value %>" data-cid="<%= cid %>"/>

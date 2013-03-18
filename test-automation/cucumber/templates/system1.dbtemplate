@@ -3,6 +3,7 @@
   "name": "System level template",
   "scope": "system",
   "default-tags": ["foo", "bar"],
+  "databag-name": "tdb",
   "properties": {
     "validated": {"description": "This is a long key", "default": 1234,  "validation": {"Must be integer value >= 0": "int_nonnegative"}},
     "required": {"description": "This is an other key", "default": "aaa", "required": true}

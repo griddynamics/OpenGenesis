@@ -44,7 +44,7 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
   }
 
   implicit def convert(dto: DataBag) = {
-    val entity = new model.DataBag(dto.name, " " + dto.tags.distinct.mkString(" ") + " ", dto.projectId)
+    val entity = new model.DataBag(dto.name, " " + dto.tags.distinct.mkString(" ") + " ", dto.projectId, dto.templateId)
     entity.id = toModelId(dto.id)
     entity
   }
