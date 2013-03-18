@@ -13,6 +13,7 @@ function(genesis, Backbone, Environments) {
     "create_new_inst": "Create new instance",
     "project_list": "Project list",
     "system_settings": "System settings",
+    "dashboard": "Dashboard",
     "project_properties": "Properties",
     "create_project": "Create"
   };
@@ -26,6 +27,7 @@ function(genesis, Backbone, Environments) {
   var _homeLocation = _locationItem("/", LANG["project_list"]);
 
   var _settingsLocation = _locationItem("settings", LANG["system_settings"]);
+  var _dashboardLocation = _locationItem("dashboard", LANG["dashboard"]);
 
   var _createProjectLocation = _locationItem("admin/create/project", LANG["create_project"]);
 
@@ -54,6 +56,7 @@ function(genesis, Backbone, Environments) {
       router.bind("route:createEnvironment", this.createEnvironment);
       router.bind("route:listSettings", this.settings);
       router.bind("route:createProject", this.createProject);
+      router.bind("route:dashboard", this.dashboard);
       genesis.app.bind("breadcrumb:changed", this.updateLastLocation)
     },
 
@@ -118,6 +121,10 @@ function(genesis, Backbone, Environments) {
     updateLastLocation: function(changed) {
       var locationList = [_homeLocation, this._project(changed.projectId), _locationItem(Backbone.history.fragment, changed.name)];
       this.render(locationList);
+    },
+
+    dashboard: function() {
+      this.render([_dashboardLocation]);
     },
 
     render: function(locationList) {

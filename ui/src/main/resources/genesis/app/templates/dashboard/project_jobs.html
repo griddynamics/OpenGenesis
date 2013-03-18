@@ -1,0 +1,17 @@
+<% _.forEach(_.keys(jobs), function(envId){   %>
+    <div class="instance">
+        <span>Instance <a href="project/<%= projectId %>/inst/<%= envId %>" style="text-decoration: underline; font-weight: bold">'<%- envs.get(envId).get('name') %>'</a></span>
+    </div>
+    <% for(var i = 0, count = jobs[envId].length; i < count; i++) { var job = jobs[envId][i] %>
+        <div class="task <%= job.status === 'Failed' ? 'failed': 'requested' %>">
+            <div class="desc">
+                <div class="title">Workflow <strong class="capitalize" >'<%- job.workflow %>'</strong> &nbsp;&nbsp;&nbsp;&nbsp; <em> by <%= job.scheduledBy %> </em></div>
+            </div>
+            <div class="time">
+                <div class="date"> <%= moment(job.date).format('lll') %> </div>
+                <div> <%= moment(job.date).fromNow() %> </div>
+            </div>
+            <div style="clear:both"/>
+        </div>
+    <% } %>
+<% }) %>

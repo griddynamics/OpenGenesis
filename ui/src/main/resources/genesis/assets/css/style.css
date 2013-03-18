@@ -158,6 +158,10 @@ a.button.reset-button {
     display: block;
 }
 
+.capitalize {
+    text-transform: capitalize;
+}
+
 a.tab {
 	margin-right: 5px;
 	display: block;
@@ -841,7 +845,7 @@ img#addShare{
 	vertical-align:middle;
 }
 
-#wrapper #wrapper-content #tab-panel #panel #panel-tab-3 .workflow{
+#wrapper #wrapper-content #tab-panel #panel #panel-tab-3 .workflow, .toggle-sector {
     width: 100%;
     min-height: 23px;
     padding-top: 2px;
@@ -869,6 +873,51 @@ img.toggle {
     float: left;
     margin: 2px 5px 2px 5px;
 }
+
+.toggle-sector {
+    min-height: 25px !important;
+}
+.toggle-sector h3 {
+    font-size: 13px;
+}
+.tasks .instance {
+    background: rgb(245, 245, 245);
+    margin-bottom: 1px;
+}
+.tasks .instance span {
+    background: #E8E8E8;
+    padding: 2px 10px;
+    display: inline-block;
+    font-size: 12px;
+    border-top: 1px solid #f9f9f9;
+}
+.task.requested {
+    border-left: 2px solid #E8E8E8;
+}
+.task.failed {
+    border-left: 2px solid #B03040;
+    color: #B03040;
+}
+.task {
+    border-bottom: 1px solid #f9f9f9;
+    margin-bottom: 1px;
+}
+
+.task .desc {
+    display: inline-block;
+    width: 75%;
+    padding: 10px 10px;
+    font-size: 12px;
+}
+.task .time {
+    display: inline-block;
+    float: right;
+    width: 15%;
+    padding: 2px 10px 5px 0;
+    font-size: 12px;
+    text-align: right;
+}
+
 
 .workflow h3.toggle, .step-details-expander a.toggle, .config_group h3.toggle, .job-details.toggle {
     margin-top: 3px;
@@ -1083,7 +1132,7 @@ td.subtable{
     display: inline-block;
     min-width: 100px;
 }
-#wrapper #wrapper-content #tab-panel #panel #panel-tab-3 .workflow .workflow-actions{
+#wrapper #wrapper-content #tab-panel #panel #panel-tab-3 .workflow .workflow-actions, .toggle-sector .right-column {
 	float:right;
 	margin-top:3px;
 	margin-right:10px;

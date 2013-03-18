@@ -23,19 +23,40 @@
 
 import com.griddynamics.genesis.service.ExecutedJobsService
 import com.griddynamics.genesis.repository.impl.FailedJobRepository
-import com.griddynamics.genesis.api.{Success, Failure}
+import com.griddynamics.genesis.api.{ExtendedResult, ScheduledJobDetails, ScheduledJobStat, Success, Failure}
 import org.springframework.transaction.annotation.Transactional
 
-class ExecutedJobsServiceImpl(repo: FailedJobRepository) extends ExecutedJobsService {
+class ExecutedJobsServiceImpl(failedJobsRepo: FailedJobRepository, envJobService: EnvironmentJobService) extends ExecutedJobsService {
 
   @Transactional(readOnly = true)
-  def listFailedJobs(envId: Int) = repo.list(envId)
+  def listFailedJobs(envId: Int) = failedJobsRepo.list(envId)
 
   @Transactional
-  def removeJobRecord(envId: Int, jobId: Int) = {
-    repo.delete(envId, jobId) match {
+  def removeFailedJobRecord(envId: Int, jobId: Int) = {
+    failedJobsRepo.delete(envId, jobId) match {
       case 0 => Failure(compoundServiceErrors = Seq(s"Failed to find jobId $jobId related to env id = $envId"), isNotFound = true)
       case _ => Success(jobId)
     }
+  }
+
+  @Transactional
+  def removeFailedJobsRecords(projectId: Int, envId: Int): ExtendedResult[Int] = {
+    Success(failedJobsRepo.deleteRecords(projectId, envId))
+  }
+
+  @Transactional(readOnly = true)
+  def jobsStat: Seq[ScheduledJobStat] = {
+    val scheduled = envJobService.scheduledJobsStat
+    val failed = failedJobsRepo.failedJobStats.toMap
+    (failed.map { case (projectId, failedCount) =>
+      new ScheduledJobStat(projectId = projectId, scheduledJobs = scheduled.getOrElse(projectId, 0), failedJobs = failedCount)
+    } ++ (scheduled -- failed.keys).map { case (projectId, requested) =>
+      new ScheduledJobStat(projectId = projectId, scheduledJobs = requested, failedJobs = 0)
+    }).toSeq
+  }
+
+  @Transactional(readOnly = true)
+  def listProjectJobs(projectId: Int): (Seq[ScheduledJobDetails], Seq[ScheduledJobDetails]) = {
+    (failedJobsRepo.listByProject(projectId).toSeq, envJobService.listScheduledJobs(projectId))
   }
 }

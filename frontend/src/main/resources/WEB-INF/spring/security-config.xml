@@ -250,6 +250,8 @@
         <s:intercept-url pattern="/metrics*"  method="GET"   access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')"/>
         <s:intercept-url pattern="/metrics/**"  method="GET"   access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')"/>
 
+        <s:intercept-url pattern="/rest/jobs-stat"  method="GET"   access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')"/>
+
         <s:intercept-url pattern="/**" access="denyAll" />
 
         <s:form-login login-page="/login.html"

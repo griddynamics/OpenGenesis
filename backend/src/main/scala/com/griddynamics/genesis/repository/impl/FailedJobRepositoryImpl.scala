@@ -33,6 +33,9 @@ trait FailedJobRepository {
   def list(envId: Int): Iterable[api.ScheduledJobDetails]
   def logFailure(job: api.ScheduledJobDetails): api.ScheduledJobDetails
   def delete(envId: GenesisEntity.Id, id: GenesisEntity.Id): Int
+  def failedJobStats: Seq[(Int, Long)]
+  def listByProject(projectId: Int):Iterable[api.ScheduledJobDetails]
+  def deleteRecords(projectId: GenesisEntity.Id, envId: GenesisEntity.Id): Int
 }
 
 class FailedJobRepositoryImpl extends AbstractGenericRepository[model.FailedJobDetails, api.ScheduledJobDetails](GS.failedJobDetails) with FailedJobRepository {
@@ -54,7 +57,27 @@ class FailedJobRepositoryImpl extends AbstractGenericRepository[model.FailedJobD
   def delete(envId: GenesisEntity.Id, id: GenesisEntity.Id) = table.deleteWhere(jd => jd.id === id and jd.envId === envId)
 
   @Transactional(readOnly = true)
+  def listByProject(projectId: Int):Iterable[api.ScheduledJobDetails] = from(table) {t =>
+    where (t.projectId === projectId) select (t)
+  }.toList.map(convert)
+
+  @Transactional(readOnly = true)
+  def failedJobStats = {
+    val group = from(table)( t =>
+        groupBy(t.projectId)
+        compute(countDistinct(t.id))
+    ).toList
+
+    group.map(g=> (g.key, g.measures)).toSeq
+  }
+
+  @Transactional(readOnly = true)
   def list(envId: Int) = from(table) { t =>
     where(t.envId === envId) select (t)
   }.toList.map(convert)
+
+  @Transactional
+  def deleteRecords(projectId: GenesisEntity.Id, envId: GenesisEntity.Id) = {
+    table.deleteWhere(jd => jd.envId === envId and jd.projectId === projectId )
+  }
 }
