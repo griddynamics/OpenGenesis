@@ -25,6 +25,7 @@ package com.griddynamics.genesis.model
 import com.griddynamics.genesis.model.EnvStatus._
 import org.squeryl.Optimistic
 import java.sql.Timestamp
+import com.thoughtworks.xstream.annotations.XStreamAlias
 
 class Environment(val name: String,
                   var status: EnvStatus,
@@ -60,4 +61,5 @@ object Environment {
 }
 
 @SerialVersionUID(8586431731087756517L)
+@XStreamAlias("attribute")
 case class DeploymentAttribute(key: String, value: String, desc: String)

@@ -26,17 +26,13 @@ import com.griddynamics.genesis.model.VmStatus._
 import com.griddynamics.genesis.model.MachineStatus._
 import collection.JavaConversions._
 import java.sql.Timestamp
-import java.io.{IOException, ObjectInputStream}
+import com.thoughtworks.xstream.annotations.{XStreamAlias, XStreamOmitField}
 
 @SerialVersionUID(6868370898183761726L)
+@XStreamAlias("ip")
 case class IpAddresses(publicIp:Option[String] = None, privateIp:Option[String] = None) {
-  var address = publicIp.getOrElse(privateIp.getOrElse(""))
+  @XStreamOmitField var address = publicIp.getOrElse(privateIp.getOrElse(""))
 
-  @throws(classOf[IOException])
-  private def readObject(in: ObjectInputStream) {
-    in.defaultReadObject()
-    if (address == null) address = publicIp.getOrElse(privateIp.getOrElse(""))
-  }
 }
 
 sealed trait EnvResource extends EntityWithAttrs {
