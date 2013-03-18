@@ -27,6 +27,7 @@ import org.squeryl.annotations.Transient
 import org.squeryl.KeyedEntity
 import org.squeryl.dsl.CompositeKey2
 import java.io.{ByteArrayInputStream, ObjectInputStream, ObjectOutputStream, ByteArrayOutputStream}
+import com.thoughtworks.xstream.XStream
 
 case class EntityAttr[T](name: String)
 
@@ -48,6 +49,7 @@ trait EntityWithAttrs extends GenesisEntity {
     @Transient private var updatedAttrs = Set[String]()
     @Transient private var removedAttrs = Set[String]()
 
+  import AttrsSerialization._
     def apply[T](attr: EntityAttr[T])(implicit manifest: Manifest[T]): T = {
         if (removedAttrs.contains(attr.name))
             return null.asInstanceOf[T]
@@ -57,7 +59,7 @@ trait EntityWithAttrs extends GenesisEntity {
             case None => jsonMap.get(attr.name) match {
                 case None => null.asInstanceOf[T]
                 case Some(jvalue) => {
-                    val value = unmarshal[T](jvalue)
+                    val value = fromXML[T](jvalue)
                     objectMap = objectMap + (attr.name -> value)
                     value
                 }
@@ -88,7 +90,7 @@ trait EntityWithAttrs extends GenesisEntity {
 
     def exportAttrs() = {
         val changedAttrs = for ((k, v) <- objectMap if updatedAttrs.contains(k))
-        yield (k, marshal(v))
+        yield (k, toXML(v))
 
         (changedAttrs, removedAttrs)
     }
@@ -99,18 +101,6 @@ trait EntityWithAttrs extends GenesisEntity {
         this.jsonMap ++= jsonMap
 
         this
-    }
-
-    private def marshal[T](v : T): String = {
-      val baos: ByteArrayOutputStream = new ByteArrayOutputStream()
-      val stream = new ObjectOutputStream(baos)
-      stream.writeObject(v)
-      encodeBase64String(baos.toByteArray)
-    }
-
-    private def unmarshal[T](bytes: String) : T = {
-      val buffer: Array[Byte] = decodeBase64(bytes)
-      new ObjectInputStream(new ByteArrayInputStream(buffer)).readObject().asInstanceOf[T]
     }
 
     def importAttrs(entity: EntityWithAttrs): this.type = {
@@ -134,4 +124,34 @@ trait EntityWithAttrs extends GenesisEntity {
 
         this
     }
+}
+
+object AttrsSerialization {
+
+  private lazy val xStream = {
+    val x = new XStream()
+    x.registerConverter(new XStreamListConverter(x.getMapper))
+    x.registerConverter(new XStreamSomeConverter(x.getMapper))
+    x.alias("list", classOf[::[_]])
+    x.processAnnotations(classOf[DeploymentAttribute])
+    x.processAnnotations(classOf[IpAddresses])
+    x
+  }
+
+  def toXML(v: Any): String = xStream.toXML(v)
+
+  def fromXML[T](xml: String) : T = xStream.fromXML(xml).asInstanceOf[T]
+
+  def marshal[T](v : T): String = {
+    val baos: ByteArrayOutputStream = new ByteArrayOutputStream()
+    val stream = new ObjectOutputStream(baos)
+    stream.writeObject(v)
+    encodeBase64String(baos.toByteArray)
+  }
+
+  def unmarshal[T](bytes: String) : T = {
+    val buffer: Array[Byte] = decodeBase64(bytes)
+    new ObjectInputStream(new ByteArrayInputStream(buffer)).readObject().asInstanceOf[T]
+  }
+
 }
