@@ -5,6 +5,7 @@
   <div class="panel">
     <div class="notification" style="display:none"></div>
     <form id="edit-databag" <% if (!canSave) { %> class="readonly" <% } %> >
+      <input type="hidden" name="templateId" value="<%- databag.templateId %>"/>
       <table class="forform-table wide" >
         <tr>
           <td class="label-required label-column" style="width: 12%"><label for="name">* Name</label></td>

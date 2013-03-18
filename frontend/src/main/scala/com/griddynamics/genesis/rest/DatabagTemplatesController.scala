@@ -55,7 +55,8 @@ class DatabagTemplatesController extends RestApiExceptionsHandler {
   @RequestMapping(value = Array("/{scope}/{id}"), method = Array(RequestMethod.GET))
   @ResponseBody
   @AddSelfLinks(methods = Array(GET), modelClass = classOf[DatabagTemplate])
-  def getEnvironmentTemplate(@PathVariable(value = "scope") scope: String, @PathVariable(value = "id") id: String, request: HttpServletRequest) : ItemWrapper[DatabagTemplate] = {
+  def getEnvironmentTemplate(@PathVariable(value = "scope") scope: String,
+                             @PathVariable(value = "id") id: String, request: HttpServletRequest) : ItemWrapper[DatabagTemplate] = {
     val template = service.get(id).filter(_.scope == scope).getOrElse(throw new ResourceNotFoundException(s"Databag template [id=${id}] not found for scope [${scope}]"))
     template
   }

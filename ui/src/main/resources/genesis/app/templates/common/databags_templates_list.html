@@ -1,0 +1,9 @@
+<form id="select-template">
+    <label for="template_id">Template</label>
+    <select name="template_id" id="template_id">
+        <option disabled="disabled">Please select...</option>
+        <% for(var i = 0, count = items.length; i < count; i++) { var item = items[i] %>
+        <option value="<%= item.id %>"><%= item.name %></option>
+        <% } %>
+    </select>
+</form>

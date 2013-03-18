@@ -225,6 +225,8 @@ case class DataItem( id: Option[Int],
                      value: String,
                      dataBagId: Option[Int] )
 
+case class ItemTemplate(name: String, value: String, required: Boolean)
+
 case class DataBag( id: Option[Int],
                     @Size(min = 1, max = 128) @NotBlank name: String,
                     tags: Seq[String],
@@ -361,7 +363,7 @@ object CancelAction extends Action("cancel")
 object ResetAction extends Action("reset")
 
 case class DatabagTemplate(id: String, name: String, defaultName: Option[String], scope: String,
-                           tags: Seq[String], properties: Seq[DataItem])
+                           tags: Seq[String], properties: Seq[ItemTemplate])
 
 trait TemplateBased {
   def templateId: Option[String]
