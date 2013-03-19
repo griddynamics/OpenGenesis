@@ -412,7 +412,6 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
             $confirmDialog: view.$("#job-removal-confirm")
           });
 
-          view.scheduledJobsView.render();
           view.scheduledJobsView.bind("request-job-update", function(job){
             view.executeWorkflow(job.get('workflow'), job.get("date"), job.get('variables'));
           });
@@ -423,8 +422,6 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
             $confirmDialog: view.$("#record-removal-confirm"),
             error: true
           });
-
-          view.failedJobsView.render();
 
         }).fail(function() {
           genesis.app.trigger("server-communication-error",
@@ -776,6 +773,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
            accessRights: self.collection.itemAccessRights(),
            error: self.error
          }));
+         self.$el.show();
        }
       });
     }
