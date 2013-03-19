@@ -34,4 +34,4 @@ Feature: Databag templates
     
   Scenario:
     When I create databag "test" based with template "1-system" and no values
-    Then Service error with code 400 and error 'required': 'Required key required not found in databag' should be returned
+    Then Service error with code 400 and error 'required': 'Required key 'required' not found in databag' should be returned
