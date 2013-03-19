@@ -27,17 +27,25 @@ import java.util.Date
 import com.griddynamics.genesis.model.VariablesField
 
 object GroupIdentity {
-  def forEnv(envId: Int) = "execution-group-for-env-" + envId
+  def forEnv(projectId: Int, envId: Int) = s"${forProjectPrefix(projectId)}-env-" + envId
 
-  def workflowForEnv(envId: Int, workflow: String) = s"execution-group-for-env-$envId-$workflow"
+  def projectId(key: TriggerKey) =  {
+    val pat = s"$basePrefix-group-for-project-(\\d+).*".r
+    val pat(projectId) = key.getGroup
+    projectId.toInt
+  }
+
+  def basePrefix = "execution"
+  def forProjectPrefix(projectId: Int) = s"$basePrefix-group-for-project-$projectId"
 }
 
 sealed trait ExecutionId {
+  def projectId: Int
   def envId: Int
   def id: String
 
-  final def triggerKey: TriggerKey = new TriggerKey(id, GroupIdentity.forEnv(envId))
-  final def jobKey: JobKey = new JobKey(id, GroupIdentity.forEnv(envId))
+  final def triggerKey: TriggerKey = new TriggerKey(id, GroupIdentity.forEnv(projectId, envId))
+  final def jobKey: JobKey = new JobKey(id, GroupIdentity.forEnv(projectId, envId))
 }
 
 object Execution {
@@ -53,6 +61,10 @@ object Execution {
       throw new IllegalArgumentException(s"Job class ${details.getJobClass} is not supported")
     }
   }
+
+  def isWorkflowExecution(key: TriggerKey) = {
+    key.getName.matches("execution-.+-env-.+")
+  }
 }
 
 sealed trait Execution extends ExecutionId {
@@ -61,17 +73,22 @@ sealed trait Execution extends ExecutionId {
   def jobClass: Class[_ <: Job]
 }
 
-sealed class WorkflowExecutionId(val envId: Int, val workflow: String) extends ExecutionId {
+sealed class WorkflowExecutionId(val projectId: Int, val envId: Int, val workflow: String) extends ExecutionId {
   def id = s"execution-$workflow-env-$envId"
+}
+
+object WorkflowExecutionId {
+
+
 }
 
 case class WorkflowExecution(
     override val workflow: String,
     override val envId: Int,
-    projectId: Int,
+    override val projectId: Int,
     requestedBy: String,
     variables: Map[String, String])
-  extends WorkflowExecutionId(envId, workflow)
+  extends WorkflowExecutionId(projectId, envId, workflow)
   with Execution {
 
   def this(jobDataMap: JobDataMap) = this(
@@ -99,11 +116,11 @@ case class WorkflowExecution(
 //  val id = "destruction-env-" + envId
 //}
 
-sealed class ExpireNotificationId(val envId: Int) extends ExecutionId {
+sealed class ExpireNotificationId(val projectId: Int, val envId: Int) extends ExecutionId {
   val id = s"env-expire-notification-$envId"
 }
 
-case class ExpireNotification(override val envId: Int, projectId: Int, destroyDate: Date) extends ExpireNotificationId(envId) with Execution {
+case class ExpireNotification(override val envId: Int, override val projectId: Int, destroyDate: Date) extends ExpireNotificationId(projectId, envId) with Execution {
 
   def this(jobDataMap: JobDataMap) = this(jobDataMap.getInt("envId"), jobDataMap.getInt("projectId"), new Date(jobDataMap.getLong("destroyDate")))
 
@@ -118,12 +135,12 @@ case class ExpireNotification(override val envId: Int, projectId: Int, destroyDa
   def jobClass = classOf[NotificationJob]
 }
 
-sealed class DestructionCheckId(val envId: Int) extends ExecutionId {
+sealed class DestructionCheckId(val projectId: Int, val envId: Int) extends ExecutionId {
   def id = s"env-destruction-check-$envId"
 }
 
-case class DestructionCheck(override val envId: Int, projectId: Int, destructionTrigger: String)
-  extends DestructionCheckId(envId) with Execution {
+case class DestructionCheck(override val envId: Int, override val projectId: Int, destructionTrigger: String)
+  extends DestructionCheckId(projectId, envId) with Execution {
 
   def this(jobDataMap: JobDataMap) = this(jobDataMap.getInt("envId"), jobDataMap.getInt("projectId"), jobDataMap.getString("destructionTriggerName"))
 
@@ -135,7 +152,7 @@ case class DestructionCheck(override val envId: Int, projectId: Int, destruction
     data
   }
 
-  def destructionTriggerKey = new TriggerKey(destructionTrigger, GroupIdentity.forEnv(envId))
+  def destructionTriggerKey = new TriggerKey(destructionTrigger, GroupIdentity.forEnv(projectId, envId))
 
   def jobClass = classOf[DestructionStatusCheckJob]
 }

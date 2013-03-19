@@ -31,21 +31,27 @@ import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.rest.GenesisRestController._
 import java.util.Date
 import com.griddynamics.genesis.rest.links.{ItemWrapper, WebPath, LinkBuilder, CollectionWrapper}
-import com.griddynamics.genesis.api.{ExtendedResult, Failure, Success, ScheduledJobDetails}
+import com.griddynamics.genesis.api.{ScheduledJobStat, ExtendedResult, Failure, Success, ScheduledJobDetails}
 import java.util.concurrent.TimeUnit
 import com.griddynamics.genesis.rest.annotations.{LinkTarget, AddSelfLinks}
 import org.springframework.web.bind.annotation.RequestMethod._
 import com.griddynamics.genesis.spring.security.LinkSecurityBean
+import com.griddynamics.genesis.rest.links.HrefBuilder._
+import com.griddynamics.genesis.api.ScheduledJobStat
+import com.griddynamics.genesis.rest.links.ItemWrapper
+import com.griddynamics.genesis.api.Failure
+import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.api.ScheduledJobDetails
 
 @Controller
-@RequestMapping(Array("/rest/projects/{projectId}/envs"))
-class EnvironmentJobsController {
+@RequestMapping(Array("/rest"))
+class ScheduledJobsController {
   @Autowired var envConfigService: EnvironmentConfigurationService = _
   @Autowired var schedulingService: EnvironmentJobService = _
   @Autowired var executedJobs: ExecutedJobsService = _
   @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
-  @RequestMapping(value = Array("{envId}/jobs"), method = Array(RequestMethod.POST))
+  @RequestMapping(value = Array("projects/{projectId}/envs/{envId}/jobs"), method = Array(RequestMethod.POST))
   @ResponseBody
   def scheduleWorkflow(@PathVariable("projectId") projectId: Int,
                        @PathVariable("envId") envId: Int,
@@ -65,7 +71,7 @@ class EnvironmentJobsController {
     }
   }
 
-  @RequestMapping(value = Array("{envId}/jobs"), method = Array(RequestMethod.GET))
+  @RequestMapping(value = Array("projects/{projectId}/envs/{envId}/jobs"), method = Array(RequestMethod.GET))
   @ResponseBody
   @AddSelfLinks(methods = Array(GET, POST), modelClass = classOf[ScheduledJobDetails])
   def scheduledJobs(@PathVariable("projectId") projectId: Int,
@@ -76,7 +82,7 @@ class EnvironmentJobsController {
       job.withLinks(LinkBuilder(WebPath(request) / job.id, LinkTarget.SELF, classOf[ScheduledJobDetails], PUT, DELETE)).filtered())
   }
 
-  @RequestMapping(value = Array("{envId}/jobs/{jobId}"), method = Array(RequestMethod.DELETE))
+  @RequestMapping(value = Array("projects/{projectId}/envs/{envId}/jobs/{jobId}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
   def removeJob(@PathVariable("projectId") projectId: Int,
                 @PathVariable("envId") envId: Int,
@@ -90,7 +96,7 @@ class EnvironmentJobsController {
     }
   }
 
-  @RequestMapping(value = Array("{envId}/failedJobs"), method = Array(RequestMethod.GET))
+  @RequestMapping(value = Array("projects/{projectId}/envs/{envId}/failedJobs"), method = Array(RequestMethod.GET))
   @ResponseBody
   @AddSelfLinks(methods = Array(GET), modelClass = classOf[ScheduledJobDetails])
   def failedJobs(@PathVariable("projectId") projectId: Int,
@@ -101,16 +107,41 @@ class EnvironmentJobsController {
       job.withLinks(LinkBuilder(WebPath(request) / job.id, LinkTarget.SELF, classOf[ScheduledJobDetails], DELETE)).filtered())
   }
 
-  @RequestMapping(value = Array("{envId}/failedJobs/{jobId}"), method = Array(RequestMethod.DELETE))
+  @RequestMapping(value = Array("projects/{projectId}/envs/{envId}/failedJobs/{jobId}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
   def removeFailedJob(@PathVariable("projectId") projectId: Int,
                 @PathVariable("envId") envId: Int,
                 @PathVariable("jobId") jobId: Int,
                 request: HttpServletRequest): ExtendedResult[_] = {
     try {
-      executedJobs.removeJobRecord(envId, jobId)
+      executedJobs.removeFailedJobRecord(envId, jobId)
     } catch {
       case e: Exception => Failure(compoundServiceErrors = Seq(e.getMessage))
+    }
+  }
+
+
+  @RequestMapping(value = Array("projects/{projectId}/jobs"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  def projectJobs(@PathVariable("projectId") projectId: Int, request: HttpServletRequest) = {
+    val top = WebPath(absolutePath(s"/rest/projects/$projectId")(request))
+    import CollectionWrapper._
+    val (failed, requested) = executedJobs.listProjectJobs(projectId)
+    Map(
+      "failed" -> failed.map( a => a.withLinks(LinkBuilder(top / "envs" / a.envId / "failedJobs" / a.id, LinkTarget.SELF, classOf[ScheduledJobDetails], DELETE)).filtered()),
+      "requested" -> requested.map( a => a.withLinks(LinkBuilder(top / "envs" / a.envId / "jobs" / a.id, LinkTarget.SELF, classOf[ScheduledJobDetails], PUT, DELETE)).filtered())
+    )
+  }
+
+  @RequestMapping(value = Array("/jobs-stat"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  def jobsStat(request: HttpServletRequest): CollectionWrapper[ItemWrapper[ScheduledJobStat]] = {
+    import CollectionWrapper._
+    executedJobs.jobsStat.map { s =>
+      val top = WebPath(absolutePath(s"/rest/projects/${s.projectId}")(request))
+      s.withLinks(
+        LinkBuilder(top / "jobs", LinkTarget.SELF, classOf[ScheduledJobDetails], GET)
+      ).filtered()
     }
   }
 }

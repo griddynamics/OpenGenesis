@@ -65,7 +65,9 @@ class SchedulerContext extends Logging {
     }
 
     WorkflowEventsBus.subscribe {
-      case EnvDestroyed(projectId, envId) => envJobService.removeAllScheduledJobs(projectId, envId)
+      case EnvDestroyed(projectId, envId) =>
+        envJobService.removeAllScheduledJobs(projectId, envId)
+        executedJobsService.removeFailedJobsRecords(projectId, envId)
     }
   }
 
@@ -90,7 +92,7 @@ class SchedulerContext extends Logging {
 
   @Bean def jobListener = new FailedJobsListener(failedJobRepository)
 
-  @Bean def executedJobsService: ExecutedJobsService = new ExecutedJobsServiceImpl(failedJobRepository)
+  @Bean def executedJobsService: ExecutedJobsService = new ExecutedJobsServiceImpl(failedJobRepository, envJobService)
 
   @Bean def scheduler: SchedulerFactoryBean = {
     val factory = new SchedulerFactoryBean()
@@ -146,5 +148,9 @@ class SchedulerStubContext {
     def removeJob(projectId: Int, envId: Int, jobId: String) {}
 
     def scheduleExecution(projectId: Int, envId: Int, workflow: String, parameters: Map[String, String], date: Date, requestedBy: String) = Success(date)
+
+    def listScheduledJobs(projectId: Int) = Seq()
+
+    def scheduledJobsStat = Map()
   }
 }

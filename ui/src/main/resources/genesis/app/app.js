@@ -11,17 +11,13 @@ require([
   "modules/status",
   "modules/projects",
   "modules/environments",
-  //"modules/env_details/env_details",
-  //"modules/createenv",
   "modules/breadcrumbs",
-//  "modules/project_properties",
-//  "cs!modules/settings/main",
 //jquery plugins
   "bootstrap",
   "tabs"
 ],
 
-function(genesis, routermodule, jQuery, Backbone, _, backend, status, Projects, Environments, /*EnvironmentDetails,CreateEnvironment, */ Breadcrumbs /*,ProjectProperties, AppSettings*/) {
+function(genesis, routermodule, jQuery, Backbone, _, backend, status, Projects, Environments, Breadcrumbs ) {
 
   var app = genesis.app;
 
