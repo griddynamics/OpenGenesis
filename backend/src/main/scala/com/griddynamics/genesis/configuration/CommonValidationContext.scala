@@ -40,4 +40,5 @@ class CommonValidationContext {
   @Bean(name = Array("email")) def emailConfigValidator = new EmailConfigValidator(validator)
   @Bean(name = Array("url")) def urlConfigValidator = new UrlConfigValidator(validator)
   @Bean(name = Array("default_length")) def defaultLengthConfigValidator = new LengthConfigValidator
+  @Bean(name = Array("boolean")) def booleanStringValidator = new RegexValidator(Option("^(true|false)"))
 }
