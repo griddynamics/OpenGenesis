@@ -38,8 +38,10 @@ trait EnvironmentJobService {
   def removeScheduledDestruction(projectId: Int, envId: Int)
   def removeAllScheduledJobs(projectId: Int, envId: Int)
   def listScheduledJobs(projectId: Int, envId: Int): Seq[ScheduledJobDetails]
+  def listScheduledJobs(projectId: Int): Seq[ScheduledJobDetails]
   def removeJob(projectId: Int, envId: Int, jobId: String)
   def scheduleExecution(projectId: Int, envId: Int, workflow: String, parameters: Map[String, String], date: Date, requestedBy: String): ExtendedResult[Date]
+  def scheduledJobsStat: Map[Int, Long]
 }
 
 class EnvironmentJobServiceImpl(scheduler: SchedulingService,
@@ -87,7 +89,7 @@ class EnvironmentJobServiceImpl(scheduler: SchedulingService,
 
   @Transactional(readOnly = true)
   def executionDate(env: Environment, workflow: String): Option[Date] = {
-    val id = new WorkflowExecutionId(env.id, workflow)
+    val id = new WorkflowExecutionId(env.projectId, env.id, workflow)
     scheduler.getScheduledDate(id)
   }
 
@@ -106,7 +108,7 @@ class EnvironmentJobServiceImpl(scheduler: SchedulingService,
   def removeScheduledDestruction(projectId: Int, envId: Int) {
     for ( env <- storeService.findEnv(envId, projectId);
           template <- templateService.findTemplate(env) ) {
-      val jobs = Seq(new DestructionCheckId(envId), new ExpireNotificationId(envId), new WorkflowExecutionId(envId, template.destroyWorkflow.name))
+      val jobs = Seq(new DestructionCheckId(projectId, envId), new ExpireNotificationId(projectId, envId), new WorkflowExecutionId(projectId, envId, template.destroyWorkflow.name))
       scheduler.removeScheduledJobs(jobs)
     }
   }
@@ -127,7 +129,7 @@ class EnvironmentJobServiceImpl(scheduler: SchedulingService,
       scheduleDestructionJobs(env, template, requestedBy, date)
       Success(date)
     } else {
-      scheduler.removeScheduledJob(new WorkflowExecutionId(envId, workflow))
+      scheduler.removeScheduledJob(new WorkflowExecutionId(projectId, envId, workflow))
       scheduleWorkflow(template, workflow, parameters, configuration, env, requestedBy, date)
     }
   }
@@ -151,13 +153,13 @@ class EnvironmentJobServiceImpl(scheduler: SchedulingService,
 
   @Transactional
   def removeJob(projectId: Int, envId: Int, jobId: String) {
-    val execution = scheduler.getJob(envId, jobId)
+    val execution = scheduler.getJob(projectId, envId, jobId)
     execution match {
       case e: WorkflowExecution =>
         if(isDestroyWorkflow(envId, projectId, e.workflow)) {
           removeScheduledDestruction(projectId, envId)
         } else {
-          scheduler.removeScheduledJob(new WorkflowExecutionId(envId, e.workflow))
+          scheduler.removeScheduledJob(new WorkflowExecutionId(projectId, envId, e.workflow))
         }
       case _ => //do nothing cause only workflow executions are propagated to upper layers
     }
@@ -172,19 +174,25 @@ class EnvironmentJobServiceImpl(scheduler: SchedulingService,
     }
 
     val s = scheduler.listJobs(projectId, envId)
-    val details = s.collect { case (date, execution: WorkflowExecution) if date != null => new ScheduledJobDetails(
-      id = execution.id,
-      projectId = projectId,
-      envId = env.id,
-      date = date.getTime,
-      workflow = execution.workflow,
-      variables = execution.variables,
-      scheduledBy = execution.requestedBy,
-      failureDescription = None
-    )}
-    details
+    convert(s, projectId)
   }
 
+
+  private def convert(s: Seq[(Date, Execution)], projectId: Int): Seq[ScheduledJobDetails] = {
+    val details = s.collect {
+      case (date, execution: WorkflowExecution) if date != null => new ScheduledJobDetails(
+        id = execution.id,
+        projectId = projectId,
+        envId = execution.envId,
+        date = date.getTime,
+        workflow = execution.workflow,
+        variables = execution.variables,
+        scheduledBy = execution.requestedBy,
+        failureDescription = None
+      )
+    }
+    details
+  }
 
   private def isDestroyWorkflow(envId: Int, projectId: Int, workflowName: String): Boolean = {
     val definition = for {
@@ -195,4 +203,11 @@ class EnvironmentJobServiceImpl(scheduler: SchedulingService,
     definition.map(_.name == workflowName).getOrElse(false)
   }
 
+  @Transactional(readOnly = true)
+  def listScheduledJobs(projectId: Int): Seq[ScheduledJobDetails] = {
+    convert(scheduler.listJobs(projectId), projectId)
+  }
+
+  @Transactional(readOnly = true)
+  def scheduledJobsStat: Map[Int, Long] = scheduler.jobsPerProjectStat
 }

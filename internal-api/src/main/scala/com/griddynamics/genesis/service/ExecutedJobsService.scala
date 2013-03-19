@@ -22,9 +22,12 @@
  */
 package com.griddynamics.genesis.service
 
-import com.griddynamics.genesis.api.{ExtendedResult, ScheduledJobDetails}
+import com.griddynamics.genesis.api.{ScheduledJobStat, ExtendedResult, ScheduledJobDetails}
 
 trait ExecutedJobsService {
   def listFailedJobs(envId: Int): Iterable[ScheduledJobDetails]
-  def removeJobRecord(envId: Int, jobId: Int): ExtendedResult[Int]
+  def removeFailedJobRecord(envId: Int, jobId: Int): ExtendedResult[Int]
+  def removeFailedJobsRecords(projectId: Int, envId: Int): ExtendedResult[Int]
+  def jobsStat: Seq[ScheduledJobStat]
+  def listProjectJobs(projectId: Int): (Seq[ScheduledJobDetails], Seq[ScheduledJobDetails]) //(failed, scheduled)
 }

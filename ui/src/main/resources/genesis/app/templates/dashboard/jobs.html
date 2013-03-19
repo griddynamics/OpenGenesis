@@ -1,0 +1,29 @@
+<div id="top-panel" style="background-color: white" >
+    <div id="page-title" style="padding-top: 25px;">
+        <img id="env-icon" src="assets/img/calendar2.png" alt="Env">
+        <h1 class="envname">Scheduled jobs</h1>
+    </div>
+    <div style="float: right; padding-top: 25px; ">
+        <h2 style="font-size: 14px; ">Total Scheduled:  <strong><%- scheduledJobsCount %></strong> &nbsp;&nbsp; / &nbsp;&nbsp; Total Failed: <strong <% if ( failedJobsCount > 0 ) { %> style="color:red"  <% } %> ><%- failedJobsCount %></strong> </h2>
+    </div>
+</div>
+
+<div id ="tab-panel" style="margin-top: 0">
+    <div id="panel" style="border-top: none">
+
+    <% for (var i = 0; i < stat.length; i ++) { var record = stat[i]; var project = projects[record.projectId] %>
+        <div class="toggle-sector project-stat" data-project-id="<%- record.projectId %>" style="margin-top: 10px">
+            <h3 class="job-details toggle" > Project '<%- project? project.name : '' %>'</h3>
+            <div class="right-column">
+                    <span> Scheduled : <strong><%- record.scheduledJobs %></strong></span> &nbsp;&nbsp; / &nbsp;&nbsp;
+                    <span> Failed : <strong <% if ( record.failedJobs > 0 ) { %> style="color:red"  <% } %>  ><%- record.failedJobs %></strong></span>
+            </div>
+            <div class="clear"></div>
+        </div>
+
+        <div class="history-details tasks" data-project-id="<%- record.projectId %>">
+        </div>
+    <% } %>
+
+    </div>
+</div>

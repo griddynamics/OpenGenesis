@@ -11,12 +11,13 @@ define([
   "modules/createenv",
   "modules/project_properties",
   "cs!modules/settings/main",
+  "cs!modules/dashboard/jobs",
 //jquery plugins
   "bootstrap",
   "tabs"
 ],
 
-function(genesis, Backbone, _, Projects, Environments, EnvironmentDetails, CreateEnvironment, ProjectProperties, AppSettings) {
+function(genesis, Backbone, _, Projects, Environments, EnvironmentDetails, CreateEnvironment, ProjectProperties, AppSettings, Jobs) {
 
   var rmodule = genesis.module();
 
@@ -33,6 +34,7 @@ function(genesis, Backbone, _, Projects, Environments, EnvironmentDetails, Creat
       "project/:projectId/properties": "projectProperties",
       "admin/create/project": "createProject",
       "settings": "listSettings",
+      "dashboard": "dashboard",
       ":hash": "index",
       "*invalid": "index"
     },
@@ -103,6 +105,11 @@ function(genesis, Backbone, _, Projects, Environments, EnvironmentDetails, Creat
       } else {
         genesis.app.trigger("server-communication-error", "Requested project wasn't found", "/")
       }
+    },
+
+    dashboard: function() {
+      this.setCurrentView(new Jobs.Views.Main({el: this.$viewDiv(), projects: this.projects}));
+
     },
 
     listSettings: function() {
