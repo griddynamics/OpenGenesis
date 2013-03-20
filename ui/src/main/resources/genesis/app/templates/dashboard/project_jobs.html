@@ -1,6 +1,6 @@
 <% _.forEach(_.keys(jobs), function(envId){   %>
     <div class="instance">
-        <span>Instance <a href="project/<%= projectId %>/inst/<%= envId %>" style="text-decoration: underline; font-weight: bold">'<%- envs.get(envId).get('name') %>'</a></span>
+        <span>Instance <a href="#project/<%= projectId %>/inst/<%= envId %>" style="text-decoration: underline; font-weight: bold">'<%- envs.get(envId).get('name') %>'</a></span>
     </div>
     <% for(var i = 0, count = jobs[envId].length; i < count; i++) { var job = jobs[envId][i] %>
         <div class="task <%= job.status === 'Failed' ? 'failed': 'requested' %>">
