@@ -29,7 +29,11 @@ class RootController {
 
     val links: Seq[Link] =
       collectLinks(classOf[ProjectsController], classOf[Project], LinkTarget.COLLECTION) ++
-      (if (isAdminOrReadOnly) collectLinks(classOf[SettingsController], classOf[SystemSettings], LinkTarget.COLLECTION) else Seq()) ++
+      (if (isAdminOrReadOnly)
+        collectLinks(classOf[SettingsController], classOf[SystemSettings], LinkTarget.COLLECTION) ++
+          Seq(LinkBuilder(HrefBuilder.absolutePath("rest/jobs-stat"), LinkTarget.COLLECTION, RequestMethod.GET))
+      else
+        Seq()) ++
       (if (!isLogoutDisabled) Seq(LinkBuilder(HrefBuilder.absolutePath("logout"), LinkTarget.LOGOUT, RequestMethod.GET)) else Seq())
 
     Map(
