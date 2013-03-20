@@ -26,5 +26,7 @@
   "genesis.system.metrics": {"default": "true","description": "Gathering of system metrics: on if true, off otherwise",
    "restartRequired": true,
     "validation": {"Must be true or false": "true|false"}
-   }
+   },
+   "genesis.system.databag.template.repository.path" : {"default" : "templates", "description" : "Filesystem path to databag templates folder", "restartRequired": true},
+   "genesis.system.databag.template.repository.wildcard": {"default": "*.dbtemplate", "description": "Extension for databag templates files", "restartRequired": true}
 }
