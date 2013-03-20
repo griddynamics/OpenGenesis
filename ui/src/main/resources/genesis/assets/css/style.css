@@ -1896,6 +1896,13 @@ table.settings td.restart-required {
     line-height: 1.5em;
 }
 
+/* Fix jquery-ui datepicker 'Now' button to not look 'grayed' */
+.ui-datepicker .ui-datepicker-buttonpane button.ui-datepicker-current {
+    float:left;
+    font-weight:bold;
+    opacity: 1.0
+}
+
 /* Growl */
 
 .ui-notify {
