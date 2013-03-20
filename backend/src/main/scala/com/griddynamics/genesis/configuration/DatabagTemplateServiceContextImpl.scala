@@ -9,8 +9,8 @@ import com.griddynamics.genesis.repository.impl.DatabagTemplateRepositoryImpl
 
 @Configuration
 class DatabagTemplateServiceContextImpl extends DatabagTemplateServiceContext {
-  @Value("${genesis.databag.template.repository.path:templates}") var templatePath: String = _
-  @Value("${genesis.databag.template.repository.wildcard:*.dbtemplate}") var wildCard: String = _
+  @Value("${genesis.system.databag.template.repository.path:templates}") var templatePath: String = _
+  @Value("${genesis.system.databag.template.repository.wildcard:*.dbtemplate}") var wildCard: String = _
 
   @Bean
   def databagTemplateRepository: DatabagTemplateRepository = new DatabagTemplateRepositoryImpl(templatePath, wildCard)
