@@ -245,12 +245,12 @@
 
         <s:intercept-url pattern="/rest/metrics*" access="hasRole('ROLE_GENESIS_ADMIN')"/>
 
+        <s:intercept-url pattern="/rest/jobs-stat"  method="GET"   access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')"/>
+
         <s:intercept-url pattern="/rest/**" access="isAuthenticated()" />
 
         <s:intercept-url pattern="/metrics*"  method="GET"   access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')"/>
         <s:intercept-url pattern="/metrics/**"  method="GET"   access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')"/>
-
-        <s:intercept-url pattern="/rest/jobs-stat"  method="GET"   access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')"/>
 
         <s:intercept-url pattern="/**" access="denyAll" />
 
