@@ -11,6 +11,16 @@ template {
          }
     }
 
+    workflow("update") {
+        steps {
+            execLocal {
+                phase = "init"
+                shell = "sh"
+                commands = ['echo "Creation of new environment..."']
+            }
+        }
+    }
+
     workflow("destroy") {
         steps {
         }
