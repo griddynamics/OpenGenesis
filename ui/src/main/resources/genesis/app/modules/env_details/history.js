@@ -225,11 +225,16 @@ function (genesis, Backbone, status, $) {
     render: function(callback) {
       var self = this;
       $.when(genesis.fetchTemplate(this.template)).done(function (tmpl) {
+        var failedSteps = _.filter(self.model.get('steps'), function(step) {
+          return step.status == 'Failed';
+        });
+        _.each(failedSteps, function(step){
+          self.showStepActions(step.stepId);
+        });
         var htmls = _.chain(self.actionViews).keys().reduce(function(memo, item) {   //real hardcore!
           memo[item] = self.actionViews[item].html();
           return memo;
         }, {}).value();
-
         self.$el.html(tmpl({
           workflow: self.model.toJSON(),
           projectId: self.model.projectId || self.model.collection.projectId,
@@ -238,6 +243,10 @@ function (genesis, Backbone, status, $) {
           expandedStepsHtml: htmls,
           utils: genesis.utils
         }));
+
+        _.each(failedSteps, function(step){
+          self.showStepActions(step.stepId);
+        });
 
         _.chain(self.actionViews).keys().each(function(stepId) {
           self.actionViews[stepId].setElement(self.$("#step-"+ stepId + "-actions .subtable"));
