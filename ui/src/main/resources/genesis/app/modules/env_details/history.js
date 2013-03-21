@@ -228,9 +228,7 @@ function (genesis, Backbone, status, $) {
         var failedSteps = _.filter(self.model.get('steps'), function(step) {
           return step.status == 'Failed';
         });
-        _.each(failedSteps, function(step){
-          self.showStepActions(step.stepId);
-        });
+
         var htmls = _.chain(self.actionViews).keys().reduce(function(memo, item) {   //real hardcore!
           memo[item] = self.actionViews[item].html();
           return memo;
