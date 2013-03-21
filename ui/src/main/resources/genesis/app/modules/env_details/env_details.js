@@ -612,7 +612,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
           } else {
             view.trigger("workflow-validation-errors");
             var validator = $('#workflow-parameters-form').validate();
-              validator.showErrors(json.variablesErrors);
+            validator.showErrors(json.variablesErrors);
           }
         }
       );
@@ -631,14 +631,6 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
         }));
 
         if(view.scheduling) {
-          var locale = genesis.app.currentConfiguration.locale;
-          $.timepicker.setDefaults({
-            controlType :"select",
-            showOn: "button", buttonText: "Select date & time",
-            buttonImage: "assets/img/date-picker.png", buttonImageOnly: true,
-            // TODO: provide timepicker localization file
-            timeFormat: locale == "en-US" ? "hh:mm tt" : "HH:mm"
-          });
           var date = new Date();
           date.setHours(0);
           date.setMinutes(0);

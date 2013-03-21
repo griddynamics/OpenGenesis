@@ -217,6 +217,15 @@ function(genesis, routermodule, jQuery, Backbone, _, backend, status, Projects, 
       } else {
         $(".logout-link").attr("href", logoutLink.href)
       }
+      // datetime picker settings customization:
+      var locale = app.currentConfiguration.locale;
+      $.timepicker.setDefaults({
+        controlType :"select",
+        showOn: "button", buttonText: "Select date & time",
+        buttonImage: "assets/img/date-picker.png", buttonImageOnly: true,
+        // TODO: provide timepicker localization file
+        timeFormat: locale == "en-US" ? "hh:mm tt" : "HH:mm"
+      });
     }
 
     $("#connection-error").ajaxError(function(event, jqXHR) {
@@ -268,6 +277,13 @@ function(genesis, routermodule, jQuery, Backbone, _, backend, status, Projects, 
         href.indexOf("javascript:") !== 0) {
       evt.preventDefault();
       app.router.navigate(href, true);
+    }
+  });
+
+  // fix validation error placement
+  $.validator.setDefaults({
+    errorPlacement: function(error, element) {
+      error.appendTo(element.parent());
     }
   });
 
