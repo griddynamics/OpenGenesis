@@ -11,6 +11,28 @@ template {
          }
     }
 
+    workflow("update") {
+        steps {
+            execLocal {
+                phase = "init"
+                shell = "sh"
+                commands = ['echo "Creation of new environment..."']
+            }
+            execLocal {
+                phase = "postinit"
+                precedingPhases = ["init"]
+                shell = "sh"
+                commands = ['echo "Post init..." && /bin/nocommand']
+            }
+            execLocal {
+                phase = "finish"
+                precedingPhases = ["init", "postinit"]
+                shell = "sh"
+                commands = ['echo "Post init..." && /bin/nocommand']
+            }
+        }
+    }
+
     workflow("destroy") {
         steps {
         }
