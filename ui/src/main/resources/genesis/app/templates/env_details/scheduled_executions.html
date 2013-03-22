@@ -45,7 +45,7 @@
                     <% } %>
                 </td>
             </tr>
-            <tr class="no-hover-white" style="background-color: #FFF3F3">
+            <tr class="no-hover" style="background-color: #FFF3F3">
                 <td colspan="4" >
                     <div class="workflow-variables compact"  id="variables-<%- job.id %>" style="background-color: #FFF3F3;display: none">
                         <% if (job.failureDescription) { %>
@@ -58,14 +58,14 @@
                             <dt>Parameters</dt>
                             <dd>
                                 <% if (job.variables && _.keys(job.variables).length > 0) { %>
-                                <% _.chain(job.variables).keys().each(function(key) { %>
+                                <% _.chain(job.variables).keys().sortBy(function(o) {return o;} ).each(function(key) { %>
                                 <dl>
                                     <dt><%= key %></dt>
                                     <dd><%= job.variables[key] %></dd>
                                 </dl>
                                 <% }) %>
                                 <% } else { %>
-                                <strong>No variables requred</strong>
+                                <strong>No variables required</strong>
                                 <% } %>
 
                             </dd>
