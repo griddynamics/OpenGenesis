@@ -39,6 +39,9 @@ define [
       @url = options.urlLink
 
   class JobView extends Backbone.View
+    events:
+      "click .job-details": "toggleDetails"
+
     template: "app/templates/dashboard/project_jobs.html"
     initialize: (options) ->
       jobs = options.jobs
@@ -52,6 +55,11 @@ define [
           memo[k] = _.union(@failedPerEnv[k] or [], @requestedPerEnv[k] or []) unless _.isUndefined(k)
           memo), {}).
         value()
+
+    toggleDetails: (e) ->
+      id = $(e.currentTarget).attr("rel");
+      $(e.currentTarget).toggleClass("expanded");
+      this.$(id).slideToggle("fast");
 
     render: ->
       $.when(genesis.fetchTemplate(@template)).done (tmpl) =>
