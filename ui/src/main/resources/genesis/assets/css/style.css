@@ -881,15 +881,16 @@ img.toggle {
     font-size: 13px;
 }
 .tasks .instance {
-    background: rgb(245, 245, 245);
+    background: #f8f8f8;
     margin-bottom: 1px;
+    padding-top: 12px;
+    padding-bottom: 12px;
 }
-.tasks .instance span {
-    background: #E8E8E8;
+.tasks .instance .instance-label {
     padding: 2px 10px;
     display: inline-block;
     font-size: 12px;
-    border-top: 1px solid #f9f9f9;
+    font-weight: bold;
 }
 .task.requested {
     border-left: 2px solid #E8E8E8;
@@ -1372,8 +1373,8 @@ table.main-table tr:hover, table.intab tr:hover{
     background-color: #f5f5ff;
 }
 
-table.intab tr.no-hover-white {
-    background-color: white !important;
+table.intab tr.no-hover {
+    background-color: #f8f8f8 !important;
 }
 #panel table.main-table span{
 	font-weight:bold;
