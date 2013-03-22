@@ -169,10 +169,11 @@ trait QuartzSchema extends Schema {
     d.JOB_GROUP is (dbType("varchar(200)")),
     d.DESCRIPTION is (dbType("varchar(250)")),
     d.JOB_CLASS_NAME is (dbType("varchar(250)")),
-    d.IS_DURABLE is (dbType("varchar(1)")),
-    d.IS_NONCONCURRENT is (dbType("varchar(1)")),
-    d.IS_UPDATE_DATA is (dbType("varchar(1)")),
-    d.REQUESTS_RECOVERY is (dbType("varchar(1)"))//,
+    // all boolean columns should have size >= 5, since H2 for example stores 'true'/'false' values
+    d.IS_DURABLE is (dbType("varchar(5)")),
+    d.IS_NONCONCURRENT is (dbType("varchar(5)")),
+    d.IS_UPDATE_DATA is (dbType("varchar(5)")),
+    d.REQUESTS_RECOVERY is (dbType("varchar(5)"))//,
 //    d.JOB_DATA is (dbType("blob"))
   ))
 
