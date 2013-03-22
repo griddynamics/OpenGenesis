@@ -53,6 +53,10 @@ a.button.disabled {
     outline: none;
 }
 
+a.button.add-from-template, a.button.add-config-from-template {
+    margin-right: 5px;
+}
+
 a.button.disabled span {
     background: url(../img/btn-disabled-left.png) no-repeat !important;
 }
