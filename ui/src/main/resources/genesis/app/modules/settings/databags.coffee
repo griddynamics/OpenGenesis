@@ -88,7 +88,11 @@ define [
           tags: obj.tags
           projectId: @projectId
           templateId: obj.id
-          items: obj.properties
+          items: obj.properties.map((property)->
+              (name: property.name,
+              value: property.value,
+              isNew: true)
+          )
         )
 
     createDatabag: =>
