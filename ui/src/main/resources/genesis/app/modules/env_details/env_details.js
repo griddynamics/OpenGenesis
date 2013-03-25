@@ -566,7 +566,15 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
     },
 
     executionDate: function() {
-      return new Date(this.$("#executionDate").val()).getTime()
+     try {
+       var $exDate = this.$("#executionDate");
+       var value = $exDate.val();
+       var dateFmt = $exDate.datepicker("option", "dateFormat");
+       var timeFmt = $exDate.datepicker("option", "timeFormat");
+       return $.datepicker.parseDateTime(dateFmt, timeFmt, value, {}, {}).getTime()
+      } catch (e) {
+        return null; // let backend return validation error
+      }
     },
 
     runWorkflow: function() {
