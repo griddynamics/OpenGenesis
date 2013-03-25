@@ -16,8 +16,12 @@ define ["genesis", "backbone", "services/backend"],  (genesis, Backbone, backend
       val = $.Deferred()
       id = @get('id')
       if id
-        $.when(@fetch()).done (tpl) ->
-          val.resolve(tpl.properties?.map (x) -> x.name)
+        $.when(@fetch(suppressErrors: true)).then(
+          success: (tpl) ->
+            val.resolve(tpl.properties?.map (x) -> x.name)
+        ).fail( ->
+          val.resolve([])
+        )
       else
         val.resolve([])
       val.promise()

@@ -96,7 +96,7 @@ define [
         name: ""
         tags: []
         projectId: @projectId
-        templateId: templateId?
+        templateId: if templateId? then templateId else null
       )
 
     selectTemplate: =>
@@ -183,13 +183,15 @@ define [
       )
       properties.remove toBeRemoved,
         silent: true
-
+      template = @$("input[name='templateId']").val()
       bag = @model.clone().set(
         name: @$("input[name='name']").val().trim()
         tags: @$("textarea[name='tags']").val().split(" ")
-        templateId: @$("input[name='templateId']").val()
         items: properties.toJSON()
       )
+      if template?
+        bag.templateId = template
+
       validation.bindValidation bag, @$("#edit-databag"), @status, true
       bag.save().done =>
         @trigger "back"
