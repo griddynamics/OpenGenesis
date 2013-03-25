@@ -109,12 +109,14 @@ function(genesis, Backbone, status, property, access, templates, roles, validati
         var prefilled = _.reduce(obj.properties, function(memo, element) {
           memo[element.name] = element.value;
           return memo;
-        }, {})
+        }, {});
+        console.log(prefilled);
         self.showEditView(new EnvConfigs.Model({
             description: "Created from template",
             projectId: self.projectId,
             templateId: templateId,
-            items: prefilled
+            items: prefilled,
+            isNew: true
           }
         )
         )});
@@ -310,8 +312,9 @@ function(genesis, Backbone, status, property, access, templates, roles, validati
       var self = this;
       $.when(genesis.fetchTemplate(this.template)).done(function(tmpl) {
         var attributes = self.model.get("items") || [];
-        var items = _.chain(attributes).keys().map(function(key) { return new Item({name: key, value: attributes[key]}) }).value();
+        var items = _.chain(attributes).keys().map(function(key) { return new Item({name: key, value: attributes[key], isNew: self.model.isNew}) }).value();
         var itemsCollection = new ItemsCollection(items);
+
         self.$el.html( tmpl({
           config: self.model.toJSON(),
           canEdit: self.model.canEdit()|| self.collection.canCreate(),
