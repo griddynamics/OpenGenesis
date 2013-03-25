@@ -17,7 +17,7 @@ define ["genesis", "backbone", "services/backend"],  (genesis, Backbone, backend
       id = @get('id')
       if id
         $.when(@fetch(suppressErrors: true)).then(
-          success: (tpl) ->
+         (tpl) ->
             val.resolve(tpl.properties?.map (x) -> x.name)
         ).fail( ->
           val.resolve([])
