@@ -20,7 +20,11 @@
           <% if (property.variants && property.variants.length > 0) { %>
             <select name="items.[<%= i %>].name" id="name-input-<%= cid %>" class="name-input" data-cid="<%= cid %>">
                 <% for (var j = 0; j < property.variants.length; j++) { var item = property.variants[j]; %>
-                    <option value="<%- item %>"><%- item %></option>
+                    <% if (property.name == item) { %>
+                        <option value="<%- item %>" selected="selected"><%- item %></option>
+                    <% } else { %>
+                        <option value="<%- item %>"><%- item %></option>
+                    <% } %>
                 <% } %>
             </select>
           <% } else { %>
