@@ -110,7 +110,6 @@ function(genesis, Backbone, status, property, access, templates, roles, validati
           memo[element.name] = element.value;
           return memo;
         }, {});
-        console.log(prefilled);
         self.showEditView(new EnvConfigs.Model({
             description: "Created from template",
             projectId: self.projectId,
