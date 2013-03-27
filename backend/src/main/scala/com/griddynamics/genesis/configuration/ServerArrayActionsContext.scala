@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.servers._
 import com.griddynamics.genesis.service.{ServersService, ServersLoanService}
 import com.griddynamics.genesis.plugin.StepDefinition
+import scala.reflect.runtime.universe.typeOf
 
 @Configuration
 class ServerArrayActionsContext {
@@ -34,9 +35,9 @@ class ServerArrayActionsContext {
   @Autowired var serversLoanService: ServersLoanService = _
   @Autowired var serversService: ServersService = _
 
-  @Bean def borrowServerStepDefinition = new StepDefinition("borrowServers", classOf[BorrowServersStep])
+  @Bean def borrowServerStepDefinition = new StepDefinition("borrowServers", typeOf[BorrowServersStep])
   @Bean def borrowServersStepExecutor = new BorrowServersExecutor(serversService, serversLoanService)
 
-  @Bean def releaseServerStepDefinition = new StepDefinition("releaseServers", classOf[ReleaseServersStep])
+  @Bean def releaseServerStepDefinition = new StepDefinition("releaseServers", typeOf[ReleaseServersStep])
   @Bean def releaseServerStepExecutor = new ReleaseServersExecutor(serversLoanService)
 }

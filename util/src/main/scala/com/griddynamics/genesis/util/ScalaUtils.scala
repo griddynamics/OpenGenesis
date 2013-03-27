@@ -50,36 +50,19 @@ object ScalaUtils extends com.griddynamics.genesis.cache.Cache {
   }
 
 
-  def loadClass(path: String, classLoader: ClassLoader) = path match {
-    case "scala.Predef.Map" => classOf[Map[_, _]]
-    case "scala.Predef.Set" => classOf[Set[_]]
-    case "scala.Predef.String" => classOf[String]
-    case "scala.package.List" => classOf[List[_]]
-    case "scala.package.Seq" => classOf[Seq[_]]
-    case "scala.package.Sequence" => classOf[Seq[_]]
-    case "scala.package.Collection" => classOf[Seq[_]]
-    case "scala.package.IndexedSeq" => classOf[IndexedSeq[_]]
-    case "scala.package.RandomAccessSeq" => classOf[IndexedSeq[_]]
-    case "scala.package.Iterable" => classOf[Iterable[_]]
-    case "scala.package.Iterator" => classOf[Iterator[_]]
-    case "scala.package.Vector" => classOf[Vector[_]]
-    case "scala.package.BigDecimal" => classOf[BigDecimal]
-    case "scala.package.BigInt" => classOf[BigInt]
-    case "scala.package.Integer" => classOf[java.lang.Integer]
-    case "scala.package.Character" => classOf[java.lang.Character]
-    case "scala.Long" => classOf[java.lang.Long]
-    case "scala.Int" => classOf[java.lang.Integer]
-    case "scala.Boolean" => classOf[java.lang.Boolean]
-    case "scala.Short" => classOf[java.lang.Short]
-    case "scala.Byte" => classOf[java.lang.Byte]
-    case "scala.Float" => classOf[java.lang.Float]
-    case "scala.Double" => classOf[java.lang.Double]
-    case "scala.Char" => classOf[java.lang.Character]
-    case "scala.Any" => classOf[Any]
-    case "scala.AnyRef" => classOf[AnyRef]
-    case name => classLoader.loadClass(name)
+  def getScalaClass(value: Any): Class[_] = value match {
+    case b: java.lang.Byte => classOf[Byte]
+    case s: java.lang.Short => classOf[Short]
+    case i: java.lang.Integer => classOf[Int]
+    case l: java.lang.Long => classOf[Long]
+    case f: java.lang.Float => classOf[Float]
+    case d: java.lang.Double => classOf[Double]
+    case c: java.lang.Character => classOf[Char]
+    case b: java.lang.Boolean => classOf[Boolean]
+    case v: java.lang.Void => classOf[Unit]
+    case r: AnyRef => r.getClass
+    case _ => throw new IllegalArgumentException("Can't get type of %s".format(value))
   }
-
 
   private[this] def findPropertyMutator(obj: AnyRef, name: String, valueType: Class[_]): Option[Method] = fromCache(CacheName, CacheKey(obj.getClass, name, valueType)) {
     def isAssignable(to: Class[_], from: Class[_]) = {

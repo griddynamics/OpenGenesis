@@ -24,7 +24,10 @@ package com.griddynamics.genesis.steps.builder
 
 import com.griddynamics.genesis.workflow.Step
 import com.griddynamics.genesis.plugin.StepBuilderFactory
+import scala.reflect.runtime.universe.Type
 
-class ReflectionBasedStepBuilderFactory(val stepName: String, clazz: Class[_ <: Step]) extends StepBuilderFactory {
-  def newStepBuilder = new ReflectionBasedStepBuilder(clazz)
+class ReflectionBasedStepBuilderFactory(val stepName: String, tpe: Type) extends StepBuilderFactory {
+  def newStepBuilder =
+    new ReflectionBasedStepBuilder(tpe)
+
 }

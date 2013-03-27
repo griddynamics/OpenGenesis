@@ -22,121 +22,61 @@
  */
 package com.griddynamics.genesis.util
 
-import java.lang.reflect.{ParameterizedType, Type, Constructor}
-import com.thoughtworks.paranamer.{BytecodeReadingParanamer, CachingParanamer}
-import tools.scalap.scalax.rules.scalasig.TypeRefType
-import tools.scalap.scalax.rules.scalasig.{Type => ScalaType}
-import scala.Some
+import scala.reflect.runtime.universe.{Type, TypeTag, typeOf, weakTypeOf, runtimeMirror, nme}
 
-
-//this class will be mostly outdated after scala 2.10 will be released
 object ScalaReflectionUtils {
 
-  private val byAmountOfParameters = new Ordering[Constructor[_]] {
-    def compare(x: Constructor[_], y: Constructor[_]) = {
-      x.getParameterTypes.size.compare(y.getParameterTypes.size)
-    }
+  private lazy val m = runtimeMirror(getClass.getClassLoader)
+
+  private def getPrimaryConsSym(typ: Type) = {
+    val constSym = typ.declaration(nme.CONSTRUCTOR)
+    constSym.asTerm.alternatives.collect {
+      case s if s.isMethod => s.asMethod
+    }.find(_.isPrimaryConstructor).get
   }
 
-  private val paranamer = new CachingParanamer(new BytecodeReadingParanamer)
-
-  private val Name = """^((?:[^$]|[$][^0-9]+)+)([$][0-9]+)?$""".r
-
-  implicit def class2companion(clazz: Class[_]) = new {
-    def companionClass(classLoader: ClassLoader): Class[_] = {
-      val path = if (clazz.getName.endsWith("$")) clazz.getName else "%s$".format(clazz.getName)
-      Some(Class.forName(path, true, classLoader)).getOrElse(
-        throw new Error("Could not resolve clazz='%s'".format(path))
-      )
-    }
-
-    def companionObject(classLoader: ClassLoader) = companionClass(classLoader).getField("MODULE$").get(null)
+  def getPrimaryConstructor(tpe: Type) = {
+    val ctor = getPrimaryConsSym(tpe)
+    val cm = m.reflectClass(tpe.typeSymbol.asClass)
+    val ctorm = cm.reflectConstructor(ctor)
+    (ctorm, ctor.paramss.flatten.map(s => (s.name.toString, s.typeSignature)))
   }
-
-
-  private[this] def clean(name: String) = name match {
-    case Name(text, junk) => text
-  }
-
-  def getPrimaryConstructor[T](clazz: Class[T]): (Constructor[T], List[(String, Type)]) = {
-    val primary = rawClassOf(clazz).getDeclaredConstructors.max(byAmountOfParameters)
-
-    val names = paranamer.lookupParameterNames(primary).map(clean)
-    val loader = clazz.getClassLoader
-    lazy val parsedSigTypes = ScalaCaseClassSigParser.parse(clazz, loader).toIndexedSeq
-
-    val types = primary.getGenericParameterTypes.toList.zipWithIndex.map { case (constParam, constParamidx) =>
-      constParam match {
-        case parameterized: ParameterizedType => {
-          val typeArgs = parameterized.getActualTypeArguments.toList.zipWithIndex.map {
-            case (t, typeArgIdx) =>
-              if (t == classOf[java.lang.Object]) {
-                val paramTypeRef = parsedSigTypes.apply(constParamidx).apply(typeArgIdx).asInstanceOf[TypeRefType]
-                ScalaUtils.loadClass(paramTypeRef.symbol.toString, clazz.getClassLoader)
-              } else if(t.isInstanceOf[ParameterizedType]){
-                val paramTypeRef = parsedSigTypes.apply(constParamidx).apply(typeArgIdx).asInstanceOf[TypeRefType]
-                val intType = ScalaUtils.loadClass(paramTypeRef.symbol.toString, clazz.getClassLoader)
-                mkParameterizedType(intType, paramTypeRef.typeArgs.map{ t => ScalaUtils.loadClass(t.asInstanceOf[TypeRefType].symbol.toString, clazz.getClassLoader)})
-              } else {
-                t
-              }
-          }
-          mkParameterizedType(parameterized.getRawType, typeArgs)
-        }
-        case clazz: Class[_] => clazz
-        case c => throw new IllegalStateException("Failed to recognize consturctor argument type %s for class %s".format(c, clazz.getCanonicalName))
-      }
-    }
-    (primary.asInstanceOf[Constructor[T]], names.toList.zip(types))
-  }
-
-
-  private[this] def mkParameterizedType(owner: Type, typeArgs: Seq[Type]) =
-    new ParameterizedType {
-      def getActualTypeArguments = typeArgs.toArray
-
-      def getOwnerType = owner
-
-      def getRawType = owner
-
-      override def toString = "Parameterized type { raw type = %s, type arguments = [%s] }".format(owner.toString, typeArgs.toString())
-    }
 
   /**
    * WARNING: current implementation do not checks for types (especially when it comes to generics)
    */
-  def newInstance[T](clazz: Class[T], values: Map[String, Any], defaults: Map[String, Any] = Map()): T = {
-    val (const, params) = ScalaReflectionUtils.getPrimaryConstructor(clazz)
+  def newInstance(tpe: Type, values: Map[String, Any], defaults: Map[String, Any] = Map()): Any = {
+    val (const, params) = ScalaReflectionUtils.getPrimaryConstructor(tpe)
     val constParamNames = params.map(_._1)
     val allValues = if (!constParamNames.sameElements(values.keys)) {
-      defaults ++ constructorDefaultValues(clazz, constParamNames) ++ values
+      defaults ++ constructorDefaultValues(tpe) ++ values
     } else {
       values
     }
-    const.newInstance(params.map {
+    const(params.map {
       case (name, ttype) => allValues(name)
     }.toSeq.asInstanceOf[Seq[AnyRef]]: _*)
   }
 
-  private[this] def rawClassOf(t: Type): Class[_] = t match {
-    case c: Class[_] => c
-    case p: ParameterizedType => rawClassOf(p.getRawType)
-    case x => throw new IllegalArgumentException("Failed to get raw class value from type %s. This type is not supported".format(t.getClass.getCanonicalName))
-  }
+  def constructorDefaultValues(tpe: Type): Map[String, Any] = {
+    val compSymbol = m.classSymbol(m.runtimeClass(tpe)).companionSymbol
+    val compMirrorInst = m.reflectModule(compSymbol.asModule).instance
+    val companionClass: Class[_] = compMirrorInst.getClass
+    val companionObject: Any = compMirrorInst
 
-
-  def constructorDefaultValues(clazz: Class[_], constParams: List[(String)]): Map[String, Any] = {
-    val companionClass: Class[_] = clazz.companionClass(clazz.getClassLoader)
-    val companionObject: AnyRef = clazz.companionObject(clazz.getClassLoader)
-
+    val ctorm = getPrimaryConsSym(tpe)
+    val constParams = ctorm.paramss.flatten
     val defaults = constParams.zipWithIndex.map {
-      case (name, index) =>
+      case (paramSym, index)  if (paramSym.asTerm.isParamWithDefault) =>
         val value: Option[Any] = try {
+          // have to do this until https://issues.scala-lang.org/browse/SI-6468 is fixed
+          // in 2.10 'Reflection doesn't provide a way to find out values of default arguments'
           Option(companionClass.getMethod("apply$default$%d".format(index + 1)).invoke(companionObject)) //this looks really fragile
         } catch {
           case _: Throwable => None
         }
-        value.map((name, _))
+        value.map((paramSym.name.toString, _))
+      case _ => None
     }.flatten
 
     defaults.toMap
