@@ -262,9 +262,18 @@ function(genesis, $) {
         processData: false,
         suppressErrors: true
       })
+    },
+
+    contentList: function() {
+      return $.ajax({
+        url: "/content/index.json",
+        dataType: "json",
+        type: "GET",
+        processData: true,
+        suppressErrors: true
+      })
     }
   };
-
 
   function _type(name) {
     var type = "application/vnd.griddynamics.genesis." + name + "+json";

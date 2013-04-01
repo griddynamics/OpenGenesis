@@ -170,6 +170,16 @@ function(genesis, routermodule, jQuery, Backbone, _, backend, status, Projects, 
       $(".distr-details").data("details", details).text(info)
     });
 
+    $.when(backend.SettingsManager.contentList()).done(function(contentList) {
+      var contentTemplate = _.template($("#content-list-tmpl").html());
+      if (contentList.length > 0) {
+        $('.additional-content-list').html(contentTemplate({
+          links: contentList
+        }));
+        $(".content-list").show();
+      }
+    }).fail(function(jxhr){});
+
     $(".genesis-version").click(function(e) {
       if (e.shiftKey && window) {
         window.prompt("Copy to clipboard: Ctrl+C, Enter",

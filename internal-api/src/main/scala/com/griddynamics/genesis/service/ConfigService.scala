@@ -65,6 +65,7 @@ object GenesisSystemProperties {
   val MAX_IDLE = "genesis.system.request.maxIdle"
   val AGENT_POLLING_PERIOD = "genesis.system.agent.poll.period"
   val WEB_RESOURCE_ROOTS = "genesis.system.web.resourceRoots"
+  val CONTENT_JSON = "genesis.system.content.json"
   val CLIENT_DEBUG_MODE = "genesis.web.client.debug"
   val LOGOUT_ENABLED = "genesis.web.logout.enabled"
   val AUTH_MODE = "genesis.system.auth.mode"
