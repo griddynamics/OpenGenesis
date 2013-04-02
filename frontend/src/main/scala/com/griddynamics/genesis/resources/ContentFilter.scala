@@ -80,8 +80,8 @@ class ContentFilter extends Filter with Logging {
     }
   }
 
-  def index = mappings.values.collect({case MappingDescriptor(_, mapping, link, index)
-    if index.isDefined && link.isDefined => JSONObject(Map("link" -> link.get, "index" -> s"${filterPath}/${mapping}/${index.get}"))}).toList
+  def index = mappings.values.collect({case MappingDescriptor(_, mapping, Some(link), index)
+    => JSONObject(Map("link" -> link, "index" -> s"${filterPath}/${mapping}/${index.getOrElse("index.html")}"))}).toList
 
   def destroy() {}
 }
