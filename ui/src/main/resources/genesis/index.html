@@ -47,6 +47,14 @@
     <li><a href="/">View All Projects</a></li>
 </script>
 
+<script id="content-list-tmpl" type="text/x-underscore-tmplate">
+    <% if (links.length > 0) { %>
+    <% for (var i = 0, count = links.length; i < count; i++) { var link = links[i]; %>
+        <li><a href="<%= link.index %>" target="_blank" data-bypass="true"><%= link.link %></a></li>
+    <% } %>
+    <% } %>
+</script>
+
 <script id="app-growl-message" type="text/x-underscore-tmplate">
     <div class="<%= message.type %> ui-notify-message ui-notify-message-style">
         <a data-bypass class="ui-notify-close" href="javascript:void(0)" title="Close notification">
@@ -85,6 +93,16 @@
             <div id="header-content">
                 <a id="fake-logo-link" href="#" ></a>
                 <div id="userinfo">
+                    <div id="content-list" class="content-list" style="display: none">
+                        <div class="dropdown" >
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="#menu1">
+                                <span id="content-btn" class="btn">See also</span>
+                                <b class="caret"></b>
+                            </a>
+                            <ul class="dropdown-menu additional-content-list">
+                            </ul>
+                        </div>
+                    </div>
                     <div id="project-list" rel="p2" >
                         <div class="dropdown">
                             <a class="dropdown-toggle" data-toggle="dropdown" href="#menu1">

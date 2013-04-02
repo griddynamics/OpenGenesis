@@ -24,7 +24,7 @@ package com.griddynamics.genesis
 
 import com.griddynamics.genesis.api.Failure
 import com.griddynamics.genesis.http.{UrlConnectionTunnel, TunnelFilter}
-import com.griddynamics.genesis.resources.ResourceFilter
+import resources.{ContentFilter, ResourceFilter}
 import com.griddynamics.genesis.service.ConfigService
 import com.griddynamics.genesis.service.GenesisSystemProperties._
 import com.griddynamics.genesis.util.{RichLogger, Logging}
@@ -86,6 +86,7 @@ object GenesisFrontend extends Logging {
         }
 
         val resourceRoots = helper.getPropWithFallback(WEB_RESOURCE_ROOTS, "classpath:genesis/")
+        val contentJson: String = helper.getPropWithFallback(CONTENT_JSON, "")
         val debugMode = helper.getPropWithFallback(CLIENT_DEBUG_MODE, "false")
         val metrics = helper.getPropWithFallback(METRICS, true)
         val metricsAdd = !isFrontend && metrics
@@ -120,6 +121,14 @@ object GenesisFrontend extends Logging {
             resourceHolder.setInitParameter("resourceRoots", resourceRoots)
             resourceHolder.setInitParameter("debugMode", debugMode)
             context.addFilter(resourceHolder, "/*", java.util.EnumSet.of(DispatcherType.REQUEST))
+        }
+
+        if (!contentJson.isEmpty) {
+          val contentHolder = new FilterHolder(new ContentFilter)
+          contentHolder.setName("contentFilter")
+          contentHolder.setInitParameter(ContentFilter.InitName, contentJson)
+          contentHolder.setInitParameter(ContentFilter.Mapping, "/content")
+          context.addFilter(contentHolder, "/content/*", java.util.EnumSet.of(DispatcherType.REQUEST))
         }
 
         if (isFrontend) {
