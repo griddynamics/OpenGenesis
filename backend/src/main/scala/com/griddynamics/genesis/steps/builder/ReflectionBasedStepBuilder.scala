@@ -28,7 +28,7 @@ import com.griddynamics.genesis.plugin.StepBuilder
 import com.griddynamics.genesis.util.ScalaReflectionUtils
 import scala.collection.mutable
 import scala.Some
-import scala.reflect.runtime.universe.{Type, TypeTag, TypeRef, runtimeMirror, typeOf}
+import scala.reflect.runtime.universe._
 
 class ReflectionBasedStepBuilder(tpe: Type) extends GroovyObjectSupport with StepBuilder {
   import ReflectionBasedStepBuilder._
@@ -82,14 +82,16 @@ object ScalaGroovyInterop {
   import scala.collection.JavaConversions._
   import com.griddynamics.genesis.util.ScalaUtils._
 
-  def convert(value: Any, expectedType: Type) = (value, expectedType) match {
-    case (x: java.util.List[_], ttype: TypeRef) => convertJavaList(x, ttype)
-    case (x: java.util.Map[_, _], ttype: TypeRef) => convertJavaMap(x, ttype)
-    case (x, ttype: TypeRef) if isScalaOption(ttype) => convertToOption(x, ttype)
-    case (x, ttype: TypeRef) if x == null => null
-    case (x, ttype: TypeRef) if (ttype <:< scalaType(x)) => x
-    case (_, _) => throw new IllegalArgumentException(
-      s"Failed to convert value $value to type ${expectedType.typeSymbol.name}: This kind of conversion is not supported")
+  def convert(value: Any, expectedType: Type) = synchronized {
+    (value, expectedType) match {
+      case (x: java.util.List[_], ttype: TypeRef) => convertJavaList(x, ttype)
+      case (x: java.util.Map[_, _], ttype: TypeRef) => convertJavaMap(x, ttype)
+      case (x, ttype: TypeRef) if isScalaOption(ttype) => convertToOption(x, ttype)
+      case (x, ttype: TypeRef) if x == null => null
+      case (x, ttype: TypeRef) if (ttype <:< scalaType(x)) => x
+      case (_, _) => throw new IllegalArgumentException(
+        s"Failed to convert value $value to type ${expectedType.typeSymbol.name}: This kind of conversion is not supported")
+    }
   }
 
   private def scalaType(v: Any) = mirrorRT.classSymbol(getScalaClass(v)).toType
@@ -117,7 +119,7 @@ object ScalaGroovyInterop {
     s"Elements [${badTypeElements.toString()}] in java.util.List do not conform to type Map[${keyType.typeSymbol.name}, ${valueType.typeSymbol.name}]")
   }
 
-  def convertJavaList(x: java.util.List[_], ttype: TypeRef): AnyRef = {
+  private def convertJavaList(x: java.util.List[_], ttype: TypeRef): AnyRef = {
     if (isScalaOption(ttype)) {
       ttype.args(0) match {
         case ttype0: TypeRef => return Some(convertJavaList(x, ttype0))

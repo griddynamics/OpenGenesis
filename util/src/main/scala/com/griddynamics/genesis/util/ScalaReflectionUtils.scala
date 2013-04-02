@@ -22,11 +22,11 @@
  */
 package com.griddynamics.genesis.util
 
-import scala.reflect.runtime.universe.{Type, TypeTag, typeOf, weakTypeOf, runtimeMirror, nme}
+import scala.reflect.runtime.universe.{Type, runtimeMirror, nme}
 
 object ScalaReflectionUtils {
 
-  private lazy val m = runtimeMirror(getClass.getClassLoader)
+  private lazy val mirror = runtimeMirror(getClass.getClassLoader)
 
   private def getPrimaryConsSym(typ: Type) = {
     val constSym = typ.declaration(nme.CONSTRUCTOR)
@@ -35,9 +35,17 @@ object ScalaReflectionUtils {
     }.find(_.isPrimaryConstructor).get
   }
 
-  def getPrimaryConstructor(tpe: Type) = {
+  /**
+   * Have to synchronize all public methods accessing runtime reflection
+   * since it's not thread-safe in scala 2.10.
+   * See https://issues.scala-lang.org/browse/SI-6240:
+   * Runtime reflection mixed with threads or actors might be dangerous.
+   *
+   * Synchronization could be removed from this class when the issue is fixed - probably in scala-2.10.2?
+   */
+  def getPrimaryConstructor(tpe: Type) = synchronized {
     val ctor = getPrimaryConsSym(tpe)
-    val cm = m.reflectClass(tpe.typeSymbol.asClass)
+    val cm = mirror.reflectClass(tpe.typeSymbol.asClass)
     val ctorm = cm.reflectConstructor(ctor)
     (ctorm, ctor.paramss.flatten.map(s => (s.name.toString, s.typeSignature)))
   }
@@ -45,8 +53,8 @@ object ScalaReflectionUtils {
   /**
    * WARNING: current implementation do not checks for types (especially when it comes to generics)
    */
-  def newInstance(tpe: Type, values: Map[String, Any], defaults: Map[String, Any] = Map()): Any = {
-    val (const, params) = ScalaReflectionUtils.getPrimaryConstructor(tpe)
+  def newInstance(tpe: Type, values: Map[String, Any], defaults: Map[String, Any] = Map()): Any = synchronized {
+    val (const, params) = getPrimaryConstructor(tpe)
     val constParamNames = params.map(_._1)
     val allValues = if (!constParamNames.sameElements(values.keys)) {
       defaults ++ constructorDefaultValues(tpe) ++ values
@@ -58,9 +66,9 @@ object ScalaReflectionUtils {
     }.toSeq.asInstanceOf[Seq[AnyRef]]: _*)
   }
 
-  def constructorDefaultValues(tpe: Type): Map[String, Any] = {
-    val compSymbol = m.classSymbol(m.runtimeClass(tpe)).companionSymbol
-    val compMirrorInst = m.reflectModule(compSymbol.asModule).instance
+  def constructorDefaultValues(tpe: Type): Map[String, Any] = synchronized {
+    val compSymbol = mirror.classSymbol(mirror.runtimeClass(tpe)).companionSymbol
+    val compMirrorInst = mirror.reflectModule(compSymbol.asModule).instance
     val companionClass: Class[_] = compMirrorInst.getClass
     val companionObject: Any = compMirrorInst
 
