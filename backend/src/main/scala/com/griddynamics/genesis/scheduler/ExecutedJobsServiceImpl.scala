@@ -44,7 +44,6 @@ class ExecutedJobsServiceImpl(failedJobsRepo: FailedJobRepository, envJobService
     Success(failedJobsRepo.deleteRecords(projectId, envId))
   }
 
-  @Transactional(readOnly = true)
   def jobsStat: Seq[ScheduledJobStat] = {
     val scheduled = envJobService.scheduledJobsStat
     val failed = failedJobsRepo.failedJobStats.toMap

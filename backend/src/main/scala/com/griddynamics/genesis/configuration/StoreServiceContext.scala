@@ -44,6 +44,7 @@ import java.sql.SQLException
 import com.griddynamics.genesis.validation.ConfigValueValidator
 import collection.JavaConversions._
 import scala.Some
+import com.griddynamics.genesis.squeryl.adapters.CustomPostgreSQLAdapter
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
@@ -117,7 +118,7 @@ object SquerylConfigurator {
         jdbcUrl.drop("jdbc:".length).takeWhile(_ != ':').toLowerCase match {
             case "h2" => new H2Adapter
             case "mysql" => new MySQLAdapter
-            case "postgresql" => new PostgreSqlAdapter
+            case "postgresql" => new CustomPostgreSQLAdapter
             case "sqlserver" => new MSSQLServerWithPagination
             case _ => throw new IllegalArgumentException
         }

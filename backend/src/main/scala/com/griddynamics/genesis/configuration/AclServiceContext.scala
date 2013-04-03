@@ -81,6 +81,11 @@ class AclServiceContext {
       service.setSidIdentityQuery("SELECT @@IDENTITY")
     }
 
+    if (jdbcUrl.startsWith("jdbc:postgresql")) {
+      service.setClassIdentityQuery("select currval('s_acl_class_id')")
+      service.setSidIdentityQuery("select currval('s_acl_sid_id')")
+    }
+
     service
   }
 
