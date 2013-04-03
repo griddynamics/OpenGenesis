@@ -39,6 +39,7 @@ import com.griddynamics.genesis.model.Environment
 import com.griddynamics.genesis.api.Success
 import com.griddynamics.genesis.core.events.{EnvDestroyed, WorkflowEventsBus}
 import com.griddynamics.genesis.repository.impl.{FailedJobRepositoryImpl, FailedJobRepository}
+import org.apache.commons.dbcp.BasicDataSource
 
 
 @Configuration
@@ -100,6 +101,15 @@ class SchedulerContext extends Logging {
     factory.setTransactionManager(transactionManager)
     factory.setJobFactory(jobFactory)
 
+    // Postgres uses different blob handling for Quartz; also we need to customize boolean processing
+    // because we're using varchar(5) for them, and Postgres does not have implicit conversion for it.
+    def driverDelegate: String = {
+      if (dataSource.isInstanceOf[BasicDataSource] && dataSource.asInstanceOf[BasicDataSource].getUrl.startsWith("jdbc:postgresql"))
+        "com.griddynamics.genesis.model.scheduling.CustomPostgreSQLDelegate"
+      else
+        "org.quartz.impl.jdbcjobstore.StdJDBCDelegate"
+    }
+
     factory.setQuartzProperties( Map (
       "org.quartz.jobStore.class" -> "org.quartz.impl.jdbcjobstore.JobStoreTX",
       "org.quartz.jobStore.misfireThreshold" -> "60000",
@@ -110,8 +120,8 @@ class SchedulerContext extends Logging {
       "org.quartz.plugin.jobHistory.jobSuccessMessage" -> "Job {1}.{0} fired at: {2, date, dd/MM/yyyy HH:mm:ss} result=OK",
       "org.quartz.plugin.jobHistory.jobFailedMessage" -> "Job {1}.{0} fired at: {2, date, dd/MM/yyyy HH:mm:ss} result=ERROR",
       "org.quartz.jobStore.tablePrefix" -> "QRTZ_",
-      "org.terracotta.quartz.skipUpdateCheck" -> "true"
-    ))
+      "org.terracotta.quartz.skipUpdateCheck" -> "true",
+      "org.quartz.jobStore.driverDelegateClass" -> driverDelegate))
     factory.setOverwriteExistingJobs(true)
     factory.setStartupDelay(50)
     factory.setApplicationContextSchedulerContextKey("applicationContext")
