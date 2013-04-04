@@ -22,11 +22,6 @@
  */
 package com.griddynamics.genesis.template
 
-import org.bouncycastle.crypto.digests.SHA1Digest
-import org.bouncycastle.util.encoders.Base64
-import org.apache.commons.io.IOCase
-import com.griddynamics.genesis.api.{Tag, VcsProject}
-
 trait TemplateRepository {
     def listSources() : Map[VersionedTemplate, String]
     /** Content for specific versioned template */
@@ -42,32 +37,4 @@ trait TemplateRepository {
 
 case class VersionedTemplate(name: String,  version: String = "LATEST", fullName: String = "")
 
-object TemplateRepository {
-    val wildCardIOCase = IOCase.SENSITIVE
 
-    def revisionId(sources : Map[VersionedTemplate, String]) = {
-        val digest = new SHA1Digest()
-
-        for (hash <- sources.keys.map(v => "%s#%s".format(v.name, v.version))) {
-            val bytes = hash.getBytes
-            digest.update(bytes, 0, bytes.length)
-        }
-
-        val result : Array[Byte] = Array.ofDim(digest.getDigestSize)
-        digest.doFinal(result, 0)
-
-        new String(Base64.encode(result), "ASCII")
-    }
-
-    def sourcePair(source : String) = {
-        val content = source.getBytes
-
-        val digest = new SHA1Digest()
-        digest.update(content, 0, content.length)
-
-        val result = Array.ofDim[Byte](digest.getDigestSize)
-        digest.doFinal(result, 0)
-
-        (new String(Base64.encode(result), "ASCII"), source)
-    }
-}

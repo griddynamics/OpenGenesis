@@ -21,31 +21,14 @@
  *   Description:  Continuous Delivery Platform
  */
 
-package com.griddynamics.genesis.build
+package com.griddynamics.genesis.workflow
 
 import java.sql.Timestamp
+import com.griddynamics.genesis.logging.LoggerWrapper
 
-trait BuildSpecification {
-  def projectName : String
-  def tagName: Option[String] = None
-}
-
-trait BuildProvider  {
-    def mode : String
-    def build(values: Map[String, String])
-    def query() : Option[BuildResult]
-    def cancel()
-}
-
-case class BuildLogEntry(timestamp: Timestamp, message: String)
-
-trait BuildResult {
-    def success: Boolean
-    def results = Map[String, String]()
-    def logSummary: Seq[BuildLogEntry] = Seq()
-    def log : Option[java.io.BufferedReader] = None
-}
-
-object BuildCommons {
-  val BUILD_LOCATION = "BUILD_LOCATION"
+trait ActionWithLog extends Action {
+  final val logger = LoggerWrapper.logger()
+  def log(message: String, timestamp: Timestamp = new Timestamp(System.currentTimeMillis())) {
+    logger.writeActionLog(uuid, message, timestamp)
+  }
 }

@@ -19,7 +19,8 @@
  *
  *   Project:     Genesis
  *   Description: Continuous Delivery Platform
- */package com.griddynamics.genesis.util
+ */
+package com.griddynamics.genesis.util
 
 object StringUtils {
   def splitByCase(str: String) = str.replaceAll(

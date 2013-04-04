@@ -22,12 +22,11 @@
  */
 package com.griddynamics.genesis.logging
 
-import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.service.StoreService
 import akka.actor._
 import java.sql.Timestamp
 
-class LoggerActor(val service: StoreService) extends Actor with Logging {
+class LoggerActor(val service: StoreService) extends Actor {
   override def receive = {
     case Log(id, message, timestamp) => {
       service.writeLog(id, message, timestamp)
@@ -60,7 +59,7 @@ class LoggerWrapper(logger: ActorRef) extends java.io.Serializable {
   }
 }
 
-object LoggerWrapper extends Logging {
+object LoggerWrapper {
   private var instance: LoggerWrapper = _
   private val ACTOR_NAME = "LoggerActor"
 

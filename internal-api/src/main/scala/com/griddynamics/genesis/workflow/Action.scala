@@ -24,8 +24,6 @@ package com.griddynamics.genesis.workflow
 
 import java.util
 import com.griddynamics.genesis.model.ActionTrackingStatus
-import com.griddynamics.genesis.logging.LoggerWrapper
-import java.sql.Timestamp
 import com.griddynamics.genesis.util.StringUtils
 
 /* Marker trait for any particular action */
@@ -35,12 +33,6 @@ trait Action {
   final val uuid = util.UUID.randomUUID().toString
 }
 
-trait ActionWithLog extends Action {
-  final val logger = LoggerWrapper.logger()
-  def log(message: String, timestamp: Timestamp = new Timestamp(System.currentTimeMillis())) {
-    logger.writeActionLog(uuid, message, timestamp)
-  }
-}
 /* Trait for any action able to be executed on remote agent*/
 trait RemoteAgentExec {
    def tag: String

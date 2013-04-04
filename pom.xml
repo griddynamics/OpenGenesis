@@ -89,6 +89,7 @@
 
     <modules>
         <module>internal-api</module>
+        <module>util</module>
         <module>backend</module>
         <module>frontend</module>
         <module>notification</module>
@@ -272,6 +273,11 @@
                 <artifactId>agent-commons</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.griddynamics.genesis</groupId>
+                <artifactId>util</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 	          <dependency>
                 <artifactId>genesis-shell</artifactId>
                 <groupId>com.griddynamics.genesis</groupId>
@@ -394,6 +400,12 @@
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-expression</artifactId>
+                <version>${org.springframework.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context-support</artifactId>
                 <version>${org.springframework.version}</version>
             </dependency>
 

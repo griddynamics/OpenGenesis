@@ -22,11 +22,9 @@
  */
 package com.griddynamics.genesis.model
 
-import org.apache.commons.codec.binary.Base64.{encodeBase64String, decodeBase64}
 import org.squeryl.annotations.Transient
 import org.squeryl.KeyedEntity
 import org.squeryl.dsl.CompositeKey2
-import java.io.{ByteArrayInputStream, ObjectInputStream, ObjectOutputStream, ByteArrayOutputStream}
 import com.thoughtworks.xstream.XStream
 
 case class EntityAttr[T](name: String)
@@ -141,17 +139,5 @@ object AttrsSerialization {
   def toXML(v: Any): String = xStream.toXML(v)
 
   def fromXML[T](xml: String) : T = xStream.fromXML(xml).asInstanceOf[T]
-
-  def marshal[T](v : T): String = {
-    val baos: ByteArrayOutputStream = new ByteArrayOutputStream()
-    val stream = new ObjectOutputStream(baos)
-    stream.writeObject(v)
-    encodeBase64String(baos.toByteArray)
-  }
-
-  def unmarshal[T](bytes: String) : T = {
-    val buffer: Array[Byte] = decodeBase64(bytes)
-    new ObjectInputStream(new ByteArrayInputStream(buffer)).readObject().asInstanceOf[T]
-  }
 
 }

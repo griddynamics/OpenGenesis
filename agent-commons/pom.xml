@@ -120,6 +120,10 @@
 
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>com.griddynamics.genesis</groupId>
+            <artifactId>util</artifactId>
+        </dependency>
      </dependencies>
 
 </project>

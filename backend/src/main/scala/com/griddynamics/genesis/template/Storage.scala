@@ -27,7 +27,7 @@ class FilesystemStorage(val path: String, val wildcard: String) extends Storage[
     if (!topDir.exists || !topDir.isDirectory)
       throw new IllegalArgumentException("Given directory doesn't exist (%s)".format(topDir.getPath))
     topDir.listFiles(new FilenameFilter {
-      def accept(dir: File, name: String) = FilenameUtils.wildcardMatch(name, wildcard, TemplateRepository.wildCardIOCase)
+      def accept(dir: File, name: String) = FilenameUtils.wildcardMatch(name, wildcard, TemplateRepo.wildCardIOCase)
     })
   }
 

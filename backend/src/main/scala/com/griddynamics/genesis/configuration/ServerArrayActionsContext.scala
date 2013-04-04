@@ -26,7 +26,7 @@ import org.springframework.context.annotation.{Bean, Configuration}
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.servers._
 import com.griddynamics.genesis.service.{ServersService, ServersLoanService}
-import com.griddynamics.genesis.plugin.{StepDefinition}
+import com.griddynamics.genesis.plugin.StepDefinition
 
 @Configuration
 class ServerArrayActionsContext {

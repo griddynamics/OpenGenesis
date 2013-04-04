@@ -20,32 +20,16 @@
  *   Project:     Genesis
  *   Description:  Continuous Delivery Platform
  */
+package com.griddynamics.genesis.configuration
 
-package com.griddynamics.genesis.build
+import org.springframework.context.annotation.{Bean, Configuration}
+import net.sf.ehcache.CacheManager
+import com.griddynamics.genesis.cache.EhCacheManager
 
-import java.sql.Timestamp
 
-trait BuildSpecification {
-  def projectName : String
-  def tagName: Option[String] = None
-}
-
-trait BuildProvider  {
-    def mode : String
-    def build(values: Map[String, String])
-    def query() : Option[BuildResult]
-    def cancel()
-}
-
-case class BuildLogEntry(timestamp: Timestamp, message: String)
-
-trait BuildResult {
-    def success: Boolean
-    def results = Map[String, String]()
-    def logSummary: Seq[BuildLogEntry] = Seq()
-    def log : Option[java.io.BufferedReader] = None
-}
-
-object BuildCommons {
-  val BUILD_LOCATION = "BUILD_LOCATION"
+@Configuration
+class CacheContextImpl {
+  @Bean def cacheManager() = {
+    new EhCacheManager(new CacheManager())
+  }
 }

@@ -17,19 +17,20 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Project:     Genesis
- * Description:  Continuous Delivery Platform
+ *   Project:     Genesis
+ *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.configuration
+package com.griddynamics.genesis.build
 
-import org.springframework.context.annotation.{Bean, Configuration}
-import net.sf.ehcache.CacheManager
-import com.griddynamics.genesis.cache.EhCacheManager
+case class NullBuildProvider() extends BuildProvider {
+  val mode = "null"
 
+  def build(values: Map[String, String]) {}
 
-@Configuration
-class CacheContextImpl {
-  @Bean def cacheManager() = {
-    new EhCacheManager(new CacheManager())
-  }
+  def query() = Some(new BuildResult {
+    def success = false
+  })
+  def cancel() {}
 }
+
+

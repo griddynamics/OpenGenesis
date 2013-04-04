@@ -21,31 +21,29 @@
  *   Description:  Continuous Delivery Platform
  */
 
-package com.griddynamics.genesis.build
+package com.griddynamics.genesis.plugin
 
-import java.sql.Timestamp
+import com.griddynamics.genesis.workflow.Step
+import com.griddynamics.genesis.util.Logging
 
-trait BuildSpecification {
-  def projectName : String
-  def tagName: Option[String] = None
-}
+class CompositeStepCoordinatorFactory(factories: Array[PartialStepCoordinatorFactory])
+    extends StepCoordinatorFactory with Logging {
 
-trait BuildProvider  {
-    def mode : String
-    def build(values: Map[String, String])
-    def query() : Option[BuildResult]
-    def cancel()
-}
-
-case class BuildLogEntry(timestamp: Timestamp, message: String)
-
-trait BuildResult {
-    def success: Boolean
-    def results = Map[String, String]()
-    def logSummary: Seq[BuildLogEntry] = Seq()
-    def log : Option[java.io.BufferedReader] = None
-}
-
-object BuildCommons {
-  val BUILD_LOCATION = "BUILD_LOCATION"
+    def apply(step: Step, context: StepExecutionContext) = {
+        factories.find(_.isDefinedAt(step)) match {
+            case Some(factory) => try {
+                factory.apply(step, context)
+            } catch {
+                case e: Throwable => {
+                    log.error(e, "Failed to create step coordinator for %s".format(step))
+                    throw new RuntimeException("Failed to start step %s due to error: %s".format(step, e.getCause match {
+                        case null => e.getMessage
+                        case _ => e.getCause.getMessage
+                    }), e)
+                }
+            }
+            case None => throw new RuntimeException("Failed to find coordinator for '%s'".
+                format(step))
+        }
+    }
 }

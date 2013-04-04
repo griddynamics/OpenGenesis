@@ -21,31 +21,38 @@
  *   Description:  Continuous Delivery Platform
  */
 
-package com.griddynamics.genesis.build
+package com.griddynamics.genesis.template
 
-import java.sql.Timestamp
+import org.apache.commons.io.IOCase
+import org.bouncycastle.crypto.digests.SHA1Digest
+import org.bouncycastle.util.encoders.Base64
 
-trait BuildSpecification {
-  def projectName : String
-  def tagName: Option[String] = None
-}
+object TemplateRepo {
+    val wildCardIOCase = IOCase.SENSITIVE
 
-trait BuildProvider  {
-    def mode : String
-    def build(values: Map[String, String])
-    def query() : Option[BuildResult]
-    def cancel()
-}
+    def revisionId(sources : Map[VersionedTemplate, String]) = {
+        val digest = new SHA1Digest()
 
-case class BuildLogEntry(timestamp: Timestamp, message: String)
+        for (hash <- sources.keys.map(v => "%s#%s".format(v.name, v.version))) {
+            val bytes = hash.getBytes
+            digest.update(bytes, 0, bytes.length)
+        }
 
-trait BuildResult {
-    def success: Boolean
-    def results = Map[String, String]()
-    def logSummary: Seq[BuildLogEntry] = Seq()
-    def log : Option[java.io.BufferedReader] = None
-}
+        val result : Array[Byte] = Array.ofDim(digest.getDigestSize)
+        digest.doFinal(result, 0)
 
-object BuildCommons {
-  val BUILD_LOCATION = "BUILD_LOCATION"
+        new String(Base64.encode(result), "ASCII")
+    }
+
+    def sourcePair(source : String) = {
+        val content = source.getBytes
+
+        val digest = new SHA1Digest()
+        digest.update(content, 0, content.length)
+
+        val result = Array.ofDim[Byte](digest.getDigestSize)
+        digest.doFinal(result, 0)
+
+        (new String(Base64.encode(result), "ASCII"), source)
+    }
 }
