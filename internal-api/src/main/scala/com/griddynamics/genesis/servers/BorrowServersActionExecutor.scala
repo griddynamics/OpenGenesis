@@ -31,6 +31,8 @@ import com.griddynamics.genesis.util.Describer
 
 class BorrowServersExecutor(serversService: ServersService,loanService: ServersLoanService) extends TrivialStepExecutor[BorrowServersStep, StepResult] {
 
+  val stepType = classOf[BorrowServersStep]
+
   def execute(request: BorrowServersStep, context: StepExecutionContext) = {
     val serverArray = {
       val opt = serversService.findArrayByName(context.env.projectId, request.serverArray)
