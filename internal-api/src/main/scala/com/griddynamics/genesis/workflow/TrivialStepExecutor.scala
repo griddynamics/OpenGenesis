@@ -25,6 +25,7 @@ package com.griddynamics.genesis.workflow
 import com.griddynamics.genesis.plugin.StepExecutionContext
 
 trait TrivialStepExecutor[Req <: Step, Resp <: StepResult] {
+  def stepType: Class[_ <: Step]
   def execute(request: Req, context: StepExecutionContext): Resp
 }
 
