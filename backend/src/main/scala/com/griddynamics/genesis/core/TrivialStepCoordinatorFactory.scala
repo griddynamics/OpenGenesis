@@ -28,17 +28,12 @@ import com.griddynamics.genesis.model.ActionTrackingStatus
 
 class TrivialStepCoordinatorFactory(executor: TrivialStepExecutor[_ <: Step, _ <: StepResult]) extends PartialStepCoordinatorFactory {
 
-  val stepType = executor.getClass.getMethods.find { _.getName == "execute"}.
-    flatMap { m => m.getGenericParameterTypes.collect {
-      case t: Class[_] if classOf[Step].isAssignableFrom(t) => t
-    }.headOption
-  }
-
   def apply(step: Step, context: StepExecutionContext): StepCoordinator = {
     new InternalSingleStepCoordinator(executor.asInstanceOf[TrivialStepExecutor[Step, StepResult]], step, context)
   }
 
-  def isDefinedAt(step: Step) = stepType.map(_.isAssignableFrom(step.getClass)).getOrElse(false)
+  def isDefinedAt(step: Step) = executor.stepType.isAssignableFrom(step.getClass)
+
 }
 
 

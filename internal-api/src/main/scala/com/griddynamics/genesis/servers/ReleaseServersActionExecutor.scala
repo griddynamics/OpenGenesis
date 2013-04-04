@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired
 
 class ReleaseServersExecutor(serversLoanService: ServersLoanService) extends TrivialStepExecutor[ReleaseServersStep, StepResult] {
 
+  val stepType = classOf[ReleaseServersStep]
   def execute(request: ReleaseServersStep, context: StepExecutionContext) = {
     val all = context.servers.collect { case bm: BorrowedMachine => bm }
 
