@@ -22,24 +22,10 @@
  */
 package com.griddynamics.genesis.model
 
-import org.apache.commons.codec.binary.Base64.{encodeBase64String, decodeBase64}
 import org.squeryl.annotations.Transient
-import org.squeryl.KeyedEntity
-import org.squeryl.dsl.CompositeKey2
-import java.io.{ByteArrayInputStream, ObjectInputStream, ObjectOutputStream, ByteArrayOutputStream}
 import com.thoughtworks.xstream.XStream
 
 case class EntityAttr[T](name: String)
-
-class SquerylEntityAttr(val entityId: GenesisEntity.Id,
-                        val name: String,
-                        val value: String)
-    extends KeyedEntity[CompositeKey2[GenesisEntity.Id, String]] {
-
-    def this() = this (0, "", "")
-
-    override def id = CompositeKey2(entityId, name)
-}
 
 trait EntityWithAttrs extends GenesisEntity {
 
@@ -141,17 +127,5 @@ object AttrsSerialization {
   def toXML(v: Any): String = xStream.toXML(v)
 
   def fromXML[T](xml: String) : T = xStream.fromXML(xml).asInstanceOf[T]
-
-  def marshal[T](v : T): String = {
-    val baos: ByteArrayOutputStream = new ByteArrayOutputStream()
-    val stream = new ObjectOutputStream(baos)
-    stream.writeObject(v)
-    encodeBase64String(baos.toByteArray)
-  }
-
-  def unmarshal[T](bytes: String) : T = {
-    val buffer: Array[Byte] = decodeBase64(bytes)
-    new ObjectInputStream(new ByteArrayInputStream(buffer)).readObject().asInstanceOf[T]
-  }
 
 }

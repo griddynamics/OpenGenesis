@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -20,20 +20,21 @@
  *   Project:     Genesis
  *   Description:  Continuous Delivery Platform
  */
+
 package com.griddynamics.genesis.build
 
 import java.sql.Timestamp
+
+trait BuildSpecification {
+  def projectName : String
+  def tagName: Option[String] = None
+}
 
 trait BuildProvider  {
     def mode : String
     def build(values: Map[String, String])
     def query() : Option[BuildResult]
     def cancel()
-}
-
-trait BuildSpecification {
-  def projectName : String
-  def tagName: Option[String] = None
 }
 
 case class BuildLogEntry(timestamp: Timestamp, message: String)
@@ -45,18 +46,6 @@ trait BuildResult {
     def log : Option[java.io.BufferedReader] = None
 }
 
-case class NullBuildProvider() extends BuildProvider {
-  val mode = "null"
-
-  def build(values: Map[String, String]) {}
-
-  def query() = Some(new BuildResult {
-    def success = false
-  })
-  def cancel() {}
-}
-
 object BuildCommons {
   val BUILD_LOCATION = "BUILD_LOCATION"
 }
-

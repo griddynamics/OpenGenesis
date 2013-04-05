@@ -26,7 +26,6 @@ import com.griddynamics.genesis.util.Logging
 import java.util.concurrent.{TimeUnit, Future, Callable, ExecutorService}
 import java.util.concurrent.atomic.AtomicReference
 import com.griddynamics.genesis.workflow.signal.Success
-import com.griddynamics.genesis.logging.LoggerWrapper
 
 /* Base trait for classes for particular actions executors */
 trait ActionExecutor {
@@ -127,38 +126,6 @@ trait AsyncTimeoutAwareActionExecutor extends AsyncActionExecutor {
 
 }
 
-/* Trait to mixin in AsyncTimeoutAwareActionExecutor
- * implementations to support timeout behaviour
- */
-trait DurationLimitedActionExecutor extends AsyncTimeoutAwareActionExecutor with Logging {
-    var startTimeNanos : Long = _
-
-    private def isTimedOut = {
-        val durationNanos = java.lang.System.nanoTime() - startTimeNanos
-        val timeoutNanos = timeoutMillis * 1000000
-        durationNanos > timeoutNanos
-    }
-
-    abstract override def startAsync() {
-        startTimeNanos = java.lang.System.nanoTime()
-        super.startAsync()
-    }
-
-    def timeoutDescription = "WARNING: Action '%s' timed out. Time out was set to [%d seconds]".format(action.desc, TimeUnit.MILLISECONDS.toSeconds(timeoutMillis).toInt)
-
-    abstract override def getResult() = {
-        (super.getResult(), isTimedOut) match {
-            case (Some(ar), _) => Some(ar)
-            case (None, false) => None
-            case (None, true) => {
-                LoggerWrapper.writeActionLog(action.uuid, timeoutDescription)
-                log.debug("action '%s' is timed out, limit: %dmsec", action, timeoutMillis)
-                Some(getResultOnTimeout)
-            }
-        }
-    }
-}
-
 trait ActionToExecutor extends PartialFunction[Action, ActionExecutor]
 
 object ActionToExecutor {
@@ -167,6 +134,3 @@ object ActionToExecutor {
     def isDefinedAt(x: Action) = pf.isDefinedAt(x)
   }
 }
-
-
-case class RemoteTask(action: Action, supervisor: akka.actor.ActorRef, logger: LoggerWrapper)

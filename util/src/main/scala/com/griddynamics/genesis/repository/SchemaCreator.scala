@@ -27,7 +27,7 @@ import org.squeryl.Schema
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.transaction.{TransactionStatus, PlatformTransactionManager}
 import org.springframework.jdbc.datasource.DataSourceUtils
-import org.springframework.transaction.support.{TransactionTemplate, TransactionCallback}
+import org.springframework.transaction.support.{TransactionCallback, TransactionTemplate}
 import javax.sql.DataSource
 import com.griddynamics.genesis.util.Logging
 

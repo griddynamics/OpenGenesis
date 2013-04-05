@@ -52,9 +52,9 @@ object FlowElement {
     }
 }
 
-case class TestAction(name: String) extends Action
+case class TestAction(name: String) extends ActionWithDesc
 
-case class TestResult(action: TestAction) extends ActionResult
+case class TestResult(action: TestAction) extends ActionResultWithDesc
 
 case class TestStep() extends Step
 

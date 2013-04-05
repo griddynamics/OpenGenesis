@@ -25,7 +25,7 @@ package com.griddynamics.genesis.configuration
 import org.springframework.context.annotation.{Configuration, Bean}
 import javax.sql.DataSource
 import org.squeryl.{Session, SessionFactory}
-import com.griddynamics.genesis.model.{GenesisVersion, GenesisSchema}
+import com.griddynamics.genesis.model.{GenesisVersionModel, GenesisVersion, GenesisSchema}
 import org.squeryl.internals.DatabaseAdapter
 import org.springframework.jdbc.datasource.{DataSourceUtils, DataSourceTransactionManager}
 import org.squeryl.adapters.{PostgreSqlAdapter, MySQLAdapter, H2Adapter}
@@ -86,7 +86,7 @@ class GenesisSchemaCreator(override val dataSource : DataSource, override val tr
     override def afterPropertiesSet() {
         val setNeeded = drop || !isSchemaExists
         super.afterPropertiesSet
-        if (setNeeded) GenesisVersion.fromBuildProps(buildInfoProps).foreach(repo.set(_))
+        if (setNeeded) GenesisVersionModel.fromBuildProps(buildInfoProps).foreach(repo.set(_))
     }
 }
 
@@ -103,7 +103,7 @@ class GenesisSchemaValidator(val repo: GenesisVersionRepository, val buildInfoPr
     } catch {
       case e: Exception => log.error(e, "Couldn't retrieve schema version"); None
     }
-    val genesisVersion = GenesisVersion.fromBuildProps(buildInfoProps)
+    val genesisVersion = GenesisVersionModel.fromBuildProps(buildInfoProps)
     if (genesisVersion.isEmpty)
         throw new RuntimeException("Invalid application or DB schema version: No genesis version found at build info properties")
     if (schemaVersion.isEmpty)

@@ -37,17 +37,21 @@ class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: Age
       health.checkStatus(agents).map { case (agent, (status, jobs)) => agent.copy(status = Some(status), stats = jobs) }
     }
 
+    @Transactional(readOnly = true)
     def list: Seq[RemoteAgent] = withStatus(repository.list)
 
-    def get(key: Int): Option[RemoteAgent] = repository.get(key).map(
+  @Transactional(readOnly = true)
+     def get(key: Int): Option[RemoteAgent] = repository.get(key).map(
       agent => {
         val s = health.checkStatus(agent)
         agent.copy(status = Some(s._1), stats = s._2)
       }
     )
 
+    @Transactional(readOnly = true)
     def findByTags(tags: Seq[String]): Seq[RemoteAgent] = withStatus(repository.findByTags(tags))
 
+    @Transactional(readOnly = false)
     override def update(a: RemoteAgent): ExtendedResult[RemoteAgent] = {
       repository.get(a.id.get).map(health.stopTracking(_))
       val updated = repository.update(a)

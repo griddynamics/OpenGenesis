@@ -156,7 +156,7 @@ class WildcardTreeFilter(wildcard : String) extends TreeFilter {
 
     def include(walker: TreeWalk) = {
         walker.isSubtree || FilenameUtils.wildcardMatch(walker.getPathString, wildcard,
-                                                        TemplateRepository.wildCardIOCase)
+                                                        TemplateRepo.wildCardIOCase)
     }
 
     override def clone() = {

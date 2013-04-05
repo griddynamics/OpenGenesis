@@ -34,7 +34,6 @@ trait StepResult {
 package step {
 
 import com.griddynamics.genesis.plugin.{FallibleResult}
-import com.griddynamics.genesis.workflow.action.ExecutorThrowable
 
 case class CoordinatorLoop private[workflow](step: Step) extends StepResult
 

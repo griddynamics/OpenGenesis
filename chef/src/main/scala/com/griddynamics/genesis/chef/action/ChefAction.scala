@@ -25,12 +25,11 @@ package com.griddynamics.genesis.chef
 package action
 
 import net.liftweb.json.JsonAST.JObject
-import com.griddynamics.genesis.workflow.Action
+import com.griddynamics.genesis.workflow.{ActionWithDesc, ActionResultWithDesc, Action, ActionResult}
 import com.griddynamics.genesis.exec.ExecDetails
-import com.griddynamics.genesis.workflow.ActionResult
 import com.griddynamics.genesis.model.{EnvResource, Environment}
 
-sealed trait ChefAction extends Action
+sealed trait ChefAction extends ActionWithDesc
 
 case class InitChefNode(env: Environment, server: EnvResource) extends ChefAction
 
@@ -67,7 +66,7 @@ case class DestroyChefEnv(env: Environment) extends ChefAction
 
 /* ------------------------------------- Results ------------------------------------- */
 
-sealed trait ChefResult extends ActionResult
+sealed trait ChefResult extends ActionResultWithDesc
 
 case class ChefInitSuccess(action: InitChefNode, execDetails: ExecDetails) extends ChefResult
 

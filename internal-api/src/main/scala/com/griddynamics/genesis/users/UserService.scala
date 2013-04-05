@@ -23,7 +23,6 @@
 package com.griddynamics.genesis.users
 
 import com.griddynamics.genesis.common.CRUDService
-import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.api.User
 import org.springframework.beans.factory.annotation.Value
 
@@ -31,25 +30,18 @@ trait UserService extends CRUDService[User, String] {
 
   @Value("genesis.system.admin.email") var adminEmail: String =_
 
-  @Transactional(readOnly = true)
   override def get(key: String) = findByUsername(key)
 
-  @Transactional(readOnly = true)
   def getWithCredentials(username: String): Option[User]
 
-  @Transactional(readOnly = true)
   def findByUsername(username: String): Option[User]
 
-  @Transactional(readOnly = true)
   def findByUsernames(userNames: Iterable[String]): Set[User]
 
-  @Transactional(readOnly = true)
   def search(usernameLike: String): List[User]
 
-  @Transactional(readOnly = true)
   def doesUserExist(userName: String): Boolean
 
-  @Transactional(readOnly = true)
   def doUsersExist(userNames: Iterable[String]): Boolean
 
   def isReadOnly = false

@@ -43,7 +43,7 @@ class ClassPathTemplateRepository(classLoader : ClassLoader,
 object ClassPathTemplateRepository {
     def sourcePair(file : FileObject, charset : String) = {
         val content = file.getContent.getInputStream
-        val pair = TemplateRepository.sourcePair(InputUtil.streamAsString(content, charset))
+        val pair = TemplateRepo.sourcePair(InputUtil.streamAsString(content, charset))
         (VersionedTemplate(file.getName.getBaseName, pair._1), pair._2)
     }
 }
@@ -53,7 +53,7 @@ class WildcardFileSelector(wildcard : String) extends FileSelector {
 
     def includeFile(fileInfo: FileSelectInfo) = {
         FilenameUtils.wildcardMatch(fileInfo.getFile.getName.getBaseName, wildcard,
-                                    TemplateRepository.wildCardIOCase) &&
+                                    TemplateRepo.wildCardIOCase) &&
         fileInfo.getFile.getType == FileType.FILE
     }
 }

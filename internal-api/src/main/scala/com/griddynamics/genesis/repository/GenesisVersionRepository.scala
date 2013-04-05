@@ -22,9 +22,9 @@
  */
 package com.griddynamics.genesis.repository
 
-import com.griddynamics.genesis.model.GenesisVersion
+import com.griddynamics.genesis.model.GenesisVersionModel
 
 trait GenesisVersionRepository {
-  def get: GenesisVersion
-  def set(version: GenesisVersion)
+  def get: GenesisVersionModel
+  def set(version: GenesisVersionModel)
 }
