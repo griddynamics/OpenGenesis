@@ -374,7 +374,13 @@ table th{
 
 #prj-list td.name {
     word-wrap: break-word;
-    width: 24%;
+    width: 30%;
+    max-width: 80px;
+}
+
+#prj-list td.human-name {
+    word-wrap: break-word;
+    width: 18%;
     max-width: 80px;
 }
 
