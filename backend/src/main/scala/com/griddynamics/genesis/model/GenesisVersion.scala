@@ -21,14 +21,9 @@
  *   Description:  Continuous Delivery Platform
  */
 
-package com.griddynamics.genesis.workflow
+package com.griddynamics.genesis.model
 
-import java.sql.Timestamp
-import com.griddynamics.genesis.logging.LoggerWrapper
+import org.squeryl.annotations._
 
-trait ActionWithLog extends ActionWithDesc {
-  final val logger = LoggerWrapper.logger()
-  def log(message: String, timestamp: Timestamp = new Timestamp(System.currentTimeMillis())) {
-    logger.writeActionLog(uuid, message, timestamp)
-  }
-}
+case class GenesisVersion(@Column("version_id") versionId: String)
+

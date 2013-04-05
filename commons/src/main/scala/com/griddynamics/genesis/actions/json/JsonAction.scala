@@ -22,11 +22,11 @@
  */
 package com.griddynamics.genesis.actions.json
 
-import com.griddynamics.genesis.workflow.{ActionResult, Action}
+import com.griddynamics.genesis.workflow.{ActionWithDesc, ActionResultWithDesc, ActionResult, Action}
 import com.griddynamics.genesis.model.{EnvResource, Environment}
 import net.liftweb.json.JsonAST.JObject
 
-trait JsonAction extends Action
+trait JsonAction extends ActionWithDesc
 
 case class PreprocessingJsonAction(env: Environment, server: EnvResource,
                                    patternSubst: Map[String, String],
@@ -35,4 +35,4 @@ case class PreprocessingJsonAction(env: Environment, server: EnvResource,
                                    templatesUrl: Option[String],
                                    templateName: String) extends JsonAction
 
-case class PreprocessingSuccess(action: PreprocessingJsonAction, server: EnvResource, json: String) extends ActionResult
+case class PreprocessingSuccess(action: PreprocessingJsonAction, server: EnvResource, json: String) extends ActionResultWithDesc

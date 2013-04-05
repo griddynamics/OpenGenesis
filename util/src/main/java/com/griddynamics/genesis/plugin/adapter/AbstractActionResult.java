@@ -20,15 +20,46 @@
  *   Project:     Genesis
  *   Description:  Continuous Delivery Platform
  */
+package com.griddynamics.genesis.plugin.adapter;
 
-package com.griddynamics.genesis.workflow
+import com.griddynamics.genesis.workflow.*;
+import scala.Enumeration;
 
-import java.sql.Timestamp
-import com.griddynamics.genesis.logging.LoggerWrapper
+public abstract class AbstractActionResult implements ActionResultWithDesc {
 
-trait ActionWithLog extends ActionWithDesc {
-  final val logger = LoggerWrapper.logger()
-  def log(message: String, timestamp: Timestamp = new Timestamp(System.currentTimeMillis())) {
-    logger.writeActionLog(uuid, message, timestamp)
-  }
+    private final Action action;
+
+    @Override
+    public Enumeration.Value outcome() {
+        return ActionResult$class.outcome(this);
+    }
+
+    @Override
+    public String desc() {
+        return ActionResultWithDesc$class.desc(this);
+    }
+
+    /**
+     * Simply delegates to scala-generated "implementation" ActionResult trait.
+     */
+    public void $init$() {
+        ActionResult$class.$init$(this);
+    }
+
+    public AbstractActionResult(Action action) {
+        this.action = action;
+    }
+
+    /**
+     * Scala-style getter.
+     *
+     * @return action
+     */
+    public Action action() {
+        return action;
+    }
+
+    public Action getAction() {
+        return action;
+    }
 }

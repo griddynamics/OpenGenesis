@@ -44,6 +44,7 @@ class RemoteAgentRepositoryImpl extends AbstractGenericRepository[model.RemoteAg
     m
   }
 
+  @Transactional(readOnly = true)
   def findByTags(tags: Seq[String]): Seq[RemoteAgent] = from(table)(agent => {
     val tags_has = { s: String => lower(agent.tags) like ("%" + s.toLowerCase + "%") }
     val alwaysTrue: BinaryOperatorNodeLogicalBoolean = 1 === 1
@@ -63,6 +64,7 @@ class RemoteAgentRepositoryImpl extends AbstractGenericRepository[model.RemoteAg
     agent
   }
 
+  @Transactional(readOnly = false)
   def touch(key: Int) = {
     table.update(
       a => where(a.id === key)

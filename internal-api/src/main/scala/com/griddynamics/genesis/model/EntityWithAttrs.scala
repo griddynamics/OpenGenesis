@@ -23,21 +23,9 @@
 package com.griddynamics.genesis.model
 
 import org.squeryl.annotations.Transient
-import org.squeryl.KeyedEntity
-import org.squeryl.dsl.CompositeKey2
 import com.thoughtworks.xstream.XStream
 
 case class EntityAttr[T](name: String)
-
-class SquerylEntityAttr(val entityId: GenesisEntity.Id,
-                        val name: String,
-                        val value: String)
-    extends KeyedEntity[CompositeKey2[GenesisEntity.Id, String]] {
-
-    def this() = this (0, "", "")
-
-    override def id = CompositeKey2(entityId, name)
-}
 
 trait EntityWithAttrs extends GenesisEntity {
 

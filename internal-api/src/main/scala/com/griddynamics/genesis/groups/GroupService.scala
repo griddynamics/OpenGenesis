@@ -24,34 +24,20 @@
 package com.griddynamics.genesis.groups
 
 import com.griddynamics.genesis.common.CRUDService
-import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.api.{ExtendedResult, User, UserGroup}
 
-
 trait GroupService extends CRUDService[UserGroup, String]{
-    @Transactional(readOnly = true)
     override def get(name: String) = findByName(name)
-    @Transactional(readOnly = true)
     def findByName(name: String) : Option[UserGroup]
-    @Transactional(readOnly = true)
     def findByNames(names: Iterable[String]) : Set[UserGroup]
-    @Transactional(readOnly = true)
     def users(name: Int) : Seq[User]
-    @Transactional(readOnly = false)
     def addUserToGroup(id: Int, username: String) : ExtendedResult[_]
-    @Transactional(readOnly = false)
     def removeUserFromGroup(id: Int, username: String) : ExtendedResult[_]
-    @Transactional(readOnly = true)
     def get(id: Int) : Option[UserGroup]
-    @Transactional(readOnly = true)
     def getUsersGroups(username: String): Iterable[UserGroup]
-    @Transactional(readOnly = false)
     def setUsersGroups(username: String, groups: Seq[String])
-    @Transactional(readOnly = true)
     def search(nameLike: String): List[UserGroup]
-    @Transactional(readOnly = true)
     def doesGroupExist(groupName: String): Boolean
-    @Transactional(readOnly = true)
     def doGroupsExist(groupNames: Iterable[String]): Boolean
     def isReadOnly = false
 }

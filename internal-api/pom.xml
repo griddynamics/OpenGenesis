@@ -35,11 +35,7 @@
     <name>${project.artifactId}</name>
     <description>Genesis internal API</description>
     <dependencies>
-        <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-        </dependency>
-
+        <!-- TODO: squeryl dependency has to be removed - model classes should not depend on it -->
         <dependency>
             <groupId>org.squeryl</groupId>
             <artifactId>${org.squeryl.id}</artifactId>
@@ -50,17 +46,16 @@
             <artifactId>config</artifactId>
             <version>1.0.0</version>
         </dependency>
-
-        <dependency>
-              <groupId>org.springframework</groupId>
-              <artifactId>spring-tx</artifactId>
-          </dependency>
         <dependency>
             <groupId>com.griddynamics.genesis</groupId>
             <artifactId>api</artifactId>
             <version>${project.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+        <!-- TODO: xstream dependency has to be removed - model classes should not depend on it -->
         <dependency>
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>

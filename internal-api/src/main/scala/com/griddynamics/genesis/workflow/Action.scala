@@ -24,11 +24,10 @@ package com.griddynamics.genesis.workflow
 
 import java.util
 import com.griddynamics.genesis.model.ActionTrackingStatus
-import com.griddynamics.genesis.util.StringUtils
 
 /* Marker trait for any particular action */
 trait Action {
-  def desc = DefaultDescription.toString(this)
+  def desc: String
 
   final val uuid = util.UUID.randomUUID().toString
 }
@@ -42,13 +41,9 @@ trait RemoteAgentExec {
 trait ActionResult {
     def action: Action
 
-    def desc = DefaultDescription.toString(this)
+    def desc: String
 
     def outcome: ActionTrackingStatus.ActionStatus = ActionTrackingStatus.Succeed
-}
-
-object DefaultDescription {
-  def toString(obj: AnyRef) = StringUtils.splitByCase(obj.getClass.getSimpleName)
 }
 
 trait ActionFailed extends ActionResult {
@@ -59,12 +54,4 @@ trait ActionInterrupted extends ActionResult {
     override def outcome = ActionTrackingStatus.Interrupted
 }
 
-package action {
-/* Result of action which executor has thrown an exception */
-case class ExecutorThrowable private[workflow](action: Action, throwable: Throwable) extends ActionResult with ActionFailed
 
-/* Result of action which wasn't finished because of executor interrupt */
-case class ExecutorInterrupt private[workflow](action: Action, signal: Signal) extends ActionResult with ActionInterrupted
-  
-case class DelayedExecutorInterrupt private[workflow](action: Action, result : ActionResult, signal : Signal) extends ActionResult with ActionInterrupted
-}

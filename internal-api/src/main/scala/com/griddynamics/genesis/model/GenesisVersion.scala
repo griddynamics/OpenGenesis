@@ -22,12 +22,11 @@
  */
 package com.griddynamics.genesis.model
 
-import org.squeryl.annotations.Column
 import collection.JavaConversions
 
-case class GenesisVersion(@Column("version_id") versionId: String)
+case class GenesisVersionModel(versionId: String)
 
-object GenesisVersion {
+object GenesisVersionModel {
     val VersionRegex = """(\d+)\.(\d+)\.(\d+).*""".r
     val VersionBuildProp = "genesis.build.opengenesis.version"
 
@@ -35,7 +34,7 @@ object GenesisVersion {
         .flatMap(fromString(_))
 
     private def fromString(s: String) = s match {
-        case VersionRegex(maj, min, bld) => Option(new GenesisVersion(Seq(maj, min, bld).mkString(".")))
+        case VersionRegex(maj, min, bld) => Option(GenesisVersionModel(Seq(maj, min, bld).mkString(".")))
         case _ => None
     }
 }

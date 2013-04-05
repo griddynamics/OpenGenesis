@@ -26,16 +26,16 @@ import com.griddynamics.genesis.model.{EnvResource, Environment}
 import com.griddynamics.genesis.exec.ExecDetails
 import net.liftweb.json.JsonAST.JObject
 import com.griddynamics.genesis.exec.action.{ExecResult, RunExec}
-import com.griddynamics.genesis.workflow.{Action, ActionResult}
+import com.griddynamics.genesis.workflow.{ActionWithDesc, ActionResultWithDesc, Action, ActionResult}
 import com.griddynamics.genesis.model
 
-sealed trait ChefSoloAction extends Action
+sealed trait ChefSoloAction extends ActionWithDesc
 
 case class AddKeyAction(env: Environment, server: EnvResource) extends ChefSoloAction
 
 case class PrepareNodeAction(env: Environment, server: EnvResource, json: String, label: String, cookbooksPath: String) extends ChefSoloAction
 
-sealed trait ChefSoloActionResult extends ActionResult
+sealed trait ChefSoloActionResult extends ActionResultWithDesc
 
 case class NodePrepared(action: PrepareNodeAction, server: EnvResource, execDetails: ExecDetails) extends ChefSoloActionResult
 

@@ -20,44 +20,30 @@
  *   Project:     Genesis
  *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.plugin.adapter;
 
-import com.griddynamics.genesis.workflow.Action;
-import com.griddynamics.genesis.workflow.Action$class;
+package com.griddynamics.genesis.workflow
 
-import java.util.UUID;
+import com.griddynamics.genesis.util.StringUtils
 
-public abstract class AbstractAction implements Action {
+trait ActionWithDesc extends Action {
+  def desc = DefaultDescription.toString(this)
+}
 
-    private String uuid;
+trait ActionResultWithDesc extends ActionResult {
+   def desc = DefaultDescription.toString(this)
+}
 
-    public AbstractAction() {
-        uuid = UUID.randomUUID().toString();
-    }
+object DefaultDescription {
+  def toString(obj: AnyRef) = StringUtils.splitByCase(obj.getClass.getSimpleName)
+}
 
-    /**
-     * Simply delegates to scala-generated "implementation" Action trait.
-     */
-    public void $init$() {
-        Action$class.$init$(this);
-    }
+package action {
 
-    @Override
-    public String desc() {
-        return Action$class.desc(this);
-    }
+/* Result of action which executor has thrown an exception */
+case class ExecutorThrowable private[workflow](action: Action, throwable: Throwable) extends ActionResultWithDesc with ActionFailed
 
-    @Override
-    public final String uuid() {
-        return uuid;
-    }
+/* Result of action which wasn't finished because of executor interrupt */
+case class ExecutorInterrupt private[workflow](action: Action, signal: Signal) extends ActionResultWithDesc with ActionInterrupted
 
-    @Override
-    public final void com$griddynamics$genesis$workflow$Action$_setter_$uuid_$eq(String uuid) {
-        this.uuid = uuid;
-    }
-
-    public String getUUID() {
-        return uuid;
-    }
+case class DelayedExecutorInterrupt private[workflow](action: Action, result : ActionResult, signal : Signal) extends ActionResultWithDesc with ActionInterrupted
 }

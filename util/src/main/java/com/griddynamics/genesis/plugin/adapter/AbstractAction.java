@@ -23,45 +23,43 @@
 package com.griddynamics.genesis.plugin.adapter;
 
 import com.griddynamics.genesis.workflow.Action;
-import com.griddynamics.genesis.workflow.ActionResult;
-import com.griddynamics.genesis.workflow.ActionResult$class;
-import scala.Enumeration;
+import com.griddynamics.genesis.workflow.Action$class;
+import com.griddynamics.genesis.workflow.ActionWithDesc;
+import com.griddynamics.genesis.workflow.ActionWithDesc$class;
 
-public abstract class AbstractActionResult implements ActionResult {
+import java.util.UUID;
 
-    private final Action action;
+public abstract class AbstractAction implements ActionWithDesc {
 
-    @Override
-    public Enumeration.Value outcome() {
-        return ActionResult$class.outcome(this);
+    private String uuid;
+
+    public AbstractAction() {
+        uuid = UUID.randomUUID().toString();
+    }
+
+    /**
+     * Simply delegates to scala-generated "implementation" Action trait.
+     */
+    public void $init$() {
+        Action$class.$init$(this);
     }
 
     @Override
     public String desc() {
-        return ActionResult$class.desc(this);
+        return ActionWithDesc$class.desc(this);
     }
 
-    /**
-     * Simply delegates to scala-generated "implementation" ActionResult trait.
-     */
-    public void $init$() {
-        ActionResult$class.$init$(this);
+    @Override
+    public final String uuid() {
+        return uuid;
     }
 
-    public AbstractActionResult(Action action) {
-        this.action = action;
+    @Override
+    public final void com$griddynamics$genesis$workflow$Action$_setter_$uuid_$eq(String uuid) {
+        this.uuid = uuid;
     }
 
-    /**
-     * Scala-style getter.
-     *
-     * @return action
-     */
-    public Action action() {
-        return action;
-    }
-
-    public Action getAction() {
-        return action;
+    public String getUUID() {
+        return uuid;
     }
 }
