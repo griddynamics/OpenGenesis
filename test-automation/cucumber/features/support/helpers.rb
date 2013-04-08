@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'genesis_client'
+require 'json'
 include Genesis
 module ModelHelpers
   class ConditionTimeout < RuntimeError; end
