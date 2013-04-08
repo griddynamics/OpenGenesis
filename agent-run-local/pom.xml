@@ -44,45 +44,6 @@
         <dependency>
             <groupId>com.griddynamics.genesis</groupId>
             <artifactId>run-local</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.griddynamics.genesis</groupId>
-                    <artifactId>api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.squeryl</groupId>
-                    <artifactId>squeryl_2.9.0</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-webmvc</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-jdbc</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-tx</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>javax.transaction</groupId>
-                    <artifactId>jta</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.jclouds.api</groupId>
-                    <artifactId>nova</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>net.liftweb</groupId>
-                    <artifactId>${net.liftweb.lift-json.id}</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.jcraft</groupId>
-                    <artifactId>jsch</artifactId>
-                </exclusion>
-
-            </exclusions>
         </dependency>
     </dependencies>
 

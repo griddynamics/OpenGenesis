@@ -24,11 +24,14 @@ package com.griddynamics.genesis.exec
 
 package action
 
-import com.griddynamics.genesis.workflow.{ActionFailed, ActionResult, Action}
+import com.griddynamics.genesis.workflow._
 import com.griddynamics.genesis.model
 import model.{Environment, EnvResource}
+import com.griddynamics.genesis.exec.ExecDetails
+import com.griddynamics.genesis.exec.action.InitExecNode
+import com.griddynamics.genesis.exec.action.UploadScripts
 
-sealed trait ExecAction extends Action
+sealed trait ExecAction extends ActionWithDesc
 
 case class InitExecNode(env: Environment, server: EnvResource) extends ExecAction
 
@@ -46,7 +49,7 @@ case class UploadScripts(env:Environment, server: EnvResource, workingDir: Strin
 
 /* ------------------------------------- Results ------------------------------------- */
 
-trait ExecResult extends ActionResult
+trait ExecResult extends ActionResultWithDesc
 
 case class ExecInitSuccess(action: InitExecNode) extends ExecResult
 

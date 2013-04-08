@@ -1,5 +1,5 @@
 /**
- *   Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
+ * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
  *   This library is free software; you can redistribute it and/or modify it under the terms of
@@ -18,15 +18,19 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *   Project:     Genesis
- *   Description: Continuous Delivery Platform
- */package com.griddynamics.genesis.util
+ *   Description:  Continuous Delivery Platform
+ */
+package com.griddynamics.genesis.build
 
-object StringUtils {
-  def splitByCase(str: String) = str.replaceAll(
-    String.format("%s|%s|%s",
-      "(?<=[A-Z])(?=[A-Z][a-z])",
-      "(?<=[^A-Z])(?=[A-Z])",
-      "(?<=[A-Za-z])(?=[^A-Za-z])"
-    ),
-    " ")
+case class NullBuildProvider() extends BuildProvider {
+  val mode = "null"
+
+  def build(values: Map[String, String]) {}
+
+  def query() = Some(new BuildResult {
+    def success = false
+  })
+  def cancel() {}
 }
+
+

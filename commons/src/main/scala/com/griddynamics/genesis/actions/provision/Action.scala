@@ -22,12 +22,17 @@
  */
 package com.griddynamics.genesis.actions.provision
 
-import com.griddynamics.genesis.workflow.{ActionFailed, Action, ActionResult}
+import com.griddynamics.genesis.workflow._
 import com.griddynamics.genesis.model.{Workflow, VirtualMachine, Environment}
 import com.griddynamics.genesis.plugin.GenesisStep
+import com.griddynamics.genesis.actions.provision.DestroyVmAction
+import com.griddynamics.genesis.actions.provision.CheckPortAction
+import com.griddynamics.genesis.plugin.GenesisStep
+import com.griddynamics.genesis.actions.provision.CheckSshPortAction
+import com.griddynamics.genesis.actions.provision.CheckPublicIpAction
 
 
-trait ProvisionAction extends Action
+trait ProvisionAction extends ActionWithDesc
 
 trait SpecificProvisionVmAction extends Action {
   def env : Environment
@@ -48,7 +53,7 @@ case class CheckPortAction(vm: VirtualMachine, port: Int) extends ProvisionActio
 
 case class CheckPublicIpAction(vm: VirtualMachine) extends ProvisionAction
 
-sealed trait ProvisionResult extends ActionResult
+sealed trait ProvisionResult extends ActionResultWithDesc
 
 case class ProvisionCompleted(action: SpecificProvisionVmAction,
                               vm: VirtualMachine) extends ProvisionResult

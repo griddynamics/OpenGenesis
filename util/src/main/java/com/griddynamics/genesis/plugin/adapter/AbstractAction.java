@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
  *   http://www.griddynamics.com
  *
@@ -17,19 +17,49 @@
  *   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Project:     Genesis
- * Description:  Continuous Delivery Platform
+ *   Project:     Genesis
+ *   Description:  Continuous Delivery Platform
  */
-package com.griddynamics.genesis.configuration
+package com.griddynamics.genesis.plugin.adapter;
 
-import org.springframework.context.annotation.{Bean, Configuration}
-import net.sf.ehcache.CacheManager
-import com.griddynamics.genesis.cache.EhCacheManager
+import com.griddynamics.genesis.workflow.Action;
+import com.griddynamics.genesis.workflow.Action$class;
+import com.griddynamics.genesis.workflow.ActionWithDesc;
+import com.griddynamics.genesis.workflow.ActionWithDesc$class;
 
+import java.util.UUID;
 
-@Configuration
-class CacheContextImpl {
-  @Bean def cacheManager() = {
-    new EhCacheManager(new CacheManager())
-  }
+public abstract class AbstractAction implements ActionWithDesc {
+
+    private String uuid;
+
+    public AbstractAction() {
+        uuid = UUID.randomUUID().toString();
+    }
+
+    /**
+     * Simply delegates to scala-generated "implementation" Action trait.
+     */
+    public void $init$() {
+        Action$class.$init$(this);
+    }
+
+    @Override
+    public String desc() {
+        return ActionWithDesc$class.desc(this);
+    }
+
+    @Override
+    public final String uuid() {
+        return uuid;
+    }
+
+    @Override
+    public final void com$griddynamics$genesis$workflow$Action$_setter_$uuid_$eq(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public String getUUID() {
+        return uuid;
+    }
 }

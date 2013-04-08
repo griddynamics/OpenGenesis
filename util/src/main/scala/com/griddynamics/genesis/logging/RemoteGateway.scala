@@ -19,7 +19,8 @@
  *
  *   Project:     Genesis
  *   Description: Continuous Delivery Platform
- */package com.griddynamics.genesis.logging
+ */
+package com.griddynamics.genesis.logging
 
 import org.aopalliance.intercept.{MethodInvocation, MethodInterceptor}
 import org.springframework.aop.framework.ProxyFactory
