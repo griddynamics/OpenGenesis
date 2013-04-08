@@ -12,9 +12,11 @@ Given /^I am valid admin user$/ do
 end
 
 Given /^There is a project '(.+)'$/ do |project_name|
-  resource :projects do |projects|
-    project = projects.find_by_name(project_name)
-    project.should_not be_nil, "Expected to find project #{project}, but got none"
+  wait_for(20) do
+    resource :projects do |projects|
+      project = projects.find_by_name(project_name)
+      ! project.nil?
+    end
   end
 end
 
