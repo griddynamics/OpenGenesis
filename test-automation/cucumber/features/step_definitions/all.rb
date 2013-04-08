@@ -5,9 +5,16 @@ Given /^Genesis is running$/ do
   end
 end
 
-  Given /^I am valid admin user$/ do
+Given /^I am valid admin user$/ do
   resource "/" do |r|
     JSON.parse(r.get.body)["administrator"].should eq(true), "It should run as admin user"
+  end
+end
+
+Given /^There is a project '(.+)'$/ do |project_name|
+  resource :projects do |projects|
+    project = projects.find_by_name(project_name)
+    project.should_not be_nil, "Expected to find project #{project}, but got none"
   end
 end
 

@@ -35,6 +35,7 @@ Feature: Unified name rules for projects and environment. Environment part
     And I can delete project 'Environments2'
 
   Scenario Outline: Allowed symbols for environment name
+    Given There is a project 'Environments'
     When I create an environment '<name>' in project 'Environments' with template 'Simple' version '0.1'
     Then I should get response with code '<code>'
     And there must be an environment '<name>' in project 'Environments'
@@ -48,7 +49,8 @@ Feature: Unified name rules for projects and environment. Environment part
       | Q1w2e4 | 200  |
 
   Scenario: I can rename an existing environment, if new name is not duplicated
-    Given I create an environment 'name' in project 'Environments' with template 'Simple' version '0.1'
+    Given There is a project 'Environments' 
+    And I create an environment 'name' in project 'Environments' with template 'Simple' version '0.1'
     And there is no environment 'newname' in project 'Environments'
     When I'm renaming environment 'name' to 'newname' in project 'Environments'
     Then I should get response with code '200'
