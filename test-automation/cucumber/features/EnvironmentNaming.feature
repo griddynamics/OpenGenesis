@@ -35,18 +35,18 @@ Feature: Unified name rules for projects and environment. Environment part
     And I can delete project 'Environments2'
 
   Scenario Outline: Allowed symbols for environment name
-    Given There is a project 'Environments'
-    When I create an environment '<name>' in project 'Environments' with template 'Simple' version '0.1'
+    Given I create a project with the name '<env>' managed by 'jdoe'
+    When I create an environment '<name>' in project '<env>' with template 'Simple' version '0.1'
     Then I should get response with code '<code>'
-    And there must be an environment '<name>' in project 'Environments'
-    And I can remove environment '<name>' in project 'Environments'
-    And I can delete project 'Environments'
+    And there must be an environment '<name>' in project '<env>'
+    And I can remove environment '<name>' in project '<env>'
+    And I can delete project '<env>'
     Examples:
-      | name   | code |
-      | name   | 200  |
-      | Name   | 200  |
-      | nAmE   | 200  |
-      | Q1w2e4 | 200  |
+      | name   | code | env     |
+      | name   | 200  | Allowed |
+      | Name   | 200  | Allowed |
+      | nAmE   | 200  | Allowed |
+      | Q1w2e4 | 200  | Allowed |
 
   Scenario: I can rename an existing environment, if new name is not duplicated
     Given There is a project 'Environments' 
