@@ -45,7 +45,7 @@ import com.griddynamics.genesis.api.ScheduledJobDetails
 
 @Controller
 @RequestMapping(Array("/rest"))
-class ScheduledJobsController {
+class ScheduledJobsController extends RestApiExceptionsHandler {
   @Autowired var envConfigService: EnvironmentConfigurationService = _
   @Autowired var schedulingService: EnvironmentJobService = _
   @Autowired var executedJobs: ExecutedJobsService = _

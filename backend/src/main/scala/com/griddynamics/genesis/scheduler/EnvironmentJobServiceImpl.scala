@@ -129,7 +129,6 @@ class EnvironmentJobServiceImpl(scheduler: SchedulingService,
       scheduleDestructionJobs(env, template, requestedBy, date)
       Success(date)
     } else {
-      scheduler.removeScheduledJob(new WorkflowExecutionId(projectId, envId, workflow))
       scheduleWorkflow(template, workflow, parameters, configuration, env, requestedBy, date)
     }
   }
@@ -145,6 +144,7 @@ class EnvironmentJobServiceImpl(scheduler: SchedulingService,
     template.getValidWorkflow(workflow).flatMap { wf =>
       RequestBrokerImpl.validateWorkflow(wf, parameters, configuration).map { _ =>
         val execution = new WorkflowExecution(workflow, env.id, env.projectId, requestedBy, parameters)
+        scheduler.removeScheduledJob(new WorkflowExecutionId(env.projectId, env.id, workflow))
         scheduler.schedule(execution, date)
         date
       }
