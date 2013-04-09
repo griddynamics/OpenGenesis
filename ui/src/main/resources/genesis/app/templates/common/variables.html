@@ -12,6 +12,11 @@
     return !_.size(variable.values) && !grp || grp && !variable.defaultValue ? 'disabled="disabled"' : '';
   }
 
+  function disabledInput(variable) {
+    var grp = variable.group;
+    return grp && !variable.defaultValue ? 'disabled="disabled"' : ''
+  }
+
   function isSelected(key, variable) {
     return variable.defaultValue && variable.defaultValue === key ? 'selected="selected"' : '';
   }
@@ -55,7 +60,7 @@
               <% }) %>
             </select>
         <% } else { %>
-          <input type="<%= inputType(variable) %>" class="<%= varClass(variable) %>" id="<%= name %>" name="<%= name %>"  <%= disabled(variable) %> <%= defVal(variable) %> />
+          <input type="<%= inputType(variable) %>" class="<%= varClass(variable) %>" id="<%= name %>" name="<%= name %>"  <%= disabledInput(variable) %> <%= defVal(variable) %> />
          <% } %>
     </div>
     <div style="clear: both"></div>
