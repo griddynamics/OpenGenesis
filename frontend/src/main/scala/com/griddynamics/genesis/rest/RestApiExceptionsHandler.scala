@@ -55,7 +55,7 @@ trait RestApiExceptionsHandler extends Logging {
     @ExceptionHandler(value = Array(classOf[ResourceConflictException]))
     @ResponseStatus(HttpStatus.CONFLICT)
     def handleConflict(response : HttpServletResponse, exception: ResourceConflictException) {
-        response.getWriter.write("{\"error\":\"Conflict when updating resource\"}")
+      response.getWriter.write("{\"error\":\"" + exception.msg + "\"}")
     }
 
     @ExceptionHandler(value = Array(classOf[MappingException]))

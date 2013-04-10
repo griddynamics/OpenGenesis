@@ -59,9 +59,18 @@ class ScheduledJobsController extends RestApiExceptionsHandler {
     val requestMap = extractParamsMap(request)
     val parameters = extractMapValue("parameters", requestMap).mapValues(_.toString)
     val workflowName = extractValue("workflow", requestMap)
+    val details: Option[ScheduledJobDetails] = schedulingService.listScheduledJobs(projectId, envId).
+      find(details => details.workflow == workflowName)
+    if (details.isDefined)
+      throw new ResourceConflictException("Another workflow is already scheduled for the current instance. Please delete it and retry.")
+    doScheduleJob(projectId, envId, requestMap, parameters, workflowName)
+  }
+
+
+  def doScheduleJob(projectId: Int, envId: Int, requestMap: Map[String, Any], parameters: Map[String, String], workflowName: String): ExtendedResult[Date] = {
     try {
       val time = new Date(extractValue("executionDate", requestMap).toLong)
-      if(time.before(new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1)))) {
+      if (time.before(new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1)))) {
         Failure(variablesErrors = Map("executionDate" -> "Execution date can't be in the past "))
       } else {
         schedulingService.scheduleExecution(projectId, envId, workflowName, parameters, time, getCurrentUser)
@@ -69,6 +78,22 @@ class ScheduledJobsController extends RestApiExceptionsHandler {
     } catch {
       case e: NumberFormatException => Failure(variablesErrors = Map("executionDate" -> "Invalid timestamp format"))
     }
+  }
+
+  @RequestMapping(value = Array("projects/{projectId}/envs/{envId}/jobs/{jobId}"), method = Array(RequestMethod.PUT))
+  @ResponseBody
+  def updateScheduledWorkflow(@PathVariable("projectId") projectId: Int,
+                              @PathVariable("envId") envId: Int,
+                              @PathVariable("jobId") jobId: String,
+                              request: HttpServletRequest): ExtendedResult[_] = {
+    val requestMap = extractParamsMap(request)
+    val parameters = extractMapValue("parameters", requestMap).mapValues(_.toString)
+    val workflowName = extractValue("workflow", requestMap)
+    val details: Option[ScheduledJobDetails] = schedulingService.listScheduledJobs(projectId, envId).
+      find(details => details.workflow == workflowName && details.id == jobId)
+    details.map(details => doScheduleJob(projectId, envId, requestMap, parameters, details.workflow)).getOrElse(
+      throw new ResourceNotFoundException(s"Scheduled job '${jobId}' has not been found for this environment and workflow '${workflowName}'.")
+    )
   }
 
   @RequestMapping(value = Array("projects/{projectId}/envs/{envId}/jobs"), method = Array(RequestMethod.GET))
