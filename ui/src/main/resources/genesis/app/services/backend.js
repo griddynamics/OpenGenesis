@@ -48,12 +48,15 @@ function(genesis, $) {
       });
     },
 
-    scheduleWorkflow: function(projectId, envId, workflow, variables, date) {
+    scheduleWorkflow: function(projectId, envId, workflow, variables, date, scheduleId) {
+      var url = 'rest/projects/' + projectId + '/envs/' + envId + '/jobs';
+      if (scheduleId)
+        url += '/' + scheduleId;
       return $.ajax({
-        url: 'rest/projects/' + projectId + '/envs/' + envId + '/jobs',
+        url: url,
         dataType: "json",
         contentType : 'application/json',
-        type: "POST",
+        type: scheduleId ? "PUT" : "POST",
         data: JSON.stringify({
           workflow: workflow,
           executionDate: date,
