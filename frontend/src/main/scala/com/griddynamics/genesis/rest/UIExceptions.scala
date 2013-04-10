@@ -36,4 +36,4 @@ class MissingParameterException(val paramName : String) extends RuntimeException
 class ResourceNotFoundException(val msg: String) extends RuntimeException
 
 
-class ResourceConflictException() extends RuntimeException
+class ResourceConflictException(val msg: String = "Conflict when updating resource") extends RuntimeException

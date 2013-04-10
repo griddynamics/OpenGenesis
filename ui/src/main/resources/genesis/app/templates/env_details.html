@@ -56,7 +56,7 @@
                         </a>
                         <ul class="dropdown-menu" >
                             <li class="action-button"><a href="javascript: void(0)" rel="<%= action.name %>" class="action-button" >Run...</a></li>
-                            <li><a href="javascript: void(0)"   rel="<%= action.name %>" class="schedule-button" data-scheduling="true">Schedule... </a></li>
+                            <li><a href="javascript: void(0)"  rel="<%= action.name %>" class="schedule-button" data-scheduling="true" style="display: <%= action.schedule? 'block':'none'%>">Schedule... </a></li>
                         </ul>
                     </div>
                 <% } %>

@@ -175,7 +175,9 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       this.executeWorkflowDialog = new ExecuteWorkflowDialog().
         bind('workflow-scheduled', function(workflow) {
           status.StatusPanel.information("'" + capitalise(workflow.name) + "' execution was scheduled successfully");
-          self.envJobs.fetch()
+          self.envJobs.fetch().done(function(){
+            self.$('.schedule-button[rel='+ workflow.name + ']').not('hidden').hide();
+          })
         }).
         bind('workflow-started', function(workflow) {
           status.StatusPanel.information("Workflow '" + workflow.name + "' execution started");
@@ -256,7 +258,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       this.executeWorkflow(workflowName, scheduling);
     },
 
-    executeWorkflow: function (workflowName, scheduling, varValues) {
+    executeWorkflow: function (workflowName, scheduling, varValues, scheduleId) {
       genesis.app.trigger("page-view-loading-started");
 
       var template = new gtemplates.TemplateModel(
@@ -288,7 +290,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
             });
 
           $.when(wmodel.fetch()).done(function () {
-            self.executeWorkflowDialog.showFor(self.details, wmodel, scheduling, varValues);
+            self.executeWorkflowDialog.showFor(self.details, wmodel, scheduling, varValues, scheduleId);
           }).fail(function (jqXHR) {
             genesis.app.trigger("page-view-loading-completed");
             status.StatusPanel.error(jqXHR);
@@ -380,12 +382,16 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
         genesis.fetchTemplate(this.template),
         genesis.fetchTemplate(this.staticServersTemplate),  //prefetching template
         genesis.fetchTemplate(this.vmsTemplate),            //prefetching template
-        this.details.fetch()
+        this.details.fetch(),
+        this.envJobs.fetch()
       ).done(function (tmpl) {
           var details = view.details.toJSON();
-
+          var scheduledJobs = view.envJobs.pluck("workflow");
           var actions = _(details.workflows).reject(function (flow) {
             return flow.name === details.createWorkflowName
+          }).map(function(flow) {
+              var scheduled = _.contains(scheduledJobs, flow.name);
+              return {name: flow.name, schedule: !scheduled};
           });
 
           view.$el.html(tmpl({
@@ -413,7 +419,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
           });
 
           view.scheduledJobsView.bind("request-job-update", function(job){
-            view.executeWorkflow(job.get('workflow'), job.get("date"), job.get('variables'));
+            view.executeWorkflow(job.get('workflow'), job.get("date"), job.get('variables'), job.get('id'));
           });
 
           view.failedJobsView = new ScheduledJobsView({
@@ -547,7 +553,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       this.$el.id = "#workflowParametersDialog";
     },
 
-    showFor: function(envDetails, workflow, scheduling, varValues) {
+    showFor: function(envDetails, workflow, scheduling, varValues, scheduleId) {
       this.scheduling = scheduling;
       this.workflow = workflow;
       this.envId = envDetails.get("id");
@@ -556,6 +562,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       this.templateVersion = envDetails.get('templateVersion');
       this.configurationId = envDetails.get('configurationId');
       this.varValues = varValues;
+      this.scheduleId = scheduleId;
       this.render();
     },
 
@@ -588,7 +595,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       genesis.app.trigger("page-view-loading-started");
       var execution = !this.scheduling ?
         backend.WorkflowManager.executeWorkflow(this.projectId, this.envId, this.workflow.get('name'), this.workflowParams()) :
-        backend.WorkflowManager.scheduleWorkflow(this.projectId, this.envId, this.workflow.get('name'), this.workflowParams(), this.executionDate());
+        backend.WorkflowManager.scheduleWorkflow(this.projectId, this.envId, this.workflow.get('name'), this.workflowParams(), this.executionDate(), this.scheduleId);
 
       var view = this;
       $.when(execution).then(
@@ -613,6 +620,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
             var errors = _.union(
               json.compoundVariablesErrors,
               json.compoundServiceErrors,
+              json.error,
               _.values(json.serviceErrors)
             );
             view.trigger("workflow-starting-error", view.workflow.toJSON(), errors);
@@ -729,6 +737,9 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
           self.collection.fetch()
         }
       });
+      this.bind('job-removed', function(workflowName) {
+        $('.schedule-button[rel=' + workflowName + ']').show();
+      })
     },
 
     updateJob: function(e) {
@@ -747,6 +758,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
         $.when(job.destroy()).done(function() {
           self.collection.fetch();
           status.StatusPanel.information("Record was successfully removed");
+          self.trigger('job-removed', job.get('workflow'));
         }).fail(function(jqxhr) {
           status.StatusPanel.error(jqxhr);
         }).always(function(){

@@ -1,3 +1,7 @@
 *.html
 config.yml
 distrib
+local*genesis
+local*properties
+local*dbtemplate
+local*json
