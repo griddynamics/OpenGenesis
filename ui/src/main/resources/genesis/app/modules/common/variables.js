@@ -219,7 +219,7 @@ function(genesis, status, $, _, Backbone) {
             var $input = self.$("#" + escapeCss(v));
             $input.removeAttr("disabled");
             if($input.hasClass("group")) {
-              self.$("input[type='radio'][data-var-name='" + escapeCss(v) + "']").attr("checked", "checked")
+              self.$("input[type='radio'][data-var-name='" + escapeCss(v) + "']").trigger('click');
             }
           });
           self._applyResolvedVariables(self.variableValues);
