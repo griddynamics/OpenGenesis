@@ -243,6 +243,7 @@ function (genesis, Backbone, status, $) {
         }));
 
         _.each(failedSteps, function(step){
+          self.toggle({currentTarget: self.$('td[data-step-id=' + step.stepId + '] .toggle')});
           self.showStepActions(step.stepId);
         });
 
