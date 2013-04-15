@@ -37,6 +37,7 @@ import akka.actor.ActorSystem
 import com.griddynamics.genesis.service.RemoteAgentsService
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.configuration.WorkflowConfig
+import com.typesafe.config.ConfigFactory
 
 class FlowElement(val action: Action, val precursors: Set[FlowElement]) {
     override def toString = "FlowElement(%s, %s)".format(action, precursors)
@@ -183,7 +184,7 @@ class SimpleFlowTest extends AssertionsForJUnit with Logging with MockitoSugar {
 
 object SimpleFlowTest {
 
-  lazy val actorSystem = ActorSystem()
+  lazy val actorSystem = ActorSystem("test", ConfigFactory.empty) // do not use genesis main application config(turn off remoting)
 
     def isFlowSatisfied(stringFlow: Seq[String], flowElement: FlowElement): Boolean = {
         val actionName = flowElement.action.asInstanceOf[TestAction].name
