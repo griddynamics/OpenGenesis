@@ -372,13 +372,13 @@ table th{
     padding:10px;
 }
 
-#prj-list td.name {
+#prj-list td.name, th.name {
     word-wrap: break-word;
-    width: 30%;
+    width: 40%;
     max-width: 80px;
 }
 
-#prj-list td.human-name {
+#prj-list td.human-name, th.human-name {
     word-wrap: break-word;
     width: 18%;
     max-width: 80px;
