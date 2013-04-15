@@ -24,36 +24,37 @@ package com.griddynamics.genesis.steps.builder
 
 import org.junit.Test
 import com.griddynamics.genesis.workflow.Step
+import org.scalatest.junit.AssertionsForJUnit
+import scala.reflect.runtime.universe.typeOf
 
-class ReflectionBasedStepBuilderTest {
+class ReflectionBasedStepBuilderTest extends AssertionsForJUnit {
 
   @Test def shouldBuildNormallyIfAllParametersProvided() {
-    val builder = new ReflectionBasedStepBuilder(classOf[BasicCaseClass])
+    val builder = new ReflectionBasedStepBuilder(typeOf[BasicCaseClass])
     builder.setProperty("intValue", 5)
     builder.setProperty("stringValue", "some string")
     builder.setProperty("seq", java.util.Arrays.asList(1, 2, 3))
-    val result = builder.getDetails
-    assert(result == new BasicCaseClass(5, "some string", Seq(1, 2, 3)))
+    expectResult(BasicCaseClass(5, "some string", Seq(1, 2, 3)))(builder.getDetails)
   }
 
   @Test def itShouldBePossibleToHaveEmptyDefaultsForSequences() {
-    val builder = new ReflectionBasedStepBuilder(classOf[BasicCaseClass])
+    val builder = new ReflectionBasedStepBuilder(typeOf[BasicCaseClass])
     builder.setProperty("intValue", 5)
     builder.setProperty("stringValue", "some string")
-    val result = builder.getDetails
-    assert(result == new BasicCaseClass(5, "some string", Seq()))
+    expectResult(BasicCaseClass(5, "some string", Seq()))(builder.getDetails)
   }
 
-  @Test(expected = classOf[Exception]) //todo exception type is awkward
+
+  @Test(expected = classOf[NoSuchElementException])
   def shouldThrowExceptionIfMandatoryParametersAreAbsent() {
-    val builder = new ReflectionBasedStepBuilder(classOf[BasicCaseClass])
+    val builder = new ReflectionBasedStepBuilder(typeOf[BasicCaseClass])
     builder.setProperty("intValue", 5)
     builder.getDetails
   }
 
   @Test(expected = classOf[IllegalArgumentException])
   def shouldThrowExceptionIfListContainsWrongType() {
-    val builder = new ReflectionBasedStepBuilder(classOf[BasicCaseClass])
+    val builder = new ReflectionBasedStepBuilder(typeOf[BasicCaseClass])
     builder.setProperty("intValue", 5)
     builder.setProperty("stringValue", "some string")
     builder.setProperty("seq", java.util.Arrays.asList("uno", "dos", "tres"))
@@ -61,51 +62,47 @@ class ReflectionBasedStepBuilderTest {
   }
 
   @Test def shouldWrapOptionIfProvided() {
-    val builder = new ReflectionBasedStepBuilder(classOf[AdvancedCaseClass])
+    val builder = new ReflectionBasedStepBuilder(typeOf[AdvancedCaseClass])
     builder.setProperty("intValue", 5)
     builder.setProperty("opt", "some string")
-    val value = builder.getDetails
-    assert(value == new AdvancedCaseClass(5, Some("some string")))
+    expectResult(AdvancedCaseClass(5, Some("some string")))(builder.getDetails)
   }
 
   @Test def shouldUseNoneIfOptionalIsNotProvided() {
-    val builder = new ReflectionBasedStepBuilder(classOf[AdvancedCaseClass])
+    val builder = new ReflectionBasedStepBuilder(typeOf[AdvancedCaseClass])
     builder.setProperty("intValue", 5)
-    val value = builder.getDetails
-    assert(value == new AdvancedCaseClass(5, None))
+    expectResult(AdvancedCaseClass(5, None))(builder.getDetails)
   }
 
   @Test def shouldWrapNullToOption() {
-    val builder = new ReflectionBasedStepBuilder(classOf[AdvancedCaseClass])
-    val value = builder.getDetails
-    assert(value == new AdvancedCaseClass(666, None))
+    val builder = new ReflectionBasedStepBuilder(typeOf[AdvancedCaseClass])
+    expectResult(AdvancedCaseClass(666, None))(builder.getDetails)
   }
 
   @Test def shouldUseDefaultConstructorValue() {
-    val builder = new ReflectionBasedStepBuilder(classOf[AdvancedCaseClass])
+    val builder = new ReflectionBasedStepBuilder(typeOf[AdvancedCaseClass])
     builder.setProperty("opt", null)
-    val value = builder.getDetails
-    assert(value == new AdvancedCaseClass(666, None))
+    expectResult(AdvancedCaseClass(666, None))(builder.getDetails)
   }
 
   @Test(expected = classOf[IllegalArgumentException])
   def optionShouldRespectType() {
-    val builder = new ReflectionBasedStepBuilder(classOf[AdvancedCaseClass])
+    val builder = new ReflectionBasedStepBuilder(typeOf[AdvancedCaseClass])
     builder.setProperty("opt", 999)
     builder.getDetails
   }
 
   @Test def weirdCase() {
-    val builder = new ReflectionBasedStepBuilder(classOf[OptionSeqCaseClass])
+    val builder = new ReflectionBasedStepBuilder(typeOf[OptionSeqCaseClass])
     builder.setProperty("list", new java.util.ArrayList[Int]() {
       {
         add(1); add(2); add(3);
       }
     })
-    val result = builder.getDetails
-    assert(result == OptionSeqCaseClass(Some(Seq(1, 2, 3))))
+    expectResult(OptionSeqCaseClass(Some(Seq(1, 2, 3))))(builder.getDetails)
   }
 }
+
 
 case class BasicCaseClass(intValue: Int, stringValue: String, seq: Seq[Int]) extends Step
 

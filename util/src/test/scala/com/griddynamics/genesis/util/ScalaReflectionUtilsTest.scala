@@ -23,74 +23,71 @@
 package com.griddynamics.genesis.util
 
 import org.junit.{Ignore, Test}
-import java.lang.reflect.ParameterizedType
+import scala.reflect.runtime.universe.{typeOf, TypeRef}
+import org.scalatest.junit.AssertionsForJUnit
 
-class ScalaReflectionUtilsTest {
+class ScalaReflectionUtilsTest extends AssertionsForJUnit {
 
   @Test def shouldFindPrimaryConstructor() {
-    val (const, params) = ScalaReflectionUtils.getPrimaryConstructor(classOf[SomeOrdinaryCaseClass])
-    assert(params.size == 3)
+    val (const, params) = ScalaReflectionUtils.getPrimaryConstructor(typeOf[SomeOrdinaryCaseClass])
+    expectResult(3)(params.size)
     val paramsMap = params.toMap
 
-    assert(paramsMap("intVar") == classOf[Int])
-    assert(paramsMap("stringVar") == classOf[String])
+    expectResult(typeOf[Int])(paramsMap("intVar"))
+    expectResult(typeOf[String])(paramsMap("stringVar"))
 
     val listType = paramsMap("list")
-    assert(listType.isInstanceOf[ParameterizedType])
-    assert(listType.asInstanceOf[ParameterizedType].getRawType == classOf[Seq[_]])
-    assert(listType.asInstanceOf[ParameterizedType].getActualTypeArguments.apply(0) == classOf[java.lang.Integer])
+    assert(listType.isInstanceOf[TypeRef])
+    expectResult(typeOf[Seq[Int]])(listType)
+    expectResult(typeOf[Int])(listType.asInstanceOf[TypeRef].args(0))
   }
 
   @Test def newInstanceCreation() {
     val constParams: Map[String, Any] = Map("intVar" -> 1, "stringVar" -> "stringValue", "list" -> Seq(3, 2, 1))
-    val instance = ScalaReflectionUtils.newInstance(classOf[SomeOrdinaryCaseClass], constParams)
+    val instance = ScalaReflectionUtils.newInstance(typeOf[SomeOrdinaryCaseClass], constParams)
 
-    assert(instance == new SomeOrdinaryCaseClass(intVar = 1, stringVar = "stringValue", list = Seq(3, 2, 1)))
+    expectResult(SomeOrdinaryCaseClass(intVar = 1, stringVar = "stringValue", list = Seq(3, 2, 1)))(instance)
   }
 
   @Test(expected = classOf[Exception])
-  @Ignore("type parameters check are not imlemented yet")
+  @Ignore("type parameters check are not imlemented yet. Also in scala 2.10 MethodMirror they're not checked and instance is created with wrong type.")
   def newInstanceShouldRespectTypeParameters() {
-    val instance = ScalaReflectionUtils.newInstance(classOf[OptionsTestCase], Map("opt" -> Some("not a number")))
+    val instance = ScalaReflectionUtils.newInstance(typeOf[OptionsTestCase], Map("opt" -> Some("not a number")))
   }
 
   @Test def newInstanceShouldUseDefaultValues() {
-    val instance = ScalaReflectionUtils.newInstance(classOf[CaseClassWithDefaults], Map("stringVar" -> "some"))
-    assert(new CaseClassWithDefaults(stringVar = "some") == instance)
+    val instance = ScalaReflectionUtils.newInstance(typeOf[CaseClassWithDefaults], Map("stringVar" -> "some"))
+    expectResult(CaseClassWithDefaults(stringVar = "some"))(instance)
   }
 
   @Test def newInstanceShouldOverrideDefaultValuesIfProvided() {
-    assert(classOf[Option[_]].isAssignableFrom(Some(0).getClass))
-    val instance = ScalaReflectionUtils.newInstance(classOf[CaseClassWithDefaults], Map("stringVar" -> "some", "intVar" -> 666))
-    assert(new CaseClassWithDefaults(intVar = 666, stringVar = "some") == instance)
+    val instance = ScalaReflectionUtils.newInstance(typeOf[CaseClassWithDefaults], Map("stringVar" -> "some", "intVar" -> 666))
+    expectResult(CaseClassWithDefaults(intVar = 666, stringVar = "some"))(instance)
   }
 
   @Test def collectDefaultValuesShouldReturnConsDefaultValues() {
-    val (construct, params) = ScalaReflectionUtils.getPrimaryConstructor(classOf[CaseClassWithDefaults])
-    val defaults = ScalaReflectionUtils.constructorDefaultValues(classOf[CaseClassWithDefaults], params.map(_._1))
+    val defaults = ScalaReflectionUtils.constructorDefaultValues(typeOf[CaseClassWithDefaults])
 
-    assert(defaults("intVar") == 1)
-    assert(defaults("list").asInstanceOf[Seq[Int]].sameElements(Seq(1, 2, 3)))
+    expectResult(1)(defaults("intVar"))
+    expectResult(Seq(1, 2, 3))(defaults("list").asInstanceOf[Seq[Int]])
     assert(defaults.get("stringVar").isEmpty)
   }
 
   @Test def optionOfSeqOfInts() {
-    val (construct, params) = ScalaReflectionUtils.getPrimaryConstructor(classOf[OptionOfSeqCaseClass])
+    val (construct, params) = ScalaReflectionUtils.getPrimaryConstructor(typeOf[OptionOfSeqCaseClass])
     val map = params.toMap
 
     val optStringType = map("optString")
-    assert(optStringType.isInstanceOf[ParameterizedType])
-    assert(optStringType.asInstanceOf[ParameterizedType].getRawType == classOf[Option[_]])
-    assert(optStringType.asInstanceOf[ParameterizedType].getActualTypeArguments.apply(0) == classOf[String])
+    assert(optStringType.isInstanceOf[TypeRef])
+    val typeRef = optStringType.asInstanceOf[TypeRef]
+    expectResult(typeOf[Option[String]])(optStringType)
+    expectResult(typeOf[String])(typeRef.args(0))
 
-    val optSeqType  = map("optseq").asInstanceOf[ParameterizedType]
+    val optSeqType = map("optseq")
 
-    assert(optSeqType.getRawType == classOf[Option[_]])
-    assert(optSeqType.getActualTypeArguments.apply(0).isInstanceOf[ParameterizedType])
+    expectResult(typeOf[Option[Seq[Int]]])(optSeqType)
+    expectResult(typeOf[Seq[Int]])(optSeqType.asInstanceOf[TypeRef].args(0))
 
-    val seqInOptionType = optSeqType.getActualTypeArguments.apply(0).asInstanceOf[ParameterizedType]
-    assert(seqInOptionType.getRawType == classOf[Seq[_]])
-    assert(seqInOptionType.getActualTypeArguments.apply(0) == classOf[java.lang.Integer])
   }
 }
 

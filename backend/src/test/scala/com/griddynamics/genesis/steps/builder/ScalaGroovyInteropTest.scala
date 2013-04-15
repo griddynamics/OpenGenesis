@@ -25,19 +25,62 @@ package com.griddynamics.genesis.steps.builder
 import org.junit.Test
 import java.util.Collections
 import java.lang.reflect.ParameterizedType
+import scala.reflect.runtime.{universe => ru}
+import org.scalatest.junit.AssertionsForJUnit
 
-class ScalaGroovyInteropTest {
+class ScalaGroovyInteropTest extends AssertionsForJUnit {
+
+  @Test def nullShouldBeConvertedToNone() {
+    val value = ScalaGroovyInterop.convert(null, ru.typeOf[Option[String]])
+    expectResult(None)(value)
+  }
 
   @Test def shouldConvertPrimitive() {
-    val value = ScalaGroovyInterop.convert(1, classOf[Int])
-    assert(value == 1)
+    val value = ScalaGroovyInterop.convert(1, ru.typeOf[Int])
+    expectResult(1)(value)
   }
 
   @Test def shouldConvertBoxedToPrimitive() {
-    val value = ScalaGroovyInterop.convert(new Integer(1), classOf[Int])
-    assert(value == 1)
+    val value = ScalaGroovyInterop.convert(new Integer(1), ru.typeOf[Int])
+    expectResult(1)(value)
   }
 
+  @Test def shouldConvertJMapToScalaMap() {
+    val value = ScalaGroovyInterop.convert(Collections.singletonMap("Key", 666), ru.typeOf[Map[String, Int]])
+    expectResult(Map("Key" -> 666))(value)
+  }
+
+  @Test(expected = classOf[IllegalArgumentException])
+  def mapConvertShouldFailIfKeyTypesAreWrong() {
+    ScalaGroovyInterop.convert(Collections.singletonMap("Not a number", 666), ru.typeOf[Map[Int, Int]])
+  }
+
+  @Test(expected = classOf[IllegalArgumentException])
+  def mapConvertShouldFailIfValueTypesAreWrong() {
+    ScalaGroovyInterop.convert(Collections.singletonMap("Key", "Not a number"), ru.typeOf[Map[String, Int]])
+  }
+
+  @Test def valueShouldBeConvertedToSome() {
+    val value = ScalaGroovyInterop.convert(5, ru.typeOf[Option[Int]])
+    expectResult(Some(5))(value)
+  }
+
+  @Test(expected = classOf[IllegalArgumentException])
+  def convertToOptionShouldRespectType() {
+    ScalaGroovyInterop.convert("not a number", ru.typeOf[Option[Int]])
+  }
+
+  @Test(expected = classOf[IllegalArgumentException])
+  def convertToOptionOfSeqShouldRespectSecTypeParameter() {
+    ScalaGroovyInterop.convert(Collections.singletonList("not a number"), ru.typeOf[Option[Seq[Int]]])
+  }
+
+  @Test def convertToOptionOfSeqOfInt() {
+    val conversion = ScalaGroovyInterop.convert(Collections.singletonList(666), ru.typeOf[Option[Seq[Int]]])
+    println(conversion)
+    expectResult(Some(Seq(666)))(conversion)
+  }
+  /*
   @Test def shouldConvertJListToScalaList() {
     val value = ScalaGroovyInterop.convert(Collections.singletonList(5), mkType(classOf[List[_]], Array(classOf[Int])))
     assert(value.isInstanceOf[List[_]] && value.asInstanceOf[List[_]].sameElements(List(5)))
@@ -53,45 +96,6 @@ class ScalaGroovyInteropTest {
     ScalaGroovyInterop.convert(Collections.singletonList(new Integer(5)), mkType(classOf[Set[_]], Array(classOf[String])))
   }
 
-  @Test def shouldConvertJMapToScalaMap() {
-    val value = ScalaGroovyInterop.convert(Collections.singletonMap("Key", 666), mkType(classOf[Map[_, _]], Array(classOf[String], classOf[Int])))
-    assert(value.asInstanceOf[Map[String, Int]].apply("Key") == 666)
-  }
-
-  @Test(expected = classOf[IllegalArgumentException])
-  def mapConvertShouldFailIfKeyTypesAreWrong() {
-    ScalaGroovyInterop.convert(Collections.singletonMap("Not a number", 666), mkType(classOf[Map[_, _]], Array(classOf[Int], classOf[Int])))
-  }
-
-  @Test(expected = classOf[IllegalArgumentException])
-  def mapConvertShouldFailIfValueTypesAreWrong() {
-    ScalaGroovyInterop.convert(Collections.singletonMap("Key", "Not a number"), mkType(classOf[Map[_, _]], Array(classOf[String], classOf[Int])))
-  }
-
-  @Test def nullShouldBeConvertedToNone() {
-    val value = ScalaGroovyInterop.convert(null, mkType(classOf[Option[_]], Array(classOf[String])))
-    assert(value == None)
-  }
-
-  @Test def valueShouldBeConvertedToSome() {
-    val value = ScalaGroovyInterop.convert(5, mkType(classOf[Option[_]], Array(classOf[Int])))
-    assert(value.asInstanceOf[Option[_]].get == 5)
-  }
-
-  @Test(expected = classOf[IllegalArgumentException])
-  def convertToOptionShouldRespectType() {
-    ScalaGroovyInterop.convert("not a number", mkType(classOf[Option[_]], Array(classOf[Int])))
-  }
-
-  @Test def convertToOptionOfSeqOfInt() {
-    val conversion = ScalaGroovyInterop.convert(Collections.singletonList(666), mkType(classOf[Option[_]], Array(mkType(classOf[Seq[_]], Array(classOf[Int])))))
-    assert(conversion == Some(Seq(666)))
-  }
-
-  @Test(expected = classOf[IllegalArgumentException])
-  def convertToOptionOfSeqShouldRespectSecTypeParameter() {
-    ScalaGroovyInterop.convert(Collections.singletonList("not a number"), mkType(classOf[Option[_]], Array(mkType(classOf[Seq[_]], Array(classOf[Int])))))
-  }
 
   def mkType(rawType: java.lang.reflect.Type, argTypes: Array[java.lang.reflect.Type]): ParameterizedType = {
     new ParameterizedType {
@@ -101,5 +105,5 @@ class ScalaGroovyInteropTest {
 
       def getOwnerType = rawType
     }
-  }
+  }*/
 }
