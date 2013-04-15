@@ -22,6 +22,6 @@
  */
 package com.griddynamics.genesis.plugin
 
-import com.griddynamics.genesis.workflow.Step
+import scala.reflect.runtime.universe.Type
 
-case class StepDefinition(name: String, step: Class[_ <: Step])
+case class StepDefinition(name: String, step: Type)

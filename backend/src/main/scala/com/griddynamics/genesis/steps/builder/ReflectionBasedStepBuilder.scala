@@ -26,10 +26,11 @@ import com.griddynamics.genesis.workflow.Step
 import groovy.lang.{MissingPropertyException, GroovyObjectSupport}
 import com.griddynamics.genesis.plugin.StepBuilder
 import com.griddynamics.genesis.util.ScalaReflectionUtils
-import java.lang.reflect.{ParameterizedType, Type}
 import scala.collection.mutable
+import scala.Some
+import scala.reflect.runtime.universe._
 
-class ReflectionBasedStepBuilder(clazz: Class[_ <: Step]) extends GroovyObjectSupport with StepBuilder {
+class ReflectionBasedStepBuilder(tpe: Type) extends GroovyObjectSupport with StepBuilder {
   import ReflectionBasedStepBuilder._
 
   val properties: mutable.Map[String, Any] = new mutable.HashMap()
@@ -43,110 +44,104 @@ class ReflectionBasedStepBuilder(clazz: Class[_ <: Step]) extends GroovyObjectSu
   }
 
   def getDetails = {
-    val (_, expectedParams) = ScalaReflectionUtils.getPrimaryConstructor(clazz)
+    val (_, expectedParams) = ScalaReflectionUtils.getPrimaryConstructor(tpe)
 
     val (withValues, withoutValues) = expectedParams.partition {case (name, ttype) => properties.isDefinedAt(name) }
-
-    val realValues = withValues.map {case (name, ttype) => (name, ScalaGroovyInterop.convert(properties(name), ttype) ) }
-    val validEmpties = withoutValues.collect {
-      case (name, ttype: ParameterizedType) if hasEmptyValue(ttype.getRawType) =>  (name, emptyValue(ttype.getRawType))
-      case (name, clazz: Class[_]) if hasEmptyValue(clazz) => (name, emptyValue(clazz))
+    val realValues = withValues.map {
+      case (name, ttype) =>  (name, ScalaGroovyInterop.convert(properties(name), ttype) )
     }
-
-    ScalaReflectionUtils.newInstance(clazz, realValues.toMap, validEmpties.toMap)
+    val validEmpties = withoutValues.collect {
+      case (name, ttype: TypeRef) if hasEmptyValue(ttype) => (name, emptyValue(ttype))
+    }
+    ScalaReflectionUtils.newInstance(tpe, realValues.toMap, validEmpties.toMap).asInstanceOf[Step]
   }
 }
 
 object ReflectionBasedStepBuilder {
 
   val emptyValues = Map(
-    classOf[Option[_]] -> None,
-    classOf[Seq[_]] -> Seq(),
-    classOf[Set[_]] -> Set(),
-    classOf[List[_]] -> List(),
-    classOf[Map[_, _]] -> Map()
+    typeOf[Option[_]] -> None,
+    typeOf[Seq[_]] -> Seq(),
+    typeOf[Set[_]] -> Set(),
+    typeOf[List[_]] -> List(),
+    typeOf[Map[_, _]] -> Map()
   )
 
-  def hasEmptyValue(ttype: Type): Boolean = ttype.isInstanceOf[Class[_]] && hasEmptyValue(ttype.asInstanceOf[Class[_]])
+  def hasEmptyValue(ttype: TypeRef): Boolean = emptyValues.keys.exists(ttype <:< _)
 
-  def hasEmptyValue(clazz: Class[_]): Boolean = emptyValues.keys.exists(clazz.isAssignableFrom(_))
-
-  def emptyValue(clazz: Class[_]): AnyRef = emptyValues.find {
-    case (key, _) => clazz.isAssignableFrom(key)
+  def emptyValue(clazz: TypeRef): AnyRef = emptyValues.find {
+    case (key, _) => clazz <:< key
   }.get._2
 
-  def emptyValue(ttype: Type): AnyRef = emptyValue(ttype.asInstanceOf[Class[_]])
 }
 
 object ScalaGroovyInterop {
 
+  private lazy val mirrorRT = runtimeMirror(getClass.getClassLoader)
+
   import scala.collection.JavaConversions._
   import com.griddynamics.genesis.util.ScalaUtils._
 
-  def convert(value: Any, expectedType: Type) = (value, expectedType) match {
-    case (x: java.util.List[_], ttype: ParameterizedType) => convertJavaList(ttype, x)
-    case (x: java.util.Map[_, _], ttype: ParameterizedType) => convertJavaMap(x, ttype)
-    case (x, ttype: ParameterizedType) if isScalaOption(ttype.getRawType) => convertToOption(x, ttype)
-    case (x, ttype: Class[_]) if x == null => null
-    case (x, ttype: Class[_]) if (getType(x) == ttype || ttype.isAssignableFrom(toAnyRef(x).getClass)) => x
-    case (_, _) => throw new IllegalArgumentException("Failed to convert value %s to type %s: This kind of conversion is not supported".format(value, expectedType))
+  def convert(value: Any, expectedType: Type) = synchronized {
+    (value, expectedType) match {
+      case (x: java.util.List[_], ttype: TypeRef) => convertJavaList(x, ttype)
+      case (x: java.util.Map[_, _], ttype: TypeRef) => convertJavaMap(x, ttype)
+      case (x, ttype: TypeRef) if isScalaOption(ttype) => convertToOption(x, ttype)
+      case (x, ttype: TypeRef) if x == null => null
+      case (x, ttype: TypeRef) if (ttype <:< scalaType(x)) => x
+      case (_, _) => throw new IllegalArgumentException(
+        s"Failed to convert value $value to type ${expectedType.typeSymbol.name}: This kind of conversion is not supported")
+    }
   }
 
-  def convertToOption(x: Any, ttype: ParameterizedType) = {
-    if (x == null || ttype.getActualTypeArguments.forall {
-      case typeArg: Class[_] => typeArg.isAssignableFrom(getType(x)) || typeArg.isAssignableFrom(toAnyRef(x).getClass)
-    })
-      Option(x)
-    else
-      throw new IllegalArgumentException("Falied to convert value %s: doesn't conform Option[%s]".format(x, ttype.getActualTypeArguments.apply(0)))
-  }
+  private def scalaType(v: Any) = mirrorRT.classSymbol(getScalaClass(v)).toType
 
-  def convertJavaMap(x: java.util.Map[_, _], ttype: ParameterizedType): AnyRef = {
+  private def convertToOption(x: Any, ttype: TypeRef) = if (x == null || ttype.args.forall {
+    case typeArg: TypeRef => typeArg <:< scalaType(x)
+  }) Option(x)
+  else throw new IllegalArgumentException(
+    s"Failed to convert value $x: doesn't conform Option[${ttype.args(0).typeSymbol.name}]")
+
+
+  private def convertJavaMap(x: java.util.Map[_, _], ttype: TypeRef): AnyRef = {
     val map = mapAsScalaMap(x)
-    val keyType = ttype.getActualTypeArguments.apply(0).asInstanceOf[Class[_]]
-    val valueType = ttype.getActualTypeArguments.apply(1).asInstanceOf[Class[_]]
+    val keyType = ttype.args(0)
+    val valueType = ttype.args(1)
     val badTypeElements = map.filterNot {
-      mv: (Any, Any) => keyType.isAssignableFrom(getType(mv._1)) && valueType.isAssignableFrom(getType(mv._2))
+      kv: (Any, Any) => keyType <:< scalaType(kv._1) && valueType <:< scalaType(kv._2)
     }
-    if (badTypeElements.isEmpty) {
-      ttype.getRawType match {
-        case x: Class[_] if x.isAssignableFrom(classOf[Map[_, _]]) => map.toMap
-        case x: Class[_] if x.isAssignableFrom(classOf[java.util.Map[_, _]]) => x
-        case _ => throw new IllegalArgumentException("Failed to convert java.util.Map to %s: this kind of target collection is not supported".format(ttype.getRawType))
-      }
-    } else {
-      throw new IllegalArgumentException("Elements [%s] in java.util.List do not conform to type Map[%s, %s]".format(
-        badTypeElements.toString(), keyType.getCanonicalName, valueType.getCanonicalName))
-    }
+    if (badTypeElements.isEmpty) ttype match {
+        case x: TypeRef if x <:< typeOf[Map[_, _]] => map.toMap
+        case x: TypeRef if x <:< typeOf[java.util.Map[_, _]] => x
+        case _ => throw new IllegalArgumentException(
+          s"Failed to convert java.util.Map to ${ttype.typeSymbol.name}: this kind of target collection is not supported")
+    } else throw new IllegalArgumentException(
+    s"Elements [${badTypeElements.toString()}] in java.util.List do not conform to type Map[${keyType.typeSymbol.name}, ${valueType.typeSymbol.name}]")
   }
 
-  def convertJavaList(ttype: ParameterizedType, x: java.util.List[_]): AnyRef = {
-    if (isScalaOption(ttype.getRawType)) {
-      ttype.getActualTypeArguments.apply(0) match {
-        case ttype: ParameterizedType => return Some(convertJavaList(ttype, x))
-        case t => throw new IllegalArgumentException("Failed to convert java.util.List to Option[%s]".format(t))
+  private def convertJavaList(x: java.util.List[_], ttype: TypeRef): AnyRef = {
+    if (isScalaOption(ttype)) {
+      ttype.args(0) match {
+        case ttype0: TypeRef => return Some(convertJavaList(x, ttype0))
+        case t => throw new IllegalArgumentException(s"Failed to convert java.util.List to Option[${t.typeSymbol.name}]")
       }
     }
-    val elemType = ttype.getActualTypeArguments.apply(0).asInstanceOf[Class[_]]
+    val elemType = ttype.args(0)
     val list = iterableAsScalaIterable(x)
-    val badTypeElements = list.filterNot {
-      item => elemType.isAssignableFrom(toAnyRef(item).getClass) || elemType.isAssignableFrom(getType(item))
-    }
-    if (badTypeElements.isEmpty) {
-      ttype.getRawType match {
-        case x: Class[_] if x.isAssignableFrom(classOf[Seq[_]]) => list.toSeq
-        case x: Class[_] if x.isAssignableFrom(classOf[IndexedSeq[_]]) => list.toIndexedSeq
-        case x: Class[_] if x.isAssignableFrom(classOf[Set[_]]) => list.toSet
-        case x: Class[_] if x.isAssignableFrom(classOf[List[_]]) => list.toList
-        case x: Class[_] if x.isAssignableFrom(classOf[java.util.List[_]]) => x
-        case _ => throw new IllegalArgumentException("Failed to convert java.util.List to %s: this kind of target collection is not supported".format(ttype.getRawType))
-      }
+    val badTypeElements = list.filterNot {elemType <:< scalaType(_)}
+    if (badTypeElements.isEmpty) ttype match {
+      case x if x <:< typeOf[Seq[_]] => list.toSeq
+      case x if x <:< typeOf[IndexedSeq[_]] => list.toIndexedSeq
+      case x if x <:< typeOf[Set[_]] => list.toSet
+      case x if x <:< typeOf[List[_]] => list.toList
+      case x if x <:< typeOf[java.util.List[_]] => x
+      case _ => throw new IllegalArgumentException(
+        s"Failed to convert java.util.List to ${ttype.typeSymbol.name}: this kind of target collection is not supported")
     } else {
-      throw new IllegalArgumentException("Elements [%s] in java.util.List do not conform to type %s".format(badTypeElements.toString(), elemType.getCanonicalName))
+      throw new IllegalArgumentException(s"Elements [${badTypeElements.toString()}] in java.util.List do not conform to type ${elemType.typeSymbol.name}")
     }
   }
 
-  private[this] def isScalaOption(ttype: Type) = {
-    ttype.isInstanceOf[Class[_]] && ttype.asInstanceOf[Class[_]].isAssignableFrom(classOf[Option[_]])
-  }
+  private[this] def isScalaOption(ttype: TypeRef) = ttype <:< typeOf[Option[_]]
+
 }
