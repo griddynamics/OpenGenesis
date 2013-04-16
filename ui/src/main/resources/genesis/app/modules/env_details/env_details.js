@@ -758,7 +758,6 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
         $.when(job.destroy()).done(function() {
           self.collection.fetch();
           status.StatusPanel.information("Record was successfully removed");
-          self.trigger('job-removed', job.get('workflow'));
         }).fail(function(jqxhr) {
           status.StatusPanel.error(jqxhr);
         }).always(function(){
@@ -784,8 +783,14 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       var self = this;
       $.when(genesis.fetchTemplate(this.template)).done(function(tmpl) {
        if(self.collection.length == 0) {
-         self.$el.html("")
+         self.$el.html("");
        } else {
+         $('.schedule-button').not('visible').show();
+         var jobs = self.collection.toJSON();
+         _.map(jobs, function(job) {
+           var button = $('.schedule-button[rel=' + job.workflow + ']').not('hidden');
+           $(button).hide();
+         });
          self.$el.html(tmpl({
            jobs: _(self.collection.sortBy(function(i) { return self.error ? -i.get('date') : i.get('date') })).map(function(i) { return i.toJSON(); }),
            moment: moment,
