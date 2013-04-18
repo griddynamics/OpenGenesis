@@ -26,6 +26,9 @@ define ["genesis", "backbone", "services/backend"],  (genesis, Backbone, backend
         val.resolve([])
       val.promise()
 
+    required: ->
+      @get('properties').filter (p) -> p.required
+
   class DatabagTemplates.Collection extends genesis.Backbone.Collection
     linkType: backend.LinkTypes.DataBagTemplate
     model: DatabagTemplates.Model
