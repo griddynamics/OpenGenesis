@@ -6,6 +6,11 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
 
     url: "rest/settings/root"
 
+
+  class AppSettings.SystemActions extends Backbone.Model
+    url: "rest/system/root"
+
+
   class AppSettings.Views.Main extends Backbone.View
     template: "app/templates/settings.html"
     pluginsView: null
@@ -21,9 +26,12 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
       "click #roles-panel-tab-header": "showRolesTab"
       "click #databags-panel-tab-header": "showDatabags"
       "click #agents-panel-tab-header": "showAgents"
+      "click #system-restart": "restartSystem"
+      "click #system-stop": "stopSystem"
 
     initialize: (options) ->
       @model = new AppSettings.SystemSettings
+      @actionsModel = new AppSettings.SystemActions
 
     onClose: ->
       genesis.utils.nullSafeClose @pluginsView
@@ -71,10 +79,18 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
       $.when(backend.SettingsManager.restartRequired()).done (restart) =>
         @$("#restart").toggle restart
 
+    restartSystem: ->
+      $.when(backend.SystemManager.restart()).done () =>
+         @showSettings()
+
+    stopSystem: ->
+      $.when(backend.SystemManager.stop()).done () =>
+         @showSettings()
 
     render: ->
-      $.when(@model.fetch(), genesis.fetchTemplate(@template)).done (linksAggregator, tmpl) =>
+      $.when(@model.fetch(), @actionsModel.fetch(), genesis.fetchTemplate(@template)).done (linksAggregator, actions, tmpl) =>
         typeToLink = _(@model.get("links")).groupBy 'type'
+        actionLinks = @actionsModel.get("links")
         @$el.html tmpl(
           users: typeToLink[backend.LinkTypes.User.name]
           groups: typeToLink[backend.LinkTypes.UserGroup.name]
@@ -82,6 +98,8 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
           plugins: typeToLink[backend.LinkTypes.Plugin.name]
           databags: typeToLink[backend.LinkTypes.DataBag.name]
           agents: typeToLink[backend.LinkTypes.RemoteAgent.name]
+          restart: _(actionLinks).find((l) => l.href.contains('restart'))
+          stop: _(actionLinks).find((l) => l.href.contains('stop'))
         )
         @showSettings()
 

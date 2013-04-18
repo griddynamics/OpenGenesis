@@ -36,11 +36,12 @@
         <dependencySet>
             <outputDirectory>lib</outputDirectory>
             <useTransitiveDependencies>true</useTransitiveDependencies>
-            <useProjectArtifact>false</useProjectArtifact>
+            <useProjectArtifact>true</useProjectArtifact>
             <fileMode>644</fileMode>
             <scope>runtime</scope>
         </dependencySet>
     </dependencySets>
+
     <fileSets>
         <fileSet>
             <directory>${project.basedir}</directory>
@@ -61,5 +62,6 @@
             <outputDirectory>.</outputDirectory>
             <fileMode>644</fileMode>
         </fileSet>
+
     </fileSets>
 </assembly>
