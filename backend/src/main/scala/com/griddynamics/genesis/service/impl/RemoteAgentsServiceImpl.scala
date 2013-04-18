@@ -23,13 +23,17 @@
 
 package com.griddynamics.genesis.service.impl
 
-import com.griddynamics.genesis.service.{AgentsHealthService, RemoteAgentsService}
-import com.griddynamics.genesis.api.{Success, ExtendedResult, RemoteAgent}
+import com.griddynamics.genesis.service.{AgentConfigurationService, AgentsHealthService, RemoteAgentsService}
+import com.griddynamics.genesis.api._
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.repository.RemoteAgentRepository
+import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.api.RemoteAgent
+import com.griddynamics.genesis.api.Failure
+import scala.Some
 
 
-class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: AgentsHealthService) extends RemoteAgentsService {
+class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: AgentsHealthService, val config: AgentConfigurationService) extends RemoteAgentsService {
 
     repository.list.map { health.startTracking(_) }
 
@@ -47,6 +51,16 @@ class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: Age
         agent.copy(status = Some(s._1), stats = s._2)
       }
     )
+
+  def getConfiguration(key: Int): ExtendedResult[Seq[String]] = repository.get(key).map(
+    agent => {
+      config.getConfiguration(agent)
+    }
+  ).getOrElse(Failure(isNotFound = true))
+
+  def putConfiguration(values: Map[String, String], key: Int) = get(key).map(
+    {case agent if (agent.status.isDefined && agent.status.get == AgentStatus.Active) => config.applyConfiguration(agent,values).flatMap(_ => Success(agent))}
+  ).getOrElse(Failure(isNotFound = true))
 
     @Transactional(readOnly = true)
     def findByTags(tags: Seq[String]): Seq[RemoteAgent] = withStatus(repository.findByTags(tags))

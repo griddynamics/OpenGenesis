@@ -29,7 +29,7 @@ package status {
 
 package configuration {
   case object GetConfiguration
-  case class ConfigurationResponse()
+  case class ConfigurationResponse(names: Seq[String])
   case class ApplyConfiguration(values: Map[String,String])
   case class ConfigurationApplied(success: Boolean = true, restart: Boolean)
 }

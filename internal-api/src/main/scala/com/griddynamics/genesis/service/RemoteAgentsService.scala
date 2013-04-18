@@ -24,8 +24,10 @@
 package com.griddynamics.genesis.service
 
 import com.griddynamics.genesis.common.CRUDService
-import com.griddynamics.genesis.api.RemoteAgent
+import com.griddynamics.genesis.api.{ExtendedResult, RemoteAgent}
 
 trait RemoteAgentsService extends CRUDService[RemoteAgent, Int]{
-    def findByTags(tags: Seq[String]): Seq[RemoteAgent]
+  def findByTags(tags: Seq[String]): Seq[RemoteAgent]
+  def getConfiguration(key: Int): ExtendedResult[Seq[String]]
+  def putConfiguration(values: Map[String, String], key: Int): ExtendedResult[RemoteAgent]
 }

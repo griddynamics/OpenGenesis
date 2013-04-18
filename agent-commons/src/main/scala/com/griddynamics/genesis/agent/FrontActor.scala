@@ -56,7 +56,10 @@ class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: Ex
       sender ! StatusResponse(running, total)
     case Terminated(_) =>
       running -= 1
-    case GetConfiguration => configService.getConfig
+    case GetConfiguration => {
+      log.debug("Get configuration call")
+      sender ! configService.getConfig
+    }
     case ApplyConfiguration(values) =>
       sender ! configService.applyConfiguration(values)
     case m => log.debug("Unknown message: " + m)

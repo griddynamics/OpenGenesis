@@ -26,20 +26,20 @@ import org.springframework.context.annotation.{Profile, Bean, Configuration}
 import akka.actor.ActorSystem
 import com.griddynamics.genesis.agents.AgentsHealthServiceImpl
 import org.springframework.beans.factory.annotation.{Value, Autowired}
-import com.griddynamics.genesis.service.{ConfigService, AgentsHealthService}
+import com.griddynamics.genesis.service.{AgentConfigurationService, ConfigService, AgentsHealthService}
 import com.griddynamics.genesis.api.{AgentStatus, RemoteAgent}
 import com.griddynamics.genesis.{service, repository}
 import com.griddynamics.genesis.repository.impl.RemoteAgentRepositoryImpl
-import com.griddynamics.genesis.service.impl.RemoteAgentsServiceImpl
+import com.griddynamics.genesis.service.impl.{AgentConfigurationServiceImpl, RemoteAgentsServiceImpl}
 import com.typesafe.config.{ConfigSyntax, ConfigParseOptions, ConfigFactory, Config}
 import org.springframework.core.io.Resource
 
 @Configuration
 class AgentServiceContext {
   @Autowired var healthService: AgentsHealthService = _
+  @Autowired var agentConfigService: AgentConfigurationService = _
   @Bean def agentsRepository: repository.RemoteAgentRepository = new RemoteAgentRepositoryImpl
-  @Bean def agentsService: service.RemoteAgentsService = new RemoteAgentsServiceImpl(agentsRepository, healthService)
-
+  @Bean def agentsService: service.RemoteAgentsService = new RemoteAgentsServiceImpl(agentsRepository, healthService, agentConfigService)
 }
 
 @Configuration
@@ -57,6 +57,7 @@ class AgentTrackerContext {
   @Autowired var configService: ConfigService = _
   @Autowired var actorSystem: ActorSystem = _
   @Bean def healthService: AgentsHealthService = new AgentsHealthServiceImpl(actorSystem, configService)
+  @Bean def agentConfigService: AgentConfigurationService = new AgentConfigurationServiceImpl(actorSystem)
 }
 
 @Configuration
@@ -70,6 +71,8 @@ class AgentTrackerStubContext {
     def checkStatus(agents: Seq[RemoteAgent]) = Seq()
 
     def checkStatus(agent: RemoteAgent) = (AgentStatus.Unavailable, None)
+
+    def getConfiguration(agent: RemoteAgent) = Seq()
   }
 
 }
