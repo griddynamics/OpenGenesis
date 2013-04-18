@@ -88,7 +88,7 @@ define [
           tags: obj.tags
           projectId: @projectId
           templateId: obj.id
-          items: obj.properties.map((property)->
+          items: created.required().map((property)->
               (name: property.name,
               value: property.value,
               isNew: true)
