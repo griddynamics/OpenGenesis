@@ -61,12 +61,13 @@ define ["genesis", "backbone", "services/backend"],  (genesis, Backbone, backend
     render: ->
       $.when(@collection.fetch(), genesis.fetchTemplate(@template)).done (c,tmpl) =>
         buttons = {}
-        buttons["Cancel"] = () =>
-          @$el.dialog("close")
-          @close()
 
         buttons['Select'] = () =>
           @select()
+
+        buttons["Cancel"] = () =>
+          @$el.dialog("close")
+          @close()
 
         @$el.html tmpl(
           items: @collection.toJSON()
