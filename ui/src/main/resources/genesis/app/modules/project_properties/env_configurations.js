@@ -106,7 +106,7 @@ function(genesis, Backbone, status, property, access, templates, roles, validati
       });
       var self = this;
       $.when(created.fetch()).done(function(obj) {
-        var prefilled = _.reduce(obj.properties, function(memo, element) {
+        var prefilled = _.reduce(created.required(), function(memo, element) {
           memo[element.name] = element.value;
           return memo;
         }, {});
