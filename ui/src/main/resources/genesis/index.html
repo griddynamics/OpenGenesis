@@ -8,13 +8,15 @@
     <title>Genesis</title>
     <script type="text/javascript">
         (function checkIEVersion() {
+         if(navigator.appName == 'Microsoft Internet Explorer') {
             var userAgent = navigator.userAgent;
-            var match = userAgent.match('MSIE (.)');
+            var match = userAgent.match('MSIE ([0-9]{1,}[\.0-9]{0,})');
             if(match && match.length > 1) {
-                var version = parseInt(match[1]);
+                var version = parseFloat(match[1]);
                 var docMode = document.documentMode;
-                if (version < 9 || docMode && (docMode < 9)) window.location = 'ie_version_error.html';
+                if (version < 9.0 || docMode && (docMode < 9)) window.location = 'ie_version_error.html';
             }
+        }
         }) ();
     </script>
 </head>
