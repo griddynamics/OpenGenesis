@@ -19,7 +19,7 @@ class AgentConfigurationServiceImpl(actorSystem: ActorSystem) extends AgentConfi
     val agentActor = createActorForAgent(agent)
     val future = (agentActor ? GetConfiguration).mapTo [ConfigurationResponse]
     val result: ConfigurationResponse = Await.result(future, requestTimeout.duration)
-    Success(result.names)
+    Success(result.values)
   } catch {
     case e: Exception => {
       log.error(s"Error getting configuration for agent $agent", e)

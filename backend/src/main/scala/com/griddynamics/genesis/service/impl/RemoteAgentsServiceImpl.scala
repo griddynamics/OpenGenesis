@@ -31,9 +31,21 @@ import com.griddynamics.genesis.api.Success
 import com.griddynamics.genesis.api.RemoteAgent
 import com.griddynamics.genesis.api.Failure
 import scala.Some
+import com.typesafe.config.{ConfigObject, ConfigFactory}
+import com.griddynamics.genesis.configuration.GenesisSettingMetadata
+import collection.JavaConversions.mapAsScalaMap
+import com.griddynamics.genesis.validation.{ConfigValueValidator, SettingsValidation}
 
 
-class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: AgentsHealthService, val config: AgentConfigurationService) extends RemoteAgentsService {
+class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: AgentsHealthService,
+                              val config: AgentConfigurationService,
+                              override val validators: Map[String, ConfigValueValidator],
+                              override val defaultValidator: ConfigValueValidator) extends RemoteAgentsService with SettingsValidation {
+
+    override val defaults: Map[String, GenesisSettingMetadata] = ConfigFactory.load("genesis-plugin").
+      root.toMap.filterKeys(_.startsWith("genesis.")).mapValues {
+      case co: ConfigObject => new GenesisSettingMetadata(co.toConfig)
+    }
 
     repository.list.map { health.startTracking(_) }
 
@@ -52,14 +64,31 @@ class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: Age
       }
     )
 
-  def getConfiguration(key: Int): ExtendedResult[Seq[String]] = repository.get(key).map(
+  private def getDefault(key: String, value: String) = {
+    if (value == null || value.isEmpty) {
+      defaults.get(key).map(metadata => metadata.default).getOrElse("")
+    } else value
+  }
+
+  def getConfiguration(key: Int) = repository.get(key).map(
     agent => {
-      config.getConfiguration(agent)
+      config.getConfiguration(agent).map(response => {
+        response.map({case (k,v) => (k, getDefault(k,v))}).toMap
+      })
     }
   ).getOrElse(Failure(isNotFound = true))
 
   def putConfiguration(values: Map[String, String], key: Int) = get(key).map(
-    {case agent if (agent.status.isDefined && agent.status.get == AgentStatus.Active) => config.applyConfiguration(agent,values).flatMap(_ => Success(agent))}
+    {
+      case agent if (agent.status.isDefined && agent.status.get == AgentStatus.Active) => {
+        val validationResult: ExtendedResult[Any] = values.map({
+          case (name, value) => validate(name, value)
+        }).reduceOption(_ ++ _).getOrElse(Success())
+        validationResult.flatMap( r =>
+          config.applyConfiguration(agent,values).flatMap(_ => Success(agent))
+        )
+      }
+    }
   ).getOrElse(Failure(isNotFound = true))
 
     @Transactional(readOnly = true)

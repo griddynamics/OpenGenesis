@@ -33,13 +33,18 @@ import com.griddynamics.genesis.repository.impl.RemoteAgentRepositoryImpl
 import com.griddynamics.genesis.service.impl.{AgentConfigurationServiceImpl, RemoteAgentsServiceImpl}
 import com.typesafe.config.{ConfigSyntax, ConfigParseOptions, ConfigFactory, Config}
 import org.springframework.core.io.Resource
+import com.griddynamics.genesis.validation.{RegexValidator, ConfigValueValidator}
+import scala.collection.JavaConversions._
+import com.griddynamics.genesis.api.RemoteAgent
 
 @Configuration
 class AgentServiceContext {
   @Autowired var healthService: AgentsHealthService = _
   @Autowired var agentConfigService: AgentConfigurationService = _
+  @Autowired(required = false) private var validators: java.util.Map[String, ConfigValueValidator] = mapAsJavaMap(Map())
   @Bean def agentsRepository: repository.RemoteAgentRepository = new RemoteAgentRepositoryImpl
-  @Bean def agentsService: service.RemoteAgentsService = new RemoteAgentsServiceImpl(agentsRepository, healthService, agentConfigService)
+  @Bean def agentsService: service.RemoteAgentsService = new RemoteAgentsServiceImpl(agentsRepository, healthService,
+    agentConfigService, validators.toMap, new RegexValidator)
 }
 
 @Configuration

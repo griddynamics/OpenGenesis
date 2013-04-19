@@ -3,13 +3,15 @@ package com.griddynamics.genesis.agent
 import org.springframework.context.annotation.{Bean, Configuration}
 import com.griddynamics.genesis.agents.configuration.{ConfigurationApplied, ConfigurationResponse}
 import java.util.Properties
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.{ConfigValue, ConfigObject, Config, ConfigFactory}
 import com.griddynamics.genesis.service.BaseConfigService
 import java.util.prefs.Preferences
 import com.griddynamics.genesis.util.{Closeables, Logging}
 import java.io.{File, FileOutputStream, FileInputStream}
 import org.springframework.beans.factory.annotation.Value
 import javax.annotation.PostConstruct
+import scala.collection.mutable
+import com.griddynamics.genesis.model.ValueMetadata
 
 @Configuration
 class ConfigContext {
@@ -19,12 +21,16 @@ class ConfigContext {
 }
 
 trait SimpleConfigService extends BaseConfigService {
-  def getConfig: ConfigurationResponse
+  def getConfig: Map[String, String]
   def applyConfiguration(request: Map[String,String]) : ConfigurationApplied
 }
 
 class AgentConfigService(config: Config, path: String) extends SimpleConfigService with Logging {
   val prefs: Properties = new Properties()
+  import scala.collection.JavaConversions._
+  val defaults = config.root().toMap.filterKeys(_.startsWith("genesis")).mapValues(
+  {case co: ConfigObject => new ValueMetadata(co.toConfig)}
+  )
 
   @PostConstruct
   def init() {
@@ -36,9 +42,8 @@ class AgentConfigService(config: Config, path: String) extends SimpleConfigServi
     }
   }
 
-  import scala.collection.JavaConversions._
-  def getConfig: ConfigurationResponse = {
-    new ConfigurationResponse(config.root().entrySet().filter(entry => {println(entry.getKey);entry.getKey.startsWith("genesis")}).map(_.getKey).toSeq)
+  def getConfig = {
+    (for (key <- defaults.keys) yield (key, get(key, defaultFor(key)))).toMap
   }
 
   def applyConfiguration(request: Map[String,String]) = {
@@ -47,6 +52,10 @@ class AgentConfigService(config: Config, path: String) extends SimpleConfigServi
         prefs.store(out, s"Saved on ${new java.util.Date()}")
     }
     ConfigurationApplied(success = true, restart = false)
+  }
+
+  def defaultFor(key: String) = {
+    defaults.get(key).map(_.default).getOrElse("")
   }
 
   def get[B](key: String, default: B) = {

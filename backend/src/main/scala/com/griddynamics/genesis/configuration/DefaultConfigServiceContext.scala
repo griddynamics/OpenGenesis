@@ -74,7 +74,9 @@ class DefaultConfigServiceContext extends ConfigServiceContext {
 }
 
 
-class GenesisSettingMetadata(c: Config) extends ValueMetadata(c) {
+class
+
+GenesisSettingMetadata(c: Config) extends ValueMetadata(c) {
   val propType = getStringOption("type").map(x => ConfigPropertyType.withName(x)).getOrElse(ConfigPropertyType.TEXT)
   val restartRequired = getBoolean("restartRequired")
 

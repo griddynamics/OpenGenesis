@@ -30,7 +30,7 @@ import java.util.concurrent.ExecutorService
 import com.griddynamics.genesis.workflow.agent.ExecutorActor
 import com.griddynamics.genesis.agents.status.{StatusResponse, GetStatus}
 import com.griddynamics.genesis.logging.LoggerWrapper
-import com.griddynamics.genesis.agents.configuration.{ConfigurationApplied, ApplyConfiguration, GetConfiguration}
+import com.griddynamics.genesis.agents.configuration.{ConfigurationResponse, ConfigurationApplied, ApplyConfiguration, GetConfiguration}
 
 class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: ExecutorService, configService: SimpleConfigService) extends Actor {
   import context.system
@@ -58,7 +58,7 @@ class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: Ex
       running -= 1
     case GetConfiguration => {
       log.debug("Get configuration call")
-      sender ! configService.getConfig
+      sender ! ConfigurationResponse(configService.getConfig)
     }
     case ApplyConfiguration(values) =>
       sender ! configService.applyConfiguration(values)
