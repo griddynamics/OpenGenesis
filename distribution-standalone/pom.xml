@@ -30,7 +30,7 @@
 
     <artifactId>distribution-standalone</artifactId>
     <groupId>com.griddynamics.genesis</groupId>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
     <parent>
         <groupId>com.griddynamics.genesis</groupId>
         <artifactId>parent</artifactId>
@@ -75,6 +75,11 @@
             <groupId>com.griddynamics.genesis</groupId>
             <artifactId>all-dependencies</artifactId>
             <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>tanukisoft</groupId>
+            <artifactId>wrapper</artifactId>
+            <version>3.2.3</version>
         </dependency>
     </dependencies>
 

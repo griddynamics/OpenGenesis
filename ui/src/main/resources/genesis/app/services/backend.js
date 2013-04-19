@@ -278,6 +278,28 @@ function(genesis, $) {
     }
   };
 
+  backend.SystemManager = {
+    restart: function() {
+     return $.ajax({
+        url:  "/rest/system/restart",
+        dataType: "json",
+        type: "POST",
+        timeout: DEFAULT_TIMEOUT,
+        processData: false
+      });
+    },
+
+    stop: function() {
+      return $.ajax({
+        url:  "/rest/system/stop",
+        dataType: "json",
+        type: "POST",
+        timeout: DEFAULT_TIMEOUT,
+        processData: false
+      });
+    }
+  };
+
   function _type(name) {
     var type = "application/vnd.griddynamics.genesis." + name + "+json";
     this.name = type;
