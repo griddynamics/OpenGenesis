@@ -32,6 +32,7 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
     initialize: (options) ->
       @model = new AppSettings.SystemSettings
       @actionsModel = new AppSettings.SystemActions
+      @confirmations = {}
 
     onClose: ->
       genesis.utils.nullSafeClose @pluginsView
@@ -80,12 +81,24 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
         @$("#restart").toggle restart
 
     restartSystem: ->
-      $.when(backend.SystemManager.restart()).done () =>
-         @showSettings()
+      @showConfirm("#dialog-confirm-system-restart", backend.SystemManager.restart)
 
     stopSystem: ->
-      $.when(backend.SystemManager.stop()).done () =>
-         @showSettings()
+      @showConfirm("#dialog-confirm-system-stop", backend.SystemManager.stop)
+
+    showConfirm: (id, action) ->
+      unless @confirmations[id]
+        @confirmations[id] = @$(id).dialog(
+          title: "Confirmation"
+          buttons:
+            Yes: ->
+              action()
+              $(this).dialog "close"
+
+            No: ->
+              $(this).dialog "close"
+        )
+      @confirmations[id].dialog "open"
 
     render: ->
       $.when(@model.fetch(), @actionsModel.fetch(), genesis.fetchTemplate(@template)).done (linksAggregator, actions, tmpl) =>
