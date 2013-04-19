@@ -3,10 +3,10 @@ package com.griddynamics.genesis.template
 import org.apache.commons.vfs.{FileType, VFS, FileObject}
 import java.net.{URL, URLClassLoader}
 import java.util.jar.JarFile
-import java.io.{FilenameFilter, File}
+import java.io.{FileInputStream, FilenameFilter, File}
 import org.apache.commons.io.FilenameUtils
-import io.Source
-import com.griddynamics.genesis.util.InputUtil
+import scala.io.{BufferedSource, Source}
+import com.griddynamics.genesis.util.{Closeables, InputUtil}
 
 trait Storage[U] {
    def files: Iterable[U]
@@ -32,7 +32,9 @@ class FilesystemStorage(val path: String, val wildcard: String) extends Storage[
   }
 
   def content(f: File): String = {
-    Source.fromFile(f).getLines().mkString("\n")
+    Closeables.using(Source.fromFile(f)) { stream =>
+      stream.getLines().mkString("\n")
+    }
   }
 }
 
