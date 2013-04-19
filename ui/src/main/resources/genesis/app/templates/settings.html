@@ -1,7 +1,26 @@
 <div id="top-panel">
     <div id="page-title"><h1>System settings</h1></div>
-    <div id="title-right">
+    <!--<div id="title-right" />-->
+    <div>
+        <% if (stop) { %>
+        <a href="javascript:void(0)" id="system-stop" class="button-group button executable" style="margin-right: 5px;">
+            <span> Stop Genesis Backend </span>
+        </a>
+        <% } %>
+        <% if (restart) { %>
+        <a href="javascript:void(0)" id="system-restart" class="button-group button executable" style="margin-right: 5px;">
+            <span> Restart Genesis Backend </span>
+        </a>
+        <% } %>
     </div>
+</div>
+
+<div id="dialog-confirm-system-stop" style="display: none; ">
+    Are you sure you want to stop Genesis back-end service? It is possible to start it again only manually.
+</div>
+
+<div id="dialog-confirm-system-restart" style="display: none; ">
+    Are you sure you want to restart Genesis back-end service?
 </div>
 
 <div id="restart" style="display:none">
