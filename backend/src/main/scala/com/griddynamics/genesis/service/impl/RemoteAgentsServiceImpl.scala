@@ -73,7 +73,10 @@ class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: Age
   def getConfiguration(key: Int) = repository.get(key).map(
     agent => {
       config.getConfiguration(agent).map(response => {
-        response.map({case (k,v) => (k, getDefault(k,v))}).toMap
+        response.map({case (k,v) => {
+          val default = defaults.getOrElse(k, GenesisSettingMetadata("NOT-SET!!!"))
+          new ConfigProperty(k, v, false, default.description, default.propType, false)
+        }}).toSeq
       })
     }
   ).getOrElse(Failure(isNotFound = true))
