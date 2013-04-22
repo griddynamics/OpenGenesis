@@ -22,6 +22,27 @@ define [
     url: URL
     linkType: backend.LinkTypes.RemoteAgent
 
+  class Agents.SettingsModel extends genesis.Backbone.Model
+    idAttribute: "name"
+
+  class Agents.Settings extends genesis.Backbone.Collection
+    url: ->
+      "rest/agents/" + @agentId + "/settings"
+    agentId: null
+    model: Agents.SettingsModel
+    initialize: (options) ->
+      @agentId = options.id
+
+    parse: (json) ->
+      if json.result?
+        json.result
+      else
+        {}
+
+    save: () ->
+      payload = _.reduce @models, ((map, elem) -> map[elem.get('name')] = elem.get('value'); return map), {}
+      Backbone.sync('update', @, url: @url(), contentType: 'application/json', data: JSON.stringify(payload))
+
 
   class Agents.Views.Main extends Backbone.View
     events:
@@ -119,7 +140,12 @@ define [
       "click #save-agent": "save"
 
     initialize: (options) ->
-      @render()
+      @settings = new Agents.Settings(id: @model.get('id'))
+      if (@model.get('status').name == 'Active')
+        $.when(@settings.fetch()).always (settings) =>
+          @render(settings)
+      else
+        @render()
 
     cancel: ->
       @trigger "back"
@@ -135,13 +161,21 @@ define [
       )
       validation.bindValidation agent, @$("#edit-agent"), @status
       agent.save().done =>
-        @trigger "back"
+        @saveSettings(agent)
 
-    render: ->
+    saveSettings: (agent) ->
+      data = _.reduce @$('input[rel=settings]'), ((acc, item) -> acc[$(item).attr('name')] = $(item).val(); return acc), {}
+      for name, value of data
+        @settings.get(name).set "value", value
+      @settings.save().done () ->
+        console.log('saved')
+
+    render: (settings) ->
       $.when(genesis.fetchTemplate(@template), @model.fetch()).done (tmpl) =>
         @$el.html tmpl(
           agent: @model.toJSON()
-          canEdit: @model.canEdit() or @collection.canCreate()
+          canEdit: @model.canEdit() or @collection.canCreate(),
+          settings: settings.result if settings?.result?
         )
   Agents
 
