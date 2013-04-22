@@ -21,15 +21,30 @@
  *   Description:  Continuous Delivery Platform
  */
 
-package com.griddynamics.genesis.configuration
+package com.griddynamics.genesis.service.impl
 
-import org.springframework.context.annotation.{Bean, Configuration}
-import com.griddynamics.genesis.service.impl.JswSystemService
 import com.griddynamics.genesis.service.SystemService
-import org.springframework.beans.factory.annotation.Qualifier
+import com.griddynamics.genesis.util.Logging
 
-@Configuration
-class SystemContextImpl extends SystemContext {
+class DefaultSystemService extends SystemService with Logging {
 
-  @Qualifier("override") @Bean  def getSystemService: SystemService = new JswSystemService
+  import DefaultSystemService._
+
+  def isRestartable = sys.props.contains(PROP_WRAPPER_KEY)
+
+  def restart() {
+    log.debug(s"To restart Genesis exiting with code: $RESTART_EXIT_CODE")
+    sys.exit(RESTART_EXIT_CODE)
+  }
+
+  def stop() {
+    log.debug(s"To stop Genesis exiting with code: $STOP_EXIT_CODE")
+    sys.exit(STOP_EXIT_CODE)
+  }
+}
+
+object DefaultSystemService {
+  val RESTART_EXIT_CODE = 0
+  val STOP_EXIT_CODE = 201
+  val PROP_WRAPPER_KEY = "wrapper.pid"
 }
