@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.{RequestMethod, ResponseBody, Req
 import org.springframework.web.bind.annotation.RequestMethod._
 import org.springframework.stereotype.Controller
 import com.griddynamics.genesis.service.SystemService
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.{Qualifier, Autowired}
 import com.griddynamics.genesis.api.{Link, SystemSettings}
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.spring.security.LinkSecurityBean
@@ -38,10 +38,13 @@ import com.griddynamics.genesis.rest.annotations.LinkTarget
 @Controller
 @RequestMapping(value = Array("/rest/system"))
 class SystemController extends RestApiExceptionsHandler {
-  @Autowired(required = false) private var systemService: SystemService = _
+  @Autowired(required = false)  @Qualifier("override") private var systemService: SystemService = _
+  @Autowired private var defSystemService: SystemService = _
+
   @Autowired private implicit var linkSecurity: LinkSecurityBean = _
 
-  private lazy val systemServOpt = Option(systemService)
+  private lazy val service = Option(systemService).getOrElse(defSystemService)
+
 
   @RequestMapping(value = Array("root"), method = Array(RequestMethod.GET)) //TODO: mapping will be changed
   @ResponseBody
@@ -49,24 +52,21 @@ class SystemController extends RestApiExceptionsHandler {
     linkSecurity.filter(collectLinks(request)).toArray
   )
 
-  private def collectLinks(request: HttpServletRequest): Array[Link] = systemServOpt match {
-    case Some(service) =>
+  private def collectLinks(request: HttpServletRequest): Array[Link] = {
     implicit val req: HttpServletRequest = request
     val path: WebPath = WebPath(absolutePath("/rest/system"))
     val result = Array(
       LinkBuilder(path / "stop", LinkTarget.SELF, POST)
     )
     if (service.isRestartable) result :+ LinkBuilder(path / "restart", LinkTarget.SELF, POST) else result
-
-    case _ => Array()
   }
 
   @RequestMapping(value = Array("restart"),method = Array(RequestMethod.POST))
   @ResponseBody
-  def restart() = systemServOpt.foreach(s => if (s.isRestartable) s.restart else log.error("Restart is not supported!"))
+  def restart() = if (service.isRestartable) service.restart else log.error("Restart is not supported!")
 
   @RequestMapping(value = Array("stop"),method = Array(RequestMethod.POST))
   @ResponseBody
-  def stop() = systemServOpt.foreach(_.stop)
+  def stop() = service.stop
 
 }

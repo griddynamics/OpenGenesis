@@ -27,16 +27,11 @@ import com.griddynamics.genesis.service.SystemService
 import org.tanukisoftware.wrapper.WrapperManager
 import com.griddynamics.genesis.util.Logging
 
-class JswSystemService extends SystemService with Logging {
-  def isRestartable = WrapperManager.isControlledByNativeWrapper
+class JswSystemService extends DefaultSystemService {
+  override def isRestartable = WrapperManager.isControlledByNativeWrapper
 
-  def restart() {
-    log.debug("Going to restart Genesis!")
+  override def restart() {
+    log.debug("Requesting JSW to restart Genesis!")
     WrapperManager.restart()
-  }
-
-  def stop() {
-    log.debug("Going to stop Genesis!")
-    WrapperManager.stop(1)
   }
 }
