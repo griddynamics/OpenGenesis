@@ -24,12 +24,10 @@
 package com.griddynamics.genesis.configuration
 
 import org.springframework.context.annotation.{Bean, Configuration}
-import com.griddynamics.genesis.service.impl.JswSystemService
+import com.griddynamics.genesis.service.impl.DefaultSystemService
 import com.griddynamics.genesis.service.SystemService
-import org.springframework.beans.factory.annotation.Qualifier
 
 @Configuration
-class SystemContextImpl extends SystemContext {
-
-  @Qualifier("override") @Bean  def getSystemService: SystemService = new JswSystemService
+class DefaultSystemContext extends SystemContext {
+  @Bean def getSystemService: SystemService = new DefaultSystemService
 }
