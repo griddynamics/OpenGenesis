@@ -46,5 +46,5 @@ class DefaultSystemService extends SystemService with Logging {
 object DefaultSystemService {
   val RESTART_EXIT_CODE = 0
   val STOP_EXIT_CODE = 201
-  val PROP_WRAPPER_KEY = "wrapper.pid"
+  val PROP_WRAPPER_KEY = "wrapper.key"
 }
