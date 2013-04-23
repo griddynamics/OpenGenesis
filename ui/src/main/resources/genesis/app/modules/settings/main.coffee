@@ -111,8 +111,8 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
           plugins: typeToLink[backend.LinkTypes.Plugin.name]
           databags: typeToLink[backend.LinkTypes.DataBag.name]
           agents: typeToLink[backend.LinkTypes.RemoteAgent.name]
-          restart: _(actionLinks).find((l) => l.href.contains('restart'))
-          stop: _(actionLinks).find((l) => l.href.contains('stop'))
+          restart: _(actionLinks).find((l) => l.href.indexOf('restart') != -1)
+          stop: _(actionLinks).find((l) => l.href.indexOf('stop') != -1)
         )
         @showSettings()
 
