@@ -26,16 +26,16 @@ package com.griddynamics.genesis.rest
 import annotations.LinkTarget
 import links.CollectionWrapper._
 import links.{WebPath, LinkBuilder}
-import links.HrefBuilder._
 import org.springframework.web.bind.annotation._
 import org.springframework.web.bind.annotation.RequestMethod._
 import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.service.RemoteAgentsService
 import javax.validation.Valid
 import org.springframework.stereotype.Controller
-import com.griddynamics.genesis.api.RemoteAgent
+import com.griddynamics.genesis.api.{ConfigPropertyType, RemoteAgent}
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.spring.security.LinkSecurityBean
+import GenesisRestController._
 
 @Controller
 @RequestMapping(value = Array("/rest/agents"))
@@ -77,6 +77,17 @@ class RemoteAgentController extends RestApiExceptionsHandler {
     @ResponseBody @RequestMapping(method = Array(RequestMethod.POST))
     def create(@Valid @RequestBody agent: RemoteAgent) = {
         service.create(agent)
+    }
+
+    @ResponseBody @RequestMapping(value = Array("{id}/settings"), method = Array(RequestMethod.GET))
+    def getConfiguration(@PathVariable(value = "id") key: Int) = {
+      service.getConfiguration(key)
+    }
+
+    @ResponseBody @RequestMapping(value = Array("{id}/settings"), method = Array(RequestMethod.PUT))
+    def putConfiguration(@PathVariable(value = "id") key: Int, request: HttpServletRequest) = {
+      val map = extractParamsMap(request).map({case (key, value) => (key, value.toString)})
+      service.putConfiguration(map, key)
     }
 
     private def find(key: Int) = service.get(key).getOrElse(throw new ResourceNotFoundException("Couldn't find agent"))

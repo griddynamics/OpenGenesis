@@ -30,8 +30,9 @@ import java.util.concurrent.ExecutorService
 import com.griddynamics.genesis.workflow.agent.ExecutorActor
 import com.griddynamics.genesis.agents.status.{StatusResponse, GetStatus}
 import com.griddynamics.genesis.logging.LoggerWrapper
+import com.griddynamics.genesis.agents.configuration.{ConfigurationResponse, ConfigurationApplied, ApplyConfiguration, GetConfiguration}
 
-class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: ExecutorService) extends Actor {
+class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: ExecutorService, configService: SimpleConfigService) extends Actor {
   import context.system
   val log = Logging(system, classOf[FrontActor])
   var running = 0
@@ -55,6 +56,12 @@ class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: Ex
       sender ! StatusResponse(running, total)
     case Terminated(_) =>
       running -= 1
+    case GetConfiguration => {
+      log.debug("Get configuration call")
+      sender ! ConfigurationResponse(configService.getConfig)
+    }
+    case ApplyConfiguration(values) =>
+      sender ! configService.applyConfiguration(values)
     case m => log.debug("Unknown message: " + m)
   }
 

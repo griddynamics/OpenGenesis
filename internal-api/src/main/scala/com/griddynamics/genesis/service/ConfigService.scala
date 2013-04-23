@@ -25,9 +25,11 @@ package com.griddynamics.genesis.service
 
 import com.griddynamics.genesis.api.{ExtendedResult, ConfigProperty}
 
-
-trait ConfigService {
+trait BaseConfigService {
   def get[B](name: String, default: B): B
+}
+
+trait ConfigService extends BaseConfigService {
   def get(name: String) : Option[Any]
   def getPropertyWithMeta(name: String) : Option[ConfigProperty]
   def listSettings(prefix: Option[String]) : Seq[ConfigProperty]

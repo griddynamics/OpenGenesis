@@ -30,6 +30,7 @@
                            http://www.springframework.org/schema/context/spring-context-3.1.xsd">
 
     <context:annotation-config/>
+    <context:property-placeholder/>
     <context:component-scan base-package="com.griddynamics" >
         <context:exclude-filter type="regex" expression = "com.griddynamics.genesis.exec.*"/>
         <context:exclude-filter type="regex" expression = ".*ServerArrayActionsContext.*"/>

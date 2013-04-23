@@ -21,7 +21,27 @@
         </table>
         <div class="form-notice">All fields marked with * are required</div>
         <br class="clear"/>
-
+        <% if (settings) { %>
+    <h4>Agent configuration</h4>
+    <table class="main-table key-value-table settings">
+        <thead>
+        <tr id="table-title">
+            <th style="width:47%">Key</th>
+            <th style="width:48%">Value</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% for (var i = 0, count = settings.length; i < count; i++ ) { var config = settings[i]; %>
+        <tr>
+            <td <% if (config.restartRequired) { %> class="restart-required" title="Changes are applied only after Genesis back-end restart!" <% } %> >
+            <label for="<%= config.name %>" > <%= config.name %></label>
+            </td>
+            <td ><input rel="settings" id="<%= config.name %>" name="<%= config.name %>" <% if ( config.propertyType.name !== "password" ) { %> type="text" <% } else { %> type="password" <% } %> value="<%- config.value %>" class="property-value"></td>
+        </tr>
+        <% } %>
+        </tbody>
+    </table>
+        <% } %>
         <div class="stepbutton" >
             <a href="javascript:void(0);" class="button executable" id="save-agent"> <span> Save </span> </a>
             <a href="javascript:void(0);" class="button cancel" > <span> Cancel </span> </a>

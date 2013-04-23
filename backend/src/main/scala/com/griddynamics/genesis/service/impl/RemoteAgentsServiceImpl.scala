@@ -23,13 +23,29 @@
 
 package com.griddynamics.genesis.service.impl
 
-import com.griddynamics.genesis.service.{AgentsHealthService, RemoteAgentsService}
-import com.griddynamics.genesis.api.{Success, ExtendedResult, RemoteAgent}
+import com.griddynamics.genesis.service.{AgentConfigurationService, AgentsHealthService, RemoteAgentsService}
+import com.griddynamics.genesis.api._
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.repository.RemoteAgentRepository
+import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.api.RemoteAgent
+import com.griddynamics.genesis.api.Failure
+import scala.Some
+import com.typesafe.config.{ConfigObject, ConfigFactory}
+import com.griddynamics.genesis.configuration.GenesisSettingMetadata
+import collection.JavaConversions.mapAsScalaMap
+import com.griddynamics.genesis.validation.{ConfigValueValidator, SettingsValidation}
 
 
-class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: AgentsHealthService) extends RemoteAgentsService {
+class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: AgentsHealthService,
+                              val config: AgentConfigurationService,
+                              override val validators: Map[String, ConfigValueValidator],
+                              override val defaultValidator: ConfigValueValidator) extends RemoteAgentsService with SettingsValidation {
+
+    override val defaults: Map[String, GenesisSettingMetadata] = ConfigFactory.load("genesis-plugin").
+      root.toMap.filterKeys(_.startsWith("genesis.")).mapValues {
+      case co: ConfigObject => new GenesisSettingMetadata(co.toConfig)
+    }
 
     repository.list.map { health.startTracking(_) }
 
@@ -47,6 +63,36 @@ class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: Age
         agent.copy(status = Some(s._1), stats = s._2)
       }
     )
+
+  private def getDefault(key: String, value: String) = {
+    if (value == null || value.isEmpty) {
+      defaults.get(key).map(metadata => metadata.default).getOrElse("")
+    } else value
+  }
+
+  def getConfiguration(key: Int) = repository.get(key).map(
+    agent => {
+      config.getConfiguration(agent).map(response => {
+        response.map({case (k,v) => {
+          val default = defaults.getOrElse(k, GenesisSettingMetadata("NOT-SET!!!"))
+          new ConfigProperty(k, v, false, default.description, default.propType, false)
+        }}).toSeq
+      })
+    }
+  ).getOrElse(Failure(isNotFound = true))
+
+  def putConfiguration(values: Map[String, String], key: Int) = get(key).map(
+    {
+      case agent if (agent.status.isDefined && agent.status.get == AgentStatus.Active) => {
+        val validationResult: ExtendedResult[Any] = values.map({
+          case (name, value) => validate(name, value)
+        }).reduceOption(_ ++ _).getOrElse(Success())
+        validationResult.flatMap( r =>
+          config.applyConfiguration(agent,values).flatMap(_ => Success(agent))
+        )
+      }
+    }
+  ).getOrElse(Failure(isNotFound = true))
 
     @Transactional(readOnly = true)
     def findByTags(tags: Seq[String]): Seq[RemoteAgent] = withStatus(repository.findByTags(tags))
