@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import scala.Array
 import com.griddynamics.genesis.workflow.{Action, ActionToExecutor}
 import java.util.concurrent.Executors
+import com.griddynamics.genesis.agents.configuration.{ConfigurationApplied, ConfigurationResponse}
 
 @Configuration
 class AgentContext {
@@ -36,7 +37,8 @@ class AgentContext {
   // this executor service is used to 'asynchronously' execute SyncActionExecutors,
   // @see com.griddynamics.genesis.workflow.actor.SyncActionExecutorAdapter
   @Bean def executorService = Executors.newFixedThreadPool(5)
-
+  @Autowired var configService: SimpleConfigService = _
   private def getExecutor(action: Action) = execs.find(_.isDefinedAt(action)).map(_(action))
-  def frontActor = new FrontActor(getExecutor, executorService)
+  def frontActor = new FrontActor(getExecutor, executorService, configService)
 }
+

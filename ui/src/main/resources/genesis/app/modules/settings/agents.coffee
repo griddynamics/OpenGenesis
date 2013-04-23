@@ -1,12 +1,13 @@
 define [
   "genesis",
   "backbone",
+  "modules/status",
   "modules/validation",
   "services/backend",
   "utils/poller",
   "jquery",
   "jvalidate"
-], (genesis, Backbone, validation, backend, poller, $) ->
+], (genesis, Backbone, status, validation, backend, poller, $) ->
   'use strict'
 
   Agents = genesis.module()
@@ -21,6 +22,27 @@ define [
     model: Agents.Model
     url: URL
     linkType: backend.LinkTypes.RemoteAgent
+
+  class Agents.SettingsModel extends genesis.Backbone.Model
+    idAttribute: "name"
+
+  class Agents.Settings extends genesis.Backbone.Collection
+    url: ->
+      "rest/agents/" + @agentId + "/settings"
+    agentId: null
+    model: Agents.SettingsModel
+    initialize: (options) ->
+      @agentId = options.id
+
+    parse: (json) ->
+      if json.result?
+        json.result
+      else
+        {}
+
+    save: () ->
+      payload = _.reduce @models, ((map, elem) -> map[elem.get('name')] = elem.get('value'); return map), {}
+      Backbone.sync('update', @, url: @url(), contentType: 'application/json', data: JSON.stringify(payload))
 
 
   class Agents.Views.Main extends Backbone.View
@@ -119,7 +141,12 @@ define [
       "click #save-agent": "save"
 
     initialize: (options) ->
-      @render()
+      @settings = new Agents.Settings(id: @model.get('id'))
+      if (@settings.agentId? && @model.get('status').name == 'Active')
+        $.when(@settings.fetch()).always (settings) =>
+          @render(settings)
+      else
+        @render()
 
     cancel: ->
       @trigger "back"
@@ -135,13 +162,32 @@ define [
       )
       validation.bindValidation agent, @$("#edit-agent"), @status
       agent.save().done =>
-        @trigger "back"
+        if @settings.agentId?
+          @saveSettings(agent)
+        else
+          @trigger "back"
 
-    render: ->
+    saveSettings: (agent) ->
+      agent.fetch().done () =>
+        if (agent.get("status").name == 'Active')
+          data = _.reduce @$('input[rel=settings]'), ((acc, item) -> acc[$(item).attr('name')] = $(item).val(); return acc), {}
+          for name, value of data
+            @settings.get(name).set "value", value
+          validation.bindValidation @settings, @$("#edit-agent"), @status
+          @settings.save().done () =>
+            @trigger "back"
+        else
+          status.StatusPanel.attention("Cannot save agent plugins configuration because agent is not active")
+          @trigger "back"
+
+
+
+    render: (settings) ->
       $.when(genesis.fetchTemplate(@template), @model.fetch()).done (tmpl) =>
         @$el.html tmpl(
           agent: @model.toJSON()
-          canEdit: @model.canEdit() or @collection.canCreate()
+          canEdit: @model.canEdit() or @collection.canCreate(),
+          settings: settings.result if settings?.result?
         )
   Agents
 

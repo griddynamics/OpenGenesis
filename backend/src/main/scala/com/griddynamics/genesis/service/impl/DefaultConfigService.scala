@@ -30,14 +30,14 @@ import collection.JavaConversions.asScalaIterator
 import org.springframework.transaction.annotation.Transactional
 import org.apache.commons.configuration.Configuration
 import com.griddynamics.genesis.configuration.GenesisSettingMetadata
-import com.griddynamics.genesis.validation.ConfigValueValidator
+import com.griddynamics.genesis.validation.{SettingsValidation, ConfigValueValidator}
 
 
 // TODO: add synchronization?
 class DefaultConfigService(val config: Configuration, val writeConfig: Configuration, val configRO: Configuration,
-                           val defaults: Map[String, GenesisSettingMetadata] = Map(),
-                           validators: Map[String, ConfigValueValidator],
-                           defaultValidator: ConfigValueValidator) extends service.ConfigService {
+                           override val defaults: Map[String, GenesisSettingMetadata] = Map(),
+                           override val validators: Map[String, ConfigValueValidator],
+                           override val defaultValidator: ConfigValueValidator) extends service.ConfigService with SettingsValidation {
 
   import service.GenesisSystemProperties._
 
@@ -104,13 +104,6 @@ class DefaultConfigService(val config: Configuration, val writeConfig: Configura
   def restartRequired() = initialConfig.exists {
     case (k, v) => v != config.getProperty(k)
   }
-
-  private def validate(propName: String, value: String): ExtendedResult[Any] =
-    (for {prop <- defaults.get(propName).toSeq
-          (msg, validatorName) <- prop.getValidation
-          validator = validators.getOrElse(validatorName, defaultValidator)} yield
-      validator.validate(propName, value, msg, Map("name" -> validatorName))
-    ).reduceOption(_ ++ _).getOrElse(Success(value))
 
   def validateSettings = config.getKeys.map(k => validate(k, config.getString(k))).reduceOption(_ ++ _)
     .getOrElse(Success(None))

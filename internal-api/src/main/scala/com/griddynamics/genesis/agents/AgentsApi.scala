@@ -26,3 +26,10 @@ package status {
   case class StatusResponse(activeJobs: Int, totalJobs: Int)
   case object GetStatus
 }
+
+package configuration {
+  case object GetConfiguration
+  case class ConfigurationResponse(values: Map[String,String])
+  case class ApplyConfiguration(values: Map[String,String])
+  case class ConfigurationApplied(success: Boolean = true, restart: Boolean)
+}
