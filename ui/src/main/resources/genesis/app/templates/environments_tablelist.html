@@ -37,15 +37,26 @@
             </td>
             <td >
                 <table id="env-attributes">
-                <tr>   <td><%= environment.templateName %></td><td> <%= environment.templateVersion %></td></tr>
+                <tr>
+                    <td>
+                        <span class="ellipsis" title="<%= environment.templateName %>">
+                            <%= environment.templateName %>
+                        </span>
+                    </td>
+                    <td>
+                        <span class="ellipsis" title="<%= environment.templateVersion %>">
+                            <%= environment.templateVersion %>
+                        </span>
+                    </td>
+                </tr>
                 <% _.each(environment.attributes, function(attr, key) { if (attr && attr.value) {%>
                     <tr>
-                     <td title="<%- attr.description %>" >
-                        <%- attr.description %>
-                     </td>
-                    <td title="<%- attr.value %>" >
-                         <%- attr.value %>
-                    </td>
+                        <td>
+                            <span class="ellipsis" title="<%= attr.description %>"><%- attr.description %> </span>
+                        </td>
+                        <td>
+                            <span class="ellipsis" title="<%= attr.value %>"><%- attr.value %></span>
+                        </td>
                     </tr>
                     <%} }); %>
                 </table>
