@@ -1,12 +1,13 @@
 define [
   "genesis",
   "backbone",
+  "modules/status",
   "modules/validation",
   "services/backend",
   "utils/poller",
   "jquery",
   "jvalidate"
-], (genesis, Backbone, validation, backend, poller, $) ->
+], (genesis, Backbone, status, validation, backend, poller, $) ->
   'use strict'
 
   Agents = genesis.module()
@@ -141,7 +142,7 @@ define [
 
     initialize: (options) ->
       @settings = new Agents.Settings(id: @model.get('id'))
-      if (@model.get('status').name == 'Active')
+      if (@settings.agentId? && @model.get('status').name == 'Active')
         $.when(@settings.fetch()).always (settings) =>
           @render(settings)
       else
@@ -161,14 +162,25 @@ define [
       )
       validation.bindValidation agent, @$("#edit-agent"), @status
       agent.save().done =>
-        @saveSettings(agent)
+        if @settings.agentId?
+          @saveSettings(agent)
+        else
+          @trigger "back"
 
     saveSettings: (agent) ->
-      data = _.reduce @$('input[rel=settings]'), ((acc, item) -> acc[$(item).attr('name')] = $(item).val(); return acc), {}
-      for name, value of data
-        @settings.get(name).set "value", value
-      @settings.save().done () ->
-        console.log('saved')
+      agent.fetch().done () =>
+        if (agent.get("status").name == 'Active')
+          data = _.reduce @$('input[rel=settings]'), ((acc, item) -> acc[$(item).attr('name')] = $(item).val(); return acc), {}
+          for name, value of data
+            @settings.get(name).set "value", value
+          validation.bindValidation @settings, @$("#edit-agent"), @status
+          @settings.save().done () =>
+            @trigger "back"
+        else
+          status.StatusPanel.attention("Cannot save agent plugins configuration because agent is not active")
+          @trigger "back"
+
+
 
     render: (settings) ->
       $.when(genesis.fetchTemplate(@template), @model.fetch()).done (tmpl) =>
