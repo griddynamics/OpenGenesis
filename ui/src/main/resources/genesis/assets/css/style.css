@@ -840,9 +840,6 @@ table#env-attributes {
 
 table#env-attributes td {
 	border:none;
-	white-space:nowrap;
-	overflow:hidden;
-	text-overflow:ellipsis;
 	padding: 2px !important;
 }
 
