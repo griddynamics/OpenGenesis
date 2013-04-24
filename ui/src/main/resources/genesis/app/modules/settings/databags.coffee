@@ -58,12 +58,14 @@ define [
         "project"
       else
         "system"
+      @templates = new templates.Collection(scope: @scope)
       @refresh()
 
     refresh: ->
-      @collection.fetch().done =>
+      $.when(@collection.fetch(), @templates.fetch()).done =>
         @listView = new DatabagsList(
           collection: @collection
+          templates: @templates
           el: @el
         )
         @currentView = @listView
@@ -73,7 +75,7 @@ define [
           "system"
         @selectTemplateDialog = new templates.SelectTemplateDialog(
           $el: $("#select-template-dialog"),
-          collection: new templates.Collection(scope: @scope)
+          collection: @templates
         )
         @render()
 
@@ -134,6 +136,9 @@ define [
     events:
       "click .delete-databag": "deleteDatabag"
 
+    initialize: (options) ->
+       @templates = options.templates
+
     deleteDatabag: (e) ->
       bagId = $(e.currentTarget).attr("data-databag-id")
       self = this
@@ -158,6 +163,7 @@ define [
           databags: @collection.toJSON()
           canCreate: @collection.canCreate()
           accessRights: @collection.itemAccessRights()
+          hasTemplates: @templates.length > 0
         )
         @dialog = @dialog or @initConfirmationDialog()
 

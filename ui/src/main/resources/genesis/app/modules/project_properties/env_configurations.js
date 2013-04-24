@@ -74,17 +74,18 @@ function(genesis, Backbone, status, property, access, templates, roles, validati
       _.bind(this.render, this);
       this.projectId = options.projectId;
       this.collection = new EnvConfigs.Collection({projectId: this.projectId});
+      this.templates = new templates.Collection({scope: "environment"});
       this.refresh();
     },
 
     refresh: function() {
       var self = this;
-      this.collection.fetch().done(function() {
-        self.listView = new ConfigsList({collection: self.collection, el: self.el});
+      $.when(this.collection.fetch(), this.templates.fetch()).done(function() {
+        self.listView = new ConfigsList({collection: self.collection, el: self.el, templates: self.templates});
         self.currentView = self.listView;
         self.selectTemplateDialog = new templates.SelectTemplateDialog({
           $el: $("#select-template-dialog"),
-          collection: new templates.Collection({scope: "environment"})
+          collection: self.templates
         });
         self.render();
       });
@@ -166,6 +167,10 @@ function(genesis, Backbone, status, property, access, templates, roles, validati
       "click .delete-config": "deleteConfig"
     },
 
+    initialize: function(options) {
+      this.templates = options.templates;
+    },
+
     deleteConfig: function(e) {
       var id = $(e.currentTarget).attr("data-config-id"),
           self = this;
@@ -198,7 +203,8 @@ function(genesis, Backbone, status, property, access, templates, roles, validati
         self.$el.html(tmpl({
           "configs": self.collection.toJSON(),
           "canCreate": self.collection.canCreate(),
-          "accessRights": self.collection.itemAccessRights()
+          "accessRights": self.collection.itemAccessRights(),
+          hasTemplates: self.templates.length > 0
         }));
 
         self.dialog = self.dialog || self.initConfirmationDialog();
