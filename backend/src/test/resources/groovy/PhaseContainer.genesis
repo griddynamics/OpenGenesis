@@ -21,11 +21,11 @@ template {
                     text = "foo"
                 }
             }
-            /*teststep {
+            teststep {
                 text = "bbb"
                 phase = "final"
                 precedingPhases = ["initial", "second"]
-            } */
+            }
         }
     }
 

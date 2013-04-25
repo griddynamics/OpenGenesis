@@ -31,8 +31,8 @@ class PhaseContainerTest extends AssertionsForJUnit with MockitoSugar with DSLTe
   def testPhaseApplied() {
     val createWorkflow = templateService.findTemplate(0, "PhaseContainer", "0.1", 0).get.createWorkflow
     val steps = createWorkflow.embody(Map())
-    expectResult(3)(steps.regular.size)
-    val firstStep: StepBuilder = steps(0)
-    expectResult("initial")(firstStep.getPhase)
+    expectResult(4)(steps.regular.size)
+    val initialPhase: Option[StepBuilder] = steps.regular.find(_.phase == "initial")
+    assert(initialPhase.isDefined)
   }
 }
