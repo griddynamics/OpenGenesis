@@ -40,7 +40,6 @@ class PhaseTransformer extends ExpressionTransformer with Logging{
        val phasesCalls = new PhasesSearch()
        phaseCall.visit(phasesCalls)
        log.debug(s"Found ${phasesCalls.found} of phases container at examined expression")
-       log.debug(s"Collected: ${phasesCalls.phases.toList}")
        if (phasesCalls.found == 0) {
          expression
        } else {
