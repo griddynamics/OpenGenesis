@@ -1,0 +1,40 @@
+package groovy
+template {
+    name("PhaseContainer")
+    version("0.1")
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+
+    workflow("create") {
+        steps {
+            phase(name: "initial") {
+                teststep {
+                    text = "test input"
+                }
+                teststep {
+                    text = "another input"
+                }
+            }
+            phase(name: "second", after: ["initial"]) {
+                teststep {
+                    text = "foo"
+                }
+            }
+            teststep {
+                text = "bbb"
+                phase = "final"
+                precedingPhases = ["initial", "second"]
+            }
+        }
+    }
+
+    workflow("destroy") {
+        steps {
+            teststep {
+                phase = "undeply"
+                text = "destroy"
+            }
+        }
+    }
+}
