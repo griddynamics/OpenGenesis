@@ -10,6 +10,8 @@ import java.util
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConversions._
 import org.codehaus.groovy.syntax.Token
+import PartialFunction._
+
 
 @GroovyASTTransformation(phase = CompilePhase.SEMANTIC_ANALYSIS)
 class PhaseContainerASTTransformation extends ASTTransformation with Logging{
@@ -23,7 +25,6 @@ class PhaseContainerASTTransformation extends ASTTransformation with Logging{
 class PhaseEraser extends CodeVisitorSupport with Logging {
    override def visitMethodCallExpression(call: MethodCallExpression) {
      if (call.getMethodAsString == "steps") {
-       log.trace("Found steps call")
        val expr = call.getArguments.transformExpression(new PhaseTransformer)
        call.setArguments(expr)
      } else {
@@ -33,28 +34,21 @@ class PhaseEraser extends CodeVisitorSupport with Logging {
 }
 
 class PhaseTransformer extends ExpressionTransformer with Logging{
-  def transform(expression: Expression): Expression = {
-    if (expression.isInstanceOf[ClosureExpression]) {
-      val closure: ClosureExpression = expression.asInstanceOf[ClosureExpression]
-      val phaseCall = closure.getCode
-       val phasesCalls = new PhasesSearch()
-       phaseCall.visit(phasesCalls)
-       if (phasesCalls.phases.isEmpty) {
-         expression
-       } else {
-         val statements = phasesCalls.phases.toList.collect({case p => p.toStatements}).flatten
-         closure.setCode(new BlockStatement((phasesCalls.other ++ statements).toArray, closure.getVariableScope))
-         closure
-       }
-    } else {
-      expression
+  def transform(expression: Expression): Expression = expression match {
+    case closure: ClosureExpression => {
+      val collector = new PhasesCollector()
+      closure.getCode.visit(collector)
+      val unwrapped = collector.phases.toList.collect({case p => p.toStatements}).flatten
+      closure.setCode(new BlockStatement((collector.plainSteps ++ unwrapped).toArray, closure.getVariableScope))
+      closure
     }
+    case x => x
   }
 }
 
-class PhasesSearch extends CodeVisitorSupport with Logging {
+class PhasesCollector extends CodeVisitorSupport with Logging {
   val phases: ListBuffer[PhaseDefinition] = ListBuffer[PhaseDefinition]()
-  val other: ListBuffer[Statement] = ListBuffer[Statement]()
+  val plainSteps: ListBuffer[Statement] = ListBuffer[Statement]()
   override def visitMethodCallExpression(call: MethodCallExpression) {
     if (call.getMethodAsString == "phase") {
       val arguments: Expression = call.getArguments
@@ -64,7 +58,7 @@ class PhasesSearch extends CodeVisitorSupport with Logging {
       }
       phaseDef.map(phases.append(_))
     } else {
-      other.append(new ExpressionStatement(call))
+      plainSteps.append(new ExpressionStatement(call))
     }
   }
 
@@ -72,9 +66,11 @@ class PhasesSearch extends CodeVisitorSupport with Logging {
     def hasName(name: String, expr: Expression) = {
       expr.isInstanceOf[ConstantExpression] && expr.asInstanceOf[ConstantExpression].getValue == name
     }
+
     def hasType(klass: Class[_], expr: Expression) = {
       expr.getClass == klass
     }
+
     def readPhaseArguments(expr: MapExpression) : Option[PhaseDefinition] = {
        if (expr.getMapEntryExpressions.size() > 0) {
          import scala.collection.JavaConversions._
@@ -112,40 +108,39 @@ class PhasesSearch extends CodeVisitorSupport with Logging {
 
 case class PhaseDefinition(name: Expression, preceding: List[Expression] = List(), steps: List[Statement] = List()) extends ExpressionTransformer with Logging {
 
-  def transform(expression: Expression): Expression = {
-    expression match {
-      case arguments: ArgumentListExpression => {
-        val expressions: util.List[Expression] = arguments.getExpressions
-        if (! expressions.isEmpty) {
-          val closure: ClosureExpression = expressions.get(0).asInstanceOf[ClosureExpression]
-          val stepCode = closure.getCode
-          stepCode match {
-            case block: BlockStatement => {
-              val nameStatement: BinaryExpression = new BinaryExpression(new VariableExpression("phase"),
-                PhaseDefinition.ASSIGN, name)
-              block.addStatement(new ExpressionStatement(nameStatement))
-              if (! preceding.isEmpty) {
-                val precedingStatement = new BinaryExpression(new VariableExpression("precedingPhases"),
-                  PhaseDefinition.ASSIGN, new ListExpression(preceding))
-                block.addStatement(new ExpressionStatement(precedingStatement))
-              }
-              closure.setCode(block)
+  val expressionTransformer: PartialFunction[Expression, Expression] = {
+    case arguments: ArgumentListExpression => {
+      val expressions: util.List[Expression] = arguments.getExpressions
+      if (! expressions.isEmpty) {
+        val closure: ClosureExpression = expressions.get(0).asInstanceOf[ClosureExpression]
+        val stepCode = closure.getCode
+        stepCode match {
+          case block: BlockStatement => {
+            val nameStatement: BinaryExpression = new BinaryExpression(new VariableExpression("phase"),
+              PhaseDefinition.ASSIGN, name)
+            block.addStatement(new ExpressionStatement(nameStatement))
+            if (! preceding.isEmpty) {
+              val precedingStatement = new BinaryExpression(new VariableExpression("precedingPhases"),
+                PhaseDefinition.ASSIGN, new ListExpression(preceding))
+              block.addStatement(new ExpressionStatement(precedingStatement))
             }
-            case _ => println("No block found")
+            closure.setCode(block)
           }
+          case _ => log.trace("No block found in closure, so don't append phases-related assignments")
         }
-        arguments
       }
-      case _ => log.trace(s"Will not transform ${expression}") ; expression
-  }
+      arguments
+    }
   }
 
-  def toStatements: List[Statement] = steps.map(step => {
-    val statement: ExpressionStatement = step.asInstanceOf[ExpressionStatement]
-    val transformExpression: Expression = statement.getExpression.transformExpression(this)
-    log.trace(s"Transformed expression: ${transformExpression}")
+  def transform(expression: Expression): Expression =
+    condOpt(expression)(expressionTransformer).getOrElse(expression)
+
+  def toStatements: List[Statement] = steps.map({case step: ExpressionStatement => {
+    val transformExpression: Expression = step.getExpression.transformExpression(this)
+    log.trace(s"Transformed expression: $transformExpression")
     new ExpressionStatement(transformExpression)
-  })
+  }})
 }
 
 object PhaseDefinition {
