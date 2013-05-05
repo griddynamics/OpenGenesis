@@ -341,6 +341,8 @@ case class Link(href: String, rel: String, `type`: Option[String], methods: Arra
   def remove(method: String) = new Link(href, rel, `type`, methods.filter(_ != method))
 }
 
+case class Attachment(id: Int, description: String, attachmentType: String, stepId: Option[Int], actionUUID: Option[String])
+
 object Links {
   def merge(links: Array[Link]) = {
     val groupedByHref = links.groupBy(_.href)

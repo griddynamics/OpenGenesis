@@ -65,7 +65,8 @@ class DefaultWorkflowContext extends WorkflowContext {
         templateService = templateServiceContext.templateService,
         executorService = executorService,
         stepCoordinatorFactory = stepCoordinatorFactory, actorSystem = actorSystem,
-        remoteAgentService = remoteAgentService)
+        remoteAgentService = remoteAgentService,
+        attachmentService = storeServiceContext.attachmentService)
     }
 
     // this executor service is used to 'asynchronously' execute SyncActionExecutors,

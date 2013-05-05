@@ -36,7 +36,7 @@ import com.griddynamics.genesis.http.TunnelFilter
 import org.springframework.web.bind.annotation._
 import org.springframework.web.bind.annotation.RequestMethod._
 import org.springframework.beans.factory.annotation.{Autowired, Value}
-import com.griddynamics.genesis.service.{EnvironmentConfigurationService, EnvironmentAccessService}
+import com.griddynamics.genesis.service.{AttachmentService, EnvironmentConfigurationService, EnvironmentAccessService}
 import org.springframework.security.access.prepost.PostFilter
 import org.springframework.http.{HttpHeaders, MediaType}
 import java.util.{Date, TimeZone, Locale}
@@ -63,6 +63,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @Autowired implicit var linkSecurity: LinkSecurityBean = _
   @Autowired var envConfigService: EnvironmentConfigurationService = _
   @Autowired var schedulingService: EnvironmentJobService = _
+  @Autowired var attachmentService: AttachmentService = _
 
   @Value("${genesis.system.server.mode:frontend}")
   var mode = ""
@@ -374,6 +375,14 @@ class EnvironmentsController extends RestApiExceptionsHandler {
                      request: HttpServletRequest): Seq[ActionTracking] = {
     validateStepId(stepId, envId)
     genesisService.getStepLog(stepId)
+  }
+
+  @RequestMapping(value = Array("{envId}/steps/{stepId}/actions/{uuid}/attachments"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  def getActionAttachments(@PathVariable("projectId") projectId: Int,
+  @PathVariable("envId") envId: Int, @PathVariable("stepId") stepId: Int, @PathVariable("uuid") actionUUID: String, request: HttpServletRequest): Seq[Attachment] = {
+    validateStepId(stepId, envId)
+    attachmentService.findForAction(actionUUID)
   }
 
   @RequestMapping(value = Array("{envId}"), method = Array(RequestMethod.PUT))

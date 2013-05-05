@@ -24,26 +24,37 @@ package com.griddynamics.genesis.core
 
 import com.griddynamics.genesis.workflow._
 import com.griddynamics.genesis.plugin._
-import com.griddynamics.genesis.service.StoreService
-import com.griddynamics.genesis.model.{ActionTracking, Workflow}
+import com.griddynamics.genesis.service.{AttachmentService, StoreService}
+import com.griddynamics.genesis.model.{Attachment, ActionTracking, Workflow}
 import com.griddynamics.genesis.model.WorkflowStepStatus._
 import scala.Some
 import com.griddynamics.genesis.plugin.GenesisStepResult
 import com.griddynamics.genesis.plugin.GenesisStep
+import PartialFunction._
 
 
 class GenesisStepCoordinator(val step: GenesisStep,
                              workflow : Workflow,
                              stepCoordinator: StepCoordinator,
-                             storeService : StoreService) extends StepCoordinator {
+                             storeService : StoreService,
+                             attachmentService: AttachmentService) extends StepCoordinator {
     def onStepStart() = {
         setStepStatus(Executing)
         trackStart(stepCoordinator.onStepStart())
     }
 
     def onActionFinish(result: ActionResult) = {
-        storeService.endAction(result.action.uuid, Some(result.desc), result.outcome)
-        trackStart(stepCoordinator.onActionFinish(result))
+       storeService.endAction(result.action.uuid, Some(result.desc), result.outcome)
+       val attachmentProc: PartialFunction[ActionResult, Boolean] = {
+         case attachment: ResultWithAttachment => {
+           attachment.attachments.foreach(a => {
+             attachmentService.insert(new Attachment(Some(result.action.uuid), None, a.getType, a.getName), a.getInputStream)
+           })
+           true
+         }
+       }
+       cond(result)(attachmentProc) //possible it's better to do it in asynchronous manner
+       trackStart(stepCoordinator.onActionFinish(result))
     }
 
     def getStepResult() = {

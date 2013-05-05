@@ -75,7 +75,9 @@ class JdbcStoreServiceContext extends StoreServiceContext {
     @Bean def serversLoanService: service.ServersLoanService = new ServersLoanServiceImpl(storeService, credentialsRepository)
     @Bean def databagRepository: repository.DatabagRepository = new repository.impl.DatabagRepository
     @Bean def databagService: service.DataBagService = new impl.DataBagServiceImpl(databagRepository, databagTemplateRepository, validators.toMap)
-
+    @Bean def attachmentContentRepository: repository.AttachmentContentRepository = new repository.impl.AttachmentContentRepositoryDBImpl
+    @Bean def attachmentRepository: repository.AttachmentRepository = new repository.impl.AttachmentRepositoryImpl
+    @Bean def attachmentService: service.AttachmentService = new service.impl.AttachmentServiceImpl(attachmentRepository, attachmentContentRepository)
 }
 
 class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager,
