@@ -66,6 +66,8 @@ trait GenesisSchema extends Schema {
     val failedJobDetails = table[FailedJobDetails]("failed_job_details")
 
     val genesisVersion = table[GenesisVersion]("genesis_version")
+    val attachments = table[Attachment]("attachments")
+    val attachmentContent = table[DBAttachmentContent]("attachment_content")
 }
 
 trait GenesisSchemaPrimitive extends GenesisSchema {
@@ -104,6 +106,9 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
 
     val configToAttrs = oneToManyRelation(configuration, configAttrs).via((config, attr) => config.id === attr.entityId)
     configToAttrs.foreignKeyDeclaration.constrainReference(onDelete cascade)
+
+    val contentToAttachment = oneToManyRelation(attachments, attachmentContent).via((master, slave) => master.id === slave.attachmentId)
+    contentToAttachment.foreignKeyDeclaration.constrainReference(onDelete cascade)
 
     on(vmAttrs)(attr => declare(
         attr.value is (dbType("text"))
@@ -165,6 +170,11 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
         tracking.actionUUID is dbType("varchar(36)"),
         columns(tracking.workflowStepId) are (indexed("step_idx")),
         columns(tracking.actionUUID) are (indexed("action_uuid_idx"))
+    ))
+
+    on(attachments)(attachment => declare(
+       attachment.actionUUID is dbType("varchar(36)"),
+       columns(attachment.actionUUID) are (indexed("attachment_action_idx"))
     ))
 
     on(serverArrays)(array => declare (

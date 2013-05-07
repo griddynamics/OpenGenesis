@@ -26,7 +26,7 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.util.IoUtil
 import org.springframework.core.convert.support.DefaultConversionService
-import com.griddynamics.genesis.service.Builders
+import com.griddynamics.genesis.service.{AttachmentService, Builders}
 import com.griddynamics.genesis.template.ListVarDSFactory
 import org.junit.Test
 import com.griddynamics.genesis.core.{RegularWorkflow, GenesisFlowCoordinator}
@@ -77,7 +77,7 @@ class EnvConfigTest extends AssertionsForJUnit with MockitoSugar with DSLTestUni
   private lazy val template = templateService.findTemplate(0, "EnvConfigTest", "0.1", 1).get
 
   private def flowCoordinator(stepBuilders: Builders) = new GenesisFlowCoordinator(0, 0, stepBuilders.regular,
-    storeService, stepCoordinatorFactory, stepBuilders.onError) with RegularWorkflow
+    storeService, mock[AttachmentService], stepCoordinatorFactory, stepBuilders.onError) with RegularWorkflow
 
   @Test def envConfigAccessInStep() {
     val workflow = template.createWorkflow

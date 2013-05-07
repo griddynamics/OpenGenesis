@@ -99,6 +99,18 @@ function (genesis, Backbone, status, $) {
         json.finished = new Date(json.finishedTimestamp);
       }
       return json;
+    },
+
+    isFinished: function() {
+      return this.get('finished');
+    },
+
+    attachments: function() {
+      if (this.get('finished')) {
+        return new AttachmentCollection(this.get("projectId"), this.get("envId"), this.get("stepId"), this.get("uuid"));
+      } else {
+        return [];
+      }
     }
   });
 
@@ -114,6 +126,25 @@ function (genesis, Backbone, status, $) {
     url: function() {
       return "rest/projects/" + this.projectId + "/envs/" + this.envId + "/steps/" + this.stepId + "/actions";
     }
+  });
+
+  var AttachmentModel = Backbone.Model.extend({
+
+  });
+
+  var AttachmentCollection = Backbone.Collection.extend({
+     model: AttachmentModel,
+
+     initialize: function(options) {
+       this.projectId = options.projectId;
+       this.envId = options.envId;
+       this.stepId = options.stepId;
+       this.actionUUID = options.uuid;
+     },
+
+     url: function() {
+       return "rest/projects/" + this.projectId + "/envs/" + this.envId + "/steps/" + this.stepId + "/actions" + this.actionUUID + "/attachments";
+     }
   });
 
   var StepLogView = Backbone.View.extend({
