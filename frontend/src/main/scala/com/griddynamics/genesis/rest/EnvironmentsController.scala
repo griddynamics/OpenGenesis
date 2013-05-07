@@ -396,7 +396,6 @@ class EnvironmentsController extends RestApiExceptionsHandler {
        val out = response.getOutputStream
        if (bytes.isEmpty) {
          response.setStatus(HttpServletResponse.SC_NO_CONTENT)
-         out.flush()
        } else {
          response.setHeader("Content-type", att.attachmentType)
          response.setHeader("Content-length", bytes.length.toString)
