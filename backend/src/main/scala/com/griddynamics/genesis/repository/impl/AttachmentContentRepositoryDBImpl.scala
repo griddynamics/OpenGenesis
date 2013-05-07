@@ -12,7 +12,6 @@ class AttachmentContentRepositoryDBImpl extends AttachmentContentRepository {
   def saveAttachmentContent(attachment: Attachment, content: InputStream) {
       Closeables.using(content) { is =>
         val bytes = Stream.continually(is.read()).takeWhile(-1 !=).map(_.toByte).toArray
-        is.close()
         GenesisSchema.attachmentContent.insert(new DBAttachmentContent(bytes, attachment.id))
       }
   }

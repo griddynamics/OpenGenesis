@@ -35,10 +35,8 @@ import com.griddynamics.genesis.model.WorkflowStatus._
 import com.griddynamics.genesis.util.Logging
 import java.sql.Timestamp
 import com.griddynamics.genesis.configuration.WorkflowConfig
-import scala.Some
 import com.griddynamics.genesis.configuration.WorkflowConfig
 import com.griddynamics.genesis.plugin.Cancel
-import scala.Tuple2
 import com.griddynamics.genesis.service.Builders
 
 trait RequestDispatcher {
