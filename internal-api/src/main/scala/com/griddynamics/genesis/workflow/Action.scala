@@ -23,7 +23,8 @@
 package com.griddynamics.genesis.workflow
 
 import java.util
-import com.griddynamics.genesis.model.ActionTrackingStatus
+import com.griddynamics.genesis.model.{Attachment, ActionTrackingStatus}
+import java.io.{FileInputStream, File, InputStream}
 
 /* Marker trait for any particular action */
 trait Action {
@@ -52,6 +53,26 @@ trait ActionFailed extends ActionResult {
 
 trait ActionInterrupted extends ActionResult {
     override def outcome = ActionTrackingStatus.Interrupted
+}
+
+trait ResultWithAttachment {
+  def attachments: Seq[Attachable]
+}
+
+trait Attachable {
+  def getInputStream: InputStream
+  def getName: String
+  def getType: String
+}
+
+class FileAttachable(file: File, `type`: String = "text/plain" ) extends Attachable {
+  def getInputStream: InputStream = new FileInputStream(file)
+  def getName = file.getName
+  def getType = `type`
+}
+
+object FileAttachable {
+  def apply(s: String) = new FileAttachable(new File(s))
 }
 
 

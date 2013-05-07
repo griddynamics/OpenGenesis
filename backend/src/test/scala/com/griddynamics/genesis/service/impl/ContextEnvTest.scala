@@ -26,7 +26,7 @@ import org.scalatest.junit.AssertionsForJUnit
 import org.scalatest.mock.MockitoSugar
 import com.griddynamics.genesis.util.IoUtil
 import org.springframework.core.convert.support.DefaultConversionService
-import com.griddynamics.genesis.service.Builders
+import com.griddynamics.genesis.service.{AttachmentService, Builders}
 import com.griddynamics.genesis.template.ListVarDSFactory
 import org.junit.Test
 import com.griddynamics.genesis.core.{RegularWorkflow, GenesisFlowCoordinator}
@@ -56,6 +56,8 @@ class ContextEnvTest extends AssertionsForJUnit with MockitoSugar with DSLTestUn
     storeService
   }
 
+  val attachmentService = mock[AttachmentService]
+
   when(configService.getDefault(Matchers.any())).thenReturn(Some(new api.Configuration(Some(0), "", 0, None, Map())))
   when(configService.get(Matchers.any(), Matchers.any())).thenReturn(Some(new api.Configuration(Some(0), "", 0, None, Map())))
 
@@ -73,7 +75,7 @@ class ContextEnvTest extends AssertionsForJUnit with MockitoSugar with DSLTestUn
   private lazy val template = templateService.findTemplate(0, "ContextWithEnv", "0.1", 1).get
 
   private def flowCoordinator(stepBuilders: Builders) = new GenesisFlowCoordinator(0, 0, stepBuilders.regular,
-    storeService, stepCoordinatorFactory, stepBuilders.onError) with RegularWorkflow
+    storeService, attachmentService, stepCoordinatorFactory, stepBuilders.onError) with RegularWorkflow
 
   @Test def contextEnvAccess() {
     flowCoordinator(template.createWorkflow.embody(Map())).onFlowStart() match {

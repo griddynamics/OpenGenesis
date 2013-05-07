@@ -37,6 +37,7 @@ import com.griddynamics.genesis.workflow.{Step, StepResult}
 import com.griddynamics.genesis.plugin.{GenesisStep, GenesisStepResult, StepCoordinatorFactory}
 import com.griddynamics.genesis.api
 import com.griddynamics.genesis.cache.NullCacheManager
+import com.griddynamics.genesis.service.AttachmentService
 
 class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar  with DSLTestUniverse {
 
@@ -65,7 +66,7 @@ class GroovyTemplateContextTest extends AssertionsForJUnit with MockitoSugar  wi
     val stepBuilders = templateService.findTemplate(0, "TestEnv", "0.1", 0).get.createWorkflow.embody(Map())
     stepBuilders.regular.foreach { _.id = IdGen.generate }
 
-    val flowCoordinator = new GenesisFlowCoordinator(0, 0, stepBuilders.regular, storeService, stepCoordinatorFactory, stepBuilders.onError) with RegularWorkflow
+    val flowCoordinator = new GenesisFlowCoordinator(0, 0, stepBuilders.regular, storeService, mock[AttachmentService], stepCoordinatorFactory, stepBuilders.onError) with RegularWorkflow
 
     flowCoordinator.onFlowStart()
 

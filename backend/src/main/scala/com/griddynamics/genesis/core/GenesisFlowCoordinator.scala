@@ -25,7 +25,7 @@ package com.griddynamics.genesis.core
 import scala.collection.mutable
 import com.griddynamics.genesis.plugin._
 import com.griddynamics.genesis.workflow._
-import com.griddynamics.genesis.service.StoreService
+import com.griddynamics.genesis.service.{AttachmentService, StoreService}
 import com.griddynamics.genesis.model._
 import com.griddynamics.genesis.model.EnvStatus._
 import com.griddynamics.genesis.common.Mistake
@@ -46,15 +46,17 @@ abstract class GenesisFlowCoordinator(envId: Int,
                                       projectId: Int,
                                       flowSteps: Seq[StepBuilder],
                                       storeService: StoreService,
+                                      attachmentService: AttachmentService,
                                       stepCoordinatorFactory: StepCoordinatorFactory,
                                       rescueSteps: Seq[StepBuilder] = Seq())
-    extends GenesisFlowCoordinatorBase(envId, projectId, flowSteps, storeService, stepCoordinatorFactory, rescueSteps)
+    extends GenesisFlowCoordinatorBase(envId, projectId, flowSteps, storeService, attachmentService, stepCoordinatorFactory, rescueSteps)
     with StepIgnore with StepRestart with StepExecutionContextHolder
 
 abstract class GenesisFlowCoordinatorBase(val envId: Int,
                                           val projectId: Int,
                                           val flowSteps: Seq[StepBuilder],
                                           val storeService: StoreService,
+                                          val attachmentService: AttachmentService,
                                           val stepCoordinatorFactory: StepCoordinatorFactory,
                                           val rescueSteps: Seq[StepBuilder] = Seq())
     extends FlowCoordinator with Logging {
@@ -151,7 +153,7 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
         safe {
             val context = createStepExecutionContext(s)
             val stepCoordinator = stepCoordinatorFactory.apply(s.actualStep, context)
-            new GenesisStepCoordinator(s, workflow, stepCoordinator, storeService)
+            new GenesisStepCoordinator(s, workflow, stepCoordinator, storeService, attachmentService)
         } {
             error => storeService.updateStepDetailsAndStatus(s.id, Some(error.getMessage), WorkflowStepStatus.Canceled)
         }
