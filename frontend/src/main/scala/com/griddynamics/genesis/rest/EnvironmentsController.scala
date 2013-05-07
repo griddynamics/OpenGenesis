@@ -399,7 +399,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
        } else {
          response.setHeader("Content-type", att.attachmentType)
          response.setHeader("Content-length", bytes.length.toString)
-         response.setHeader("Content-Disposition", s"attachment;filename=\"${att.description}\"")
+         response.setHeader("Content-Disposition", "attachment;filename=\"" + att.description + "\"")
          out.write(bytes)
        }
        out.flush()
