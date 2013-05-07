@@ -385,6 +385,29 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     attachmentService.findForAction(actionUUID)
   }
 
+
+  @RequestMapping(value = Array("{envId}/steps/{stepId}/actions/{uuid}/attachments/{id}"), method = Array(RequestMethod.GET))
+  def downloadAttachment(@PathVariable("projectId") projectId: Int,
+                           @PathVariable("envId") envId: Int, @PathVariable("stepId") stepId: Int,
+                           @PathVariable("uuid") actionUUID: String, @PathVariable("id") attachmentId: Int,
+                           request: HttpServletRequest, response: HttpServletResponse) {
+     attachmentService.get(attachmentId).map(att => {
+       val bytes = attachmentService.getContent(att)
+       val out = response.getOutputStream
+       if (bytes.isEmpty) {
+         response.setStatus(HttpServletResponse.SC_NO_CONTENT)
+         out.flush()
+       } else {
+         response.setHeader("Content-type", att.attachmentType)
+         response.setHeader("Content-length", bytes.length.toString)
+         response.setHeader("Content-Disposition", s"attachment;filename=\"${att.description}\"")
+         out.write(bytes)
+       }
+       out.flush()
+       out.close()
+     }).orElse(throw new ResourceNotFoundException("No attachment found for specified arguments"))
+  }
+
   @RequestMapping(value = Array("{envId}"), method = Array(RequestMethod.PUT))
   @ResponseBody
   def updateEnv(@PathVariable("projectId") projectId: Int, @PathVariable("envId") envId: Int, request: HttpServletRequest) = {
