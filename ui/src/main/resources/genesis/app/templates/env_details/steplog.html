@@ -17,7 +17,18 @@
       <td class="first" style="width: <%= nameWidth %> " ><%= action.name %></td>
       <td class="phase"></td>
       <td class="status" ><%- action.status || "" %></td>
-      <td class="details details-cell"><%- action.description || "" %></td>
+      <td class="details details-cell">
+          <%- action.description || "" %>
+          <% if (attachments[action.uuid]) { var attcol = attachments[action.uuid]; %>
+          <ul class="attachments-list">
+              <% for (var j = 0, cnt = attcol.length; j < cnt; j++) { var att = attcol[j]; %>
+                  <% if (att.links && att.links.length > 0) { %>
+                  <li><a href="<%- att.links[0].href %>"><%- att.item.description %></a></li>
+                  <% } %>
+              <% } %>
+          </ul>
+          <% } %>
+      </td>
       <td class="started">
           <% var time = utils.formatTime(action.started); %>
           <span class="time ellipsis" title="<%= time %>"><%= time %></span>

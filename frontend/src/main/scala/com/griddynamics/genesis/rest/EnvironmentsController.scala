@@ -380,9 +380,9 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @RequestMapping(value = Array("{envId}/steps/{stepId}/actions/{uuid}/attachments"), method = Array(RequestMethod.GET))
   @ResponseBody
   def getActionAttachments(@PathVariable("projectId") projectId: Int,
-  @PathVariable("envId") envId: Int, @PathVariable("stepId") stepId: Int, @PathVariable("uuid") actionUUID: String, request: HttpServletRequest): Seq[Attachment] = {
+  @PathVariable("envId") envId: Int, @PathVariable("stepId") stepId: Int, @PathVariable("uuid") actionUUID: String, request: HttpServletRequest): Seq[ItemWrapper[Attachment]] = {
     validateStepId(stepId, envId)
-    attachmentService.findForAction(actionUUID)
+    attachmentService.findForAction(actionUUID).map(att => att.withLinks(LinkBuilder(WebPath(request) / att.id, DOWNLOAD, att.getClass, GET)))
   }
 
 

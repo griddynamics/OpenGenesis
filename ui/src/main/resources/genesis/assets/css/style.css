@@ -2067,3 +2067,13 @@ table.settings td.restart-required {
     margin: 3px 0;
 }
 
+ul.attachments-list {
+    list-style: none;
+    margin: 5px 0;
+    padding-left: 0;
+}
+
+.attachments-list li {
+    margin-left: 0;
+}
+
