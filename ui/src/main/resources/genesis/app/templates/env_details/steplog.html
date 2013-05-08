@@ -9,7 +9,7 @@
     var now = new Date();
 %>
 <% if (actions.length > 0) { %>
-<table class="slide-subtable intab" style="table-layout: fixed; width: 100.1%; margin-left: -1px">
+<table class="slide-subtable intab action-log" style="table-layout: fixed; width: 100.1%; margin-left: -1px">
     <tbody>
     <% for (var i = 0, count = actions.length; i < count; i++) { var action = actions[i]; %>
     <tr class="<%= stepStatusClass(action.status) %>">

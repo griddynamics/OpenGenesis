@@ -1047,6 +1047,9 @@ td.subtable{
     border:none;
 }
 
+.workflow-history td {
+    vertical-align: top;
+}
 
 .worflow-history tr.step-actions:hover {
     background: #fff;
@@ -2075,5 +2078,9 @@ ul.attachments-list {
 
 .attachments-list li {
     margin-left: 0;
+}
+
+.attachments-list a {
+    text-decoration: underline;
 }
 
