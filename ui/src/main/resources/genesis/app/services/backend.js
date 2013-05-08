@@ -300,6 +300,17 @@ function(genesis, $) {
     }
   };
 
+  backend.Attachments = {
+    fetch: function(options) {
+      return $.ajax({
+        url: "rest/projects/" + options.projectId + "/envs/" + options.envId + "/steps/" + options.stepId + "/actions/" + options.actionUUID + "/attachments",
+        dataType: "json",
+        type: "GET",
+        timeout: DEFAULT_TIMEOUT
+      });
+    }
+  };
+
   function _type(name) {
     var type = "application/vnd.griddynamics.genesis." + name + "+json";
     this.name = type;

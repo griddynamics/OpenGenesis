@@ -2,12 +2,13 @@ define([
   "genesis",
   "backbone",
   "modules/status",
+  "services/backend",
   "jquery",
   "jqueryui",
   "jvalidate"
 ],
 
-function (genesis, Backbone, status, $) {
+function (genesis, Backbone, status, backend, $) {
   var EnvironmentHistory = genesis.module();
 
   /**
@@ -128,25 +129,6 @@ function (genesis, Backbone, status, $) {
     }
   });
 
-  var AttachmentModel = Backbone.Model.extend({
-
-  });
-
-  var AttachmentCollection = Backbone.Collection.extend({
-     model: AttachmentModel,
-
-     initialize: function(options) {
-       this.projectId = options.projectId;
-       this.envId = options.envId;
-       this.stepId = options.stepId;
-       this.actionUUID = options.uuid;
-     },
-
-     url: function() {
-       return "rest/projects/" + this.projectId + "/envs/" + this.envId + "/steps/" + this.stepId + "/actions" + this.actionUUID + "/attachments";
-     }
-  });
-
   var StepLogView = Backbone.View.extend({
     template: "app/templates/env_details/steplog.html",
 
@@ -165,17 +147,39 @@ function (genesis, Backbone, status, $) {
       }
     },
 
-    render: function() {
+    attachments: function() {
       var self = this;
-      $.when(genesis.fetchTemplate(this.template)).done(function(tmpl){
-        self.$el.html(tmpl({
-          actions: self.collection.toJSON(),
-          isStepFinished: self.isStepFinished,
+      var attachmentReqs = _.map(_.filter(this.collection.toJSON(), function(action) {
+        return action.finished;
+      }), function(x) {
+        var id = x.uuid;
+        var dfd = $.Deferred();
+        var query = backend.Attachments.fetch({
           projectId: self.collection.projectId,
           envId: self.collection.envId,
-          utils: genesis.utils
-        }));
+          stepId: self.collection.stepId,
+          actionUUID: id
+        }).success(function(data){dfd.resolve(data)}).fail(function(){dfd.resolve([])});
+        return dfd;
       });
+      return attachmentReqs;
+    },
+
+    render: function() {
+      var self = this;
+      var promises = this.attachments();
+      $.when.apply($, promises).then(function() {
+        var results = _.chain(arguments).flatten().groupBy(function(obj) {return obj.item.actionUUID; }).value();
+        $.when(genesis.fetchTemplate(self.template)).done(function(tmpl){
+          self.$el.html(tmpl({
+            actions: self.collection.toJSON(),
+            isStepFinished: self.isStepFinished,
+            projectId: self.collection.projectId,
+            attachments: results,
+            envId: self.collection.envId,
+            utils: genesis.utils
+          }));
+        })});
     }
   });
 
@@ -190,7 +194,6 @@ function (genesis, Backbone, status, $) {
 
     initialize: function(options) {
       var opt = options || {};
-
       this.actionViews = {};
       this.expanded = opt.expanded || false;
     },
