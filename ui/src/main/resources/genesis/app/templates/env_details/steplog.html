@@ -11,7 +11,7 @@
 <% if (actions.length > 0) { %>
 <table class="slide-subtable intab" style="table-layout: fixed; width: 100.1%; margin-left: -1px">
     <tbody>
-    <% for (var i = 0, count = actions.length; i < count; i++) { var action = actions[i]; console.log(action); %>
+    <% for (var i = 0, count = actions.length; i < count; i++) { var action = actions[i]; %>
     <tr class="<%= stepStatusClass(action.status) %>">
       <% var nameWidth = $.browser.mozilla ? '14.1%' : '15%' %>
       <td class="first" style="width: <%= nameWidth %> " ><%= action.name %></td>

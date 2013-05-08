@@ -170,7 +170,6 @@ function (genesis, Backbone, status, backend, $) {
       var promises = this.attachments();
       $.when.apply($, promises).then(function() {
         var results = _.chain(arguments).flatten().groupBy(function(obj) {return obj.item.actionUUID; }).value();
-        console.log(results);
         $.when(genesis.fetchTemplate(self.template)).done(function(tmpl){
           self.$el.html(tmpl({
             actions: self.collection.toJSON(),
