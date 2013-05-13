@@ -23,14 +23,16 @@
 package com.griddynamics.genesis.build
 
 case class NullBuildProvider() extends BuildProvider {
+  type BuildIdType = Unit
+
   val mode = "null"
 
   def build(values: Map[String, String]) {}
 
-  def query() = Some(new BuildResult {
+  def query(id: BuildIdType, values: Map[String, String]) = (Some(new BuildResult {
     def success = false
-  })
-  def cancel() {}
+  }), Seq())
+  def cancel(id: BuildIdType, values: Map[String, String]) {}
 }
 
 

@@ -30,19 +30,23 @@ trait BuildSpecification {
   def tagName: Option[String] = None
 }
 
-trait BuildProvider  {
-    def mode : String
-    def build(values: Map[String, String])
-    def query() : Option[BuildResult]
-    def cancel()
+trait BuildProvider {
+  type BuildIdType
+
+  def mode: String
+
+  def build(values: Map[String, String]): BuildIdType
+
+  def query(id: BuildIdType, values: Map[String, String]): (Option[BuildResult], Seq[BuildLogEntry])
+
+  def cancel(id: BuildIdType, values: Map[String, String])
 }
 
-case class BuildLogEntry(timestamp: Timestamp, message: String)
+case class BuildLogEntry(timestamp: Timestamp, message: String, id: Int)
 
 trait BuildResult {
     def success: Boolean
     def results = Map[String, String]()
-    def logSummary: Seq[BuildLogEntry] = Seq()
     def log : Option[java.io.BufferedReader] = None
 }
 

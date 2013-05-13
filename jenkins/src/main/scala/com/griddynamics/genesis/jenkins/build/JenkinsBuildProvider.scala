@@ -22,57 +22,50 @@
  */
 package com.griddynamics.genesis.jenkins.build
 
-import com.griddynamics.genesis.build.{BuildResult, BuildProvider, BuildSpecification}
+import com.griddynamics.genesis.build.{BuildLogEntry, BuildResult, BuildProvider, BuildSpecification}
 import java.io.InputStream
 import xml.{Elem, XML}
 import com.griddynamics.genesis.jenkins.api.{JenkinsRemoteApi, JenkinsConnectSpecification}
 import com.griddynamics.genesis.util.Logging
 
-class JenkinsBuildProvider(var specification: JenkinsConnectSpecification) extends BuildProvider with Logging {
-
-  var api = new JenkinsRemoteApi(specification)
+class JenkinsBuildProvider extends BuildProvider with Logging {
+  type BuildIdType = Int
 
   override val mode = "jenkins"
-  var next: Int = _
-  var buildSpec: BuildSpecification = _
 
-  override def build(values: Map[String, String]) {
-    if(values.contains("url")) {
-      this.specification = new JenkinsConnectSpecification(values("url"), values.get("username"), values.get("password"))
-      this.api = new JenkinsRemoteApi(specification)
-    }
-    doBuild(Specifications(values))
+  private def connSpec(values: Map[String, String]) = JenkinsConnectSpecification(values("url"), values.get("username"), values.get("password"))
+
+  private def api(values: Map[String, String]) = new JenkinsRemoteApi(connSpec(values))
+
+  override def build(values: Map[String, String]) = {
+    val spec = Specifications(values)
+    val connSpc = connSpec(values)
+    val a = api(values)
+    val (lastBuild, nextBuildNum) = a.get(connSpc.jobXmlApi(spec.projectName))(nextBuildNumber)
+    a.postNoResult(connSpc.buildUrl(spec.projectName))
+    nextBuildNum
   }
 
-  def doBuild(spec: BuildSpecification) {
-    buildSpec = spec
-    val (lastBuild, nextBuildNum) = nextBuild(spec)
-    next = nextBuildNum
-    api.postNoResult(specification.buildUrl(spec.projectName))
-  }
-
-  override def query(): Option[JenkinsBuildResult] = {
+  override def query(id: BuildIdType, values: Map[String, String]): (Option[JenkinsBuildResult], Seq[BuildLogEntry]) = {
     try {
-      val result: JenkinsBuildResult = jobStatus(buildSpec, next)
+      val result: JenkinsBuildResult = jobStatus(api(values), connSpec(values), Specifications(values), id)
       result match {
-        case r@JenkinsBuildResult(_, false, _) => None
-        case r@JenkinsBuildResult(_, true, _) => Some(r)
+        case r@JenkinsBuildResult(_, false, _) => (None, Seq())
+        case r@JenkinsBuildResult(_, true, _) => (Some(r), Seq())
       }
     } catch {
       case e: Exception => {
         log.warn(e, "Couldn't query job status")
-        None
+        (None, Seq())
       }
     }
   }
 
-  def cancel() {
-    api.postNoResult(specification.stopBuildUrl(buildSpec.projectName, next))
+  def cancel(id: BuildIdType, values: Map[String, String]) {
+    api(values).postNoResult(connSpec(values).stopBuildUrl(Specifications(values).projectName, id))
   }
 
-  def nextBuild(spec: BuildSpecification) = api.get(specification.jobXmlApi(spec.projectName))(nextBuildNumber)
-
-  def jobStatus(spec: BuildSpecification, number: Int) = api.get(specification.jobUrl(spec.projectName, number))(buildResult)
+  def jobStatus(api: JenkinsRemoteApi, connSpec: JenkinsConnectSpecification, spec: BuildSpecification, number: Int) = api.get(connSpec.jobUrl(spec.projectName, number))(buildResult)
 
   def retry[B](retryCount: Int, delay: Int)(fun: => B): B = {
     try {
