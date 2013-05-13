@@ -80,16 +80,25 @@ class BuildStepCoordinator(val step : Step, context: StepExecutionContext, plugi
 }
 
 class BuildActionExecutor(val action : BuildAction, provider : BuildProvider, stepId: Int) extends SimpleAsyncActionExecutor with Logging {
+
+  private var buildId: provider.BuildIdType = _
+  private val logIds: collection.mutable.Set[Int] = collection.mutable.Set()
+
   def startAsync() {
         log.debug("Starting build")
-        provider.build(action.step.values)
+        buildId = provider.build(action.step.values)
     }
 
   def getResult() = {
-    val query: Option[BuildResult] = provider.query
+    val (query, logEntries) = provider.query(buildId, action.step.values)
     log.debug("Intermediate result is: %s".format(query))
+    logEntries.filterNot(
+      l => logIds.contains(l.id)
+    ).foreach{l =>
+      logIds.add(l.id)
+      LoggerWrapper.writeStepLog(stepId, l.message, l.timestamp)
+    }
     query.foreach( q => {
-      q.logSummary.foreach(entry => LoggerWrapper.writeStepLog(stepId, entry.message, entry.timestamp))
       buildLog(q.log, LoggerWrapper.writeActionLog(action.uuid, _))
     })
 
@@ -105,7 +114,7 @@ class BuildActionExecutor(val action : BuildAction, provider : BuildProvider, st
   }
 
   override def cleanUp(signal: Signal) {
-    provider.cancel()
+    provider.cancel(buildId, action.step.values)
   }
 
   private def buildLog(readerOpt: Option[BufferedReader], logger: String => Unit) = readerOpt match {
