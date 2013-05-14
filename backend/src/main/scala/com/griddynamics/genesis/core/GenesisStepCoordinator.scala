@@ -72,6 +72,9 @@ class GenesisStepCoordinator(val step: GenesisStep,
                 if (result.isInstanceOf[ServersUpdateResult])
                     genesisResult = genesisResult.copy(serversUpdate = result.asInstanceOf[ServersUpdateResult].serversUpdate)
 
+                if (result.isInstanceOf[WorkflowUpdateResult])
+                    genesisResult = genesisResult.copy(workflowUpdate = result.asInstanceOf[WorkflowUpdateResult].workflowUpdate)
+
                 genesisResult
             }
         }

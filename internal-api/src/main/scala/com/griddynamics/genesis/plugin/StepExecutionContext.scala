@@ -40,9 +40,11 @@ trait StepExecutionContext {
 
     def updateEnv(env : Environment)
     def updateServer(server : EnvResource)
+    def updateWorkflow(workflow: Workflow)
 
     def envUpdate() : Option[Environment]
     def serversUpdate() : Seq[EnvResource]
+    def workflowUpdate() : Option[Workflow]
     def pluginContexts: mutable.Map[String, Any]
 }
 
@@ -52,9 +54,11 @@ class StepExecutionContextImpl(val step : GenesisStep,
                                iWorkflow : Workflow,
                                val pluginContexts: mutable.Map[String, Any]) extends StepExecutionContext {
     var hEnv = iEnv
+  var hWf = iWorkflow
     var hVms = mutable.Seq(iVms : _ *)
 
     var envUpdated = false
+    var wfUpdated = false
     val vmsUpdates = mutable.Set[GenesisEntity.Id]()
 
     def env = hEnv.copy()
@@ -83,9 +87,16 @@ class StepExecutionContextImpl(val step : GenesisStep,
         vmsUpdates += hVms.indexWhere(vm => vm.id == server.id && vm.getClass == server.getClass)
     }
 
+    def updateWorkflow(workflow: Workflow) {
+        wfUpdated = true
+        hWf = workflow
+    }
+
     def envUpdate() = if (envUpdated) Some(hEnv) else None
 
     def serversUpdate() = vmsUpdates.toSeq.map(hVms(_))
 
     def virtualMachines = servers.collect { case vm: VirtualMachine => vm }
+
+  def workflowUpdate() = if (wfUpdated) Some(hWf) else None
 }

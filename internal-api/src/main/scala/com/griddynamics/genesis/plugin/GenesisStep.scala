@@ -23,7 +23,7 @@
 package com.griddynamics.genesis.plugin
 
 import com.griddynamics.genesis.workflow.{StepResult, Step}
-import com.griddynamics.genesis.model.{EnvResource, GenesisEntity, Environment}
+import com.griddynamics.genesis.model.{Workflow, EnvResource, GenesisEntity, Environment}
 
 case class GenesisStep(id: GenesisEntity.Id,
                        phase: String,
@@ -40,10 +40,12 @@ case class GenesisStepResult(step: GenesisStep,
                              isStepFailed: Boolean = false,
                              envUpdate: Option[Environment] = None,
                              serversUpdate: Seq[EnvResource] = Seq(),
+                             workflowUpdate: Option[Workflow] = None,
                              actualResult: Option[StepResult] = None) extends StepResult
 with FallibleResult
 with EnvUpdateResult
 with ServersUpdateResult
+with WorkflowUpdateResult
 
 trait FallibleResult extends StepResult {
     def isStepFailed: Boolean
@@ -69,4 +71,8 @@ trait EnvUpdateResult extends StepResult {
 
 trait ServersUpdateResult extends StepResult {
     def serversUpdate: Seq[EnvResource]
+}
+
+trait WorkflowUpdateResult extends StepResult {
+    def workflowUpdate: Option[Workflow]
 }
