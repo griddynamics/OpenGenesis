@@ -126,14 +126,17 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
 
     //TODO remove workflow.stepsFinished
     def onStepFinish(result: GenesisStepResult): Either[Signal, Seq[StepCoordinator]] = {
-        log.debug(s"Result is ${result}")
-        workflow = storeService.findWorkflow(workflow.id).get
-        workflow.stepsFinished += 1
-        if (result.isStepFailed && result.step.ignoreFail)
-          workflow.status = WorkflowStatus.Warning
-        storeService.updateWorkflow(workflow)
-        finishedSteps = finishedSteps :+ result.step
-        createReachableStepCoordinators()
+      log.debug(s"Result is ${result}")
+
+      workflow = storeService.findWorkflow(workflow.id).get
+      workflow.stepsFinished += 1
+      if (result.isStepFailed && result.step.ignoreFail)
+        workflow.status = WorkflowStatus.Warning
+      // only workflow display variables could be updated by steps
+      result.workflowUpdate.foreach(w => workflow.displayVariables = w.displayVariables)
+      storeService.updateWorkflow(workflow)
+      finishedSteps = finishedSteps :+ result.step
+      createReachableStepCoordinators()
     }
 
     def createCoordinators(builders: Seq[StepBuilder]): Either[Fail, Seq[StepCoordinator]] = {

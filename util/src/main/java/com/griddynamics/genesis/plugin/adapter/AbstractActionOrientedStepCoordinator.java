@@ -48,7 +48,7 @@ public abstract class AbstractActionOrientedStepCoordinator implements ActionOri
 
   @Override
   public StepResult getStepResult() {
-    return new GenesisStepResult(context.step(), isFailed(), context.envUpdate(), context.serversUpdate(), result);
+    return new GenesisStepResult(context.step(), isFailed(), context.envUpdate(), context.serversUpdate(), context.workflowUpdate(), result);
   }
 
   protected abstract boolean isFailed();
