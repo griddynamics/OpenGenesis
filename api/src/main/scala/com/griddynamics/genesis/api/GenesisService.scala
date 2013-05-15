@@ -50,6 +50,8 @@ trait GenesisService extends TemplateRestService {
 
   def resetEnvStatus(envId: Int, projectId: Int): ExtendedResult[Int]
 
+  def markEnvDestroyed(envId: Int, projectId: Int): ExtendedResult[Int]
+
   def cancelWorkflow(envId: Int, projectId: Int)
 
   def isEnvExists(envId: Int, projectId: Int): Boolean

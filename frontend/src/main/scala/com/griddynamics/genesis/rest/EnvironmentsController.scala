@@ -310,6 +310,10 @@ class EnvironmentsController extends RestApiExceptionsHandler {
         genesisService.cancelWorkflow(envId, projectId)
         Success(envId)
       case Some(Actions.Reset) => genesisService.resetEnvStatus(envId, projectId)
+
+      case Some(Actions.MarkDestroyed) =>
+        genesisService.markEnvDestroyed(envId, projectId)
+
       case _ => throw new ResourceNotFoundException(s"Cannot find action ${actionName} for specified environment")
     }
   }
@@ -346,10 +350,11 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   def getActions(@PathVariable("projectId") projectId: Int,
                    @PathVariable("envId") envId: Int, request: HttpServletRequest) : CollectionWrapper[ItemWrapper[Action]] = {
     val env = genesisService.describeEnv(envId, projectId).
-      getOrElse(throw new ResourceNotFoundException("Environment [" + envId + "] was not found"))
+      getOrElse(throw new ResourceNotFoundException(s"Environment [$envId] was not found"))
     val availableActions = EnvStatus.fromString(env.status) match {
       case Some(EnvStatus.Busy) => Actions.Cancel :: Nil
-      case Some(EnvStatus.Broken) => Actions.Reset :: Nil
+      case Some(EnvStatus.Broken) => Actions.Reset :: Actions.MarkDestroyed :: Nil
+      case Some(EnvStatus.Ready) => Actions.MarkDestroyed :: Nil
       case _ => Nil
     }
     availableActions.map { action => Action(action.toString).withLinksToSelf(WebPath(request) / action, POST) }
@@ -445,6 +450,7 @@ object Actions extends Enumeration {
   type Actions = Value
   val Reset = Value(0, "reset")
   val Cancel = Value(1, "cancel")
+  val MarkDestroyed = Value(2, "markDestroyed")
 
   def fromString(input: String): Option[Actions] = try {
     Some(Actions.withName(input))

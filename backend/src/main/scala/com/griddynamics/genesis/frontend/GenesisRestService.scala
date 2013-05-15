@@ -89,7 +89,11 @@ class GenesisRestService(storeService: StoreService,
     }
 
     def resetEnvStatus(envId: Int, projectId: Int) = {
-      broker.resetEnvStatus(envId, projectId)
+      broker.setEnvStatus(envId, projectId, EnvStatus.Ready)
+    }
+
+    def markEnvDestroyed(envId: Int, projectId: Int) = {
+      broker.setEnvStatus(envId, projectId, EnvStatus.Destroyed)
     }
 
     def isEnvExists(envId: Int, projectId: Int): Boolean = {

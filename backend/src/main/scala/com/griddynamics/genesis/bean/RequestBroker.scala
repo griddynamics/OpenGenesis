@@ -32,6 +32,7 @@ import com.griddynamics.genesis.api
 import com.griddynamics.genesis.api.Failure
 import com.griddynamics.genesis.api.Success
 import com.griddynamics.genesis.repository.ConfigurationRepository
+import EnvStatus._
 
 trait RequestBroker {
     def createEnv(projectId: Int, envName: String, envCreator : String,
@@ -44,7 +45,7 @@ trait RequestBroker {
 
     def cancelWorkflow(envId : Int, projectId: Int)
 
-    def resetEnvStatus(envId: Int, projectId: Int) : ExtendedResult[Int]
+    def setEnvStatus(envId: Int, projectId: Int, status: EnvStatus) : ExtendedResult[Int]
 }
 
 class RequestBrokerImpl(storeService: StoreService,
@@ -159,16 +160,14 @@ class RequestBrokerImpl(storeService: StoreService,
         dispatcher.cancelWorkflow(envId, projectId)
     }
 
-    def resetEnvStatus(envId: Int, projectId: Int) : ExtendedResult[Int] = findEnv(envId, projectId).flatMap(env => {
-        env.status match {
-            case EnvStatus.Broken => {
-                storeService.resetEnvStatus(env) match {
-                    case Some(m) => Failure(compoundServiceErrors = Seq(m.toString))
-                    case _ => Success(envId)
-                }
-            }
-            case _ => Failure(compoundServiceErrors = Seq("Instance is not in 'Broken' state"))
+    def setEnvStatus(envId: Int, projectId: Int, status: EnvStatus) : ExtendedResult[Int] = findEnv(envId, projectId).flatMap(env => {
+      if (env.status == Broken && status == Ready || env.status != Busy && status == Destroyed) {
+        storeService.setEnvStatus(env, status) match {
+          case Some(m) => Failure(compoundServiceErrors = Seq(m.toString))
+          case _ => Success(envId)
         }
+      } else Failure(compoundServiceErrors = Seq(s"Illegal Instance state change is requested: current state is [${env.status}], requested state is [$status]"))
+
     })
 
     def findEnv(envId : Int, projectId: Int) : ExtendedResult[Environment] = {
