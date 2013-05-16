@@ -290,7 +290,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
       }
 
       case "resetEnvStatus" => {
-        genesisService.resetEnvStatus(envId, projectId)
+        genesisService.setEnvStatus(envId, projectId, EnvStatus.Ready.toString)
       }
 
       case _ => throw new InvalidInputException ()
@@ -309,10 +309,10 @@ class EnvironmentsController extends RestApiExceptionsHandler {
       case Some(Actions.Cancel) =>
         genesisService.cancelWorkflow(envId, projectId)
         Success(envId)
-      case Some(Actions.Reset) => genesisService.resetEnvStatus(envId, projectId)
+      case Some(Actions.Reset) => genesisService.setEnvStatus(envId, projectId, EnvStatus.Ready.toString)
 
       case Some(Actions.MarkDestroyed) =>
-        genesisService.markEnvDestroyed(envId, projectId)
+        genesisService.setEnvStatus(envId, projectId, EnvStatus.Destroyed.toString)
 
       case _ => throw new ResourceNotFoundException(s"Cannot find action ${actionName} for specified environment")
     }
