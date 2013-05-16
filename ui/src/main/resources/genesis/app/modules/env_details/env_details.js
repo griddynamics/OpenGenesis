@@ -37,6 +37,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
     parseLinks: function(links) {
       this.renameLink = _(links).find(backend.LinkTypes.EnvironmentDetails.edit);
       this.resetStatusLink = _(links).find(backend.LinkTypes.ResetAction.any);
+      this.markDestroyedLink = _(links).find(backend.LinkTypes.MarkDestroyedAction.any);
       this.cancelLink = _(links).find(backend.LinkTypes.CancelAction.any);
       this.workflowsLink = _(links).find(backend.LinkTypes.Workflow.any);
     },
@@ -47,6 +48,10 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
 
     canResetStatus: function() {
       return !_.isUndefined(this.resetStatusLink);
+    },
+
+    canMarkDestroyed: function() {
+      return !_.isUndefined(this.markDestroyedLink);
     },
 
     canCancelWorkflow: function() {
@@ -140,6 +145,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
     confirmationDialog: null,
     executeWorkflowDialog: null,
     resetEnvStatusDialog: null,
+    markEnvDestroyedDialog: null,
     envRenameDialog: null,
 
     events: {
@@ -148,6 +154,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       "click .action-button:not(.disabled)": "executeWorkflowClick",
       "click .cancel-button:not(.disabled)": "cancelWorkflow",
       "click .reset-button:not(.disabled)": "resetEnvStatus",
+      "click .mark-destroyed:not(.disabled)": "markEnvDestroyed",
       "click a.show-sources" : "showSources",
       "click a.postpone-destruction" : "postponeDestruction",
       "click a.rename-button": "renameEnv"
@@ -201,6 +208,9 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       if(this.resetEnvStatusDialog) {
         this.resetEnvStatusDialog.dialog('destroy').remove();
       }
+      if(this.markEnvDestroyedDialog) {
+        this.markEnvDestroyedDialog.dialog('destroy').remove();
+      }
       if (this.envRenameDialog) {
         this.envRenameDialog.dialog('destroy').remove();
       }
@@ -241,6 +251,10 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
 
     resetEnvStatus: function () {
       this.resetEnvStatusDialog.dialog('open');
+    },
+
+    markEnvDestroyed: function () {
+      this.markEnvDestroyedDialog.dialog('open');
     },
 
     renameEnv: function() {
@@ -391,7 +405,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
             return flow.name === details.createWorkflowName
           }).map(function(flow) {
               var scheduled = _.contains(scheduledJobs, flow.name);
-              return {name: flow.name, schedule: !scheduled};
+              return {name: flow.name, schedule: !scheduled, markDestroyed: (flow.name == details.destroyWorkflowName && view.details.canMarkDestroyed())};
           });
 
           view.$el.html(tmpl({
@@ -409,6 +423,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
           }
           view.confirmationDialog = view.createConfirmationDialog(view.$("#dialog-confirm"));
           view.resetEnvStatusDialog = view.createResetEnvStatusDialog(view.$("#dialog-reset"));
+          view.markEnvDestroyedDialog = view.createMarkEnvDestroyedDialog(view.$("#dialog-mark"));
           view.envRenameDialog = view.createRenameDialog(view.$("#env-rename"));
           view.expandLifeTimeDialog = view.createExpandLifeTimeDialog(view.$("#expand-env-life-time"));
 
@@ -472,6 +487,28 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
             $.when(backend.EnvironmentManager.resetEnvStatus(self.details.get("projectId"), self.details.get('id')))
               .done(function() {
                 status.StatusPanel.information("Instance status was changed to 'Ready'");
+              })
+              .fail(function(jqXHR) {
+                status.StatusPanel.error(jqXHR);
+              });
+            $(this).dialog("close");
+          },
+          "No": function () {
+            $(this).dialog("close");
+          }
+        }
+      });
+    },
+
+    createMarkEnvDestroyedDialog: function (element) {
+      var self = this;
+      return element.dialog({
+        title: 'Confirmation',
+        buttons: {
+          "Yes": function () {
+            $.when(backend.EnvironmentManager.markDestroyed(self.details.get("projectId"), self.details.get('id')))
+              .done(function() {
+                status.StatusPanel.information("Instance status was changed to 'Destroyed'");
               })
               .fail(function(jqXHR) {
                 status.StatusPanel.error(jqXHR);
