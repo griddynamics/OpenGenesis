@@ -38,6 +38,7 @@ import com.griddynamics.genesis.repository.AbstractOrderingMapper
 import com.griddynamics.genesis.api.Ordering
 import collection.mutable
 import com.griddynamics.genesis.annotation.RemoteGateway
+import EnvStatus._
 
 object EnvOrdering {
   val ID = "id"
@@ -243,22 +244,23 @@ class StoreService extends service.StoreService with Logging {
     updateAttrs(env, GS.envAttrs)
   }
 
-  @Transactional
-  def resetEnvStatus(env: Environment) : Option[Mistake] = {
-    lazy val mistake = Some(Mistake("Can't reset status of instance [%s] because it's not in 'Broken' state".format(env.name)))
+   @Transactional
+  def setEnvStatus(env: Environment, status: EnvStatus) : Option[Mistake] = {
+    lazy val mistake = Mistake(s"Can't update status of instance [${env.name}]")
 
-    env.status match {
-      case EnvStatus.Broken => {
-        val updatedRowCount = update(GS.envs)(e =>
-          where(e.id === env.id and
-                e.status === EnvStatus.Broken)
-          set(e.status := EnvStatus.Ready)
-        )
-        if (updatedRowCount != 1) mistake else None
-      }
-      case _ => mistake
+    val updatedRowCount = (env.status, status) match {
+      case (Broken, Ready) => updateEnvStatus(env.id, Broken, Ready)
+      case (s, Destroyed) if s != Busy => updateEnvStatus(env.id, s, Destroyed)
+      case _ => 0
     }
+    if (updatedRowCount != 1) Option(mistake) else None
   }
+
+  private def updateEnvStatus(envId: Int, oldStatus: EnvStatus, status: EnvStatus) =
+    update(GS.envs)(e =>
+      where(e.id === envId and e.status === oldStatus)
+        set (e.status := status)
+    )
 
   @Transactional
   def createVm(vm: VirtualMachine) = {

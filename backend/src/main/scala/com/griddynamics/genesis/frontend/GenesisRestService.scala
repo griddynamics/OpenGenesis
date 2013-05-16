@@ -88,11 +88,12 @@ class GenesisRestService(storeService: StoreService,
       broker.cancelWorkflow(envId, projectId)
     }
 
-    def resetEnvStatus(envId: Int, projectId: Int) = {
-      broker.resetEnvStatus(envId, projectId)
-    }
+  def setEnvStatus(envId: Int, projectId: Int, status: String) = EnvStatus.fromString(status).map(
+    broker.setEnvStatus(envId, projectId, _)
+  ) getOrElse Failure(compoundServiceErrors = Seq(s"Invalid status: $status"))
 
-    def isEnvExists(envId: Int, projectId: Int): Boolean = {
+
+  def isEnvExists(envId: Int, projectId: Int): Boolean = {
       storeService.isEnvExist(projectId, envId)
     }
 
