@@ -48,7 +48,7 @@ trait GenesisService extends TemplateRestService {
 
   def requestWorkflow(envId: Int, projectId: Int, workflowName: String, variables: Map[String, String], startedBy: String): ExtendedResult[Int]
 
-  def resetEnvStatus(envId: Int, projectId: Int): ExtendedResult[Int]
+  def setEnvStatus(envId: Int, projectId: Int, status: String): ExtendedResult[Int]
 
   def cancelWorkflow(envId: Int, projectId: Int)
 
