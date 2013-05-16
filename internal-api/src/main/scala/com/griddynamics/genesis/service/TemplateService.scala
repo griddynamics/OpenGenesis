@@ -60,6 +60,8 @@ trait WorkflowDefinition {
     def validatePreconditions(variables: Map[String, Any], config: Configuration): ExtendedResult[_]
 
     def partial(variables: Map[String, Any]): Seq[VariableDescription] = Seq()
+
+  def isReadOnly: Boolean
 }
 
 case class Builders(regular: Seq[StepBuilder], onError: Seq[StepBuilder] = Seq()) {

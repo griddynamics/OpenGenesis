@@ -455,6 +455,8 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
     lazy val variableDescriptions = for (variable <- workflow.variables()) yield varDesc(variable)
 
     val name = workflow.name
+
+  val isReadOnly = workflow.readOnly
 }
 
 private case class TmplCacheKey(name: String, version: String, projectId: Int)
