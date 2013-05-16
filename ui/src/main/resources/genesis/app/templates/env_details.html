@@ -4,6 +4,9 @@
 <div id="dialog-reset" style="display: none; ">
     Are you sure that current instance is not broken?
 </div>
+<div id="dialog-mark" style="display: none; ">
+    Are you sure that current instance is destroyed? This will only mark it as Destroyed without running any workflow!
+</div>
 <div id="job-removal-confirm" style="display:none">
     Are you sure you want to remove this scheduled job?
 </div>
@@ -57,6 +60,7 @@
                         <ul class="dropdown-menu" >
                             <li class="action-button"><a href="javascript: void(0)" rel="<%= action.name %>" class="action-button" >Run...</a></li>
                             <li><a href="javascript: void(0)"  rel="<%= action.name %>" class="schedule-button" data-scheduling="true" style="display: <%= action.schedule? 'block':'none'%>">Schedule... </a></li>
+                            <li><a href="javascript: void(0)"  rel="<%= action.name %>"  class="mark-destroyed" style="display: <%= action.markDestroyed? 'block':'none'%>">Mark as Destroyed</a></li>
                         </ul>
                     </div>
                 <% } %>

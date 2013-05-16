@@ -191,15 +191,14 @@ class EnvironmentsController extends RestApiExceptionsHandler {
       getOrElse(throw new ResourceNotFoundException("Environment [" + envId + "] was not found"))
 
     val actions = EnvStatus.fromString(env.status) match {
-      case Some(EnvStatus.Busy) => Some((Actions.Cancel, CancelAction))
-      case Some(EnvStatus.Broken) => Some((Actions.Reset, ResetAction))
-      case _ => None
+      case Some(EnvStatus.Busy) => Seq((Actions.Cancel, CancelAction))
+      case Some(EnvStatus.Broken) => Seq((Actions.Reset, ResetAction), (Actions.MarkDestroyed, MarkDestroyedAction))
+      case Some(EnvStatus.Ready) => Seq((Actions.MarkDestroyed, MarkDestroyedAction))
+      case _ => Seq()
     }
-    actions.map { case (action, t) =>
-      env.withLinks(LinkBuilder(request / "actions" / action.toString, ACTION, t.getClass, POST)).filtered
-    }.getOrElse (
-      env
-    )
+    env.add(actions.map { case (action, t) =>
+      LinkBuilder(request / "actions" / action.toString, ACTION, t.getClass, POST)
+    }).filtered
   }
 
 
