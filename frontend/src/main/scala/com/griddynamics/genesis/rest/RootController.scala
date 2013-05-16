@@ -31,7 +31,8 @@ class RootController {
       collectLinks(classOf[ProjectsController], classOf[Project], LinkTarget.COLLECTION) ++
       (if (isAdminOrReadOnly)
         collectLinks(classOf[SettingsController], classOf[SystemSettings], LinkTarget.COLLECTION) ++
-          Seq(LinkBuilder(HrefBuilder.absolutePath("rest/jobs-stat"), LinkTarget.COLLECTION, RequestMethod.GET))
+          Seq(LinkBuilder(HrefBuilder.absolutePath("rest/jobs-stat"), LinkTarget.COLLECTION, RequestMethod.GET),
+            LinkBuilder(HrefBuilder.absolutePath("rest/workflow-stats"), LinkTarget.COLLECTION, RequestMethod.GET))
       else
         Seq()) ++
       (if (!isLogoutDisabled) Seq(LinkBuilder(HrefBuilder.absolutePath("logout"), LinkTarget.LOGOUT, RequestMethod.GET)) else Seq())

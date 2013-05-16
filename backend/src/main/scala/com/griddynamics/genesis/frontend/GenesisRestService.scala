@@ -224,6 +224,16 @@ class GenesisRestService(storeService: StoreService,
     }
   }
 
+  def listRunningWorkflows: List[Workflow] = {
+     ???
+  }
+
+  def workflowStats: Seq[WorkflowStats] = {
+    storeService.workflowStats.groupBy(_._1)
+      .mapValues(v => v.map({case (_, x) => x}))
+      .map({case (projectId, wfList) => WorkflowStats(projectId, wfList.size)}).toSeq
+  }
+
 }
 
 object GenesisRestService {
