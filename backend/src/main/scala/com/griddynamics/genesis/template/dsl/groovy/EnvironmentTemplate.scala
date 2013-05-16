@@ -48,11 +48,27 @@ class NameVersionDelegate extends GroovyObjectSupport with TemplateBuilder with 
     var destroyWorkflowName : String = _
     val workflows = ListBuffer[EnvWorkflow]()
 
-    def workflow(name: String, details : Closure[Unit]) = {
-        workflows += new EnvWorkflow(name, None)
+    def workflow(name: String, details : Closure[Unit]): NameVersionDelegate = {
+        workflow(name, false, details)
+    }
+
+    def workflow(name: String, ro: Boolean, details : Closure[Unit]) = {
+        if (ro && (name == createWorkflowName || name == destroyWorkflowName))
+          throw new IllegalStateException("Create and destroy workflows could not be read-only!")
+        workflows += new EnvWorkflow(name, ro, None)
         this
     }
 
+  import collection.JavaConversions.mapAsScalaMap
+
+  def workflow(params: java.util.Map[String, Any], details: Closure[Unit]): NameVersionDelegate = {
+    val paramsMap = params.toMap
+    (paramsMap.get("name"), paramsMap.get("readOnly")) match {
+      case (Some(name: String), Some(readOnly: Boolean)) => workflow(name, readOnly, details)
+      case (Some(name: String), _) => workflow(name, false, details)
+      case _ => throw new IllegalStateException("Workflow name is not specified!")
+    }
+  }
     def name(value : String) : NameVersionDelegate = {
         if (name != null)
             throw new IllegalStateException("name is already set")
@@ -95,14 +111,14 @@ class EnvTemplateBuilder(val projectId: Int,
     var dsObjSupport : Option[DSObjectSupport] = None
     var dsClozures: Option[Closure[Unit]] = None
 
-    override def workflow(name: String, details : Closure[Unit]) = {
+    override def workflow(name: String, ro: Boolean, details : Closure[Unit]) = {
         if (workflows.find(_.name == name).isDefined)
             throw new IllegalStateException("workflow with name '%s' is already defined".format(name))
 
         val delegate = Delegate(details)
           .to(new WorkflowDeclaration(dsClozures, dataSourceFactories, projectId))
 
-        workflows += new EnvWorkflow(name, delegate.stepsBlock,
+        workflows += new EnvWorkflow(name, ro, delegate.stepsBlock,
             preconditions = delegate.requirements.toMap, rescues = delegate.rescueBlock) {
             override def variables() = delegate.variables
         }
