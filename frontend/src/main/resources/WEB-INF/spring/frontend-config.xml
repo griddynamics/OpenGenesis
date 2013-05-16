@@ -88,4 +88,6 @@
     <bean class="com.griddynamics.genesis.rest.DatabagTemplatesController"/>
 
     <bean class="com.griddynamics.genesis.rest.SystemController"/>
+
+    <bean class="com.griddynamics.genesis.rest.WorkflowController"/>
 </beans>

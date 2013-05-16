@@ -62,4 +62,6 @@ trait GenesisService extends TemplateRestService {
 
   def removeTimeToLive(projectId: Int, envId: Int): ExtendedResult[Boolean]
 
+  def workflowStats: Seq[WorkflowStats]
+
 }
