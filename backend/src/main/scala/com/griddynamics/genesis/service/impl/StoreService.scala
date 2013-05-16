@@ -517,6 +517,12 @@ class StoreService extends service.StoreService with Logging {
   def findLiveEnvsByConfigurationId(configId: Int): Seq[Int] = from(GS.envs) ( env =>
     where((env.configurationId === configId) and (env.status <> EnvStatus.Destroyed)) select(env.id)
   ).toList
+
+  @Transactional(readOnly = true)
+  def workflowStats = from(GS.workflows, GS.envs)((workflow, env) =>
+    where((workflow.status === WorkflowStatus.Executing) or (workflow.status === WorkflowStatus.Requested) and (env.id === workflow.envId))
+    select (env.projectId, workflow.id)
+  ).toList
 }
 
 

@@ -334,6 +334,8 @@ case class ScheduledJobStat (
   failedJobs: Long
 )
 
+case class WorkflowStats(projectId: Int, runningWorklows: Int)
+
 case class JobStats(runningJobs: Int, totalJobs: Int)
 
 case class Link(href: String, rel: String, `type`: Option[String], methods: Array[String] = Array())  {
