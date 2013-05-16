@@ -83,6 +83,14 @@ function(genesis, $) {
         processData: false
       });
     },
+    markDestroyed: function(projectId, environmentId) {
+      return $.ajax({
+        url: "rest/projects/" + projectId + "/envs/" + environmentId + "/actions/markDestroyed",
+        type: "POST",
+        timeout: DEFAULT_TIMEOUT,
+        processData: false
+      });
+    },
     updateEnvName: function(projectId, environmentId, envName) {
       return $.ajax({
         url: "rest/projects/" + projectId + "/envs/" + environmentId,
@@ -365,6 +373,7 @@ function(genesis, $) {
 
     ResetAction: new _type("ResetAction$"),
     CancelAction: new _type("CancelAction$"),
+    MarkDestroyedAction: new _type("MarkDestroyedAction$"),
     DataBagTemplate: new _type("DatabagTemplate")
 
   };
