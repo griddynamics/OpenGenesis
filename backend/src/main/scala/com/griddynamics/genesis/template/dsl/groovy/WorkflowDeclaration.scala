@@ -53,7 +53,7 @@ class RequirementsHandler extends GroovyObjectSupport with Delegate {
     }
 }
 
-class EnvWorkflow(val name : String,
+class EnvWorkflow(val name : String, val readOnly: Boolean = false,
                   val stepsGenerator : Option[Closure[Unit]],
                   val preconditions: Map[String, Closure[Boolean]] = Map(),
                   val rescues: Option[Closure[Unit]] = None) {
