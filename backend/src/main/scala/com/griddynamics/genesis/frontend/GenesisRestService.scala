@@ -121,6 +121,7 @@ class GenesisRestService(storeService: StoreService,
     def workflowHistory(envId: Int, projectId: Int, pageOffset: Int, pageLength: Int): Option[WorkflowHistory] = {
         storeService.findEnv(envId, projectId).map(env =>
             workflowHistoryDesc(
+                envId,
                 storeService.workflowsHistory(env, pageOffset, pageLength),
                 storeService.countWorkflows(env)
             )
@@ -133,7 +134,7 @@ class GenesisRestService(storeService: StoreService,
          if flow.envId == env.id
       ) yield {
         val steps = storeService.listWorkflowSteps(flow)
-        new WorkflowDetails(flow.id, flow.name, flow.status.toString, flow.startedBy, flow.displayVariables, stepsCompleted(Some(flow)),
+        new WorkflowDetails(flow.id, flow.name, flow.status.toString, flow.startedBy, envId, flow.displayVariables, stepsCompleted(Some(flow)),
           stepDesc(steps), flow.executionStarted.map (_.getTime), flow.executionFinished.map (_.getTime))
       }
     }
@@ -303,10 +304,10 @@ object GenesisRestService {
         )
     }
 
-    def workflowHistoryDesc(history: Seq[(Workflow, Seq[model.WorkflowStep])], workflowsTotalCount: Int) = {
+    def workflowHistoryDesc(envId: Int, history: Seq[(Workflow, Seq[model.WorkflowStep])], workflowsTotalCount: Int) = {
         val h = wrap(history)(() =>
             (for ((flow, steps) <- history) yield
-                new WorkflowDetails(flow.id, flow.name, flow.status.toString, flow.startedBy, flow.displayVariables, stepsCompleted(Some(flow)),
+                new WorkflowDetails(flow.id, flow.name, flow.status.toString, flow.startedBy, envId, flow.displayVariables, stepsCompleted(Some(flow)),
                   stepDesc(steps), flow.executionStarted.map (_.getTime), flow.executionFinished.map (_.getTime))).toSeq)
 
         WorkflowHistory(h, workflowsTotalCount)
