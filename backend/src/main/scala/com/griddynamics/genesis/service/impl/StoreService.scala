@@ -307,7 +307,7 @@ class StoreService extends service.StoreService with Logging {
   }
 
   @Transactional
-  def finishWorkflow(env: Environment, workflow: Workflow) {
+  def finishWorkflow(env: Environment, workflow: Workflow, modifyEnv: Boolean = true) {
     val finishTime: Some[Timestamp] = Some(new Timestamp(System.currentTimeMillis()))
 
     GS.steps.update(step =>
@@ -316,8 +316,10 @@ class StoreService extends service.StoreService with Logging {
           )
     )
 
-    env.modifiedBy = Some(workflow.startedBy)
-    env.modificationTime = finishTime
+    if (modifyEnv) {
+      env.modifiedBy = Some(workflow.startedBy)
+      env.modificationTime = finishTime
+    }
 
     updateEnv(env)
 

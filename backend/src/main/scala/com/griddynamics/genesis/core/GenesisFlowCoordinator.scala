@@ -48,8 +48,9 @@ abstract class GenesisFlowCoordinator(envId: Int,
                                       storeService: StoreService,
                                       attachmentService: AttachmentService,
                                       stepCoordinatorFactory: StepCoordinatorFactory,
-                                      rescueSteps: Seq[StepBuilder] = Seq())
-    extends GenesisFlowCoordinatorBase(envId, projectId, flowSteps, storeService, attachmentService, stepCoordinatorFactory, rescueSteps)
+                                      rescueSteps: Seq[StepBuilder] = Seq(),
+                                      restoreEnvStatus: Option[EnvStatus] = None)
+    extends GenesisFlowCoordinatorBase(envId, projectId, flowSteps, storeService, attachmentService, stepCoordinatorFactory, rescueSteps, restoreEnvStatus)
     with StepIgnore with StepRestart with StepExecutionContextHolder
 
 abstract class GenesisFlowCoordinatorBase(val envId: Int,
@@ -58,7 +59,8 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
                                           val storeService: StoreService,
                                           val attachmentService: AttachmentService,
                                           val stepCoordinatorFactory: StepCoordinatorFactory,
-                                          val rescueSteps: Seq[StepBuilder] = Seq())
+                                          val rescueSteps: Seq[StepBuilder] = Seq(),
+                                          val restoreEnvStatus: Option[EnvStatus] = None)
     extends FlowCoordinator with Logging {
 
     var env: Environment = _
@@ -113,8 +115,8 @@ abstract class GenesisFlowCoordinatorBase(val envId: Int,
         workflow.status = workflowStatus
 
         val updEnv = storeService.findEnv(env.id).get // updating optimistic lock counter
-        updEnv.status = envStatus
-        storeService.finishWorkflow(updEnv, workflow)
+        updEnv.status = restoreEnvStatus getOrElse envStatus
+        storeService.finishWorkflow(updEnv, workflow, modifyEnv = restoreEnvStatus.isEmpty)
         WorkflowEventsBus.publish(new WorkflowFinished(projectId, envId, workflow.id, workflow.status))
     }
 
