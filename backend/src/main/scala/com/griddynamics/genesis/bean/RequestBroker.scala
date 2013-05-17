@@ -136,7 +136,7 @@ class RequestBrokerImpl(storeService: StoreService,
         storeService.requestWorkflow(env, workflow) match {
             case Left(m) => Failure(compoundVariablesErrors = Seq(m.toString))
             case Right((e, wf)) => {
-                dispatcher.startWorkflow(e.id, env.projectId)
+                dispatcher.startWorkflow(e.id, env.projectId, if(w.isReadOnly) Option(env.status) else None)
                 Success(wf.id)
             }
         }
