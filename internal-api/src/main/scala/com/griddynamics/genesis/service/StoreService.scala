@@ -87,7 +87,7 @@ trait StoreService {
 
     def startWorkflow(envId: Int, projectId: Int): (Environment, Workflow, Seq[EnvResource])
 
-    def finishWorkflow(env: Environment, workflow: Workflow)
+    def finishWorkflow(env: Environment, workflow: Workflow, modifyEnv: Boolean = true)
 
     def updateStep(step : WorkflowStep)
 

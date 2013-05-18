@@ -29,12 +29,11 @@ import com.griddynamics.genesis.workflow.actor.{TypedFlowCoordinatorImpl, TypedF
 import com.griddynamics.genesis.core._
 import com.griddynamics.genesis.service._
 import collection.mutable.ArrayBuffer
-import com.griddynamics.genesis.plugin.{StepBuilder, Cancel, StepCoordinatorFactory}
-import com.griddynamics.genesis.model.EnvStatus
+import com.griddynamics.genesis.plugin.{StepBuilder, StepCoordinatorFactory}
+import com.griddynamics.genesis.model.EnvStatus._
 import com.griddynamics.genesis.model.WorkflowStatus._
 import com.griddynamics.genesis.util.Logging
 import java.sql.Timestamp
-import com.griddynamics.genesis.configuration.WorkflowConfig
 import com.griddynamics.genesis.configuration.WorkflowConfig
 import com.griddynamics.genesis.plugin.Cancel
 import com.griddynamics.genesis.service.Builders
@@ -42,7 +41,7 @@ import com.griddynamics.genesis.service.Builders
 trait RequestDispatcher {
     def createEnv(envName: Int, projectId: Int)
 
-    def startWorkflow(envId: Int, projectId: Int)
+    def startWorkflow(envId: Int, projectId: Int, restoreEnvStatus: Option[EnvStatus] = None)
 
     def destroyEnv(envId: Int, projectId: Int)
 
@@ -68,7 +67,7 @@ class RequestDispatcherImpl(workflowConfig: WorkflowConfig,
         startWorkflow(envId, projectId)
     }
 
-    def startWorkflow(envId: Int, projectId: Int) {
+    def startWorkflow(envId: Int, projectId: Int, restoreEnvStatus: Option[EnvStatus] = None) {
       val (env, workflow) = storeService.retrieveWorkflow(envId, projectId)
 
       try{
@@ -83,16 +82,16 @@ class RequestDispatcherImpl(workflowConfig: WorkflowConfig,
             )).filter(s => !s.skip))
             coordinators((env.id, env.projectId)) = if (Option(workflow.name) == definition.map(_.destroyWorkflow.name))
                 destroyingCoordinator(env.id, projectId, s, rescueBuilders)
-            else regularCoordinator(env.id, projectId, s, rescueBuilders)
+            else regularCoordinator(env.id, projectId, s, rescueBuilders, restoreEnvStatus)
             coordinators((env.id, env.projectId)).start()
         })
       } catch {
         case e: Throwable => {
           log.error(e, "Failed to start workflow [%s] for env [%d]".format(workflow.name, envId))
-          env.status = EnvStatus.Broken
+          env.status = restoreEnvStatus getOrElse Broken
           workflow.status = Failed
           workflow.executionStarted = Some(new Timestamp(System.currentTimeMillis()))
-          storeService.finishWorkflow(env, workflow)
+          storeService.finishWorkflow(env, workflow, modifyEnv = restoreEnvStatus.isEmpty)
         }
       }
     }
@@ -132,10 +131,11 @@ class RequestDispatcherImpl(workflowConfig: WorkflowConfig,
         }
     }
 
-    def regularCoordinator(envId: Int, projectId: Int, flowSteps: Seq[StepBuilder], rescueSteps: Seq[StepBuilder]) =
+    def regularCoordinator(envId: Int, projectId: Int, flowSteps: Seq[StepBuilder], rescueSteps: Seq[StepBuilder],
+                           restoreEnvStatus: Option[EnvStatus] = None) =
         new TypedFlowCoordinatorImpl(
             new GenesisFlowCoordinator(envId, projectId, flowSteps, storeService, attachmentService,
-                stepCoordinatorFactory, rescueSteps) with RegularWorkflow,
+                stepCoordinatorFactory, rescueSteps, restoreEnvStatus) with RegularWorkflow,
             workflowConfig, executorService, actorSystem, remoteAgentService
 
         )
