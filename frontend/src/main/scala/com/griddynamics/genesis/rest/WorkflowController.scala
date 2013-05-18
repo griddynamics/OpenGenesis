@@ -34,8 +34,7 @@ class WorkflowController extends RestApiExceptionsHandler {
   @ResponseBody
   @RequestMapping(value = Array("/projects/{projectId}/workflows/running"))
   def runningWorkflows(@PathVariable(value = "projectId") projectId: Int, request: HttpServletRequest) : List[WorkflowDetails] = {
-    val mockProject: Int = projectService.list.headOption.flatMap(p => p.id).getOrElse(1)
-    List(WorkflowDetails(mockProject, "mock", "Running", "nodoby", 2, Map("foo" -> "bar"), None, None, Some(0), None))
+    genesisRestService.runningWorkflowsPerProject(projectId)
   }
 
 }

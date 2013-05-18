@@ -230,6 +230,14 @@ class GenesisRestService(storeService: StoreService,
       .map({case (projectId, wfList) => WorkflowStats(projectId, wfList.size)}).toSeq
   }
 
+  def runningWorkflowsPerProject(projectId: Int) : List[WorkflowDetails] = {
+    storeService.runningWorkflowsPerProject(projectId).map(flow => WorkflowDetails(flow.id, flow.name,
+      flow.status.toString, flow.startedBy, flow.envId, flow.displayVariables,
+      stepsCompleted(Some(flow)),
+      None, flow.executionStarted.map (_.getTime),
+      flow.executionFinished.map (_.getTime)))
+  }
+
 }
 
 object GenesisRestService {
