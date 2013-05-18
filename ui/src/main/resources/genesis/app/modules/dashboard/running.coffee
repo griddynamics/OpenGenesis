@@ -52,7 +52,7 @@ define [
       console.log(workflows)
       @envs = options.envs
       @projectId = options.projectId
-      @running = _.chain(workflows).map((i) -> i).sortBy('executionStartedTimestamp').groupBy("envId").value()
+      @running = _.chain(workflows).sortBy('executionStartedTimestamp').groupBy("envId").value()
       @jobs = _.chain().
       union(_.keys(@running), []).
       reduce(((memo, k) =>
