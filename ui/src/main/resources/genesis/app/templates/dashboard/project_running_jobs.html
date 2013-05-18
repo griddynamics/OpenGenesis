@@ -1,0 +1,52 @@
+<% _.forEach(_.keys(jobs), function(envId){  %>
+    <div class="instance">
+        <span class="instance-label">Instance <a href="#project/<%= projectId %>/inst/<%= envId %>" style="text-decoration: underline; font-weight: bold">'<%- envs.get(envId).get('name') %>'</a></span>
+    </div>
+<table class="main-table intab plain-table ">
+    <thead>
+    <tr>
+        <th style="width: 20%">Job name</th>
+        <th>Started at</th>
+        <th>Started by</th>
+        <th style="width: 15%; ">Status</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% for(var i = 0, count = jobs[envId].length; i < count; i++) { var job = jobs[envId][i] %>
+    <tr>
+        <td class="first">
+            <a href="javascript: void(0)" class="job-details toggle"
+               data-job-id="<%- job.id %>" rel="#variables-<%- job.id %>">
+                <%- job.name %>
+            </a>
+        </td>
+        <td class="first"><%= moment(job.executionStartedTimestamp).format('lll') %> (<%= moment(job.executionStartedTimestamp).fromNow() %>)</td>
+        <td class="first"><%- job.startedBy %></td>
+        <td class="first task <%= job.status === 'Failed' ? 'failed': 'requested' %>"><%- job.status %></td>
+    </tr>
+    <tr class="no-hover">
+        <td colspan="4">
+            <div class="workflow-variables compact"  id="variables-<%- job.id %>" style="background-color: #FFF3F3;display: none">
+                <dl>
+                    <dt>Parameters</dt>
+                    <dd>
+                        <% if (job.variables && _.keys(job.variables).length > 0) { %>
+                        <% _.chain(job.variables).keys().sortBy(function(o) {return o;} ).each(function(key) { %>
+                        <dl>
+                            <dt><%= key %></dt>
+                            <dd><%= job.variables[key] %></dd>
+                        </dl>
+                        <% }) %>
+                        <% } else { %>
+                        <strong>No variables required</strong>
+                        <% } %>
+
+                    </dd>
+                </dl>
+            </div>
+        </td>
+    </tr>
+    <% } %>
+    </tbody>
+</table>
+<% }) %>
