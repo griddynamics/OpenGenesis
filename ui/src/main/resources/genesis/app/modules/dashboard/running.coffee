@@ -22,11 +22,13 @@ define [
 
   class Workflow extends Backbone.Model
 
-  class WorkflowCollection extends genesis.Backbone.Model
+  class WorkflowCollection extends genesis.Backbone.Collection
     linkType: backend.LinkTypes.WorkflowDetails
     model: Workflow
     initialize: (options) ->
-      @url = options.urlLink
+      @link = options.urlLink
+    url: -> @link
+
 
   class EnvsCollection extends Env.Collection
     getFilter: ->
@@ -45,21 +47,12 @@ define [
     events:
       "click .job-details": "toggleDetails"
 
-    template: "app/templates/dashboard/project_jobs.html"
+    template: "app/templates/dashboard/project_running_jobs.html"
     initialize: (options) ->
-      console.log(options)
       workflows = options.workflows
-      console.log(workflows)
       @envs = options.envs
       @projectId = options.projectId
       @running = _.chain(workflows).sortBy('executionStartedTimestamp').groupBy("envId").value()
-      @jobs = _.chain().
-      union(_.keys(@running), []).
-      reduce(((memo, k) =>
-        memo[k] = @running unless _.isUndefined(k)
-        memo), {}).
-      value()
-      console.log(@jobs)
 
     toggleDetails: (e) ->
       id = $(e.currentTarget).attr("rel");
@@ -69,7 +62,7 @@ define [
     render: ->
       $.when(genesis.fetchTemplate(@template)).done (tmpl) =>
         @$el.html(tmpl(
-          jobs: @jobs,
+          jobs: @running,
           envs: @envs,
           moment: moment,
           projectId: @projectId
