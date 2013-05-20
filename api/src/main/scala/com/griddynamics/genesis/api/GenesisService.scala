@@ -64,4 +64,6 @@ trait GenesisService extends TemplateRestService {
 
   def workflowStats: Seq[WorkflowStats]
 
+  def runningWorkflowsPerProject(projectId: Int) : List[WorkflowDetails]
+
 }

@@ -13,7 +13,8 @@ function(genesis, Backbone, Environments) {
     "create_new_inst": "Create new instance",
     "project_list": "Project list",
     "system_settings": "System settings",
-    "dashboard": "Dashboard",
+    "dashboard": "Scheduled Jobs",
+    "runningJobs": "Running Jobs",
     "project_properties": "Properties",
     "create_project": "Create"
   };
@@ -27,7 +28,8 @@ function(genesis, Backbone, Environments) {
   var _homeLocation = _locationItem("/", LANG["project_list"]);
 
   var _settingsLocation = _locationItem("settings", LANG["system_settings"]);
-  var _dashboardLocation = _locationItem("dashboard", LANG["dashboard"]);
+  var _dashboardLocation = _locationItem("jobs_scheduled", LANG["dashboard"]);
+  var _running = _locationItem("jobs_running", LANG["runningJobs"]);
 
   var _createProjectLocation = _locationItem("admin/create/project", LANG["create_project"]);
 
@@ -57,6 +59,7 @@ function(genesis, Backbone, Environments) {
       router.bind("route:listSettings", this.settings);
       router.bind("route:createProject", this.createProject);
       router.bind("route:dashboard", this.dashboard);
+      router.bind("route:runningJobs", this.runningJobs);
       genesis.app.bind("breadcrumb:changed", this.updateLastLocation)
     },
 
@@ -125,6 +128,10 @@ function(genesis, Backbone, Environments) {
 
     dashboard: function() {
       this.render([_dashboardLocation]);
+    },
+
+    runningJobs: function() {
+      this.render([_running]);
     },
 
     render: function(locationList) {
