@@ -79,5 +79,9 @@
             <artifactId>genesis-shell</artifactId>
             <groupId>com.griddynamics.genesis</groupId>
         </dependency>
+        <dependency>
+            <artifactId>nuget</artifactId>
+            <groupId>com.griddynamics.genesis</groupId>
+        </dependency>
     </dependencies>
 </project>
