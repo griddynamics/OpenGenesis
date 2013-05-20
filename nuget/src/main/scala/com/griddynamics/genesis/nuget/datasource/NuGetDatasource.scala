@@ -92,7 +92,6 @@ class NuGetDataSource(credStore: CredentialsStoreService) extends VarDataSource 
       case Some(_) => {
         credOpt.map(credential =>  {
           val decrypted = credStore.decrypt(credential)
-          log.debug(s"Credential is ${decrypted}")
           httpClient.getCredentialsProvider.setCredentials(new AuthScope(host.getHostName, host.getPort),
             new UsernamePasswordCredentials(credential.identity, decrypted.credential.getOrElse("")))
         }).orElse(throw new IllegalArgumentException("Datasource is set use authorization, but no credentials found."))
@@ -118,7 +117,6 @@ class NuGetDataSource(credStore: CredentialsStoreService) extends VarDataSource 
     auth = cfg.get(AuthMode).map(v => Authentication.withName(v.toString))
     val projId = cfg.get(ProjectId).map(_.asInstanceOf[Int])
     val pairName: String = cfg.get(Credential).getOrElse("").toString
-    log.debug(s"PairName is ${pairName}")
     credOpt = projId.flatMap(credStore.find(_, Mode, pairName))
   }
 }
