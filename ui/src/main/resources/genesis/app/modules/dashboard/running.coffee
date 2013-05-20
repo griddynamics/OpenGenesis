@@ -79,9 +79,27 @@ define [
       @projectsCollection = options.projects
       @projects = options.projects.reduce ((memo, proj) -> memo[proj.id] = proj.toJSON(); memo ), {}
       @stat = new JobStats()
+      @stat.bind "reset", @render, @
+      @refresh()
+
+    refresh: () ->
+      @stat.fetch().done =>
+        @poll = @stat.clone()
+        poller.PollingManager.start @poll, { delay: 5000 }
+        @poll.bind "reset", @checkStatusUpdates, @
+
+    checkStatusUpdates: () ->
+      hasChanges = () =>
+        @poll.find (p) =>
+          @stat.get(p.id)?.get("runningWorkflows") != p.get("runningWorkflows")
+      if @poll.size() != @stat.size() or hasChanges()
+        @stat.reset @poll.models
+
+    onClose: ->
+      poller.PollingManager.stop @poll
 
     render: ->
-      $.when(genesis.fetchTemplate(@template), @stat.fetch()).done (tmpl) =>
+      $.when(genesis.fetchTemplate(@template)).done (tmpl) =>
         numbers = @stat.reduce(((memo, j) => memo += j.get('runningWorkflows'); memo), 0)
         @$el.html ( tmpl
           stat: @stat.toJSON(),
