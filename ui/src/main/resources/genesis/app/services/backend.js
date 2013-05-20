@@ -352,6 +352,7 @@ function(genesis, $) {
     ProjectSettings: new _type("SystemSettings"),//todo:!!!!
 
     Workflow: new _type("Workflow"),
+    WorkflowDetails: new _type("WorkflowDetails"),
 
     ConfigProperty: new _type("ConfigProperty"),
     User: new _type("User"),

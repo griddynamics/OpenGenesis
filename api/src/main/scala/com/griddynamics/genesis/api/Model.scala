@@ -103,6 +103,7 @@ case class WorkflowDetails(id: Int,
                            name : String,
                            status: String,
                            startedBy: String,
+                           envId: Int,
                            variables: Map[String, String],
                            stepsCompleted: Option[Double],
                            steps : Option[Seq[WorkflowStep]],
@@ -334,7 +335,7 @@ case class ScheduledJobStat (
   failedJobs: Long
 )
 
-case class WorkflowStats(projectId: Int, runningWorklows: Int)
+case class WorkflowStats(projectId: Int, runningWorkflows: Int)
 
 case class JobStats(runningJobs: Int, totalJobs: Int)
 
