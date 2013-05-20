@@ -115,6 +115,7 @@ trait StoreService {
     def stepExists(stepId: Int, envId: Int) : Boolean
     def findBorrowedMachinesByServerId(serverId: Int): Seq[BorrowedMachine]
     def workflowStats: List[(Int, Int)]
+    def runningWorkflowsPerProject(projectId: Int): List[Workflow]
 }
 
 class StoreServiceException extends RuntimeException

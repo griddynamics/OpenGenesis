@@ -520,8 +520,15 @@ class StoreService extends service.StoreService with Logging {
 
   @Transactional(readOnly = true)
   def workflowStats = from(GS.workflows, GS.envs)((workflow, env) =>
-    where((workflow.status === WorkflowStatus.Executing) or (workflow.status === WorkflowStatus.Requested) and (env.id === workflow.envId))
+    where((workflow.status === WorkflowStatus.Executing) and (env.id === workflow.envId))
     select (env.projectId, workflow.id)
+  ).toList
+
+  @Transactional(readOnly = true)
+  def runningWorkflowsPerProject(projectId: Int) = from(GS.workflows, GS.envs)(
+    (workflow, env) => where(
+      (workflow.status === WorkflowStatus.Executing) and (env.id === workflow.envId) and (env.projectId === projectId)
+    ) select (workflow)
   ).toList
 }
 
