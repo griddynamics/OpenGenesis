@@ -12,12 +12,13 @@ define([
   "modules/project_properties",
   "cs!modules/settings/main",
   "cs!modules/dashboard/jobs",
+  "cs!modules/dashboard/running",
 //jquery plugins
   "bootstrap",
   "tabs"
 ],
 
-function(genesis, Backbone, _, Projects, Environments, EnvironmentDetails, CreateEnvironment, ProjectProperties, AppSettings, Jobs) {
+function(genesis, Backbone, _, Projects, Environments, EnvironmentDetails, CreateEnvironment, ProjectProperties, AppSettings, Jobs, RunningJobs) {
 
   var rmodule = genesis.module();
 
@@ -34,7 +35,8 @@ function(genesis, Backbone, _, Projects, Environments, EnvironmentDetails, Creat
       "project/:projectId/properties": "projectProperties",
       "admin/create/project": "createProject",
       "settings": "listSettings",
-      "dashboard": "dashboard",
+      "jobs_scheduled": "dashboard",
+      "jobs_running": "runningJobs",
       ":hash": "index",
       "*invalid": "index"
     },
@@ -110,6 +112,10 @@ function(genesis, Backbone, _, Projects, Environments, EnvironmentDetails, Creat
     dashboard: function() {
       this.setCurrentView(new Jobs.Views.Main({el: this.$viewDiv(), projects: this.projects}));
 
+    },
+
+    runningJobs: function() {
+      this.setCurrentView(new RunningJobs.Views.Main({el: this.$viewDiv(), projects: this.projects}));
     },
 
     listSettings: function() {

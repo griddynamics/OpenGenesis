@@ -1,0 +1,27 @@
+<div id="top-panel" style="background-color: white" >
+    <div id="page-title" style="padding-top: 25px;">
+        <h1 class="envname">Running jobs</h1>
+    </div>
+    <div style="float: right; padding-top: 25px; ">
+        <h2 style="font-size: 14px; ">Total Running:  <strong><%- running %></strong></h2>
+    </div>
+</div>
+
+<div id ="tab-panel" style="margin-top: 0">
+    <div id="panel" style="border-top: none">
+
+        <% for (var i = 0; i < stat.length; i ++) { var record = stat[i]; var project = projects[record.projectId] %>
+        <div class="toggle-sector project-stat" data-project-id="<%- record.projectId %>" style="margin-top: 10px">
+            <h3 class="job-details toggle" > Project '<%- project? project.name : '' %>'</h3>
+            <div class="right-column">
+                <span> Running : <strong><%- record.runningWorkflows %></strong></span>
+            </div>
+            <div class="clear"></div>
+        </div>
+
+        <div class="history-details tasks" data-project-id="<%- record.projectId %>">
+        </div>
+        <% } %>
+
+    </div>
+</div>
