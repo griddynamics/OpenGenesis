@@ -74,11 +74,8 @@ function(genesis, $) {
   backend.EnvironmentManager = {
     resetEnvStatus: function(projectId, environmentId) {
       return $.ajax({
-        url: "rest/projects/" + projectId + "/envs/" + environmentId + "/actions",
-        dataType: "json",
-        contentType : 'application/json',
+        url: "rest/projects/" + projectId + "/envs/" + environmentId + "/actions/reset",
         type: "POST",
-        data: JSON.stringify({action: 'resetEnvStatus'}),
         timeout: DEFAULT_TIMEOUT,
         processData: false
       });
