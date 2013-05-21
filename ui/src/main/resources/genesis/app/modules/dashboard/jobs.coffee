@@ -85,35 +85,62 @@ define [
       @projectsCollection = options.projects
       @projects = options.projects.reduce ((memo, proj) -> memo[proj.id] = proj.toJSON(); memo ), {}
       @stat = new ProjectStats
+      @stat.bind "reset", @render, @
       @subviews = {}
+      @opened = []
+      @refresh()
 
-    showProjectDetails: (e) ->
-      projectId = $(e.currentTarget).attr("data-project-id")
+    refresh: () ->
+      @stat.fetch().done () =>
+        @poll = @stat.clone()
+        poller.PollingManager.start @poll, {delay: 3000}
+        @poll.bind "reset", @checkUpdates, @
+        @render()
+
+    checkUpdates: () ->
+      hasChanges = () =>
+        @poll.find (p) =>
+          @stat.get(p.id)?.get("scheduledJobs") != p.get("scheduledJobs") or @stat.get(p.id)?.get("failedJobs") != p.get("failedJobs")
+      if @poll.size() != @stat.size() or hasChanges()
+        @opened = _.reject(@opened, (x) => !@poll.get(x))
+        @stat.reset @poll.models
+
+
+    showProjectDetails: (e, selectedId) ->
+      projectId = if !selectedId
+        $(e.currentTarget).attr("data-project-id")
+      else
+        selectedId
+
       project = @stat.get(projectId)
 
-      $(".toggle", e.currentTarget).toggleClass("expanded")
+      $(".project-stat[data-projectId=" + projectId + "]").find(".toggle").toggleClass("expanded")
       $projDetailsEl = @$(".history-details[ data-project-id=" +projectId + "]")
-      $projDetailsEl.toggleClass("visible")
+      if project and $projDetailsEl
+        $projDetailsEl.toggleClass("visible")
 
-      link = _.find project.get("links"), (l) -> l.rel == "self"
-      jobs = new Job(urlLink: link.href)
-      envs = new EnvsCollection([], project: @projectsCollection.get(projectId))
-      $.when(jobs.fetch(), envs.fetch()).done =>
-        @subviews[projectId]?.close()
-        $projDetailsEl.append('<div class=jobs-list></div>')
-        view = new JobView(
-          jobs: jobs,
-          envs: envs,
-          el: $projDetailsEl.children(".jobs-list"),
-          projectId: projectId
-        )
-        view.render()
-        @subviews[projectId] = view
+        link = _.find project.get("links"), (l) -> l.rel == "self"
+        jobs = new Job(urlLink: link.href)
+        envs = new EnvsCollection([], project: @projectsCollection.get(projectId))
+        @opened.push projectId
+        $.when(jobs.fetch(), envs.fetch()).done =>
+          @subviews[projectId]?.close()
+          $projDetailsEl.append('<div class=jobs-list></div>')
+          view = new JobView(
+            jobs: jobs,
+            envs: envs,
+            el: $projDetailsEl.children(".jobs-list"),
+            projectId: projectId
+          )
+          view.render()
+          @subviews[projectId] = view
 
     onClose: ->
+      @selected = []
+      poller.PollingManager.stop @poll
 
     render: ->
-      $.when(genesis.fetchTemplate(@template), @stat.fetch()).done (tmpl) =>
+      $.when(genesis.fetchTemplate(@template)).done (tmpl) =>
         numbers = @stat.reduce(((memo, j) => memo.failed += j.get('failedJobs'); memo.requested += j.get('scheduledJobs'); memo), {failed: 0, requested: 0})
         @$el.html ( tmpl
           stat: @stat.toJSON(),
@@ -121,6 +148,7 @@ define [
           failedJobsCount: numbers.failed,
           projects: @projects
         )
+        _.each(@opened, (x) => @showProjectDetails(null, x))
 
   Jobs
 
