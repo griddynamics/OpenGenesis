@@ -80,7 +80,7 @@ class RolesController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("groups/{groupName}/roles"), method = Array(RequestMethod.GET))
   @ResponseBody
-  def groupRoles(@PathVariable("groupName") groupName: String): List[String] = authorityService.getGroupAuthorities(groupName)
+  def groupRoles(@PathVariable("groupName") groupName: String): List[String] = authorityService.getGroupsAuthorities(groupName)
 
   @RequestMapping(value = Array("groups/{groupName}/roles"), method = Array(RequestMethod.PUT))
   @ResponseBody
