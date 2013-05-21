@@ -75,8 +75,8 @@ class DefaultAuthorityService(permissionService: PermissionService) extends Auth
   ).toList
 
   @Transactional(readOnly = true)
-  def getGroupAuthorities(groupName: String) = from(groupAuthorities) (item =>
-    where(lower(item.principalName) === lower(groupName)) select (item.authority)
+  def getGroupsAuthorities(groupNames: String*) = from(groupAuthorities) (item =>
+    where(lower(item.principalName) in (groupNames map (_.toLowerCase))) select (item.authority)
   ).toList
 
   @Transactional(readOnly = true)
