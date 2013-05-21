@@ -61,6 +61,9 @@ define [
       $(e.currentTarget).toggleClass("expanded");
       this.$(id).slideToggle("fast");
 
+    onClose: () ->
+      @unbind()
+
     render: ->
       $.when(genesis.fetchTemplate(@template)).done (tmpl) =>
         @$el.html(tmpl(
@@ -82,6 +85,7 @@ define [
       @projectsCollection = options.projects
       @projects = options.projects.reduce ((memo, proj) -> memo[proj.id] = proj.toJSON(); memo ), {}
       @stat = new ProjectStats
+      @subviews = {}
 
     showProjectDetails: (e) ->
       projectId = $(e.currentTarget).attr("data-project-id")
@@ -95,13 +99,16 @@ define [
       jobs = new Job(urlLink: link.href)
       envs = new EnvsCollection([], project: @projectsCollection.get(projectId))
       $.when(jobs.fetch(), envs.fetch()).done =>
+        @subviews[projectId]?.close()
+        $projDetailsEl.append('<div class=jobs-list></div>')
         view = new JobView(
           jobs: jobs,
           envs: envs,
-          el: $projDetailsEl,
+          el: $projDetailsEl.children(".jobs-list"),
           projectId: projectId
         )
         view.render()
+        @subviews[projectId] = view
 
     onClose: ->
 
