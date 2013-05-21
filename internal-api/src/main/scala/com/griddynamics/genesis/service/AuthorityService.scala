@@ -40,7 +40,7 @@ trait AuthorityService {
 
   def getUserAuthorities(username: String): List[String]
 
-  def getGroupAuthorities(groupName: String): List[String]
+  def getGroupsAuthorities(groupNames: String*): List[String]
 
   def getAuthorities(groups: Iterable[api.UserGroup]): List[String]
 
