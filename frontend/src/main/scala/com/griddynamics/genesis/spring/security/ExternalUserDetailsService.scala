@@ -34,6 +34,10 @@ import com.griddynamics.genesis.util.Logging
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import GenesisRole._
 
+trait GroupBasedRoleService extends UserDetailsService {
+  def getRolesByGroupNames(groupNames: String*): Iterable[GrantedAuthority]
+}
+
 class ExternalUserDetailsService(authorityService: AuthorityService, projectAuthorityService: ProjectAuthorityService, adminUsername: String)
   extends UserDetailsService with GroupBasedRoleService {
 
@@ -55,13 +59,10 @@ class ExternalUserDetailsService(authorityService: AuthorityService, projectAuth
         }
     }
 
-    def getRolesByGroupName(groupName: String): List[GrantedAuthority] = {
-        new SimpleGrantedAuthority("GROUP_" + groupName) :: RoleBasedAuthority(authorityService.getGroupAuthorities(groupName)).toList
-    }
-}
+    def getRolesByGroupNames(groupNames: String*) = groupNames.map(gn =>
+      new SimpleGrantedAuthority(s"GROUP_$gn")
+    ) ++ RoleBasedAuthority(authorityService.getGroupsAuthorities(groupNames :_*))
 
-trait GroupBasedRoleService extends UserDetailsService {
-    def getRolesByGroupName(groupName: String) : List[GrantedAuthority]
 }
 
 class ExternalUserAuthenticationProvider(details: ExternalUserDetailsService) extends AuthenticationProvider with Logging {
@@ -73,7 +74,7 @@ class ExternalUserAuthenticationProvider(details: ExternalUserDetailsService) ex
     val assignedGroups = authRequest.assignedGroups
     val username = authRequest.username
     val user = details.loadUserByUsername(username, assignedGroups)
-    val additionalGroups = getAdditionalGroups(user, assignedGroups)
+    val additionalGroups = getAdditionalGroups(user, assignedGroups :_*)
     if(!additionalGroups.exists( gr => ALLOWED_ROLES.contains(gr.getAuthority)))
       throw new UsernameNotFoundException(s"User $username doesn't have required role [$GenesisUser]")
     new ExternalAuthentication(user, additionalGroups.toList)
@@ -81,8 +82,8 @@ class ExternalUserAuthenticationProvider(details: ExternalUserDetailsService) ex
 
   def supports(authentication: Class[_]) = classOf[ExternalAuthentication].isAssignableFrom(authentication)
 
-  private def getAdditionalGroups(user: User, assignedGroups: Iterable[String]) = {
-    lazy val groupRoles = assignedGroups.flatMap(details.getRolesByGroupName(_))
+  private def getAdditionalGroups(user: User, assignedGroups: String*) = {
+    lazy val groupRoles = details.getRolesByGroupNames(assignedGroups: _*)
     // in case of user is system admin there's no need of any more roles(avoid loading roles from DB)
     (if(isSysAdmin(user)) Seq() else groupRoles) ++ user.getAuthorities
   }
