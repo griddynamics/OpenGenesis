@@ -110,17 +110,9 @@
         <module>ldap</module>
         <module>active-directory</module>
         <module>nuget</module>
-    </modules>
-
-    <profiles>
-        <profile>
-            <id>distributions</id>
-            <modules>
-                <module>distribution-standalone</module>
-                <module>distribution-war</module>
-            </modules>
-        </profile>
-    </profiles>
+        <module>distribution-standalone</module>
+        <module>distribution-war</module>
+     </modules>
 
       <dependencyManagement>
         <dependencies>
