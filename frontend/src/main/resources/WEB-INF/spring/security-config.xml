@@ -147,6 +147,22 @@
                 )"
         />
 
+        <s:intercept-url pattern="/rest/projects/*/envs/*/actions/cancel" access="
+             hasRole('ROLE_GENESIS_ADMIN') or hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration') or
+                (
+                    not(@environmentSecurity.restrictionsEnabled())
+                        and
+                    hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'read')
+                ) or (
+                    @environmentSecurity.restrictionsEnabled()
+                       and
+                    hasPermission( #urlId('/rest/projects/.*/envs/{id}.*', #url), 'com.griddynamics.genesis.api.Environment', 'read')
+                )"
+        />
+        <s:intercept-url pattern="/rest/projects/*/envs/*/actions/*" access="
+             hasRole('ROLE_GENESIS_ADMIN') or hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration')"
+        />
+
         <s:intercept-url pattern="/rest/projects/*/envs/*/workflows" method="GET" access="
              hasRole('ROLE_GENESIS_ADMIN') or hasPermission( #urlId('/rest/projects/{id}.*', #url), 'com.griddynamics.genesis.api.Project', 'administration') or
                 (
