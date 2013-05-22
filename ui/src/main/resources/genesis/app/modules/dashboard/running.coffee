@@ -55,9 +55,9 @@ define [
       @running = _.chain(workflows.toJSON()).sortBy('executionStartedTimestamp').groupBy("envId").value()
 
     toggleDetails: (e) ->
-      id = $(e.currentTarget).attr("rel");
-      $(e.currentTarget).toggleClass("expanded");
-      this.$(id).slideToggle("fast");
+      id = $(e.currentTarget).attr("rel")
+      $(e.currentTarget).toggleClass("expanded")
+      this.$(id).toggle(100)
 
     render: ->
       $.when(genesis.fetchTemplate(@template)).done (tmpl) =>
@@ -82,6 +82,7 @@ define [
       @opened = []
       @stat.bind "reset", @render, @
       @refresh()
+      @subviews = {}
 
     refresh: () ->
       @stat.fetch().done =>
@@ -126,13 +127,16 @@ define [
         envs = new EnvsCollection([], project: @projectsCollection.get(projectId))
         @opened.push(projectId)
         $.when(workflows.fetch(), envs.fetch()).done =>
+          @subviews.projectId?.close()
+          $projDetailsEl.append('<div class=jobs-list></div>')
           view = new WorkflowView(
             workflows: workflows,
             envs: envs,
-            el: $projDetailsEl,
+            el: $projDetailsEl.children(".jobs-list"),
             projectId: projectId
           )
           view.render()
+          @subviews.projectId = view
 
 
   RunningJobs

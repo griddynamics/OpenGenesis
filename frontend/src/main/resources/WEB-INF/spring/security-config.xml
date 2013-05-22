@@ -86,7 +86,7 @@
         <s:intercept-url pattern="/rest/projects" method="GET" access="isAuthenticated()"/>
         <s:intercept-url pattern="/rest/projects/" method="GET" access="isAuthenticated()"/>
 
-        <s:intercept-url pattern="/rest/workflows-stats" method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')"/>
+        <s:intercept-url pattern="/rest/workflow-stats" method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')"/>
         <s:intercept-url pattern="/rest/projects/*/workflows**" method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY')"/>
 
         <s:intercept-url pattern="/rest/projects/*/permissions" method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_READONLY') or
