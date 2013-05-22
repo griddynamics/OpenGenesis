@@ -52,7 +52,7 @@ define [
       workflows = options.workflows
       @envs = options.envs
       @projectId = options.projectId
-      @running = _.chain(workflows).sortBy('executionStartedTimestamp').groupBy("envId").value()
+      @running = _.chain(workflows.toJSON()).sortBy('executionStartedTimestamp').groupBy("envId").value()
 
     toggleDetails: (e) ->
       id = $(e.currentTarget).attr("rel");
@@ -78,7 +78,8 @@ define [
       _.bind @render, this
       @projectsCollection = options.projects
       @projects = options.projects.reduce ((memo, proj) -> memo[proj.id] = proj.toJSON(); memo ), {}
-      @stat = new JobStats()
+      @stat = new JobStats
+      @opened = []
       @stat.bind "reset", @render, @
       @refresh()
 
@@ -93,9 +94,11 @@ define [
         @poll.find (p) =>
           @stat.get(p.id)?.get("runningWorkflows") != p.get("runningWorkflows")
       if @poll.size() != @stat.size() or hasChanges()
+        @opened = _.reject(@opened, (x) => !@poll.get(x))
         @stat.reset @poll.models
 
     onClose: ->
+      @selected = []
       poller.PollingManager.stop @poll
 
     render: ->
@@ -106,25 +109,30 @@ define [
           running: numbers,
           projects: @projects
         )
+        _.each(@opened, (x) => @showProjectDetails(null, x))
 
-    showProjectDetails: (e) ->
-      projectId = $(e.currentTarget).attr("data-project-id")
+    showProjectDetails: (e, selectedId) ->
+      projectId = if (! selectedId)
+        $(e.currentTarget).attr("data-project-id")
+      else
+        selectedId
       project = @stat.get(projectId)
-
-      $(".toggle", e.currentTarget).toggleClass("expanded")
+      $(".project-stat[data-projectId=" + projectId + "]").find(".toggle").toggleClass("expanded")
       $projDetailsEl = @$(".history-details[ data-project-id=" +projectId + "]")
-      $projDetailsEl.toggleClass("visible")
-      link = _.find project.get("links"), (l) -> l.rel == "collection"
-      workflows = new WorkflowCollection(urlLink: link.href)
-      envs = new EnvsCollection([], project: @projectsCollection.get(projectId))
-      $.when(workflows.fetch(), envs.fetch()).done =>
-        view = new WorkflowView(
-          workflows: workflows.toJSON(),
-          envs: envs,
-          el: $projDetailsEl,
-          projectId: projectId
-        )
-        view.render()
+      if (project and $projDetailsEl)
+        $projDetailsEl.toggleClass("visible")
+        link = _.find project.get("links"), (l) -> l.rel == "collection"
+        workflows = new WorkflowCollection(urlLink: link.href)
+        envs = new EnvsCollection([], project: @projectsCollection.get(projectId))
+        @opened.push(projectId)
+        $.when(workflows.fetch(), envs.fetch()).done =>
+          view = new WorkflowView(
+            workflows: workflows,
+            envs: envs,
+            el: $projDetailsEl,
+            projectId: projectId
+          )
+          view.render()
 
 
   RunningJobs
