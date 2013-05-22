@@ -288,10 +288,6 @@ class EnvironmentsController extends RestApiExceptionsHandler {
         genesisService.requestWorkflow(envId, projectId, workflow, extractVariables(parameters), getCurrentUser)
       }
 
-      case "resetEnvStatus" => {
-        genesisService.setEnvStatus(envId, projectId, EnvStatus.Ready.toString)
-      }
-
       case _ => throw new InvalidInputException ()
     }
   }
