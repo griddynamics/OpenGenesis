@@ -127,7 +127,7 @@ define [
         envs = new EnvsCollection([], project: @projectsCollection.get(projectId))
         @opened.push(projectId)
         $.when(workflows.fetch(), envs.fetch()).done =>
-          @subviews.projectId?.close()
+          @subviews[projectId]?.close()
           $projDetailsEl.append('<div class=jobs-list></div>')
           view = new WorkflowView(
             workflows: workflows,
@@ -136,7 +136,7 @@ define [
             projectId: projectId
           )
           view.render()
-          @subviews.projectId = view
+          @subviews[projectId] = view
 
 
   RunningJobs
