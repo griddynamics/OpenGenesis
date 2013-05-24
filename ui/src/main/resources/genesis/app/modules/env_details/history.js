@@ -115,7 +115,7 @@ function (genesis, Backbone, status, backend, $) {
     }
   });
 
-  var StepLogCollection = Backbone.Collection.extend ({
+  var StepLogCollection = genesis.Backbone.Collection.extend ({
     model: ActionTracking,
 
     initialize: function(values, options) {

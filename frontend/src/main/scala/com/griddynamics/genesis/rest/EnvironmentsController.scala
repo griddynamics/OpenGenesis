@@ -369,12 +369,18 @@ class EnvironmentsController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{envId}/steps/{stepId}/actions"), method = Array(RequestMethod.GET))
   @ResponseBody
+  @AddSelfLinks(methods = Array(GET), modelClass = classOf[ActionTracking])
   def getStepActions(@PathVariable("projectId") projectId: Int,
                      @PathVariable("envId") envId: Int,
                      @PathVariable("stepId") stepId: Int,
-                     request: HttpServletRequest): Seq[ActionTracking] = {
+                     request: HttpServletRequest): CollectionWrapper[ItemWrapper[ActionTracking]] = {
     validateStepId(stepId, envId)
-    genesisService.getStepLog(stepId)
+    implicit val httpRequest = request
+    def wrap(trackingItem: ActionTracking): ItemWrapper[ActionTracking] = {
+      val top = WebPath(request)
+      CollectionWrapper.wrap(trackingItem).withLinks(LinkBuilder(top / trackingItem.uuid / "attachments", COLLECTION, classOf[Attachment], GET)).filtered()
+    }
+    genesisService.getStepLog(stepId).map(wrap(_))
   }
 
   @RequestMapping(value = Array("{envId}/steps/{stepId}/actions/{uuid}/attachments"), method = Array(RequestMethod.GET))
