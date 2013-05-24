@@ -329,6 +329,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
         .toggle(status !== "Destroyed");
       this.$("#resetBtn")
         .toggle(this.details.canResetStatus());
+      this.$(".mark-destroyed").toggleClass("disabled", activeExecution)
     },
 
     renderVirtualMachines: function() {
