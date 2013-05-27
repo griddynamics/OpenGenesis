@@ -6,5 +6,6 @@ import java.io.InputStream
 
 trait AttachmentContentRepository {
    def saveAttachmentContent(attachment: Attachment, content: InputStream)
+   def saveAttachmentContent(attachment: Attachment, content: Array[Byte])
    def getContent(attachment: api.Attachment): Option[AttachmentContent[_]]
 }
