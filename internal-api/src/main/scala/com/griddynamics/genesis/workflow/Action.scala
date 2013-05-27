@@ -60,15 +60,24 @@ trait ResultWithAttachment {
 }
 
 trait Attachable {
-  def getInputStream: InputStream
+  def getContent: Array[Byte]
   def getName: String
   def getType: String
 }
 
-class FileAttachable(file: File, `type`: String = "text/plain" ) extends Attachable {
-  def getInputStream: InputStream = new FileInputStream(file)
+class FileAttachable(file: File, `type`: String = "text/plain") extends Attachable with Serializable {
+  val content = {
+    val is = new FileInputStream(file)
+    try {
+      Stream.continually(is.read()).takeWhile(-1 !=).map(_.toByte).toArray
+    } finally {
+      is.close()
+    }
+  }
+  val getContent = content
   def getName = file.getName
   def getType = `type`
+
 }
 
 object FileAttachable {
