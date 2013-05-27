@@ -13,7 +13,7 @@ class AttachmentServiceImpl(repository: AttachmentRepository, contentRepository:
   @Transactional(readOnly = true)
   def get(key: Int): Option[Attachment] = repository.get(key)
   @Transactional(readOnly = false)
-  def insert(attachment: model.Attachment, content: InputStream): model.Attachment = {
+  def insert(attachment: model.Attachment, content: Array[Byte]): model.Attachment = {
     val saved = repository.insert(attachment)
     contentRepository.saveAttachmentContent(saved, content)
     saved
