@@ -776,7 +776,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
         }
       });
       this.bind('job-removed', function(workflowName) {
-        $('.schedule-button[rel=' + workflowName + ']').show();
+        $('.schedule-button[rel="' + workflowName + '"]').show();
       })
     },
 
@@ -826,7 +826,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
          $('.schedule-button').not('visible').show();
          var jobs = self.collection.toJSON();
          _.map(jobs, function(job) {
-           var button = $('.schedule-button[rel=' + job.workflow + ']').not('hidden');
+           var button = $('.schedule-button[rel="' + job.workflow + '"]').not('hidden');
            $(button).hide();
          });
          self.$el.html(tmpl({

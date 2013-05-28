@@ -40,7 +40,8 @@ trait EnvironmentJobService {
   def listScheduledJobs(projectId: Int, envId: Int): Seq[ScheduledJobDetails]
   def listScheduledJobs(projectId: Int): Seq[ScheduledJobDetails]
   def removeJob(projectId: Int, envId: Int, jobId: String)
-  def scheduleExecution(projectId: Int, envId: Int, workflow: String, parameters: Map[String, String], date: Date, requestedBy: String): ExtendedResult[Date]
+  def scheduleExecution(projectId: Int, envId: Int, workflow: String, parameters: Map[String, String], date: Date,
+                        requestedBy: String, cronExpr: Option[String] = None): ExtendedResult[Date]
   def scheduledJobsStat: Map[Int, Long]
 }
 
@@ -115,7 +116,8 @@ class EnvironmentJobServiceImpl(scheduler: SchedulingService,
 
 
   @Transactional
-  def scheduleExecution(projectId: Int, envId: Int, workflow: String, parameters: Map[String, String], date: Date, requestedBy: String): ExtendedResult[Date] = {
+  def scheduleExecution(projectId: Int, envId: Int, workflow: String, parameters: Map[String, String], date: Date,
+                        requestedBy: String, cronExpr: Option[String] = None): ExtendedResult[Date] = {
     val env = storeService.findEnv(envId).getOrElse {
       throw new IllegalArgumentException(s"Couldn't find env id = $envId")
     }
@@ -129,7 +131,7 @@ class EnvironmentJobServiceImpl(scheduler: SchedulingService,
       scheduleDestructionJobs(env, template, requestedBy, date)
       Success(date)
     } else {
-      scheduleWorkflow(template, workflow, parameters, configuration, env, requestedBy, date)
+      scheduleWorkflow(template, workflow, parameters, configuration, env, requestedBy, date, cronExpr)
     }
   }
 
@@ -140,12 +142,13 @@ class EnvironmentJobServiceImpl(scheduler: SchedulingService,
                                configuration: Configuration,
                                env: Environment,
                                requestedBy: String,
-                               date: Date): ExtendedResult[Date] = {
+                               date: Date,
+                               cronExpr: Option[String] = None): ExtendedResult[Date] = {
     template.getValidWorkflow(workflow).flatMap { wf =>
       RequestBrokerImpl.validateWorkflow(wf, parameters, configuration).map { _ =>
         val execution = new WorkflowExecution(workflow, env.id, env.projectId, requestedBy, parameters)
         scheduler.removeScheduledJob(new WorkflowExecutionId(env.projectId, env.id, workflow))
-        scheduler.schedule(execution, date)
+        scheduler.schedule(execution, date, cronExpr)
         date
       }
     }

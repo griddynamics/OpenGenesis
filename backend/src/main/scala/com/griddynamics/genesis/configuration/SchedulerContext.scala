@@ -157,7 +157,8 @@ class SchedulerStubContext {
 
     def removeJob(projectId: Int, envId: Int, jobId: String) {}
 
-    def scheduleExecution(projectId: Int, envId: Int, workflow: String, parameters: Map[String, String], date: Date, requestedBy: String) = Success(date)
+    def scheduleExecution(projectId: Int, envId: Int, workflow: String, parameters: Map[String, String], date: Date,
+                          requestedBy: String, cronExpr: Option[String] = None) = Success(date)
 
     def listScheduledJobs(projectId: Int) = Seq()
 
