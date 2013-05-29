@@ -27,9 +27,10 @@ import scala.concurrent.duration._
 import com.griddynamics.genesis.workflow
 import com.griddynamics.genesis.workflow.message._
 import java.util.concurrent.ExecutorService
-import akka.actor.{Props, PoisonPill, ActorRef, Actor}
+import akka.actor._
+import akka.actor.SupervisorStrategy._
 import com.griddynamics.genesis.workflow._
-import workflow.action.{ExecutorThrowable, DelayedExecutorInterrupt, ExecutorInterrupt}
+import workflow.action.{DelayedExecutorInterrupt, ExecutorInterrupt}
 import scala.Some
 import workflow.signal.{Rescue, Fail, Success}
 import workflow.step.{CoordinatorThrowable, CoordinatorInterrupt}
@@ -37,10 +38,7 @@ import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.common.Mistake
 import com.griddynamics.genesis.service.RemoteAgentsService
 import com.griddynamics.genesis.logging.LoggerWrapper
-import org.apache.commons.lang.exception.ExceptionUtils
 import com.griddynamics.genesis.configuration.WorkflowConfig
-import com.griddynamics.genesis.agents.AgentGateway
-import concurrent.Await
 import akka.util.Timeout
 
 class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
@@ -56,8 +54,9 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
     else
         Success() // Success() signal only for log messages
 
-    private val regularExecutors = mutable.Set[ActorRef]()
-    val signalExecutors = mutable.Set[ActorRef]()
+    private val regularExecutors = mutable.Map[ActorRef, Action]()
+    private val signalExecutors = mutable.Map[ActorRef, Action]()
+  private val executorFailures = mutable.Map[ActorRef, Throwable]()
 
     override def receive = {
         case Start => {
@@ -82,6 +81,7 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
             startExecutors(safeStepCoordinator.onActionFinish(result), regularExecutors)
             attemptToRegularFinish()
         }
+        case Terminated(a) => handleTermination(a, regularExecutors)
     }
 
     val interrupted: Receive = {
@@ -109,6 +109,7 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
             startExecutors(safeStepCoordinator.onActionFinish(result), signalExecutors)
             attemptToSignalFinish()
         }
+        case Terminated(a) => handleTermination(a, signalExecutors)
     }
 
     def attemptToRegularFinish() {
@@ -137,41 +138,42 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
         }
     }
 
-    def isExecutorPresented(actorRef: ActorRef, executorsPool: mutable.Set[ActorRef]) = {
+    def isExecutorPresented(actorRef: ActorRef, executorsPool: mutable.Map[ActorRef, Action]) = {
         executorsPool.contains(actorRef)
     }
 
-    def removeExecutor(actorRef: ActorRef, executorsPool: mutable.Set[ActorRef]) {
-        executorsPool.remove(actorRef)
+    def removeExecutor(actorRef: ActorRef, executorsPool: mutable.Map[ActorRef, Action]) {
+      executorsPool.remove(actorRef)
+      context.unwatch(actorRef)
     }
 
-    def beatExecutors(beat: Beat, executorsPool: mutable.Set[ActorRef]) {
-        for (executor <- executorsPool)
+    def beatExecutors(beat: Beat, executorsPool: mutable.Map[ActorRef, Action]) {
+        for (executor <- executorsPool.keys)
             executor ! beat
     }
 
-    def startExecutors(executors: Seq[workflow.ActionExecutor], executorsPool: mutable.Set[ActorRef]) {
+    def startExecutors(executors: Seq[workflow.ActionExecutor], executorsPool: mutable.Map[ActorRef, Action]) {
         for (executor <- executors)
             startExecutor(executor, executorsPool)
     }
 
-    def startExecutor(executor: workflow.ActionExecutor, executorsPool: mutable.Set[ActorRef]) {
+    def startExecutor(executor: workflow.ActionExecutor, executorsPool: mutable.Map[ActorRef, Action]) {
         val asyncExecutor = executor match {
             case e: AsyncActionExecutor => e
             case e: SyncActionExecutor =>
                 new SyncActionExecutorAdapter(e, executorService)
         }
       val actionExecutionActor = executorActor(asyncExecutor)
+      context.watch(actionExecutionActor)
       actionExecutionActor ! Start
-      executorsPool += actionExecutionActor
+      executorsPool(actionExecutionActor) = executor.action
     }
 
-  import context.system
   private def executorActor(asyncExecutor: AsyncActionExecutor): ActorRef = asyncExecutor.action match {
     case r: RemoteAgentExec if r.tag.nonEmpty =>
-      system.actorOf(Props(remoteExecutor(r.tag, asyncExecutor.action)))
+      context.actorOf(Props(remoteExecutor(r.tag, asyncExecutor.action)))
     case _ =>
-      system.actorOf(Props(new actor.ActionExecutor(asyncExecutor, self, beatSource)))
+      context.actorOf(Props(new actor.ActionExecutor(asyncExecutor, self, beatSource)))
    }
 
   private val TIMEOUT_REMOTE_ACTOR = Timeout(config.remoteExecutorWaitTimeout  seconds)
@@ -182,6 +184,26 @@ class StepCoordinator(unsafeStepCoordinator: workflow.StepCoordinator,
       case _ => LoggerWrapper.logger()
     }
     new AgentCommunicatingActor(self, action, tag, remoteAgentService, logger, TIMEOUT_REMOTE_ACTOR.duration)
+  }
+
+  // do not restart executor actors on unhandled exception in receive
+  // restarting with cleared state could lead to unpredictable behavior
+  override def supervisorStrategy = OneForOneStrategy() {
+    case e: Exception => executorFailures(sender) = e
+      Stop
+  }
+
+  private def handleTermination(a: ActorRef, executorsPool: mutable.Map[ActorRef, Action]) {
+    executorFailures.get(a).foreach(t => {
+      val result = new ActionFailed {
+        val action = executorsPool.getOrElse(a, new Action{ val desc = "Unknown action"})
+
+        val desc = s"Executor actor has thrown unexpected exception: $t. See log for details."
+      }
+      removeExecutor(a, executorsPool)
+      startExecutors(safeStepCoordinator.onActionFinish(result), executorsPool)
+      if (executorsPool eq regularExecutors) attemptToRegularFinish else attemptToSignalFinish
+    })
   }
 }
 
