@@ -28,8 +28,23 @@
             <div class="value">
                 <input id="executionDate" name="executionDate"  size="22" class="required"  type="text">
             </div>
-            <div style="clear: both"></div>
+        <div style="clear: both"></div>
         </div>
+        <% if (recurrence) { %>
+        <div style="margin-top: 10px; margin-bottom: 10px">
+            <label for="recurrence" class="label">
+                Recurrence
+            </label>
+            <div class="value">
+                <select id="recurrence" name="recurrence" >
+                    <option value="" selected="selected">Once</option>
+                    <option value="1d">Daily</option>
+                    <option value="1w">Weekly</option>
+                </select>
+            </div>
+             <div style="clear: both"></div>
+        </div>
+        <% } %>
         <% } %>
     </form>
 

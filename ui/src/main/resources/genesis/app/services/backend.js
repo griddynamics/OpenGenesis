@@ -48,20 +48,22 @@ function(genesis, $) {
       });
     },
 
-    scheduleWorkflow: function(projectId, envId, workflow, variables, date, scheduleId) {
+    scheduleWorkflow: function(projectId, envId, workflow, variables, date, scheduleId, schedExpr) {
       var url = 'rest/projects/' + projectId + '/envs/' + envId + '/jobs';
       if (scheduleId)
         url += '/' + scheduleId;
+      var dataJson = {
+          workflow: workflow,
+          executionDate: date,
+          parameters: variables
+      };
+      if (schedExpr) dataJson['schedule'] = schedExpr
       return $.ajax({
         url: url,
         dataType: "json",
         contentType : 'application/json',
         type: scheduleId ? "PUT" : "POST",
-        data: JSON.stringify({
-          workflow: workflow,
-          executionDate: date,
-          parameters: variables
-        }),
+        data: JSON.stringify(dataJson),
         timeout: DEFAULT_TIMEOUT,
         processData: false
       });

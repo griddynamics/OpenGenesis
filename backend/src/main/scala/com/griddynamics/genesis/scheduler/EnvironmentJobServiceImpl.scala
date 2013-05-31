@@ -27,7 +27,7 @@ import java.util.Date
 import java.util.concurrent.TimeUnit
 import org.springframework.transaction.annotation.Transactional
 import scala.concurrent.duration._
-import com.griddynamics.genesis.api.{Configuration, ScheduledJobDetails, Success, ExtendedResult}
+import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.bean.RequestBrokerImpl
 import com.griddynamics.genesis.util.Logging
 
@@ -128,6 +128,7 @@ class EnvironmentJobServiceImpl(scheduler: SchedulingService,
       throw new IllegalArgumentException(s"Couldn't find environment configuration id = ${env.configurationId} in project ${env.projectId}")
     )
     if(template.destroyWorkflow.name == workflow) {
+      if (cronExpr.isDefined) return Failure(compoundServiceErrors = Seq(s"$workflow workflow could only be scheduled once."))
       scheduleDestructionJobs(env, template, requestedBy, date)
       Success(date)
     } else {

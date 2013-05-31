@@ -71,16 +71,16 @@ class ScheduledJobsController extends RestApiExceptionsHandler {
   def doScheduleJob(projectId: Int, envId: Int, requestMap: Map[String, Any], parameters: Map[String, String], workflowName: String): ExtendedResult[Date] = {
     try {
       val time = new Date(extractValue("executionDate", requestMap).toLong)
-      val cronExpr = extractOption("cronExpr", requestMap)
+      val schedule = extractOption("schedule", requestMap)
       if (time.before(new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1)))) {
         Failure(variablesErrors = Map("executionDate" -> "Execution date can't be in the past "))
       } else {
-        schedulingService.scheduleExecution(projectId, envId, workflowName, parameters, time, getCurrentUser, cronExpr)
+        schedulingService.scheduleExecution(projectId, envId, workflowName, parameters, time, getCurrentUser, schedule)
       }
     } catch {
       case e: NumberFormatException => Failure(variablesErrors = Map("executionDate" -> "Invalid timestamp format"))
       case re: RuntimeException => re.getCause match {
-        case pe: ParseException => Failure(variablesErrors = Map("cronExpr" -> pe.getMessage))
+        case pe: ParseException => Failure(variablesErrors = Map("schedule" -> pe.getMessage))
         case _ => throw re
       }
     }

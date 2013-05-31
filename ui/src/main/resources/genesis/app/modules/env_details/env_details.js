@@ -183,7 +183,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
         bind('workflow-scheduled', function(workflow) {
           status.StatusPanel.information("'" + capitalise(workflow.name) + "' execution was scheduled successfully");
           self.envJobs.fetch().done(function(){
-            self.$('.schedule-button[rel='+ workflow.name + ']').not('hidden').hide();
+            self.$('.schedule-button[rel="'+ workflow.name + '"]').not('hidden').hide();
           })
         }).
         bind('workflow-started', function(workflow) {
@@ -601,6 +601,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       this.configurationId = envDetails.get('configurationId');
       this.varValues = varValues;
       this.scheduleId = scheduleId;
+      this.recurrence = workflow.get('name') != envDetails.get('destroyWorkflowName')
       this.render();
     },
 
@@ -633,7 +634,8 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       genesis.app.trigger("page-view-loading-started");
       var execution = !this.scheduling ?
         backend.WorkflowManager.executeWorkflow(this.projectId, this.envId, this.workflow.get('name'), this.workflowParams()) :
-        backend.WorkflowManager.scheduleWorkflow(this.projectId, this.envId, this.workflow.get('name'), this.workflowParams(), this.executionDate(), this.scheduleId);
+        backend.WorkflowManager.scheduleWorkflow(this.projectId, this.envId, this.workflow.get('name'), this.workflowParams(),
+         this.executionDate(), this.scheduleId, this.$("#recurrence").val());
 
       var view = this;
       $.when(execution).then(
@@ -681,7 +683,8 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
         view.$el.html(tmpl({
           noVariables: view.workflow.get('variables').length == 0,
           workflowName: view.workflow.get('name'),
-          scheduling: view.scheduling
+          scheduling: view.scheduling,
+          recurrence: view.recurrence
         }));
 
         if(view.scheduling) {

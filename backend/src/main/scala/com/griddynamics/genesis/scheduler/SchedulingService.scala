@@ -3,9 +3,12 @@ package com.griddynamics.genesis.scheduler
 import java.util
 import java.util.Date
 import org.quartz.impl.matchers.{EverythingMatcher, GroupMatcher}
-import org.quartz.{TriggerKey, JobKey, JobBuilder, TriggerBuilder, Scheduler, Trigger}
+import org.quartz._
 import org.springframework.transaction.annotation.Transactional
 import org.quartz.CronScheduleBuilder._
+import org.quartz.CalendarIntervalScheduleBuilder.calendarIntervalSchedule
+import org.quartz.DateBuilder.IntervalUnit._
+import java.text.ParseException
 
 trait SchedulingService {
   def removeAllScheduledJobs(projectId: Int, envId: Int)
@@ -22,6 +25,9 @@ trait SchedulingService {
 
 class SchedulingServiceImpl(scheduler: Scheduler) extends SchedulingService {
 
+  private val INTERVAL_REGEX = "([1-9][0-9]*)([mhdw])".r
+  private val INTERVAL_UNITS = Map("m" -> MINUTE, "h" -> HOUR, "d" -> DAY, "w" -> WEEK)
+
   @Transactional
   def schedule(execution: Execution, date: Date, cronExpr: Option[String] = None) {
     val trigger = buildTrigger(execution, date, cronExpr)
@@ -34,10 +40,17 @@ class SchedulingServiceImpl(scheduler: Scheduler) extends SchedulingService {
     scheduler.scheduleJob(jobDetail, trigger)
   }
 
+  private def intervalSchedule(expr: String) = (expr match {
+    case INTERVAL_REGEX(i, x) if i.forall(_.isDigit) => calendarIntervalSchedule.withInterval(i.toInt, INTERVAL_UNITS(x))
+    case _ => throw new ParseException("Schedule syntax is incorrect. Must be either a valid cron expression or interval duration", 0)
+  }).preserveHourOfDayAcrossDaylightSavings(true)
 
   private def buildTrigger(execution: ExecutionId, date: Date, cronExpr: Option[String]): Trigger = {
     val builder = TriggerBuilder.newTrigger().withIdentity(execution.triggerKey).startAt(date)
-    cronExpr.map(ce => builder.withSchedule(cronSchedule(ce))).getOrElse(builder).build()
+    cronExpr.map(ce => {
+      val schedule = if (CronExpression.isValidExpression(ce)) cronSchedule(ce) else intervalSchedule(ce)
+      builder.withSchedule(schedule)
+    }).getOrElse(builder).build()
   }
 
   @Transactional(readOnly = true)
