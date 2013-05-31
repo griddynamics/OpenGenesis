@@ -42,6 +42,7 @@ import com.griddynamics.genesis.rest.links.ItemWrapper
 import com.griddynamics.genesis.api.Failure
 import com.griddynamics.genesis.api.Success
 import com.griddynamics.genesis.api.ScheduledJobDetails
+import java.text.ParseException
 
 @Controller
 @RequestMapping(Array("/rest"))
@@ -70,13 +71,18 @@ class ScheduledJobsController extends RestApiExceptionsHandler {
   def doScheduleJob(projectId: Int, envId: Int, requestMap: Map[String, Any], parameters: Map[String, String], workflowName: String): ExtendedResult[Date] = {
     try {
       val time = new Date(extractValue("executionDate", requestMap).toLong)
+      val schedule = extractOption("schedule", requestMap)
       if (time.before(new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(1)))) {
         Failure(variablesErrors = Map("executionDate" -> "Execution date can't be in the past "))
       } else {
-        schedulingService.scheduleExecution(projectId, envId, workflowName, parameters, time, getCurrentUser)
+        schedulingService.scheduleExecution(projectId, envId, workflowName, parameters, time, getCurrentUser, schedule)
       }
     } catch {
       case e: NumberFormatException => Failure(variablesErrors = Map("executionDate" -> "Invalid timestamp format"))
+      case re: RuntimeException => re.getCause match {
+        case pe: ParseException => Failure(variablesErrors = Map("schedule" -> pe.getMessage))
+        case _ => throw re
+      }
     }
   }
 

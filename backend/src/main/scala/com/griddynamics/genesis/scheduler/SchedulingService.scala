@@ -3,8 +3,12 @@ package com.griddynamics.genesis.scheduler
 import java.util
 import java.util.Date
 import org.quartz.impl.matchers.{EverythingMatcher, GroupMatcher}
-import org.quartz.{TriggerKey, JobKey, JobBuilder, TriggerBuilder, Scheduler}
+import org.quartz._
 import org.springframework.transaction.annotation.Transactional
+import org.quartz.CronScheduleBuilder._
+import org.quartz.CalendarIntervalScheduleBuilder.calendarIntervalSchedule
+import org.quartz.DateBuilder.IntervalUnit._
+import java.text.ParseException
 
 trait SchedulingService {
   def removeAllScheduledJobs(projectId: Int, envId: Int)
@@ -12,18 +16,21 @@ trait SchedulingService {
   def removeScheduledJob(execution: ExecutionId)
   def listJobs(projectId: Int, envId: Int): Seq[(Date, Execution)]
   def listJobs(projectId: Int): Seq[(Date, Execution)]
-  def schedule(execution: Execution, date: Date)
+  def schedule(execution: Execution, date: Date, cronExpr: Option[String] = None)
   def getScheduledDate(execution: ExecutionId): Option[Date]
-  def reschedule(execution: ExecutionId, newDate: Date): Option[Date]
+  def reschedule(execution: ExecutionId, newDate: Date, cronExpr: Option[String] = None): Option[Date]
   def getJob(projectId: Int, envId: Int, jobId: String): Execution
   def jobsPerProjectStat: Map[Int, Long]
 }
 
 class SchedulingServiceImpl(scheduler: Scheduler) extends SchedulingService {
 
+  private val INTERVAL_REGEX = "([1-9][0-9]*)([mhdw])".r
+  private val INTERVAL_UNITS = Map("m" -> MINUTE, "h" -> HOUR, "d" -> DAY, "w" -> WEEK)
+
   @Transactional
-  def schedule(execution: Execution, date: Date) {
-    val trigger = TriggerBuilder.newTrigger().withIdentity(execution.triggerKey).startAt(date).build()
+  def schedule(execution: Execution, date: Date, cronExpr: Option[String] = None) {
+    val trigger = buildTrigger(execution, date, cronExpr)
 
     val jobDetail = JobBuilder.newJob(execution.jobClass)
       .withIdentity(execution.jobKey)
@@ -33,18 +40,30 @@ class SchedulingServiceImpl(scheduler: Scheduler) extends SchedulingService {
     scheduler.scheduleJob(jobDetail, trigger)
   }
 
+  private def intervalSchedule(expr: String) = (expr match {
+    case INTERVAL_REGEX(i, x) if i.forall(_.isDigit) => calendarIntervalSchedule.withInterval(i.toInt, INTERVAL_UNITS(x))
+    case _ => throw new ParseException("Schedule syntax is incorrect. Must be either a valid cron expression or interval duration", 0)
+  }).preserveHourOfDayAcrossDaylightSavings(true)
+
+  private def buildTrigger(execution: ExecutionId, date: Date, cronExpr: Option[String]): Trigger = {
+    val builder = TriggerBuilder.newTrigger().withIdentity(execution.triggerKey).startAt(date)
+    cronExpr.map(ce => {
+      val schedule = if (CronExpression.isValidExpression(ce)) cronSchedule(ce) else intervalSchedule(ce)
+      builder.withSchedule(schedule)
+    }).getOrElse(builder).build()
+  }
+
   @Transactional(readOnly = true)
   def getScheduledDate(execution: ExecutionId): Option[Date] = {
     Option(scheduler.getTrigger(execution.triggerKey)).flatMap (t => Option(t.getNextFireTime))
   }
 
   @Transactional
-  def reschedule(execution: ExecutionId, newDate: Date): Option[Date] = {
+  def reschedule(execution: ExecutionId, newDate: Date, cronExpr: Option[String] = None): Option[Date] = {
     val trigger = Option(scheduler.getTrigger(execution.triggerKey))
 
     trigger.flatMap { t =>
-      val newTrigger = t.getTriggerBuilder.startAt(newDate).build()
-      Option(scheduler.rescheduleJob(t.getKey, newTrigger))
+      Option(scheduler.rescheduleJob(t.getKey, buildTrigger(execution, newDate, cronExpr)))
     }
   }
 
