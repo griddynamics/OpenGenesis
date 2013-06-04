@@ -36,6 +36,8 @@ import org.springframework.core.io.Resource
 import com.griddynamics.genesis.validation.{RegexValidator, ConfigValueValidator}
 import scala.collection.JavaConversions._
 import com.griddynamics.genesis.api.RemoteAgent
+import akka.dispatch.Futures
+import scala.concurrent.Future
 
 @Configuration
 class AgentServiceContext {
@@ -73,9 +75,9 @@ class AgentTrackerStubContext {
 
     def stopTracking(agent: RemoteAgent) {}
 
-    def checkStatus(agents: Seq[RemoteAgent]) = Seq()
+    def checkStatus(agents: Seq[RemoteAgent]) = ???
 
-    def checkStatus(agent: RemoteAgent) = (AgentStatus.Unavailable, None)
+    def checkStatus(agent: RemoteAgent) = ???
 
     def getConfiguration(agent: RemoteAgent) = Seq()
   }
