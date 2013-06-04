@@ -24,13 +24,16 @@
 import com.yammer.metrics.core.HealthCheck
 import com.griddynamics.genesis.service.AgentsHealthService
 import com.griddynamics.genesis.api.{AgentStatus, RemoteAgent}
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 class RemoteAgentHealthCheck(healthService: AgentsHealthService, remoteAgent: RemoteAgent, name: String) extends HealthCheck(name) {
   def check() = {
-    val (status, stat) = healthService.checkStatus(remoteAgent)
+    val future = healthService.checkStatus(remoteAgent)
+    val (status, _) = Await.result(future, 2 seconds)
     status match {
       case AgentStatus.Active => HealthCheck.Result.healthy()
-      case status => HealthCheck.Result.unhealthy(status.toString)
+      case other => HealthCheck.Result.unhealthy(other.toString)
     }
   }
 }

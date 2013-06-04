@@ -31,7 +31,10 @@ import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.workflow.message.{Pong, Ping, Beat, Start}
 import com.griddynamics.genesis.workflow.{ActionResult, RemoteTask, ActionFailed, Action}
 import java.util.Date
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
+import scala.concurrent.Await
+import com.griddynamics.genesis.api.{AgentStatus, JobStats}
+import akka.pattern.AskTimeoutException
 
 case class ResolvingRemoteActorError(action: Action, override val desc: String) extends ActionFailed
 
