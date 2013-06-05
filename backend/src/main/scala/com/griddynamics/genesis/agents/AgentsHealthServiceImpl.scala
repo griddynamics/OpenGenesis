@@ -24,12 +24,11 @@ package com.griddynamics.genesis.agents
 
 import com.griddynamics.genesis.service.{GenesisSystemProperties, ConfigService, AgentsHealthService}
 import akka.actor._
-import com.griddynamics.genesis.api.{AgentStatus, JobStats, RemoteAgent}
-import concurrent.{ExecutionContext, Future, Await}
+import com.griddynamics.genesis.api.{JobStats, RemoteAgent}
+import concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 import akka.pattern.{AskTimeoutException, ask}
 import com.griddynamics.genesis.api.AgentStatus._
-import java.util.concurrent.TimeoutException
 import com.griddynamics.genesis.util.Logging
 import akka.actor.SupervisorStrategy.Resume
 import akka.util.Timeout
@@ -56,14 +55,9 @@ class AgentsHealthServiceImpl(actorSystem: ActorSystem, configService: ConfigSer
 
   implicit val requestTimeout = Timeout(1 second)
 
-  def checkStatus(agent: RemoteAgent) = try {
-    val future = (tracker ? GetAgentStatus(agent)).mapTo[(AgentStatus, Option[JobStats])]
-    Await.result(future, requestTimeout.duration)
-  } catch {
-    case te: TimeoutException => (Unavailable, None)
-  }
+  def checkStatus(agent: RemoteAgent) = (tracker ? GetAgentStatus(agent)).mapTo[(AgentStatus, Option[JobStats])]
 
-  def checkStatus(agents: Seq[RemoteAgent]): Seq[(RemoteAgent, (AgentStatus, Option[JobStats]))] = {
+  def checkStatus(agents: Seq[RemoteAgent]): Future[Seq[(RemoteAgent, (AgentStatus, Option[JobStats]))]] = {
     implicit val ec: ExecutionContext = actorSystem.dispatcher
     val futures = agents.map { a =>
       val statusFuture = (tracker ? GetAgentStatus(a)).mapTo[(AgentStatus, Option[JobStats])]
@@ -71,9 +65,7 @@ class AgentsHealthServiceImpl(actorSystem: ActorSystem, configService: ConfigSer
         case e: AskTimeoutException  => (Unavailable, None)
       }.map ((a, _))
     }
-    val result: Seq[(RemoteAgent, (AgentStatus.AgentStatus, Option[JobStats]))]
-        = Await.result(Future.sequence(futures), Timeout(2 seconds).duration)
-    result
+    Future.sequence(futures)
   }
 
   def stopTracking(agent: RemoteAgent) {

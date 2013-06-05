@@ -24,10 +24,11 @@ package com.griddynamics.genesis.service
 
 import com.griddynamics.genesis.api.AgentStatus._
 import com.griddynamics.genesis.api.{JobStats, RemoteAgent}
+import scala.concurrent.Future
 
 trait AgentsHealthService {
-  def checkStatus(agent: RemoteAgent): (AgentStatus, Option[JobStats])
-  def checkStatus(agents: Seq[RemoteAgent]): Seq[(RemoteAgent, (AgentStatus, Option[JobStats]))]
+  def checkStatus(agent: RemoteAgent): Future[(AgentStatus, Option[JobStats])]
+  def checkStatus(agents: Seq[RemoteAgent]): Future[Seq[(RemoteAgent, (AgentStatus, Option[JobStats]))]]
   def stopTracking(agent: RemoteAgent)
   def startTracking(agent: RemoteAgent)
 }
