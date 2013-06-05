@@ -21,10 +21,11 @@
  *   Description: Continuous Delivery Platform
  */ package com.griddynamics.genesis.scheduler
 
-import org.quartz.{JobDetail, Job, JobDataMap, JobKey, TriggerKey}
+import org.quartz._
 import com.griddynamics.genesis.scheduler.jobs.{NotificationJob, DestructionStatusCheckJob, WorkflowExecutionJob}
 import java.util.Date
 import com.griddynamics.genesis.model.VariablesField
+import org.quartz.DateBuilder.IntervalUnit._
 
 object GroupIdentity {
   def forEnv(projectId: Int, envId: Int) = s"${forProjectPrefix(projectId)}-env-" + envId
@@ -49,8 +50,16 @@ sealed trait ExecutionId {
 }
 
 object Execution {
+  private[scheduler] val INTERVAL_UNITS = Map("m" -> MINUTE, "h" -> HOUR, "d" -> DAY, "w" -> WEEK)
+  private[scheduler] val UNITS_INTERVAL = INTERVAL_UNITS.map(_.swap)
+
+  def apply(details: JobDetail, trigger: Trigger): ExecutionSchedule = {
+    ExecutionSchedule(execution = apply(details), date = trigger.getNextFireTime, recurrence = recurrenceString(trigger))
+  }
+
   def apply(details: JobDetail): Execution = {
     val jobClass = details.getJobClass
+
     if(jobClass.isAssignableFrom(classOf[WorkflowExecutionJob])) {
       new WorkflowExecution(details.getJobDataMap)
     } else if (jobClass.isAssignableFrom(classOf[NotificationJob])) {
@@ -65,6 +74,15 @@ object Execution {
   def isWorkflowExecution(key: TriggerKey) = {
     key.getName.matches("execution-.+-env-.+")
   }
+
+  def recurrenceString(trigger: Trigger): Option[String] = trigger match {
+    case ct: CronTrigger => Option(ct.getCronExpression)
+    case cit: CalendarIntervalTrigger =>
+      val unit = cit.getRepeatIntervalUnit
+      val unitName = UNITS_INTERVAL.getOrElse(unit, unit.toString)
+      Option(cit.getRepeatInterval + unitName)
+    case _ => None
+  }
 }
 
 sealed trait Execution extends ExecutionId {
@@ -73,13 +91,10 @@ sealed trait Execution extends ExecutionId {
   def jobClass: Class[_ <: Job]
 }
 
+case class ExecutionSchedule(execution: Execution, date: Date, recurrence: Option[String])
+
 sealed class WorkflowExecutionId(val projectId: Int, val envId: Int, val workflow: String) extends ExecutionId {
   def id = s"execution-$workflow-env-$envId"
-}
-
-object WorkflowExecutionId {
-
-
 }
 
 case class WorkflowExecution(

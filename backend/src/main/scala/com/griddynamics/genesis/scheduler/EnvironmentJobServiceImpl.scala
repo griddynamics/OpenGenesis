@@ -182,17 +182,18 @@ class EnvironmentJobServiceImpl(scheduler: SchedulingService,
   }
 
 
-  private def convert(s: Seq[(Date, Execution)], projectId: Int): Seq[ScheduledJobDetails] = {
+  private def convert(s: Seq[ExecutionSchedule], projectId: Int): Seq[ScheduledJobDetails] = {
     val details = s.collect {
-      case (date, execution: WorkflowExecution) if date != null => new ScheduledJobDetails(
+      case ExecutionSchedule(execution: WorkflowExecution, d, rec) if d != null => new ScheduledJobDetails(
         id = execution.id,
         projectId = projectId,
         envId = execution.envId,
-        date = date.getTime,
+        date = d.getTime,
         workflow = execution.workflow,
         variables = execution.variables,
         scheduledBy = execution.requestedBy,
-        failureDescription = None
+        failureDescription = None,
+        recurrence = rec
       )
     }
     details

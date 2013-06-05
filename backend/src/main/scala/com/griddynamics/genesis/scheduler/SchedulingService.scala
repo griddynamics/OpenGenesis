@@ -2,20 +2,19 @@ package com.griddynamics.genesis.scheduler
 
 import java.util
 import java.util.Date
-import org.quartz.impl.matchers.{EverythingMatcher, GroupMatcher}
+import org.quartz.impl.matchers.GroupMatcher
 import org.quartz._
 import org.springframework.transaction.annotation.Transactional
 import org.quartz.CronScheduleBuilder._
 import org.quartz.CalendarIntervalScheduleBuilder.calendarIntervalSchedule
-import org.quartz.DateBuilder.IntervalUnit._
 import java.text.ParseException
 
 trait SchedulingService {
   def removeAllScheduledJobs(projectId: Int, envId: Int)
   def removeScheduledJobs(executions: Seq[ExecutionId])
   def removeScheduledJob(execution: ExecutionId)
-  def listJobs(projectId: Int, envId: Int): Seq[(Date, Execution)]
-  def listJobs(projectId: Int): Seq[(Date, Execution)]
+  def listJobs(projectId: Int, envId: Int): Seq[ExecutionSchedule]
+  def listJobs(projectId: Int): Seq[ExecutionSchedule]
   def schedule(execution: Execution, date: Date, cronExpr: Option[String] = None)
   def getScheduledDate(execution: ExecutionId): Option[Date]
   def reschedule(execution: ExecutionId, newDate: Date, cronExpr: Option[String] = None): Option[Date]
@@ -26,7 +25,6 @@ trait SchedulingService {
 class SchedulingServiceImpl(scheduler: Scheduler) extends SchedulingService {
 
   private val INTERVAL_REGEX = "([1-9][0-9]*)([mhdw])".r
-  private val INTERVAL_UNITS = Map("m" -> MINUTE, "h" -> HOUR, "d" -> DAY, "w" -> WEEK)
 
   @Transactional
   def schedule(execution: Execution, date: Date, cronExpr: Option[String] = None) {
@@ -40,8 +38,9 @@ class SchedulingServiceImpl(scheduler: Scheduler) extends SchedulingService {
     scheduler.scheduleJob(jobDetail, trigger)
   }
 
+  import Execution.INTERVAL_UNITS
   private def intervalSchedule(expr: String) = (expr match {
-    case INTERVAL_REGEX(i, x) if i.forall(_.isDigit) => calendarIntervalSchedule.withInterval(i.toInt, INTERVAL_UNITS(x))
+    case INTERVAL_REGEX(i, x) if i.forall(_.isDigit) && INTERVAL_UNITS.contains(x) => calendarIntervalSchedule.withInterval(i.toInt, INTERVAL_UNITS(x))
     case _ => throw new ParseException("Schedule syntax is incorrect. Must be either a valid cron expression or interval duration", 0)
   }).preserveHourOfDayAcrossDaylightSavings(true)
 
@@ -85,19 +84,19 @@ class SchedulingServiceImpl(scheduler: Scheduler) extends SchedulingService {
   }
 
   @Transactional(readOnly = true)
-  def listJobs(projectId: Int, envId: Int): Seq[(Date, Execution)] = {
+  def listJobs(projectId: Int, envId: Int) = {
     import scala.collection.JavaConversions._
     val triggerKeys = scheduler.getTriggerKeys(GroupIdentity.forEnv(projectId, envId))
     loadByTriggerKeys(triggerKeys.toSet)
   }
 
-  private def loadByTriggerKeys(triggerKeys: Set[TriggerKey]): Seq[(Date, Execution)] = {
+  private def loadByTriggerKeys(triggerKeys: Set[TriggerKey]) =
     triggerKeys.map { k =>
         val trigger = scheduler.getTrigger(k)
         val jobDetail = scheduler.getJobDetail(trigger.getJobKey)
-        (trigger.getNextFireTime, Execution(jobDetail))
+        Execution(jobDetail, trigger)
     }.toSeq
-  }
+
 
   @Transactional(readOnly = true)
   def getJob(projectId: Int, envId: Int, jobId: String): Execution  = {
@@ -106,7 +105,7 @@ class SchedulingServiceImpl(scheduler: Scheduler) extends SchedulingService {
   }
 
   @Transactional(readOnly = true)
-  def listJobs(projectId: Int): Seq[(Date, Execution)] = {
+  def listJobs(projectId: Int) = {
     import scala.collection.JavaConversions._
     val keys = scheduler.getTriggerKeys(GroupMatcher.groupStartsWith(GroupIdentity.forProjectPrefix(projectId)))
     loadByTriggerKeys(keys.toSet)

@@ -36,8 +36,8 @@ class FailedJobsListener(repo: FailedJobRepository)  extends JobListener {
 
   def jobWasExecuted(context: JobExecutionContext, jobException: JobExecutionException) {
     if (jobException != null) {
-      ignoring(classOf[Exception]) { Execution(context.getJobDetail) } match {
-        case e: WorkflowExecution =>
+      ignoring(classOf[Exception]) { Execution(context.getJobDetail, context.getTrigger) } match {
+        case ExecutionSchedule(e: WorkflowExecution, _, rec) =>
           val log = new ScheduledJobDetails(
             id = e.id,
             projectId = e.projectId,
@@ -46,7 +46,8 @@ class FailedJobsListener(repo: FailedJobRepository)  extends JobListener {
             variables = e.variables,
             scheduledBy = e.requestedBy,
             date = context.getFireTime.getTime,
-            failureDescription = Some(jobException.getMessage)
+            failureDescription = Some(jobException.getMessage),
+            recurrence = rec
           )
           repo.logFailure(log)
         case _ => /* do nothing */

@@ -31,6 +31,7 @@ class FailedJobDetails (
     val workflow: String,
     val variables: VariablesField,
     val scheduledBy: String,
-    val failureDescription: String )
+    val failureDescription: String,
+    val recurrence: Option[String])
   extends GenesisEntity
   with ProjectBoundEntity

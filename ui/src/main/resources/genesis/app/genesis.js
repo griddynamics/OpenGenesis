@@ -146,6 +146,15 @@ function($, _, Backbone, formats, tmpls) {
         return result;
       },
 
+      recurrenceString: function(rec) {
+        if(rec) switch(rec) {
+          case '1d': return 'Daily';
+          case '1w': return 'Weekly';
+          default: return rec;
+        }
+        return 'Once';
+      },
+
       timeDuration: function(start, end) {
         if (start === null || _.isUndefined(start)) return "0";
 
