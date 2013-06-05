@@ -272,7 +272,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       this.executeWorkflow(workflowName, scheduling);
     },
 
-    executeWorkflow: function (workflowName, scheduling, varValues, scheduleId) {
+    executeWorkflow: function (workflowName, scheduling, varValues, scheduleId, recurrence) {
       genesis.app.trigger("page-view-loading-started");
 
       var template = new gtemplates.TemplateModel(
@@ -304,7 +304,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
             });
 
           $.when(wmodel.fetch()).done(function () {
-            self.executeWorkflowDialog.showFor(self.details, wmodel, scheduling, varValues, scheduleId);
+            self.executeWorkflowDialog.showFor(self.details, wmodel, scheduling, varValues, scheduleId, recurrence);
           }).fail(function (jqXHR) {
             genesis.app.trigger("page-view-loading-completed");
             status.StatusPanel.error(jqXHR);
@@ -435,7 +435,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
           });
 
           view.scheduledJobsView.bind("request-job-update", function(job){
-            view.executeWorkflow(job.get('workflow'), job.get("date"), job.get('variables'), job.get('id'));
+            view.executeWorkflow(job.get('workflow'), job.get("date"), job.get('variables'), job.get('id'), job.get('recurrence'));
           });
 
           view.failedJobsView = new ScheduledJobsView({
@@ -591,7 +591,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       this.$el.id = "#workflowParametersDialog";
     },
 
-    showFor: function(envDetails, workflow, scheduling, varValues, scheduleId) {
+    showFor: function(envDetails, workflow, scheduling, varValues, scheduleId, recurrence) {
       this.scheduling = scheduling;
       this.workflow = workflow;
       this.envId = envDetails.get("id");
@@ -602,6 +602,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       this.varValues = varValues;
       this.scheduleId = scheduleId;
       this.recurrence = workflow.get('name') != envDetails.get('destroyWorkflowName')
+      this.recurrenceSelected = recurrence;
       this.render();
     },
 
@@ -677,6 +678,10 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
 
     render: function() {
       var view = this;
+      var recOptions = [{value: ""}, {value: "1d"}, {value: "1w"}]
+      _.each(recOptions, function(o){
+        if (o.value == view.recurrenceSelected) o['selected'] = 'selected="selected"'
+      })
       $.when(genesis.fetchTemplate(this.template)).done(function (tmpl) {
 
         genesis.app.trigger("page-view-loading-completed");
@@ -684,7 +689,9 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
           noVariables: view.workflow.get('variables').length == 0,
           workflowName: view.workflow.get('name'),
           scheduling: view.scheduling,
-          recurrence: view.recurrence
+          recurrence: view.recurrence,
+          recurrenceOptions: recOptions,
+          utils: genesis.utils
         }));
 
         if(view.scheduling) {
