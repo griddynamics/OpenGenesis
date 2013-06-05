@@ -7,6 +7,7 @@
     <tr>
         <th style="width: 20%">Job name</th>
         <th>Execution date</th>
+        <th>Recurrence</th>
         <th>Scheduled by</th>
         <th style="width: 15%; ">Status</th>
     </tr>
@@ -21,11 +22,12 @@
             </a>
         </td>
         <td class="first"><%= moment(job.date).format('lll') %> (<%= moment(job.date).fromNow() %>)</td>
+        <td> <%- utils.recurrenceString(job.recurrence) %> </td>
         <td class="first"><%- job.scheduledBy %></td>
         <td class="first task <%= job.status === 'Failed' ? 'failed': 'requested' %>"><%- job.status %></td>
     </tr>
     <tr class="no-hover">
-        <td colspan="4">
+        <td colspan="5">
             <div class="workflow-variables compact"  id="variables-<%- job.id %>" style="background-color: #FFF3F3;display: none">
                 <% if (job.failureDescription) { %>
                 <dl style="color: #B94A48">

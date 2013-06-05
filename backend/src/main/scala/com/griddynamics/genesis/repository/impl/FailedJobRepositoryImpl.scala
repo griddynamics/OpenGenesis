@@ -41,12 +41,14 @@ trait FailedJobRepository {
 class FailedJobRepositoryImpl extends AbstractGenericRepository[model.FailedJobDetails, api.ScheduledJobDetails](GS.failedJobDetails) with FailedJobRepository {
   implicit def convert(model: FailedJobDetails) = {
     import VariablesField.variablesFieldToMap
-    new api.ScheduledJobDetails(model.id.toString, model.projectId, model.envId, model.executionDate.getTime, model.workflow, model.variables, model.scheduledBy, Some(model.failureDescription))
+    new api.ScheduledJobDetails(model.id.toString, model.projectId, model.envId, model.executionDate.getTime,
+      model.workflow, model.variables, model.scheduledBy, Some(model.failureDescription), model.recurrence)
   }
 
 
   implicit def convert(dto: ScheduledJobDetails) = {
-    new FailedJobDetails(dto.id, dto.projectId, dto.envId, new Timestamp(dto.date), dto.workflow, dto.variables, dto.scheduledBy, dto.failureDescription.getOrElse("N/A"))
+    new FailedJobDetails(dto.id, dto.projectId, dto.envId, new Timestamp(dto.date), dto.workflow, dto.variables, dto.scheduledBy,
+      dto.failureDescription.getOrElse("N/A"), dto.recurrence)
   }
 
   @Transactional
