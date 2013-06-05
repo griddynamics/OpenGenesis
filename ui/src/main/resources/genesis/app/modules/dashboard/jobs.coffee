@@ -70,6 +70,7 @@ define [
           jobs: @jobs,
           envs: @envs,
           moment: moment,
+          utils: genesis.utils,
           projectId: @projectId
         ))
 

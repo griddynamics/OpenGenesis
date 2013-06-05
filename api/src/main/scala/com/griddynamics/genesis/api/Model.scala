@@ -326,7 +326,8 @@ case class ScheduledJobDetails (
     workflow: String,
     variables: Map[String, String],
     scheduledBy: String,
-    failureDescription: Option[String]
+    failureDescription: Option[String],
+    recurrence: Option[String]
 )
 
 case class ScheduledJobStat (
