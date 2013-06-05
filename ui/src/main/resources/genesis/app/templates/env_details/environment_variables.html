@@ -37,9 +37,9 @@
             </label>
             <div class="value">
                 <select id="recurrence" name="recurrence" >
-                    <option value="" selected="selected">Once</option>
-                    <option value="1d">Daily</option>
-                    <option value="1w">Weekly</option>
+                 <% _.each(recurrenceOptions, function(opt) {  %>
+                    <option value="<%= opt.value %>" <%= opt.selected %>> <%=utils.recurrenceString(opt.value) %></option>
+                 <% }) %>
                 </select>
             </div>
              <div style="clear: both"></div>
