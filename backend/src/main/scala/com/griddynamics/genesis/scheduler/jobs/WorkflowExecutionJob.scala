@@ -4,18 +4,21 @@ import org.quartz._
 import com.griddynamics.genesis.bean.RequestBroker
 import com.griddynamics.genesis.service.StoreService
 import com.griddynamics.genesis.model.{Environment, EnvStatus}
-import java.util.Date
+import java.util.{ConcurrentModificationException, Date}
 import java.util.concurrent.TimeUnit
-import com.griddynamics.genesis.api.{Failure, ExtendedResult}
+import com.griddynamics.genesis.api.Failure
 import com.griddynamics.genesis.scheduler.{NotificationService, WorkflowExecution}
 import com.griddynamics.genesis.util.Logging
+import scala.util.Try
 
 class WorkflowExecutionJob(
     broker: RequestBroker,
     storeService: StoreService,
     notificationService: NotificationService)
-  extends Job
-  with Logging {
+  extends Job with Logging {
+
+  val RESCHEDULE_DELAY_MIN = 3
+  val RESCHEDULE_DELAY_MS = TimeUnit.MINUTES.toMillis(RESCHEDULE_DELAY_MIN)
 
   def execute(context: JobExecutionContext) {
     val details = new WorkflowExecution(context.getMergedJobDataMap)
@@ -24,12 +27,12 @@ class WorkflowExecutionJob(
     }
     env.status match {
       case EnvStatus.Destroyed => /* do nothing */
-      case EnvStatus.Busy => rescheduleJob(context, details, TimeUnit.MINUTES.toMillis(3))
+      case EnvStatus.Busy => rescheduleJob(context, details)
       case _ => requestWorkflow(context, details, env)
     }
   }
 
-  private def requestWorkflow(context: JobExecutionContext, details: WorkflowExecution, env: Environment): ExtendedResult[Int] = {
+  private def requestWorkflow(context: JobExecutionContext, details: WorkflowExecution, env: Environment) = Try {
     log.debug(s"Requesting automatic execution of ${details.workflow} workflow for env ${env.name} in project id = ${env.projectId}")
 
     val result = broker.requestWorkflow(details.envId, details.projectId, details.workflow, details.variables, "Scheduler / " + details.requestedBy)
@@ -41,14 +44,16 @@ class WorkflowExecutionJob(
       case r =>
         r
     }
+  } recover {
+    case cme: ConcurrentModificationException => rescheduleJob(context, details)
   }
 
-  private def rescheduleJob(context: JobExecutionContext, env: WorkflowExecution, delay: Long): Date = {
+  private def rescheduleJob(context: JobExecutionContext, env: WorkflowExecution): Date = {
     log.debug(s"Environment ${env.envId} in project ${env.projectId} is in BUSY state. " +
-      s"Postponing automatic ${env.workflow} execution for ${TimeUnit.MILLISECONDS.toMinutes(delay)} minute(s)}")
+      s"Postponing automatic ${env.workflow} execution for $RESCHEDULE_DELAY_MIN minute(s)}")
 
     val nextFireTrigger = context.getTrigger.getTriggerBuilder
-      .startAt(new Date(System.currentTimeMillis() + delay))
+      .startAt(new Date(System.currentTimeMillis() + RESCHEDULE_DELAY_MS))
       .build
     context.getScheduler.rescheduleJob(context.getTrigger.getKey, nextFireTrigger)
   }
