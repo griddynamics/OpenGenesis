@@ -340,7 +340,8 @@ class StoreService extends service.StoreService with Logging {
     val actualEnv = findEnv(env.name, env.projectId).get
 
     if (!isReadyForWorkflow(actualEnv.status))
-      return Left(Mistake("Instance with status %s isn't ready for workflow request".format(actualEnv.status: EnvStatus)))
+      return Left(Mistake("Instance with status %s isn't ready for workflow request".format(actualEnv.status: EnvStatus),
+        retryPossible = actualEnv.status == EnvStatus.Busy))
 
     actualEnv.status = EnvStatus.Busy
     workflow.status = WorkflowStatus.Requested

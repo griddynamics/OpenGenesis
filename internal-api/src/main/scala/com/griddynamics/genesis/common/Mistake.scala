@@ -23,7 +23,8 @@
 package com.griddynamics.genesis.common
 
 case class Mistake private(val message: Option[String],
-                           val throwable: Option[Throwable]) {
+                           val throwable: Option[Throwable],
+                           retryPossible: Boolean = false ) {
     override def toString = (message, throwable) match {
         case (Some(m), Some(t)) => "%s [%s]".format(m, t.toString)
         case (Some(m), None) => m
@@ -36,6 +37,8 @@ object Mistake {
     def apply(): Mistake = Mistake(None, None)
 
     def apply(message: String): Mistake = Mistake(Some(message), None)
+
+    def apply(message: String, retryPossible: Boolean): Mistake = Mistake(Some(message), None, retryPossible)
 
     def apply(throwable: Throwable): Mistake = Mistake(None, Some(throwable))
 

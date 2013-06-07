@@ -33,6 +33,7 @@ import com.griddynamics.genesis.validation.Validation._
 import com.griddynamics.genesis.{model, service}
 import java.util.Date
 import com.griddynamics.genesis.util.Logging
+import scala.util.Try
 
 class GenesisRestService(storeService: StoreService,
                          templateService: TemplateService,
@@ -80,9 +81,12 @@ class GenesisRestService(storeService: StoreService,
       broker.destroyEnv(envId, projectId, variables, startedBy)
     }
 
-    def requestWorkflow(envId: Int, projectId: Int, workflowName: String, variables: Map[String, String], startedBy: String) = {
-      broker.requestWorkflow(envId, projectId, workflowName, variables, startedBy)
-    }
+  def requestWorkflow(envId: Int, projectId: Int, workflowName: String, variables: Map[String, String], startedBy: String) = Try {
+    broker.requestWorkflow(envId, projectId, workflowName, variables, startedBy)
+  }.recover {
+    case e: Exception => log.error(e, e.getMessage)
+      Failure(compoundVariablesErrors = Seq(e.getMessage))
+  }.get
 
     def cancelWorkflow(envId: Int, projectId: Int) {
       broker.cancelWorkflow(envId, projectId)
