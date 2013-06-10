@@ -36,9 +36,10 @@ trait ActiveDirectoryGroupService extends GroupService
 class ActiveDirectoryGroupServiceImpl(val namingContext: String,
                                       val pluginConfig: ActiveDirectoryPluginConfig,
                                       val template: CommandTemplate) extends AbstractActiveDirectoryService with ActiveDirectoryGroupService with Logging {
-
+  import ActiveDirectoryGroupServiceImpl._
   override def isReadOnly = true
 
+  implicit val context: String = namingContext
   object GroupMapper extends FieldsMapper[UserGroup] with MappingUtils {
     protected def config = pluginConfig
 
@@ -52,11 +53,8 @@ class ActiveDirectoryGroupServiceImpl(val namingContext: String,
       )
   }
 
-  case class Query(filter: String)
-    extends Command(namingContext, "(&(%s)(sAMAccountType=268435456))".format(filter), "distinguishedName,sAMAccountName,description,mail", "subTree")
-
   def findByName(name: String) =
-    template.query(Query("(sAMAccountName=%s)".format(normalize(name))), GroupMapper).headOption
+    template.query(queries("(sAMAccountName=%s)".format(normalize(name))), GroupMapper).headOption
 
   def findByNames(names: Iterable[String]): Set[UserGroup] = {
     if (names.isEmpty)
@@ -65,7 +63,7 @@ class ActiveDirectoryGroupServiceImpl(val namingContext: String,
     val filter = "(|%s)".format(
       names.map { name => "(sAMAccountName=%s)".format(normalize(name)) }.mkString
     )
-    template.query(Query(filter), GroupMapper).toSet
+    template.query(queries(filter), GroupMapper).toSet
   }
 
   def users(name: Int) = throw new UnsupportedOperationException
@@ -83,11 +81,21 @@ class ActiveDirectoryGroupServiceImpl(val namingContext: String,
   }
 
   def search(nameLike: String) =
-    template.query(Query("(sAMAccountName=%s)".format(escape(nameLike))), GroupMapper).toList
+    template.query(queries("(sAMAccountName=%s)".format(escape(nameLike))), GroupMapper).toList
 
   def doesGroupExist(groupName: String) = findByName(groupName).isDefined
 
   def doGroupsExist(groupNames: Iterable[String]) = groupNames forall { g => doesGroupExist(g) }
 
-  def list = template.query(Query("(*)"), GroupMapper)
+  def list = template.query(queries("(*)"), GroupMapper)
+}
+
+case class Query(filter: String, identifier: String, namingContext: String)
+  extends Command(namingContext, "(&(%s)(sAMAccountType=%s))".format(filter, identifier), "distinguishedName,sAMAccountName,description,mail", "subTree")
+
+object ActiveDirectoryGroupServiceImpl {
+  val GlobalGroupIdentifier = "268435456"
+  val LocalGroupIdentifier = "536870912"
+  def queries(filter:String)(implicit namingContext: String) = Seq(Query(filter, GlobalGroupIdentifier, namingContext),
+      Query(filter, LocalGroupIdentifier, namingContext))
 }
