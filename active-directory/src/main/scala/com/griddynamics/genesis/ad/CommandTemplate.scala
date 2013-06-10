@@ -27,6 +27,7 @@ import com4j.{ComException, Variant}
 import collection.mutable.ListBuffer
 import com.griddynamics.genesis.util.Logging
 import javax.naming.ldap.LdapName
+import scala.annotation.tailrec
 
 class CommandTemplate(pool: ActiveDirectoryConnectionPool) extends Logging {
 
@@ -73,7 +74,14 @@ class CommandTemplate(pool: ActiveDirectoryConnectionPool) extends Logging {
     }
   }
 
-  def query[T](commands: Seq[Command], mapper: FieldsMapper[T]): Seq[T] = commands.flatMap(query(_, mapper))
+  @tailrec
+  final def query[T](commands: Seq[Command], mapper: FieldsMapper[T]): Seq[T] = commands match {
+    case Nil => Seq()
+    case x :: xs => query(x, mapper) match {
+      case seq if !seq.isEmpty  => seq
+      case Nil => query(xs, mapper)
+    }
+  }
 
 }
 
