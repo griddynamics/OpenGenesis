@@ -73,6 +73,8 @@ class CommandTemplate(pool: ActiveDirectoryConnectionPool) extends Logging {
     }
   }
 
+  def query[T](commands: Seq[Command], mapper: FieldsMapper[T]): Seq[T] = commands.flatMap(query(_, mapper))
+
 }
 
 class Command(namingContext: String, filter: String, attrsToReturn: String, searchScope: String) {
