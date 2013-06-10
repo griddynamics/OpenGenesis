@@ -100,6 +100,9 @@ class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: Age
           config.applyConfiguration(agent,values).flatMap(_ => Success(agent))
         )
       }
+      case other => {
+        Failure(compoundServiceErrors = Seq("Error changing agent configuration. Agent is not active."))
+      }
     }
   ).getOrElse(Failure(isNotFound = true))
 
