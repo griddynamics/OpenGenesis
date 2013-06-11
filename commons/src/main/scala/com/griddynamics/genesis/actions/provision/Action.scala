@@ -25,11 +25,6 @@ package com.griddynamics.genesis.actions.provision
 import com.griddynamics.genesis.workflow._
 import com.griddynamics.genesis.model.{Workflow, VirtualMachine, Environment}
 import com.griddynamics.genesis.plugin.GenesisStep
-import com.griddynamics.genesis.actions.provision.DestroyVmAction
-import com.griddynamics.genesis.actions.provision.CheckPortAction
-import com.griddynamics.genesis.plugin.GenesisStep
-import com.griddynamics.genesis.actions.provision.CheckSshPortAction
-import com.griddynamics.genesis.actions.provision.CheckPublicIpAction
 
 
 trait ProvisionAction extends ActionWithDesc
