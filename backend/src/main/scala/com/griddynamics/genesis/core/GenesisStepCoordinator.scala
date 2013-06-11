@@ -48,7 +48,7 @@ class GenesisStepCoordinator(val step: GenesisStep,
        val attachmentProc: PartialFunction[ActionResult, Boolean] = {
          case attachment: ResultWithAttachment => {
            attachment.attachments.foreach(a => {
-             attachmentService.insert(new Attachment(Some(result.action.uuid), None, a.getType, a.getName), a.getInputStream)
+             attachmentService.insert(new Attachment(Some(result.action.uuid), None, a.getType, a.getName), a.getContent)
            })
            true
          }

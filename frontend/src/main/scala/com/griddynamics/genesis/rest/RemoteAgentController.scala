@@ -32,10 +32,14 @@ import org.springframework.beans.factory.annotation.Autowired
 import com.griddynamics.genesis.service.RemoteAgentsService
 import javax.validation.Valid
 import org.springframework.stereotype.Controller
-import com.griddynamics.genesis.api.{ConfigPropertyType, RemoteAgent}
+import com.griddynamics.genesis.api.{AgentStatus, JobStats, ConfigPropertyType, RemoteAgent}
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.spring.security.LinkSecurityBean
 import GenesisRestController._
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
+import akka.util.Timeout
+
 
 @Controller
 @RequestMapping(value = Array("/rest/agents"))
@@ -52,7 +56,9 @@ class RemoteAgentController extends RestApiExceptionsHandler {
       def wrapAgent(agent: RemoteAgent) = {
         wrap(agent).withLinks(LinkBuilder(top / agent.id.get.toString, LinkTarget.SELF, classOf[RemoteAgent], GET, PUT, DELETE)).filtered()
       }
-      wrapCollection(service.list.map(wrapAgent(_))).withLinksToSelf(classOf[RemoteAgent], GET, POST).filtered()
+      val agents: Seq[RemoteAgent] = service.list
+      val resolved = Await.result(service.status(agents), Timeout(2 seconds).duration).map { case (agent, (status, jobs)) => agent.copy(status = Some(status), stats = jobs) }
+      wrapCollection(resolved.map(wrapAgent(_))).withLinksToSelf(classOf[RemoteAgent], GET, POST).filtered()
     }
 
     @ResponseBody @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.GET))
