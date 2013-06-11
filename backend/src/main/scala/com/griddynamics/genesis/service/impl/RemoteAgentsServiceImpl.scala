@@ -35,6 +35,10 @@ import com.typesafe.config.{ConfigObject, ConfigFactory}
 import com.griddynamics.genesis.configuration.GenesisSettingMetadata
 import collection.JavaConversions.mapAsScalaMap
 import com.griddynamics.genesis.validation.{ConfigValueValidator, SettingsValidation}
+import scala.concurrent.Await
+import scala.concurrent.duration._
+import akka.util.Timeout
+import java.util.concurrent.TimeoutException
 
 
 class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: AgentsHealthService,
@@ -49,17 +53,22 @@ class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: Age
 
     repository.list.map { health.startTracking(_) }
 
-    private def withStatus(agents: Seq[RemoteAgent]): Seq[RemoteAgent] = {
-      health.checkStatus(agents).map { case (agent, (status, jobs)) => agent.copy(status = Some(status), stats = jobs) }
-    }
+
+    def status(agent: RemoteAgent) = health.checkStatus(agent)
+    def status(agents: Seq[RemoteAgent]) = health.checkStatus(agents)
 
     @Transactional(readOnly = true)
-    def list: Seq[RemoteAgent] = withStatus(repository.list)
+    def list: Seq[RemoteAgent] = repository.list
 
   @Transactional(readOnly = true)
      def get(key: Int): Option[RemoteAgent] = repository.get(key).map(
       agent => {
-        val s = health.checkStatus(agent)
+        val future = health.checkStatus(agent)
+        val s = try {
+          Await.result(future, Timeout(2 seconds).duration)
+        } catch {
+          case e: TimeoutException => (AgentStatus.Unavailable, None)
+        }
         agent.copy(status = Some(s._1), stats = s._2)
       }
     )
@@ -95,7 +104,7 @@ class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: Age
   ).getOrElse(Failure(isNotFound = true))
 
     @Transactional(readOnly = true)
-    def findByTags(tags: Seq[String]): Seq[RemoteAgent] = withStatus(repository.findByTags(tags))
+    def findByTags(tags: Seq[String]): Seq[RemoteAgent] = repository.findByTags(tags).toList //to detach from result set
 
     @Transactional(readOnly = false)
     override def update(a: RemoteAgent): ExtendedResult[RemoteAgent] = {
