@@ -28,7 +28,7 @@ import com.griddynamics.genesis.model.Environment
 
 class VariableDescription(val name: String, val clazz : Class[_ <: Any], val description: String, val isOptional: Boolean = false,
                           val defaultValue: String = null, val values: Option[Map[String,String]] = None, val dependsOn: Option[List[String]] = None,
-                          val group: Option[String] = None)
+                          val group: Option[String] = None, val hidden: Boolean = false)
 
 case class ValidationError(variableName: String, description: String)
 class ConversionException(val fieldId: String, val message: String) extends Exception

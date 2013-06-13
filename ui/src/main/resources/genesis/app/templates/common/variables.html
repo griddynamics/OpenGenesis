@@ -22,6 +22,7 @@
   }
 
   function inputType(variable) {
+    if (variable.hidden) return 'hidden';
     switch(variable.type) {
         case 'Boolean' : return 'checkbox';
         default : return 'text';

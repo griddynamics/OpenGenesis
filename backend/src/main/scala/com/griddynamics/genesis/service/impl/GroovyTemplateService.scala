@@ -330,7 +330,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
       }
 
       new VariableDescription(v.name, v.clazz, v.description, v.isOptional, v.defaultValue().map(String.valueOf(_)).getOrElse(varDsDefault.map(String.valueOf(_)).getOrElse(null)),
-        possibleValues, dependsOn, v.group.map(_.description))
+        possibleValues, dependsOn, v.group.map(_.description), v.hidden)
     }
 
     override def partial(variables: Map[String, Any]): Seq[VariableDescription] = {
