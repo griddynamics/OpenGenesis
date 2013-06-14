@@ -91,11 +91,13 @@ case class Variable(name : String, `type`: String, description : String, optiona
                     values:Option[Map[String,String]] = None, dependsOn: Option[List[String]] = None,
                     group : Option[String] = None, hidden: Boolean = false)
 
+case class VarGroup(desc: String, required: Boolean = false, defVariable: Option[String] = None)
+
 case class Template(name : String, version : String, createWorkflow : Workflow, workflows : Seq[Workflow])
 
 case class TemplateExcerpt(name: String, version: String, createWorkflow: String, destroyWorkflow: String, workflows: Seq[String])
 
-case class Workflow(name : String, variables : Seq[Variable])
+case class Workflow(name : String, variables : Seq[Variable], varGroups : Map[String, VarGroup] = Map())
 
 case class WorkflowStep(stepId: String, phase: String, status : String, details : String, started: Option[Long],
                         finished: Option[Long], title: Option[String], regular: Boolean)

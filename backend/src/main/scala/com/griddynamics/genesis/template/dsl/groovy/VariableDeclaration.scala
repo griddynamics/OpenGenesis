@@ -41,15 +41,16 @@ class VariableDeclaration(dsObjSupport: Option[Closure[Unit]],
 
   import collection.JavaConversions.mapAsScalaMap
   def group(params: java.util.Map[String, Any], variables : Closure[Unit]) = {
-    val details = groupDetails(params.toMap, variables.hashCode)
+    val details = groupDetails(params.toMap)
     val groupDeclaration = new GroupDeclaration(builders, dsObjSupport, dataSourceFactories, projectId, details)
     builders ++= Delegate(variables).to(groupDeclaration).getBuilders
   }
 
 
-  private def groupDetails(params: Map[String, Any], id: Int) = (params.get("description"), params.getOrElse("required", false)) match {
-    case (Some(desc: String), req: Boolean) => GroupDetails(id, desc, req)
-    case _ => throw new IllegalArgumentException("String parameter 'description' is mandatory, boolean parameter 'required' is optional")
+  private def groupDetails(params: Map[String, Any]) =
+    (params.get("name"), params.get("description"), params.getOrElse("required", false), params.get("default").map(_.toString)) match {
+    case (Some(name: String), desc, req: Boolean, defVar) => GroupDetails(name, desc.map(_.toString).getOrElse(name), req, defVar)
+    case _ => throw new IllegalArgumentException("String parameter 'name' is mandatory, boolean parameter 'required' is optional")
   }
 
   def getBuilders = {
@@ -89,7 +90,7 @@ class GroupDeclaration(parentBuilders: ListBuffer[VariableBuilder],
 
 }
 
-case class GroupDetails(id: Int, description: String, required: Boolean = false)
+case class GroupDetails(name: String, description: String, required: Boolean = false, defaultVar: Option[String] = None)
 
 object VariableDetails {
   type ValuesListType = Option[(Map[String,Any] => (Option[Any], Map[String,String]))]
