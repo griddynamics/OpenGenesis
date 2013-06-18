@@ -34,17 +34,17 @@ template {
             variable("a").description("A variable").as(Integer).validator([
                     "A must be > 0" : { it > 0 }
             ])
-            group(description: "testGroup") {
+            group(name: "testGroup") {
                 b = {
                     description = "B variable"
                     clazz = Boolean
                 }
                 variable("c").description("C variable").as(Integer)
             }
-            group(description: "testGroup") {
+            group(name: "testGroup", description: "Test Group") {
                 variable("x").description("string var")
             }
-            group(description: "requiredGroup", required: true) {
+            group(name: "requiredGroup", required: true) {
                 y = {clazz = Integer}
             }
        }

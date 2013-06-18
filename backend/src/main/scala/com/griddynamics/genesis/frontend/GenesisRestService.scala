@@ -270,8 +270,11 @@ object GenesisRestService {
         case v if v.defaultValue != null => v.name -> v.defaultValue
       }.toMap).map(v => v.name -> v).toMap
       val vars = for (variable <- allVars) yield varDesc(appliedVars.getOrElse(variable.name, variable))
-      Workflow(workflow.name, vars)
+      Workflow(workflow.name, vars, groups(allVars).toMap)
     }
+
+  private def groups(vars: Seq[VariableDescription]) =
+      for (v <- vars; g <- v.group) yield g.name -> VarGroup(g.description, g.required, g.defaultVar)
 
     def envDesc(env: model.Environment,
                 vms: Seq[model.VirtualMachine],
@@ -379,5 +382,5 @@ object GenesisRestService {
       attrDesc(env.deploymentAttrs), configNames.getOrElse(env.configurationId, "*deleted*"))
 
   private def varDesc(v : VariableDescription) = Variable(v.name, v.clazz.getSimpleName, v.description, v.isOptional,
-    v.defaultValue, v.values, v.dependsOn, v.group)
+    v.defaultValue, v.values, v.dependsOn, v.group.map(_.name), v.hidden)
 }

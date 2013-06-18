@@ -147,6 +147,7 @@ class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with Mock
                       .validator { it > 0 }
 
                   variable("test").description("test")
+                  variable("hidden").description("Hidden Var").hidden()
               }
               steps {
                   teststep {
@@ -171,9 +172,15 @@ class GroovyTemplateSyntaxTest extends AssertionsForJUnit with Logging with Mock
       }"""
     val template = getTemplateDefinition(script)
     assert(template.isDefined)
-    val nodesCountVar = template.get.createWorkflow.variableDescriptions.find(_.name == "nodesCount")
+    val varsDesc = template.get.createWorkflow.variableDescriptions
+    val nodesCountVar = varsDesc.find(_.name == "nodesCount")
     assert(nodesCountVar.isDefined)
-    expectResult(None)(nodesCountVar.get.values)
+    val nodesCount = nodesCountVar.get
+    expectResult(None)(nodesCount.values)
+    expectResult(false)(nodesCount.hidden)
+    val hiddenVarOpt = varsDesc.find(_.name == "hidden")
+    assert(hiddenVarOpt.isDefined)
+    expectResult(true)(hiddenVarOpt.get.hidden)
   }
 
 

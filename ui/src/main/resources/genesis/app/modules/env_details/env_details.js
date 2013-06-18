@@ -710,6 +710,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
         var inputsView = new variablesmodule.Views.InputControlsView({
           el: view.$('#workflow_vars'),
           variables: view.workflow.get('variables'),
+          varGroups: view.workflow.get('varGroups'),
           projectId: view.projectId,
           workflow: view.workflow,
           configurationId: view.configurationId,
