@@ -41,15 +41,16 @@ class VariableDeclaration(dsObjSupport: Option[Closure[Unit]],
 
   import collection.JavaConversions.mapAsScalaMap
   def group(params: java.util.Map[String, Any], variables : Closure[Unit]) = {
-    val details = groupDetails(params.toMap, variables.hashCode)
+    val details = groupDetails(params.toMap)
     val groupDeclaration = new GroupDeclaration(builders, dsObjSupport, dataSourceFactories, projectId, details)
     builders ++= Delegate(variables).to(groupDeclaration).getBuilders
   }
 
 
-  private def groupDetails(params: Map[String, Any], id: Int) = (params.get("description"), params.getOrElse("required", false)) match {
-    case (Some(desc: String), req: Boolean) => GroupDetails(id, desc, req)
-    case _ => throw new IllegalArgumentException("String parameter 'description' is mandatory, boolean parameter 'required' is optional")
+  private def groupDetails(params: Map[String, Any]) =
+    (params.get("name"), params.get("description"), params.getOrElse("required", false), params.get("default").map(_.toString)) match {
+    case (Some(name: String), desc, req: Boolean, defVar) => GroupDetails(name, desc.map(_.toString).getOrElse(name), req, defVar)
+    case _ => throw new IllegalArgumentException("String parameter 'name' is mandatory, boolean parameter 'required' is optional")
   }
 
   def getBuilders = {
@@ -89,7 +90,7 @@ class GroupDeclaration(parentBuilders: ListBuffer[VariableBuilder],
 
 }
 
-case class GroupDetails(id: Int, description: String, required: Boolean = false)
+case class GroupDetails(name: String, description: String, required: Boolean = false, defaultVar: Option[String] = None)
 
 object VariableDetails {
   type ValuesListType = Option[(Map[String,Any] => (Option[Any], Map[String,String]))]
@@ -98,7 +99,7 @@ object VariableDetails {
 class VariableDetails(val name : String, val clazz : Class[_ <: AnyRef], val description : String,
                       val validators : Seq[(String, Closure[Boolean])], val isOptional: Boolean = false, val defaultValue: () => Option[Any],
                       val valuesList: VariableDetails.ValuesListType = None, val dependsOn: Seq[String],
-                      val group: Option[GroupDetails] = None)
+                      val group: Option[GroupDetails] = None, val hidden: Boolean = false)
 
 class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
                       val dataSourceFactories: Seq[DataSourceFactory],
@@ -108,6 +109,7 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
     @BeanProperty var clazz : Class[_ <: AnyRef] = classOf[String]
     private var defaultVal: Any = _
     @BeanProperty var isOptional: Boolean = false
+  private var isHidden = false
 
     var validators = new collection.mutable.LinkedHashMap[String, Closure[Boolean]]
     var props = new collection.mutable.LinkedHashMap[String, AnyRef]
@@ -148,6 +150,11 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
 
     def optional() = {
       isOptional = true
+      this
+    }
+
+    def hidden() = {
+      isHidden = true
       this
     }
 
@@ -244,7 +251,7 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
              dataSourceRef.flatMap(ds => {dsObj.flatMap(_.default(ds))})
          }
       }
-      new VariableDetails(name, clazz, description, validators.toSeq, isOptional, default, values, parents.toList, group)
+      new VariableDetails(name, clazz, description, validators.toSeq, isOptional, default, values, parents.toList, group, isHidden)
     }
 }
 
