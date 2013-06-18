@@ -35,6 +35,7 @@ import com.griddynamics.genesis.cache.NullCacheManager
 import org.mockito.Mockito._
 import com.griddynamics.genesis.template.VersionedTemplate
 import com.griddynamics.genesis.api
+import com.griddynamics.genesis.service.VarGroupDesc
 
 class VarGroupsTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniverse {
     Mockito.when(configService.getDefault(Matchers.anyInt)).thenReturn(None)
@@ -53,8 +54,8 @@ class VarGroupsTest extends AssertionsForJUnit with MockitoSugar with DSLTestUni
     @Test
     def testSimpleGroup() {
       expectResult(None)(createWorkflow.variableDescriptions.find(_.name == "a").get.group)
-      expectResult(Some("testGroup"))(createWorkflow.variableDescriptions.find(_.name == "b").get.group)
-      expectResult(Some("testGroup"))(createWorkflow.variableDescriptions.find(_.name == "c").get.group)
+      expectResult(Some(VarGroupDesc("testGroup", "testGroup")))(createWorkflow.variableDescriptions.find(_.name == "b").get.group)
+      expectResult(Some(VarGroupDesc("testGroup", "testGroup")))(createWorkflow.variableDescriptions.find(_.name == "c").get.group)
     }
 
     @Test
