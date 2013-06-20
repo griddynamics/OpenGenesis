@@ -31,15 +31,22 @@ import com.griddynamics.genesis.model.EnvStatus
 import com.griddynamics.genesis.repository.{ConfigurationRepository, ProjectRepository}
 import com.griddynamics.genesis.users.GenesisRole
 import com.griddynamics.genesis.service.ProjectService
+import com.griddynamics.genesis.cache.{CacheManager, Cache}
+import com.griddynamics.genesis.util.Logging
 
 
 class ProjectServiceImpl(
     repository: ProjectRepository,
     storeService: service.StoreService,
     authorityService: service.ProjectAuthorityService,
-    configurationRepository: ConfigurationRepository)
-  extends ProjectService
-  with Validation[Project] {
+    configurationRepository: ConfigurationRepository,
+    val cacheManager: CacheManager) extends ProjectService
+  with Validation[Project] with Cache with Logging {
+
+  override val defaultTtl = 3600
+  private val CACHE_REGION = "projects"
+
+  private def getFromCache[B](key: AnyRef)(callback: => B) = fromCache(CACHE_REGION, key)(callback)
 
   protected def validateCreation(project: Project) =
       must(project, "Project with name '" + project.name + "' already exists") {
@@ -55,16 +62,16 @@ class ProjectServiceImpl(
       }
 
   @Transactional(readOnly = true)
-  def get(key: Int): Option[Project] = repository.get(key)
+  def get(key: Int): Option[Project] = getFromCache(key.toString) { repository.get(key) }
 
   @Transactional(readOnly = true)
-  def list: Seq[Project] =  repository.list
+  def list: Seq[Project] =  fromCache(CACHE_REGION, "*") { repository.list }
 
   @Transactional(readOnly = true)
-  def orderedList(ordering: Ordering) = repository.list(ordering)
+  def orderedList(ordering: Ordering) = getFromCache(s"*~${ordering.field}~${ordering.direction}") { repository.list(ordering) }
 
   @Transactional
-  override def create(project: Project) = {
+  override def create(project: Project) = withEvict(CACHE_REGION) {
     val result = validCreate(project, repository.save(_))
 
     result.map { pr =>
@@ -74,10 +81,10 @@ class ProjectServiceImpl(
   }
 
   @Transactional
-  override def update(project: Project) = validUpdate(project, repository.save(_))
+  override def update(project: Project) = withEvict(CACHE_REGION) { validUpdate(project, repository.save(_)) }
 
   @Transactional
-  override def delete(project: Project) = {
+  override def delete(project: Project) = withEvict(CACHE_REGION) {
     val currentTimeMillis = System.currentTimeMillis()
     val deletedProject = project.copy(
       name = project.name + "_" + currentTimeMillis.toString,
@@ -89,11 +96,11 @@ class ProjectServiceImpl(
 
   @Transactional(readOnly = true)
   def findByName(project: String): Option[Project] = {
-    list.filter(p => p.name == project).headOption
+    list.find(p => p.name == project)
   }
 
   @Transactional(readOnly = true)
-  def getProjects(ids: Iterable[Int], ordering: Option[Ordering] = None): Iterable[Project] = {
+  def getProjects(ids: Iterable[Int], ordering: Option[Ordering] = None): Iterable[Project] = getFromCache(ids.mkString("~") + ordering.map(o => s"*~${o.field}~${o.direction}").getOrElse("")){
     repository.getProjects(ids, ordering)
   }
 
