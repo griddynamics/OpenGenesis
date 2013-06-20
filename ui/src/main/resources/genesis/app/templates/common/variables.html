@@ -22,6 +22,7 @@
   }
 
   function inputType(variable) {
+    if (variable.hidden) return 'hidden';
     switch(variable.type) {
         case 'Boolean' : return 'checkbox';
         default : return 'text';
@@ -39,17 +40,18 @@
 <% _.each(variables, function(variable, i) {
     var name = variable.name;
     var values = variable.values;
-    var required = !variable.optional;
-    var group = variable.group;
+    var group = varGroups[variable.group];
+    var groupLabel = group && (i == 0 || variable.group !== variables[i-1].group) ? group.desc : "";
+    var required = !variable.optional || groupLabel && group.required;
     var select = typeof(values) !== "undefined" || variable.dependsOn; %>
 <div style="margin-top: 10px; <%= (i === variables.length - 1 ? 'margin-bottom: 10px' : '') %>">
-    <label for="<%= group ? group : name %>" class="<%= (required ? 'label-required' : '') %>">
-    <% if (required) { %>*&nbsp;<% } %> <%= group ? (i == 0 || group !== variables[i-1].group ? group : "") : variable.description %>
+    <label for="<%= group ? variable.group : name %>" class="<%= (required ? 'label-required' : '') %>">
+    <% if (required) { %>*&nbsp;<% } %> <%= group ? groupLabel : variable.description %>
     </label>
     <div class="value">
         <% if (group) { %>
-            <input type="radio" name="<%= group %>" class="group-radio" data-var-name="<%= name %>"
-                   <% if (variable.defaultValue) { %> checked <% } %> />
+            <input type="radio" name="<%= variable.group %>" class="group-radio" data-var-name="<%= name %>"
+                   <% if (group.defVariable == name) { %> checked <% } %> />
             <label for="<%= name %>" class="group"> <%= variable.description %></label>
         <% } %>
         <% if (select) { %>

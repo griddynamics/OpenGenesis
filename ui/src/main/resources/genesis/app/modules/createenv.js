@@ -340,6 +340,7 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
       this.inputsView = new variablesmodule.Views.InputControlsView({
         el: this.$('#workflow_vars'),
         variables: this.variables,
+        varGroups: workflow.get('varGroups'),
         projectId: this.project.id,
         workflow: workflow,
         template: template,

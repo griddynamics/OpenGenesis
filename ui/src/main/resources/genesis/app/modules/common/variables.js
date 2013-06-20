@@ -117,8 +117,8 @@ function(genesis, status, $, _, Backbone) {
       this.$('.workflow-variable').each(function () {
         var value = $(this).is("input[type='checkbox']") ? $(this).is(':checked').toString() : $(this).val();
         var group = $($(this).parent()).children("input[type='radio'].group-radio");
-        var groupChecked = group && $(group).is(':checked');
-        if ($(this).val() && $(this).is(':enabled') || groupChecked) {
+        var groupChecked = $(group).is(':checked');
+        if ($(this).val() && $(this).is(':enabled') && (!$(group).length || groupChecked)) {
           vals[$(this).attr('name')] = value;
         }
       });
@@ -150,6 +150,7 @@ function(genesis, status, $, _, Backbone) {
     initialize: function (options) {
       this.workflow = options.workflow;
       this.variables = options.variables;
+      this.varGroups = options.varGroups;
       this.graph = new DependencyGraph(this.variables);
       this.configurationId = options.configurationId;
       this.variableValues = options.variableValues || {};
@@ -211,7 +212,7 @@ function(genesis, status, $, _, Backbone) {
     render: function (callback) {
       var self = this;
       $.when(genesis.fetchTemplate(this.htmltemplate)).done(function (varTmpl) {
-        self.$el.html(varTmpl({variables: self.variables}));
+        self.$el.html(varTmpl({variables: self.variables, varGroups: self.varGroups}));
         self._linkDependencies();
         var resolvedVars = _.keys(self.variableValues);
         if(resolvedVars.length > 0) {
