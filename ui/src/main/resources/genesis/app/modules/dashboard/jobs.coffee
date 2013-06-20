@@ -26,12 +26,14 @@ define [
         namePart: ""
         statuses:
           ready:
-            visible: true
+            visible: true, name: "Ready"
           busy:
-            visible: true
+            visible: true, name: "Busy"
           broken:
-            visible: true
+            visible: true, name: "Broken"
       }
+    _setFilter: ->
+      true
 
   class Job extends genesis.Backbone.Model
     linkType: backend.LinkTypes.EnvScheduledJob

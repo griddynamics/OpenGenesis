@@ -58,5 +58,4 @@
     <logger name="jclouds.ssh" level="debug" />
     <logger name="org.jclouds.ssh" level="debug" />
     <logger name="com.griddynamics.genesis.http" level="trace"/>
-    <logger name="org.apache.http.wire" level="trace"/>
 </configuration>
