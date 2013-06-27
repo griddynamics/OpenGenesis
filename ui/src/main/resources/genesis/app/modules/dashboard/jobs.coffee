@@ -63,7 +63,6 @@ define [
           job.id == j.id and job.date == j.date and job.recurrence == j.recurrence
       jobExist = (job) =>
         found = (element for element in @mdl.get('requested') when eq(element.item, job.item))
-        console.log(found.length)
         found.length > 0
       changed = () =>
         result = _.every(@poll.get('requested'), (job) => jobExist(job))
