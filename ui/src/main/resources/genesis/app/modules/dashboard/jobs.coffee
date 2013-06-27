@@ -46,17 +46,43 @@ define [
 
     template: "app/templates/dashboard/project_jobs.html"
     initialize: (options) ->
-      jobs = options.jobs
+      @mdl = options.jobs
       @envs = options.envs
       @projectId = options.projectId
-      @failedPerEnv = _.chain(jobs.get("failed")).map((i) -> body = i.item; body.links = i.links; body.status = "Failed"; body ).sortBy('date').groupBy("envId").value()
-      @requestedPerEnv = _.chain(jobs.get("requested")).map((i) -> body = i.item; body.links = i.links; body.status = "Requested"; body ).sortBy('date').groupBy("envId").value()
-      @jobs = _.chain().
-        union(_.keys(@failedPerEnv), _.keys(@requestedPerEnv)).
-        reduce(((memo, k) =>
-          memo[k] = _.union(@failedPerEnv[k] or [], @requestedPerEnv[k] or []) unless _.isUndefined(k)
-          memo), {}).
-        value()
+      @refresh()
+
+    refresh: ->
+      @mdl.fetch().done () =>
+        @poll = @mdl.clone()
+        poller.PollingManager.start @poll, {delay: 3000}
+        @poll.bind "change", @changed, @
+        @render()
+
+    changed: () =>
+      eq = (job, j) =>
+          job.id == j.id and job.date == j.date and job.recurrence == j.recurrence
+      jobExist = (job) =>
+        found = (element for element in @mdl.get('requested') when eq(element.item, job.item))
+        console.log(found.length)
+        found.length > 0
+      changed = () =>
+        result = _.every(@poll.get('requested'), (job) => jobExist(job))
+        !result
+      if changed()
+        @mdl = @poll.clone()
+        @render()
+
+
+    prepareData: (model) =>
+      failedPerEnv = _.chain(model.get("failed")).map((i) -> body = i.item; body.links = i.links; body.status = "Failed"; body ).sortBy('date').groupBy("envId").value()
+      requestedPerEnv = _.chain(model.get("requested")).map((i) -> body = i.item; body.links = i.links; body.status = "Requested"; body ).sortBy('date').groupBy("envId").value()
+      jobs = _.chain().
+      union(_.keys(failedPerEnv), _.keys(requestedPerEnv)).
+      reduce(((memo, k) =>
+        memo[k] = _.union(failedPerEnv[k] or [], requestedPerEnv[k] or []) unless _.isUndefined(k)
+        memo), {}).
+      value()
+      {failed: failedPerEnv, requestedPerEnv: requestedPerEnv, jobs: jobs}
 
     toggleDetails: (e) ->
       id = $(e.currentTarget).attr("rel");
@@ -64,12 +90,14 @@ define [
       this.$(id).slideToggle("fast");
 
     onClose: () ->
+      poller.PollingManager.stop @poll
       @unbind()
 
     render: ->
       $.when(genesis.fetchTemplate(@template)).done (tmpl) =>
+        data = @prepareData(@mdl)
         @$el.html(tmpl(
-          jobs: @jobs,
+          jobs: data.jobs,
           envs: @envs,
           moment: moment,
           utils: genesis.utils,
@@ -116,8 +144,7 @@ define [
         selectedId
 
       project = @stat.get(projectId)
-
-      $(".project-stat[data-projectId=" + projectId + "]").find(".toggle").toggleClass("expanded")
+      $(".project-stat[data-project-id=" + projectId + "]").find("h3.toggle").toggleClass("expanded")
       $projDetailsEl = @$(".history-details[ data-project-id=" +projectId + "]")
       if project and $projDetailsEl
         $projDetailsEl.toggleClass("visible")
@@ -135,11 +162,12 @@ define [
             el: $projDetailsEl.children(".jobs-list"),
             projectId: projectId
           )
-          view.render()
           @subviews[projectId] = view
 
     onClose: ->
       @selected = []
+      console.log @subviews
+      subview.close() for key,subview of @subviews
       poller.PollingManager.stop @poll
 
     render: ->
