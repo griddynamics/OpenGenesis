@@ -12,21 +12,45 @@ require([
   "modules/projects",
   "modules/environments",
   "modules/breadcrumbs",
+  "cs!utils/inactivity",
 //jquery plugins
   "bootstrap",
   "tabs"
 ],
 
-function(genesis, routermodule, jQuery, Backbone, _, backend, status, Projects, Environments, Breadcrumbs ) {
+function(genesis, routermodule, jQuery, Backbone, _, backend, status, Projects, Environments, Breadcrumbs, Inactivity) {
 
   var app = genesis.app;
-
+  var inactive = new Inactivity({timeout: 15 * 60 * 1000});
   jQuery(function($) {
     var errorDialog = $("<div style='margin-top: 10px' id='server-communication-error-dialog'></div>").dialog({
       title: 'Failed to complete request',
       dialogClass: 'error-notification-dialog',
       width: 400,
       minHeight: 80
+    });
+
+    var sessionExpireDialog = $("<div style='margin-top: 10px' id='genesis-warning-dialog'></div>").dialog({
+      title: 'Session expiry',
+      dialogClass: 'error-notification-dialog',
+      width: 400,
+      minHeight: 80
+    });
+
+    genesis.app.bind('session-expire', function(message) {
+      if (! sessionExpireDialog.dialog('isOpen')) {
+        $('#genesis-warning-dialog').html(message);
+        sessionExpireDialog.dialog("option", "buttons", {
+          "OK": function() {
+             $(this).dialog('close');
+            inactive.reset();
+          }
+        }).dialog("open");
+        setTimeout(function() {
+          $('#genesis-warning-dialog').dialog('close');
+          inactive.shutdown();
+        }, 60000);
+      }
     });
 
     genesis.app.bind("server-communication-error", function(message, url) {
@@ -274,6 +298,7 @@ function(genesis, routermodule, jQuery, Backbone, _, backend, status, Projects, 
       $loadingSpinner.hide();
       $overlay.hide();
     });
+    inactive.start();
   });
 
   // All navigation that is relative should be passed through the navigate
