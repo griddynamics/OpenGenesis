@@ -134,6 +134,11 @@ function (Backbone, _) {
     },
     size: function () {
       return pollers.length;
+    },
+    shutdown: function() {
+      _.each(pollers, function(poller) {
+        poller.stop();
+      })
     }
   };
 
