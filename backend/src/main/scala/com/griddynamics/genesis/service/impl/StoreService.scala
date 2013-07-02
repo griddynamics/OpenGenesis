@@ -514,7 +514,9 @@ class StoreService(val cacheManager: CacheManager) extends service.StoreService 
 
   @Transactional(readOnly = false)
   def updateEnvName(i: Int, s: String) = {
+    withEvict(StoreService.EnvCache) {
       update(GS.envs)(e => where(e.id === i) set (e.name := s))
+    }
   }
 
   @Transactional(readOnly = true)
