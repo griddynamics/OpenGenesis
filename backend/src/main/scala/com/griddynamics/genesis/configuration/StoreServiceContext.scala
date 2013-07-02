@@ -45,6 +45,7 @@ import com.griddynamics.genesis.validation.ConfigValueValidator
 import collection.JavaConversions._
 import scala.Some
 import com.griddynamics.genesis.squeryl.adapters.CustomPostgreSQLAdapter
+import com.griddynamics.genesis.cache.CacheManager
 
 @Configuration
 class JdbcStoreServiceContext extends StoreServiceContext {
@@ -57,13 +58,15 @@ class JdbcStoreServiceContext extends StoreServiceContext {
 
     @Autowired(required = false) private var validators: java.util.Map[String, ConfigValueValidator] = mapAsJavaMap(Map())
 
+    @Autowired var cacheManager: CacheManager = _
+
     @Bean def environmentSecurity: service.EnvironmentAccessService = new impl.EnvironmentAccessService(storeService, permissionService)
 
-    @Bean def storeService: service.StoreService = new impl.StoreService
+    @Bean def storeService: service.StoreService = new impl.StoreService(cacheManager)
 
     @Bean def projectRepository: repository.ProjectRepository = new repository.impl.ProjectRepository
 
-    @Bean def projectService: ProjectService = new ProjectServiceImpl(projectRepository, storeService, projectAuthority, configurationRepository)
+    @Bean def projectService: ProjectService = new ProjectServiceImpl(projectRepository, storeService, projectAuthority, configurationRepository, cacheManager)
 
     @Bean def credentialsRepository: repository.CredentialsRepository = new repository.impl.CredentialsRepository
     @Bean def configurationRepository: repository.ConfigurationRepository = new repository.impl.ConfigurationRepositoryImpl

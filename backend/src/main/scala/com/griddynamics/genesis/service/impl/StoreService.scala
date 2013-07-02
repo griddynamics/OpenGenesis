@@ -39,6 +39,7 @@ import com.griddynamics.genesis.api.Ordering
 import collection.mutable
 import com.griddynamics.genesis.annotation.RemoteGateway
 import EnvStatus._
+import com.griddynamics.genesis.cache.{CacheManager, Cache}
 
 object EnvOrdering {
   val ID = "id"
@@ -47,7 +48,7 @@ object EnvOrdering {
 
 //TODO think about ids as vars
 @RemoteGateway("Genesis database access: StoreService")
-class StoreService extends service.StoreService with Logging {
+class StoreService(val cacheManager: CacheManager) extends service.StoreService with Logging with Cache {
 
   import StoreService._
 
@@ -66,27 +67,30 @@ class StoreService extends service.StoreService with Logging {
 
   @Transactional(readOnly = true)
   def listEnvs(projectId: Int, statusFilter: Option[Seq[EnvStatus]] = None, ordering: Option[Ordering] = None): Seq[Environment] = {
-    //TODO: change Option[Seq] to just Seq[]
     val filterId = statusFilter.toSeq.flatten(_.map(_.id))
-    val envsWithAttrs = join(GS.envs, GS.envAttrs.leftOuter)((env, attrs) =>
-      where((if (statusFilter.nonEmpty) env.status.id in filterId else 1===1) and
-        env.projectId === projectId)
-        select(env, attrs)
-        orderBy ( EnvOrderingMapper.order(env, ordering.getOrElse(Ordering.asc(EnvOrdering.ID))) )
-        on(env.id === attrs.map(_.entityId))
-    ).toSeq
+    val key = "?projectId=" + projectId.toString + "&filter=" + filterId.mkString("~") + ordering.map(o => s"&orderBy=${o.field}&direction=${o.direction.toString}").getOrElse("")
+    fromCache(StoreService.EnvCache, key){
+      //TODO: change Option[Seq] to just Seq[]
+      val envsWithAttrs = join(GS.envs, GS.envAttrs.leftOuter)((env, attrs) =>
+        where((if (statusFilter.nonEmpty) env.status.id in filterId else 1===1) and
+          env.projectId === projectId)
+          select(env, attrs)
+          orderBy ( EnvOrderingMapper.order(env, ordering.getOrElse(Ordering.asc(EnvOrdering.ID))) )
+          on(env.id === attrs.map(_.entityId))
+      ).toSeq
 
-    val envToEnvAttr = new mutable.LinkedHashMap[Environment, Seq[(Environment, Option[SquerylEntityAttr])]]()
-    envsWithAttrs foreach { case (env, attr) =>
-      envToEnvAttr.put( env, envToEnvAttr.getOrElse(env, Seq()) ++ Seq((env, attr)) )
+      val envToEnvAttr = new mutable.LinkedHashMap[Environment, Seq[(Environment, Option[SquerylEntityAttr])]]()
+      envsWithAttrs foreach { case (env, attr) =>
+        envToEnvAttr.put( env, envToEnvAttr.getOrElse(env, Seq()) ++ Seq((env, attr)) )
+      }
+
+      (for {(env, envAttrs) <- envToEnvAttr
+            attrs = envAttrs.collect { case (env, Some(attr) ) => attr.name -> attr.value}
+      } yield {
+        env.importAttrs(attrs.toMap)
+        env
+      }).toSeq
     }
-
-    (for {(env, envAttrs) <- envToEnvAttr
-          attrs = envAttrs.collect { case (env, Some(attr) ) => attr.name -> attr.value}
-    } yield {
-      env.importAttrs(attrs.toMap)
-      env
-    }).toSeq
   }
 
   @Transactional(readOnly = true)
@@ -223,7 +227,7 @@ class StoreService extends service.StoreService with Logging {
     ).single.measures.toInt
 
   @Transactional
-  def createEnv(env: Environment, workflow: Workflow) = {
+  def createEnv(env: Environment, workflow: Workflow) = withEvict(StoreService.EnvCache){
     throwableToLeft {
       env.status = EnvStatus.Busy
       val cenv = GS.envs.insert(env)
@@ -240,12 +244,14 @@ class StoreService extends service.StoreService with Logging {
 
   @Transactional
   def updateEnv(env: Environment) {
-    GS.envs.update(env)
-    updateAttrs(env, GS.envAttrs)
+    withEvict(StoreService.EnvCache) {
+      GS.envs.update(env)
+      updateAttrs(env, GS.envAttrs)
+    }
   }
 
    @Transactional
-  def setEnvStatus(env: Environment, status: EnvStatus) : Option[Mistake] = {
+  def setEnvStatus(env: Environment, status: EnvStatus) : Option[Mistake] = withEvict(StoreService.EnvCache){
     lazy val mistake = Mistake(s"Can't update status of instance [${env.name}]")
 
     val updatedRowCount = (env.status, status) match {
@@ -542,4 +548,6 @@ object StoreService {
     case EnvStatus.Destroyed => false
     case _ => true
   }
+
+  val EnvCache = "Environments"
 }
