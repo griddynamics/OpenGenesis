@@ -22,7 +22,9 @@
  */
 package com.griddynamics.genesis.cache
 
-trait Cache {
+import com.griddynamics.genesis.util.Logging
+
+trait Cache extends Logging {
   def cacheManager: CacheManager
 
   def defaultTtl: Int = 30 //seconds
@@ -31,7 +33,8 @@ trait Cache {
   def fromCache[B](region: String, key: Any)(callback: => B): B = {
     cacheManager.createCacheIfAbsent(CacheConfig(region, defaultTtl, maxEntries))
 
-    cacheManager.fromCache(region, key) map { _.asInstanceOf[B] } getOrElse {
+    cacheManager.fromCache(region, key) map { c => c.asInstanceOf[B] } getOrElse {
+      log.debug(s"Cache miss. Region: $region, key: $key")
       val toCache = callback
       (toCache == null || (toCache.isInstanceOf[Option[Any]] && !toCache.asInstanceOf[Option[Any]].isDefined)) match {
         case true =>
@@ -46,6 +49,12 @@ trait Cache {
   def withEvict[B](region: String, key: AnyRef)(block: => B): B = {
     if (cacheManager.cacheExists(region))
       cacheManager.evictFromCache(region, key)
+    block
+  }
+
+  def withEvict[B](region: String)(block: => B): B = {
+    if (cacheManager.cacheExists(region))
+      cacheManager.clearCache(region)
     block
   }
 }

@@ -30,9 +30,10 @@ import org.junit.{Before, Test, BeforeClass}
 import org.squeryl.PrimitiveTypeMode.transaction
 import org.scalatest.junit.MustMatchersForJUnit
 import com.griddynamics.genesis.model._
+import com.griddynamics.genesis.cache.NullCacheManager
 
 class StoreServiceTest extends MustMatchersForJUnit {
-    val storeService = new StoreService
+    val storeService = new StoreService(NullCacheManager)
 
     var project: Project = _
     var env: Environment = _
