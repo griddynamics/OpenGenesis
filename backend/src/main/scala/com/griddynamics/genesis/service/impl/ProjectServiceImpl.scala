@@ -100,7 +100,7 @@ class ProjectServiceImpl(
   }
 
   @Transactional(readOnly = true)
-  def getProjects(ids: Iterable[Int], ordering: Option[Ordering] = None): Iterable[Project] = getFromCache(ids.mkString("~") + ordering.map(o => s"*~${o.field}~${o.direction}").getOrElse("")){
+  def getProjects(ids: Iterable[Int], ordering: Option[Ordering] = None): Iterable[Project] = getFromCache(ids.mkString("~") + ordering.map(o => s"~${o.field}~${o.direction}").getOrElse("")){
     repository.getProjects(ids, ordering)
   }
 
