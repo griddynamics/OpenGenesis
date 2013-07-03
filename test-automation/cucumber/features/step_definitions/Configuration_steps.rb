@@ -41,7 +41,7 @@ Given /^Environment security is enabled$/ do
   config.should eq("true")
 end
 
-Given /User '(.+)' is a project user of a project '(.+)'/ do |username, project|
+Given /(?:If\s+)?[u|U]ser '(.+)' (?:is|becomes) a project user of a project '(.+)'/ do |username, project|
   resource :users do |r|
     user = r.find_by_username(username)
     if user.nil?
