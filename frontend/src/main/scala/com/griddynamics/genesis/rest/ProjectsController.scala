@@ -75,10 +75,13 @@ class ProjectsController extends RestApiExceptionsHandler {
     } else {
       val authorities = GenesisRestController.getCurrentUserAuthorities
       val ids = authorityService.getAllowedProjectIds(request.getUserPrincipal.getName, authorities)
-      projectService.getProjects(ids, Option(sorting))
+      if (ids.isEmpty)
+        Seq()
+      else
+        projectService.getProjects(ids, Option(sorting))
     }
     projects.map(project => wrap(project).withLinks(LinkBuilder(WebPath(request) / project.id.get.toString,
-      SELF, classOf[Environment], GET)).filtered())
+      SELF, classOf[Project], GET)).filtered())
   }
 
 
