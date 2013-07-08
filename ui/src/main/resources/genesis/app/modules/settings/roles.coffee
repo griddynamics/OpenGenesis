@@ -134,11 +134,16 @@ define [
       if $not_found
         status.StatusPanel.error("Some changes will not be saved. Offending input is #{$not_found}. Clear it before saving or re-enter it with completion, please")
       else
-        @role.
-        save({users: @$("#users-select").val() or [], groups: @$("#groups-select").val() or []}, {suppressErrors: true}).
-        done =>
+        @role.save({users: @$("#users-select").val() or [], groups: @$("#groups-select").val() or []}, {suppressErrors: true}).
+        done (response)=>
+          console.log(response)
+          message = if (response.result and response.result.usersWithoutRights.length > 0)
+            offendingUsers = response.result.usersWithoutRights.join(", ");
+            "Changes have been saved, but following users can not have access to object due to restrictions of parent object: #{offendingUsers}"
+          else
+            "Changes have been saved."
           @backToList()
-          status.StatusPanel.success "Changes have been saved"
+          status.StatusPanel.success message
 
 
     initCompletion: (hasGroups, hasUsers) ->
