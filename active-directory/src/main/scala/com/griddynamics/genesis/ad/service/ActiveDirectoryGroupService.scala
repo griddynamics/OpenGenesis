@@ -66,15 +66,15 @@ class ActiveDirectoryGroupServiceImpl(val namingContext: String,
     template.query(queries(filter), GroupMapper).toSet
   }
 
-  def users(name: Int) = throw new UnsupportedOperationException
+  def users(name: Int) = throw new UnsupportedOperationException("Not implemented by AD plugin")
 
-  def addUserToGroup(id: Int, username: String) = throw new UnsupportedOperationException
+  def addUserToGroup(id: Int, username: String) = throw new UnsupportedOperationException("Not implemented by AD plugin")
 
-  def removeUserFromGroup(id: Int, username: String) = throw new UnsupportedOperationException
+  def removeUserFromGroup(id: Int, username: String) = throw new UnsupportedOperationException("Not implemented by AD plugin")
 
-  def get(id: Int) = throw new UnsupportedOperationException
+  def get(id: Int) = throw new UnsupportedOperationException("Not implemented by AD plugin")
 
-  def getUsersGroups(username: String) = throw new UnsupportedOperationException
+  def getUsersGroups(username: String) = throw new UnsupportedOperationException("Not implemented by AD plugin")
 
   def setUsersGroups(username: String, groups: Seq[String]) {
     throw new UnsupportedOperationException
