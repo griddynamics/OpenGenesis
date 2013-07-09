@@ -52,6 +52,7 @@ import com.griddynamics.genesis.api.Configuration
 import com.griddynamics.genesis.api.Environment
 import com.griddynamics.genesis.api.Success
 import com.griddynamics.genesis.api.Access
+import scala.util.Try
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/configs"))
@@ -171,7 +172,7 @@ class ConfigurationController extends RestApiExceptionsHandler{
     val nonExistentGroups = groups.map(_.toLowerCase).toSet -- groupService.findByNames(groups).map(_.name.toLowerCase)
 
     val allowedUsers = (users.distinct.toSet -- nonExistentUsers).map({ user =>
-      val userGroups: Iterable[UserGroup] = groupService.getUsersGroups(user)
+      val userGroups: Iterable[UserGroup] = Try(groupService.getUsersGroups(user)).getOrElse(Seq())
       val authorities =
           authorityService.getAuthorities(userGroups) ++
           authorityService.getUserAuthorities(user) ++
