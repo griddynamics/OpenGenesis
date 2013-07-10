@@ -32,6 +32,7 @@ import com.griddynamics.genesis.workflow.message.{Pong, Ping, Beat, Start}
 import com.griddynamics.genesis.workflow.{ActionResult, RemoteTask, ActionFailed, Action}
 import java.util.Date
 import scala.concurrent.duration.FiniteDuration
+import com.griddynamics.genesis.api.RemoteAgent
 
 case class ResolvingRemoteActorError(action: Action, override val desc: String) extends ActionFailed
 
@@ -54,22 +55,19 @@ class AgentCommunicatingActor(superVisor: ActorRef,
 
   case object CheckStatus
   case object CheckStatusTimeout
+  case class CommandTimeout(hostname: String, remoteTask: RemoteTask)
 
   override def receive = {
 
     case Start =>
-      val agent = agentService.findByTags(Seq(agentTag)).headOption
+      submit(RemoteTask(action, self, logger)) {
+        agentService.findByTags(Seq(agentTag))
+      }
 
-      agent match {
-        case Some(a) =>
-          log.trace("Submitting a job to an agent. Waiting for remote executor")
-
-          AgentGateway.resolve(a) ! RemoteTask(action, self, logger)
-          scheduler.scheduleOnce(timeout) { self ! Timeout }
-        case None =>
-          LoggerWrapper.writeActionLog(action.uuid, "Could not find agent for tag: " + agentTag)
-          superVisor ! new ResolvingRemoteActorError(action, "Could not find remote agent for tag: " + agentTag)
-          self ! PoisonPill
+    case CommandTimeout(address, task) =>
+      log.debug(s"Got timeout for address ${address}. Tyring to send to another agent, if any")
+      submit(task) {
+        agentService.findByTags(Seq(agentTag)).filterNot(_.hostname == address)
       }
 
     case Timeout =>
@@ -92,6 +90,28 @@ class AgentCommunicatingActor(superVisor: ActorRef,
       scheduler.schedule(timeout, timeout) {
         self ! CheckStatus
       }
+  }
+
+  def submit(task: RemoteTask)(getAgent: => Iterable[RemoteAgent]) = {
+    val agent = getAgent.headOption
+    agent match {
+      case Some(a) => submitRemoteJob(a, task)
+      case None => failWithNoAgent()
+    }
+  }
+
+  def submitRemoteJob(a: RemoteAgent, task: RemoteTask) {
+    log.debug(s"Submitting job to an agent ${a.hostname}. Waiting for remote executor")
+    AgentGateway.resolve(a) ! task
+    scheduler.scheduleOnce(timeout) {
+      self ! CommandTimeout(a.hostname, task)
+    }
+  }
+
+  def failWithNoAgent()  {
+    LoggerWrapper.writeActionLog(action.uuid, "Could not find working agent for tag: " + agentTag)
+    superVisor ! new ResolvingRemoteActorError(action, "Could not find working remote agent for tag: " + agentTag)
+    self ! PoisonPill
   }
 
   val executorWatcher: Receive = {
