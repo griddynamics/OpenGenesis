@@ -24,5 +24,6 @@
 package com.griddynamics.genesis.workflow
 
 import com.griddynamics.genesis.logging.LoggerWrapper
+import scala.collection.mutable
 
-case class RemoteTask(action: Action, supervisor: akka.actor.ActorRef, logger: LoggerWrapper)
+case class RemoteTask(action: Action, supervisor: akka.actor.ActorRef, logger: LoggerWrapper, history: mutable.Map[String, Int])

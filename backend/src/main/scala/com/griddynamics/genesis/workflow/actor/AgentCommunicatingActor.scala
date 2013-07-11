@@ -33,6 +33,7 @@ import com.griddynamics.genesis.workflow.{ActionResult, RemoteTask, ActionFailed
 import java.util.Date
 import scala.concurrent.duration.FiniteDuration
 import com.griddynamics.genesis.api.RemoteAgent
+import scala.collection.mutable
 
 case class ResolvingRemoteActorError(action: Action, override val desc: String) extends ActionFailed
 
@@ -60,14 +61,14 @@ class AgentCommunicatingActor(superVisor: ActorRef,
   override def receive = {
 
     case Start =>
-      submit(RemoteTask(action, self, logger)) {
+      submit(RemoteTask(action, self, logger, mutable.Map() withDefaultValue 0)) {
         agentService.findByTags(Seq(agentTag))
       }
 
     case CommandTimeout(address, task) =>
       log.debug(s"Got timeout for address ${address}. Tyring to send to another agent, if any")
       submit(task) {
-        agentService.findByTags(Seq(agentTag)).filterNot(_.hostname == address)
+        agentService.findByTags(Seq(agentTag)).filterNot(agent => task.history(agent.hostname) > 0)
       }
 
     case Timeout =>
@@ -102,6 +103,7 @@ class AgentCommunicatingActor(superVisor: ActorRef,
 
   def submitRemoteJob(a: RemoteAgent, task: RemoteTask) {
     log.debug(s"Submitting job to an agent ${a.hostname}. Waiting for remote executor")
+    task.history(a.hostname) += 1
     AgentGateway.resolve(a) ! task
     scheduler.scheduleOnce(timeout) {
       self ! CommandTimeout(a.hostname, task)
