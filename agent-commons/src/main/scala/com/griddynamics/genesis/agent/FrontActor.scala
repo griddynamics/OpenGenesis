@@ -39,7 +39,7 @@ class FrontActor(actionToExec: Action => Option[ActionExecutor], execService: Ex
   var total = 0
 
   override def receive = {
-    case rt@RemoteTask(action, supervisor, logger) => try {
+    case rt@RemoteTask(action, supervisor, logger, _) => try {
       actionToExec(action).foreach(a => {
         val actor = executorActor(a, supervisor, logger)
         context.watch(actor)

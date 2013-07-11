@@ -36,23 +36,14 @@ import com.griddynamics.genesis.api._
 import org.springframework.security.access.prepost.PostFilter
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.validation.Validation
-import com.griddynamics.genesis.service._
-import com.griddynamics.genesis.users.{GenesisRole, UserService}
+import com.griddynamics.genesis.service.{EnvironmentConfigurationService, StoreService, EnvironmentAccessService}
+import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.api.Failure
 import scala.Some
 import com.griddynamics.genesis.api.Configuration
 import com.griddynamics.genesis.api.Success
 import com.griddynamics.genesis.groups.GroupService
 import com.griddynamics.genesis.spring.security.LinkSecurityBean
-import com.griddynamics.genesis.api.UserGroup
-import com.griddynamics.genesis.rest.links.ItemWrapper
-import com.griddynamics.genesis.api.Failure
-import scala.Some
-import com.griddynamics.genesis.api.Configuration
-import com.griddynamics.genesis.api.Environment
-import com.griddynamics.genesis.api.Success
-import com.griddynamics.genesis.api.Access
-import scala.util.Try
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/configs"))
@@ -65,8 +56,6 @@ class ConfigurationController extends RestApiExceptionsHandler{
   @Autowired var groupService: GroupService = _
   @Autowired var envConfigService: EnvironmentConfigurationService = _
   @Autowired implicit var linkSecurity: LinkSecurityBean = _
-  @Autowired var projectAuthorityService: ProjectAuthorityService = _
-  @Autowired var authorityService: AuthorityService  = _
 
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
@@ -171,24 +160,12 @@ class ConfigurationController extends RestApiExceptionsHandler{
     val nonExistentUsers = users.map(_.toLowerCase).toSet -- userService.findByUsernames(users).map(_.username.toLowerCase)
     val nonExistentGroups = groups.map(_.toLowerCase).toSet -- groupService.findByNames(groups).map(_.name.toLowerCase)
 
-    val allowedUsers = (users.distinct.toSet -- nonExistentUsers).map({ user =>
-      val userGroups: Iterable[UserGroup] = Try(groupService.getUsersGroups(user)).getOrElse(Seq())
-      val authorities =
-          authorityService.getAuthorities(userGroups) ++
-          authorityService.getUserAuthorities(user) ++
-          userGroups.map("GROUP_" + _.name) ++
-          (if (projectAuthorityService.isUserProjectAdmin(user, userGroups.map(_.name))) List(GenesisRole.ProjectAdmin.toString) else List())
-      val projectAuthorities: Seq[GenesisRole.Value] = projectAuthorityService.getGrantedAuthorities(projectId, user, authorities)
-      (user, projectAuthorities.nonEmpty)
-    }).toSeq
-
-    envAuthService.grantConfigAccess(configId, allowedUsers.filter(f => f._2).map(_._1), groups.distinct)
+    envAuthService.grantConfigAccess(configId, users.distinct, groups.distinct)
 
     Success(
       Map(
-        "nonExistentUsers" -> nonExistentUsers.toList,
-        "nonExistentGroups" -> nonExistentGroups,
-        "usersWithoutRights" -> allowedUsers.filter(f => !f._2).map(_._1)
+        "nonExistentUsers" -> nonExistentUsers,
+        "nonExistentGroups" -> nonExistentGroups
       )
     )
   }
