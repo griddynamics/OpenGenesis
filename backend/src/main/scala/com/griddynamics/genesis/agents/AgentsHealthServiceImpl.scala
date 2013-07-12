@@ -79,6 +79,11 @@ class AgentsHealthServiceImpl(actorSystem: ActorSystem, configService: ConfigSer
   }
 
   private def healthCheckName(agent: RemoteAgent) = s"agent status ${agent.id.get}"
+
+  def getAgent(tag: String, select: Seq[RemoteAgent] => Option[RemoteAgent]): Future[Option[RemoteAgent]] = {
+    val future = (tracker ? GetAgent(tag, select)).mapTo[Option[RemoteAgent]]
+    future
+  }
 }
 
 
