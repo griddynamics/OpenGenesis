@@ -34,6 +34,8 @@ import java.util.Date
 import scala.concurrent.duration.FiniteDuration
 import com.griddynamics.genesis.api.RemoteAgent
 import scala.collection.mutable
+import scala.concurrent.Future
+import java.util.concurrent.atomic.AtomicInteger
 
 case class ResolvingRemoteActorError(action: Action, override val desc: String) extends ActionFailed
 
@@ -53,7 +55,6 @@ class AgentCommunicatingActor(superVisor: ActorRef,
   var executor: ActorRef = context.system.deadLetters
   val scheduler = context.system.scheduler
   var lastPongReceived: Date = new Date()
-
   case object CheckStatus
   case object CheckStatusTimeout
   case class CommandTimeout(hostname: String, remoteTask: RemoteTask)
@@ -62,13 +63,13 @@ class AgentCommunicatingActor(superVisor: ActorRef,
 
     case Start =>
       submit(RemoteTask(action, self, logger, mutable.Map() withDefaultValue 0)) {
-        agentService.findByTags(Seq(agentTag))
+        agentService.getActiveAgent(agentTag)
       }
 
     case CommandTimeout(address, task) =>
-      log.debug(s"Got timeout for address ${address}. Tyring to send to another agent, if any")
+      log.debug(s"Got timeout for address ${address}. Trying to send to another agent, if any")
       submit(task) {
-        agentService.findByTags(Seq(agentTag)).filterNot(agent => task.history(agent.hostname) > 0)
+        agentService.getActiveAgent(agentTag)
       }
 
     case Timeout =>
@@ -93,16 +94,22 @@ class AgentCommunicatingActor(superVisor: ActorRef,
       }
   }
 
-  def submit(task: RemoteTask)(getAgent: => Iterable[RemoteAgent]) = {
-    val agent = getAgent.headOption
+  def submit(task: RemoteTask)(future: => Future[Option[RemoteAgent]]) = for (agent <- future) yield doSubmit(task, agent)
+
+  def doSubmit(task: RemoteTask, agent: Option[RemoteAgent]) = {
     agent match {
-      case Some(a) => submitRemoteJob(a, task)
+      case Some(a) => {
+        if (task.history.exists({case (host, tryouts) => tryouts > 10}))
+          failWithNoAgent()
+        else
+          submitRemoteJob(a, task)
+      }
       case None => failWithNoAgent()
     }
   }
 
   def submitRemoteJob(a: RemoteAgent, task: RemoteTask) {
-    log.debug(s"Submitting job to an agent ${a.hostname}. Waiting for remote executor")
+    log.debug(s"Submitting job to an agent ${a.hostname}:${a.port}. Waiting for remote executor")
     task.history(a.hostname) += 1
     AgentGateway.resolve(a) ! task
     scheduler.scheduleOnce(timeout) {

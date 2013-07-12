@@ -28,5 +28,8 @@
     "validation": {"Must be true or false": "true|false"}
    },
    "genesis.system.databag.template.repository.path" : {"default" : "templates", "description" : "Filesystem path to databag templates folder", "restartRequired": true},
-   "genesis.system.databag.template.repository.wildcard": {"default": "*.dbtemplate", "description": "Extension for databag templates files", "restartRequired": true}
+   "genesis.system.databag.template.repository.wildcard": {"default": "*.dbtemplate", "description": "Extension for databag templates files", "restartRequired": true},
+   "genesis.system.agent.selection": {"default": "random", "description": "Agent selection algorithm",
+     "validation": {"Must be random or round-robin": "random|round-robin"}
+   }
 }
