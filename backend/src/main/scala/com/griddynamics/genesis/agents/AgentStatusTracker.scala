@@ -32,13 +32,15 @@ import akka.remote.RemoteClientDisconnected
 
 import com.griddynamics.genesis.api.AgentStatus._
 import com.griddynamics.genesis.api
-import api.{JobStats, RemoteAgent}
+import com.griddynamics.genesis.api.{AgentStatus, JobStats, RemoteAgent}
 import com.griddynamics.genesis.agents.status.{GetStatus, StatusResponse}
 import scala.concurrent.duration._
+import com.griddynamics.genesis.api.AgentStatus.AgentStatus
 
 case class GetAgentStatus(agent: RemoteAgent)
 case class StartTracking(agent: RemoteAgent)
 case class StopTracking(agent: RemoteAgent)
+case class GetAgent(tag: String, select: Seq[RemoteAgent] => Option[RemoteAgent])
 
 class StatusTrackerRoot(pollingPeriod: Int) extends Actor {
   import scala.collection.mutable
@@ -47,6 +49,8 @@ class StatusTrackerRoot(pollingPeriod: Int) extends Actor {
 
   private val trackerState: mutable.Map[ActorRef, AgentStatus] = new mutable.HashMap[ActorRef, AgentStatus]()
   private val trackerStats: mutable.Map[ActorRef, JobStats] = new mutable.HashMap[ActorRef, JobStats]()
+  private val agents: mutable.Map[ActorRef, RemoteAgent] = new mutable.HashMap[ActorRef,RemoteAgent]()
+  private val tags: mutable.Map[String, Seq[ActorRef]] = new mutable.HashMap[String,Seq[ActorRef]]() withDefaultValue Seq()
 
   override def preStart() {
     context.system.eventStream.subscribe(self, classOf[RemoteClientLifeCycleEvent])
@@ -72,7 +76,11 @@ class StatusTrackerRoot(pollingPeriod: Int) extends Actor {
     case StartTracking(agent) => {
       val agentTracker = createTracker(agent)
       trackerState(agentTracker) = Unavailable
+      agents(agentTracker) = agent
       trackerActors(AgentGateway.address(agent)) = agentTracker
+      agent.tags.map( tag =>
+         tags(tag) = Seq(agentTracker) ++ tags(tag)
+      )
       agentTracker ! SubscribeTransitionCallBack(self)
     }
 
@@ -82,22 +90,38 @@ class StatusTrackerRoot(pollingPeriod: Int) extends Actor {
       trackerState -= tracker
       trackerActors -= AgentGateway.address(agent)
       trackerStats -= tracker
+      agents -= tracker
+      agent.tags.foreach(tag => tags -= tag)
     }
 
     case (a: RemoteAgent, stat: JobsStat) => {
        trackerStats(sender) = JobStats(stat.activeJobs, stat.totalJobs)
     }
+
+    case GetAgent(tag, select) => {
+      sender ! select(availableAgents(tag).sortBy(agent => agent.hostname))
+    }
+  }
+
+  def availableAgents(tag: String) = {
+    val agents: Seq[RemoteAgent] = tags.getOrElse(tag, Seq()).filter(isActive).flatMap(lookupAgent)
+    agents
   }
 
   def lookupTracker(agent: RemoteAgent): ActorRef = lookupTracker(AgentGateway.address(agent))
 
   def lookupTracker(address: Address): ActorRef = trackerActors.getOrElse(address, context.system.deadLetters) //todo: not existing address
+
+  def lookupAgent(ref: ActorRef): Option[RemoteAgent] = agents.get(ref).map(agent => agent.copy(stats = trackerStats.get(ref)))
+
+  private def isActive(ref: ActorRef) = trackerState.get(ref).exists(status => status == AgentStatus.Active || status == AgentStatus.Connected)
 }
 
 class StatusTracker(agent: RemoteAgent, pollingPeriodSecs: Int) extends Actor with FSM[AgentStatus, Data] {
 
   private val timer = "remote-actor-status-check"
   private val remoteAgent = AgentGateway.resolve(agent)
+  private val tags = agent.tags
 
   startWith(if (remoteAgent != context.system.deadLetters) Disconnected else Error, Uninitialized)
 

@@ -31,4 +31,5 @@ trait AgentsHealthService {
   def checkStatus(agents: Seq[RemoteAgent]): Future[Seq[(RemoteAgent, (AgentStatus, Option[JobStats]))]]
   def stopTracking(agent: RemoteAgent)
   def startTracking(agent: RemoteAgent)
+  def getAgent(tag: String, select: Seq[RemoteAgent] => Option[RemoteAgent]): Future[Option[RemoteAgent]]
 }

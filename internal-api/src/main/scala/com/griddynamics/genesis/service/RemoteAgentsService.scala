@@ -37,4 +37,5 @@ trait RemoteAgentsService extends CRUDService[RemoteAgent, Int]{
   def status(agents: Seq[RemoteAgent]) : Future[Seq[(RemoteAgent, (AgentStatus, Option[JobStats]))]]
   def getConfiguration(key: Int): ExtendedResult[Seq[ConfigProperty]]
   def putConfiguration(values: Map[String, String], key: Int): ExtendedResult[RemoteAgent]
+  def getActiveAgent(tag: String): Future[Option[RemoteAgent]]
 }

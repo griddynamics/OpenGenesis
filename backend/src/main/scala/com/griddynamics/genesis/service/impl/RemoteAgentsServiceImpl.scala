@@ -23,28 +23,33 @@
 
 package com.griddynamics.genesis.service.impl
 
-import com.griddynamics.genesis.service.{AgentConfigurationService, AgentsHealthService, RemoteAgentsService}
+import com.griddynamics.genesis.service._
 import com.griddynamics.genesis.api._
 import org.springframework.transaction.annotation.Transactional
 import com.griddynamics.genesis.repository.RemoteAgentRepository
-import com.griddynamics.genesis.api.Success
-import com.griddynamics.genesis.api.RemoteAgent
-import com.griddynamics.genesis.api.Failure
-import scala.Some
 import com.typesafe.config.{ConfigObject, ConfigFactory}
 import com.griddynamics.genesis.configuration.GenesisSettingMetadata
 import collection.JavaConversions.mapAsScalaMap
 import com.griddynamics.genesis.validation.{ConfigValueValidator, SettingsValidation}
-import scala.concurrent.Await
+import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
 import akka.util.Timeout
 import java.util.concurrent.TimeoutException
+import scala.util.Random
+import scala.collection.mutable
+import java.util.concurrent.atomic.AtomicInteger
+import com.griddynamics.genesis.api.ConfigProperty
+import com.griddynamics.genesis.api.RemoteAgent
+import com.griddynamics.genesis.api.Failure
+import scala.Some
+import com.griddynamics.genesis.api.Success
 
 
 class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: AgentsHealthService,
                               val config: AgentConfigurationService,
                               override val validators: Map[String, ConfigValueValidator],
-                              override val defaultValidator: ConfigValueValidator) extends RemoteAgentsService with SettingsValidation {
+                              override val defaultValidator: ConfigValueValidator,
+                              val configService: ConfigService) extends RemoteAgentsService with SettingsValidation {
 
     override val defaults: Map[String, GenesisSettingMetadata] = ConfigFactory.load("genesis-plugin").
       root.toMap.filterKeys(_.startsWith("genesis.")).mapValues {
@@ -52,7 +57,7 @@ class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: Age
     }
 
     repository.list.map { health.startTracking(_) }
-
+  val robins: mutable.Map[String, AtomicInteger] = new mutable.HashMap[String,AtomicInteger]() withDefaultValue new AtomicInteger(0)
 
     def status(agent: RemoteAgent) = health.checkStatus(agent)
     def status(agents: Seq[RemoteAgent]) = health.checkStatus(agents)
@@ -130,4 +135,44 @@ class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: Age
       health.stopTracking(a)
       Success(a)
     }
+
+  def getActiveAgent(tag: String): Future[Option[RemoteAgent]] = {
+    val selector: Seq[RemoteAgent] => Option[RemoteAgent] = configService.get(GenesisSystemProperties.AGENT_SELECTION_ALGORYTHM, "random") match {
+      case "random" => randomSelection
+      case "round-robin" => roundRobinSelection(tag)
+    }
+    health.getAgent(tag, selector)
+  }
+
+  def getSelector: Seq[RemoteAgent] => Option[RemoteAgent] = randomSelection
+
+  def randomSelection(agents: Seq[RemoteAgent]): Option[RemoteAgent] = {
+    if (agents.isEmpty)
+      None
+    else
+      indexSelection(Random.nextInt(agents.size))(agents)
+  }
+
+  def indexSelection(index:Int)(agents: Seq[RemoteAgent]): Option[RemoteAgent] = {
+    if (agents.isDefinedAt(index))
+      Some(agents(index))
+    else
+      None
+  }
+
+  def roundRobinSelection(tag: String)(agents: Seq[RemoteAgent]): Option[RemoteAgent] = {
+    val current: AtomicInteger = robins(tag)
+    val index: Int = current.incrementAndGet
+    robins(tag) = current
+    if (agents.isDefinedAt(index)) {
+      Some(agents(index))
+    } else {
+      current.set(0)
+      agents.headOption
+    }
+  }
+}
+
+object Selectors {
+
 }

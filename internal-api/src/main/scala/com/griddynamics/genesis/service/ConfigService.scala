@@ -72,4 +72,5 @@ object GenesisSystemProperties {
   val LOGOUT_ENABLED = "genesis.web.logout.enabled"
   val AUTH_MODE = "genesis.system.auth.mode"
   val METRICS = "genesis.system.metrics"
+  val AGENT_SELECTION_ALGORYTHM = "genesis.system.agent.selection"
 }
