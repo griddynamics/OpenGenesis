@@ -91,7 +91,7 @@ class StatusTrackerRoot(pollingPeriod: Int) extends Actor {
       trackerActors -= AgentGateway.address(agent)
       trackerStats -= tracker
       agents -= tracker
-      agent.tags.foreach(tag => tags -= tag)
+      agent.tags.foreach(tag => tags(tag) = tags(tag).filter(_ != tracker))
     }
 
     case (a: RemoteAgent, stat: JobsStat) => {
