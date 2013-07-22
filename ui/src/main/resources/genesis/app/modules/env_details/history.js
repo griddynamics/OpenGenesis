@@ -236,7 +236,7 @@ function (genesis, Backbone, status, backend, $) {
       var $target = $(event.currentTarget);
       var $element = $target.parent(),
         $details = $element.siblings("div.history-details");
-      $target.toggleClass('expanded');
+      $target.find('.toggle').toggleClass('expanded');
       if ($.browser.webkit) {
         $details.toggle();
       } else {
