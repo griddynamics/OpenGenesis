@@ -81,10 +81,10 @@ class EnvironmentAccessService(storeService: service.StoreService, permissionSer
 
   def hasAccessToConfig(projectId: Int, configId: Int, username: String, authorities: Iterable[String]): Boolean = {
     if (hasAccessToAllConfigs(projectId, username, authorities)) return true
-    val projectPerms = permissionService.getPermissions(new ObjectIdentityImpl(classOf[Project], projectId), sids(username, authorities))
+
     val perms = permissionService.getPermissions(new ObjectIdentityImpl(classOf[Configuration], configId), sids(username, authorities))
 
-    projectPerms.exists(_ == BasePermission.READ) && perms.exists(_ == BasePermission.READ )
+    perms.exists(_ == BasePermission.READ )
   }
 
   def restrictionsEnabled = securityEnabled
