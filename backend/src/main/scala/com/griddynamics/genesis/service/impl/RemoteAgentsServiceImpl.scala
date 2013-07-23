@@ -165,7 +165,7 @@ class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: Age
     val index: Int = current.incrementAndGet
     robins(tag) = current
     if (agents.isDefinedAt(index)) {
-      Some(agents(index))
+      Some(agents.sortBy(agent => s"${agent.hostname}:${agent.port}").toSeq(index))
     } else {
       current.set(0)
       agents.headOption

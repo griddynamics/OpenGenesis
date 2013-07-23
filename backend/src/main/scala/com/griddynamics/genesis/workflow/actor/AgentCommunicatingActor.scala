@@ -147,7 +147,7 @@ class AgentCommunicatingActor(superVisor: ActorRef,
 
     case Timeout => /* ignore */
 
-    case CommandTimeout => /* ignore too */
+    case CommandTimeout(_, _) => /* ignore too */
 
     case t => log.error(s" Remote agent watcher received unexpected message $t")
   }
