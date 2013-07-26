@@ -81,6 +81,8 @@ class JdbcStoreServiceContext extends StoreServiceContext {
     @Bean def attachmentContentRepository: repository.AttachmentContentRepository = new repository.impl.AttachmentContentRepositoryDBImpl
     @Bean def attachmentRepository: repository.AttachmentRepository = new repository.impl.AttachmentRepositoryImpl
     @Bean def attachmentService: service.AttachmentService = new service.impl.AttachmentServiceImpl(attachmentRepository, attachmentContentRepository)
+    @Bean def permissionChangeRepository: repository.PermissionChangeRepository = new repository.impl.PermissionChangeRepository
+    @Bean def permissionChangeService: service.PermissionChangeService = new service.impl.PermissionChangeService(permissionChangeRepository)
 }
 
 class GenesisSchemaCreator(override val dataSource : DataSource, override val transactionManager : PlatformTransactionManager,
