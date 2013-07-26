@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RequestMethod._
 import javax.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Controller
 import GenesisRestController._
-import com.griddynamics.genesis.service.{ProjectAuthorityService, AuthorityService}
+import com.griddynamics.genesis.service.{PermissionChangeService, ProjectAuthorityService, AuthorityService}
 import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.groups.GroupService
 import com.griddynamics.genesis.api._
@@ -51,6 +51,7 @@ class RolesController extends RestApiExceptionsHandler {
 
   @Autowired var userService: UserService = _
   @Autowired var groupService: GroupService = _
+  @Autowired var permissionChangeService: PermissionChangeService = _
 
   @RequestMapping(value = Array("roles"), method = Array(RequestMethod.GET))
   @ResponseBody
@@ -130,8 +131,11 @@ class RolesController extends RestApiExceptionsHandler {
 
     val nonExistentUsers = users.map(_.toLowerCase).toSet -- userService.findByUsernames(users).map(_.username.toLowerCase)
     val nonExistentGroups = groups.map(_.toLowerCase).toSet -- groupService.findByNames(groups).map(_.name.toLowerCase)
-
+    val oldSecurityObject = authorityService.authorityAssociations(roleName)
     authorityService.updateAuthority(roleName, groups.distinct, users.distinct)
+
+    permissionChangeService.recordGroupChanges(SystemRolePermissionChange(oldSecurityObject.groups, groups.distinct, getCurrentUser, Some(roleName)))
+    permissionChangeService.recordUserChanges(SystemRolePermissionChange(oldSecurityObject.users, users.distinct, getCurrentUser, Some(roleName)))
 
     Success(
       Map(

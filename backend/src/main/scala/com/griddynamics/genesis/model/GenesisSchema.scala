@@ -68,6 +68,7 @@ trait GenesisSchema extends Schema {
     val genesisVersion = table[GenesisVersion]("genesis_version")
     val attachments = table[Attachment]("attachments")
     val attachmentContent = table[DBAttachmentContent]("attachment_content")
+    val permissionChanges = table[PermissionChange]("permission_changes")
 }
 
 trait GenesisSchemaPrimitive extends GenesisSchema {
@@ -231,6 +232,11 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     jd.failureDescription is (dbType("text"))
   ))
 
+  on(permissionChanges)(pc => declare(
+     pc.id is (primaryKey, autoIncremented),
+     pc.changedItem is dbType("varchar(255)"),
+     pc.roleName is dbType("varchar(64)")
+  ))
 }
 
 trait GenesisSchemaCustom extends GenesisSchema {
