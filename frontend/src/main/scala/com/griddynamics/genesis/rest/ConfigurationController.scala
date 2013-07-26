@@ -36,7 +36,7 @@ import com.griddynamics.genesis.api._
 import org.springframework.security.access.prepost.PostFilter
 import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.validation.Validation
-import com.griddynamics.genesis.service.{EnvironmentConfigurationService, StoreService, EnvironmentAccessService}
+import com.griddynamics.genesis.service.{PermissionChangeService, EnvironmentConfigurationService, StoreService, EnvironmentAccessService}
 import com.griddynamics.genesis.users.UserService
 import com.griddynamics.genesis.api.Failure
 import scala.Some
@@ -55,6 +55,7 @@ class ConfigurationController extends RestApiExceptionsHandler{
   @Autowired var userService: UserService = _
   @Autowired var groupService: GroupService = _
   @Autowired var envConfigService: EnvironmentConfigurationService = _
+  @Autowired var permissionChangeService: PermissionChangeService = _
   @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
 
@@ -160,7 +161,12 @@ class ConfigurationController extends RestApiExceptionsHandler{
     val nonExistentUsers = users.map(_.toLowerCase).toSet -- userService.findByUsernames(users).map(_.username.toLowerCase)
     val nonExistentGroups = groups.map(_.toLowerCase).toSet -- groupService.findByNames(groups).map(_.name.toLowerCase)
 
+    val (oldusers, oldgroups) = envAuthService.getConfigAccessGrantees(configId)
     envAuthService.grantConfigAccess(configId, users.distinct, groups.distinct)
+
+    val currentUser: String = GenesisRestController.getCurrentUser
+    permissionChangeService.recordGroupChanges(ConfigurationPermissionChange(oldgroups.toList, groups.distinct, currentUser, Some(projectId), Some(configId)))
+    permissionChangeService.recordUserChanges(ConfigurationPermissionChange(oldusers.toList, users.distinct, currentUser, Some(projectId), Some(configId)))
 
     Success(
       Map(

@@ -139,6 +139,10 @@ sealed abstract class ExtendedResult[+S]() extends Product with Serializable {
       case Success(a) => f(a)
   }
 
+  @inline def foreach[B](f: S => B) {
+    if (isSuccess) f(this.get)
+  }
+
   def ++[B >: S](r: ExtendedResult[B]) : ExtendedResult[B] = (this, r) match {
         case (Success(a), Success(b)) => Success(a)
         case (a@Failure(s, v, cs, cw, nf, _), b@Failure(s1, v1, cs1, cw1, nf1, _)) => Failure(s ++ s1, v ++ v1, cs ++ cs1, cw ++ cw1, nf || nf1)
@@ -385,3 +389,33 @@ trait TemplateBased {
   def templateId: Option[String]
   def itemsMap: Map[String, String]
 }
+
+trait PermissionDiff {
+  def oldItems: List[String]
+  def newItems: List[String]
+  def added: Iterable[String] = newItems diff oldItems
+  def removed: Iterable[String] = oldItems diff newItems
+  def author: String
+  def roleName: Option[String] = None
+  def projectId: Option[Int] = None
+  def confId: Option[Int] = None
+}
+
+case class SystemRolePermissionChange(oldItems: List[String],
+                                      newItems: List[String],
+                                      author: String,
+                                      override val roleName: Option[String]) extends PermissionDiff
+
+case class ProjectRolePermissionChange(oldItems: List[String],
+                          newItems: List[String],
+                          author: String,
+                          override val roleName: Option[String],
+                          override val projectId: Option[Int]) extends PermissionDiff
+
+case class ConfigurationPermissionChange(oldItems: List[String],
+                                         newItems: List[String],
+                                         author: String,
+                                         override val projectId: Option[Int],
+                                         override val confId: Option[Int]) extends PermissionDiff
+
+

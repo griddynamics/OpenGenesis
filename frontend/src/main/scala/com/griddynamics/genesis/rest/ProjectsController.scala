@@ -9,13 +9,12 @@ import HrefBuilder._
 import CollectionWrapper._
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation._
-import com.griddynamics.genesis.service.ProjectService
+import com.griddynamics.genesis.service.{PermissionChangeService, ProjectService, ProjectAuthorityService}
 import com.griddynamics.genesis.api._
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.Authentication
 import com.griddynamics.genesis.users.{UserService, GenesisRole}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
-import com.griddynamics.genesis.service.ProjectAuthorityService
 import RequestMethod._
 import com.griddynamics.genesis.validation.Validation
 import javax.validation.Valid
@@ -60,6 +59,7 @@ class ProjectsController extends RestApiExceptionsHandler {
   @Autowired var configurationRepository: ConfigurationRepository = _
   @Autowired var userService: UserService = _
   @Autowired var groupService: GroupService = _
+  @Autowired var permissionChangeService: PermissionChangeService = _
   @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
   @Value("${genesis.system.server.mode:frontend}")
@@ -186,10 +186,18 @@ class ProjectsController extends RestApiExceptionsHandler {
     val nonExistentUsers = users.map(_.toLowerCase).toSet -- userService.findByUsernames(users).map(_.username.toLowerCase)
     val nonExistentGroups = groups.map(_.toLowerCase).toSet -- groupService.findByNames(groups).map(_.name.toLowerCase)
 
+    val before = authorityService.getProjectAuthority(projectId, GenesisRole.withName(roleName))
+
     authorityService.updateProjectAuthority(projectId,
       GenesisRole.withName(roleName),
       users.distinct,
       groups.distinct)
+
+    before.foreach({case (oldUsers, oldGroups) => {
+      val currentUser: String = getCurrentUser
+      permissionChangeService.recordUserChanges(ProjectRolePermissionChange(oldUsers.toList, users, currentUser, Some(roleName), Some(projectId)))
+      permissionChangeService.recordGroupChanges(ProjectRolePermissionChange(oldGroups.toList, groups, currentUser, Some(roleName), Some(projectId)))
+    }})
 
     Success(
       Map(
