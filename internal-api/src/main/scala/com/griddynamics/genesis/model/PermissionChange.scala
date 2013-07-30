@@ -7,7 +7,9 @@ class PermissionChange(var changedAt: Timestamp,
                         var changeType: Changes.ChangesType,
                         var roleName: Option[String] = None,
                         var projectId: Option[Int] = None,
+                        var projectName: Option[String] = None,
                         var confId: Option[Int] = None,
+                        var confName: Option[String] = None,
                         var payloadType: PermPayload.PermPayloadType,
                         var changedItem: String) extends GenesisEntity
 
