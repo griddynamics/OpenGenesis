@@ -235,6 +235,7 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
   on(permissionChanges)(pc => declare(
      pc.id is (primaryKey, autoIncremented),
      pc.changedItem is dbType("varchar(255)"),
+     pc.confName is dbType("varchar(128)"),
      pc.roleName is dbType("varchar(64)")
   ))
 }
