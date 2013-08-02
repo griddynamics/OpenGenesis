@@ -85,6 +85,9 @@
         <license.header>src/main/resources/license/header.txt</license.header>
 
         <metrics.version>2.2.0</metrics.version>
+
+        <opengenesis.repository.releases>http://nexus.vm.griddynamics.net:8081/nexus/content/repositories/open-genesis/</opengenesis.repository.releases>
+        <opengenesis.repository.snapshots>http://nexus.vm.griddynamics.net:8081/nexus/content/repositories/open-genesis-snapshots/</opengenesis.repository.snapshots>
     </properties>
 
     <modules>
@@ -1039,12 +1042,12 @@
         <repository>
             <id>genesis</id>
             <name>Open Genesis GD internal repo</name>
-            <url>http://nexus.vm.griddynamics.net:8081/nexus/content/repositories/open-genesis</url>
+            <url>${opengenesis.repository.releases}</url>
         </repository>
         <snapshotRepository>
             <id>genesis</id>
             <name>Open Genesis GD snapshot internal repo</name>
-            <url>http://nexus.vm.griddynamics.net:8081/nexus/content/repositories/open-genesis-snapshots</url>
+            <url>${opengenesis.repository.snapshots}</url>
             <uniqueVersion>false</uniqueVersion>
         </snapshotRepository>
     </distributionManagement>
