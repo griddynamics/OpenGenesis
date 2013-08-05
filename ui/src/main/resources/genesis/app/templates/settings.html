@@ -19,8 +19,21 @@
     Are you sure you want to stop Genesis back-end service? It is possible to start it again only manually.
 </div>
 
+<div id="dialog-confirm-system-stop-running" style="display: none; ">
+    Are you sure you want to stop Genesis back-end service? It is possible to start it again only manually.
+    <br/>
+    There are jobs running. They will be interrupted if Genesis will be restarted.
+</div>
+
 <div id="dialog-confirm-system-restart" style="display: none; ">
     Are you sure you want to restart Genesis back-end service?
+</div>
+
+<div id="dialog-confirm-system-restart-running" style="display: none; ">
+    Are you sure you want to restart Genesis back-end service?
+    <br/>
+    There are jobs running. They will be interrupted if Genesis will be restarted. You can see list of running jobs
+    <a class="under" href="#jobs_running" data-dialog-id="dialog-confirm-system-restart-running">here</a>.
 </div>
 
 <div id="restart" style="display:none">

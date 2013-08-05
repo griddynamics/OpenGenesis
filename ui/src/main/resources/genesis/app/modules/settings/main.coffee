@@ -1,4 +1,4 @@
-define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settings/configs", "cs!modules/settings/groups", "cs!modules/settings/users", "cs!modules/settings/roles", "cs!modules/settings/databags", "cs!modules/settings/agents", "services/backend"], (genesis, Backbone, Plugins, SystemConfigs, Groups, Users, Roles, Databags, Agents, backend) ->
+define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settings/configs", "cs!modules/settings/groups", "cs!modules/settings/users", "cs!modules/settings/roles", "cs!modules/settings/databags", "cs!modules/settings/agents", "cs!modules/dashboard/running", "services/backend"], (genesis, Backbone, Plugins, SystemConfigs, Groups, Users, Roles, Databags, Agents, Running, backend) ->
   AppSettings = genesis.module()
 
   class AppSettings.SystemSettings extends Backbone.Model
@@ -80,23 +80,37 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
       $.when(backend.SettingsManager.restartRequired()).done (restart) =>
         @$("#restart").toggle restart
 
+    adviceStop: (elem, elemRunning, action)->
+      stat = new Running.JobStats
+      $.when(stat.fetch()).done ()=>
+        if (stat.size() > 0)
+          @showConfirm("#" + elemRunning, action, () =>
+            genesis.app.router.navigate('jobs_running', {trigger: true});
+          )
+        else
+          @showConfirm("#" + elem, action)
+
     restartSystem: ->
-      @showConfirm("#dialog-confirm-system-restart", backend.SystemManager.restart)
+      @adviceStop('dialog-confirm-system-restart', 'dialog-confirm-system-restart-running', backend.SystemManager.restart)
 
     stopSystem: ->
-      @showConfirm("#dialog-confirm-system-stop", backend.SystemManager.stop)
+      @adviceStop('dialog-confirm-system-stop',  'dialog-confirm-system-stop-running', backend.SystemManager.stop)
 
-    showConfirm: (id, action) ->
+    showConfirm: (id, action, list) ->
       unless @confirmations[id]
+        buttons =
+          Yes: ->
+            action()
+            $(this).dialog "close"
+          No: ->
+            $(this).dialog "close"
+        if list?
+          buttons['Jobs'] = () ->
+            $(this).dialog "close"
+            list()
         @confirmations[id] = @$(id).dialog(
           title: "Confirmation"
-          buttons:
-            Yes: ->
-              action()
-              $(this).dialog "close"
-
-            No: ->
-              $(this).dialog "close"
+          buttons: buttons
         )
       @confirmations[id].dialog "open"
 

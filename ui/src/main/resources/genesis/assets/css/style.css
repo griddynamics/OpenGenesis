@@ -2084,3 +2084,8 @@ ul.attachments-list {
     text-decoration: underline;
 }
 
+a.under:link {
+    text-decoration: underline;
+    color: #000088;
+}
+
