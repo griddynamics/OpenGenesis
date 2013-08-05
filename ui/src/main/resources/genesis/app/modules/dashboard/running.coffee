@@ -16,7 +16,7 @@ define [
   class WorkflowsRecord extends Backbone.Model
     idAttribute: "projectId"
 
-  class JobStats extends genesis.Backbone.Collection
+  class RunningJobs.JobStats extends genesis.Backbone.Collection
     url: "/rest/workflow-stats"
     model: WorkflowsRecord
 
@@ -78,7 +78,7 @@ define [
       _.bind @render, this
       @projectsCollection = options.projects
       @projects = options.projects.reduce ((memo, proj) -> memo[proj.id] = proj.toJSON(); memo ), {}
-      @stat = new JobStats
+      @stat = new RunningJobs.JobStats
       @opened = []
       @stat.bind "reset", @render, @
       @refresh()
