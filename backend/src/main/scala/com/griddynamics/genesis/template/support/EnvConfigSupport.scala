@@ -35,5 +35,5 @@ trait EnvConfigSupport {
   def configuration: Configuration
 
   import scala.collection.JavaConversions._
-  def get$envConfig: java.util.Map[_ <: String, Any] = configuration.items + ("instanceCount" -> configuration.instanceCount.getOrElse(0))
+  def get$envConfig: java.util.Map[_ <: String, Any] = configuration.items + ("instanceCount" -> configuration.instanceCount.getOrElse(0), "name" -> configuration.name)
 }
