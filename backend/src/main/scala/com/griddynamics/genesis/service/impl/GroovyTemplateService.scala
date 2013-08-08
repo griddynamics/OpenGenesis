@@ -195,11 +195,25 @@ class StepBodiesCollector(val variables: Map[String, AnyRef],
         null
     }
 
-    def buildSteps = {
-        (for ((bodies, factory) <- closures.values) yield {
-            bodies.map { body => DslDelegate(body).to(new StepBuilderProxy(factory.newStepBuilder)) }
-        }).flatten
-    }
+  def buildSteps = {
+    import scala.collection.JavaConversions._
+    val built = (for ((bodies, factory) <- closures.values) yield {
+      bodies.map { body => DslDelegate(body).to(new StepBuilderProxy(factory.newStepBuilder)) }
+    }).flatten.zipWithIndex
+    built.map { case (proxy, index) => {
+       if (proxy.phase == null) {
+         proxy.phase = s"auto_$index"
+         if (proxy.precedingPhases.isEmpty && index > 0) {
+            built.find(_._2 == index - 1).map(
+              {case (p,i) => proxy.precedingPhases = List(if (p.phase == null) {
+                s"auto_$i"
+              } else p.phase)}
+            )
+         }
+       }
+       proxy
+    }}
+  }
 }
 
 trait ContextAccess extends ((scala.collection.Map[String, Any]) => Any)
