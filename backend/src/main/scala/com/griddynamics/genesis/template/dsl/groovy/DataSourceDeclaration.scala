@@ -46,14 +46,11 @@ class DataSourceBuilder(val projectId: Int, val factory : DataSourceFactory, val
 
 class DSObjectSupport(val dsMap: Map[String, DataSourceBuilder]) extends GroovyObjectSupport {
 
-     override def getProperty(name: String)  = {
-         dataSource(name) match {
-             case Some(s) => {
-                 collection.JavaConversions.mapAsJavaMap(s._2.getData)
-             }
-             case _ => super.getProperty(name)
-         }
-     }
+     override def getProperty(name: String)  =
+         dataSource(name).map({case (dsname, ds) =>
+           collection.JavaConversions.mapAsJavaMap(ds.getData)})
+           .getOrElse(super.getProperty(name))
+
 
      def default(name: String): Option[Any] = dataSource(name).flatMap(_._2.default)
 

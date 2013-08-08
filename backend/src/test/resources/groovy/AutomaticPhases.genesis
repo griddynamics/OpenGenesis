@@ -1,0 +1,28 @@
+package groovy
+template {
+    name("AutomaticPhases")
+    version("0.1")
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+
+    workflow("create") {
+        steps {
+            teststep {
+                text = "test input"
+            }
+            teststep {
+                text = "another input"
+            }
+        }
+    }
+
+    workflow("destroy") {
+        steps {
+            teststep {
+                phase = "undeploy"
+                text = "destroy"
+            }
+        }
+    }
+}
