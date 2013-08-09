@@ -44,8 +44,14 @@ trait StepBuilder {
     var regular: Boolean = true
     var id: Int = 0
 
-    def newStep = new GenesisStep(id, phase, JC.asScalaBuffer(precedingPhases).toSet, ignoreFail,
-        if (retryCount < 0) 0 else retryCount, getDetails, JC.mapAsScalaMap(exportTo).toMap, Option(title), skip)
+    def newStep = {
+         if (phase == null) {
+           throw new IllegalArgumentException("Phase must be defined or generated for step")
+         } else {
+           new GenesisStep(id, phase, JC.asScalaBuffer(precedingPhases).toSet, ignoreFail,
+             if (retryCount < 0) 0 else retryCount, getDetails, JC.mapAsScalaMap(exportTo).toMap, Option(title), skip)
+         }
+    }
 
     def getDetails: Step
 }
