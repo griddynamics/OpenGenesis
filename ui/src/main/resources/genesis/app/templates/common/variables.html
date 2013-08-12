@@ -7,14 +7,16 @@
     return variable.defaultValue && variable.defaultValue === key ? 'selected="selected"' : '';
   }
 
-  function disabled(variable) {
+  function disabled(variable, group) {
     var grp = variable.group;
-    return !_.size(variable.values) && !grp || grp && !variable.defaultValue ? 'disabled="disabled"' : '';
+    var defaultVar = group.defVariable || ''
+    return !_.size(variable.values) && !grp || grp && variable.name !== defaultVar  ? 'disabled="disabled"' : '';
   }
 
-  function disabledInput(variable) {
+  function disabledInput(variable, group) {
     var grp = variable.group;
-    return grp && !variable.defaultValue ? 'disabled="disabled"' : ''
+    var defaultVar = group.defVariable || ''
+    return grp && variable.name !== defaultVar ? 'disabled="disabled"' : ''
   }
 
   function isSelected(key, variable) {
@@ -55,14 +57,14 @@
             <label for="<%= name %>" class="group"> <%= variable.description %></label>
         <% } %>
         <% if (select) { %>
-            <select id="<%= name %>" <%= disabled(variable) %> name="<%= name %>" class="<%= varClass(variable) %>">
+            <select id="<%= name %>" <%= disabled(variable, group) %> name="<%= name %>" class="<%= varClass(variable) %>">
               <% if (_.size(values)) {%> <option value="">Please select</option> <% } %>
               <% _.each(_.keys(values), function(key) { %>
                    <option value="<%= key %>" <%= isSelected(key, variable) %> ><%= values[key] %></option>
               <% }) %>
             </select>
         <% } else { %>
-          <input type="<%= inputType(variable) %>" class="<%= varClass(variable) %>" id="<%= name %>" name="<%= name %>"  <%= disabledInput(variable) %> <%= defVal(variable) %> />
+          <input type="<%= inputType(variable) %>" class="<%= varClass(variable) %>" id="<%= name %>" name="<%= name %>"  <%= disabledInput(variable, group) %> <%= defVal(variable) %> />
          <% } %>
     </div>
     <div style="clear: both"></div>
