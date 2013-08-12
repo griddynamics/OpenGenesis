@@ -78,11 +78,14 @@ class NameVersionDelegate extends GroovyObjectSupport with TemplateBuilder with 
 
     def version(value : String): NameVersionDelegate = {
         if (version != null) throw new IllegalStateException("version is already set")
+        if (value.contains("/")) throw new IllegalArgumentException("version cannot contain symbol '/'")
         this.version = value
         this
     }
 
     def newTemplate() = {
+      if (name.contains("/"))
+        throw new IllegalArgumentException("Name cannot contain symbol '/'")
       new EnvironmentTemplate(name, version, createWorkflowName, destroyWorkflowName,
           workflows.toList)
     }
@@ -146,6 +149,7 @@ class EnvTemplateBuilder(val projectId: Int,
 
     override def newTemplate() = {
       if (name == null) throw new IllegalStateException("name is not set")
+      if (name.contains("/") || version.contains("/")) throw new IllegalArgumentException("name neither version cannot contain symbol '/'")
       if (version == null) throw new IllegalStateException("version is not set")
       if (createWorkflowName == null) throw new IllegalStateException("create workflow name is not set")
       if (destroyWorkflowName == null) throw new IllegalStateException("destroy workflow name is not set")
