@@ -136,7 +136,6 @@ class RequestBrokerImpl(storeService: StoreService,
     def startWorkflow(env: Environment, startedBy: String, variables: Map[String, String], w: WorkflowDefinition): ExtendedResult[Int] = {
         val workflow = new Workflow(env.id, w.name, startedBy, WorkflowStatus.Requested, 0, 0, variables, varsDesc(variables, w), None, None)
         storeService.requestWorkflow(env, workflow) match {
-            case Left(m@Mistake(_, _, true)) => throw new ConcurrentModificationException(m.toString)
             case Left(m) => Failure(compoundVariablesErrors = Seq(m.toString))
             case Right((e, wf)) => {
                 dispatcher.startWorkflow(e.id, env.projectId, if(w.isReadOnly) Option(env.status) else None)
