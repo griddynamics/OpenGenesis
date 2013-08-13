@@ -9,13 +9,13 @@
 
   function disabled(variable, group) {
     var grp = variable.group;
-    var defaultVar = group.defVariable || ''
+    var defaultVar = group.defVariable || '';
     return !_.size(variable.values) && !grp || grp && variable.name !== defaultVar  ? 'disabled="disabled"' : '';
   }
 
   function disabledInput(variable, group) {
     var grp = variable.group;
-    var defaultVar = group.defVariable || ''
+    var defaultVar = group.defVariable || '';
     return grp && variable.name !== defaultVar ? 'disabled="disabled"' : ''
   }
 
