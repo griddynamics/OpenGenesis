@@ -65,7 +65,7 @@ module Genesis
               begin
                 arr = JSON.parse(response.body)
               rescue
-                raise "Response is not valid JSON: #{response.body}"
+                raise "Response is not valid JSON: " + response.body
               end
               if arr.class == Hash && arr.has_key?("items")
                  arr = arr["items"]
