@@ -61,7 +61,12 @@ module Genesis
         def #{name}(*arguments)
               criteria = concat_arguments('#{attributes.join(",")}', arguments)
               response = get
-              arr = JSON.parse(response.body)
+              arr = []
+              begin
+                arr = JSON.parse(response.body)
+              rescue
+                raise "Response is not valid JSON: #{response.body}"
+              end
               if arr.class == Hash && arr.has_key?("items")
                  arr = arr["items"]
               end
@@ -104,9 +109,13 @@ module Genesis
 
     def find(&condition)
       response = get
-      found = JSON.parse(response.body).select {|g| condition.call(g) }
-      if found.size > 0
-        found[0]
+      begin
+        found = JSON.parse(response.body).select {|g| condition.call(g) }
+        if found.size > 0
+          found[0]
+        end
+      rescue
+        raise "Response is not valid json #{response.body}"
       end
     end
 
