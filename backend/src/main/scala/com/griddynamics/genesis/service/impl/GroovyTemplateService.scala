@@ -47,7 +47,7 @@ import com.griddynamics.genesis.annotation.RemoteGateway
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer
 import support.VariablesSupport
-import com.griddynamics.genesis.template.dsl.groovy.transformations.{PhaseContainer, Context}
+import com.griddynamics.genesis.template.dsl.groovy.transformations.{MacroExpand, PhaseContainer, Context}
 
 @RemoteGateway("groovy template service")
 class GroovyTemplateService(val templateRepoService : TemplateRepoService,
@@ -147,8 +147,11 @@ class GroovyTemplateService(val templateRepoService : TemplateRepoService,
 
     try {
       val compilerConfiguration = new CompilerConfiguration()
-      compilerConfiguration.addCompilationCustomizers(new ASTTransformationCustomizer(classOf[Context]),
-        new ASTTransformationCustomizer(classOf[PhaseContainer]))
+      compilerConfiguration.addCompilationCustomizers(
+        new ASTTransformationCustomizer(classOf[MacroExpand]),
+        new ASTTransformationCustomizer(classOf[Context]),
+        new ASTTransformationCustomizer(classOf[PhaseContainer])
+      )
       val groovyShell = new GroovyShell(binding, compilerConfiguration)
       groovyShell.evaluate(body)
       projectId.foreach (evaluateIncludes(_, templateDecl.includes, groovyShell))

@@ -1,0 +1,43 @@
+package groovy
+template {
+    name("Macros")
+    version("0.1")
+    createWorkflow("create")
+    destroyWorkflow("destroy")
+
+
+    defmacro "create_steps": {
+        teststep {
+            text = "test from macro"
+        }
+    }
+
+    workflow("create") {
+        steps {
+            teststep {
+                text = "test input"
+            }
+            teststep {
+                text = "another input"
+            }
+        }
+    }
+
+    workflow("macros") {
+        steps {
+            teststep {
+                text = "It was here"
+            }
+            macro:create_steps()
+        }
+    }
+
+    workflow("destroy") {
+        steps {
+            teststep {
+                phase = "undeploy"
+                text = "destroy"
+            }
+        }
+    }
+}
