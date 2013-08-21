@@ -48,6 +48,7 @@ import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.customizers.ASTTransformationCustomizer
 import support.VariablesSupport
 import com.griddynamics.genesis.template.dsl.groovy.transformations.{MacroExpand, PhaseContainer, Context}
+import scala.tools.ant.sabbus.CompilationFailure
 
 @RemoteGateway("groovy template service")
 class GroovyTemplateService(val templateRepoService : TemplateRepoService,
@@ -156,7 +157,8 @@ class GroovyTemplateService(val templateRepoService : TemplateRepoService,
       groovyShell.evaluate(body)
       projectId.foreach (evaluateIncludes(_, templateDecl.includes, groovyShell))
     } catch {
-      case e: GroovyRuntimeException => throw new IllegalStateException("can't process template", e)
+      case compilation: CompilationFailure => throw new IllegalStateException("Conpilation error: " + compilation.message, compilation)
+      case e: GroovyRuntimeException => throw new IllegalStateException("can't process template: " + e.getMessage, e)
     }
     templateDecl.bodies.headOption.map { body => DslDelegate(body).to(builder).newTemplate() }
   }

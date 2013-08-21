@@ -5,11 +5,34 @@ template {
     createWorkflow("create")
     destroyWorkflow("destroy")
 
+    def MY_CONSTANT = "Set from constant"
 
-    defmacro "create_steps": {
+    defmacro "create_steps": { $message = "default" ->
+        1 + 2
         teststep {
-            text = "test from macro"
+            text = $message
         }
+    }
+
+    defmacro "simple": {
+        teststep {
+            text = MY_CONSTANT
+        }
+    }
+
+    defmacro "map": { $key, $mapValue ->
+        withMap {
+            text = "Test"
+            map = { [ $key: $mapValue ] }
+        }
+    }
+
+    defmacro "bad_require": { $message ->
+        require {
+            $message { 1 == 2 }
+            "Oops again" { 2 == 1 }
+        }
+
     }
 
     workflow("create") {
@@ -23,12 +46,22 @@ template {
         }
     }
 
+    workflow("maps") {
+        steps {
+           macro:map("operation", "subst")
+        }
+    }
+
     workflow("macros") {
+        macro:bad_require("Oops")
         steps {
             teststep {
-                text = "It was here"
+                text = "Static"
             }
+            macro:create_steps("Passed from macro call")
+            macro:create_steps($message: "Set with map")
             macro:create_steps()
+            macro:simple()
         }
     }
 
