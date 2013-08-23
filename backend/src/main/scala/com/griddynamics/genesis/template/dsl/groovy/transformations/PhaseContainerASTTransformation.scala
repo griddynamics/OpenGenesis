@@ -18,14 +18,14 @@ class PhaseContainerASTTransformation extends ASTTransformation with Logging{
   def visit(nodes: Array[ASTNode], source: SourceUnit) {
     val methods = source.getAST.getStatementBlock.getStatements
     val it = methods.iterator().next()
-    it.visit(new PhaseEraser)
+    it.visit(new NameMatchArgumentTransformer("steps", new PhaseTransformer))
   }
 }
 
-class PhaseEraser extends CodeVisitorSupport with Logging {
+class NameMatchArgumentTransformer(name: String, transformer: ExpressionTransformer) extends CodeVisitorSupport with Logging {
    override def visitMethodCallExpression(call: MethodCallExpression) {
-     if (call.getMethodAsString == "steps") {
-       val expr = call.getArguments.transformExpression(new PhaseTransformer)
+     if (call.getMethodAsString == name) {
+       val expr = call.getArguments.transformExpression(transformer)
        call.setArguments(expr)
      } else {
        call.getArguments.visit(this)
