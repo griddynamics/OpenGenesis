@@ -14,7 +14,7 @@ import com.griddynamics.genesis.cache.NullCacheManager
 import com.griddynamics.genesis.template.VersionedTemplate
 import com.griddynamics.genesis.api
 import com.griddynamics.genesis.plugin.{StepBuilderFactory, StepBuilder}
-import com.griddynamics.genesis.service.TemplateDefinition
+import com.griddynamics.genesis.service.{VariableDescription, TemplateDefinition}
 import com.griddynamics.genesis.api.Failure
 import com.griddynamics.genesis.workflow.Step
 import scala.beans.BeanProperty
@@ -65,9 +65,15 @@ class MacrosTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniver
   def testMacroWithMap() {
     val template: Option[TemplateDefinition] = templateService.findTemplate(0, "Macros", "0.1", 0)
     val result = template.get.getWorkflow("maps").get
-    val steps = result.embody(Map())
-    val values: Map[String, String] = steps.regular(0).newStep.actualStep.asInstanceOf[StepWithMap].values
+    val steps = result.embody(Map("myvar" -> "1024"))
+    val variables: Seq[VariableDescription] = result.variableDescriptions
+    assert(variables.size == 1)
+    assert(variables.exists(_.name == "myvar"))
+    val step: StepWithMap = steps.regular(0).newStep.actualStep.asInstanceOf[StepWithMap]
+    val values: Map[String, String] = step.values
+    val text = step.name
     expectResult(Map("operation" -> "subst"))(values)
+    expectResult("1024")(text)
   }
 }
 

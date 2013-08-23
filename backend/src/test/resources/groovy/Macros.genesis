@@ -22,8 +22,15 @@ template {
 
     defmacro "map": { $key, $mapValue ->
         withMap {
-            text = "Test"
+            text = $vars.myvar
             map = { [ $key: $mapValue ] }
+        }
+    }
+
+    defmacro "defvar": { $name ->
+        $name = {
+           description = "Variable from template"
+           isOptional = false
         }
     }
 
@@ -47,6 +54,9 @@ template {
     }
 
     workflow("maps") {
+        variables {
+            macro:defvar(myvar)
+        }
         steps {
            macro:map("operation", "subst")
         }

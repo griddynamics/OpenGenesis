@@ -138,6 +138,7 @@ class MacroExpandVisitor(val macrodefs: Map[String, Macro], replacements: mutabl
     case closure: ClosureExpression => copyClosureExpression(closure)
     case arguments: ArgumentListExpression => new ArgumentListExpression(arguments.getExpressions.map(copy))
     case mapEntry: MapEntryExpression => new MapEntryExpression(copy(mapEntry.getKeyExpression), copy(mapEntry.getValueExpression))
+    case prop: PropertyExpression => new PropertyExpression(copy(prop.getObjectExpression), copy(prop.getProperty))
   }
 
   private def copyClosureExpression(closure: ClosureExpression): ClosureExpression = {
