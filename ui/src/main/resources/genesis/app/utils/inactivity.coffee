@@ -31,7 +31,7 @@ define ["backbone", "genesis", "utils/poller", "jquery"], (Backbone, genesis, po
 
     shutdown: () ->
       if (@inactive > timeout)
-        genesis.app.trigger("server-communication-error", "Your session has been expired. Refresh the page to continue.")
+        genesis.app.trigger("polling-shutdown", "Your session has been expired. Refresh the page to continue.")
         poller.PollingManager.shutdown()
         @reset()
         if @interval?

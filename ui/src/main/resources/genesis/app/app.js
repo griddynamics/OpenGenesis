@@ -21,7 +21,7 @@ require([
 function(genesis, routermodule, jQuery, Backbone, _, backend, status, Projects, Environments, Breadcrumbs, Inactivity) {
 
   var app = genesis.app;
-  var inactive = new Inactivity({timeout: 15 * 60 * 1000});
+  var inactive = new Inactivity({timeout: 1 * 60 * 1000});
   jQuery(function($) {
     var errorDialog = $("<div style='margin-top: 10px' id='server-communication-error-dialog'></div>").dialog({
       title: 'Failed to complete request',
@@ -32,6 +32,13 @@ function(genesis, routermodule, jQuery, Backbone, _, backend, status, Projects, 
 
     var sessionExpireDialog = $("<div style='margin-top: 10px' id='genesis-warning-dialog'></div>").dialog({
       title: 'Session expiry',
+      dialogClass: 'error-notification-dialog',
+      width: 400,
+      minHeight: 80
+    });
+
+    var sessionShutdownDialog =  $("<div style='margin-top: 10px' id='genesis-session-expire-dialog'></div>").dialog({
+      title: 'Session expired',
       dialogClass: 'error-notification-dialog',
       width: 400,
       minHeight: 80
@@ -50,6 +57,18 @@ function(genesis, routermodule, jQuery, Backbone, _, backend, status, Projects, 
           $('#genesis-warning-dialog').dialog('close');
           inactive.shutdown();
         }, 60000);
+      }
+    });
+
+    genesis.app.bind('polling-shutdown', function(message) {
+      if (! sessionShutdownDialog.dialog('isOpen')) {
+        $('#genesis-session-expire-dialog').html(message);
+        sessionShutdownDialog.dialog("option", "buttons", {
+          "Refresh" : function() {
+            $(this).dialog('close');
+            setTimeout(function(){location.reload(true)}, 50);
+          }
+        }).dialog("open");
       }
     });
 
