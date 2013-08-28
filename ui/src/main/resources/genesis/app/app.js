@@ -21,7 +21,7 @@ require([
 function(genesis, routermodule, jQuery, Backbone, _, backend, status, Projects, Environments, Breadcrumbs, Inactivity) {
 
   var app = genesis.app;
-  var inactive = new Inactivity({timeout: 1 * 60 * 1000});
+  var inactive = new Inactivity({timeout: 15 * 60 * 1000});
   jQuery(function($) {
     var errorDialog = $("<div style='margin-top: 10px' id='server-communication-error-dialog'></div>").dialog({
       title: 'Failed to complete request',
