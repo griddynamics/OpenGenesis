@@ -67,8 +67,9 @@ trait RestApiExceptionsHandler extends Logging {
     @ExceptionHandler(value = Array(classOf[ResourceNotFoundException]))
     @ResponseStatus(HttpStatus.NOT_FOUND)
     def handleResourceNotFound(response : HttpServletResponse, exception: ResourceNotFoundException) {
+      val writer = response.getWriter
       response.setContentType(MediaType.APPLICATION_JSON.toString)
-      response.getWriter.write(Serialization.write(new Failure(isNotFound = true, compoundServiceErrors = List(exception.msg))))
+      writer.write(Serialization.write(new Failure(isNotFound = true, compoundServiceErrors = List(exception.msg))))
     }
 
     @ExceptionHandler(value = Array(classOf[UnsupportedOperationException]))
@@ -95,8 +96,9 @@ trait RestApiExceptionsHandler extends Logging {
     @ExceptionHandler(value = Array(classOf[AccessDeniedException]))
     @ResponseStatus(HttpStatus.FORBIDDEN)
     def handleForbidden()(response: HttpServletResponse, exception: AccessDeniedException) {
+       val writer = response.getWriter
        response.setContentType(MediaType.APPLICATION_JSON_VALUE)
-       response.getWriter.write(Serialization.write(Failure(compoundServiceErrors = Seq(exception.getMessage))))
+       writer.write(Serialization.write(Failure(compoundServiceErrors = Seq(exception.getMessage))))
     }
 
     @ExceptionHandler(value = Array(classOf[Exception]))
@@ -107,8 +109,9 @@ trait RestApiExceptionsHandler extends Logging {
       val acceptMediaTypes = MediaType.parseMediaTypes(request.getHeader("Accept"))
 
       if(acceptMediaTypes.contains(MediaType.APPLICATION_JSON)){
+        val writer = response.getWriter //force WRITER mode on response
         response.setContentType(MediaType.APPLICATION_JSON.toString)
-        response.getWriter.write("{\"error\": \"%s\"}".format(exception.getMessage))
+        writer.write("{\"error\": \"%s\"}".format(exception.getMessage))
       } else {
         response.sendError(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error occurred")
       }
