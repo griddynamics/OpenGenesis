@@ -70,6 +70,9 @@ class ApplyVariablesVisitor(values: Map[String, Expression], replacements: mutab
       }
       case constant: ConstantExpression if constant.getText.startsWith("$") =>
         values.get(constant.getText).getOrElse(constant)
+      case cast: CastExpression => {
+        new CastExpression(cast.getType, transform(cast.getExpression), cast.isIgnoringAutoboxing)
+      }
       case other => other
     }
   }
