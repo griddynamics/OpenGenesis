@@ -139,6 +139,18 @@ class MacroExpandVisitor(val macrodefs: Map[String, Macro], replacements: mutabl
     case arguments: ArgumentListExpression => new ArgumentListExpression(arguments.getExpressions.map(copy))
     case mapEntry: MapEntryExpression => new MapEntryExpression(copy(mapEntry.getKeyExpression), copy(mapEntry.getValueExpression))
     case prop: PropertyExpression => new PropertyExpression(copy(prop.getObjectExpression), copy(prop.getProperty))
+    case not: NotExpression => new NotExpression(copy(not.getExpression))
+    case cast: CastExpression => new CastExpression(cast.getType, copy(cast.getExpression), cast.isIgnoringAutoboxing)
+    case method: MethodCallExpression => new MethodCallExpression(copy(method.getObjectExpression),
+      copy(method.getMethod), copy(method.getArguments))
+    case c: ConstructorCallExpression => new ConstructorCallExpression(c.getType, copy(c.getArguments))
+    case elvis: ElvisOperatorExpression => {
+      val trueExpression = copy(elvis.getTrueExpression)
+      val falseExpression = copy(elvis.getFalseExpression)
+      val base = new BooleanExpression(trueExpression)
+      base.setSourcePosition(trueExpression)
+      new ElvisOperatorExpression(base, falseExpression)
+    }
   }
 
   private def copyClosureExpression(closure: ClosureExpression): ClosureExpression = {
