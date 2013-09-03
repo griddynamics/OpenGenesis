@@ -7,10 +7,13 @@ template {
 
     def MY_CONSTANT = "Set from constant"
 
+    def xxx = {"Call from closure"}
+
     defmacro "create_steps": { $message = "default" ->
         1 + 2
         teststep {
             text = $message
+            skip = ($message as Boolean)
         }
     }
 
@@ -72,6 +75,7 @@ template {
             macro:create_steps($message: "Set with map")
             macro:create_steps()
             macro:simple()
+            macro:create_steps($message: xxx)
         }
     }
 

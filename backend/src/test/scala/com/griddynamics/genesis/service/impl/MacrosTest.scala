@@ -38,7 +38,7 @@ class MacrosTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniver
     val template: Option[TemplateDefinition] = templateService.findTemplate(0, "Macros", "0.1", 0)
     val workflow = template.flatMap(_.getWorkflow("macros")).get
     val steps = workflow.embody(Map())
-    expectResult(5)(steps.regular.size)
+    expectResult(6)(steps.regular.size)
     val initialPhase: Option[StepBuilder] = steps.regular.find(_.phase == "auto_0")
     val secondPhase: Option[StepBuilder] = steps.regular.find(_.phase == "auto_1")
     assert(initialPhase.isDefined)
@@ -46,7 +46,7 @@ class MacrosTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniver
     assert(secondPhase.isDefined)
     assert(secondPhase.get.getPrecedingPhases.contains("auto_0"))
     steps.regular.zip(Seq("Static", "Passed from macro call",
-        "Set with map", "default", "Set from constant")).map({
+        "Set with map", "default", "Set from constant", "Call from closure")).map({
       case (step, message) => step.newStep.actualStep match {
         case nothing: DoNothingStep => expectResult(message)(nothing.name)
       }
