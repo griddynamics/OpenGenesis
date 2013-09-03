@@ -20,7 +20,6 @@ import com.griddynamics.genesis.workflow.Step
 import scala.beans.BeanProperty
 import scala.collection.mutable
 import scala.collection.JavaConversions._
-import java.io.FileInputStream
 
 
 class MacrosTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniverse with Logging {
@@ -31,12 +30,8 @@ class MacrosTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniver
 
   val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/Macros.genesis"))
 
-  val rjaBody = IoUtil.streamAsString(new FileInputStream("/Users/sreentenko/wrk/rja/genesis/genesis/resources/templates/base-template.genesis"))
-
-  Mockito.when(templateRepository.listSources()).thenReturn(Map(VersionedTemplate("1") -> body, VersionedTemplate("2") -> rjaBody))
+  Mockito.when(templateRepository.listSources()).thenReturn(Map(VersionedTemplate("1") -> body))
   when(configService.get(Matchers.any(), Matchers.any())).thenReturn(Some(new api.Configuration(Some(0), "", 0, None, Map())))
-
-
 
   @Test
   def testStepsInserted() {
