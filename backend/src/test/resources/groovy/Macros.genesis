@@ -23,6 +23,12 @@ template {
         }
     }
 
+    defmacro "elvis" : { $var ->
+        teststep {
+            text = $system.databag['macros'].keya ?: $var
+        }
+    }
+
     defmacro "map": { $key, $mapValue ->
         withMap {
             text = $vars.myvar
@@ -76,6 +82,10 @@ template {
             macro:create_steps()
             macro:simple()
             macro:create_steps($message: xxx)
+            teststep {
+                text = $databags['macros'].keya ?: "local"
+            }
+            macro:elvis("redefine")
         }
     }
 
