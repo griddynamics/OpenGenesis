@@ -15,7 +15,7 @@ import com.griddynamics.genesis.template.VersionedTemplate
 import com.griddynamics.genesis.api
 import com.griddynamics.genesis.plugin.{StepBuilderFactory, StepBuilder}
 import com.griddynamics.genesis.service.{VariableDescription, TemplateDefinition}
-import com.griddynamics.genesis.api.Failure
+import com.griddynamics.genesis.api.{DataBag, Failure}
 import com.griddynamics.genesis.workflow.Step
 import scala.beans.BeanProperty
 import scala.collection.mutable
@@ -32,13 +32,14 @@ class MacrosTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniver
 
   Mockito.when(templateRepository.listSources()).thenReturn(Map(VersionedTemplate("1") -> body))
   when(configService.get(Matchers.any(), Matchers.any())).thenReturn(Some(new api.Configuration(Some(0), "", 0, None, Map())))
+  when(databagRepository.findByName("macros")).thenReturn(Some(new DataBag(None, "macros", Seq())))
 
   @Test
   def testStepsInserted() {
     val template: Option[TemplateDefinition] = templateService.findTemplate(0, "Macros", "0.1", 0)
     val workflow = template.flatMap(_.getWorkflow("macros")).get
     val steps = workflow.embody(Map())
-    expectResult(6)(steps.regular.size)
+    expectResult(8)(steps.regular.size)
     val initialPhase: Option[StepBuilder] = steps.regular.find(_.phase == "auto_0")
     val secondPhase: Option[StepBuilder] = steps.regular.find(_.phase == "auto_1")
     assert(initialPhase.isDefined)
@@ -46,7 +47,7 @@ class MacrosTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniver
     assert(secondPhase.isDefined)
     assert(secondPhase.get.getPrecedingPhases.contains("auto_0"))
     steps.regular.zip(Seq("Static", "Passed from macro call",
-        "Set with map", "default", "Set from constant", "Call from closure")).map({
+        "Set with map", "default", "Set from constant", "Call from closure", "local", "redefine")).map({
       case (step, message) => step.newStep.actualStep match {
         case nothing: DoNothingStep => expectResult(message)(nothing.name)
       }

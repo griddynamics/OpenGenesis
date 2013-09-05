@@ -68,10 +68,19 @@ class ApplyVariablesVisitor(values: Map[String, Expression], replacements: mutab
       case variable: VariableExpression => {
         values.get(variable.getName).getOrElse(variable)
       }
+
       case constant: ConstantExpression if constant.getText.startsWith("$") =>
         values.get(constant.getText).getOrElse(constant)
+
       case cast: CastExpression => {
         new CastExpression(cast.getType, transform(cast.getExpression), cast.isIgnoringAutoboxing)
+      }
+
+      case elvis: ElvisOperatorExpression => {
+        val trueExpr: Expression = transform(elvis.getTrueExpression)
+        val be = new BooleanExpression(trueExpr)
+        be.setSourcePosition(trueExpr)
+        new ElvisOperatorExpression(be, transform(elvis.getFalseExpression))
       }
       case other => other
     }
@@ -115,11 +124,11 @@ class MacroExpandVisitor(val macrodefs: Map[String, Macro], replacements: mutabl
 
   private def applyArguments(values: Map[String, Expression], code: BlockStatement) : BlockStatement = {
     val visitor = new ApplyVariablesVisitor(values, replacements)
-    log.debug(s"Applying variables $values")
+    log.trace(s"Applying variables $values")
     val copy = copyBlock(code)
     log.trace(s"Initial code is: $code")
     copy.visit(visitor)
-    log.debug(s"Copy with expanded variables: $copy")
+    log.trace(s"Copy with expanded variables: $copy")
     copy
   }
 
@@ -147,13 +156,18 @@ class MacroExpandVisitor(val macrodefs: Map[String, Macro], replacements: mutabl
     case method: MethodCallExpression => new MethodCallExpression(copy(method.getObjectExpression),
       copy(method.getMethod), copy(method.getArguments))
     case c: ConstructorCallExpression => new ConstructorCallExpression(c.getType, copy(c.getArguments))
-    case elvis: ElvisOperatorExpression => {
-      val trueExpression = copy(elvis.getTrueExpression)
-      val falseExpression = copy(elvis.getFalseExpression)
-      val base = new BooleanExpression(trueExpression)
-      base.setSourcePosition(trueExpression)
-      new ElvisOperatorExpression(base, falseExpression)
-    }
+    case elvis: ElvisOperatorExpression => copyElvisExpression(elvis)
+  }
+
+  private def copyElvisExpression(elvis: ElvisOperatorExpression) : ElvisOperatorExpression = {
+    log.debug(s"Input: ${elvis.getText}")
+    val trueExpression = copy(elvis.getTrueExpression)
+    val falseExpression = copy(elvis.getFalseExpression)
+    val base = new BooleanExpression(trueExpression)
+    base.setSourcePosition(trueExpression)
+    val result = new ElvisOperatorExpression(base, falseExpression)
+    log.debug(s"Output: ${elvis.getText}")
+    result
   }
 
   private def copyClosureExpression(closure: ClosureExpression): ClosureExpression = {
@@ -167,6 +181,10 @@ class MacroExpandVisitor(val macrodefs: Map[String, Macro], replacements: mutabl
 
   private def addBinaryExpression(be: BinaryExpression, bs: BlockStatement) = {
     bs.addStatement(new ExpressionStatement(copy(be)))
+  }
+
+  private def addElvisExpression(elvis: ElvisOperatorExpression, bs: BlockStatement) = {
+    bs.addStatement(new ExpressionStatement(copy(elvis)))
   }
 
   private def addMethodCall(objectExpr: Expression, method: String, arguments: Expression, statement: BlockStatement) {
@@ -193,6 +211,7 @@ class MacroExpandVisitor(val macrodefs: Map[String, Macro], replacements: mutabl
            case be: BinaryExpression => addBinaryExpression(be, blockStatement)
            case method: MethodCallExpression => addMethodCall(method.getObjectExpression, method.getMethodAsString, method.getArguments, blockStatement)
            case map: MapExpression => addMapExpression(map, blockStatement)
+           case elvis: ElvisOperatorExpression => addElvisExpression(elvis, blockStatement)
          }
        }
      }
