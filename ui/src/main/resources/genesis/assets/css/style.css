@@ -1347,6 +1347,10 @@ table.forform-table .label-column label {
     border-radius: 2px;
 }
 
+input.disabled, textarea.disabled {
+    color: rgb(120, 120, 120) !important;
+}
+
 table.server-specification td.first {
     padding-left: 2px;
     width: 120px;
