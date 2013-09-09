@@ -12,7 +12,7 @@
                     <tr>
                         <td style="width:12%; min-width: 110px;" class="label-column"><label for="group-name" class="label-required">* Group name</label></td>
                         <td>
-                            <input id="group-name" name="name" type="text" class="required name" value="<%= group.name %>" <% if (group.id) { %> disabled <% } %>/>
+                            <input id="group-name" name="name" type="text" class="required name <% if (group.id) {  %> disabled <% } %> " value="<%= group.name %>" <% if (group.id) { %> disabled <% } %>/>
                         </td>
                     </tr>
                     <tr>
