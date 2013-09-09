@@ -1725,6 +1725,19 @@ table .pre {
     width: 60%;
 }
 
+#select-template select {
+   width: 75%;
+   max-width: 75%;
+   float: right;
+   left: 20%;
+}
+
+#select-template label {
+    float: left;
+    width: 20%;
+    line-height: 1.8;
+}
+
 .information-panel {
     border: 1px solid rgb(222,222,222);
     height: 50px;
