@@ -30,6 +30,7 @@
             <td>
               <% if (databag.tags.length > 0) { %>
                 <% for (var j = 0, tagsLength = databag.tags.length; j < tagsLength; j++) { var tag = databag.tags[j]; %>
+                  <% if (tag.length > 32) { tag = tag.substring(0, 28) + "..."; } %>
                   <span class="data-tag" style="margin-right: 7px"><%- tag %></span>
                 <% } %>
               <% } %>
