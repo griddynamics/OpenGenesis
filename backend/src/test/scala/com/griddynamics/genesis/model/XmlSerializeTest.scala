@@ -25,6 +25,7 @@ package com.griddynamics.genesis.model
 
 import org.junit.Test
 import org.scalatest.junit.AssertionsForJUnit
+import scala.xml.Elem
 
 class XmlSerializeTest extends AssertionsForJUnit {
 
@@ -52,7 +53,9 @@ class XmlSerializeTest extends AssertionsForJUnit {
    @Test def testSerializeEnvAttrs() {
      val env = new Environment()
      env.deploymentAttrs = DEP_ATTRS
-     expectResult(XML_DEP_ATTRS)(toXML(env(Environment.DeploymentAttr)))
+     val expected: Elem = scala.xml.XML.loadString(XML_DEP_ATTRS)
+     val actual: Elem = scala.xml.XML.loadString(toXML(env(Environment.DeploymentAttr)))
+     expectResult(expected)(actual)
    }
 
   @Test def testDeserializeEnvAttrs() {
