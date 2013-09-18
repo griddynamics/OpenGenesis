@@ -43,7 +43,6 @@ import org.springframework.security.access.AccessDeniedException
 import com.griddynamics.genesis.repository.ConfigurationRepository
 import org.apache.commons.lang3.StringEscapeUtils
 import java.util.concurrent.TimeUnit
-import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.spring.security.LinkSecurityBean
 import com.griddynamics.genesis.model.{WorkflowStatus, EnvStatus}
 import com.griddynamics.genesis.api._
@@ -62,6 +61,8 @@ import com.griddynamics.genesis.api.ScheduledJobDetails
 import com.griddynamics.genesis.rest.links.ItemWrapper
 import com.griddynamics.genesis.api.WorkflowDetails
 import com.griddynamics.genesis.api.Workflow
+import com.griddynamics.genesis.async.{Accepted, ServiceActorFront}
+import org.springframework.security.core.context.SecurityContextHolder
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
@@ -77,40 +78,45 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @Autowired var schedulingService: EnvironmentJobService = _
   @Autowired var attachmentService: AttachmentService = _
 
+  @Autowired var serviceActor: ServiceActorFront = _
+
   @Value("${genesis.system.server.mode:frontend}")
   var mode = ""
 
   @RequestMapping(value=Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
-  def createEnv(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response : HttpServletResponse): ExtendedResult[Int] = {
+  def createEnv(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response : HttpServletResponse): Accepted[ExtendedResult[Int]] = {
     val paramsMap = extractParamsMap(request)
     val envName = extractValue("envName", paramsMap).trim
     val templateName = extractValue("templateName", paramsMap)
     val templateVersion = extractValue("templateVersion", paramsMap)
     val variables = extractVariables(paramsMap)
-    val config =  extractOption("configId", paramsMap).map { cid =>
-      configRepository.get(projectId, cid.toInt).getOrElse(throw new ResourceNotFoundException("Failed to find config with id = %s in project %d".format(cid, projectId)))
-    }.getOrElse {
-      configRepository.getDefaultConfig(projectId) match {
-        case Success(s) => s
-        case f: Failure => return f
-      }
-    }
-    val timeToLive = try {
-      extractOption("timeToLive", paramsMap).map(min => TimeUnit.MINUTES.toMillis(min.toLong))
-    } catch {
-      case e: NumberFormatException => return Failure(serviceErrors = Map("timeToLive" -> "Should be numeric"))
-    }
-
-    if(!envAuthService.hasAccessToConfig(projectId, config.id.get, getCurrentUser, getCurrentUserAuthorities)) {
-      throw new AccessDeniedException(s"User doesn't have access to configuration id=${config.id.get}")
-    }
 
     val user = mode match {
       case "backend" => request.getHeader(TunnelFilter.SEC_HEADER_NAME)
       case _ => getCurrentUser
     }
-    genesisService.createEnv(projectId, envName, user, templateName, templateVersion, variables, config, timeToLive)
+
+    val usr = getCurrentUser
+    val authorities = getCurrentUserAuthorities
+    implicit val securityContent = SecurityContextHolder.getContext
+    serviceActor.async {
+      val config: ExtendedResult[Configuration] = extractOption("configId", paramsMap).map { cid =>
+        ExtendedResult(configRepository.get(projectId, cid.toInt))(s"Failed to find config with id = $cid in project $projectId")
+      } getOrElse configRepository.getDefaultConfig(projectId)
+
+      config.flatMap(c => {
+        if(!envAuthService.hasAccessToConfig(projectId, c.id.get, usr, authorities)) {
+          throw new AccessDeniedException(s"User doesn't have access to configuration id=${c.id.get}")
+        }
+        try {
+          val ttl = extractOption("timeToLive", paramsMap).map(min => TimeUnit.MINUTES.toMillis(min.toLong))
+          genesisService.createEnv(projectId, envName, user, templateName, templateVersion, variables, c, ttl)
+        } catch {
+          case e: NumberFormatException => Failure(serviceErrors = Map("timeToLive" -> "Should be numeric"))
+        }
+      })
+    }
   }
 
   private val LINK_REGEX = """(?i)\[link:(.*?)(?:\|([^\[\]]+))?\]""".r

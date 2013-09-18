@@ -125,7 +125,11 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
         var model = this.mergeModelValues();
         var self = this;
         $.when(model.save()).always(function() { genesis.app.trigger("page-view-loading-completed"); }).done(function (resp){
-          self.trigger("finished", {envId: resp.result});
+          if (resp.location) {
+            new status.LocalStatus({el: self.$(".notification")}).attention('Request is being processed at location ' + resp.location)
+          } else {
+            self.trigger("finished", {envId: resp.result});
+          }
         }).fail(function(e){
           new status.LocalStatus({el: self.$(".notification")}).error(e);
         });
