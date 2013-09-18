@@ -80,7 +80,7 @@
             <plugin>
                 <groupId>pl.project13.maven</groupId>
                 <artifactId>git-commit-id-plugin</artifactId>
-                <version>2.0.2</version>
+                <version>2.0.4</version>
                 <executions>
                     <execution>
                         <goals>
@@ -93,6 +93,7 @@
                     <prefix>git</prefix>
                     <dateFormat>dd.MM.yyyy '@' HH:mm:ss z</dateFormat>
                     <verbose>false</verbose>
+                    <failOnNoGitDirectory>false</failOnNoGitDirectory>
                 </configuration>
             </plugin>
 
@@ -104,6 +105,17 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>no-git</id>
+            <activation>
+                <property>
+                    <name>no-git</name>
+                </property>
+            </activation>
+            <properties>
+                <git.commit.id>${maven.build.timestamp}</git.commit.id>
+            </properties>
+        </profile>
         <profile>
             <id>pack-static-content</id>
             <activation>
