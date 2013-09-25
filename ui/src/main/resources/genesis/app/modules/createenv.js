@@ -119,6 +119,36 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
       this.$('#back-button').show();
     },
 
+    poll: function(url, finalCallback, failCallback) {
+      var self = this;
+      $.ajax({
+        url: url,
+        dataType: 'json',
+        type: 'GET'
+      }).done(function(response, status, xhr) {
+          var data = {};
+          console.log(xhr);
+          try {
+            data = JSON.parse(xhr.responseText);
+          } catch (e) {
+            console.log(e);
+          }
+          if (xhr.status == 202) {
+              if (data.location) {
+                setTimeout(self.poll(data.location, finalCallback, failCallback), 3000);
+              } else {
+                setTimeout(self.poll(url, finalCallback, failCallback), 3000)
+              }
+          } else if (xhr.status >= 400) {
+            failCallback(xhr);
+          } else {
+            finalCallback(data);
+          }
+        }).fail(function(e) {
+          failCallback(e);
+        });
+    },
+
     createEnvironment: function() {
       if(this.$('#workflow-parameters-form').valid()) {
         genesis.app.trigger("page-view-loading-started");
@@ -126,11 +156,18 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
         var self = this;
         $.when(model.save()).always(function() { genesis.app.trigger("page-view-loading-completed"); }).done(function (resp){
           if (resp.location) {
-            new status.LocalStatus({el: self.$(".notification")}).attention('Request is being processed at location ' + resp.location)
+              self.poll(resp.location, function(response) {
+              self.trigger("finished", {envId: response.result});
+            }, function(e) {
+              self.model.trigger('error', model, e);
+              new status.LocalStatus({el: self.$(".notification")}).error(e);
+            });
+
           } else {
             self.trigger("finished", {envId: resp.result});
           }
         }).fail(function(e){
+          console.log(e);
           new status.LocalStatus({el: self.$(".notification")}).error(e);
         });
       }

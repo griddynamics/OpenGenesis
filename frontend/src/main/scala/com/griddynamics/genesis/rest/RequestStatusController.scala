@@ -4,9 +4,11 @@ import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.{ResponseBody, PathVariable, RequestMapping}
 import javax.servlet.http.{HttpServletResponse, HttpServletRequest}
 import org.springframework.beans.factory.annotation.Autowired
-import com.griddynamics.genesis.async.{NotFound, Ready, AskLater, ServiceActorFront}
+import com.griddynamics.genesis.async._
 import org.springframework.http.HttpStatus
 import com.griddynamics.genesis.util.Logging
+import com.griddynamics.genesis.async.Ready
+import com.griddynamics.genesis.async.AskLater
 
 
 @Controller
@@ -18,10 +20,9 @@ class RequestStatusController extends RestApiExceptionsHandler with Logging {
     @ResponseBody
     def status(request: HttpServletRequest, response: HttpServletResponse, @PathVariable uuid: String) = {
        serviceActor.status(uuid) match {
-         case AskLater(r, count) => {
+         case later@AskLater(r, count) => {
            log.debug(s"There is $count queries for $r")
-           response.setStatus(HttpStatus.SEE_OTHER.value())
-           response.setHeader("Location", s"/rest/status/$uuid")
+           Accepted(uuid)
          }
          case Ready(result) => {
            result match {
