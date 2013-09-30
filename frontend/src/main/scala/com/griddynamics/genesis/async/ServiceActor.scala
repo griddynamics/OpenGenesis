@@ -14,6 +14,9 @@ import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration._
 import com.griddynamics.genesis.util.Logging
 import org.springframework.security.core.context.{SecurityContextHolder, SecurityContext}
+import javax.servlet.http.HttpServletRequest
+import com.griddynamics.genesis.rest.links.{HrefBuilder, LinkBuilder}
+import com.griddynamics.genesis.rest.annotations.LinkTarget
 
 class Worker extends Actor with Logging {
   def receive = {
@@ -102,7 +105,12 @@ class ServiceActorFront(actorSystem: ActorSystem,
 trait ServiceActor
 
 case object ListProjects
-case class Accepted[T](uuid: String)
+case class Accepted[T](uuid: String) {
+  def normalize(request: HttpServletRequest): HttpAccepted = {
+    HttpAccepted(uuid, HrefBuilder.absolutePath(s"/rest/status/$uuid")(request))
+  }
+}
+case class HttpAccepted(uuid:String, location: String)
 case class Do[T](jobID: String, context: SecurityContext, job: () => T)
 case class Enqueue[T](uuid: String, context: SecurityContext, job:() => T)
 case class Status(uuid: String)

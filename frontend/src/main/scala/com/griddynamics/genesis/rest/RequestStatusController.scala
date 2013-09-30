@@ -22,7 +22,8 @@ class RequestStatusController extends RestApiExceptionsHandler with Logging {
        serviceActor.status(uuid) match {
          case later@AskLater(r, count) => {
            log.debug(s"There is $count queries for $r")
-           Accepted(uuid)
+           implicit val root: String = ""
+           Accepted(uuid).normalize(request)
          }
          case Ready(result) => {
            result match {

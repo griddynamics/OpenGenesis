@@ -310,6 +310,7 @@ function(genesis, routermodule, jQuery, Backbone, _, backend, status, Projects, 
     var $loadingSpinner = $("#page-view-loading");
     var $overlay = $("#overlay");
     genesis.app.bind("page-view-loading-started", function() {
+      console.log('loading-started');
       $loadingSpinner.show();
       $overlay.show();
     });

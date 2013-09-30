@@ -51,6 +51,7 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
           el: view.$('#tab-panel')
         });
         view.wizard.bind('finished', function(env){
+          console.log('Got finished');
           genesis.app.router.navigate("project/" + view.project.id + "/inst/" + env.envId, {trigger: true});
         });
         view.wizard.render();
@@ -119,55 +120,27 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
       this.$('#back-button').show();
     },
 
-    poll: function(url, finalCallback, failCallback) {
-      var self = this;
-      $.ajax({
-        url: url,
-        dataType: 'json',
-        type: 'GET'
-      }).done(function(response, status, xhr) {
-          var data = {};
-          console.log(xhr);
-          try {
-            data = JSON.parse(xhr.responseText);
-          } catch (e) {
-            console.log(e);
-          }
-          if (xhr.status == 202) {
-              if (data.location) {
-                setTimeout(self.poll(data.location, finalCallback, failCallback), 3000);
-              } else {
-                setTimeout(self.poll(url, finalCallback, failCallback), 3000)
-              }
-          } else if (xhr.status >= 400) {
-            failCallback(xhr);
-          } else {
-            finalCallback(data);
-          }
-        }).fail(function(e) {
-          failCallback(e);
-        });
-    },
-
     createEnvironment: function() {
       if(this.$('#workflow-parameters-form').valid()) {
         genesis.app.trigger("page-view-loading-started");
         var model = this.mergeModelValues();
         var self = this;
-        $.when(model.save()).always(function() { genesis.app.trigger("page-view-loading-completed"); }).done(function (resp){
+        $.when(model.save()).done(function (resp){
           if (resp.location) {
-              self.poll(resp.location, function(response) {
+            genesis.poll(resp.location, function(response) {
+              genesis.app.trigger("page-view-loading-completed");
               self.trigger("finished", {envId: response.result});
             }, function(e) {
+              genesis.app.trigger("page-view-loading-completed");
               self.model.trigger('error', model, e);
               new status.LocalStatus({el: self.$(".notification")}).error(e);
             });
-
           } else {
+            genesis.app.trigger("page-view-loading-completed");
             self.trigger("finished", {envId: resp.result});
           }
         }).fail(function(e){
-          console.log(e);
+          genesis.app.trigger("page-view-loading-completed");
           new status.LocalStatus({el: self.$(".notification")}).error(e);
         });
       }

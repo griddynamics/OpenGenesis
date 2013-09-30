@@ -47,22 +47,23 @@ import com.griddynamics.genesis.spring.security.LinkSecurityBean
 import com.griddynamics.genesis.model.{WorkflowStatus, EnvStatus}
 import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.scheduler.EnvironmentJobService
+import com.griddynamics.genesis.async._
+import org.springframework.security.core.context.SecurityContextHolder
 import com.griddynamics.genesis.api.ActionTracking
 import com.griddynamics.genesis.api.EnvironmentDetails
 import com.griddynamics.genesis.api.Failure
 import com.griddynamics.genesis.api.WorkflowHistory
 import scala.Some
 import com.griddynamics.genesis.api.Action
-import com.griddynamics.genesis.api.Success
 import com.griddynamics.genesis.api.Environment
+import com.griddynamics.genesis.api.Success
 import com.griddynamics.genesis.api.Attachment
 import com.griddynamics.genesis.api.StepLogEntry
 import com.griddynamics.genesis.api.ScheduledJobDetails
 import com.griddynamics.genesis.rest.links.ItemWrapper
+import com.griddynamics.genesis.api.Configuration
 import com.griddynamics.genesis.api.WorkflowDetails
 import com.griddynamics.genesis.api.Workflow
-import com.griddynamics.genesis.async.{Accepted, ServiceActorFront}
-import org.springframework.security.core.context.SecurityContextHolder
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
@@ -85,7 +86,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
 
   @RequestMapping(value=Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
-  def createEnv(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response : HttpServletResponse): Accepted[ExtendedResult[Int]] = {
+  def createEnv(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response : HttpServletResponse): HttpAccepted = {
     val paramsMap = extractParamsMap(request)
     val envName = extractValue("envName", paramsMap).trim
     val templateName = extractValue("templateName", paramsMap)
@@ -116,7 +117,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
           case e: NumberFormatException => Failure(serviceErrors = Map("timeToLive" -> "Should be numeric"))
         }
       })
-    }
+    }.normalize(request)
   }
 
   private val LINK_REGEX = """(?i)\[link:(.*?)(?:\|([^\[\]]+))?\]""".r
@@ -294,16 +295,21 @@ class EnvironmentsController extends RestApiExceptionsHandler {
                     request: HttpServletRequest) = {
 
     val requestMap = extractParamsMap(request)
+    implicit val securityContenxt = SecurityContextHolder.getContext
     extractNotEmptyValue("action", requestMap) match {
       case "cancel" => {
-        genesisService.cancelWorkflow(envId, projectId)
-        Success(envId)
+        serviceActor.async {
+          genesisService.cancelWorkflow(envId, projectId)
+          Success(envId)
+        }
       }
 
       case "execute" => {
-        val parameters = extractMapValue("parameters", requestMap)
-        val workflow = extractValue("workflow", parameters)
-        genesisService.requestWorkflow(envId, projectId, workflow, extractVariables(parameters), getCurrentUser)
+        serviceActor.async {
+          val parameters = extractMapValue("parameters", requestMap)
+          val workflow = extractValue("workflow", parameters)
+          genesisService.requestWorkflow(envId, projectId, workflow, extractVariables(parameters), getCurrentUser)
+        }
       }
 
       case _ => throw new InvalidInputException ()
@@ -339,7 +345,10 @@ class EnvironmentsController extends RestApiExceptionsHandler {
                     request: HttpServletRequest) = {
     val requestMap = extractParamsMap(request)
     val parameters = extractMapValue("parameters", requestMap)
-    genesisService.requestWorkflow(envId, projectId, workflowName, extractVariables(parameters), getCurrentUser)
+    implicit val securityContext = SecurityContextHolder.getContext
+    serviceActor.async {
+      genesisService.requestWorkflow(envId, projectId, workflowName, extractVariables(parameters), getCurrentUser)
+    }.normalize(request)
   }
 
 

@@ -31,8 +31,8 @@ import org.springframework.http.{HttpStatus, HttpOutputMessage, HttpInputMessage
 import com.griddynamics.genesis.api.{ExtendedResult, Success, Failure}
 import com.griddynamics.genesis.rest.GenesisRestController.{DEFAULT_CHARSET => DC}
 import java.io.StringWriter
-import com.griddynamics.genesis.rest.links.{AttachmentsWrapper, CollectionWrapper, ItemWrapper}
-import com.griddynamics.genesis.async.Accepted
+import com.griddynamics.genesis.rest.links.{CollectionWrapper, ItemWrapper, AttachmentsWrapper}
+import com.griddynamics.genesis.async.{HttpAccepted, Accepted}
 
 class JsonMessageConverter
         extends HttpMessageConverter[AnyRef]{
@@ -125,7 +125,7 @@ class JsonMessageConverter
 
     private def getStatus(requestResult : AnyRef) : Int = requestResult match  {
         case Success(_) => 200
-        case Accepted(_) => 202
+        case Accepted(_) | HttpAccepted(_,_) => 202
         case Failure(_, _, _, _, false, _) => 400
         case Failure(_, _, _, _, true, _) => 404
         case _ => -1
