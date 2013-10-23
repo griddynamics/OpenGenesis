@@ -157,6 +157,7 @@ class MacroExpandVisitor(val macrodefs: Map[String, Macro], replacements: mutabl
       copy(method.getMethod), copy(method.getArguments))
     case c: ConstructorCallExpression => new ConstructorCallExpression(c.getType, copy(c.getArguments))
     case elvis: ElvisOperatorExpression => copyElvisExpression(elvis)
+    case mapExpr: MapExpression => new MapExpression(mapExpr.getMapEntryExpressions.map(copy(_).asInstanceOf[MapEntryExpression]).toList)
   }
 
   private def copyElvisExpression(elvis: ElvisOperatorExpression) : ElvisOperatorExpression = {
