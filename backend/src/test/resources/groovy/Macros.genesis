@@ -32,7 +32,7 @@ template {
     defmacro "map": { $key, $mapValue ->
         withMap {
             text = $vars.myvar
-            map = { [ $key: $mapValue ] }
+            map = [ $key : $mapValue ]
         }
     }
 
