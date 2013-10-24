@@ -75,6 +75,7 @@ class MacrosTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniver
     val text = step.name
     expectResult(Map("operation" -> "subst"))(values)
     expectResult("1024")(text)
+    expectResult("bar")(steps.regular(0).getPrecedingPhases.get(0))
   }
 }
 
