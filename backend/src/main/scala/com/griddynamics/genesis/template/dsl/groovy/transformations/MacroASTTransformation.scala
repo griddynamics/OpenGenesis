@@ -9,7 +9,6 @@ import scala.collection.mutable
 import org.codehaus.groovy.ast.stmt.{ExpressionStatement, Statement, BlockStatement}
 import java.util
 import scala.collection.JavaConversions._
-import com.griddynamics.genesis.template.dsl.groovy.transformations.exceptions.MacroParametersException
 import org.codehaus.groovy.control.messages.SimpleMessage
 
 @GroovyASTTransformation(phase = CompilePhase.CONVERSION)
@@ -81,6 +80,11 @@ class ApplyVariablesVisitor(values: Map[String, Expression], replacements: mutab
         val be = new BooleanExpression(trueExpr)
         be.setSourcePosition(trueExpr)
         new ElvisOperatorExpression(be, transform(elvis.getFalseExpression))
+      }
+
+      case ternary: TernaryExpression => {
+        new TernaryExpression(transform(ternary.getBooleanExpression).asInstanceOf[BooleanExpression],
+          transform(ternary.getTrueExpression), transform(ternary.getFalseExpression))
       }
       case other => other
     }
@@ -158,16 +162,17 @@ class MacroExpandVisitor(val macrodefs: Map[String, Macro], replacements: mutabl
     case c: ConstructorCallExpression => new ConstructorCallExpression(c.getType, copy(c.getArguments))
     case elvis: ElvisOperatorExpression => copyElvisExpression(elvis)
     case mapExpr: MapExpression => new MapExpression(mapExpr.getMapEntryExpressions.map(copy(_).asInstanceOf[MapEntryExpression]).toList)
+    case ternary: TernaryExpression => new TernaryExpression(copy(ternary.getBooleanExpression).asInstanceOf[BooleanExpression],
+      copy(ternary.getTrueExpression), copy(ternary.getFalseExpression))
+    case bool: BooleanExpression => new BooleanExpression(copy(bool.getExpression))
   }
 
   private def copyElvisExpression(elvis: ElvisOperatorExpression) : ElvisOperatorExpression = {
-    log.debug(s"Input: ${elvis.getText}")
     val trueExpression = copy(elvis.getTrueExpression)
     val falseExpression = copy(elvis.getFalseExpression)
     val base = new BooleanExpression(trueExpression)
     base.setSourcePosition(trueExpression)
     val result = new ElvisOperatorExpression(base, falseExpression)
-    log.debug(s"Output: ${elvis.getText}")
     result
   }
 
