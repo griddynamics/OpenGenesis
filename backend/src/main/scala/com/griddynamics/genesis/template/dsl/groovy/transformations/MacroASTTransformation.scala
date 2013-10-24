@@ -82,6 +82,11 @@ class ApplyVariablesVisitor(values: Map[String, Expression], replacements: mutab
         new ElvisOperatorExpression(be, transform(elvis.getFalseExpression))
       }
 
+      case binary: BinaryExpression => {
+        log.warn("Found binary expression where it should not be. Will return transformed right hand of expression: " + binary.getText)
+        transform(binary.getRightExpression)
+      }
+
       case ternary: TernaryExpression => {
         new TernaryExpression(transform(ternary.getBooleanExpression).asInstanceOf[BooleanExpression],
           transform(ternary.getTrueExpression), transform(ternary.getFalseExpression))
@@ -97,17 +102,22 @@ class MacroExpandVisitor(val macrodefs: Map[String, Macro], replacements: mutabl
   }
   private def substitute(code: Macro, call: MethodCallExpression): Statement = {
     val arguments: Expression = call.getArguments
-    //possible variants: ArgumentListExpression, Map
+    //possible variants: ArgumentListExpression, Tuple, List of Binary
     val passed: Seq[PassedParameter] = arguments match {
-      case list: ArgumentListExpression => list.getExpressions.zipWithIndex.map({case (expr, index) => new PositionedParameter(index, expr)}).toSeq
-      case tuple: TupleExpression => tuple.getExpressions.flatMap(e => e match {
+      case list: ArgumentListExpression => list.getExpressions.zipWithIndex.map({case (expr, index) =>
+        expr match {
+          case binary: BinaryExpression => NamedParameter(binary.getLeftExpression.getText, binary.getRightExpression)
+          case _ => PositionedParameter(index, expr)
+        }}
+      ).toSeq
+      case tuple: TupleExpression => tuple.getExpressions.flatMap {
         case named: NamedArgumentListExpression => {
           named.getMapEntryExpressions.map(expr => expr.getKeyExpression match {
             case constant: ConstantExpression => Some(NamedParameter(constant.getText, expr.getValueExpression))
             case other => error("Only constants allowed in macro named arguments")(None)
           })
         }
-      }).flatten
+      }.flatten
       case other => error("Macro parameters can be passed as comma-separated list or as named pairs")(Seq())
     }
     //apply
@@ -165,6 +175,7 @@ class MacroExpandVisitor(val macrodefs: Map[String, Macro], replacements: mutabl
     case ternary: TernaryExpression => new TernaryExpression(copy(ternary.getBooleanExpression).asInstanceOf[BooleanExpression],
       copy(ternary.getTrueExpression), copy(ternary.getFalseExpression))
     case bool: BooleanExpression => new BooleanExpression(copy(bool.getExpression))
+    case list: ListExpression => new ListExpression(list.getExpressions.map(copy))
   }
 
   private def copyElvisExpression(elvis: ElvisOperatorExpression) : ElvisOperatorExpression = {
@@ -245,23 +256,21 @@ class MacroExpandVisitor(val macrodefs: Map[String, Macro], replacements: mutabl
   override def visitClosureExpression(call: ClosureExpression) {
     call.getCode match {
       case bs: BlockStatement => {
-        bs.getStatements.foreach( statement =>
-          statement match {
-            case es: ExpressionStatement => {
-              if (es.getStatementLabel == "macro") {
-                call.setCode(replaceStatement(bs, es))
-              } else {
-                es.getExpression match {
-                  case call: MethodCallExpression => {
-                    this.visitMethodCallExpression(call)
-                  }
-                  case other =>
+        bs.getStatements.foreach {
+          case es: ExpressionStatement => {
+            if (es.getStatementLabel == "macro") {
+              call.setCode(replaceStatement(bs, es))
+            } else {
+              es.getExpression match {
+                case call: MethodCallExpression => {
+                  this.visitMethodCallExpression(call)
                 }
+                case other =>
               }
             }
-            case other =>
           }
-        )
+          case other =>
+        }
       }
       case other =>
     }
@@ -309,17 +318,15 @@ class MacroCollector(val source: SourceUnit) extends ExpressionTransformer with 
               val content = new BlockStatement(rest.toArray, block.getVariableScope)
               a.setCode(content)
             }
-            macroDefs.foreach(m => {
-               m match {
-                 case statement: ExpressionStatement => {
-                   statement.getExpression match {
-                     case mce: MethodCallExpression => saveExpr(mce)
-                     case other =>
-                   }
-                 }
-                 case other =>
-               }
-            })
+            macroDefs.foreach {
+              case statement: ExpressionStatement => {
+                statement.getExpression match {
+                  case mce: MethodCallExpression => saveExpr(mce)
+                  case other =>
+                }
+              }
+              case other =>
+            }
             a
           }
           case x => a

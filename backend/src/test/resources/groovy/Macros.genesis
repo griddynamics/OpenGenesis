@@ -29,10 +29,11 @@ template {
         }
     }
 
-    defmacro "map": { $key, $mapValue ->
+    defmacro "map": { $key, $mapValue, $pre ->
         withMap {
             text = $vars.myvar
             map = [ $key : (2 > 1) ? $mapValue : false ]
+            precedingPhases = $pre
         }
     }
 
@@ -67,7 +68,7 @@ template {
             macro:defvar(myvar)
         }
         steps {
-           macro:map("operation", "subst")
+           macro:map($key = "operation", $mapValue = "subst", $pre = ["bar"])
         }
     }
 
