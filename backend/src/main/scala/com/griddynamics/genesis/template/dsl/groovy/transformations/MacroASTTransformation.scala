@@ -82,11 +82,6 @@ class ApplyVariablesVisitor(values: Map[String, Expression], replacements: mutab
         new ElvisOperatorExpression(be, transform(elvis.getFalseExpression))
       }
 
-      case binary: BinaryExpression => {
-        log.warn("Found binary expression where it should not be. Will return transformed right hand of expression: " + binary.getText)
-        transform(binary.getRightExpression)
-      }
-
       case ternary: TernaryExpression => {
         new TernaryExpression(transform(ternary.getBooleanExpression).asInstanceOf[BooleanExpression],
           transform(ternary.getTrueExpression), transform(ternary.getFalseExpression))
