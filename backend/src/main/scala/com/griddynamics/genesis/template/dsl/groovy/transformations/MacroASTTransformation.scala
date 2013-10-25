@@ -171,6 +171,15 @@ class MacroExpandVisitor(val macrodefs: Map[String, Macro], replacements: mutabl
       copy(ternary.getTrueExpression), copy(ternary.getFalseExpression))
     case bool: BooleanExpression => new BooleanExpression(copy(bool.getExpression))
     case list: ListExpression => new ListExpression(list.getExpressions.map(copy))
+    case tuple: TupleExpression => copyTupleExpression(tuple, copy)
+  }
+
+
+  def copyTupleExpression(tuple: TupleExpression, copy: PartialFunction[Expression, Expression]): TupleExpression = {
+    val size = tuple.getExpressions.size()
+    val newTuple = new TupleExpression(size)
+    tuple.getExpressions.foreach(expr => newTuple.addExpression(copy(expr)))
+    newTuple
   }
 
   private def copyElvisExpression(elvis: ElvisOperatorExpression) : ElvisOperatorExpression = {
@@ -199,6 +208,10 @@ class MacroExpandVisitor(val macrodefs: Map[String, Macro], replacements: mutabl
     bs.addStatement(new ExpressionStatement(copy(elvis)))
   }
 
+  private def addPropertyExpression(property: PropertyExpression, bs: BlockStatement) = {
+    bs.addStatement(new ExpressionStatement(copy(property)))
+  }
+
   private def addMethodCall(objectExpr: Expression, method: String, arguments: Expression, statement: BlockStatement) {
      val newExpr = new MethodCallExpression(objectExpr, method, copy(arguments))
      statement.addStatement(new ExpressionStatement(newExpr))
@@ -224,6 +237,7 @@ class MacroExpandVisitor(val macrodefs: Map[String, Macro], replacements: mutabl
            case method: MethodCallExpression => addMethodCall(method.getObjectExpression, method.getMethodAsString, method.getArguments, blockStatement)
            case map: MapExpression => addMapExpression(map, blockStatement)
            case elvis: ElvisOperatorExpression => addElvisExpression(elvis, blockStatement)
+           case property: PropertyExpression => addPropertyExpression(property, blockStatement)
          }
        }
      }
