@@ -83,11 +83,13 @@ class GroovyTemplateService(val templateRepoService : TemplateRepoService,
   }
 
   override def descTemplate(projectId: Int, name: String, version: String) = {
-    for (
-      body <- templateRawContent(projectId, name, version);
-      definition <- highLevelDefinition(body)
-    ) yield {
-      new TemplateDescription(name, version, definition.createWorkflow, definition.destroyWorkflow, definition.workflows.map(_.name), body)
+    fromCache(CACHE_NAME, TmplDefinitionKey(name, version, projectId)) {
+      for (
+        body <- templateRawContent(projectId, name, version);
+        definition <- highLevelDefinition(body)
+      ) yield {
+        new TemplateDescription(name, version, definition.createWorkflow, definition.destroyWorkflow, definition.workflows.map(_.name), body)
+      }
     }
   }
 
@@ -389,7 +391,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
 
     val varDetails = workflow.variables()
 
-    val context = (for (variable <- varDetails) yield {
+    val context = for (variable <- varDetails) yield {
       (variable.name, variables.get(variable.name).map(v =>
         try {
           convert(String.valueOf(v), variable)
@@ -397,7 +399,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
           case e: Throwable => null //todo: Some(null) ???
         }
       ))
-    })
+    }
 
     val groupVars: Map[GroupDetails, List[VariableDetails]] = varDetails.groupBy(_.group).collect{case (Some(g), v) => (g,v)}
 
@@ -481,6 +483,7 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
 }
 
 private case class TmplCacheKey(name: String, version: String, projectId: Int)
+private case class TmplDefinitionKey(name: String, version: String, projectId: Int)
 
 
 class GroovyTemplateDefinition(val envTemplate : EnvironmentTemplate,
