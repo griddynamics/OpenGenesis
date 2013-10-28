@@ -34,7 +34,6 @@ class MacrosTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniver
   when(configService.get(Matchers.any(), Matchers.any())).thenReturn(Some(new api.Configuration(Some(0), "", 0, None, Map())))
 
   def testDatabag : DataBag = {
-    println("Returning stub")
     val db = DataBag(Some(0), "foo", Seq("foo"), Some(0), None, Seq(
       DataItem(Some(0), "key1", "Static", None),
       DataItem(Some(0), "key2", "Dynamic", None)
@@ -42,14 +41,8 @@ class MacrosTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniver
     db
   }
 
-  when(databagRepository.findByName("macros", Some(0))).thenReturn({
-    println("Find by name")
-    Some(testDatabag)
-  })
-  when(databagRepository.findByName("macros", None)).thenReturn({
-    println("Find by name")
-    Some(testDatabag)
-  })
+  when(databagRepository.findByName("macros", Some(0))).thenReturn(Some(testDatabag))
+  when(databagRepository.findByName("macros", None)).thenReturn(Some(testDatabag))
 
   @Test
   def testStepsInserted() {
