@@ -15,7 +15,7 @@ import com.griddynamics.genesis.template.VersionedTemplate
 import com.griddynamics.genesis.api
 import com.griddynamics.genesis.plugin.{StepBuilderFactory, StepBuilder}
 import com.griddynamics.genesis.service.{VariableDescription, TemplateDefinition}
-import com.griddynamics.genesis.api.{DataBag, Failure}
+import com.griddynamics.genesis.api.{DataItem, DataBag, Failure}
 import com.griddynamics.genesis.workflow.Step
 import scala.beans.BeanProperty
 import scala.collection.mutable
@@ -30,9 +30,26 @@ class MacrosTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniver
 
   val body = IoUtil.streamAsString(classOf[GroovyTemplateServiceTest].getResourceAsStream("/groovy/Macros.genesis"))
 
-  Mockito.when(templateRepository.listSources()).thenReturn(Map(VersionedTemplate("1") -> body))
+  when(templateRepository.listSources()).thenReturn(Map(VersionedTemplate("1") -> body))
   when(configService.get(Matchers.any(), Matchers.any())).thenReturn(Some(new api.Configuration(Some(0), "", 0, None, Map())))
-  when(databagRepository.findByName("macros")).thenReturn(Some(new DataBag(None, "macros", Seq())))
+
+  def testDatabag : DataBag = {
+    println("Returning stub")
+    val db = DataBag(Some(0), "foo", Seq("foo"), Some(0), None, Seq(
+      DataItem(Some(0), "key1", "Static", None),
+      DataItem(Some(0), "key2", "Dynamic", None)
+    ))
+    db
+  }
+
+  when(databagRepository.findByName("macros", Some(0))).thenReturn({
+    println("Find by name")
+    Some(testDatabag)
+  })
+  when(databagRepository.findByName("macros", None)).thenReturn({
+    println("Find by name")
+    Some(testDatabag)
+  })
 
   @Test
   def testStepsInserted() {
@@ -73,7 +90,7 @@ class MacrosTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniver
     val step: StepWithMap = steps.regular(0).newStep.actualStep.asInstanceOf[StepWithMap]
     val values: Map[String, String] = step.values
     val text = step.name
-    expectResult(Map("operation" -> "subst"))(values)
+    expectResult(Map("operation" -> "Dynamic"))(values)
     expectResult("1024")(text)
     expectResult("bar")(steps.regular(0).getPrecedingPhases.get(0))
   }
