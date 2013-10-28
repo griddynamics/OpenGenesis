@@ -25,14 +25,14 @@ template {
 
     defmacro "elvis" : { $var ->
         teststep {
-            text = $system.databag['macros'].keya ?: $var
+            text =  { $system.databag['macros'].keya ?: $var }
         }
     }
 
     defmacro "map": { $key, $mapValue, $pre ->
         withMap {
             text = $vars.myvar
-            map = [ $key : (2 > 1) ? $mapValue : false ]
+            map = [ $key : $databags['macros'].key2 ?: "xxx"]
             precedingPhases = $pre
         }
     }
@@ -76,7 +76,7 @@ template {
         macro:bad_require("Oops")
         steps {
             teststep {
-                text = "Static"
+                text = $databags["macros"].key1
             }
             macro:create_steps("Passed from macro call")
             macro:create_steps($message: "Set with map")

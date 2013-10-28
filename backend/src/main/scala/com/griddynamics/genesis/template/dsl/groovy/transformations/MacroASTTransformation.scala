@@ -77,9 +77,7 @@ class ApplyVariablesVisitor(values: Map[String, Expression], replacements: mutab
 
       case elvis: ElvisOperatorExpression => {
         val trueExpr: Expression = transform(elvis.getTrueExpression)
-        val be = new BooleanExpression(trueExpr)
-        be.setSourcePosition(trueExpr)
-        new ElvisOperatorExpression(be, transform(elvis.getFalseExpression))
+        new ElvisOperatorExpression(trueExpr, transform(elvis.getFalseExpression))
       }
 
       case ternary: TernaryExpression => {
@@ -185,9 +183,7 @@ class MacroExpandVisitor(val macrodefs: Map[String, Macro], replacements: mutabl
   private def copyElvisExpression(elvis: ElvisOperatorExpression) : ElvisOperatorExpression = {
     val trueExpression = copy(elvis.getTrueExpression)
     val falseExpression = copy(elvis.getFalseExpression)
-    val base = new BooleanExpression(trueExpression)
-    base.setSourcePosition(trueExpression)
-    val result = new ElvisOperatorExpression(base, falseExpression)
+    val result = new ElvisOperatorExpression(trueExpression, falseExpression)
     result
   }
 

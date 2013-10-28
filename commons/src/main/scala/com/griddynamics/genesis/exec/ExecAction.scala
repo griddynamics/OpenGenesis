@@ -55,7 +55,7 @@ case class ExecInitSuccess(action: InitExecNode) extends ExecResult
 
 case class ExecInitFail(action: InitExecNode) extends ExecResult with ActionFailed
 
-case class ExecFinished(action: RunExec, val exitStatus: Option[Int]) extends ExecResult {
+case class ExecFinished(action: RunExec, exitStatus: Option[Int]) extends ExecResult {
     def isExecSuccess = exitStatus.isDefined && exitStatus.get == 0
     override def outcome = if (isExecSuccess)
         model.ActionTrackingStatus.Succeed
