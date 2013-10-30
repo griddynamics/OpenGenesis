@@ -35,7 +35,6 @@
 	</root>
 
 	<logger name="com.griddynamics" level="debug"/>
-	<logger name="com.griddynamics.genesis.service.impl" level="trace"/>
     <logger name="com.griddynamics.genesis.configuration.SquerylTransactionManager" level="info"/>
     <!--<logger name="com.griddynamics.genesis.jclouds" level="trace"/>-->
 
