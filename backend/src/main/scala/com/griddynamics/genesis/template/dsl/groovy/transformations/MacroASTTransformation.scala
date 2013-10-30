@@ -151,7 +151,7 @@ class MacroExpandVisitor(val macrodefs: Map[String, Macro], replacements: mutabl
 
   private val copy: PartialFunction[Expression, Expression] = {
     case variable: VariableExpression => new VariableExpression(variable.getName)
-    case constant: ConstantExpression => new ConstantExpression(constant.getText)
+    case constant: ConstantExpression => new ConstantExpression(constant.getValue)
     case binary: BinaryExpression => new BinaryExpression(copy(binary.getLeftExpression), binary.getOperation,
       copy(binary.getRightExpression))
     case closure: ClosureExpression => copyClosureExpression(closure)

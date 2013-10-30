@@ -87,6 +87,16 @@ class MacrosTest extends AssertionsForJUnit with MockitoSugar with DSLTestUniver
     expectResult("1024")(text)
     expectResult("bar")(steps.regular(0).getPrecedingPhases.get(0))
   }
+
+  @Test
+  def testNullHandling() {
+    val template: Option[TemplateDefinition] = templateService.findTemplate(0, "Macros", "0.1", 0)
+    val result = template.get.getWorkflow("nulls").get
+    val steps = result.embody(Map())
+    val step: DoNothingStep = steps.regular(0).newStep.actualStep.asInstanceOf[DoNothingStep]
+    val text = step.name
+    expectResult(null)(text)
+  }
 }
 
 case class StepWithMap(name: String, values: Map[String,String]) extends Step {

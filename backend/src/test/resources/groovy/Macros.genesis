@@ -23,6 +23,12 @@ template {
         }
     }
 
+    defmacro "nulls" : { $var = "foo" ->
+        teststep {
+            text = null
+        }
+    }
+
     defmacro "elvis" : { $var ->
         teststep {
             text =  { $system.databag['macros'].keya ?: $var }
@@ -69,6 +75,12 @@ template {
         }
         steps {
            macro:map($key = "operation", $mapValue = "subst", $pre = ["bar"])
+        }
+    }
+
+    workflow("nulls") {
+        steps {
+            macro:nulls()
         }
     }
 
