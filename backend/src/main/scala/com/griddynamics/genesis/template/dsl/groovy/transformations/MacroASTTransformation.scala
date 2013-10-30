@@ -234,6 +234,9 @@ class MacroExpandVisitor(val macrodefs: Map[String, Macro], replacements: mutabl
            case map: MapExpression => addMapExpression(map, blockStatement)
            case elvis: ElvisOperatorExpression => addElvisExpression(elvis, blockStatement)
            case property: PropertyExpression => addPropertyExpression(property, blockStatement)
+           case ternary: TernaryExpression => {
+             blockStatement.addStatement(new ExpressionStatement(copy(ternary)))
+           }
          }
        }
      }
