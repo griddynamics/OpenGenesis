@@ -85,7 +85,7 @@ trait GenesisSchemaPrimitive extends GenesisSchema {
     vmsToVmAttrs.foreignKeyDeclaration.constrainReference(onDelete cascade)
 
     val envsToEnvAttrs = oneToManyRelation(envs, envAttrs).via((e, attr) => e.id === attr.entityId)
-    vmsToVmAttrs.foreignKeyDeclaration.constrainReference(onDelete cascade)
+    envsToEnvAttrs.foreignKeyDeclaration.constrainReference(onDelete cascade)
 
     val stepsToWorkflow = oneToManyRelation(workflows, steps).via((workflow, step) => workflow.id === step.workflowId)
     stepsToWorkflow.foreignKeyDeclaration.constrainReference(onDelete cascade)

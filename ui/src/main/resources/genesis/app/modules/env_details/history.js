@@ -167,19 +167,15 @@ function (genesis, Backbone, status, backend, $) {
 
     render: function() {
       var self = this;
-      var promises = this.attachments();
-      $.when.apply($, promises).then(function() {
-        var results = _.chain(arguments).flatten().groupBy(function(obj) {return obj.item.actionUUID; }).value();
         $.when(genesis.fetchTemplate(self.template)).done(function(tmpl){
           self.$el.html(tmpl({
             actions: self.collection.toJSON(),
             isStepFinished: self.isStepFinished,
             projectId: self.collection.projectId,
-            attachments: results,
             envId: self.collection.envId,
             utils: genesis.utils
           }));
-        })});
+        });
     }
   });
 
