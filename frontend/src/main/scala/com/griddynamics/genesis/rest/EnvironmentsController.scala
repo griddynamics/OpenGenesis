@@ -25,9 +25,8 @@ package com.griddynamics.genesis.rest
 import annotations.{LinkTarget, AddSelfLinks, LinkTo, LinksTo}
 import annotations.LinkTarget._
 import filters.EnvFilter
-import links._
+import com.griddynamics.genesis.rest.links._
 import HrefBuilder._
-import links.WebPath
 import CollectionWrapper._
 import org.springframework.stereotype.Controller
 import scala.Array
@@ -48,8 +47,21 @@ import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.spring.security.LinkSecurityBean
 import com.griddynamics.genesis.model.{WorkflowStatus, EnvStatus}
 import com.griddynamics.genesis.api._
-import com.griddynamics.genesis.rest.links.ItemWrapper
 import com.griddynamics.genesis.scheduler.EnvironmentJobService
+import com.griddynamics.genesis.api.ActionTracking
+import com.griddynamics.genesis.api.EnvironmentDetails
+import com.griddynamics.genesis.api.Failure
+import com.griddynamics.genesis.api.WorkflowHistory
+import scala.Some
+import com.griddynamics.genesis.api.Action
+import com.griddynamics.genesis.api.Success
+import com.griddynamics.genesis.api.Environment
+import com.griddynamics.genesis.api.Attachment
+import com.griddynamics.genesis.api.StepLogEntry
+import com.griddynamics.genesis.api.ScheduledJobDetails
+import com.griddynamics.genesis.rest.links.ItemWrapper
+import com.griddynamics.genesis.api.WorkflowDetails
+import com.griddynamics.genesis.api.Workflow
 
 @Controller
 @RequestMapping(Array("/rest/projects/{projectId}/envs"))
@@ -373,14 +385,17 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   def getStepActions(@PathVariable("projectId") projectId: Int,
                      @PathVariable("envId") envId: Int,
                      @PathVariable("stepId") stepId: Int,
-                     request: HttpServletRequest): CollectionWrapper[ItemWrapper[ActionTracking]] = {
+                     request: HttpServletRequest): CollectionWrapper[AttachmentsWrapper[ActionTracking,Attachment]] = {
     validateStepId(stepId, envId)
     implicit val httpRequest = request
-    def wrap(trackingItem: ActionTracking): ItemWrapper[ActionTracking] = {
-      val top = WebPath(request)
-      CollectionWrapper.wrap(trackingItem).withLinks(LinkBuilder(top / trackingItem.uuid / "attachments", COLLECTION, classOf[Attachment], GET)).filtered()
+    def wrap(trackingItem: ActionTracking): AttachmentsWrapper[ActionTracking,Attachment] = {
+      val attSeq: Seq[ItemWrapper[Attachment]] = attachmentService.findForAction(trackingItem.uuid)
+        .map(att => CollectionWrapper.wrap(att)
+        .withLinks(LinkBuilder(WebPath(request) / trackingItem.uuid / "attachments" / att.id, DOWNLOAD,
+        att.getClass, GET)).filtered())
+      CollectionWrapper.wrap(trackingItem, attSeq).filtered()
     }
-    genesisService.getStepLog(stepId).map(wrap(_))
+    genesisService.getStepLog(stepId).map(wrap)
   }
 
   @RequestMapping(value = Array("{envId}/steps/{stepId}/actions/{uuid}/attachments"), method = Array(RequestMethod.GET))

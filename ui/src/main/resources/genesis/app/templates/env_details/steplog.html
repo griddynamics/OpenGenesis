@@ -19,7 +19,7 @@
       <td class="status" ><%- action.status || "" %></td>
       <td class="details details-cell">
           <%- action.description || "" %>
-          <% if (attachments[action.uuid]) { var attcol = attachments[action.uuid]; %>
+          <% if (action.attachments) { var attcol = action.attachments; %>
           <ul class="attachments-list">
               <% for (var j = 0, cnt = attcol.length; j < cnt; j++) { var att = attcol[j]; %>
                   <% if (att.links && att.links.length > 0) { %>

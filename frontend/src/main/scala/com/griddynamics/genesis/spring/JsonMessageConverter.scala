@@ -31,7 +31,7 @@ import org.springframework.http.{HttpStatus, HttpOutputMessage, HttpInputMessage
 import com.griddynamics.genesis.api.{ExtendedResult, Success, Failure}
 import com.griddynamics.genesis.rest.GenesisRestController.{DEFAULT_CHARSET => DC}
 import java.io.StringWriter
-import com.griddynamics.genesis.rest.links.{CollectionWrapper, ItemWrapper}
+import com.griddynamics.genesis.rest.links.{AttachmentsWrapper, CollectionWrapper, ItemWrapper}
 
 class JsonMessageConverter
         extends HttpMessageConverter[AnyRef]{
@@ -62,6 +62,10 @@ class JsonMessageConverter
       JField("items", JArray(wrapped.toList map decomposeItemWrapper))
     }
 
+    def decomposeAttachmentCollection(content: Iterable[AttachmentsWrapper[_, _]]): JValue = {
+      JField("items", JArray(content.toList map decomposeAttachmentWrapper))
+    }
+
     def serializeCollectionWrapper(res: CollectionWrapper[_]): String = {
       if (res.items.isEmpty) {
         Serialization.write(res)
@@ -71,9 +75,27 @@ class JsonMessageConverter
             val json = JField("links", Extraction.decompose(res.links)) ++ decomposeCollection(res.items.asInstanceOf[Iterable[ItemWrapper[_]]])
             Printer.compact(render(json), new StringWriter()).toString
           }
+          case attachments: AttachmentsWrapper[_, _] => {
+            val json = JField("links", Extraction.decompose(res.links)) ++ decomposeAttachmentCollection(res.items.asInstanceOf[Iterable[AttachmentsWrapper[_, _]]])
+            Printer.compact(render(json), new StringWriter()).toString
+          }
           case _ => Serialization.write(res)
         }
       }
+    }
+
+    def decomposeAttachmentWrapper(res: AttachmentsWrapper[_, _]) : JValue = {
+      val value = res.item match {
+        case wrapper: ItemWrapper[_] => decomposeItemWrapper(wrapper)
+        case item => Extraction.decompose(item)
+      }
+      val result = value ++ JField("attachments", Extraction.decompose(res.attachments))
+      result
+    }
+
+    def serializaAttachmentWrapper(res: AttachmentsWrapper[_, _]): String = {
+      val result = decomposeAttachmentWrapper(res)
+      Serialization.write(result)
     }
 
     val statusCode  = getStatus(t)
@@ -86,6 +108,7 @@ class JsonMessageConverter
     val message: String = t match {
       case b: ExtendedResult[_] => serializeExtendedResult(b)
       case wrapped: ItemWrapper[_] => serializeItemWrapper(wrapped)
+      case attachments: AttachmentsWrapper[_, _] => serializaAttachmentWrapper(attachments)
       case collectionWrapper: CollectionWrapper[_] => serializeCollectionWrapper(collectionWrapper)
       case _ => Serialization.write(t)
     }

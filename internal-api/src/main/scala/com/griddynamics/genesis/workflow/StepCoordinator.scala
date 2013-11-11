@@ -76,13 +76,13 @@ object ActionOrientedStepCoordinator {
         val step = delegate.step
 
         def onStepStart() =
-            delegate.onStepStart().map(delegate.getActionExecutor(_))
+            delegate.onStepStart().map(delegate.getActionExecutor)
 
         def onStepInterrupt(signal: Signal) =
-            delegate.onStepInterrupt(signal).map(delegate.getActionExecutor(_))
+            delegate.onStepInterrupt(signal).map(delegate.getActionExecutor)
 
         def onActionFinish(result: ActionResult) =
-            delegate.onActionFinish(result).map(delegate.getActionExecutor(_))
+            delegate.onActionFinish(result).map(delegate.getActionExecutor)
 
         def getStepResult() = delegate.getStepResult()
     }
