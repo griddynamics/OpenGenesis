@@ -397,8 +397,8 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
         genesis.fetchTemplate(this.template),
         genesis.fetchTemplate(this.staticServersTemplate),  //prefetching template
         genesis.fetchTemplate(this.vmsTemplate),            //prefetching template
-        this.details.fetch(),
-        this.envJobs.fetch()
+        this.details.fetch()
+        //this.envJobs.fetch()
       ).done(function (tmpl) {
           var details = view.details.toJSON();
           var scheduledJobs = view.envJobs.pluck("workflow");

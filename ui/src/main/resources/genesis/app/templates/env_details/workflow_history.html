@@ -88,7 +88,7 @@
             <% if (step.status  !== 'Requested') {  %>
               <td class="first step-details-expander toggle"
                   data-actions-rel="#step-<%= step.stepId %>-actions" data-step-id="<%= step.stepId %>" data-step-status="<%= step.status %>">
-                <a href="javascript: void(0)" class="toggle  <% if (step.status === 'Failed') { %> expanded <% } %>">
+                <a href="javascript: void(0)" class="toggle">
                     <%= step.title ? step.title : "Step " + (j + 1) %>
                 </a>
               </td>

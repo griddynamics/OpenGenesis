@@ -232,7 +232,11 @@ function (genesis, Backbone, status, backend, $) {
       var $target = $(event.currentTarget);
       var $element = $target.parent(),
         $details = $element.siblings("div.history-details");
-      $target.find('.toggle').toggleClass('expanded');
+      if ($target.hasClass('toggle')) {
+        $target.toggleClass('expanded');
+      } else {
+        $target.find('.toggle').toggleClass('expanded');
+      }
       if ($.browser.webkit) {
         $details.toggle();
       } else {
@@ -272,10 +276,12 @@ function (genesis, Backbone, status, backend, $) {
           utils: genesis.utils
         }));
 
-        _.each(failedSteps, function(step){
-          self.toggle({currentTarget: self.$('td[data-step-id=' + step.stepId + '] .toggle')});
-          self.showStepActions(step.stepId);
-        });
+        if (self.expanded) {
+          _.each(failedSteps, function(step){
+            self.toggle({currentTarget: self.$('td[data-step-id=' + step.stepId + '] .toggle')});
+            self.showStepActions(step.stepId);
+          });
+        }
 
         _.chain(self.actionViews).keys().each(function(stepId) {
           self.actionViews[stepId].setElement(self.$("#step-"+ stepId + "-actions .subtable"));

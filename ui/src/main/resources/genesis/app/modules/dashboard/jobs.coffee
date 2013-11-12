@@ -165,7 +165,6 @@ define [
 
     onClose: ->
       @selected = []
-      console.log @subviews
       subview.close() for key,subview of @subviews
       poller.PollingManager.stop @poll
 
