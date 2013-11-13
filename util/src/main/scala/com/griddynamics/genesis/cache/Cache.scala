@@ -30,8 +30,8 @@ trait Cache extends Logging {
   def defaultTtl: Int = 30 //seconds
   def maxEntries: Int = 1000
 
-  def fromCache[B](region: String, key: Any)(callback: => B): B = {
-    cacheManager.createCacheIfAbsent(CacheConfig(region, defaultTtl, maxEntries))
+  def fromCache[B](region: String, key: Any, ttl: Int = defaultTtl)(callback: => B): B = {
+    cacheManager.createCacheIfAbsent(CacheConfig(region, ttl, maxEntries))
 
     cacheManager.fromCache(region, key) map { c => c.asInstanceOf[B] } getOrElse {
       log.debug(s"Cache miss. Region: $region, key: $key")
