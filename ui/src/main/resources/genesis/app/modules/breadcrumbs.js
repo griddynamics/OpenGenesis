@@ -89,7 +89,7 @@ function(genesis, Backbone, Environments) {
         , view = this
         , environment = new Environments.Model({id: envId, projectId: projectId});
 
-      $.when(environment.fetch()).done(function () {
+      $.when(environment.fetch({cache: true, expires: 3000})).done(function () {
         locationList.push(_locationItem(Backbone.history.fragment, environment.get('name')));
         view.render(locationList)
       });

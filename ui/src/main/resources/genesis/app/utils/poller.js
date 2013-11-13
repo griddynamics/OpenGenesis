@@ -93,7 +93,12 @@ function (Backbone, _) {
         }
       }
     });
-    poller.xhr = poller.model.fetch(options);
+    if (! poller.options.lazy) {
+      poller.xhr = poller.model.fetch(options);
+    } else {
+       poller.options.lazy = false;
+       reschedule(poller);
+    }
   }
 
   function reschedule(poller) {

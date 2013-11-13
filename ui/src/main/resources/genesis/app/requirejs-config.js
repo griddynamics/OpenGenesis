@@ -24,9 +24,9 @@ require.config({
     datetimepicker: "../assets/js/plugins/jquery/date.time.picker",
     momentjs: "../assets/js/libs/moment",
     'coffee-script': "../assets/js/libs/coffee-script",
-
     tmplloader: "../assets/js/plugins/templateloader",
-    cs: "../assets/js/plugins/cs"
+    cs: "../assets/js/plugins/cs",
+    fetchcache: "../assets/js/plugins/backbone.fetch-cache"
   },
   priority: ["jquery"],
 
