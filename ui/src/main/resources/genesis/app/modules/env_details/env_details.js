@@ -170,7 +170,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       this.workflowId = options.workflowId;
       this.envJobs = new EnvJobs({}, {projectId: this.details.get("projectId"), envId: this.details.id});
 
-      poller.PollingManager.start(this.details, { noninterruptible: true, delay: 3000, lazy: true });
+      poller.PollingManager.start(this.details, { noninterruptible: true, delay: 15000, lazy: true });
 
       this.details.bind("change:status", this.updateControlButtons, this);
       this.details.bind("change:vms", this.renderVirtualMachines, this);
