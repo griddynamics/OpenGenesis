@@ -75,7 +75,7 @@ class StoreService(val cacheManager: CacheManager) extends service.StoreService 
         where((if (statusFilter.nonEmpty) env.status.id in filterId else 1===1) and
           env.projectId === projectId)
           select(env, attrs)
-          orderBy ( EnvOrderingMapper.order(env, ordering.getOrElse(Ordering.asc(EnvOrdering.ID))) )
+          orderBy EnvOrderingMapper.order(env, ordering.getOrElse(Ordering.asc(EnvOrdering.ID)))
           on(env.id === attrs.map(_.entityId))
       ).toSeq
 
@@ -158,14 +158,14 @@ class StoreService(val cacheManager: CacheManager) extends service.StoreService 
   @Transactional(readOnly = true)
   def listServers(env: Environment): Seq[BorrowedMachine] = {
     val vms = from(GS.borrowedMachines)(server => where(server.envId === env.id) select (server)).toList
-    vms.foreach(loadAttrs(_, GS.serverAttrs))
+    vms.foreach(loadAttrsCached(_, GS.serverAttrs))
     vms
   }
 
   @Transactional(readOnly = true)
   def listVms(env: Environment): Seq[VirtualMachine] = {
     val vms = from(GS.vms)(vm => where(vm.envId === env.id) select (vm)).toList
-    vms.foreach(loadAttrs(_, GS.vmAttrs))
+    vms.foreach(loadAttrsCached(_, GS.vmAttrs))
     vms
   }
 
@@ -298,17 +298,16 @@ class StoreService(val cacheManager: CacheManager) extends service.StoreService 
 
   @Transactional(propagation = Propagation.MANDATORY)
   def updateAttrs(entity: EntityWithAttrs, table: Table[SquerylEntityAttr]) {
-    val (changedAttrs, removedAttrs) = entity.exportAttrs()
-
-    if (!removedAttrs.isEmpty)
-      table.deleteWhere(a => a.name in removedAttrs and a.entityId === entity.id)
-
-    if (!changedAttrs.isEmpty) {
-      table.deleteWhere(a => a.name in changedAttrs.keys and a.entityId === entity.id)
-
-      table.insert(for ((name, value) <- changedAttrs) yield
-        new SquerylEntityAttr(entity.id, name, value)
-      )
+    withEvict(AttributeCache, entityAttributeKey(entity)) {
+      val (changedAttrs, removedAttrs) = entity.exportAttrs()
+      if (!removedAttrs.isEmpty)
+        table.deleteWhere(a => a.name in removedAttrs and a.entityId === entity.id)
+      if (!changedAttrs.isEmpty) {
+        table.deleteWhere(a => a.name in changedAttrs.keys and a.entityId === entity.id)
+        table.insert(for ((name, value) <- changedAttrs) yield
+          new SquerylEntityAttr(entity.id, name, value)
+        )
+      }
     }
   }
 
@@ -335,11 +334,23 @@ class StoreService(val cacheManager: CacheManager) extends service.StoreService 
 
   @Transactional(propagation = Propagation.MANDATORY)
   def loadAttrs(entity: EntityWithAttrs, table: Table[SquerylEntityAttr]) = {
-    val attrs = from(table)(a => where(a.entityId === entity.id) select (a)).toList
+    val attrs = from(table)(a => where(a.entityId === entity.id) select a).toList
     val asMap = attrs.map(a => (a.name, a.value)).toMap
     entity.importAttrs(asMap)
     asMap
   }
+
+  @Transactional(propagation = Propagation.MANDATORY)
+  def loadAttrsCached(entity: EntityWithAttrs, table: Table[SquerylEntityAttr]) = {
+    val attrs = fromCache(AttributeCache, entityAttributeKey(entity), AttributesCacheTtl) {
+      val saved = from(table)(a => where(a.entityId === entity.id) select a).toList
+      saved.map(a => (a.name, a.value)).toMap
+    }
+    entity.importAttrs(attrs)
+    attrs
+  }
+
+  private def entityAttributeKey(entity: EntityWithAttrs) = s"${entity.getClass.getName}/${entity.id}"
 
   @Transactional
   def requestWorkflow(env: Environment, workflow: Workflow): Either[Mistake, (Environment, Workflow)] = {
@@ -432,11 +443,11 @@ class StoreService(val cacheManager: CacheManager) extends service.StoreService 
   def allocateStepCounters(count : Int = 1) = {
     val key: String = WorkflowStep.getClass.getSimpleName
     val forUpdate: Query[NumberCounter] = from(GS.counters)(counter => {
-      (where(counter.id === key) select (counter))
+      where(counter.id === key) select counter
     }).forUpdate
     val newCounter : NumberCounter = forUpdate.headOption.getOrElse(new NumberCounter(key))
     newCounter.increment(count)
-    val last = from(GS.steps)(s => (compute(max(s.id)))).getOrElse(0).asInstanceOf[Int]
+    val last = from(GS.steps)(s => (compute(max(s.id)))).getOrElse(0)
     if (last >= newCounter.counter - count) {
       newCounter.counter = last  + count + 1
     }
@@ -552,4 +563,6 @@ object StoreService {
   }
 
   val EnvCache = "Environments"
+  val AttributeCache = "Attributes"
+  val AttributesCacheTtl = Integer.MAX_VALUE
 }
