@@ -12,7 +12,8 @@ define([
   "momentjs",
   "jqueryui",
   "jvalidate",
-  "datetimepicker"
+  "datetimepicker",
+  "fetchcache"
 ],
 
 function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtemplates, EnvStatus, Backbone, $) {
@@ -169,7 +170,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       this.workflowId = options.workflowId;
       this.envJobs = new EnvJobs({}, {projectId: this.details.get("projectId"), envId: this.details.id});
 
-      poller.PollingManager.start(this.details, { noninterruptible: true });
+      poller.PollingManager.start(this.details, { noninterruptible: true, delay: 15000, lazy: true });
 
       this.details.bind("change:status", this.updateControlButtons, this);
       this.details.bind("change:vms", this.renderVirtualMachines, this);
@@ -397,7 +398,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
         genesis.fetchTemplate(this.template),
         genesis.fetchTemplate(this.staticServersTemplate),  //prefetching template
         genesis.fetchTemplate(this.vmsTemplate),            //prefetching template
-        this.details.fetch()
+        this.details.fetch({cache: true})
         //this.envJobs.fetch()
       ).done(function (tmpl) {
           var details = view.details.toJSON();
@@ -778,7 +779,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       this.collection.fetch();
 
       this.collectionPoll = this.collection.clone({projectId: this.collection.projectId, envId: this.collection.envId});
-      poller.PollingManager.start(this.collectionPoll, { noninterruptible: true,  delay: 30000 });
+      poller.PollingManager.start(this.collectionPoll, { noninterruptible: true,  delay: 30000, lazy: true });
       var self = this;
 
       this.collectionPoll.bind("reset", function(e) {
