@@ -51,7 +51,6 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
           el: view.$('#tab-panel')
         });
         view.wizard.bind('finished', function(env){
-          console.log('Got finished');
           genesis.app.router.navigate("project/" + view.project.id + "/inst/" + env.envId, {trigger: true});
         });
         view.wizard.render();

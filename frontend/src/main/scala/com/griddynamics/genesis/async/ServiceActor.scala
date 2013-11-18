@@ -68,7 +68,7 @@ class ServiceActorImpl(restService: GenesisService, projectService: ProjectServi
       ).orElse(
          completed.get(uuid).map(
             result => {
-              //completed -= uuid
+              completed -= uuid
               Ready(result)
             }
          )
