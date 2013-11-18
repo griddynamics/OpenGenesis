@@ -394,12 +394,14 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
 
     render: function () {
       var view = this;
+      if (Backbone.fetchcache) {
+        Backbone.fetchCache.clearItem(this.details.url);
+      }
       $.when(
         genesis.fetchTemplate(this.template),
         genesis.fetchTemplate(this.staticServersTemplate),  //prefetching template
         genesis.fetchTemplate(this.vmsTemplate),            //prefetching template
-        this.details.fetch({cache: true})
-        //this.envJobs.fetch()
+        this.details.fetch({cache: true, expires:15})
       ).done(function (tmpl) {
           var details = view.details.toJSON();
           var scheduledJobs = view.envJobs.pluck("workflow");
@@ -679,10 +681,10 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
 
     render: function() {
       var view = this;
-      var recOptions = [{value: ""}, {value: "1d"}, {value: "1w"}]
+      var recOptions = [{value: ""}, {value: "1d"}, {value: "1w"}];
       _.each(recOptions, function(o){
         if (o.value == view.recurrenceSelected) o['selected'] = 'selected="selected"'
-      })
+      });
       $.when(genesis.fetchTemplate(this.template)).done(function (tmpl) {
 
         genesis.app.trigger("page-view-loading-completed");
