@@ -301,7 +301,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
         serviceActor.async {
           genesisService.cancelWorkflow(envId, projectId)
           Success(envId)
-        }
+        } normalize request
       }
 
       case "execute" => {
@@ -309,7 +309,7 @@ class EnvironmentsController extends RestApiExceptionsHandler {
           val parameters = extractMapValue("parameters", requestMap)
           val workflow = extractValue("workflow", parameters)
           genesisService.requestWorkflow(envId, projectId, workflow, extractVariables(parameters), getCurrentUser)
-        }
+        } normalize request
       }
 
       case _ => throw new InvalidInputException ()
@@ -346,9 +346,13 @@ class EnvironmentsController extends RestApiExceptionsHandler {
     val requestMap = extractParamsMap(request)
     val parameters = extractMapValue("parameters", requestMap)
     implicit val securityContext = SecurityContextHolder.getContext
-    serviceActor.async {
+    val async: Accepted[ExtendedResult[Int]] = serviceActor.async {
       genesisService.requestWorkflow(envId, projectId, workflowName, extractVariables(parameters), getCurrentUser)
-    }.normalize(request)
+    }
+    log.debug(s"Execute workflow. Result of submission: ${async}")
+    val normalized: HttpAccepted = async.normalize(request)
+    log.debug(s"Execute workflow. After normalization: ${normalized}")
+    normalized
   }
 
 
