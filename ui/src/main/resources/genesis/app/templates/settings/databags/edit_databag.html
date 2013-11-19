@@ -13,7 +13,8 @@
         </tr>
         <tr>
           <td class="label-column"><label for="tags">Tags</label></td>
-          <td><textarea rows="2" cols="80" name="tags" id="tags"><%- databag.tags.join(" ") %></textarea></td>
+          <td><textarea rows="2" cols="80" name="tags" id="tags"><% if (databag.tags) { %><%- databag.tags.join(" ") %><% } %>
+          </textarea></td>
         </tr>
       </table>
 
@@ -27,7 +28,6 @@
         <a href="javascript:void(0);" class="button executable" id="save-databag"> <span> Save </span> </a>
         <a href="javascript:void(0);" class="button cancel" > <span> Cancel </span> </a>
       </div>
-    </form>
   </div>
 
 </div>

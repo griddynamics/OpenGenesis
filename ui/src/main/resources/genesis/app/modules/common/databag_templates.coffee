@@ -16,9 +16,10 @@ define ["genesis", "backbone", "services/backend"],  (genesis, Backbone, backend
       val = $.Deferred()
       id = @get('id')
       if id
-        $.when(@fetch(suppressErrors: true)).then(
+        $.when(@fetch(cache: false, suppressErrors: true)).then(
          (tpl) ->
-            val.resolve(tpl.properties?.map (x) -> x.name)
+            results = tpl.get('properties')?.map (x) -> x.name
+            val.resolve(results)
         ).fail( ->
           val.resolve([])
         )
@@ -27,6 +28,7 @@ define ["genesis", "backbone", "services/backend"],  (genesis, Backbone, backend
       val.promise()
 
     required: ->
+      console.log(@get('properties'))
       @get('properties').filter (p) -> p.required
 
   class DatabagTemplates.Collection extends genesis.Backbone.Collection
