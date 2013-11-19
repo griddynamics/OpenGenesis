@@ -85,9 +85,10 @@ define [
          id: id
       )
       $.when(created.fetch()).done (obj) =>
+        console.log(obj)
         @showEditView new Databags.Model(
-          name: obj.defaultName
-          tags: obj.tags
+          name: obj.get("defaultName")
+          tags: obj.get("tags")
           projectId: @projectId
           templateId: obj.id
           items: created.required().map((property)->
