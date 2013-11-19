@@ -114,6 +114,7 @@
             </activation>
             <properties>
                 <git.commit.id>${maven.build.timestamp}</git.commit.id>
+                <git.commit.id.abbrev>${maven.build.timestamp}</git.commit.id.abbrev>
             </properties>
         </profile>
         <profile>
