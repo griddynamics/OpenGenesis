@@ -394,14 +394,11 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
 
     render: function () {
       var view = this;
-      if (Backbone.fetchcache) {
-        Backbone.fetchCache.clearItem(this.details.url);
-      }
       $.when(
         genesis.fetchTemplate(this.template),
         genesis.fetchTemplate(this.staticServersTemplate),  //prefetching template
         genesis.fetchTemplate(this.vmsTemplate),            //prefetching template
-        this.details.fetch({cache: true, expires:15})
+        this.details.fetch({cache: false})
       ).done(function (tmpl) {
           var details = view.details.toJSON();
           var scheduledJobs = view.envJobs.pluck("workflow");
