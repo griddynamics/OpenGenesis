@@ -306,7 +306,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
 
           $.when(wmodel.fetch()).done(function () {
             self.executeWorkflowDialog.showFor(self.details, wmodel, scheduling, varValues, scheduleId, recurrence);
-          }).fail(function (jqXHR) {
+          }).fail(function (model, jqXHR) {
             genesis.app.trigger("page-view-loading-completed");
             status.StatusPanel.error(jqXHR);
           });
