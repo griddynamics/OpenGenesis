@@ -43,23 +43,25 @@ import org.springframework.security.access.AccessDeniedException
 import com.griddynamics.genesis.repository.ConfigurationRepository
 import org.apache.commons.lang3.StringEscapeUtils
 import java.util.concurrent.TimeUnit
-import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.spring.security.LinkSecurityBean
 import com.griddynamics.genesis.model.{WorkflowStatus, EnvStatus}
 import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.scheduler.EnvironmentJobService
+import com.griddynamics.genesis.async._
+import org.springframework.security.core.context.SecurityContextHolder
 import com.griddynamics.genesis.api.ActionTracking
 import com.griddynamics.genesis.api.EnvironmentDetails
 import com.griddynamics.genesis.api.Failure
 import com.griddynamics.genesis.api.WorkflowHistory
 import scala.Some
 import com.griddynamics.genesis.api.Action
-import com.griddynamics.genesis.api.Success
 import com.griddynamics.genesis.api.Environment
+import com.griddynamics.genesis.api.Success
 import com.griddynamics.genesis.api.Attachment
 import com.griddynamics.genesis.api.StepLogEntry
 import com.griddynamics.genesis.api.ScheduledJobDetails
 import com.griddynamics.genesis.rest.links.ItemWrapper
+import com.griddynamics.genesis.api.Configuration
 import com.griddynamics.genesis.api.WorkflowDetails
 import com.griddynamics.genesis.api.Workflow
 
@@ -77,40 +79,45 @@ class EnvironmentsController extends RestApiExceptionsHandler {
   @Autowired var schedulingService: EnvironmentJobService = _
   @Autowired var attachmentService: AttachmentService = _
 
+  @Autowired var serviceActor: ServiceActorFront = _
+
   @Value("${genesis.system.server.mode:frontend}")
   var mode = ""
 
   @RequestMapping(value=Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
-  def createEnv(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response : HttpServletResponse): ExtendedResult[Int] = {
+  def createEnv(@PathVariable("projectId") projectId: Int, request: HttpServletRequest, response : HttpServletResponse): HttpAccepted = {
     val paramsMap = extractParamsMap(request)
     val envName = extractValue("envName", paramsMap).trim
     val templateName = extractValue("templateName", paramsMap)
     val templateVersion = extractValue("templateVersion", paramsMap)
     val variables = extractVariables(paramsMap)
-    val config =  extractOption("configId", paramsMap).map { cid =>
-      configRepository.get(projectId, cid.toInt).getOrElse(throw new ResourceNotFoundException("Failed to find config with id = %s in project %d".format(cid, projectId)))
-    }.getOrElse {
-      configRepository.getDefaultConfig(projectId) match {
-        case Success(s) => s
-        case f: Failure => return f
-      }
-    }
-    val timeToLive = try {
-      extractOption("timeToLive", paramsMap).map(min => TimeUnit.MINUTES.toMillis(min.toLong))
-    } catch {
-      case e: NumberFormatException => return Failure(serviceErrors = Map("timeToLive" -> "Should be numeric"))
-    }
-
-    if(!envAuthService.hasAccessToConfig(projectId, config.id.get, getCurrentUser, getCurrentUserAuthorities)) {
-      throw new AccessDeniedException(s"User doesn't have access to configuration id=${config.id.get}")
-    }
 
     val user = mode match {
       case "backend" => request.getHeader(TunnelFilter.SEC_HEADER_NAME)
       case _ => getCurrentUser
     }
-    genesisService.createEnv(projectId, envName, user, templateName, templateVersion, variables, config, timeToLive)
+
+    val usr = getCurrentUser
+    val authorities = getCurrentUserAuthorities
+    implicit val securityContent = SecurityContextHolder.getContext
+    serviceActor.async {
+      val config: ExtendedResult[Configuration] = extractOption("configId", paramsMap).map { cid =>
+        ExtendedResult(configRepository.get(projectId, cid.toInt))(s"Failed to find config with id = $cid in project $projectId")
+      } getOrElse configRepository.getDefaultConfig(projectId)
+
+      config.flatMap(c => {
+        if(!envAuthService.hasAccessToConfig(projectId, c.id.get, usr, authorities)) {
+          throw new AccessDeniedException(s"User doesn't have access to configuration id=${c.id.get}")
+        }
+        try {
+          val ttl = extractOption("timeToLive", paramsMap).map(min => TimeUnit.MINUTES.toMillis(min.toLong))
+          genesisService.createEnv(projectId, envName, user, templateName, templateVersion, variables, c, ttl)
+        } catch {
+          case e: NumberFormatException => Failure(serviceErrors = Map("timeToLive" -> "Should be numeric"))
+        }
+      })
+    }.normalize(request)
   }
 
   private val LINK_REGEX = """(?i)\[link:(.*?)(?:\|([^\[\]]+))?\]""".r
@@ -288,16 +295,21 @@ class EnvironmentsController extends RestApiExceptionsHandler {
                     request: HttpServletRequest) = {
 
     val requestMap = extractParamsMap(request)
+    implicit val securityContenxt = SecurityContextHolder.getContext
     extractNotEmptyValue("action", requestMap) match {
       case "cancel" => {
-        genesisService.cancelWorkflow(envId, projectId)
-        Success(envId)
+        serviceActor.async {
+          genesisService.cancelWorkflow(envId, projectId)
+          Success(envId)
+        } normalize request
       }
 
       case "execute" => {
-        val parameters = extractMapValue("parameters", requestMap)
-        val workflow = extractValue("workflow", parameters)
-        genesisService.requestWorkflow(envId, projectId, workflow, extractVariables(parameters), getCurrentUser)
+        serviceActor.async {
+          val parameters = extractMapValue("parameters", requestMap)
+          val workflow = extractValue("workflow", parameters)
+          genesisService.requestWorkflow(envId, projectId, workflow, extractVariables(parameters), getCurrentUser)
+        } normalize request
       }
 
       case _ => throw new InvalidInputException ()
@@ -333,7 +345,14 @@ class EnvironmentsController extends RestApiExceptionsHandler {
                     request: HttpServletRequest) = {
     val requestMap = extractParamsMap(request)
     val parameters = extractMapValue("parameters", requestMap)
-    genesisService.requestWorkflow(envId, projectId, workflowName, extractVariables(parameters), getCurrentUser)
+    implicit val securityContext = SecurityContextHolder.getContext
+    val async: Accepted[ExtendedResult[Int]] = serviceActor.async {
+      genesisService.requestWorkflow(envId, projectId, workflowName, extractVariables(parameters), getCurrentUser)
+    }
+    log.debug(s"Execute workflow. Result of submission: ${async}")
+    val normalized: HttpAccepted = async.normalize(request)
+    log.debug(s"Execute workflow. After normalization: ${normalized}")
+    normalized
   }
 
 

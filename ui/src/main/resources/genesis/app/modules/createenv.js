@@ -124,9 +124,22 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
         genesis.app.trigger("page-view-loading-started");
         var model = this.mergeModelValues();
         var self = this;
-        $.when(model.save()).always(function() { genesis.app.trigger("page-view-loading-completed"); }).done(function (resp){
-          self.trigger("finished", {envId: resp.result});
+        $.when(model.save()).done(function (resp){
+          if (resp.location) {
+            genesis.poll(resp.location, function(response) {
+              genesis.app.trigger("page-view-loading-completed");
+              self.trigger("finished", {envId: response.result});
+            }, function(e) {
+              genesis.app.trigger("page-view-loading-completed");
+              self.model.trigger('error', model, e);
+              new status.LocalStatus({el: self.$(".notification")}).error(e);
+            });
+          } else {
+            genesis.app.trigger("page-view-loading-completed");
+            self.trigger("finished", {envId: resp.result});
+          }
         }).fail(function(e){
+          genesis.app.trigger("page-view-loading-completed");
           new status.LocalStatus({el: self.$(".notification")}).error(e);
         });
       }

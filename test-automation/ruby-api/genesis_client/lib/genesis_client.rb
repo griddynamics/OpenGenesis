@@ -107,6 +107,21 @@ module Genesis
        end
     end
 
+    def long_read(response)
+      if response.code == 202
+        body = JSON.parse(response.body)
+        if body.has_key?("location")
+          sleep 1
+          location = body["location"]
+          _get(location, {:basic_auth => @auth})
+        else
+          response
+        end
+      else
+        response
+      end
+    end
+
     def find(&condition)
       response = get
       begin
@@ -119,6 +134,7 @@ module Genesis
       end
     end
 
+
     private
     def concat_arguments(fields, arguments)
       Hash[fields.split(",").zip(arguments)]
@@ -129,27 +145,31 @@ module Genesis
     end
 
     def _get(p, options = {})
-      self.class.get(_path(p), options)
+      long_read self.class.get(_path(p), options)
     end
 
     def _post(p, options = {})
-      self.class.post(_path(p), options)
+      long_read self.class.post(_path(p), options)
     end
 
     def _put(p, options = {})
-      self.class.put(_path(p), options)
+      long_read self.class.put(_path(p), options)
     end
 
     def _delete(p, options = {})
-      self.class.delete(_path(p), options)
+      long_read self.class.delete(_path(p), options)
     end
 
     def _path(p)
-      gp = _genesis_path()
-      if p.to_s.size > 0
-        "#{gp}/rest/#{p}"
+      if p.to_s.start_with?("http://")
+        p
       else
-        gp
+        gp = _genesis_path()
+        if p.to_s.size > 0
+          "#{gp}/rest/#{p}"
+        else
+          gp
+        end
       end
     end
   end

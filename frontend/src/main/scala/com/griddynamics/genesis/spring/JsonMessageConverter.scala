@@ -31,7 +31,8 @@ import org.springframework.http.{HttpStatus, HttpOutputMessage, HttpInputMessage
 import com.griddynamics.genesis.api.{ExtendedResult, Success, Failure}
 import com.griddynamics.genesis.rest.GenesisRestController.{DEFAULT_CHARSET => DC}
 import java.io.StringWriter
-import com.griddynamics.genesis.rest.links.{AttachmentsWrapper, CollectionWrapper, ItemWrapper}
+import com.griddynamics.genesis.rest.links.{CollectionWrapper, ItemWrapper, AttachmentsWrapper}
+import com.griddynamics.genesis.async.{HttpAccepted, Accepted}
 
 class JsonMessageConverter
         extends HttpMessageConverter[AnyRef]{
@@ -92,10 +93,14 @@ class JsonMessageConverter
       val result = value ++ JField("attachments", Extraction.decompose(res.attachments))
       result
     }
-
     def serializaAttachmentWrapper(res: AttachmentsWrapper[_, _]): String = {
       val result = decomposeAttachmentWrapper(res)
       Serialization.write(result)
+    }
+
+    def serializeAccepted(accepted: Accepted[_]): String = {
+       val json = JObject(List(JField("location", JString(s"/rest/status/${accepted.uuid}"))))
+       Printer.compact(render(json), new StringWriter()).toString
     }
 
     val statusCode  = getStatus(t)
@@ -109,6 +114,7 @@ class JsonMessageConverter
       case b: ExtendedResult[_] => serializeExtendedResult(b)
       case wrapped: ItemWrapper[_] => serializeItemWrapper(wrapped)
       case attachments: AttachmentsWrapper[_, _] => serializaAttachmentWrapper(attachments)
+      case accepted: Accepted[_] => serializeAccepted(accepted)
       case collectionWrapper: CollectionWrapper[_] => serializeCollectionWrapper(collectionWrapper)
       case _ => Serialization.write(t)
     }
@@ -119,6 +125,7 @@ class JsonMessageConverter
 
     private def getStatus(requestResult : AnyRef) : Int = requestResult match  {
         case Success(_) => 200
+        case Accepted(_) | HttpAccepted(_,_) => 202
         case Failure(_, _, _, _, false, _) => 400
         case Failure(_, _, _, _, true, _) => 404
         case _ => -1
