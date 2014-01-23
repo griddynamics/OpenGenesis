@@ -80,7 +80,7 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
   def findByTags(tags: Seq[String], projectId: Option[Int] = None):Seq[api.DataBag] =  from(table)(bag => {
     val tags_has = { s: String => bag.tags like ("% " + s.toLowerCase + " %") }
     val alwaysTrue: BinaryOperatorNodeLogicalBoolean = 1 === 1
-    where(((bag.projectId === projectId.?) or (bag.projectId isNull).inhibitWhen(projectId.isDefined)) and tags.foldLeft(alwaysTrue) { case (acc, tag) => ( tags_has (tag) and acc) } ) select (bag)
+    where(((bag.projectId === projectId.?) or (bag.projectId isNull).inhibitWhen(projectId.isDefined)) and tags.foldLeft(alwaysTrue) { case (acc, tag) => ( tags_has (tag) and acc) } ) select (bag) orderBy(bag.name asc)
   }).toList.map(convert _)
 
   @Transactional(readOnly = true)
@@ -130,7 +130,7 @@ class DatabagRepository extends AbstractGenericRepository[model.DataBag, api.Dat
 
     def list(projectId: Option[Int]) = {
         from(table) (
-            bag => where((bag.projectId === projectId.?) or (bag.projectId isNull).inhibitWhen(projectId.isDefined)) select(bag)
+            bag => where((bag.projectId === projectId.?) or (bag.projectId isNull).inhibitWhen(projectId.isDefined)) select(bag) orderBy(bag.name asc)
         ).map(convert _).toList
     }
 }
