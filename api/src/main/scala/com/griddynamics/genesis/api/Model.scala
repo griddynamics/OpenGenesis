@@ -158,16 +158,6 @@ sealed abstract class ExtendedResult[+S]() extends Product with Serializable {
   def isSuccess: Boolean
 }
 
-object ExtendedResult {
-  def apply[T](opt: Option[T])(message: String = ""): ExtendedResult[T] = {
-    if (opt.isDefined) {
-      Success(opt.get)
-    } else {
-      Failure(compoundServiceErrors = Array(message), isNotFound = true)
-    }
-  }
-}
-
 final case class Success[+S](result: S) extends ExtendedResult[S] {
   def get = result
   override val isSuccess = true

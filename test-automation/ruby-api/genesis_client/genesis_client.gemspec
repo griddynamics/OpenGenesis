@@ -7,9 +7,9 @@ Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.authors     = ['Svyatoslav Reyentenko']
   s.email       = %q{rsvato@gmail.com}
-  s.homepage    = 'http://open-genesis.org'
+  s.homepage    = []
   s.summary     = %q{Simple OpenGenesis client}
-  s.description = %q{Simple OpenGenesis client for Cucumber tests}
+  s.description = %q{Simple OpenGenesis client}
   s.files         = `git ls-files`.split("\n")
   s.require_paths = ['lib']
   s.add_dependency 'httparty', '>= 0'

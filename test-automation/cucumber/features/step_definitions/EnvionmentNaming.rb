@@ -14,12 +14,9 @@ Given /^there is no environment '(.+)' in project '(.+)'$/ do |env, project|
 end
 
 When /^I create an environment '(.+)' in project '(.+)' with template '(.+)' version '(.+)'$/ do |env, project, template, version|
-  @last_response = nil
-  puts @last_response
   @last_response = environments_resource project do |resource, id|
      resource.post(create_environment(env, template, version))
   end
-  puts @last_response
 end
 
 

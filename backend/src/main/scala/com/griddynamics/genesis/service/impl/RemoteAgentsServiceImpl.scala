@@ -57,7 +57,7 @@ class RemoteAgentsServiceImpl(repository: RemoteAgentRepository, val health: Age
     }
 
     repository.list.map { health.startTracking(_) }
-    val robins: mutable.Map[String, AtomicInteger] = new mutable.HashMap[String,AtomicInteger]() withDefaultValue new AtomicInteger(0)
+  val robins: mutable.Map[String, AtomicInteger] = new mutable.HashMap[String,AtomicInteger]() withDefaultValue new AtomicInteger(0)
 
     def status(agent: RemoteAgent) = health.checkStatus(agent)
     def status(agents: Seq[RemoteAgent]) = health.checkStatus(agents)

@@ -639,50 +639,38 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
          this.executionDate(), this.scheduleId, this.$("#recurrence").val());
 
       var view = this;
-      var complete = function() {
-        genesis.app.trigger("page-view-loading-completed");
-        if(view.scheduling) {
-          view.trigger("workflow-scheduled", view.workflow.toJSON());
-        } else {
-          view.trigger("workflow-started", view.workflow.toJSON());
-        }
-        view.$el.dialog("close");
-      };
-      var error = function(response){
-        genesis.app.trigger("page-view-loading-completed");
-        var json = {};
-        try {
-          json = JSON.parse(response.responseText);
-        } catch (e) {
-          json = {compoundVariablesErrors: [], compoundServiceErrors: ["Internal server error"] }
-        }
-        if (_.isEmpty(json.variablesErrors)) {
-          var errors = _.union(
-            json.compoundVariablesErrors,
-            json.compoundServiceErrors,
-            json.error,
-            _.values(json.serviceErrors)
-          );
-          view.trigger("workflow-starting-error", view.workflow.toJSON(), errors);
-          view.$el.dialog("close");
-        } else {
-          view.trigger("workflow-validation-errors");
-          var validator = $('#workflow-parameters-form').validate();
-          validator.showErrors(json.variablesErrors);
-        }
-      };
-
       $.when(execution).then(
-        function success(response) {
-          if (response.location) {
-            genesis.poll(response.location, complete, error)
+        function success() {
+          genesis.app.trigger("page-view-loading-completed");
+          if(view.scheduling) {
+            view.trigger("workflow-scheduled", view.workflow.toJSON());
           } else {
-            complete();
+            view.trigger("workflow-started", view.workflow.toJSON());
           }
+          view.$el.dialog("close");
         },
-
         function fail(response) {
-          error(response);
+          genesis.app.trigger("page-view-loading-completed");
+          var json = {};
+          try {
+            json = JSON.parse(response.responseText);
+          } catch (e) {
+            json = {compoundVariablesErrors: [], compoundServiceErrors: ["Internal server error"] }
+          }
+          if (_.isEmpty(json.variablesErrors)) {
+            var errors = _.union(
+              json.compoundVariablesErrors,
+              json.compoundServiceErrors,
+              json.error,
+              _.values(json.serviceErrors)
+            );
+            view.trigger("workflow-starting-error", view.workflow.toJSON(), errors);
+            view.$el.dialog("close");
+          } else {
+            view.trigger("workflow-validation-errors");
+            var validator = $('#workflow-parameters-form').validate();
+            validator.showErrors(json.variablesErrors);
+          }
         }
       );
 

@@ -272,33 +272,5 @@ function($, _, Backbone, formats, tmpls) {
     }
   });
 
-  genesis.poll = function(url, finalCallback, failCallback) {
-    $.ajax({
-      url: url,
-      dataType: 'json',
-      type: 'GET'
-    }).done(function(response, status, xhr) {
-        var data = {};
-        try {
-          data = JSON.parse(xhr.responseText);
-        } catch (e) {
-          console.log(e);
-        }
-        if (xhr.status == 202) {
-          if (data.location) {
-            setTimeout(function() { genesis.poll(data.location, finalCallback, failCallback)}, 3000);
-          } else {
-            setTimeout(function() { genesis.poll(url, finalCallback, failCallback)}, 3000)
-          }
-        } else if (xhr.status >= 400) {
-          failCallback(xhr);
-        } else {
-          finalCallback(data);
-        }
-      }).fail(function(e) {
-        failCallback(e);
-      });
-  };
-
   return genesis;
 });

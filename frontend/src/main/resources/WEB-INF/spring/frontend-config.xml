@@ -90,6 +90,4 @@
     <bean class="com.griddynamics.genesis.rest.SystemController"/>
 
     <bean class="com.griddynamics.genesis.rest.WorkflowController"/>
-
-    <bean class="com.griddynamics.genesis.rest.RequestStatusController"/>
 </beans>

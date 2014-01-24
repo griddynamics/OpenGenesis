@@ -27,26 +27,6 @@ import com.griddynamics.genesis.api.Configuration
 import com.griddynamics.genesis.api.Environment
 import com.griddynamics.genesis.api.Success
 import com.griddynamics.genesis.api.Project
-import com.griddynamics.genesis.async.{AskLater, Ready, ServiceActorFront}
-import scala.concurrent.Await
-import akka.util.Timeout
-import scala.concurrent.duration._
-import com.griddynamics.genesis.api.ProjectAttributes
-import com.griddynamics.genesis.api.Failure
-import scala.Some
-import com.griddynamics.genesis.api.TemplateRepo
-import com.griddynamics.genesis.api.Environment
-import com.griddynamics.genesis.api.Success
-import com.griddynamics.genesis.api.Access
-import com.griddynamics.genesis.api.ApplicationRole
-import com.griddynamics.genesis.api.ProjectRolePermissionChange
-import com.griddynamics.genesis.api.ServerArray
-import com.griddynamics.genesis.rest.links.ItemWrapper
-import com.griddynamics.genesis.api.SystemSettings
-import com.griddynamics.genesis.api.Configuration
-import com.griddynamics.genesis.api.Credentials
-import com.griddynamics.genesis.api.DataBag
-import com.griddynamics.genesis.api.Project
 
 /**
  * Copyright (c) 2010-2012 Grid Dynamics Consulting Services, Inc, All Rights Reserved
@@ -82,8 +62,6 @@ class ProjectsController extends RestApiExceptionsHandler {
   @Autowired var permissionChangeService: PermissionChangeService = _
   @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
-  @Autowired var serviceActorFront: ServiceActorFront = _
-
   @Value("${genesis.system.server.mode:frontend}")
   var mode = ""
 
@@ -105,6 +83,7 @@ class ProjectsController extends RestApiExceptionsHandler {
     projects.map(project => wrap(project).withLinks(LinkBuilder(WebPath(request) / project.id.get.toString,
       SELF, classOf[Project], GET)).filtered())
   }
+
 
   @RequestMapping(value = Array("{projectId}/settings"), method = Array(GET))
   @ResponseBody
