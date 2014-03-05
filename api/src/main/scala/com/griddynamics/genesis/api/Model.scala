@@ -62,7 +62,7 @@ case class Environment(id: Int,
                        attributes: Map[String, Attribute],
                        configuration: String) extends Identifiable[Int]
 
-case class Attribute(value: String, description: String)
+case class Attribute(value: Any, description: String)
 
 case class EnvironmentDetails(envId: Int,
                               name : String,

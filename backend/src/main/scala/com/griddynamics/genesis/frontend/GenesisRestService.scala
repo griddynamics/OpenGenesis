@@ -25,7 +25,7 @@ package com.griddynamics.genesis.frontend
 import GenesisRestService._
 import com.griddynamics.genesis.api._
 import com.griddynamics.genesis.bean.RequestBroker
-import com.griddynamics.genesis.model.{Workflow, EnvStatus}
+import com.griddynamics.genesis.model.{DeploymentAttribute, Workflow, EnvStatus}
 import com.griddynamics.genesis.repository.ConfigurationRepository
 import com.griddynamics.genesis.scheduler.EnvironmentJobService
 import com.griddynamics.genesis.service._
@@ -34,6 +34,8 @@ import com.griddynamics.genesis.{model, service}
 import java.util.Date
 import com.griddynamics.genesis.util.Logging
 import scala.util.Try
+import com.google.gson.{Gson, JsonArray}
+import java.util.LinkedHashMap
 
 class GenesisRestService(storeService: StoreService,
                          templateService: TemplateService,
@@ -373,7 +375,20 @@ object GenesisRestService {
         )
     }
 
-  private def attrDesc(attrs: Seq[model.DeploymentAttribute]) = attrs.map( attr => attr.key -> Attribute(attr.value, attr.desc)).toMap
+  private def attrDesc(attrs: Seq[model.DeploymentAttribute]) = {
+    attrs.map( attr => attr.key -> {
+      attr.value match {
+        case v: List[LinkedHashMap[Any, Any]] => {
+          val jsonArray = new JsonArray
+          val gson = new Gson
+          v.foreach(el => jsonArray.add(gson.toJsonTree(el)))
+          Attribute(jsonArray.toString, attr.desc)
+        }
+        case v: Any => Attribute(v.toString, attr.desc)
+      }
+
+    }).toMap
+  }
 
   private def envs(envs: Seq[(model.Environment, Option[Workflow])], configNames: Map[Int, String]) = for ((env, workflowOption) <- envs) yield
     Environment(env.id, env.name, env.status.toString, stepsCompleted(workflowOption), env.creator,
