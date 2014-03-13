@@ -56,7 +56,7 @@
         try {
           var jsonValue = JSON.parse(attr.value);
         } catch (e) {}
-        if(typeof jsonValue != 'undefined' && jsonValue.constructor === Array) {
+        if(typeof jsonValue != 'undefined' && jsonValue !== null && jsonValue.constructor === Array) {
       %>
       <table>
         <tr>

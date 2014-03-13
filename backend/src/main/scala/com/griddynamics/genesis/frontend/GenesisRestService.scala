@@ -384,7 +384,8 @@ object GenesisRestService {
           v.foreach(el => jsonArray.add(gson.toJsonTree(el)))
           Attribute(jsonArray.toString, attr.desc)
         }
-        case v: Any => Attribute(v.toString, attr.desc)
+        case null => Attribute(null, attr.desc)
+        case _ => Attribute(attr.value.toString, attr.desc)
       }
 
     }).toMap
