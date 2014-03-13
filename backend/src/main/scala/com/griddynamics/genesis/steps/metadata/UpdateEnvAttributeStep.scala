@@ -35,7 +35,9 @@ class UpdateEnvAttributesStepBuilder extends StepBuilder {
   @BeanProperty var items: JMap[String, Any] = Collections.emptyMap()
 
   override def getDetails = {
-    val data = items.collect { case (name: String, value: JMap[String, String]) => DeploymentAttribute(name, value.head._2, value.head._1) }
+    val data = items.collect {
+      case (name: String, value: JMap[String, Any]) => DeploymentAttribute(name, value.head._2, value.head._1)
+    }
     UpdateEnvAttributeStep(data.toSeq)
   }
 }

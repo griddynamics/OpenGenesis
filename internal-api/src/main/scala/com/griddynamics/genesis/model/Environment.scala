@@ -62,4 +62,4 @@ object Environment {
 
 @SerialVersionUID(8586431731087756517L)
 @XStreamAlias("attribute")
-case class DeploymentAttribute(key: String, value: String, desc: String)
+case class DeploymentAttribute(key: String, value: Any, desc: String)

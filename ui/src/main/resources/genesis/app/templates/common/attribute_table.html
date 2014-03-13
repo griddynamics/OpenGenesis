@@ -52,7 +52,27 @@
   <tr>
     <td class="first"><%= attr.description %></td>
     <td style="width: 80%">
-      <% if (attr.value && attr.value.indexOf("http://") === 0) { %>
+      <%
+        try {
+          var jsonValue = JSON.parse(attr.value);
+        } catch (e) {}
+        if(typeof jsonValue != 'undefined' && jsonValue.constructor === Array) {
+      %>
+      <table>
+        <tr>
+        <% for (columnName in jsonValue[0]) { %>
+          <td><%= columnName %></td>
+        <% } %>
+        </tr>
+        <% for (var j = 0; j < jsonValue.length; j++) { %>
+        <tr>
+          <% var row = jsonValue[j]; for (var key in row) { %>
+          <td><%= row[key] %></td>
+          <% } %>
+        </tr>
+        <% } %>
+      </table>
+      <% } else if (attr.value && attr.value.indexOf("http://") === 0) { %>
       <a href="<%= attr.value %>" target="_blank"> <%= attr.value %> </a>
       <% } else { %>
       <%= attr.value %>
