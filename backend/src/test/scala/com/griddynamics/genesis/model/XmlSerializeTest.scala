@@ -38,12 +38,12 @@ class XmlSerializeTest extends AssertionsForJUnit {
     """<list>
   <attribute>
     <key>applicationVersion</key>
-    <value>1.0.0</value>
+    <value class="string">1.0.0</value>
     <desc>Application Version</desc>
   </attribute>
   <attribute>
     <key>attr1</key>
-    <value>value</value>
+    <value class="string">value</value>
     <desc>Deployment Attribute 1</desc>
   </attribute>
 </list>"""
