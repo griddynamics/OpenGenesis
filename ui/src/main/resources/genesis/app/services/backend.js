@@ -7,7 +7,7 @@ function(genesis, $) {
   /**
    * @const
    */
-  var DEFAULT_TIMEOUT = 30000;
+  var DEFAULT_TIMEOUT = 90000;
 
   var backend = genesis.module();
 
