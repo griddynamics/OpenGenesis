@@ -58,7 +58,7 @@
         } catch (e) {}
         if(typeof jsonValue != 'undefined' && jsonValue !== null && jsonValue.constructor === Array) {
       %>
-      <table>
+      <table class="attrs-table">
         <tr>
         <% for (columnName in jsonValue[0]) { %>
           <td><%= columnName %></td>
