@@ -28,7 +28,7 @@ import com.griddynamics.genesis.model.Environment
 
 class VariableDescription(val name: String, val clazz : Class[_ <: Any], val description: String, val isOptional: Boolean = false,
                           val defaultValue: String = null, val values: Option[Map[String,String]] = None, val dependsOn: Option[List[String]] = None,
-                          val group: Option[VarGroupDesc] = None, val hidden: Boolean = false)
+                          val group: Option[VarGroupDesc] = None, val hidden: Boolean = false, val disabled: Boolean = false)
 
 case class VarGroupDesc(name: String, description: String, required: Boolean = false, defaultVar: Option[String] = None)
 

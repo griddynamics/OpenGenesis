@@ -8,6 +8,10 @@
   }
 
   function disabled(variable, group) {
+    if (variable.disabled)
+    {
+        return 'disabled="disabled"'
+    }
     var grp = variable.group;
     var defaultVar;
     if (group) {
@@ -51,7 +55,8 @@
     var group = varGroups[variable.group];
     var groupLabel = group && (i == 0 || variable.group !== variables[i-1].group) ? group.desc : "";
     var required = !variable.optional || groupLabel && group.required;
-    var select = typeof(values) !== "undefined" || variable.dependsOn; %>
+    var select = typeof(values) !== "undefined" || variable.dependsOn;
+    var defaultValue  = variable.defaultValue; %>
 <div style="margin-top: 10px; <%= (i === variables.length - 1 ? 'margin-bottom: 10px' : '') %>">
     <label for="<%= group ? variable.group : name %>" class="<%= (required ? 'label-required' : '') %>">
     <% if (required) { %>*&nbsp;<% } %> <%= group ? groupLabel : variable.description %>
@@ -64,7 +69,7 @@
         <% } %>
         <% if (select) { %>
             <select id="<%= name %>" <%= disabled(variable, group) %> name="<%= name %>" class="<%= varClass(variable) %>">
-              <% if (_.size(values)) {%> <option value="">Please select</option> <% } %>
+              <% if (_.size(values) && !defaultValue ) {%> <option value="">Please select</option> <% } %>
               <% _.each(_.keys(values), function(key) { %>
                    <option value="<%= key %>" <%= isSelected(key, variable) %> ><%= values[key] %></option>
               <% }) %>
