@@ -398,5 +398,5 @@ object GenesisRestService {
       attrDesc(env.deploymentAttrs), configNames.getOrElse(env.configurationId, "*deleted*"))
 
   private def varDesc(v : VariableDescription) = Variable(v.name, v.clazz.getSimpleName, v.description, v.isOptional,
-    v.defaultValue, v.values, v.dependsOn, v.group.map(_.name), v.hidden)
+    v.defaultValue, v.values, v.dependsOn, v.group.map(_.name), v.hidden, v.disabled)
 }
