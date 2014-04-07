@@ -89,7 +89,7 @@ case class EnvironmentDetails(envId: Int,
 
 case class Variable(name : String, `type`: String, description : String, optional: Boolean = false, defaultValue: String = null,
                     values:Option[Map[String,String]] = None, dependsOn: Option[List[String]] = None,
-                    group : Option[String] = None, hidden: Boolean = false)
+                    group : Option[String] = None, hidden: Boolean = false, disabled: Boolean = false)
 
 case class VarGroup(desc: String, required: Boolean = false, defVariable: Option[String] = None)
 

@@ -4,7 +4,7 @@ define([
     "modules/status",
     "jquery",
     "underscore",
-    "backbone"
+    "backbone",
 ],
 
 function(genesis, status, $, _, Backbone) {
@@ -170,11 +170,15 @@ function(genesis, status, $, _, Backbone) {
     },
 
     _enableChecked: function (variable) {
-      var enable = true;
+      var enable = !variable.disabled;
       if (variable.group) {
         enable = this.$groupVariableRadio(variable).is(':checked');
       }
-      if (enable) this.$('#' + escapeCss(variable.name)).removeAttr("disabled");
+      
+      if (enable) {
+        var $elem = this.$('#' + escapeCss(variable.name));
+        $elem.removeAttr("disabled");
+      }
     },
 
     _isMultiValue: function (variable) {
@@ -182,8 +186,7 @@ function(genesis, status, $, _, Backbone) {
     },
 
     _buildOptions: function ($element, valueMap, defaultValue) {
-      $element.append("<option value=''> Please select </option>");
-      _(valueMap).each(function (label, value) {
+        _(valueMap).each(function (label, value) {
         if (label && value) {
           $element.append($("<option/>").attr("value", value).text(label));
         }
@@ -225,6 +228,7 @@ function(genesis, status, $, _, Backbone) {
           });
           self._applyResolvedVariables(self.variableValues);
         }
+
         if (callback) callback();
       });
     },
@@ -309,7 +313,7 @@ function(genesis, status, $, _, Backbone) {
 
             var unresolvedVarNames = _(descendants.difference(_(data).pluck("name")));
             _(self.variables).each(function (v) {
-              if (v.group && unresolvedVarNames.contains(v.name) && self.$groupVariableRadio(v).is(':checked')) {
+              if (v.group && unresolvedVarNames.contains(v.name) && self.$groupVariableRadio(v).is(':checked') && !v.disabled) {
                 self.$('#' + escapeCss(v.name)).removeAttr("disabled");
               }
             });
