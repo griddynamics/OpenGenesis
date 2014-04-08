@@ -51,7 +51,7 @@
 
 <% _.each(variables, function(variable, i) {
     var name = variable.name;
-    var values = variable.values;
+    var values = variable.values ? variable.values : {};
     var group = varGroups[variable.group];
     var groupLabel = group && (i == 0 || variable.group !== variables[i-1].group) ? group.desc : "";
     var required = !variable.optional || groupLabel && group.required;
