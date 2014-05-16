@@ -28,11 +28,11 @@
     <groupId>com.griddynamics.genesis</groupId>
     <artifactId>parent</artifactId>
     <packaging>pom</packaging>
-    <version>2.12.0-SNAPSHOT</version>
+    <version>2.12.0</version>
 
     <scm>
         <developerConnection>scm:git:ssh://git@github.com/griddynamics/OpenGenesis.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>Release_2_12_0</tag>
     </scm>
 
     <properties>
@@ -113,19 +113,11 @@
         <module>ldap</module>
         <module>active-directory</module>
         <module>nuget</module>
+        <module>distribution-standalone</module>
+        <module>distribution-war</module>
     </modules>
 
-    <profiles>
-        <profile>
-            <id>distributions</id>
-            <modules>
-                <module>distribution-standalone</module>
-                <module>distribution-war</module>
-            </modules>
-        </profile>
-    </profiles>
-
-      <dependencyManagement>
+    <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>net.sf.ehcache</groupId>
