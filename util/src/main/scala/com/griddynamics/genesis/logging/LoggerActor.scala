@@ -29,6 +29,21 @@ import java.sql.Timestamp
 class LoggerActor(val service: StoreService) extends Actor {
   override def receive = {
     case Log(id, message, timestamp) => {
+      val logWriter = context.system.actorOf(Props(new LogWriterActor(service)))
+      logWriter ! Log(id, message, timestamp)
+      logWriter ! PoisonPill
+    }
+    case ActionBasedLog(actionUUID, message, timestamp) => {
+      val logWriter = context.system.actorOf(Props(new LogWriterActor(service)))
+      logWriter ! ActionBasedLog(actionUUID, message, timestamp)
+      logWriter ! PoisonPill
+    }
+  }
+}
+
+class LogWriterActor(val service: StoreService) extends Actor {
+  override def receive = {
+    case Log(id, message, timestamp) => {
       service.writeLog(id, message, timestamp)
     }
     case ActionBasedLog(actionUUID, message, timestamp) => {
