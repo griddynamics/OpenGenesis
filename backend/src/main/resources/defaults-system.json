@@ -6,6 +6,9 @@
   "genesis.system.jdbc.drop.db" : {"default": "false", "description": "Recreate DB schema even if the schema already exists. Possible values: true, false",
     "restartRequired": true, "validation": {"Must be true or false": "true|false"}
   },
+  "genesis.system.connectionPool.maxIdle": {"default": 8,"description": "The cap on the number of \"sleeping\" instances in the pool", "restartRequired": true},
+  "genesis.system.connectionPool.minIdle": {"default": 0,"description": "The minimum number of \"sleeping\" instances in the pool before before the evictor thread (if active) spawns new objects", "restartRequired": true},
+  "genesis.system.connectionPool.maxActive": {"default": 32,"description": "The cap on the total number of active instances from the pool", "restartRequired": true},
   "genesis.system.shutdown.timeout.sec" : {"default": 60, "description": "Time to wait for graceful workflows termination in seconds. 0 - do not shutdown until everything canceled.",
     "validation": {"Must be integer value >= 0": "int_nonnegative"}
   },

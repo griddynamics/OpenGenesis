@@ -74,6 +74,9 @@
         <property name="url" value="#{fileProps['genesis.system.jdbc.url']}"/>
         <property name="username" value="#{fileProps['genesis.system.jdbc.username']}"/>
         <property name="password" value="#{fileProps['genesis.system.jdbc.password']}"/>
+        <property name="maxIdle" value="#{fileProps['genesis.system.connectionPool.maxIdle'] ?: 8}"/>
+        <property name="minIdle" value="#{fileProps['genesis.system.connectionPool.minIdle'] ?: 0}"/>
+        <property name="maxActive" value="#{fileProps['genesis.system.connectionPool.maxActive'] ?: 32}"/>
     </bean>
 
     <bean id="dbConfig" class="org.apache.commons.configuration.DatabaseConfiguration" depends-on="genesisSchemaValidator">
