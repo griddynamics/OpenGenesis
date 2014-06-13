@@ -42,13 +42,17 @@ class LoggerActor(val service: StoreService) extends Actor {
       actionLogBuffer += log
     }
     case Flush => {
-      val actionLogWriter = context.system.actorOf(Props(new LogWriterActor(service)))
-      actionLogWriter ! WriteActionBasedLogs(actionLogBuffer.dequeueAll(_ => true))
-      actionLogWriter ! PoisonPill
+      if (actionLogBuffer.size > 0) {
+        val actionLogWriter = context.system.actorOf(Props(new LogWriterActor(service)))
+        actionLogWriter ! WriteActionBasedLogs(actionLogBuffer.dequeueAll(_ => true))
+        actionLogWriter ! PoisonPill
+      }
 
-      val stepLogWriter = context.system.actorOf(Props(new LogWriterActor(service)))
-      stepLogWriter ! WriteStepLogs(stepLogBuffer.dequeueAll(_ => true))
-      stepLogWriter ! PoisonPill
+      if (stepLogBuffer.size > 0) {
+        val stepLogWriter = context.system.actorOf(Props(new LogWriterActor(service)))
+        stepLogWriter ! WriteStepLogs(stepLogBuffer.dequeueAll(_ => true))
+        stepLogWriter ! PoisonPill
+      }
     }
 
   }
