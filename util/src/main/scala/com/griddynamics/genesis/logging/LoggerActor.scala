@@ -25,29 +25,48 @@ package com.griddynamics.genesis.logging
 import com.griddynamics.genesis.service.StoreService
 import akka.actor._
 import java.sql.Timestamp
+import scala.collection.mutable
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext
 
 class LoggerActor(val service: StoreService) extends Actor {
+
+  private val actionLogBuffer = new mutable.SynchronizedQueue[ActionBasedLog]
+  private val stepLogBuffer = new mutable.SynchronizedQueue[Log]
+
   override def receive = {
-    case Log(id, message, timestamp) => {
-      val logWriter = context.system.actorOf(Props(new LogWriterActor(service)))
-      logWriter ! Log(id, message, timestamp)
-      logWriter ! PoisonPill
+    case log: Log => {
+      stepLogBuffer += log
     }
-    case ActionBasedLog(actionUUID, message, timestamp) => {
-      val logWriter = context.system.actorOf(Props(new LogWriterActor(service)))
-      logWriter ! ActionBasedLog(actionUUID, message, timestamp)
-      logWriter ! PoisonPill
+    case log: ActionBasedLog => {
+      actionLogBuffer += log
     }
+    case Flush => {
+      if (actionLogBuffer.size > 0) {
+        val actionLogWriter = context.system.actorOf(Props(new LogWriterActor(service)))
+        actionLogWriter ! WriteActionBasedLogs(actionLogBuffer.dequeueAll(_ => true))
+        actionLogWriter ! PoisonPill
+      }
+
+      if (stepLogBuffer.size > 0) {
+        val stepLogWriter = context.system.actorOf(Props(new LogWriterActor(service)))
+        stepLogWriter ! WriteStepLogs(stepLogBuffer.dequeueAll(_ => true))
+        stepLogWriter ! PoisonPill
+      }
+    }
+
   }
 }
 
 class LogWriterActor(val service: StoreService) extends Actor {
   override def receive = {
-    case Log(id, message, timestamp) => {
-      service.writeLog(id, message, timestamp)
+    case WriteStepLogs(stepLogs) => {
+      service.writeLog(
+        stepLogs.map{log => (log.stepId, log.message, log.timestamp)})
     }
-    case ActionBasedLog(actionUUID, message, timestamp) => {
-      service.writeActionLog(actionUUID, message, timestamp)
+    case WriteActionBasedLogs(actionLogs) => {
+      service.writeActionLog(
+        actionLogs.map{ log => (log.actionUID, log.message, log.timestamp)})
     }
   }
 }
@@ -55,6 +74,12 @@ class LogWriterActor(val service: StoreService) extends Actor {
 case class Log(stepId : Int, message: String, timestamp: Timestamp)
 
 case class ActionBasedLog(actionUID: String, message: String, timestamp: Timestamp)
+
+case class WriteActionBasedLogs(logs: Seq[ActionBasedLog])
+
+case class WriteStepLogs(logs: Seq[Log])
+
+case class Flush()
 
 trait InternalLogger {
    def stepId : Int
@@ -72,6 +97,10 @@ class LoggerWrapper(logger: ActorRef) extends java.io.Serializable {
   def writeStepLog(id: Int, message: String, timestamp: Timestamp = now) {
     logger ! Log(id, message, timestamp)
   }
+
+  def flush {
+    logger ! Flush
+  }
 }
 
 object LoggerWrapper {
@@ -81,7 +110,10 @@ object LoggerWrapper {
   private def now = new Timestamp(System.currentTimeMillis())
 
   def start(system: ActorSystem, storeService: StoreService) {
-    instance = new LoggerWrapper(system.actorOf(Props(new LoggerActor(storeService)), ACTOR_NAME))
+    val actor = system.actorOf(Props(new LoggerActor(storeService)), ACTOR_NAME)
+    instance = new LoggerWrapper(actor)
+    import ExecutionContext.Implicits.global
+    system.scheduler.schedule(0 milliseconds, 5 seconds, actor, Flush)
   }
 
   def writeActionLog(actionUUID: String, message: String, timestamp: Timestamp = now) {
@@ -90,6 +122,10 @@ object LoggerWrapper {
 
   def writeStepLog(id: Int, message: String, timestamp: Timestamp = now) {
     instance.writeStepLog(id, message, timestamp)
+  }
+
+  def flush {
+    instance.flush
   }
 
   def logger() = instance

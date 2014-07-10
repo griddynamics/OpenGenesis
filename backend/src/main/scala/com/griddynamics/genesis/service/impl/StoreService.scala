@@ -461,9 +461,25 @@ class StoreService(val cacheManager: CacheManager) extends service.StoreService 
   }
 
   @Transactional
+  def writeLog(logs: Seq[(Int, String, Timestamp)]) {
+    GS.logs.insert(logs.map {log => new StepLogEntry(log._1, log._2, log._3)})
+  }
+
+  @Transactional
   def writeActionLog(actionUUID: String, message: String, timestamp: Timestamp = new Timestamp(System.currentTimeMillis())) {
     val stepID = from(GS.actionTracking)((action) => where (action.actionUUID === actionUUID) select(action.workflowStepId)).headOption
     stepID.foreach { id => GS.logs.insert(new StepLogEntry(id, message, timestamp, Option(actionUUID))) }
+  }
+
+  @Transactional
+  def writeActionLog(logs: Seq[(String, String, Timestamp)]) {
+    val groupedLogs = logs.groupBy(_._1)
+    groupedLogs.foreach {
+      case (actionId: String, actionLogs: Seq[(String, String, Timestamp)]) => {
+        val stepID = from(GS.actionTracking)((action) => where (action.actionUUID === actionId) select(action.workflowStepId)).headOption
+        stepID.foreach { id => GS.logs.insert(actionLogs.map { log: Tuple3[String, String, Timestamp] => new StepLogEntry(id, log._2, log._3, Some(log._1))}) }
+      }
+    }
   }
 
   @Transactional
