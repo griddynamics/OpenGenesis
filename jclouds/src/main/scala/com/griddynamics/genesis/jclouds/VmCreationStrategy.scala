@@ -22,7 +22,7 @@
  */
 package com.griddynamics.genesis.jclouds
 
-import com.griddynamics.genesis.model.{VirtualMachine, Environment}
+import com.griddynamics.genesis.model.{EntityAttr, VirtualMachine, Environment}
 import collection.JavaConversions.asScalaSet
 import org.jclouds.ec2.compute.options.EC2TemplateOptions
 import com.griddynamics.genesis.util.Logging
@@ -34,6 +34,7 @@ import org.springframework.stereotype.Component
 import org.jclouds.ec2.reference.EC2Constants
 import org.jclouds.compute.options.TemplateOptions
 import org.jclouds.openstack.nova.v2_0.compute.options.NovaTemplateOptions
+import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions
 
 
 trait JCloudsVmCreationStrategyProvider {
@@ -64,7 +65,7 @@ class DefaultVmCreationStrategy(nodeNamePrefix: String, pluginContext: ComputeSe
   def createVm(env: Environment, vm: VirtualMachine): VmMetadataFuture = {
     val nodes = computeService.createNodesInGroup(group(env, vm), 1, template(env, vm))
 
-    val instanceId = nodes.headOption.map(_.getId)
+    val instanceId = nodes.headOption.map { _.getId }
     vm.instanceId = instanceId
 
     new DefaultVmMetadataFuture(instanceId.get)
@@ -120,7 +121,7 @@ class Ec2VmCreationStrategyProvider extends JCloudsVmCreationStrategyProvider {
     new DefaultVmCreationStrategy(nodeNamePrefix, computeContext) {
 
       override protected def templateOptions(env: Environment, vm: VirtualMachine) = {
-        super.templateOptions(env, vm).asInstanceOf[EC2TemplateOptions]
+        super.templateOptions(env, vm).asInstanceOf[AWSEC2TemplateOptions]
           .keyPair(vm.keyPair.getOrElse { throw new IllegalArgumentException("VM keyPair property should be specified") })
           .securityGroups(securityGroup(vm))
       }

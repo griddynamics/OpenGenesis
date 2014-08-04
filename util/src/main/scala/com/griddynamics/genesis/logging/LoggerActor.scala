@@ -22,14 +22,15 @@
  */
 package com.griddynamics.genesis.logging
 
-import com.griddynamics.genesis.service.StoreService
+import com.griddynamics.genesis.service.{LoggerService, StoreService}
 import akka.actor._
 import java.sql.Timestamp
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
+import com.griddynamics.genesis.logs.{Log, ActionBasedLog}
 
-class LoggerActor(val service: StoreService) extends Actor {
+class LoggerActor(val service: LoggerService) extends Actor {
 
   private val actionLogBuffer = new mutable.SynchronizedQueue[ActionBasedLog]
   private val stepLogBuffer = new mutable.SynchronizedQueue[Log]
@@ -58,27 +59,21 @@ class LoggerActor(val service: StoreService) extends Actor {
   }
 }
 
-class LogWriterActor(val service: StoreService) extends Actor {
+class LogWriterActor(val service: LoggerService) extends Actor {
   override def receive = {
-    case WriteStepLogs(stepLogs) => {
-      service.writeLog(
-        stepLogs.map{log => (log.stepId, log.message, log.timestamp)})
+    case WriteStepLogs(stepLogs: Seq[Log]) => {
+      service.writeLogs(stepLogs)
     }
-    case WriteActionBasedLogs(actionLogs) => {
-      service.writeActionLog(
-        actionLogs.map{ log => (log.actionUID, log.message, log.timestamp)})
+    case WriteActionBasedLogs(actionLogs: Seq[ActionBasedLog]) => {
+      service.writeActionLogs(actionLogs)
     }
   }
 }
 
-case class Log(stepId : Int, message: String, timestamp: Timestamp)
 
-case class ActionBasedLog(actionUID: String, message: String, timestamp: Timestamp)
 
 case class WriteActionBasedLogs(logs: Seq[ActionBasedLog])
-
 case class WriteStepLogs(logs: Seq[Log])
-
 case class Flush()
 
 trait InternalLogger {
@@ -109,7 +104,7 @@ object LoggerWrapper {
 
   private def now = new Timestamp(System.currentTimeMillis())
 
-  def start(system: ActorSystem, storeService: StoreService) {
+  def start(system: ActorSystem, storeService: LoggerService) {
     val actor = system.actorOf(Props(new LoggerActor(storeService)), ACTOR_NAME)
     instance = new LoggerWrapper(actor)
     import ExecutionContext.Implicits.global

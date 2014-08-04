@@ -58,6 +58,7 @@
         <s:intercept-url pattern="/rest" access="isAuthenticated()" />
         <s:intercept-url pattern="/rest/groups*"  method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_PROJECT_ADMIN') or hasRole('ROLE_GENESIS_READONLY')" />
         <s:intercept-url pattern="/rest/users*"   method="GET" access="hasRole('ROLE_GENESIS_ADMIN') or hasRole('ROLE_GENESIS_PROJECT_ADMIN') or hasRole('ROLE_GENESIS_READONLY')" />
+        <s:intercept-url pattern="/rest/logpump*" method="GET" access="hasRole('ROLE_GENESIS_ADMIN')" />
 
         <s:intercept-url pattern="/rest/groups/**" method="GET"  access="hasRole('ROLE_GENESIS_ADMIN')  or hasRole('ROLE_GENESIS_READONLY')" />
         <s:intercept-url pattern="/rest/groups/**" access="hasRole('ROLE_GENESIS_ADMIN')" />

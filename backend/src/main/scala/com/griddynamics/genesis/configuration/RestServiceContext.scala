@@ -38,6 +38,7 @@ class RestServiceContext {
     @Autowired var envAccessService: EnvironmentAccessService = _
     @Autowired var configurationRepository: ConfigurationRepository = _
     @Autowired var envJobService: EnvironmentJobService = _
+    @Autowired var loggerContext: LoggerContext = _
 
     @Bean def genesisRestService = new GenesisRestService(storeServiceContext.storeService,
                                                           templateServiceContext.templateService,
@@ -45,5 +46,7 @@ class RestServiceContext {
                                                           workflowContext.requestBroker,
                                                           envAccessService,
                                                           configurationRepository,
-                                                          envJobService)
+                                                          envJobService,
+                                                          loggerContext.loggerService
+    )
 }
