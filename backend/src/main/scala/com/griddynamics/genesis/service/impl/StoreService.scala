@@ -173,18 +173,19 @@ class StoreService(val cacheManager: CacheManager) extends service.StoreService 
   def listWorkflows(env: Environment) = {
     from(GS.workflows)(w =>
       where(w.envId === env.id)
-          select (w)
+          select (w.id)
           orderBy(w.id desc)
-    ).toList
+    ).toList flatMap { findWorkflow }
   }
 
   @Transactional(readOnly = true)
   def listWorkflows(env: Environment, pageOffset: Int, pageLength: Int) = {
-    from(GS.workflows)(w =>
+    val list: List[Int] = from(GS.workflows)(w =>
       where(w.envId === env.id)
-          select (w)
+          select (w.id)
           orderBy(w.id desc)
     ).page(pageOffset, pageLength).toList
+    list.flatMap { findWorkflow  }
   }
 
   @Transactional(readOnly = true)
@@ -313,23 +314,25 @@ class StoreService(val cacheManager: CacheManager) extends service.StoreService 
 
   @Transactional
   def finishWorkflow(env: Environment, workflow: Workflow, modifyEnv: Boolean = true) {
-    val finishTime: Some[Timestamp] = Some(new Timestamp(System.currentTimeMillis()))
+    withEvict(StoreService.WorkflowCache, workflow.id.toString) {
+      val finishTime: Some[Timestamp] = Some(new Timestamp(System.currentTimeMillis()))
 
-    GS.steps.update(step =>
-      where((step.finished isNull) and (step.workflowId === workflow.id) and (step.started isNotNull)) set (
+      GS.steps.update(step =>
+        where((step.finished isNull) and (step.workflowId === workflow.id) and (step.started isNotNull)) set (
           step.finished := finishTime
           )
-    )
+      )
 
-    if (modifyEnv) {
-      env.modifiedBy = Some(workflow.startedBy)
-      env.modificationTime = finishTime
+      if (modifyEnv) {
+        env.modifiedBy = Some(workflow.startedBy)
+        env.modificationTime = finishTime
+      }
+
+      updateEnv(env)
+
+      workflow.executionFinished = finishTime
+      GS.workflows.update(workflow)
     }
-
-    updateEnv(env)
-
-    workflow.executionFinished = finishTime
-    GS.workflows.update(workflow)
   }
 
   @Transactional(propagation = Propagation.MANDATORY)
@@ -401,11 +404,16 @@ class StoreService(val cacheManager: CacheManager) extends service.StoreService 
   }
 
   @Transactional(readOnly = true)
-  def findWorkflow(id: Int) = GS.workflows.lookup(id)
+  def findWorkflow(id: Int) = fromCache(StoreService.WorkflowCache, id.toString, 900) {
+    log.debug("Getting workflow " + id + " from database")
+    GS.workflows.lookup(id)
+  }
 
   @Transactional
   def updateWorkflow(w: Workflow) {
-    GS.workflows.update(w)
+    withEvict(StoreService.WorkflowCache, w.id.toString) {
+      GS.workflows.update(w)
+    }
   }
 
   @Transactional
@@ -467,7 +475,7 @@ class StoreService(val cacheManager: CacheManager) extends service.StoreService 
 
   @Transactional
   def writeActionLog(actionUUID: String, message: String, timestamp: Timestamp = new Timestamp(System.currentTimeMillis())) {
-    val stepID = from(GS.actionTracking)((action) => where (action.actionUUID === actionUUID) select(action.workflowStepId)).headOption
+    val stepID = getStepID(actionUUID)
     stepID.foreach { id => GS.logs.insert(new StepLogEntry(id, message, timestamp, Option(actionUUID))) }
   }
 
@@ -476,9 +484,15 @@ class StoreService(val cacheManager: CacheManager) extends service.StoreService 
     val groupedLogs = logs.groupBy(_._1)
     groupedLogs.foreach {
       case (actionId: String, actionLogs: Seq[(String, String, Timestamp)]) => {
-        val stepID = from(GS.actionTracking)((action) => where (action.actionUUID === actionId) select(action.workflowStepId)).headOption
+        val stepID = getStepID(actionId)
         stepID.foreach { id => GS.logs.insert(actionLogs.map { log: Tuple3[String, String, Timestamp] => new StepLogEntry(id, log._2, log._3, Some(log._1))}) }
       }
+    }
+  }
+
+  private def getStepID(actionUUID: String) = {
+    fromCache(StoreService.TrackingCache, actionUUID, 3600) {
+      from(GS.actionTracking)((action) => where (action.actionUUID === actionUUID) select(action.workflowStepId)).headOption
     }
   }
 
@@ -581,4 +595,6 @@ object StoreService {
   val EnvCache = "Environments"
   val AttributeCache = "Attributes"
   val AttributesCacheTtl = Integer.MAX_VALUE
+  val TrackingCache = "Tracking"
+  val WorkflowCache = "Workflows"
 }
