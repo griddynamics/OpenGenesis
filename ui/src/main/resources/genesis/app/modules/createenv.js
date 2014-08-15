@@ -266,10 +266,10 @@ function(genesis, backend,  status, variablesmodule, gtemplates, validation, Bac
       );
 
       var self = this;
-      $.when(workflow.fetch({ data: $.param({ configurationId: configurationId}) })).done(function() {
+      $.when(workflow.fetch({ data: $.param({ configurationId: configurationId})})).done(function() {
         self.variables = workflow.get('variables');
         self.renderVariablesForm(currentTemplate, workflow, configurationId);
-      }).fail(function (jqXHR) {
+      }).fail(function (model, jqXHR) {
         self.renderError(jqXHR, self.envConfigErrorTemplate);
       }).always(function () {
         genesis.app.trigger("page-view-loading-completed");
