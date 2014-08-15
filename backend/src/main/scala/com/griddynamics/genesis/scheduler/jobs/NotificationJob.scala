@@ -29,7 +29,7 @@ class NotificationJob(storeService: StoreService,
         s"""
             Hello,
 
-            This is a friendly reminder, that your instance ${env.name} will be automatically destroyed in ${TimeUnit.MILLISECONDS.toHours(destroyDate.getTime)} hours.\n\n
+            This is a friendly reminder, that your instance ${env.name} will be automatically destroyed in ${TimeUnit.MILLISECONDS.toHours(destroyDate.getTime - new Date().getTime)} hours.\n\n
 
             BR,
             Genesis Notification system
