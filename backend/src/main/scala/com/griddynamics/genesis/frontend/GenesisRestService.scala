@@ -36,6 +36,7 @@ import com.griddynamics.genesis.util.Logging
 import scala.util.Try
 import com.google.gson.{Gson, JsonArray}
 import java.util.LinkedHashMap
+import com.griddynamics.genesis.core.events.{EnvDestroyed, WorkflowEventsBus}
 
 class GenesisRestService(storeService: StoreService,
                          templateService: TemplateService,
@@ -94,9 +95,13 @@ class GenesisRestService(storeService: StoreService,
       broker.cancelWorkflow(envId, projectId)
     }
 
-  def setEnvStatus(envId: Int, projectId: Int, status: String) = EnvStatus.fromString(status).map(
-    broker.setEnvStatus(envId, projectId, _)
-  ) getOrElse Failure(compoundServiceErrors = Seq(s"Invalid status: $status"))
+  def setEnvStatus(envId: Int, projectId: Int, status: String) = EnvStatus.fromString(status).map( { status => {
+      if (status == EnvStatus.Destroyed) {
+        WorkflowEventsBus.publish(EnvDestroyed(projectId, envId))
+      }
+      broker.setEnvStatus(envId, projectId, status)
+    }
+  } ) getOrElse Failure(compoundServiceErrors = Seq(s"Invalid status: $status"))
 
 
   def isEnvExists(envId: Int, projectId: Int): Boolean = {
