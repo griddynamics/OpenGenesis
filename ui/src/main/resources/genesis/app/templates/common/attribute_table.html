@@ -40,10 +40,11 @@
         <td class="first" >Instance will be destroyed</td>
         <td>
             <p style="float:left; margin-top: 1px; margin-bottom: 2px;" > <%- environment.timeToLiveStr %> </p>
+            <% if (isCanEdit) { %>
             <a title="Postpone" class="ui-widget postpone-destruction ui-state-default">
                 <span style="float:left; margin-left: 10px" class="ui-icon ui-icon-clock" ></span>
             </a>
-
+            <% } %>
         </td>
     </tr>
   <% } %>

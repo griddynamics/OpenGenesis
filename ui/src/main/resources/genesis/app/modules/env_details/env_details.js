@@ -369,6 +369,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
         view.$("#env-attrs").html(tmpl({
           attributes: _.sortBy(view.details.get("attributes"), function(attr) { return attr.description; }),
           environment: view.details.toJSON(),
+          isCanEdit: view.details.canRunWorkflows(),
           utils: genesis.utils
         }));
       });
