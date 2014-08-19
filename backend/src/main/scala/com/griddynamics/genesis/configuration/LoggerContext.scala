@@ -22,18 +22,35 @@
  */
 package com.griddynamics.genesis.configuration
 
-import org.springframework.context.annotation.Configuration
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.{Bean, Configuration}
+import org.springframework.beans.factory.annotation.{Value, Autowired}
 import javax.annotation.PostConstruct
 import com.griddynamics.genesis.logging.LoggerWrapper
 import akka.actor.ActorSystem
+import com.griddynamics.genesis.service.LoggerService
+import com.griddynamics.genesis.service.impl.FileBasedLoggerService
+import org.springframework.context.ApplicationContext
 
 @Configuration
 class LoggerContext {
     @Autowired var storeServiceContext: StoreServiceContext = _
     @Autowired var actorSystem: ActorSystem = _
+    @Autowired var applicationContext: ApplicationContext = _
+    @Value("${genesis.logging.filesystem.path:logs}") var logRoot: String = _
+    @Value("${genesis.logging.type:db}") var loggingType: String = _
 
     @PostConstruct def init() = {
-      LoggerWrapper.start(actorSystem, storeServiceContext.storeService)
+      LoggerWrapper.start(actorSystem, findLoggerService(loggingType).get)
+    }
+
+    @Bean def fileSystemLogger: FileBasedLoggerService = new FileBasedLoggerService(logRoot)
+
+    def loggerService = findLoggerService(loggingType).get
+
+    def findLoggerService(loggingType: String): Option[LoggerService] = {
+      import scala.collection.JavaConversions._
+      val service = applicationContext.getBeansOfType(classOf[LoggerService]).find { case (key, value) => {
+        value.storageMode == loggingType}} map { case (name, bean) => bean }
+      service
     }
 }

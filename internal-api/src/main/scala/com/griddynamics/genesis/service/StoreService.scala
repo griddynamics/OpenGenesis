@@ -30,7 +30,7 @@ import com.griddynamics.genesis.model.WorkflowStepStatus._
 import java.sql.Timestamp
 import com.griddynamics.genesis.api.Ordering
 
-trait StoreService {
+trait StoreService extends LoggerService {
     def findEnvsByConfigurationId(configId: Int): Seq[Int]
     def findLiveEnvsByConfigurationId(configId: Int): Seq[Int]
 
@@ -100,19 +100,6 @@ trait StoreService {
     def insertWorkflowStep(step : WorkflowStep): WorkflowStep
 
     def allocateStepCounters(count : Int = 1) : Int
-  
-    def writeLog(stepId: Int, message: String, timestamp: Timestamp)
-
-    def writeLog(logs: Seq[(Int, String, Timestamp)])
-
-    def writeActionLog(actionUUID: String, message: String, timestamp: Timestamp)
-
-    def writeActionLog(logs: Seq[(String, String, Timestamp)])
-
-    def getLogs(stepId: Int, includeActions : Boolean) : Seq[StepLogEntry]
-
-    def getLogs(actionUUID: String) : Seq[StepLogEntry]
-
     def startAction(actionTracking: ActionTracking): ActionTracking
     def endAction(uuid: String, message: Option[String], status: ActionTrackingStatus.ActionStatus)
     def cancelRunningActions(stepId: Int)

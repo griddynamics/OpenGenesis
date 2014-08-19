@@ -44,7 +44,8 @@ class GenesisRestService(storeService: StoreService,
                          broker: RequestBroker,
                          envAccessService: EnvironmentAccessService,
                          configurationRepository: ConfigurationRepository,
-                         jobService: EnvironmentJobService) extends GenesisService with Logging {
+                         jobService: EnvironmentJobService,
+                         loggerService: LoggerService) extends GenesisService with Logging {
 
     def listEnvs(projectId: Int, statusFilter: Option[Seq[String]] = None, ordering: Option[Ordering] = None) = {
       val filterOpt = statusFilter.map(_.map(EnvStatus.withName(_)))
@@ -151,10 +152,10 @@ class GenesisRestService(storeService: StoreService,
     }
 
     def getLogs(envId: Int,  stepId: Int, includeActions: Boolean) : Seq[StepLogEntry] =
-      storeService.getLogs(stepId, includeActions).map { entry => StepLogEntry(entry.timestamp, entry.message) }
+      loggerService.getLogs(stepId, includeActions).map { entry => StepLogEntry(entry.timestamp, entry.message) }
 
     def getLogs(envId: Int, actionUUID: String): Seq[StepLogEntry] =
-      storeService.getLogs(actionUUID).map { entry => StepLogEntry(entry.timestamp, entry.message) }
+      loggerService.getLogs(actionUUID).map { entry => StepLogEntry(entry.timestamp, entry.message) }
 
     def queryVariables(projectId: Int, envConfigId: Int, templateName: String, templateVersion: String, workflow: String, variables: Map[String, String]): ExtendedResult[Seq[Variable]] = {
         val tmpl = templateService.findTemplate(projectId, templateName, templateVersion, envConfigId).getOrElse(

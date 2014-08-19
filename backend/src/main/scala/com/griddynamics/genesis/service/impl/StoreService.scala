@@ -36,10 +36,13 @@ import com.griddynamics.genesis.model.WorkflowStepStatus._
 import com.griddynamics.genesis.util.Logging
 import com.griddynamics.genesis.repository.AbstractOrderingMapper
 import com.griddynamics.genesis.api.Ordering
-import collection.mutable
+import scala.collection.mutable
 import com.griddynamics.genesis.annotation.RemoteGateway
 import EnvStatus._
 import com.griddynamics.genesis.cache.{CacheManager, Cache}
+import com.griddynamics.genesis.service.LoggerService
+import scala.collection.mutable.ListBuffer
+import com.griddynamics.genesis.logs.{ActionBasedLog, Log}
 
 object EnvOrdering {
   val ID = "id"
@@ -464,28 +467,28 @@ class StoreService(val cacheManager: CacheManager) extends service.StoreService 
   }
 
   @Transactional
-  def writeLog(stepId: Int, message: String, timestamp: Timestamp = new Timestamp(System.currentTimeMillis())) {
-    GS.logs.insert(new StepLogEntry(stepId, message, timestamp))
+  def writeLog(log: Log) {
+    GS.logs.insert(new StepLogEntry(log.stepId, log.message, log.timestamp))
   }
 
   @Transactional
-  def writeLog(logs: Seq[(Int, String, Timestamp)]) {
-    GS.logs.insert(logs.map {log => new StepLogEntry(log._1, log._2, log._3)})
+  def writeLogs(logs: Seq[Log]) {
+    GS.logs.insert(logs.map {log => new StepLogEntry(log.stepId, log.message, log.timestamp)})
   }
 
   @Transactional
-  def writeActionLog(actionUUID: String, message: String, timestamp: Timestamp = new Timestamp(System.currentTimeMillis())) {
-    val stepID = getStepID(actionUUID)
-    stepID.foreach { id => GS.logs.insert(new StepLogEntry(id, message, timestamp, Option(actionUUID))) }
+  def writeActionLog(log: ActionBasedLog) {
+    val stepID = from(GS.actionTracking)((action) => where (action.actionUUID === log.actionUID) select(action.workflowStepId)).headOption
+    stepID.foreach { id => GS.logs.insert(new StepLogEntry(id, log.message, log.timestamp, Option(log.actionUID))) }
   }
 
   @Transactional
-  def writeActionLog(logs: Seq[(String, String, Timestamp)]) {
-    val groupedLogs = logs.groupBy(_._1)
+  def writeActionLogs(logs: Seq[ActionBasedLog]) {
+    val groupedLogs = logs.groupBy(_.actionUID)
     groupedLogs.foreach {
-      case (actionId: String, actionLogs: Seq[(String, String, Timestamp)]) => {
-        val stepID = getStepID(actionId)
-        stepID.foreach { id => GS.logs.insert(actionLogs.map { log: Tuple3[String, String, Timestamp] => new StepLogEntry(id, log._2, log._3, Some(log._1))}) }
+      case (actionId: String, actionLogs: Seq[ActionBasedLog]) => {
+        val stepID = from(GS.actionTracking)((action) => where (action.actionUUID === actionId) select(action.workflowStepId)).headOption
+        stepID.foreach { id => GS.logs.insert(actionLogs.map { log: ActionBasedLog => new StepLogEntry(id, log.message, log.timestamp, Some(log.actionUID))}) }
       }
     }
   }
@@ -582,6 +585,33 @@ class StoreService(val cacheManager: CacheManager) extends service.StoreService 
       (workflow.status === WorkflowStatus.Executing) and (env.id === workflow.envId) and (env.projectId === projectId)
     ) select (workflow)
   ).toList
+
+  def iterate(to: LoggerService) = {
+    val actionBuffer = mutable.ArrayBuffer[ActionBasedLog]()
+    val stepBuffer = mutable.ArrayBuffer[Log]()
+    from(GS.logs)((log) =>
+        select(log)
+    ).foreach({ logRecord: StepLogEntry => {
+      logRecord.actionUUID match {
+        case Some(s: String) => actionBuffer += ActionBasedLog(s, logRecord.message, logRecord.timestamp)
+        case None => stepBuffer += Log(logRecord.stepId, logRecord.message, logRecord.timestamp)
+      }
+      if (actionBuffer.size >= 100) {
+        to.writeActionLogs(actionBuffer.toSeq)
+        actionBuffer.clear()
+      }
+      if (stepBuffer.size >= 100) {
+        to.writeLogs(stepBuffer.toSeq)
+        stepBuffer.clear()
+      }
+    } })
+    to.writeActionLogs(actionBuffer.toSeq)
+    actionBuffer.clear()
+    to.writeLogs(stepBuffer.toSeq)
+    stepBuffer.clear()
+  }
+
+  def storageMode = LoggerService.DATABASE
 }
 
 
