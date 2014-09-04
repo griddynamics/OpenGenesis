@@ -32,7 +32,7 @@
 
     <scm>
         <developerConnection>scm:git:ssh://git@github.com/griddynamics/OpenGenesis.git</developerConnection>
-        <tag>Release_2_12_0</tag>
+        <tag>Release_2_13_0</tag>
     </scm>
 
     <properties>
