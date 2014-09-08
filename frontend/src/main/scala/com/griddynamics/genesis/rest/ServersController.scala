@@ -50,7 +50,7 @@ class ServersController extends RestApiExceptionsHandler {
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
   def create(@PathVariable("projectId") projectId: Int, @Valid @RequestBody array: ServerArray) = {
-    service.create(array.copy(projectId = projectId))
+    service.create(array.copy(projectId = Some(projectId)))
   }
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
@@ -132,7 +132,7 @@ class ServersController extends RestApiExceptionsHandler {
   }
 
   private[this] def assertCredentialsExistInProject(projectId: Int, credentialsId: Int) {
-    credService.get(projectId, credentialsId).getOrElse(throw new ResourceNotFoundException("Failed to find credentials record in project"))
+    credService.get(Some(projectId), credentialsId).getOrElse(throw new ResourceNotFoundException("Failed to find credentials record in project"))
   }
 
   private[this] def assertArrayBelongsToProject(projectId: Int, arrayId: Int) {

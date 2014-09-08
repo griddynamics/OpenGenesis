@@ -117,7 +117,7 @@ class NuGetDataSource(credStore: CredentialsStoreService) extends VarDataSource 
     auth = cfg.get(AuthMode).map(v => Authentication.withName(v.toString))
     val projId = cfg.get(ProjectId).map(_.asInstanceOf[Int])
     val pairName: String = cfg.get(Credential).getOrElse("").toString
-    credOpt = projId.flatMap(credStore.find(_, Mode, pairName))
+    credOpt = projId.flatMap { id => credStore.find(Some(id), Mode, pairName) }
   }
 }
 

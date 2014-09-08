@@ -251,23 +251,23 @@ case class Plugin(id: String, description: Option[String])
 case class PluginDetails(id: String,  description: Option[String], configuration: Seq[ConfigProperty])
 
 case class Credentials( id: Option[Int],
-                        projectId: Int,
+                        projectId: Option[Int],
                         @Size(min = 1, max = 128) @NotBlank cloudProvider: String,
                         @Size(min = 1, max = 128) @NotBlank pairName: String,
                         @Size(min = 1, max = 128) @NotBlank identity: String,
                         credential: Option[String],
-                        fingerPrint: Option[String] = None) extends ProjectBound
+                        fingerPrint: Option[String] = None)
 
 case class AuthorityDescription(name: String, users: List[String], groups: List[String])
 
 case class ActionTracking(uuid: String, name: String, description: Option[String], startedTimestamp: Long, finishedTimestamp: Option[Long], status: String)
 
 case class ServerArray( id: Option[Int],
-                        projectId: Int,
+                        projectId: Option[Int] = None,
                         @Size(min = 1, max = 128) @NotBlank
                         name: String,
                         @OptString(min = 0, max = 128, notBlank = true)
-                        description: Option[String] ) extends ProjectBound
+                        description: Option[String] )
 
 case class Server(id: Option[Int],
                   arrayId: Int,

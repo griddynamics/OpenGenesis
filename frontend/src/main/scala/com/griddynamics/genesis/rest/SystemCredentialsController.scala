@@ -23,11 +23,9 @@
 
 package com.griddynamics.genesis.rest
 
-
 import annotations.{AddSelfLinks, LinkTarget}
 import links.{WebPath, LinkBuilder, ItemWrapper, CollectionWrapper}
 import links.CollectionWrapper._
-import links.HrefBuilder._
 import scala.Array
 import org.springframework.stereotype.Controller
 import com.griddynamics.genesis.service.CredentialsStoreService
@@ -41,28 +39,27 @@ import javax.servlet.http.HttpServletRequest
 import com.griddynamics.genesis.spring.security.LinkSecurityBean
 
 @Controller
-@RequestMapping(Array("/rest/projects/{projectId}/credentials"))
-class CredentialsController extends RestApiExceptionsHandler {
+@RequestMapping(Array("/rest/credentials"))
+class SystemCredentialsController extends RestApiExceptionsHandler {
 
   @Autowired var service: CredentialsStoreService = _
   @Autowired implicit var linkSecurity: LinkSecurityBean = _
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
   @ResponseBody
-  def create(@PathVariable("projectId") projectId: Int, @Valid @RequestBody creds: api.Credentials) = {
-      service.create(creds).map(_.copy(credential = None))
+  def create(@Valid @RequestBody creds: api.Credentials) = {
+      service.create(creds.copy(projectId = None)).map(_.copy(credential = None))
   }
 
   @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
   @ResponseBody
   @AddSelfLinks(methods = Array(GET, POST), modelClass = classOf[Credentials])
-  def listCredentials(@PathVariable("projectId") projectId: Int,
-                      @RequestParam(value = "type", required = false) credentialsType: String,
+  def listCredentials(@RequestParam(value = "type", required = false) credentialsType: String,
                        request: HttpServletRequest): CollectionWrapper[ItemWrapper[Credentials]] = {
     val creds = if(credentialsType == null) {
-      service.list(Some(projectId))
+      service.list(None)
     } else {
-      service.findCredentials(Some(projectId), credentialsType)
+      service.findCredentials(None, credentialsType)
     }
     def wrapCredential(cred: Credentials) : ItemWrapper[Credentials] = {
       val wrapper: ItemWrapper[Credentials] = cred
@@ -75,14 +72,14 @@ class CredentialsController extends RestApiExceptionsHandler {
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.DELETE))
   @ResponseBody
-  def deleteCredentials(@PathVariable("projectId") projectId: Int, @PathVariable("id") id: Int) = service.delete(Some(projectId), id)
+  def deleteCredentials(@PathVariable("id") id: Int) = service.delete(None, id)
 
   @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.GET))
   @ResponseBody
   @AddSelfLinks(methods = Array(GET, PUT, DELETE), modelClass = classOf[Credentials])
-  def getCredentials(@PathVariable("projectId") projectId: Int, @PathVariable("id") credId: Int, request: HttpServletRequest): ItemWrapper[Credentials] = {
-    val cred = service.get(Some(projectId), credId).getOrElse(
-      throw new ResourceNotFoundException("Credential [id = %d] was not found in Project [id = %d]".format(credId, projectId))
+  def getCredentials(@PathVariable("id") credId: Int, request: HttpServletRequest): ItemWrapper[Credentials] = {
+    val cred = service.get(None, credId).getOrElse(
+      throw new ResourceNotFoundException("Credential [id = %d] was not found on system level".format(credId))
     )
     cred.copy(credential = None)
   }

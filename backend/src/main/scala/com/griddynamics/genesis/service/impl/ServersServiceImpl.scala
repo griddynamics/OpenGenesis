@@ -42,17 +42,32 @@ class ServersServiceImpl(arrayRepo: ServerArrayRepository, serverRepo: ServerRep
   @Transactional(readOnly = true)
   def get(projectId: Int, id: Int) = arrayRepo.get(projectId, id)
 
+  @Transactional(readOnly = true)
+  def get(id: Int) = arrayRepo.get(id)
+
   @Transactional
   def delete(array: ServerArray) = {
-    if (arrayRepo.delete(array.projectId, array.id.get) > 0){
-      Success(None)
-    } else {
-      Failure(isNotFound = true, compoundServiceErrors = List("No server array was found"))
+    array.projectId map { projectId: Int => {
+      if (arrayRepo.delete(projectId, array.id.get) > 0){
+        Success(None)
+      } else {
+        Failure(isNotFound = true, compoundServiceErrors = List("No server array was found"))
+      }
+    }
+    } getOrElse {
+      if (arrayRepo.delete(array.id.get) > 0) {
+         Success(None)
+      } else {
+         Failure(isNotFound = true, compoundServiceErrors = List("No server array was found"))
+      }
     }
   }
 
   @Transactional(readOnly = true)
   def list(projectId: Int) = arrayRepo.list(projectId)
+
+  @Transactional(readOnly = true)
+  def list = arrayRepo.list
 
   @Transactional
   def create(server: Server) = validateServer(server).map( serverRepo.insert(_) )
@@ -73,6 +88,9 @@ class ServersServiceImpl(arrayRepo: ServerArrayRepository, serverRepo: ServerRep
   def findArrayByName(projectId: Int, name: String): Option[ServerArray] = {
     arrayRepo.findByName(name, projectId)
   }
+
+  @Transactional(readOnly = true)
+  def findArrayByName(name: String) : Option[ServerArray] = arrayRepo.findByName(name)
 
   @Transactional(readOnly = true)
   def getServer(arrayId: Int, serverId: Int): Option[Server] = serverRepo.get(arrayId, serverId)
@@ -101,7 +119,7 @@ class ServersServiceImpl(arrayRepo: ServerArrayRepository, serverRepo: ServerRep
 
 
   protected def validateCreation(c: ServerArray) =
-    must(c, "Server array with name '" + c.name + "' already exists") {
+    must(c, s"Server array with name '" + c.name + "' already exists in project ${c.projectId}") {
         array => arrayRepo.findByName(array.name, array.projectId).isEmpty
     }
 }

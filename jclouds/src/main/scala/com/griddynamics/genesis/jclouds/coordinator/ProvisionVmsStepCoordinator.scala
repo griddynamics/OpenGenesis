@@ -52,7 +52,7 @@ class ProvisionVmsStepCoordinator(override val step: ProvisionVmStep,
     val computeSettings = if (step.account.isEmpty) pluginContext.computeSettings else Account.mapToComputeSettings(step.account)
     val provider = computeSettings(Plugin.Provider).toString
 
-    val credentials = step.keyPair.flatMap { credStore.find(context.env.projectId, provider, _) }
+    val credentials = step.keyPair.flatMap { credStore.find(Some(context.env.projectId), provider, _) }
 
     if(credentials.isDefined || credService.defaultCredentials.isDefined) {
       for (n <- 1 to (step.quantity - existingVms.size)) yield {

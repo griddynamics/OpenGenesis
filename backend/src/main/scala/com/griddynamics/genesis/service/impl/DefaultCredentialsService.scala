@@ -37,7 +37,7 @@ class DefaultCredentialsService(credentialsStore: service.CredentialsStoreServic
     for {
       provider <- provider
       keypair <- resource.keyPair
-      creds <- credentialsStore.find(env.projectId, provider, keypair)
+      creds <- credentialsStore.find(Some(env.projectId), provider, keypair)
       credential <- credentialsStore.decrypt(creds).credential
     } yield new Credentials(creds.identity, credential)
   }
@@ -47,10 +47,10 @@ class DefaultCredentialsService(credentialsStore: service.CredentialsStoreServic
       case vm: VirtualMachine => vm.cloudProvider.getOrElse(throw new IllegalArgumentException("cloud provider isn't set"))
       case server: BorrowedMachine => "static"   //todo: !!!
     }
-    val credsOption = credentialsStore.findCredentials(env.projectId, cloudProvider, credentials.credential)
+    val credsOption = credentialsStore.findCredentials(Some(env.projectId), cloudProvider, credentials.credential)
     credsOption match {
       case None => {
-        val creds = credentialsStore.generate(env.projectId, cloudProvider, credentials.identity, credentials.credential)
+        val creds = credentialsStore.generate(Some(env.projectId), cloudProvider, credentials.identity, credentials.credential)
         server.keyPair = Some(creds.pairName)
       }
       case Some(creds) => {

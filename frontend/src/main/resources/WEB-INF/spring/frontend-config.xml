@@ -92,4 +92,7 @@
     <bean class="com.griddynamics.genesis.rest.WorkflowController"/>
 
     <bean class="com.griddynamics.genesis.rest.LogAdminController"/>
+
+    <bean class="com.griddynamics.genesis.rest.GlobalServersController"/>
+    <bean class="com.griddynamics.genesis.rest.SystemCredentialsController"/>
 </beans>

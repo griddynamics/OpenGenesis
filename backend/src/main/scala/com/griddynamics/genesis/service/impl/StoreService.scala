@@ -407,10 +407,14 @@ class StoreService(val cacheManager: CacheManager) extends service.StoreService 
   }
 
   @Transactional(readOnly = true)
-  def findWorkflow(id: Int) = fromCache(StoreService.WorkflowCache, id.toString, 900) {
-    log.debug("Getting workflow " + id + " from database")
-    GS.workflows.lookup(id)
+  def findWorkflow(id: Int) = {
+    val wOpt =  fromCache(StoreService.WorkflowCache, id.toString, 900) {
+      log.debug("Getting workflow " + id + " from database")
+      GS.workflows.lookup(id)
+    }
+    wOpt.filter {wf: Workflow => wf.status != WorkflowStatus.Requested && wf.status != WorkflowStatus.Executing} orElse (GS.workflows.lookup(id))
   }
+
 
   @Transactional
   def updateWorkflow(w: Workflow) {
