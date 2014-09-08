@@ -88,7 +88,7 @@ class NexusDataSource(val credStore: CredentialsStoreService) extends VarDataSou
 
     def config(map: Map[String, Any]) {
         val projId = map.get("projectId").map(_.asInstanceOf[Int])
-        credOpt = projId.flatMap(credStore.find(_, CredProvider, map.get(Credential).getOrElse("").toString))
+        credOpt = projId.flatMap { id => credStore.find(Some(id), CredProvider, map.get(Credential).getOrElse("").toString) }
         url = new URL(map(Url).toString)
         wildcard = map.getOrElse(Filter, wildcard).toString
     }

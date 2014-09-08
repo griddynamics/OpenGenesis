@@ -24,6 +24,13 @@ package com.griddynamics.genesis.repository
 
 import com.griddynamics.genesis.api
 
-trait ServerArrayRepository extends ProjectBoundRepository[api.ServerArray] {
+trait ServerArrayRepository extends Repository[api.ServerArray] {
   def findByName(s: String, projectId: Int): Option[api.ServerArray]
+  def findByName(s: String, projectId: Option[Int]): Option[api.ServerArray]
+  def list(projectId: Int): Iterable[api.ServerArray]
+  def get(id: Int): Option[api.ServerArray]
+  def findByName(s: String): Option[api.ServerArray]
+  def delete(projectId: Int, arrayId: Int): Int
+  def get(projectId: Int, arrayId: Int): Option[api.ServerArray]
+  def get(projectId: Option[Int], arrayId: Int): Option[api.ServerArray]
 }

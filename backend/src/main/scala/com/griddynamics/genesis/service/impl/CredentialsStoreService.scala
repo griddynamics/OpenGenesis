@@ -43,33 +43,33 @@ class CredentialsStoreService(repository: CredentialsRepository, projectReposito
     keySpec = BasicCrypto.secretKeySpec(key)
   }
 
-  def get(projectId: Int, id: Int): Option[api.Credentials] = repository.get(projectId, id)
+  def get(projectId: Option[Int], id: Int): Option[api.Credentials] = repository.get(projectId.get, id)
 
-  def delete(projectId: Int, id: Int) = {
-    if(repository.delete(projectId, id) > 0){
+  def delete(projectId: Option[Int], id: Int) = {
+    if(repository.delete(projectId.get, id) > 0){
       Success(id)
     } else {
       Failure(isNotFound = true, compoundServiceErrors = List("No credentials found"))
     }
   }
 
-  def list(projectId: Int) = repository.list(projectId)
+  def list(projectId: Option[Int]) = repository.list(projectId)
 
-  def find(projectId: Int, cloudProvider: String, keypairName: String): Option[api.Credentials] = repository.find(projectId, cloudProvider, keypairName)
+  def find(projectId: Option[Int], cloudProvider: String, keypairName: String): Option[api.Credentials] = repository.find(projectId, cloudProvider, keypairName)
 
-  def findCredentials(projectId: Int, cloudProvider: String) = repository.find(projectId, cloudProvider)
+  def findCredentials(projectId: Option[Int], cloudProvider: String) = repository.find(projectId, cloudProvider)
 
   def decrypt(creds: api.Credentials): api.Credentials =
     creds.copy(credential = creds.credential.map (BasicCrypto.decrypt(keySpec, _)))
 
   @Transactional
-  def generate(projectId: Int, cloudProvider: String, identity: String, credentials: String): api.Credentials = {
+  def generate(projectId: Option[Int], cloudProvider: String, identity: String, credentials: String): api.Credentials = {
     val name = "Generated-" + UUID.randomUUID().toString
     val creds = new api.Credentials(None, projectId, cloudProvider, name, identity, Some(credentials))
     saveWithFingerprints(creds)
   }
 
-  def findCredentials(projectId: Int, cloudProvider: String, privateKey: String): Option[api.Credentials] =
+  def findCredentials(projectId: Option[Int], cloudProvider: String, privateKey: String): Option[api.Credentials] =
     repository.find(projectId, cloudProvider, BasicCrypto.fingerPrint(privateKey))
 
   @Transactional

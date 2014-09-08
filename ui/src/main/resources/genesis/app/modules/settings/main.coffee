@@ -1,4 +1,4 @@
-define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settings/configs", "cs!modules/settings/groups", "cs!modules/settings/users", "cs!modules/settings/roles", "cs!modules/settings/databags", "cs!modules/settings/agents", "cs!modules/dashboard/running", "services/backend"], (genesis, Backbone, Plugins, SystemConfigs, Groups, Users, Roles, Databags, Agents, Running, backend) ->
+define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settings/configs", "cs!modules/settings/groups", "cs!modules/settings/users", "cs!modules/settings/roles", "cs!modules/settings/databags", "cs!modules/settings/agents", "cs!modules/settings/servers", "cs!modules/settings/credentials", "cs!modules/dashboard/running", "services/backend"], (genesis, Backbone, Plugins, SystemConfigs, Groups, Users, Roles, Databags, Agents, Servers, Credentials, Running, backend) ->
   AppSettings = genesis.module()
 
   class AppSettings.SystemSettings extends Backbone.Model
@@ -18,6 +18,8 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
     groupsView: null
     usersView: null
     agentsView: null
+    arraysView: null
+    credentialsView: null
     events:
       "click #plugin-panel-tab-header": "showPluginsTab"
       "click #settings-panel-tab-header": "showSettings"
@@ -26,6 +28,8 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
       "click #roles-panel-tab-header": "showRolesTab"
       "click #databags-panel-tab-header": "showDatabags"
       "click #agents-panel-tab-header": "showAgents"
+      "click #servers-panel-tab-header": "showServers"
+      "click #credentials-panel-tab-header": "showCredentials"
       "click #system-restart": "restartSystem"
       "click #system-stop": "stopSystem"
 
@@ -76,6 +80,12 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
     showAgents: ->
       @agentsView = new Agents.Views.Main(el: @$("#agents-panel")) unless @agentsView?
 
+    showServers: ->
+      @serversView = new Servers.Views.Main(el: @$("#servers-panel")) unless @serversView?
+
+    showCredentials: ->
+      @serversView = new Credentials.Views.Main(el: @$("#credentials-panel")) unless @credentialsView?
+
     toggleRestart: ->
       $.when(backend.SettingsManager.restartRequired()).done (restart) =>
         @$("#restart").toggle restart
@@ -125,6 +135,8 @@ define ["genesis", "backbone", "cs!modules/settings/plugins", "cs!modules/settin
           plugins: typeToLink[backend.LinkTypes.Plugin.name]
           databags: typeToLink[backend.LinkTypes.DataBag.name]
           agents: typeToLink[backend.LinkTypes.RemoteAgent.name]
+          servers: typeToLink[backend.LinkTypes.ServerArray.name]
+          credentials: typeToLink[backend.LinkTypes.Credentials.name]
           restart: _(actionLinks).find((l) => l.href.indexOf('restart') != -1)
           stop: _(actionLinks).find((l) => l.href.indexOf('stop') != -1)
         )

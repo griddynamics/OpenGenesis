@@ -38,6 +38,8 @@ class ServerArrayRepository extends AbstractGenericRepository[model.ServerArray,
     where(array.projectId === project.id and project.isDeleted === false) select(array)
   }
 
+  val globalServerArrays = from(table) {(array) => where(array.projectId isNull) select(array)}
+
   implicit def convert(entity: model.ServerArray) = new api.ServerArray(fromModelId(entity.id), entity.projectId, entity.name, entity.description)
 
   implicit def convert(dto: ServerArray) = {
@@ -47,16 +49,23 @@ class ServerArrayRepository extends AbstractGenericRepository[model.ServerArray,
   }
 
   @Transactional(readOnly = true)
-  def findByName(name: String, projectId: Int) = from (availableServerArrays) (
+  def findByName(name: String, projectId: Option[Int]) = from (table) (
     item =>
-      where((name === item.name) and (projectId === item.projectId )  )
+      where((name === item.name) and ((item.projectId === projectId.?) or (item.projectId isNull).inhibitWhen(projectId.isDefined)))
         select (item)
   ).headOption.map(convert(_))
+
+  @Transactional(readOnly = true)
+  def findByName(name: String, projectId: Int) = findByName(name, Some(projectId))
+
+  def findByName(name: String) = findByName(name, None)
 
   @Transactional(readOnly = true)
   def list(projectId: Int) = from(availableServerArrays) (
     item => where( projectId === item.projectId ) select (item) orderBy(item.id)
   ).toList.map(convert(_))
+
+  override def list = from(globalServerArrays) ( array => select(array) orderBy array.id ).toList map { convert }
 
   @Transactional
   def delete(projectId: Int, id: Int) = {
@@ -64,10 +73,20 @@ class ServerArrayRepository extends AbstractGenericRepository[model.ServerArray,
   }
 
   @Transactional
-  def get(projectId: Int, id: Int) = from(availableServerArrays) (
+  override def delete(id: Int) = {
+    table.deleteWhere( item => (id === item.id) and (item.projectId isNull))
+  }
+
+  @Transactional
+  def get(projectId: Option[Int], id: Int) = from(table) (
     item =>
-      where((id === item.id) and (projectId === item.projectId )  )
+      where((id === item.id) and (projectId.? === item.projectId ) or (item.projectId isNull).inhibitWhen(projectId.isDefined) )
         select (item)
   ).headOption.map(convert(_))
 
+  @Transactional
+  def get(projectId: Int, id: Int) = get(Some(projectId), id)
+
+  @Transactional
+  override def get(id: Int) = get(None, id)
 }

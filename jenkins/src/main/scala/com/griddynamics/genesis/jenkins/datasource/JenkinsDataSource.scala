@@ -58,7 +58,7 @@ class JenkinsDataSource(val cacheManager: CacheManager, val credStore: Credentia
       val credsOption = for {
         projectId <- config.get("projectId").map(_.asInstanceOf[Int])
         credName <- config.get(Credentials).map(_.toString)
-        credentialsObj <- credStore.find(projectId, CredProvider, credName).map(credStore.decrypt(_))
+        credentialsObj <- credStore.find(Some(projectId), CredProvider, credName).map(credStore.decrypt(_))
       } yield (Some(credentialsObj.identity), credentialsObj.credential)
 
       val (username, password) = credsOption.getOrElse((None, None))

@@ -4,8 +4,8 @@ define([
   "services/backend",
   "modules/projects",
   "modules/project_properties/env_configurations",
-  "modules/project_properties/credentials",
-  "modules/project_properties/servers",
+  "cs!modules/settings/credentials",
+  "cs!modules/settings/servers",
   "cs!modules/settings/roles",
   "cs!modules/settings/databags",
   "modules/project_properties/template_repo"

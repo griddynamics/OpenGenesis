@@ -47,26 +47,29 @@ class CredentialsRepository extends AbstractGenericRepository[model.Credentials,
   }
 
   @Transactional(readOnly = true)
-  def findCredentials(projectId: Int, cloudProvider: String, fingerPrint: String): Option[api.Credentials] = from(table) (
-    item => where((item.projectId === projectId) and (cloudProvider === item.cloudProvider) and (Option(fingerPrint) === item.fingerPrint) )
+  def findCredentials(projectId: Option[Int], cloudProvider: String, fingerPrint: String): Option[api.Credentials] = from(table) (
+    item => where((item.projectId === projectId.?) or (item.projectId isNull).inhibitWhen(projectId.isDefined) and (cloudProvider === item.cloudProvider) and (Option(fingerPrint) === item.fingerPrint) )
       select (item)
   ).headOption.map(convert(_))
 
   @Transactional(readOnly = true)
-  def find(projectId: Int, cloudProvider: String) = from(table) (
-    item => where((item.projectId === projectId) and (cloudProvider === item.cloudProvider) ) select (item)
+  def find(projectId: Option[Int], cloudProvider: String) = from(table) (
+    item => where((item.projectId === projectId.?) or (item.projectId isNull).inhibitWhen(projectId.isDefined) and (cloudProvider === item.cloudProvider) ) select (item)
   ).toList.map(convert(_))
 
 
 
   @Transactional(readOnly = true)
-  def list(projectId: Int): Iterable[api.Credentials] = from(table) (
-    item => where(item.projectId === projectId) select (item)
+  def list(projectId: Option[Int]): Iterable[api.Credentials] = from(table) (
+    item => where((item.projectId === projectId.?) or (item.projectId isNull).inhibitWhen(projectId.isDefined)) select (item)
   ).map(convert(_))
+
+  @Transactional
+  def list(projectId: Int) : Iterable[api.Credentials] = list(Some(projectId))
 
 
   @Transactional(readOnly = true)
-  def find(projectId: Int, cloudProvider: String, pairName: String): Option[api.Credentials] = from(table) (
+  def find(projectId: Option[Int], cloudProvider: String, pairName: String): Option[api.Credentials] = from(table) (
       item =>
         where((projectId === item.projectId) and (cloudProvider === item.cloudProvider ) and (pairName === item.pairName ))
         select (item)

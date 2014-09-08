@@ -74,7 +74,9 @@ class SettingsController extends RestApiExceptionsHandler {
          LinkBuilder(path / "databags", COLLECTION, classOf[DataBag], GET),
          LinkBuilder(path / "roles", COLLECTION, classOf[ApplicationRole], GET),
          LinkBuilder(path / "agents", COLLECTION, classOf[RemoteAgent], GET),
-         LinkBuilder(path / "plugins", COLLECTION, classOf[Plugin], GET)
+         LinkBuilder(path / "plugins", COLLECTION, classOf[Plugin], GET),
+         LinkBuilder(path / "server-arrays", COLLECTION, classOf[ServerArray], GET),
+         LinkBuilder(path / "credentials", COLLECTION, classOf[Credentials], GET)
        )
        if (! userService.isReadOnly) {
          result = LinkBuilder(path / "users", COLLECTION, classOf[User], GET) :: result

@@ -56,7 +56,7 @@ class BorrowServersExecutor(serversService: ServersService,loanService: ServersL
       }
     }
 
-    if(expectedSize != servers.size) {
+    if(expectedSize != servers.size && !request.shared) {
       throw new StepExecutionException("Failed to borrow requested machines")
     }
 
@@ -75,7 +75,8 @@ class BorrowServersExecutor(serversService: ServersService,loanService: ServersL
 case class BorrowServersStep( serverArray: String,
                               roleName: String,
                               serverIds: Option[Set[String]],
-                              quantity: Option[Int] ) extends Step {
+                              quantity: Option[Int],
+                              shared: Boolean = false) extends Step {
 
   override val stepDescription = new Describer("Acquiring servers from server array")
     .param("array", serverArray)

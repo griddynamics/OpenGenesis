@@ -1,0 +1,122 @@
+package com.griddynamics.genesis.rest
+
+import org.springframework.beans.factory.annotation.Autowired
+import com.griddynamics.genesis.service.{CredentialsStoreService, ServersLoanService, ServersService}
+import com.griddynamics.genesis.spring.security.LinkSecurityBean
+import org.springframework.web.bind.annotation._
+import scala.Array
+import javax.validation.Valid
+import com.griddynamics.genesis.api.{ServerDescription, ExtendedResult, Server, ServerArray}
+import com.griddynamics.genesis.rest.annotations.{LinkTo, LinksTo, AddSelfLinks}
+import org.springframework.web.bind.annotation.RequestMethod._
+import javax.servlet.http.HttpServletRequest
+import com.griddynamics.genesis.rest.links.{WebPath, ItemWrapper, CollectionWrapper}
+import com.griddynamics.genesis.rest.links.CollectionWrapper._
+import com.griddynamics.genesis.rest.GenesisRestController._
+import com.griddynamics.genesis.api.ServerArray
+import com.griddynamics.genesis.rest.links.ItemWrapper
+import scala.Some
+import com.griddynamics.genesis.api.Server
+import com.griddynamics.genesis.api.ServerDescription
+import com.griddynamics.genesis.api
+import org.springframework.stereotype.Controller
+
+@Controller
+@RequestMapping(Array("/rest/server-arrays"))
+class GlobalServersController extends RestApiExceptionsHandler {
+
+  @Autowired var service: ServersService = _
+  @Autowired var loanService: ServersLoanService = _
+  @Autowired var credService: CredentialsStoreService =_
+  @Autowired implicit var linkSecurity: LinkSecurityBean = _
+
+  @RequestMapping(value = Array(""), method = Array(RequestMethod.POST))
+  @ResponseBody
+  def create(@Valid @RequestBody array: ServerArray) = {
+    service.create(array.copy(projectId = None))
+  }
+
+  @RequestMapping(value = Array(""), method = Array(RequestMethod.GET))
+  @ResponseBody
+  @AddSelfLinks(methods = Array(GET, POST), modelClass = classOf[ServerArray])
+  def list(request: HttpServletRequest) : CollectionWrapper[ItemWrapper[ServerArray]] = {
+    implicit val req = request
+    wrap(service.list) { serverArray =>
+      wrap(serverArray).withLinksToSelf(WebPath(request) / serverArray.id, PUT, DELETE, GET)
+    }
+  }
+
+  @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  @AddSelfLinks(methods = Array(GET, PUT, DELETE), modelClass = classOf[ServerArray])
+  @LinksTo(value = Array(new LinkTo(path = "servers", methods = Array(GET, POST), modelClass = classOf[Server])))
+  def get(@PathVariable("id") id: Int, request: HttpServletRequest) : ItemWrapper[ServerArray] = {
+    find(id)
+  }
+
+  private def find(id: Int) = service.get(id).getOrElse(throw new ResourceNotFoundException("Server array wasn't found in project"))
+
+  @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.DELETE))
+  @ResponseBody
+  def delete(@PathVariable("id") id: Int, request: HttpServletRequest) = {
+    service.delete(find(id))
+  }
+
+  @RequestMapping(value = Array("{id}"), method = Array(RequestMethod.PUT))
+  @ResponseBody
+  def updateServerArray(@PathVariable("id") id: Int, @Valid @RequestBody request: ServerArray) = {
+    val array = find(id).copy(
+      name = request.name,
+      description = request.description
+    )
+    service.update(array)
+  }
+
+  @RequestMapping(value = Array("{arrayId}/servers"), method = Array(RequestMethod.POST))
+  @ResponseBody
+  def addServer(@PathVariable("arrayId") arrayId: Int, request: HttpServletRequest) = {
+    val server = extractServer(request, arrayId, None)
+    service.create(server)
+  }
+
+  @RequestMapping(value = Array("{arrayId}/servers"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  @AddSelfLinks(methods = Array(GET, POST), modelClass = classOf[Server])
+  def getServersInArray(@PathVariable("arrayId") arrayId: Int, request: HttpServletRequest):  CollectionWrapper[ItemWrapper[Server]] = {
+    wrap(service.getServers(arrayId)) { server => {
+      server.withLinksToSelf(WebPath(request) / server.id,  GET, PUT, DELETE)
+    }}
+  }
+
+  @RequestMapping(value = Array("{arrayId}/servers/{serverId}"), method = Array(RequestMethod.DELETE))
+  @ResponseBody
+  def deleteServer(@PathVariable("arrayId") arrayId: Int,
+                   @PathVariable("serverId") serverId: Int): ExtendedResult[_] = {
+    service.deleteServer(arrayId, serverId)
+  }
+
+  @RequestMapping(value = Array("{arrayId}/servers/{serverId}"), method = Array(RequestMethod.GET))
+  @ResponseBody
+  @AddSelfLinks(methods = Array(GET, PUT, DELETE), modelClass = classOf[ServerDescription])
+  def getServerDescription(@PathVariable("arrayId") arrayId: Int,
+                           @PathVariable("serverId") serverId: Int,
+                           request: HttpServletRequest): ItemWrapper[ServerDescription] = {
+    val server = service.getServer(arrayId, serverId).getOrElse(throw new ResourceNotFoundException("Couldn't find server in the array"))
+    val envs = loanService.debtorEnvironments(server)
+    ServerDescription(server.id, server.arrayId, server.instanceId, server.address, envs)
+  }
+
+
+  private[this] def extractServer(request: HttpServletRequest, arrayId: Int, id: Option[Int]) = {
+    val params = extractParamsMap(request)
+    val address = extractValue("address", params)
+    val instanceId = extractOption("instanceId", params)
+    val credentialsId = extractOption("credentialsId", params).flatMap(id => if (id.isEmpty) None else Some(id.toInt))
+    if (instanceId.isDefined && !instanceId.get.isEmpty) {
+      new api.Server(id, arrayId, instanceId.get, address, credentialsId)
+    } else {
+      new api.Server(id, arrayId, address, credentialsId)
+    }
+  }
+}
+
