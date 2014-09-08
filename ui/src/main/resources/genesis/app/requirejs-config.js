@@ -5,7 +5,6 @@ require.config({
   paths: {
     // JavaScript folders
     libs: "../assets/js/libs",
-    plugins: "../assets/js/plugins",
 
     // Libraries
     jquery: "../assets/js/libs/jquery",
