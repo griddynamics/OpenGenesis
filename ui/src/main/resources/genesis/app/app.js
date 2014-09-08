@@ -15,8 +15,7 @@ require([
   "cs!utils/inactivity",
 //jquery plugins
   "bootstrap",
-  "tabs",
-  "custom/plugins.js"
+  "tabs"
 ],
 
 function(genesis, routermodule, jQuery, Backbone, _, backend, status, Projects, Environments, Breadcrumbs, Inactivity) {
