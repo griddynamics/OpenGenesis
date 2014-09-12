@@ -354,12 +354,18 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
       });
     },
 
-    checkServersAndVms: function() {
-      if(_.all(this.details.get("vms"), function(vm) { return vm.status === "Destroyed" }) &&
-        _.all(this.details.get("servers"), function(server) { return server.status === "Released"; })) {
+  checkServersAndVms: function() {
+    var servers = this.details.get("servers");
+    if(_.all(this.details.get("vms"), function(vm) { return vm.status === "Destroyed" }) &&
+        _.all(servers, function(server) { return server.status === "Released"; })) {
         this.$("#no-servers-message").show();
       } else {
         this.$("#no-servers-message").hide();
+      }
+      if (servers && servers.length > 0) {
+        this.$('#tab2').show();
+      } else {
+        this.$('#tab2').hide();
       }
     },
 
@@ -385,7 +391,7 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
     _renderAllSubViews: function() {
       var statusView = new EnvStatus.View({el: this.$(".env-status"), model: this.details});
       statusView.render();
-
+      console.log('Rerender');
       this.renderVirtualMachines();
       this.renderServers();
       this.checkServersAndVms();
