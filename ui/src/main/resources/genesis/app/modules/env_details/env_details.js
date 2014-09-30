@@ -391,7 +391,6 @@ function (genesis, backend, poller, status, EnvHistory, variablesmodule, gtempla
     _renderAllSubViews: function() {
       var statusView = new EnvStatus.View({el: this.$(".env-status"), model: this.details});
       statusView.render();
-      console.log('Rerender');
       this.renderVirtualMachines();
       this.renderServers();
       this.checkServersAndVms();
