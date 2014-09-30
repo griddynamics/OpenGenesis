@@ -76,7 +76,8 @@
   <div id="tabs" data-tabpanel="header">
     <a href="javascript:void(0);" class="tab tab-selected" id="tab1" rel="#panel-tab-1"> <span> Instance details </span> </a>
     <a href="javascript:void(0);" class="tab" id="tab3" rel="#panel-tab-3"> <span> Action history </span> </a>
-    <a href="javascript:void(0);" class="tab" id="tab2" rel="#panel-tab-2"> <span> Servers </span> </a>
+    <% var serversStyle = (environment.servers && environment.servers.length > 0) ? "" : "display:none" %>
+    <a href="javascript:void(0);" class="tab" id="tab2" rel="#panel-tab-2" style="<%= serversStyle %>"> <span> Servers </span> </a>
   </div>
 
    <div id="panel">
