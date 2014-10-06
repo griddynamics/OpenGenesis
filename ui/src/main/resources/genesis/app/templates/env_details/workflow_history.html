@@ -43,7 +43,7 @@
    <%= workflow.executionFinishedTimestamp ? utils.formatDateTime(workflow.executionFinishedTimestamp) : "--" %>
   </span>
   Duration: <span class="duration"> <%= utils.timeDuration(workflow.executionStartedTimestamp, workflow.executionFinishedTimestamp) %></a></span>
-  <span class="status-section"><a href="#project/<%= projectId %>/inst/<%= workflow.envId %>/workflow/<%= workflow.id %>">Status: <span class=<%= (failStatuses.indexOf(workflow.status) != -1 ? "bad" : warningStatus === workflow.status ? "warning" : "normal") %> > <%= workflow.status %></span></span>
+  <span class="status-section"><a href="#project/<%= projectId %>/inst/<%= workflow.envId %>/workflow/<%= workflow.id %>">Status:</a> <span class=<%= (failStatuses.indexOf(workflow.status) != -1 ? "bad" : warningStatus === workflow.status ? "warning" : "normal") %> > <%= workflow.status %></span></span>
 </div>
 <div class="clear"></div>
 </div>
