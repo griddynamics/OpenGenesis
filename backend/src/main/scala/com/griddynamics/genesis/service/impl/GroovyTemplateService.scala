@@ -350,23 +350,35 @@ class GroovyWorkflowDefinition(val template: EnvironmentTemplate, val workflow :
       }
 
       val links = ListBuffer[String]()
+
+      val varsResolver = new ScopeHolder(resolvedVariables) with VariablesSupport {
+        override def variables: Map[String, Any] = resolvedVariables
+        override def get$vars = new java.util.HashMap[String, Any](super.get$vars) {
+          override def get(key: Any) = {
+            links += key.toString
+            super.get(key)
+          }
+        }
+      }
+
       val disabled =
         if (v.disabled != null) {
-          v.disabled.setDelegate(new ScopeHolder(resolvedVariables) with VariablesSupport {
-            override def variables: Map[String, Any] = resolvedVariables
-            override def get$vars = new java.util.HashMap[String, Any](super.get$vars) {
-              override def get(key: Any) = {
-                links += key.toString
-                super.get(key)
-              }
-            }
-          })
+          v.disabled.setDelegate(varsResolver)
           v.disabled.call()
         } else false;
 
       val dependsOn = if (v.dependsOn.isEmpty && links.toList.isEmpty) None else Some(v.dependsOn.toList ++ links.toList)
 
-      new VariableDescription(v.name, v.clazz, v.description, v.isOptional, v.defaultValue().map(String.valueOf(_)).getOrElse(varDsDefault.map(String.valueOf(_)).getOrElse(null)),
+      val defaultValue: String = v.defaultValue() match {
+        case Some(closure: Closure[String]) => {
+          closure.setDelegate(varsResolver)
+          closure.call()
+        }
+        case Some(a: Any) => String.valueOf(a)
+        case None => varDsDefault.map(String.valueOf(_)).getOrElse(null)
+      }
+
+      new VariableDescription(v.name, v.clazz, v.description, v.isOptional, defaultValue,
       possibleValues, dependsOn, v.group.map(groupDesc), v.hidden, disabled)
     }
 

@@ -248,11 +248,11 @@ class VariableBuilder(val name : String, dsClosure: Option[Closure[Unit]],
         }
     }
 
-    def newVariable = {
+  def newVariable = {
       val values = valuesList
-      val default = () => {
+      val default: () => Option[Any] = () => {
          if (defaultVal != null) {
-             Option(defaultVal)
+           Option(defaultVal)
          } else if (inlineDataSource.isDefined){
              val inlineDS = inlineDataSource.get
              inlineDS.default
