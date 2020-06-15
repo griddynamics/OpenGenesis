@@ -48,7 +48,7 @@
 
         <io.akka.version>2.1.0</io.akka.version>
 
-        <org.springframework.version>3.1.2.RELEASE</org.springframework.version>
+        <org.springframework.version>5.2.7.RELEASE</org.springframework.version>
         <org.springframework.security.version>3.1.2.RELEASE</org.springframework.security.version>
 
         <org.eclipse.jetty.version>8.1.9.v20130131</org.eclipse.jetty.version>
